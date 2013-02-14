@@ -1,9 +1,9 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ProductStatistic;
 import dr.inference.model.Variable;
 import dr.math.RiemannApproximation;
 import dr.xml.*;
@@ -11,29 +11,33 @@ import dr.xml.*;
 import java.util.ArrayList;
 
 /**
- * Created with IntelliJ IDEA.
+ * Adaptation of the farm incubation and infectious period models from Morelli et al, PLoS Computational Biology, 2012
+ * (10.1371/journal.pcbi.1002768.g001)
+ *
  * User: Matthew Hall
  * Date: 07/09/2012
  * Time: 16:17
- * To change this template use File | Settings | File Templates.
  */
-public class LesionDatedFarmCaseSet extends AbstractCaseSet{
+public class Morelli12FarmCaseSet extends AbstractCaseSet{
 
-    public LesionDatedFarmCaseSet(String name, ParametricDistributionModel incubationPeriodDistribution,
-                                  ArrayList<AbstractCase> farms, Integer riemannSampleSize){
+    public Morelli12FarmCaseSet(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+                                ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
         super(name);
+
         this.incubationPeriodDistribution = incubationPeriodDistribution;
         addModel(this.incubationPeriodDistribution);
         this.cases = farms;
-        numericalIntegrator = new RiemannApproximation(riemannSampleSize);
+        this.d = d;
+        numericalIntegrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
         for(AbstractCase farm : farms){
-            ((LesionDatedFarmCase)farm).installNumericalIntegrator(numericalIntegrator);
+            ((Morelli12FarmCase)farm).installNumericalIntegrator(numericalIntegrator);
+            addModel(farm);
         }
     }
 
-    public LesionDatedFarmCaseSet(ParametricDistributionModel incubationPeriodDistribution,
-                                  ArrayList<AbstractCase> farms, Integer riemannSampleSize){
-        this(LESION_DATED_FARM_CASE_SET, incubationPeriodDistribution, farms, riemannSampleSize);
+    public Morelli12FarmCaseSet(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+                                ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
+        this(MORELLI_12_FARM_CASE_SET, incubationPeriodDistribution, d, farms, riemannSampleSize);
     }
 
     /* Likelihood of the root branch (the farm is infectious by the root node time).*/
@@ -46,7 +50,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         if(farm.culledYet(farmInfectiousBy)){
             return Double.NEGATIVE_INFINITY;
         } else {
-            return Math.log(((LesionDatedFarmCase) farm).infectiousCDF(farmInfectiousBy));
+            return Math.log(((Morelli12FarmCase) farm).infectiousCDF(farmInfectiousBy));
         }
     }
 
@@ -65,7 +69,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         } else if(parent==child){
             return 0;
         } else {
-            return Math.log(((LesionDatedFarmCase)child).periodInfectionDistribution(childInfected - 1, childInfected,
+            return Math.log(((Morelli12FarmCase)child).periodInfectionDistribution(childInfected - 1, childInfected,
                     childInfectiousBy));
         }
     }
@@ -77,8 +81,13 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
     /* Parser. */
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        //The duplication, believe it or not, makes sense since the distribution needs to exist in the XML to
+        // let the farm elements inherit it, but the operators should apply to the mean and stdev.
+        public static final String INCUBATION_PERIOD_MEAN = "incubationPeriodMean";
+        public static final String INCUBATION_PERIOD_STDEV = "incubationPeriodStdev";
         public static final String INCUBATION_PERIOD_DISTRIBUTION = "incubationPeriodDistribution";
         public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
+        public static final String SQRT_INFECTIOUS_SCALE = "sqrtInfectiousScale";
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -86,28 +95,28 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
                     (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             ArrayList<AbstractCase> tempFarms = new ArrayList<AbstractCase>();
             for(int i=0; i<xo.getChildCount(); i++){
-                if(xo.getChild(i) instanceof LesionDatedFarmCase){
-                    tempFarms.add((LesionDatedFarmCase)xo.getChild(i));
+                if(xo.getChild(i) instanceof Morelli12FarmCase){
+                    tempFarms.add((Morelli12FarmCase)xo.getChild(i));
                 }
             }
+            final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
             final ArrayList<AbstractCase> farms = tempFarms;
-            return new LesionDatedFarmCaseSet(incubationPeriodDistribution, farms,
-                    (int)riemannSampleSize.getParameterValue(0));
+            return new Morelli12FarmCaseSet(incubationPeriodDistribution, d, farms, riemannSampleSize);
         }
 
         @Override
         public String getParserDescription(){
-            return "Parses a set of lesion dated farm cases and the information that they all share";
+            return "Parses a set of Morelli 2012 farm cases and the information that they all share";
         }
 
         @Override
         public Class getReturnType(){
-            return LesionDatedFarmCaseSet.class;
+            return Morelli12FarmCaseSet.class;
         }
 
         public String getParserName(){
-            return LESION_DATED_FARM_CASE_SET;
+            return MORELLI_12_FARM_CASE_SET;
         }
 
         @Override
@@ -116,17 +125,25 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         }
 
         private final XMLSyntaxRule[] rules = {
+                new ElementRule(ProductStatistic.class, 0,2),
+                new ElementRule(INCUBATION_PERIOD_STDEV, ProductStatistic.class, "The standard deviation of the distribution" +
+                        "of incubation periods", true),
                 new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
-                        "distribution of incubation periods for this set of cases", false),
-                new ElementRule(LesionDatedFarmCase.class, 1, Integer.MAX_VALUE),
+                        "distribution of incubation periods (constructed in the XML so farm elements can inherit" +
+                        "it).", false),
+                new ElementRule(Morelli12FarmCase.class, 1, Integer.MAX_VALUE),
+                new ElementRule(SQRT_INFECTIOUS_SCALE, Parameter.class, "The square root of the scale parameter of " +
+                        "all infectiousness periods (variances are proportional to the square of this, see Morelli" +
+                        "2012).", false),
                 new ElementRule(RIEMANN_SAMPLE_SIZE, Parameter.class, "The sample size for the Riemann numerical" +
                         "integration method, used by all child cases.", true)
         };
     };
 
-    public static final String LESION_DATED_FARM_CASE_SET = "LesionDatedFarmCaseSet";
+    public static final String MORELLI_12_FARM_CASE_SET = "morelli12FarmCaseSet";
     private ParametricDistributionModel incubationPeriodDistribution;
-    public RiemannApproximation numericalIntegrator;
+    private RiemannApproximation numericalIntegrator;
+    private Parameter d;
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -135,7 +152,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        fireModelChanged();
     }
 
     @Override

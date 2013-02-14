@@ -6,7 +6,6 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.distribution.TruncatedNormalDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -15,43 +14,50 @@ import dr.math.RiemannApproximation;
 import dr.math.UnivariateFunction;
 import dr.xml.*;
 
-import java.util.ArrayList;
-
 /**
- * New class for farms, discarding most of what's left of the original model and using numerical integration rather
- * than a discrete timescale based on days.
+ * Adaptation of the farm incubation and infectious period models from Morelli et al, PLoS Computational Biology, 2012
+ * (10.1371/journal.pcbi.1002768.g001)
  *
  * User: Matthew Hall
  * Date: 07/09/2012
  * Time: 16:17
- * To change this template use File | Settings | File Templates.
  */
 
-public class LesionDatedFarmCase extends AbstractCase {
+public class Morelli12FarmCase extends AbstractCase {
 
-    public LesionDatedFarmCase(String name, String caseID, Date examDate, Date cullDate, ParametricDistributionModel
-            infectiousDate, Double oldestLesionAge, ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
+    public Morelli12FarmCase(String name, String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
+                             Parameter d, ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
         super(name);
         this.caseID = caseID;
         //The time value for end of these days is the numerical value of these dates plus 1.
         this.examDate = examDate;
+        this.d = d;
         endOfInfectiousDate = cullDate;
-        this.infectiousDate = infectiousDate;
         this.associatedTaxa = associatedTaxa;
         this.oldestLesionAge = oldestLesionAge;
         this.incubationPeriod = incubationPeriod;
         infectionDate = new InfectionDatePDF();
+        rebuildInfDistribution();
+        addModel(infectiousPeriod);
+        addModel(this.incubationPeriod);
+        addVariable(this.d);
+
     }
 
-    public LesionDatedFarmCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel
-            infectiousDate, Double oldestLesionAge, ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
-        this(LESION_DATED_FARM_CASE, caseID, examDate, cullDate, infectiousDate, oldestLesionAge, incubationPeriod,
+
+    public Morelli12FarmCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Parameter d,
+                             ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
+        this(MORELLI_12_FARM_CASE, caseID, examDate, cullDate, oldestLesionAge, d, incubationPeriod,
                 associatedTaxa);
     }
 
+    private void rebuildInfDistribution(){
+        Parameter infectious_shape = new Parameter.Default
+                (oldestLesionAge.getParameterValue(0)/Math.pow(d.getParameterValue(0),2));
+        Parameter infectious_scale = new Parameter.Default(Math.pow(d.getParameterValue(0),2));
 
-
-
+        infectiousPeriod = new GammaDistributionModel(infectious_shape, infectious_scale);
+    }
 
     public Date getLatestPossibleInfectionDate() {
         Double doubleDate = examDate.getTimeValue();
@@ -74,12 +80,12 @@ public class LesionDatedFarmCase extends AbstractCase {
         return incubationPeriod;
     }
 
-    public void setInfectiousDateDistribution(ParametricDistributionModel distribution){
-        infectiousDate = distribution;
+    public void setInfectiousPeriodDistribution(ParametricDistributionModel distribution){
+        infectiousPeriod = distribution;
     }
 
-    public ParametricDistributionModel getInfectiousDateDistribution(){
-        return infectiousDate;
+    public ParametricDistributionModel getInfectiousPeriodDistribution(){
+        return infectiousPeriod;
     }
 
     public boolean culledYet(int day) {
@@ -91,7 +97,7 @@ public class LesionDatedFarmCase extends AbstractCase {
     }
 
     public Object getInfectiousDate() {
-        return infectiousDate;
+        return null;
     }
 
     public Object getEndOfInfectiousDate() {
@@ -103,11 +109,11 @@ public class LesionDatedFarmCase extends AbstractCase {
     }
 
     public Double getInfectiousDateModeHeight(Date latestTaxonDate) {
-        return latestTaxonDate.getTimeValue()-infectiousDate.mean();
+        return null;
     }
 
     public double infectiousCDF(double time){
-        return infectiousDate.cdf(time);
+        return 1-infectiousPeriod.cdf(oldestLesionAge.getParameterValue(0)-time);
     }
 
     /* Probability that infection occurred between 'earliestInfection' and 'latestInfection' given that the case is
@@ -134,8 +140,8 @@ public class LesionDatedFarmCase extends AbstractCase {
         public static final String CULL_DAY = "cullDay";
         public static final String EXAMINATION_DAY = "examinationDay";
         public static final String INCUBATION_PERIOD_DISTRIBUTION = "incubationPeriodDistribution";
-        public static final String INFECTIOUS_DATE_DISTRIBUTION = "infectiousDateDistribution";
         public static final String OLDEST_LESION_AGE = "oldestLesionAge";
+        public static final String SQRT_INFECTIOUS_SCALE = "sqrtInfectiousScale";
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -143,6 +149,7 @@ public class LesionDatedFarmCase extends AbstractCase {
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examinationDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
             final Parameter oldestLesionAgeParameter = (Parameter) xo.getElementFirstChild(OLDEST_LESION_AGE);
+            final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             Taxa tempTaxa = new Taxa();
             for(int i=0; i<xo.getChildCount(); i++){
                 if(xo.getChild(i) instanceof Taxon){
@@ -152,10 +159,8 @@ public class LesionDatedFarmCase extends AbstractCase {
             final Taxa associatedTaxa = tempTaxa;
             final ParametricDistributionModel incubationPeriodDistribution =
                     (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
-            final ParametricDistributionModel infectiousDateDistribution =
-                    (ParametricDistributionModel) xo.getElementFirstChild(INFECTIOUS_DATE_DISTRIBUTION);
-            return new LesionDatedFarmCase(farmID, examinationDate, cullDate, infectiousDateDistribution,
-                    oldestLesionAgeParameter.getParameterValue(0), incubationPeriodDistribution, associatedTaxa);
+            return new Morelli12FarmCase(farmID, examinationDate, cullDate, oldestLesionAgeParameter, d,
+                    incubationPeriodDistribution, associatedTaxa);
         }
 
         @Override
@@ -168,9 +173,9 @@ public class LesionDatedFarmCase extends AbstractCase {
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
-                new ElementRule(INFECTIOUS_DATE_DISTRIBUTION, ParametricDistributionModel.class, "The " +
-                        "probability distribution of the infection date, in days since the date origins specified" +
-                        "in the ", false),
+                new ElementRule(SQRT_INFECTIOUS_SCALE, Parameter.class, "The square root of the scale parameter of " +
+                        "all infectiousness periods (variances are proportional to the square of this, see Morelli" +
+                        "2012).", false),
                 new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
                         "distribution of the incubation period of this farm", false),
                 new ElementRule(OLDEST_LESION_AGE, Parameter.class, "The estimated oldest lesion date as determined" +
@@ -187,32 +192,34 @@ public class LesionDatedFarmCase extends AbstractCase {
 
         @Override
         public Class getReturnType() {
-            return LesionDatedFarmCase.class;
+            return Morelli12FarmCase.class;
         }
 
         public String getParserName() {
-            return LESION_DATED_FARM_CASE;
+            return MORELLI_12_FARM_CASE;
         }
     };
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        rebuildInfDistribution();
         fireModelChanged();
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        rebuildInfDistribution();
+        fireModelChanged();
     }
 
     @Override
     protected void storeState() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        storedInfectiousPeriod = infectiousPeriod;
     }
 
     @Override
     protected void restoreState() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        infectiousPeriod = storedInfectiousPeriod;
     }
 
     @Override
@@ -263,7 +270,7 @@ public class LesionDatedFarmCase extends AbstractCase {
                 throw new RuntimeException("Numerical integrator not specified.");
             } else {
                 L_x_fi underlyingFunction = new L_x_fi(argument);
-                return numericalIntegrator.integrate(underlyingFunction,argument,examDate.getTimeValue());
+                return numericalIntegrator.integrate(underlyingFunction,0,examDate.getTimeValue()-argument);
             }
         }
 
@@ -285,10 +292,11 @@ public class LesionDatedFarmCase extends AbstractCase {
         }
 
         public double evaluate(double argument) {
-            if(argument<currentT || argument>examDate.getTimeValue()){
+            if(argument<0 || argument>examDate.getTimeValue() - currentT){
                 return 0;
             } else {
-                return incubationPeriod.pdf(argument-currentT)*infectiousDate.pdf(argument);
+                return incubationPeriod.pdf(examDate.getTimeValue() - currentT - argument)
+                        *infectiousPeriod.pdf(argument);
             }
         }
 
@@ -302,15 +310,18 @@ public class LesionDatedFarmCase extends AbstractCase {
         private double currentT;
     }
 
-    public static final String LESION_DATED_FARM_CASE = "LesionDatedFarmCase";
+    public static final String MORELLI_12_FARM_CASE = "morelli12FarmCase";
     private Date examDate;
     private Date endOfInfectiousDate;
-    private Double oldestLesionAge;
+    private Parameter oldestLesionAge;
+    private Parameter d;
     private ParametricDistributionModel infectiousDate;
     private InfectionDatePDF infectionDate;
     private Taxa associatedTaxa;
     private RiemannApproximation numericalIntegrator;
     private ParametricDistributionModel incubationPeriod;
+    private ParametricDistributionModel infectiousPeriod;
+    private ParametricDistributionModel storedInfectiousPeriod;
     private double[] fastInfectionDate;
 
 }

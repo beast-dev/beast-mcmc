@@ -57,8 +57,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
     private static final String DNDS_ROBUST_COUNTING_TOOL_TIP = "<html>"
             + "Enable counting of synonymous and non-synonymous substitution as described in<br>"
             + "O'Brien, Minin & Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond &<br>"
-            + "Suchard (in preparation). This model requires a 3-partition codon model to be<br>"
-            + "selected in the Site model for this partition.</html>";
+            + "Suchard (2012). This model requires a 3-partition codon model to be<br>"
+            + "selected in the Site model for this partition and NO Site Heterogeneity Model.</html>";
 
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
@@ -77,8 +77,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
 
     private JTextArea dNnSText = new JTextArea(
-            "This model requires a 3-partition codon model to be selected in " +
-                    "the Site model for this partition before it can be selected.");
+            "This model requires a 3-partition codon model to be selected in the Site model " +
+                    "for this partition and NO Site Heterogeneity Model before it can be selected.");
 
     // dNdS robust counting is automatic if RC is turned on for a codon
     // partitioned data set.
@@ -271,7 +271,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
             JTextArea text = new JTextArea(
                     "Select this option to reconstruct counts of state changes using " +
-                            "Markov Jumps. This approached is described in Minin & Suchard (2008).");
+                            "Markov Jumps. This approach is described in Minin & Suchard (2008).");
             text.setColumns(40);
             PanelUtils.setupComponent(text);
             addComponent(text);
@@ -290,10 +290,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             if (dNdSRobustCountingAvailable) {
                 addSeparator();
                 text = new JTextArea(
-                        "Select this option to reconstruct counts of synonymous and nonsynonymous " +
-                                "changes using Robust Counting. This approached is described in O'Brien, Minin " +
+                        "Renaissance counting: select this option to reconstruct counts of synonymous and nonsynonymous " +
+                                "changes using Robust Counting. This approach is described in O'Brien, Minin " +
                                 "& Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard " +
-                                "(in preparation):");
+                                "(2012):");
                 text.setColumns(40);
                 PanelUtils.setupComponent(text);
                 addComponent(text);

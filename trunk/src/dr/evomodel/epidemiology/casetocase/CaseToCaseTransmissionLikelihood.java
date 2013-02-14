@@ -47,14 +47,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     /* The log likelihood of the subtree from the parent branch of the referred-to node downwards; old version is stored
     before operators are applied.*/
 
-    private double[] subTreeLogLikelihoods;
-    private double[] storedSubTreeLogLikelihoods;
+    private double[] nodeLogLikelihoods;
+    private double[] storedNodeLogLikelihoods;
 
     /* Whether operations have required the recalculation of the log likelihoods of the subtree from the parent branch
     of the referred-to node downwards.
      */
 
-    private boolean[] subTreeRecalculationNeeded;
+    private boolean[] nodeRecalculationNeeded;
+    private boolean[] storedRecalculationArray;
 
     /* Matches cases to external nodes */
 
@@ -126,9 +127,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         tipMap = new HashMap<AbstractCase, NodeRef>();
 
-        subTreeRecalculationNeeded = new boolean[virusTree.getNodeCount()];
-        Arrays.fill(subTreeRecalculationNeeded, true);
-        subTreeLogLikelihoods = new double[virusTree.getNodeCount()];
+        nodeRecalculationNeeded = new boolean[virusTree.getNodeCount()];
+        Arrays.fill(nodeRecalculationNeeded, true);
+        nodeLogLikelihoods = new double[virusTree.getNodeCount()];
 
         if(startingNetworkFileName==null){
             branchMap = paintRandomNetwork();
@@ -284,11 +285,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     //Return a set of nodes that are not descendants of (or equal to) the current node and have the same painting as it.
+    //The node recalculation is going to need reworking once the time comes to test the extended version,
 
     public HashSet<Integer> samePaintingUpTree(NodeRef node, boolean flagForRecalc){
-        if(!subTreeRecalculationNeeded[node.getNumber()] && flagForRecalc){
-            flagForRecalculation(virusTree, virusTree.getChild(node,0), subTreeRecalculationNeeded);
-            flagForRecalculation(virusTree, virusTree.getChild(node,1), subTreeRecalculationNeeded);
+        if(!nodeRecalculationNeeded[node.getNumber()] && flagForRecalc){
+            extendedflagForRecalculation(virusTree, virusTree.getChild(node,0), nodeRecalculationNeeded);
+            extendedflagForRecalculation(virusTree, virusTree.getChild(node,1), nodeRecalculationNeeded);
         }
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = branchMap[node.getNumber()];
@@ -322,8 +324,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
         }
         if(flagForRecalc && !creepsFurther){
-            flagForRecalculation(virusTree, virusTree.getChild(node,0), subTreeRecalculationNeeded);
-            flagForRecalculation(virusTree, virusTree.getChild(node,1), subTreeRecalculationNeeded);
+            extendedflagForRecalculation(virusTree, virusTree.getChild(node,0), nodeRecalculationNeeded);
+            extendedflagForRecalculation(virusTree, virusTree.getChild(node,1), nodeRecalculationNeeded);
         }
         return out;
     }
@@ -338,7 +340,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return out;
     }
 
-    public static void flagForRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
+    // The flags indicate if a node's painting has changed. Only tree operators can use this shortcut; if parameters of
+    // the epidemiological model have changed then the whole tree's likelihood needs recalculating. Somewhat out of
+    // date at this point.
+
+    public static void extendedflagForRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
         flags[node.getNumber()]=true;
         for(int i=0; i<tree.getChildCount(node); i++){
             flags[tree.getChild(node,i).getNumber()]=true;
@@ -348,7 +354,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             currentNode = tree.getParent(currentNode);
             flags[currentNode.getNumber()]=true;
         }
+    }
 
+    public static void flagForRecalculation(NodeRef node, boolean[] flags){
+        flags[node.getNumber()]=true;
     }
 
     public void changeCreepLock(int index, boolean value){
@@ -361,7 +370,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
-        Arrays.fill(subTreeRecalculationNeeded, true);
+        Arrays.fill(nodeRecalculationNeeded, true);
         likelihoodKnown = false;
     }
 
@@ -372,7 +381,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        Arrays.fill(subTreeRecalculationNeeded, true);
+        Arrays.fill(nodeRecalculationNeeded, true);
         likelihoodKnown = false;
     }
 
@@ -385,7 +394,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      */
     protected final void storeState() {
         storedBranchMap = Arrays.copyOf(branchMap, branchMap.length);
-        storedSubTreeLogLikelihoods = Arrays.copyOf(subTreeLogLikelihoods, subTreeLogLikelihoods.length);
+        storedNodeLogLikelihoods = Arrays.copyOf(nodeLogLikelihoods, nodeLogLikelihoods.length);
+        storedRecalculationArray = Arrays.copyOf(nodeRecalculationNeeded, nodeRecalculationNeeded.length);
     }
 
     /**
@@ -393,7 +403,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      */
     protected final void restoreState() {
         branchMap = storedBranchMap;
-        subTreeLogLikelihoods = storedSubTreeLogLikelihoods;
+        nodeLogLikelihoods = storedNodeLogLikelihoods;
+        nodeRecalculationNeeded = storedRecalculationArray;
         likelihoodKnown = false;
     }
 
@@ -426,11 +437,22 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public final void makeDirty() {
         // so every switch operator is forcing recalculation of the whole tree? Can't be necessary.
-        Arrays.fill(subTreeRecalculationNeeded, true);
+        Arrays.fill(nodeRecalculationNeeded, true);
         if(extended){
             recalculateLocks();
         }
         likelihoodKnown = false;
+    }
+
+    public void makeDirty(boolean cleanTree){
+        if(cleanTree){
+            makeDirty();
+        } else {
+            if(extended){
+                recalculateLocks();
+            }
+            likelihoodKnown = false;
+        }
     }
 
     /**
@@ -477,40 +499,39 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     private double calculateNodeTransmissionLogLikelihood(NodeRef node, int parentDay, AbstractCase[]
             currentBranchMap) {
-
         double logLikelihood=0;
         AbstractCase nodeCase = currentBranchMap[node.getNumber()];
         Integer nodeDay = getNodeDay(node);
         /* Likelihood of the branch leading to the node.*/
-        if(subTreeRecalculationNeeded[node.getNumber()]){
+        if(!nodeRecalculationNeeded[node.getNumber()]){
+            logLikelihood = logLikelihood + nodeLogLikelihoods[node.getNumber()];
+        } else {
+            double nodeLogLikelihood = 0;
             if(virusTree.isRoot(node)){
                 /*Likelihood of root node case being infectious by the time of the root.*/
-                logLikelihood = logLikelihood + Math.log(cases.noTransmissionBranchLikelihood(nodeCase, nodeDay));
+                nodeLogLikelihood =  Math.log(cases.noTransmissionBranchLikelihood(nodeCase, nodeDay));
             } else {
                 /*Likelihood of this case being infected at the time of the parent node and infectious by the time
                 of the child node.*/
                 NodeRef parent = virusTree.getParent(node);
-                logLikelihood = logLikelihood + Math.log(cases.transmissionBranchLikelihood(currentBranchMap[parent.getNumber()],
+                nodeLogLikelihood = Math.log(cases.transmissionBranchLikelihood(currentBranchMap[parent.getNumber()],
                         nodeCase, parentDay, nodeDay));
             }
-            /* If this isn't an external node, get the log likelihood of lower branches */
-            if(!virusTree.isExternal(node)){
-                for(int i=0; i<virusTree.getChildCount(node); i++){
-                    logLikelihood = logLikelihood + calculateNodeTransmissionLogLikelihood(virusTree.getChild(node,i),
-                            nodeDay, currentBranchMap);
-                }
-            }
-            subTreeLogLikelihoods[node.getNumber()]=logLikelihood;
-            subTreeRecalculationNeeded[node.getNumber()]=false;
+            nodeLogLikelihoods[node.getNumber()]=nodeLogLikelihood;
+            nodeRecalculationNeeded[node.getNumber()]=false;
+            logLikelihood += nodeLogLikelihood;
         }
-        else{
-            logLikelihood = subTreeLogLikelihoods[node.getNumber()];
+        if(!virusTree.isExternal(node)){
+            for(int i=0; i<virusTree.getChildCount(node); i++){
+                logLikelihood = logLikelihood + calculateNodeTransmissionLogLikelihood(virusTree.getChild(node,i),
+                        nodeDay, currentBranchMap);
+            }
         }
         return logLikelihood;
     }
 
     public boolean[] getRecalculationArray(){
-        return subTreeRecalculationNeeded;
+        return nodeRecalculationNeeded;
     }
 
     private double getHeight(NodeRef node){
@@ -671,7 +692,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      * the non-extended version right now, watch it. */
 
     private AbstractCase[] paintSpecificNetwork(HashMap<AbstractCase, AbstractCase> map){
-        Arrays.fill(subTreeRecalculationNeeded,true);
+        Arrays.fill(nodeRecalculationNeeded,true);
         AbstractCase[] branchArray = new AbstractCase[virusTree.getNodeCount()];
         branchArray = prepareExternalNodeMap(branchArray);
         TreeModel.Node root = (TreeModel.Node)virusTree.getRoot();
@@ -769,7 +790,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     */
 
     private AbstractCase[] paintRandomNetwork(AbstractCase[] map, boolean checkNonZero){
-        Arrays.fill(subTreeRecalculationNeeded,true);
+        Arrays.fill(nodeRecalculationNeeded,true);
         TreeModel.Node root = (TreeModel.Node)virusTree.getRoot();
         randomlyPaintNode(root, map, checkNonZero);
         return map;

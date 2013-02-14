@@ -44,7 +44,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                         c2cLikelihood.isExtended());
             }
         }
-        c2cLikelihood.makeDirty();
+        c2cLikelihood.makeDirty(false);
         return 1;
     }
 
@@ -77,7 +77,10 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                 }
             }
         }
-        CaseToCaseTransmissionLikelihood.flagForRecalculation(tree, node, flags);
+        CaseToCaseTransmissionLikelihood.flagForRecalculation(node, flags);
+        for(int i=0; i<tree.getChildCount(node); i++){
+            CaseToCaseTransmissionLikelihood.flagForRecalculation(tree.getChild(node,i), flags);
+        }
     }
 
     /*Go up the tree and change all ancestors of the current node that had the old painting to have the new painting.
@@ -89,8 +92,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         NodeRef parent = tree.getParent(node);
         if(map[parent.getNumber()]==originalCase){
             map[parent.getNumber()]=newCase;
+            NodeRef otherChild = tree.getChild(parent,0) == node ? tree.getChild(parent,1) : tree.getChild(parent,0);
             if(extended){
-                NodeRef otherChild = tree.getChild(parent,0) == node ? tree.getChild(parent,1) : tree.getChild(parent,0);
                 if(map[otherChild.getNumber()]==originalCase){
                     changeDescendantNodes(tree, parent, originalCase, newCase, map, flags);
                 }
@@ -98,11 +101,13 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             if(!tree.isRoot(parent)){
                 changeAncestorNodes(tree, parent, originalCase, newCase, map, flags, extended);
             }
+            CaseToCaseTransmissionLikelihood.flagForRecalculation(parent, flags);
+            CaseToCaseTransmissionLikelihood.flagForRecalculation(otherChild, flags);
         }
     }
 
-/*    Extended only. Go down the tree and change all descendants of the current node that have the old painting to have
-    the new painting. This should never change the label of tip-linked nodes under either painting, and if it does
+    /*  Extended only. Go down the tree and change all descendants of the current node that have the old painting to
+    have the new painting. This should never change the label of tip-linked nodes under either painting, and if it does
     something is wrong.*/
 
     private void changeDescendantNodes(TreeModel tree, NodeRef node, AbstractCase originalCase,
@@ -110,17 +115,13 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         if(tree.isExternal(node)){
             throw new RuntimeException("changeDescendantNodes has reached a tip, which should never happen.");
         }
-        boolean creepContinues = false;
         for(int i=0; i<tree.getChildCount(node); i++){
+            CaseToCaseTransmissionLikelihood.flagForRecalculation(node, flags);
             NodeRef child = tree.getChild(node,i);
             if(map[child.getNumber()]==originalCase){
                 map[child.getNumber()]=newCase;
                 changeDescendantNodes(tree, child, originalCase, newCase, map, flags);
-                creepContinues = true;
             }
-        }
-        if(!creepContinues){
-            CaseToCaseTransmissionLikelihood.flagForRecalculation(tree, node, flags);
         }
     }
 

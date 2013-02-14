@@ -43,4 +43,4 @@ This is a branch annotation with the colour starting at the time as 0, changing 
 1 at time 8.0, reverting to 0 at time 12.0 and then remaining that colour up to time
 20.0 (the total length of the branch).  
 
-A regex to match these is {{{("[^"]*"+|[^,=\s]+)\s*(=\s*(\{[^=}]*\}|"[^"]*"+|[^,]+))?"}}}
+A regex to match these is {{{("[^"]*"+|[^,=\s]+)\s*(=\s*(\{[^=}]*\}|"[^"]*"+|[^,]+))?}}}

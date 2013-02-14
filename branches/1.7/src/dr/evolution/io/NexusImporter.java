@@ -701,7 +701,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         int duplicateTaxon = TaxonList.Utils.findDuplicateTaxon(taxa);
         if (duplicateTaxon >= 0)
             throw new IllegalArgumentException("Tree contains duplicate taxon name: " + taxa.getTaxon(duplicateTaxon).getId() +
-                      "!\nAll taxon names should be unique.");
+                    "!\nAll taxon names should be unique.");
 
         return taxa;
     }
@@ -1246,6 +1246,19 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     }
 
     static void parseMetaCommentPairs(String meta, Attributable item) throws Importer.BadFormatException {
+        if (meta.startsWith("B ")) {
+            // a MrBayes annotation
+            String[] parts = meta.split(" ");
+            if (parts.length == 3 && parts[1].length() > 0 && parts[2].length() > 0) {
+                item.setAttribute(parts[1], parseValue(parts[2]));
+            } else if (parts.length == 2 && parts[1].length() > 0) {
+                item.setAttribute(parts[1], Boolean.TRUE);
+            } else {
+                throw new Importer.BadFormatException("Badly formatted attribute: '" + meta + "'");
+            }
+            return;
+        }
+
         // This regex should match key=value pairs, separated by commas
         // This can match the following types of meta comment pairs:
         // value=number, value="string", value={item1, item2, item3}

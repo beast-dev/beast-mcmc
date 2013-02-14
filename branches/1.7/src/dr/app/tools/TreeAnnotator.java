@@ -278,7 +278,7 @@ public class TreeAnnotator {
         try {
             cladeSystem.annotateTree(targetTree, targetTree.getRoot(), null, heightsOption);
         } catch (Exception e) {
-            System.err.println("Error to annotate tree: " + e.getMessage() + "\nPlease check the tree log file format.");
+            System.err.println("Error annotating tree: " + e.getMessage() + "\nPlease check the tree log file format.");
             return;
         }
 

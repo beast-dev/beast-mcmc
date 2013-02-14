@@ -462,7 +462,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     /* Return the integer day on which the given node occurred */
 
-    private int getNodeDay(NodeRef node){
+    public int getNodeDay(NodeRef node){
         Double nodeHeight = getHeight(node);
         Double estimatedNodeTime = estimatedLastSampleTime-nodeHeight;
         Date nodeDate = new Date(estimatedNodeTime, Units.Type.DAYS, false);

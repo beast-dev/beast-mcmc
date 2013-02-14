@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-import com.sun.corba.se.impl.orbutil.graph.Node;
-
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;

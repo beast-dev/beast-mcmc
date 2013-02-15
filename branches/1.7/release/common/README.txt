@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 13th February 2013
+Last updated: a.rambaut@ed.ac.uk - 14th February 2013
 
 Contents:
 1) INTRODUCTION

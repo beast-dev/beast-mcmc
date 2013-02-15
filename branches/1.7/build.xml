@@ -482,7 +482,7 @@
                     vmoptions="-Xmx1024M"
                     arguments="-window -working -options"
                     version="${version}"
-                    infostring="${BEAST_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${BEAST_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.beast">
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
@@ -503,7 +503,7 @@
                     vmoptions="-Xmx1024M"
                     arguments="-window -working -options"
                     version="${version}"
-                    infostring="${BEASTMC3_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${BEASTMC3_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.beast">
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
@@ -524,7 +524,7 @@
                     vmoptions="-Xmx1024M"
                     arguments=""
                     version="${version}"
-                    infostring="${BEAUti_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${BEAUti_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.beauti">
             <documenttype name="BEAUti document"
                           extensions="beauti bti"
@@ -551,7 +551,7 @@
                     vmoptions="-Xmx1024M"
                     arguments=""
                     version="${version}"
-                    infostring="${LogCombiner_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${LogCombiner_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.tools.logcombiner">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -585,7 +585,7 @@
                     vmoptions="-Xmx1024M"
                     arguments=""
                     version="${version}"
-                    infostring="${TreeStat_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${TreeStat_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.treestat">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>

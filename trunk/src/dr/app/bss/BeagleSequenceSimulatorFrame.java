@@ -172,6 +172,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
+	//TODO: generate number of simulations time (incrementing seed?)
 	private void generateFile(final File outFile) throws IOException,
 			ImportException {
 
@@ -184,39 +185,46 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 				try {
 
-					if (BeagleSequenceSimulatorApp.DEBUG) {
-						Utils.printDataList(dataList);
-					}
+					System.out.println("SimCount: " + dataList.simulationsCount);
+					
+					for (int i = 0; i < dataList.simulationsCount; i++) {
 
-					PrintWriter writer;
+						if (BeagleSequenceSimulatorApp.DEBUG) {
+							Utils.printDataList(dataList);
+						}
 
-					writer = new PrintWriter(new FileWriter(outFile));
+						String path = ((i == 0) ? outFile.toString() : outFile.toString() + i);
 
-					ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+						PrintWriter writer = new PrintWriter(new FileWriter(
+								path));
 
-					for (PartitionData data : dataList) {
+						ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
-						// create partition
-						Partition partition = new Partition(data.treeModel, //
-								data.createBranchModel(), //
-								data.createSiteRateModel(), //
-								data.createBranchRateModel(), //
-								data.createFrequencyModel(), //
-								0, // from
-								data.to - 1, // to
-								1 // every
-						);
+						for (PartitionData data : dataList) {
 
-						partitionsList.add(partition);
+							// create partition
+							Partition partition = new Partition(data.treeModel, //
+									data.createBranchModel(), //
+									data.createSiteRateModel(), //
+									data.createBranchRateModel(), //
+									data.createFrequencyModel(), //
+									0, // from
+									data.to - 1, // to
+									1 // every
+							);
 
-					}// END: data list loop
+							partitionsList.add(partition);
 
-					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-							partitionsList, dataList.siteCount);
+						}// END: data list loop
 
-					writer.println(beagleSequenceSimulator.simulate()
-							.toString());
-					writer.close();
+						BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+								partitionsList, dataList.siteCount);
+
+						writer.println(beagleSequenceSimulator.simulate()
+								.toString());
+						writer.close();
+
+					}// END: simulationsCount loop
 
 				} catch (Exception e) {
 					Utils.handleException(e);

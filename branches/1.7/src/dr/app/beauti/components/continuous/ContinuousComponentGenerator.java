@@ -167,7 +167,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             }
             writer.writeTag("parameter",
                     new Attribute[]{
-                            new Attribute.Default<String>("id", "col" + (i + 1)),
+                            new Attribute.Default<String>("id", precisionMatrixId + ".col" + (i + 1)),
                             new Attribute.Default<String>("value", sb.toString())
                     }, true);
         }
@@ -363,7 +363,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("correlation",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", prefix + "correlation")
+                        new Attribute.Default<String>("id", prefix + "correlation"),
+                        new Attribute.Default<Integer>("dimension1", 1),
+                        new Attribute.Default<Integer>("dimension2", 2)
                 });
         writer.writeIDref("matrixParameter", precisionMatrixId);
         writer.writeCloseTag("correlation");
@@ -386,7 +388,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "precision1"),
                         new Attribute.Default<String>("dimension", "0")
                 });
-        writer.writeIDref("parameter", prefix + "col1");
+        writer.writeIDref("parameter", prefix + "precision.col1");
         writer.writeCloseTag("subStatistic");
         writer.writeCloseTag("productStatistic");
 
@@ -400,7 +402,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "precision2"),
                         new Attribute.Default<String>("dimension", "1")
                 });
-        writer.writeIDref("parameter", prefix + "col2");
+        writer.writeIDref("parameter", prefix + "precision.col2");
         writer.writeCloseTag("subStatistic");
         writer.writeCloseTag("productStatistic");
 
@@ -516,12 +518,13 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writePrecisionMatrixIdRefs(final XMLWriter writer, final ContinuousComponentOptions component) {
-        for (PartitionSubstitutionModel model : component.getOptions().getPartitionSubstitutionModels(ContinuousDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
+            PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
             writer.writeIDref("matrixParameter", model.getName() + ".precision");
 
             if (model.getContinuousTraitCount() == 2) {
                 // if we are analysing bivariate traits we can add these special statistics...
-                write2DStatisticsIDrefs(writer, null);
+                write2DStatisticsIDrefs(writer, partitionData);
             }
         }
     }

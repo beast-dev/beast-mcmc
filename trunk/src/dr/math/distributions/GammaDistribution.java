@@ -25,19 +25,18 @@
 
 package dr.math.distributions;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.GammaDistributionImpl;
-
 import cern.jet.random.Gamma;
 import cern.jet.random.engine.MersenneTwister;
 import cern.jet.random.engine.RandomEngine;
 import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.GammaDistributionImpl;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * gamma distribution.
@@ -796,7 +795,7 @@ public class GammaDistribution implements Distribution {
     protected double shape, scale;
     protected int samples;
 
-    private static final boolean TRY_COLT = true;
+    private static final boolean TRY_COLT = false;
     private static RandomEngine randomEngine;
     private static Gamma coltGamma;
 

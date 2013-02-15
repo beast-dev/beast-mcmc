@@ -1,28 +1,3 @@
-/*
- * BeagleSubstitutionEpochModelParser.java
- *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.app.beagle.evomodel.parsers;
 
 import java.util.ArrayList;
@@ -48,8 +23,6 @@ import dr.xml.XMLSyntaxRule;
  * @author Marc A. Suchard
  * @version $Id$
  */
-
-@Deprecated // Switching to BranchModel
 public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser {
 
 	public static final String SUBSTITUTION_EPOCH_MODEL = "beagleSubstitutionEpochModel";
@@ -94,11 +67,11 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 		}//END: i loop
 
 		BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
-		
+
 		if (branchRateModel == null) {
 			branchRateModel = new DefaultBranchRateModel();
 		}
-		
+
 		Parameter epochTransitionTimes = (Parameter) xo
 				.getChild(Parameter.class);
 
@@ -116,8 +89,8 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 			epochTransitionTimes.setParameterValueQuietly(i, sortedEpochTransitionTimes[i]);
 		}//END: i loop
 
-		return new EpochBranchSubstitutionModel(substModelList, 
-				frequencyModelList, 
+		return new EpochBranchSubstitutionModel(substModelList,
+				frequencyModelList,
 				branchRateModel,
 				epochTransitionTimes);
 	}// END: parseXMLObject
@@ -129,12 +102,14 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
                 new ElementRule(MODELS,
                         new XMLSyntaxRule[] {
                                 new ElementRule(AbstractModel.class, 1, Integer.MAX_VALUE),
+                                //TODO or other subst model classes
                         }
                 ),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(Parameter.class),
         };
 
+//		return null;
 	}// END: getSyntaxRules
 
 	@Override

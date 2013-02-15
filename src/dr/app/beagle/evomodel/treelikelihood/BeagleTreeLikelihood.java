@@ -1,7 +1,7 @@
 /*
  * BeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,34 +26,25 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.*;
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.parsers.BeagleTreeLikelihoodParser;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.tools.BeagleSequenceSimulator;
-import dr.app.beagle.tools.Partition;
-import dr.evolution.alignment.Alignment;
+import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.MathUtils;
+import dr.util.Citable;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -78,7 +69,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
     private static final String SCALING_PROPERTY = "beagle.scaling";
     private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
-    private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DELAYED;
@@ -88,26 +78,26 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static List<Integer> preferredOrder = null;
     private static List<Integer> requiredOrder = null;
     private static List<String> scalingOrder = null;
-    private static List<Integer> extraBufferOrder = null;
 
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
-                                BranchModel branchModel,
+                                BranchSubstitutionModel branchSubstitutionModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
                                 TipStatesModel tipStatesModel,
                                 boolean useAmbiguities,
                                 PartialsRescalingScheme rescalingScheme) {
 
-        this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme, null);
+        this(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme,
+                null);
     }
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
-                                BranchModel branchModel,
+                                BranchSubstitutionModel branchSubstitutionModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
                                 TipStatesModel tipStatesModel,
@@ -115,7 +105,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                                 PartialsRescalingScheme rescalingScheme,
                                 Map<Set<String>, Parameter> partialsRestrictions) {
 
-        super(BeagleTreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
+        super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
 
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");
@@ -125,8 +115,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             this.siteRateModel = siteRateModel;
             addModel(this.siteRateModel);
 
-            this.branchModel = branchModel;
-            addModel(this.branchModel);
+            this.branchSubstitutionModel = branchSubstitutionModel;
+            if (!(branchSubstitutionModel instanceof HomogenousBranchSubstitutionModel)) {
+                logger.info("  Branch site model used: " + branchSubstitutionModel.getModelName());
+                if (branchSubstitutionModel instanceof Citable) {
+                    logger.info("      Please cite: " + Citable.Utils.getCitationString((Citable) branchSubstitutionModel, "", ""));
+                }
+            }
+            eigenCount = this.branchSubstitutionModel.getEigenCount();
+            addModel(branchSubstitutionModel);
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -153,8 +150,16 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // one partials buffer for each tip and two for each internal node (for store restore)
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
+            // two eigen buffers for each decomposition for store and restore.
+            eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
+
+            // two matrices for each node less the root
+            matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
+
+            this.branchSubstitutionModel.setFirstBuffer(matrixBufferHelper.getBufferCount());
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
@@ -169,15 +174,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (scalingOrder == null) {
                 scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
             }
-            if (extraBufferOrder == null) {
-                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
-            }
-
-            int extraBufferCount = -1; // default
-            if (extraBufferOrder.size() > 0) {
-                extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
-            }
-            substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel, extraBufferCount);
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
@@ -248,7 +244,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
-            if (substitutionModelDelegate.canReturnComplexDiagonalization()) {
+            if (branchSubstitutionModel.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
@@ -260,8 +256,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     compactPartialsCount,
                     stateCount,
                     patternCount,
-                    substitutionModelDelegate.getEigenBufferCount(),
-                    substitutionModelDelegate.getMatrixBufferCount(),
+                    eigenBufferHelper.getBufferCount(), // eigenBufferCount
+                    matrixBufferHelper.getBufferCount() + this.branchSubstitutionModel.getExtraBufferCount(treeModel),
                     categoryCount,
                     scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
                     resourceList,
@@ -589,15 +585,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 updateNode(treeModel.getNode(index));
             }
 
-        } else if (model == branchModel) {
-//            if (index == -1) {
-//                updateSubstitutionModel = true;
-//                updateAllNodes();
-//            } else {
-//                updateNode(treeModel.getNode(index));
-//            }
+        } else if (model == branchSubstitutionModel) {
 
-            makeDirty();
+            updateSubstitutionModel = true;
+            updateAllNodes();
 
         } else if (model == siteRateModel) {
 
@@ -619,14 +610,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         super.handleModelChangedEvent(model, object, index);
     }
 
-    @Override
-    public void makeDirty() {
-        super.makeDirty();
-        updateSiteModel = true;
-        updateSubstitutionModel = true;
-        updateRestrictedNodePartials = true;
-    }
-// **************************************************************
+    // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 
@@ -635,7 +619,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      */
     protected void storeState() {
         partialBufferHelper.storeState();
-        substitutionModelDelegate.storeState();
+        eigenBufferHelper.storeState();
+        matrixBufferHelper.storeState();
 
         if (useScaleFactors || useAutoScaling) { // Only store when actually used
             scaleBufferHelper.storeState();
@@ -654,7 +639,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
 
         partialBufferHelper.restoreState();
-        substitutionModelDelegate.restoreState();
+        eigenBufferHelper.restoreState();
+        matrixBufferHelper.restoreState();
 
         if (useScaleFactors || useAutoScaling) {
             scaleBufferHelper.restoreState();
@@ -686,9 +672,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             patternLogLikelihoods = new double[patternCount];
         }
 
-        if (branchUpdateIndices == null) {
-            branchUpdateIndices = new int[nodeCount];
-            branchLengths = new double[nodeCount];
+        if (matrixUpdateIndices == null) {
+            matrixUpdateIndices = new int[eigenCount][nodeCount];
+            branchLengths = new double[eigenCount][nodeCount];
+            branchUpdateCount = new int[eigenCount];
             scaleBufferIndices = new int[internalNodeCount];
             storedScaleBufferIndices = new int[internalNodeCount];
         }
@@ -738,7 +725,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
-        branchUpdateCount = 0;
+        for (int i = 0; i < eigenCount; i++) {
+            branchUpdateCount[i] = 0;
+        }
         operationListCount = 0;
 
         if (hasRestrictedPartials) {
@@ -753,9 +742,29 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         traverse(treeModel, root, null, true);
 
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
-            substitutionModelDelegate.updateSubstitutionModels(beagle);
-
             // we are currently assuming a no-category model...
+            for (int i = 0; i < eigenCount; i++) {
+                if (EpochBranchSubstitutionModel.TRY_EPOCH) {
+            		  eigenBufferHelper.flipOffset(i);
+            		  
+            		  branchSubstitutionModel.setEigenDecomposition(
+            				  beagle, i, eigenBufferHelper, 0
+            				  );
+            		
+            		
+            	} else {
+            	
+                EigenDecomposition ed = branchSubstitutionModel.getEigenDecomposition(i, 0);
+
+                eigenBufferHelper.flipOffset(i);
+
+                beagle.setEigenDecomposition(
+                        eigenBufferHelper.getOffsetIndex(i),
+                        ed.getEigenVectors(),
+                        ed.getInverseEigenVectors(),
+                        ed.getEigenValues());
+            	}
+            }
         }
 
         if (updateSiteModel) {
@@ -763,16 +772,35 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             beagle.setCategoryRates(categoryRates);
         }
 
-        if (branchUpdateCount > 0) {
-            substitutionModelDelegate.updateTransitionMatrices(
-                    beagle,
-                    branchUpdateIndices,
-                    branchLengths,
-                    branchUpdateCount);
+        for (int i = 0; i < eigenCount; i++) {
+            if (branchUpdateCount[i] > 0) {
+
+                if (EpochBranchSubstitutionModel.TRY_EPOCH) {
+                    branchSubstitutionModel.updateTransitionMatrices(
+                            beagle,
+                            i,
+                            eigenBufferHelper,
+                            matrixUpdateIndices[i],
+                            null,
+                            null,
+                            branchLengths[i],
+                            branchUpdateCount[i]);
+                } else {
+                    beagle.updateTransitionMatrices(
+                            eigenBufferHelper.getOffsetIndex(i),
+                            matrixUpdateIndices[i],
+                            null,
+                            null,
+                            branchLengths[i],
+                            branchUpdateCount[i]);
+                }
+            }
         }
 
         if (COUNT_TOTAL_OPERATIONS) {
-            totalMatrixUpdateCount += branchUpdateCount;
+            for (int i = 0; i < eigenCount; i++) {
+                totalMatrixUpdateCount += branchUpdateCount[i];
+            }
 
             for (int i = 0; i <= numRestrictedPartials; i++) {
                 totalOperationCount += operationCount[i];
@@ -799,9 +827,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
 
             double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-
-            // This should probably explicitly be the state frequencies for the root node...
-            double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
+            double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
 
             int cumulateScaleBufferIndex = Beagle.NONE;
             if (useScaleFactors) {
@@ -848,7 +874,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     useScaleFactors = true;
                     recomputeScaleFactors = true;
 
-                    branchUpdateCount = 0;
+                    for (int i = 0; i < eigenCount; i++) {
+                        branchUpdateCount[i] = 0;
+                    }
 
                     if (hasRestrictedPartials) {
                         for (int i = 0; i <= numRestrictedPartials; i++) {
@@ -893,7 +921,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         return logL;
     }
 
-    public void getPartials(int number, double[] partials) {
+    protected void getPartials(int number, double[] partials) {
         int cumulativeBufferIndex = Beagle.NONE;
         /* No need to rescale partials */
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
@@ -976,21 +1004,26 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 
-            final double parentHeight = tree.getNodeHeight(parent);
-            final double nodeHeight = tree.getNodeHeight(node);
-
             // Get the operational time of the branch
-            final double branchLength = branchRate * (parentHeight - nodeHeight);
-            if (branchLength < 0.0) {
-                throw new RuntimeException("Negative branch length: " + branchLength);
+            final double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
+
+            if (branchTime < 0.0) {
+                throw new RuntimeException("Negative branch length: " + branchTime);
             }
 
             if (flip) {
-                substitutionModelDelegate.flipMatrixBuffer(nodeNum);
+                // first flip the matrixBufferHelper
+                matrixBufferHelper.flipOffset(nodeNum);
             }
-            branchUpdateIndices[branchUpdateCount] = nodeNum;
-            branchLengths[branchUpdateCount] = branchLength;
-            branchUpdateCount++;
+
+            // then set which matrix to update
+            final int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
+            final int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, bufferIndex);
+            final int updateCount = branchUpdateCount[eigenIndex];
+            matrixUpdateIndices[eigenIndex][updateCount] = bufferIndex;
+
+            branchLengths[eigenIndex][updateCount] = branchTime;
+            branchUpdateCount[eigenIndex]++;
 
             update = true;
         }
@@ -1050,9 +1083,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
 
                 operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
-                operations[x + 4] = substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
+                operations[x + 4] = matrixBufferHelper.getOffsetIndex(child1.getNumber()); // source matrix 1
                 operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
-                operations[x + 6] = substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
+                operations[x + 6] = matrixBufferHelper.getOffsetIndex(child2.getNumber()); // source matrix 2
 
                 operationCount[operationListCount]++;
 
@@ -1069,10 +1102,29 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
                     }
                 }
+                
+                // /////////////
+                // ---DEBUG---//
+                // /////////////
+
+//				double tmp[] = new double[stateCount * patternCount * categoryCount];
+//				System.out.println(nodeNum);
+//				getPartials(nodeNum, tmp);
+//
+//				for (int i = 0; i < 4; i++) {
+////					if (tmp[i] != 0) {
+//						System.out.println(Math.log(tmp[i]));
+////					}
+//				}
+
+				// //////////////////
+				// ---END: DEBUG---//
+				// //////////////////
 
             }
         }
 
+//        EpochBranchSubstitutionModel.printArray(branchUpdateCount, branchUpdateCount.length);
         return update;
 
     }
@@ -1081,10 +1133,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private int[] branchUpdateIndices;
-    private double[] branchLengths;
-    private int branchUpdateCount;
-
+    private int eigenCount;
+    private int[][] matrixUpdateIndices;
+    private double[][] branchLengths;
+    private int[] branchUpdateCount;
     private int[] scaleBufferIndices;
     private int[] storedScaleBufferIndices;
 
@@ -1102,6 +1154,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 //    private int[] restrictedIndices;
 
     protected BufferIndexHelper partialBufferHelper;
+    private final BufferIndexHelper eigenBufferHelper;
+    protected BufferIndexHelper matrixBufferHelper;
     protected BufferIndexHelper scaleBufferHelper;
 
     protected final int tipCount;
@@ -1121,12 +1175,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * the branch-site model for these sites
      */
-    protected final BranchModel branchModel;
-
-    /**
-     * A delegate to handle substitution models on branches
-     */
-    protected final SubstitutionModelDelegate substitutionModelDelegate;
+    protected final BranchSubstitutionModel branchSubstitutionModel;
 
     /**
      * the site model for these sites
@@ -1172,11 +1221,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Flag to specify that the substitution model has changed
      */
     protected boolean updateSubstitutionModel;
+    protected boolean storedUpdateSubstitutionModel;
 
     /**
      * Flag to specify that the site model has changed
      */
     protected boolean updateSiteModel;
+    protected boolean storedUpdateSiteModel;
 
 //    /***
 //     * Flag to specify if LikelihoodCore supports dynamic rescaling
@@ -1190,96 +1241,60 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private boolean ascertainedSitePatterns = false;
 
-    public static void main(String[] args) {
-
-        try {
-
-            MathUtils.setSeed(666);
-
-            System.out.println("Test case 1: simulateOnePartition");
-
-            int sequenceLength = 1000;
-            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-            // create tree
-            NewickImporter importer = new NewickImporter(
-                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-            Tree tree = importer.importTree(null);
-            TreeModel treeModel = new TreeModel(tree);
-
-            // create Frequency Model
-            Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-                    0.25, 0.25 });
-            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-                    freqs);
-
-            // create branch model
-            Parameter kappa1 = new Parameter.Default(1, 1);
-            Parameter kappa2 = new Parameter.Default(1, 1);
-
-            HKY hky1 = new HKY(kappa1, freqModel);
-            HKY hky2 = new HKY(kappa2, freqModel);
-
-            HomogeneousBranchModel homogenousBranchSubstitutionModel = new HomogeneousBranchModel(
-                    hky1);
-
-            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
-            substitutionModels.add(hky1);
-            substitutionModels.add(hky2);
-            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
-            freqModels.add(freqModel);
-
-            Parameter epochTimes = new Parameter.Default(1,20);
-
-            // create branch rate model
-            Parameter rate = new Parameter.Default(1, 0.001);
-            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
-
-            // create site model
-            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-                    "siteModel");
-
-            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);
-
-            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
-
-            // create partition
-            Partition partition1 = new Partition(treeModel, //
-            		homogenousBranchSubstitutionModel,//
-                    siteRateModel, //
-                    branchRateModel, //
-                    freqModel, //
-                    0, // from
-                    sequenceLength - 1, // to
-                    1 // every
-            );
-
-            partitionsList.add(partition1);
-
-            // feed to sequence simulator and generate data
-            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
-            Alignment alignment = simulator.simulate();
-
-            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
-
-            System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
-
-             nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
-
-            System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } // END: try-catch block
-    }
-    
-	public Double getUpdateTimer() {
-		return Double.valueOf(substitutionModelDelegate.updateTime);
-	}
-    
-	public Double getConvolveTimer() {
-		return Double.valueOf(substitutionModelDelegate.convolveTime);
-	}
-	
-}//END: class
+//    protected class BufferIndexHelper {
+//        /**
+//         * @param maxIndexValue the number of possible input values for the index
+//         * @param minIndexValue the minimum index value to have the mirrored buffers
+//         */
+//        BufferIndexHelper(int maxIndexValue, int minIndexValue) {
+//            this.maxIndexValue = maxIndexValue;
+//            this.minIndexValue = minIndexValue;
+//
+//            offsetCount = maxIndexValue - minIndexValue;
+//            indexOffsets = new int[offsetCount];
+//            storedIndexOffsets = new int[offsetCount];
+//        }
+//
+//        public int getBufferCount() {
+//            return 2 * offsetCount + minIndexValue;
+//        }
+//
+//        void flipOffset(int i) {
+//            if (i >= minIndexValue) {
+//                indexOffsets[i - minIndexValue] = offsetCount - indexOffsets[i - minIndexValue];
+//            } // else do nothing
+//        }
+//
+//        int getOffsetIndex(int i) {
+//            if (i < minIndexValue) {
+//                return i;
+//            }
+//            return indexOffsets[i - minIndexValue] + i;
+//        }
+//
+//        void getIndices(int[] outIndices) {
+//            for (int i = 0; i < maxIndexValue; i++) {
+//                outIndices[i] = getOffsetIndex(i);
+//            }
+//        }
+//
+//        void storeState() {
+//            System.arraycopy(indexOffsets, 0, storedIndexOffsets, 0, indexOffsets.length);
+//
+//        }
+//
+//        void restoreState() {
+//            int[] tmp = storedIndexOffsets;
+//            storedIndexOffsets = indexOffsets;
+//            indexOffsets = tmp;
+//        }
+//
+//        private final int maxIndexValue;
+//        private final int minIndexValue;
+//        private final int offsetCount;
+//
+//        private int[] indexOffsets;
+//        private int[] storedIndexOffsets;
+//
+//    }
+}

@@ -42,7 +42,7 @@ public class MarginalLikelihoodAnalysis {
     private final String traceName;
     private final List<Double> sample;
     private final int burnin;
-    private final String analysisType; // "harmonic" for harmonic mean, "smoothed" for smoothed harmonic mean, "aicm" for AICM, "arithmetic" for arithmetic mean 
+    private final String analysisType; // "harmonic" for harmonic mean, "smoothed" for smoothed harmonic mean, "aicm" for AICM, "arithmetic" for arithmetic mean
     private final int bootstrapLength;
 
     private boolean marginalLikelihoodCalculated = false;
@@ -91,7 +91,7 @@ public class MarginalLikelihoodAnalysis {
             return logMarginalLikelihoodHarmonic(sample);
         }
     }
-    
+
     /**
      * Calculates the log marginal likelihood of a model using the arithmetic mean estimator
      *
@@ -99,16 +99,16 @@ public class MarginalLikelihoodAnalysis {
      * @return the log marginal likelihood
      */
     public double logMarginalLikelihoodArithmetic(List<Double> v) {
-    	
+
     	double sum = 0;
         final int size = v.size();
-        
+
         for (int i = 0; i < size; i++) {
         	sum = LogTricks.logSum(sum, v.get(i));
         }
-        
+
         return sum - StrictMath.log(size);
-    	
+
     }
 
     /**

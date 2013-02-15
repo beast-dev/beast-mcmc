@@ -1,7 +1,7 @@
 /*
  * GammaSiteModelParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,20 +25,15 @@
 
 package dr.app.beagle.evomodel.parsers;
 
-import java.util.logging.Logger;
-
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.inference.model.Parameter;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-import dr.xml.XORRule;
+import dr.xml.*;
+
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -109,7 +104,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
 //        	System.err.println("Doing the substitution model stuff");
 
-            // set this to pass it along to the OldTreeLikelihoodParser...
+            // set this to pass it along to the TreeLikelihoodParser...
             substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
             siteRateModel.setSubstitutionModel(substitutionModel);
 
@@ -142,7 +137,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
                     }),
                     new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                             new ElementRule(BranchSubstitutionModel.class)
-                    }), true
+                    }), false
             ),
 
             new XORRule(

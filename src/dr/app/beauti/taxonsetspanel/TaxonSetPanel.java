@@ -643,7 +643,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             // these requirements (it was just confusing why they weren't in the lists.
 //       if (taxa != currentTaxonSet) {
 //                if (isCompatible(taxa, availableTaxa)) {
-            comboBox.addItem(taxa.getId()); // have to add String, otherwise it will throw Exception to cast "taxa..." into Taxa
+                    comboBox.addItem(taxa.getId()); // have to add String, otherwise it will throw Exception to cast "taxa..." into Taxa
 //                }
 //            }
         }

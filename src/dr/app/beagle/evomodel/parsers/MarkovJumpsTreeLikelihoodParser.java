@@ -1,37 +1,12 @@
-/*
- * MarkovJumpsTreeLikelihoodParser.java
- *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
@@ -39,9 +14,9 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
-import dr.inference.markovjumps.MarkovJumpsType;
-import dr.inference.model.Parameter;
 import dr.xml.*;
+import dr.inference.model.Parameter;
+import dr.inference.markovjumps.MarkovJumpsType;
 
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +36,6 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     public static final String USE_UNIFORMIZATION = "useUniformization";
     public static final String SAVE_HISTORY = "saveCompleteHistory";
     public static final String LOG_HISTORY = "logCompleteHistory";
-    public static final String COMPACT_HISTORY = "compactHistory";
     public static final String NUMBER_OF_SIMULANTS = "numberOfSimulants";
     public static final String REPORT_UNCONDITIONED_COLUMNS = "reportUnconditionedValues";
 
@@ -71,7 +45,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchModel branchModel,
+                                                        BranchSubstitutionModel branchSubstitutionModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
@@ -79,7 +53,12 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
 
-        DataType dataType = branchModel.getRootSubstitutionModel().getDataType();
+        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        if (substModel == null) {
+            substModel = siteRateModel.getSubstitutionModel();
+        }
+
+        DataType dataType = substModel.getDataType();
 
         String stateTag = xo.getAttribute(RECONSTRUCTION_TAG_NAME,RECONSTRUCTION_TAG);
         String jumpTag = xo.getAttribute(JUMP_TAG_NAME, JUMP_TAG);
@@ -96,7 +75,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         MarkovJumpsBeagleTreeLikelihood treeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patternList,
                 treeModel,
-                branchModel,
+                branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
                 tipStatesModel,
@@ -105,6 +84,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 partialsRestrictions,
                 dataType,
                 stateTag,
+                substModel,
                 useMAP,
                 useMarginalLogLikelihood,
                 useUniformization,
@@ -151,9 +131,8 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 }
             }
             allCounts.setId(MarkovJumpsBeagleTreeLikelihood.TOTAL_COUNTS);
-            treeLikelihood.setLogHistories(xo.getAttribute(LOG_HISTORY, false));
-            treeLikelihood.setUseCompactHistory(xo.getAttribute(COMPACT_HISTORY, false));
             treeLikelihood.addRegister(allCounts, MarkovJumpsType.HISTORY, false);
+            treeLikelihood.setLogHistories(xo.getAttribute(LOG_HISTORY, false));
         }
 
         return treeLikelihood;
@@ -189,7 +168,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
     public static XMLSyntaxRule[]  rules =
             new XMLSyntaxRule[] {
-                    AttributeRule.newBooleanRule(OldTreeLikelihoodParser.USE_AMBIGUITIES, true),
+                    AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
                     AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                     AttributeRule.newStringRule(JUMP_TAG_NAME, true),
                     AttributeRule.newBooleanRule(SCALE_REWARDS,true),
@@ -198,7 +177,6 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     AttributeRule.newIntegerRule(NUMBER_OF_SIMULANTS,true),
                     AttributeRule.newBooleanRule(SAVE_HISTORY, true),
                     AttributeRule.newBooleanRule(LOG_HISTORY, true),
-                    AttributeRule.newBooleanRule(COMPACT_HISTORY, true),
                     new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                             new ElementRule(TaxonList.class),
                             new ElementRule(Parameter.class),
@@ -206,10 +184,10 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     new ElementRule(PatternList.class),
                     new ElementRule(TreeModel.class),
                     new ElementRule(GammaSiteRateModel.class),
-                    new ElementRule(BranchModel.class, true),
-                    new ElementRule(SubstitutionModel.class, true),
+                    new ElementRule(BranchSubstitutionModel.class, true),
                     new ElementRule(BranchRateModel.class, true),
-                    AttributeRule.newStringRule(OldTreeLikelihoodParser.SCALING_SCHEME, true),
+                    new ElementRule(SubstitutionModel.class, true),
+                    AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),
                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE), // For backwards compatibility
                     new ElementRule(COUNTS,
                             new XMLSyntaxRule[] {
@@ -219,7 +197,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             new XMLSyntaxRule[] {
                                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
                             },true),
-                     new ElementRule(FrequencyModel.class, true),
+                    new ElementRule(FrequencyModel.class, true),
             };
 
     public XMLSyntaxRule[] getSyntaxRules() {

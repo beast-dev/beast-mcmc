@@ -9,14 +9,11 @@
 package dr.app.pathogen;
 
 import dr.evolution.io.*;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.TaxonList;
 import dr.app.tools.NexusExporter;
 import dr.app.pathogen.TemporalRooting;
-import dr.stats.Regression;
 import dr.util.NumberFormatter;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
@@ -24,12 +21,9 @@ import jam.framework.Exportable;
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -66,13 +60,6 @@ public class PathogenFrame extends DocumentFrame {
         getSaveAsAction().setEnabled(false);
 
         getFindAction().setEnabled(false);
-
-        getCutAction().setEnabled(false);
-        getPasteAction().setEnabled(false);
-        getDeleteAction().setEnabled(false);
-        getSelectAllAction().setEnabled(false);
-
-        getCopyAction().setEnabled(false);
 
         getZoomWindowAction().setEnabled(false);
     }
@@ -195,48 +182,6 @@ public class PathogenFrame extends DocumentFrame {
         }
     }
 
-    private void doExportTimeTree() {
-        FileDialog dialog = new FileDialog(this,
-                "Export Time Tree File...",
-                FileDialog.SAVE);
-
-        dialog.setVisible(true);
-        if (dialog.getFile() != null) {
-            File file = new File(dialog.getDirectory(), dialog.getFile());
-
-            PrintStream ps = null;
-            try {
-                ps = new PrintStream(file);
-                writeTimeTreeFile(ps);
-                ps.close();
-            } catch (IOException ioe) {
-                JOptionPane.showMessageDialog(this, "Error writing tree file: " + ioe.getMessage(),
-                        "Export Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-
-        }
-    }
-
-    protected void writeTimeTreeFile(PrintStream ps) throws IOException {
-
-        FlexibleTree tree = new FlexibleTree(treesPanel.getTreeAsViewed());
-
-        Regression r = treesPanel.getTemporalRooting().getRootToTipRegression(treesPanel.getTreeAsViewed());
-
-        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            NodeRef node = tree.getInternalNode(i);
-            double height = tree.getNodeHeight(node);
-            tree.setNodeHeight(node, height/r.getGradient());
-        }
-
-        TreeUtils.setHeightsFromDates(tree);
-
-        NexusExporter nexusExporter = new NexusExporter(new PrintStream(ps));
-        nexusExporter.exportTree(tree);
-    }
-
-
     protected void writeTreeFile(PrintStream ps, boolean newickFormat) throws IOException {
 
         Tree tree = treesPanel.getTreeAsViewed();
@@ -309,20 +254,6 @@ public class PathogenFrame extends DocumentFrame {
         return exportable;
     }
 
-    @Override
-    public void doCopy() {
-        StringWriter writer = new StringWriter();
-        PrintWriter pwriter = new PrintWriter(writer);
-
-        for (String tip : treesPanel.getSelectedTips()) {
-            pwriter.println(tip);
-        }
-
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        StringSelection selection = new StringSelection(writer.toString());
-        clipboard.setContents(selection, selection);
-    }
-
     public Action getExportTreeAction() {
         return exportTreeAction;
     }
@@ -352,15 +283,4 @@ public class PathogenFrame extends DocumentFrame {
             doExportData();
         }
     };
-
-    public Action getExportTimeTreeAction() {
-        return exportTimeTreeAction;
-    }
-
-    protected AbstractAction exportTimeTreeAction = new AbstractAction("Export Time Tree...") {
-        public void actionPerformed(ActionEvent ae) {
-            doExportTimeTree();
-        }
-    };
-
 }

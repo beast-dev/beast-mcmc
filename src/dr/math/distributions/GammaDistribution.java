@@ -1,7 +1,7 @@
 /*
  * GammaDistribution.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,19 +25,15 @@
 
 package dr.math.distributions;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.GammaDistributionImpl;
-
-import cern.jet.random.Gamma;
-import cern.jet.random.engine.MersenneTwister;
-import cern.jet.random.engine.RandomEngine;
 import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.GammaDistributionImpl;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * gamma distribution.
@@ -60,11 +56,6 @@ public class GammaDistribution implements Distribution {
         this.shape = shape;
         this.scale = scale;
         this.samples = 0;
-
-        if (TRY_COLT) {
-            randomEngine = new MersenneTwister(MathUtils.nextInt());
-            coltGamma = new Gamma(shape, scale, randomEngine);
-        }
     }
 
     public double getShape() {
@@ -192,12 +183,8 @@ public class GammaDistribution implements Distribution {
         }
         if (shape == 0.0)  // uninformative
             return -Math.log(x);
-        
-        /*return ((shape - 1.0) * Math.log(x/scale) - x / scale - GammaFunction
-                .lnGamma(shape))
-                - Math.log(scale);*/
-        
-        return ((shape - 1.0) * (Math.log(x) - Math.log(scale)) - x / scale - GammaFunction
+
+        return ((shape - 1.0) * Math.log(x / scale) - x / scale - GammaFunction
                 .lnGamma(shape))
                 - Math.log(scale);
     }
@@ -260,9 +247,6 @@ public class GammaDistribution implements Distribution {
      * @return sample
      */
     public static double nextGamma(double shape, double scale) {
-        if (TRY_COLT) {
-            return coltGamma.nextDouble(shape, 1.0/scale);
-        }
         return nextGamma(shape, scale, false);
     }
 
@@ -528,14 +512,16 @@ public class GammaDistribution implements Distribution {
         testQuantileCM(0.5, 0.878328435043444, 0.0013696236839573005);
         testQuantileCM(1.0 - 1e-10, 0.878328435043444, 0.0013696236839573005);
 
-        for (double i = 0.0125; i < 1.0; i += 0.025) {
-        	System.out.print(i + ": ");
-        	try {
-        		System.out.println(new GammaDistributionImpl(0.878328435043444, 0.0013696236839573005).inverseCumulativeProbability(i));
-        	} catch (MathException e) {
-        	System.out.println(e.getMessage());
-        	}
-        }
+
+for (double i = 0.0125; i < 1.0; i += 0.025) {
+System.out.print(i + ": ");
+try {
+System.out.println(new GammaDistributionImpl(0.878328435043444, 0.0013696236839573005).inverseCumulativeProbability(i));
+} catch (MathException e) {
+System.out.println(e.getMessage());
+}
+}
+
 
 //        System.out
 //                .println("K-S critical values: 1.22(10%), 1.36(5%), 1.63(1%)\n");
@@ -795,10 +781,6 @@ public class GammaDistribution implements Distribution {
 
     protected double shape, scale;
     protected int samples;
-
-    private static final boolean TRY_COLT = true;
-    private static RandomEngine randomEngine;
-    private static Gamma coltGamma;
 
 }
 

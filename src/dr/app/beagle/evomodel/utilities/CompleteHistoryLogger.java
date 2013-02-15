@@ -94,7 +94,7 @@ public class CompleteHistoryLogger implements Loggable, Citable {
         } else {
             this.filter = filter;
             Logger.getLogger("dr.app.beagle").info("\tWith filter: " + filter.getDescription() + "\n");
-        }
+    }
 
 
     }
@@ -216,15 +216,14 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                             double minTime = Math.min(parentTime, childTime);
                             double maxTime = Math.max(parentTime, childTime);
                             String trait = treeTraitHistory[anonSite].getTraitString(tree, node);
-                            if (trait != null && trait.compareTo("{}") != 0) {
+                            if (trait.compareTo("{}") != 0) {
                                 Object[] changes = (Object[]) parseValue(trait);
                                 for (int j = 0; j < changes.length; ++j) {
 
                                     Object[] change = (Object[]) changes[j];
-                                    int offset = (change.length == 4) ? 1 : 0;
-                                    String source = (String) change[1 + offset];
-                                    String dest = (String) change[2 + offset];
-                                    double thisTime = (Double) change[0 + offset];
+                                    String source = (String) change[2];
+                                    String dest = (String) change[3];
+                                    double thisTime = (Double) change[1];
                                     if (thisTime < 0.0) {
                                         throw new RuntimeException("negative time");
                                     }
@@ -238,16 +237,16 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                                         if (!empty) {
                                             bf.append(",");
                                         }
-                                        StateHistory.addEventToStringBuilder(bf, source, dest,
+                                    StateHistory.addEventToStringBuilder(bf, source, dest,
                                                 thisTime, anonSite + 1);
-                                        count++;
-                                        empty = false;
+                                    count++;
+                                    empty = false;
                                     } else {
                                         // Do nothing
-                                    }
                                 }
                             }
                         }
+                    }
                     }
                     bf.append("}").append(" ").append(count);
                     return bf.toString();

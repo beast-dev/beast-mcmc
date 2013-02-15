@@ -103,7 +103,7 @@ public class StateHistory {
         }
         return total;
     }
-
+    
     public void accumulateSufficientStatistics(int[] counts, double[] times) {
         checkFinalized(true);
         int nJumps = getNumberOfJumps();
@@ -178,7 +178,7 @@ public class StateHistory {
 
             double newNextTime = oldTimeDiff * scale + newCurrentTime;
             nextStateChange.setTime(newNextTime);
-
+            
             oldCurrentTime = oldNextTime;
             newCurrentTime = newNextTime;
 
@@ -239,14 +239,8 @@ public class StateHistory {
         return newHistory;
     }
 
-    public String toStringChanges(int site, DataType dataType) {
-        return toStringChanges(site, dataType, true);
-    }
-
-    public String toStringChanges(int site, DataType dataType, boolean wrap) {
-        StringBuilder sb = wrap ? new StringBuilder("{") : new StringBuilder();
-        // site number gets put into each and every event string
-//        sb.append(site).append(",");
+    public String toStringChanges(DataType dataType) {
+        StringBuilder sb = new StringBuilder("{");
         int currentState = stateList.get(0).getState();
         boolean firstChange = true;
         for (int i = 1; i < stateList.size() - 1; i++) {  // TODO Code review: should this really be size() - 1?
@@ -259,24 +253,22 @@ public class StateHistory {
                     sb.append(",");
                 }
                 double time = stateList.get(i).getTime(); // + startTime;
-                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, site);
+                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time);
                 firstChange = false;
                 currentState = nextState;
             }
         }
-        if (wrap) {
-            sb.append("}"); // Always returns an array of arrays
-        }
+        sb.append("}"); // Always returns an array of arrays
         return sb.toString();
     }
 
     public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time, int site) {
         // AR changed this to match an attribute array:
-        sb.append("{");
-        if (site > 0) {
-            sb.append(site).append(",");
-        }
-        sb.append(time).append(",").append(source).append(",").append(dest).append("}");
+        sb.append("{").append(site).append(",").append(time).append(",").append(source).append(",").append(dest).append("}");
+    }
+
+    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time) {
+        addEventToStringBuilder(sb, source, dest, time, -1);
     }
 
     public static StateHistory simulateConditionalOnEndingState(double startingTime,

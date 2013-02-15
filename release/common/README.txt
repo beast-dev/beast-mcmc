@@ -1,4 +1,4 @@
-                    BEAST v1.7.3 2002-2012
+                    BEAST v1.7.5 2002-2013
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 1st Aug 2012
+Last updated: a.rambaut@ed.ac.uk - 14th February 2013
 
 Contents:
 1) INTRODUCTION
@@ -147,7 +147,7 @@ For example:
 
 
 Note: MCMC is not a black-box, and poor prior choices and starting values
-      can affect inference.
+      can affect inference, publication probability and career outcomes.
 
 ___________________________________________________________________________
 5) ANALYZING RESULTS
@@ -211,12 +211,13 @@ ___________________________________________________________________________
 8) ACKNOWLEDGMENTS
 
 Thanks to the following for supplying code or assisting with the creation
-or testing of BEAST:
+or testing of BEAST (this is a woefully incomplete list - apologies to the
+inadvertently absent names):
 
-	Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Roald Forsberg,
-	Joseph Heled, Simon Ho, Sebastian Hoehna, Denise Kuehnert,
-	Philippe Lemey, Gerton Lunter, Sam Lycett, Sidney Markowitz,
-	Vladimir Minin, Michael Defoin Platel, Oliver Pybus, Tulio de Oliveira,
-	Beth Shapiro, Korbinian Strimmer, Wai Lok Sibon Li, Chieh-Hsi Wu,
-	Walter Xie
-
+	Alex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Peter Beerli,
+	Filip Bielejec, Erik Bloomquist, Aaron Darling, Gytis Dudas, Roald Forsberg,
+	Jess Hedge, Joseph Heled, Simon Ho, Sebastian Hoehna, Mark Holder,
+	Denise Kuehnert, Philippe Lemey, Paul Lewis, Wai Lok Sibon Li, Gerton Lunter,
+	Sam Lycett, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,
+	Oliver Pybus, Tulio de Oliveira, Jayna Ragwani, Beth Shapiro,
+	Korbinian Strimmer, David Swofford, Chieh-Hsi Wu, Walter Xie, Ziheng Yang

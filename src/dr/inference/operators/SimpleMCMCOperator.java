@@ -1,7 +1,7 @@
 /*
  * SimpleMCMCOperator.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -61,11 +61,6 @@ public abstract class SimpleMCMCOperator implements MCMCOperator {
      */
     public final double getWeight() {
         return weight;
-    }
-
-    public void setPathParameter(double beta) {
-        throw new IllegalArgumentException("Path parameter has no effect on Metropolis-Hastings kernels." +
-        "\nGibbs samplers need an implementation for use in power-posteriors");
     }
 
     /**

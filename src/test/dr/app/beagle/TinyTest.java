@@ -1,7 +1,6 @@
 package test.dr.app.beagle;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.OldBeagleTreeLikelihood;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.alignment.SitePatterns;
@@ -9,6 +8,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.Parameter;
 import dr.evomodelxml.substmodel.HKYParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
@@ -59,7 +59,7 @@ public class TinyTest extends TraceCorrelationAssert {
         BranchRateModel branchRateModel = null;
 
 
-        OldBeagleTreeLikelihood treeLikelihood = new OldBeagleTreeLikelihood(
+        BeagleTreeLikelihood treeLikelihood = new BeagleTreeLikelihood(
                 patterns,
                 treeModel,
                 branchSubstitutionModel,

@@ -1,7 +1,7 @@
 /*
  * StarTreeLikelihoodParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,7 +27,7 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.treelikelihood.OldBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.StarTreeLikelihood;
 import dr.evolution.alignment.PatternList;
@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Philippe Lemey
  */
 
-public class StarTreeLikelihoodParser extends OldTreeLikelihoodParser {
+public class StarTreeLikelihoodParser extends TreeLikelihoodParser {
 
     public static final String STAR_TREE = "starTreeLikelihood";
 //    public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
@@ -58,7 +58,7 @@ public class StarTreeLikelihoodParser extends OldTreeLikelihoodParser {
         return STAR_TREE;
     }
 
-    protected OldBeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                                      BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
                                                      BranchRateModel branchRateModel,
                                                      boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
@@ -77,6 +77,6 @@ public class StarTreeLikelihoodParser extends OldTreeLikelihoodParser {
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
-        return OldTreeLikelihoodParser.rules;
+        return TreeLikelihoodParser.rules;
     }
 }

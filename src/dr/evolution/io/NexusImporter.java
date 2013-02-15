@@ -66,12 +66,6 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     public static final NexusBlock TREES_BLOCK = new NexusBlock("TREES");
     public static final NexusBlock CALIBRATION_BLOCK = new NexusBlock("CALIBRATION");
 
-    public static boolean suppressWarnings = false;
-
-    public static void setSuppressWarnings(boolean sw) {
-        suppressWarnings = sw;
-    }
-
     // NEXUS specific ImportException classes
     public static class MissingBlockException extends ImportException {
         /**
@@ -1035,20 +1029,16 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         // read the first child
         node.addChild(readBranch(translationList));
 
-        if (getLastDelimiter() != ',' && !suppressWarnings) {
-            java.util.logging.Logger.getLogger("dr.evolution.io").warning("Internal node only has a single child!");
-        }
-
-        // this allows one or more children
-        while(getLastDelimiter()==',') {
-            node.addChild(readBranch(translationList));
+        // an internal node must have at least 2 children
+        if (getLastDelimiter() != ',') {
+            throw new BadFormatException("Missing ',' in tree in TREES block");
         }
 
         // read subsequent children
-        //do {
-        //    node.addChild(readBranch(translationList));
-        //
-        //} while (getLastDelimiter() == ',');
+        do {
+            node.addChild(readBranch(translationList));
+
+        } while (getLastDelimiter() == ',');
 
         // should have had a closing ')'
         if (getLastDelimiter() != ')') {
@@ -1274,8 +1264,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         // value=number, value="string", value={item1, item2, item3}
         // (label must be quoted if it contains spaces (i.e. "my label"=label)
 
-        // TODO MAS Minor change in line below for nested arrays may cause other unforeseen bugs
-        Pattern pattern = Pattern.compile("(\"[^\"]*\"+|[^,=\\s]+)\\s*(=\\s*(\\{[^=]*\\}|\"[^\"]*\"+|[^,]+))?");
+        Pattern pattern = Pattern.compile("(\"[^\"]*\"+|[^,=\\s]+)\\s*(=\\s*(\\{[^=}]*\\}|\"[^\"]*\"+|[^,]+))?");
         Matcher matcher = pattern.matcher(meta);
 
         while (matcher.find()) {
@@ -1298,7 +1287,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
     /**
      * This method takes a string and tries to decode it returning the object
-     * that best fits the data. It will recognize comma delimited lists enclosed
+     * that best fits the data. It will recognize command delimited lists enclosed
      * in {..} and call parseValue() on each element. It will also recognize Boolean,
      * Integer and Double. If the value starts with a # then it will attempt to decode
      * the following integer as an RGB colour - see Color.decode(). If nothing else fits
@@ -1308,42 +1297,14 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * @param value the string
      * @return the object
      */
-    public static Serializable parseValue(String value) {
+    static Serializable parseValue(String value) {
 
         value = value.trim();
 
         if (value.startsWith("{")) {
             // the value is a list so recursively parse the elements
             // and return an array
-            String inside = value.substring(1, value.length() - 1);
-
-            if (inside.length() == 0) {
-                return null;
-            }
-
-             // Determine depth of further nesting
-            int depth = 0;
-            while (inside.charAt(depth) == '{') {
-                depth++;
-            }
-
-            StringBuilder split;
-            if (depth == 0) {
-                split = new StringBuilder(",");
-            } else {
-                StringBuilder rightBookEnd = new StringBuilder("(?<=");
-                StringBuilder leftBookEnd = new StringBuilder("(?=");
-                for (int i = 0; i < depth; ++i) {
-                    rightBookEnd.append("\\}");
-                    leftBookEnd.append("\\{");
-                }
-                leftBookEnd.append(")");
-                rightBookEnd.append(")");
-                split = rightBookEnd.append(",").append(leftBookEnd);
-            }
-
-            // Non-destructive split
-            String[] elements = inside.split(split.toString());
+            String[] elements = value.substring(1, value.length() - 1).split(",");
             Object[] values = new Object[elements.length];
             for (int i = 0; i < elements.length; i++) {
                 values[i] = parseValue(elements[i]);

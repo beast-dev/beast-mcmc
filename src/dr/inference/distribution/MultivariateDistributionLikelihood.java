@@ -1,7 +1,7 @@
 /*
  * MultivariateDistributionLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -26,7 +26,6 @@
 package dr.inference.distribution;
 
 import dr.inference.model.*;
-import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.math.distributions.*;
 import dr.util.Attribute;
 import dr.xml.*;
@@ -51,24 +50,14 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String MVGAMMA_SCALE = "scaleParameter";
     public static final String COUNTS = "countsParameter";
     public static final String NON_INFORMATIVE = "nonInformative";
-    public static final String MULTIVARIATE_LIKELIHOOD = "multivariateDistributionLikelihood";
 
     public static final String DATA = "data";
 
     private final MultivariateDistribution distribution;
 
-    public MultivariateDistributionLikelihood(String name, ParametricMultivariateDistributionModel model) {
-        super(model);
-        this.distribution = model;
-    }
-
-    public MultivariateDistributionLikelihood(String name, MultivariateDistribution distribution) {
-        super(new DefaultModel(name));
-        this.distribution = distribution;
-    }
-
     public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
-        this(distribution.getType(), distribution);
+        super(new DefaultModel());
+        this.distribution = distribution;
     }
 
     public double calculateLogLikelihood() {
@@ -84,14 +73,15 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public void addData(Attribute<double[]> data) {
         super.addData(data);
 
-        if (data instanceof Variable && getModel() instanceof DefaultModel) {
-            ((DefaultModel) getModel()).addVariable((Variable) data);
+        if (data instanceof Variable) {
+            ((DefaultModel)getModel()).addVariable((Variable)data);
         }
     }
 
     public MultivariateDistribution getDistribution() {
         return distribution;
     }
+
 
     public static XMLObjectParser DIRICHLET_PRIOR_PARSER = new AbstractXMLObjectParser() {
 
@@ -118,6 +108,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                     throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
                 }
             }
+
 
             return likelihood;
         }
@@ -167,6 +158,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                     throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
                 }
             }
+
 
             return likelihood;
         }
@@ -259,73 +251,6 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         }
     };
 
-    public static XMLObjectParser MULTIVARIATE_LIKELIHOOD_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return MULTIVARIATE_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            XMLObject cxo = xo.getChild(DistributionLikelihoodParser.DISTRIBUTION);
-            ParametricMultivariateDistributionModel distribution = (ParametricMultivariateDistributionModel)
-                    cxo.getChild(ParametricMultivariateDistributionModel.class);
-            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(xo.getId(),
-                    distribution);
-
-            cxo = xo.getChild(DATA);
-            if (cxo != null) {
-                for (int j = 0; j < cxo.getChildCount(); j++) {
-                    if (cxo.getChild(j) instanceof Parameter) {
-                        Parameter data = (Parameter) cxo.getChild(j);
-                        if (data instanceof MatrixParameter) {
-                            MatrixParameter matrix = (MatrixParameter) data;
-                            if (matrix.getParameter(0).getDimension() != distribution.getMean().length)
-                                throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + matrix.getParameter(0).getDimension()
-                                        + " is not equal to dim(" + distribution.getType() + ") = " + distribution.getMean().length
-                                        + " in " + xo.getName() + "element");
-
-                            for (int i = 0; i < matrix.getParameterCount(); i++) {
-                                likelihood.addData(matrix.getParameter(i));
-                            }
-                        } else {
-                            if (data.getDimension() != distribution.getMean().length)
-                                throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + data.getDimension()
-                                        + " is not equal to dim(" + distribution.getType() + ") = " + distribution.getMean().length
-                                        + " in " + xo.getName() + "element");
-                            likelihood.addData(data);
-                        }
-                    } else {
-                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
-                    }
-                }
-            }
-
-            return likelihood;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(DistributionLikelihoodParser.DISTRIBUTION,
-                        new XMLSyntaxRule[]{new ElementRule(ParametricMultivariateDistributionModel.class)}
-                ),
-                new ElementRule(DATA,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)
-        };
-
-        public String getParserDescription() {
-            return "Calculates the likelihood of some data under a given multivariate distribution.";
-        }
-
-        public Class getReturnType() {
-            return MultivariateDistributionLikelihood.class;
-        }
-    };
-
-
     public static XMLObjectParser MVN_PRIOR_PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -355,9 +280,9 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                     if (cxo.getChild(j) instanceof Parameter) {
                         Parameter data = (Parameter) cxo.getChild(j);
                         if (data instanceof MatrixParameter) {
-                            MatrixParameter matrix = (MatrixParameter) data;
+                            MatrixParameter matrix = (MatrixParameter)data;
                             if (matrix.getParameter(0).getDimension() != mean.getDimension())
-                                throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + matrix.getParameter(0).getDimension()
+                                throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + matrix.getColumnDimension()
                                         + " is not equal to dim(" + mean.getStatisticName() + ") = " + mean.getDimension()
                                         + " in " + xo.getName() + "element");
 

@@ -28,6 +28,9 @@ package dr.inference.model;
 import dr.xml.*;
 
 import java.util.StringTokenizer;
+//import org.w3c.dom.Document;
+//import org.w3c.dom.Element;
+//import dr.xml.*;
 
 /**
  * @author Marc Suchard
@@ -86,6 +89,7 @@ public class MatrixParameter extends CompoundParameter {
                 addParameter(row);
             }
         }
+
     }
 
     public int getColumnDimension() {
@@ -97,7 +101,7 @@ public class MatrixParameter extends CompoundParameter {
     }
 
     public String toSymmetricString() {
-        StringBuilder sb = new StringBuilder("{");
+        StringBuffer sb = new StringBuffer("{");
         int dim = getRowDimension();
         int total = dim * (dim + 1) / 2;
         for (int i = 0; i < dim; i++) {
@@ -161,7 +165,6 @@ public class MatrixParameter extends CompoundParameter {
 
     private static final String ROW_DIMENSION = "rows";
     private static final String COLUMN_DIMENSION = "columns";
-    private static final String TRANSPOSE = "transpose";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -172,14 +175,7 @@ public class MatrixParameter extends CompoundParameter {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final String name = xo.hasId() ? xo.getId() : null;
-            boolean transposed = xo.getAttribute(TRANSPOSE, false);
-
-            MatrixParameter matrixParameter;
-            if (!transposed) {
-                matrixParameter = new MatrixParameter(name);
-            } else {
-                matrixParameter = new TransposedMatrixParameter(name);
-            }
+            MatrixParameter matrixParameter = new MatrixParameter(name);
 
             if (xo.hasAttribute(ROW_DIMENSION)) {
                 int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
@@ -200,7 +196,6 @@ public class MatrixParameter extends CompoundParameter {
                 else if (dim != parameter.getDimension())
                     throw new XMLParseException("All parameters must have the same dimension to construct a rectangular matrix");
             }
-
             return matrixParameter;
         }
 
@@ -226,4 +221,6 @@ public class MatrixParameter extends CompoundParameter {
             return MatrixParameter.class;
         }
     };
+
+
 }

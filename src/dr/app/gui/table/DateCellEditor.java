@@ -80,7 +80,7 @@ public class DateCellEditor extends DefaultCellEditor {
 //      System.out.println(editor.getPreferredSize() + "\t" + table.getRowHeight(row) + "\t" + table.getHeight());
         editor.setFont(table.getFont());
         if (value != null) {
-            editor.setValue(((Double) value).doubleValue());
+        editor.setValue(((Double) value).doubleValue());
         }
         return editor;
     }

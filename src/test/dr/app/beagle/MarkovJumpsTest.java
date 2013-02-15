@@ -1,7 +1,5 @@
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.datatype.Nucleotides;
@@ -59,15 +57,16 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
-        BranchModel branchModel = new HomogeneousBranchModel(
-                siteRateModel.getSubstitutionModel());
+        BranchSubstitutionModel branchSubstitutionModel = new HomogenousBranchSubstitutionModel(
+                siteRateModel.getSubstitutionModel(),
+                siteRateModel.getSubstitutionModel().getFrequencyModel());
 
         BranchRateModel branchRateModel = null;
 
         MarkovJumpsBeagleTreeLikelihood mjTreeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patterns,
                 treeModel,
-                branchModel,
+                branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
                 null,
@@ -76,6 +75,7 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
                 null,
                 hky.getDataType(),
                 "stateTag",
+                hky,
                 false, // use MAP
                 true, // return ML
                 false, // use uniformization

@@ -43,7 +43,7 @@ import java.util.*;
 public class TreeLogger extends MCLogger {
 
     private Tree tree;
-	private BranchRates branchRates = null;
+    private BranchRates branchRates = null;
 
     private TreeAttributeProvider[] treeAttributeProviders;
     private TreeTraitProvider[] treeTraitProviders;
@@ -70,7 +70,7 @@ public class TreeLogger extends MCLogger {
          * @param state
          * @return  True if log tree of this state.
          */
-       boolean logNow(long state);
+        boolean logNow(long state);
     }
 
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
@@ -143,7 +143,7 @@ public class TreeLogger extends MCLogger {
 
             for (String taxaId : taxaIds) {
                 logLine("\t\t" + cleanTaxonName(taxaId));
-                }
+            }
 
             logLine("\t\t;");
             logLine("End;");
@@ -189,7 +189,7 @@ public class TreeLogger extends MCLogger {
         }*/
 
         final boolean doIt = condition != null ? condition.logNow(state) :
-                    (logEvery < 0 || ((state % logEvery) == 0));
+                (logEvery < 0 || ((state % logEvery) == 0));
 
         if ( doIt ) {
             StringBuffer buffer = new StringBuffer("tree STATE_");
@@ -237,11 +237,11 @@ public class TreeLogger extends MCLogger {
     }
 
     public Tree getTree() {
-		return tree;
-	}
+        return tree;
+    }
 
-	public void setTree(Tree tree) {
-		this.tree = tree;
-	}
+    public void setTree(Tree tree) {
+        this.tree = tree;
+    }
 
 }

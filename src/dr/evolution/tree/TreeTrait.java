@@ -93,10 +93,6 @@ public interface TreeTrait<T> {
         public boolean getLoggable() {
             return true;
         }
-
-        public boolean getFormatAsArray() {
-            return false;
-        }
     }
 
     /**
@@ -196,12 +192,12 @@ public interface TreeTrait<T> {
         }
 
         public String getTraitString(Tree tree, NodeRef node) {
-            return formatTrait(getTrait(tree, node), getFormatAsArray());
+            return formatTrait(getTrait(tree, node));
         }
 
-        public static String formatTrait(String[] values, boolean asArray) {
+        public static String formatTrait(String[] values) {
             if (values == null || values.length == 0) return null;
-            if (values.length > 1 || asArray) {
+            if (values.length > 1) {
                 StringBuilder sb = new StringBuilder("{");
                 sb.append(values[0]);
                 for (int i = 1; i < values.length; i++) {

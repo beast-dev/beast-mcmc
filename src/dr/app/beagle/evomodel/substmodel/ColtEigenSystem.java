@@ -1,34 +1,9 @@
-/*
- * ColtEigenSystem.java
- *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.app.beagle.evomodel.substmodel;
 
-import cern.colt.matrix.DoubleMatrix2D;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
-import cern.colt.matrix.linalg.Algebra;
 import cern.colt.matrix.linalg.Property;
+import cern.colt.matrix.linalg.Algebra;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.DoubleMatrix2D;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
 
@@ -36,16 +11,6 @@ import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
  * @author Marc Suchard
  */
 public class ColtEigenSystem implements EigenSystem {
-
-    public ColtEigenSystem() {
-        this(defaultCheckConditioning, defaultMaxConditionNumber, defaultMaxIterations);
-    }
-
-    public ColtEigenSystem(boolean checkConditioning, int maxConditionNumber, int maxIterations) {
-        this.checkConditioning = checkConditioning;
-        this.maxConditionNumber = maxConditionNumber;
-        this.maxIterations = maxIterations;
-    }
 
     public EigenDecomposition decomposeMatrix(double[][] matrix) {
 
@@ -118,15 +83,12 @@ public class ColtEigenSystem implements EigenSystem {
         );
     }
 
-    private boolean checkConditioning;
-    private int maxConditionNumber;
-    private int maxIterations;
+
+    protected boolean checkConditioning = true;
+    protected int maxConditionNumber = 1000;
+    protected int maxIterations = 1000;
 
     private static final double minProb = Property.DEFAULT.tolerance();
     private static final Algebra alegbra = new Algebra(minProb);
-
-    public static final boolean defaultCheckConditioning = true;
-    public static final int defaultMaxConditionNumber = 1000000;
-    public static final int defaultMaxIterations = 1000000;
 
 }

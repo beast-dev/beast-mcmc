@@ -1,28 +1,3 @@
-/*
- * CompleteHistorySimulatorParser.java
- *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.app.beagle.tools.parsers;
 
 import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
@@ -64,8 +39,6 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
 
     public static final String ANNOTATE_WITH_ALIGNMENT = "annotateWithAlignment";
 
-    public static final String ALIGNMENT_ONLY = "alignmentOnly";
-    
     public String getParserName() {
         return HISTORY_SIMULATOR;
     }
@@ -131,16 +104,6 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             history.addAlignmentTrait();
         }
 
-		boolean alignmentOnly = xo.getAttribute(ALIGNMENT_ONLY, false);
-		if (dataType instanceof Codons && !alignmentOnly) {
-			System.out.println("Codon models give exception when count statistics are done on them. "
-							+ "You can supress this by setting alignmentOnly to true.");
-		}
-
-		if (alignmentOnly) {
-			history.setAlignmentOnly();
-		}
-        
         history.simulate();
         return history;
     }
@@ -170,7 +133,6 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(NON_SYN_JUMPS, true),
             AttributeRule.newBooleanRule(SUM_SITES, true),
             AttributeRule.newBooleanRule(ANNOTATE_WITH_ALIGNMENT, true),
-            AttributeRule.newBooleanRule(ALIGNMENT_ONLY, true),
             new ElementRule(BRANCH_SPECIFIC_SPECIFICATION, new XMLSyntaxRule[] {
                     new ElementRule(VARIABLE_VALUE_PARAMETER, Parameter.class),
                     new ElementRule(BRANCH_VARIABLE_PARAMETER, Parameter.class),

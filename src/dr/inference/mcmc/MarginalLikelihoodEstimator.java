@@ -1,7 +1,7 @@
 /*
- * MarginalLikelihoodEstimator.java
+ * MCMC.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,7 +31,9 @@ import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
-import dr.inference.operators.*;
+import dr.inference.operators.CombinedOperatorSchedule;
+import dr.inference.operators.OperatorAnalysisPrinter;
+import dr.inference.operators.OperatorSchedule;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.xml.*;
@@ -39,10 +41,11 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.BetaDistributionImpl;
 
 /**
+ * An MCMC analysis that estimates parameters of a probabilistic model.
+ *
  * @author Andrew Rambaut
  * @author Alex Alekseyenko
- * @author Marc Suchard
- * @author Guy Baele
+ * @version $Id: MCMC.java,v 1.41 2005/07/11 14:06:25 rambaut Exp $
  */
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
@@ -90,18 +93,9 @@ MCLogger logger) {
         setDefaultBurnin();
         mc.setCurrentLength(burnin);
         scheme.init();
-        ((CombinedOperatorSchedule) schedule).reset();
         for (pathParameter = scheme.nextPathParameter(); pathParameter >= 0; pathParameter = scheme.nextPathParameter()) {
             pathLikelihood.setPathParameter(pathParameter);
-            reportIteration(pathParameter, chainLength, burnin, scheme.pathSteps, scheme.step);
-
-            for (int i = 0; i < schedule.getOperatorCount(); ++i) {
-                MCMCOperator operator = schedule.getOperator(i);
-                if (operator instanceof GibbsOperator) {
-                    ((GibbsOperator)operator).setPathParameter(pathParameter);
-                }
-            }
-
+            reportIteration(pathParameter, chainLength, burnin);
             long cl = mc.getCurrentLength();
             mc.setCurrentLength(0);
             mc.runChain(burnin, false/*, 0*/);
@@ -126,15 +120,15 @@ MCLogger logger) {
 
         abstract double nextPathParameter();
     }
-    
+
     public class FixedThetaRun extends Integrator {
     	private double value;
-    	
+
     	public FixedThetaRun(double value) {
     		super(1);
     		this.value = value;
     	}
-    	
+
     	double nextPathParameter() {
     		if (step == 0) {
     			step++;
@@ -143,7 +137,7 @@ MCLogger logger) {
     			return -1.0;
     		}
     	}
-    	
+
     }
 
     public class LinearIntegrator extends Integrator {
@@ -155,7 +149,7 @@ MCLogger logger) {
             if (step > pathSteps) {
                 return -1;
             }
-            double pathParameter = 1.0 - (double)step / (double)(pathSteps);
+            double pathParameter = 1.0 - (double)step / (double)(pathSteps - 1);
             step = step + 1;
             return pathParameter;
         }
@@ -295,8 +289,8 @@ MCLogger logger) {
         }
     }*/
 
-    private void reportIteration(double pathParameter, long chainLength, long burnin, long totalSteps, long steps) {
-        System.out.println("Attempting theta ("+steps+"/" + (totalSteps+1) +") = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
+    private void reportIteration(double pathParameter, long chainLength, long burnin) {
+        System.out.println("Attempting theta = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
     }
 
     public void run() {
@@ -519,11 +513,8 @@ MCLogger logger) {
                     "\n  pathScheme=" + scheme.getText() + alphaBetaText +
                     "\n  If you use these results, please cite:" +
                     "\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
-                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " + 
-                    "\n          phylogenetic uncertainty. Mol. Biol. Evol. 29(9):2157-2167." +
-                    "\n    and " + 
-                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2012" + 
-                    "\n    Accurate model selection of relaxed molecular clocks in Bayesian phylogenetics. Mol. Biol. Evol. 30(2):239-243.\n");
+                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " +
+                    "\n          phylogenetic uncertainty. Mol. Biol. Evol. (in press).");
             return mle;
         }
 

@@ -82,6 +82,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     private final GeneTreeInfo[] geneTreeInfos;
     
     private final ApSpInfo[] apspecies;
+    private final Individual[] indivs;
     private final Taxon[] taxa;
     private final Map<Taxon, Integer> taxon2index = new HashMap<Taxon, Integer>();
 	private final int spsq[][];
@@ -132,7 +133,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
      */
 	public static class ApSpInfo extends Taxon {
 
-		final public String name;
+		final public String name; // grjtodo needed?
 		final public int ploidylevel; // 2 means diploid, 4 means allotetraploid, etc
 		final Individual[] individuals;
 
@@ -183,7 +184,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	private SequenceAssignment seqassigns[];
     	private SequenceAssignment oldseqassigns[];
         private final int[] lineagesCount;
-        private final double popFactor; // grjtodo-oneday will mul pops by this, eg for chloroplast data.
+        private final double popFactor; // grjtodo mul pops by this.
         
         
     	/* class GeneTreeInfo.SequenceAssignments
@@ -221,7 +222,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
          * 
          * Node for GeneTreeInfo.GeneUnionTree.
          */
-        private class GeneUnionNode {
+       private class GeneUnionNode {
     		private GeneUnionNode child[];
     		private double height;
     		private FixedBitSet union;
@@ -377,13 +378,14 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	 * GeneTreeInfo constructor
     	 * 
     	 * JH's SpeciesBindings code has test
+    	 * 
     	 *   if (tree.getTaxonIndex(t) >= 0) { add taxon to count }
     	 *   
     	 * I am not clear about what happens if some gene trees don't have all taxa.  
-    	 * I insist all gene trees have all taxa, and use missing data
-    	 * grjtodo-oneday make more efficient
+    	 * For now, 2011-05-12 I insist all gene trees have all taxa
+    	 * 
     	 */
-        GeneTreeInfo(TreeModel tree, double popFactor, boolean permuteSequenceAssignments) {
+        GeneTreeInfo(TreeModel tree, double popFactor) {
             this.tree = tree;
             this.popFactor = popFactor;
             seqassigns = new SequenceAssignment[taxa.length];
@@ -397,7 +399,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
             		for (int x = 0; x < nseqs; x++) {
             			asgns[x] = x;
             		}
-            		if (permuteSequenceAssignments) { MathUtils.permute(asgns); }
+            		MathUtils.permute(asgns);
             		for (int x = 0; x < nseqs; x++) {
             			int t = taxon2index.get(apspecies[s].individuals[i].taxa[x]);
             			seqassigns[t] = new SequenceAssignment(s, asgns[x]);
@@ -428,99 +430,102 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
             }
         }
 
-
+       
         public String seqassignsAsText() {
-            String s = "Sequence assignments" + System.getProperty("line.separator");
-            for (int tx = 0; tx < seqassigns.length; tx++) {
-                s += taxa[tx];
-                s += ":";
-                s += seqassigns[tx].seqIndex;
-                if (tx+1 < seqassigns.length  &&  seqassigns[tx].spIndex != seqassigns[tx+1].spIndex) {
-                    s += System.getProperty("line.separator");
-                } else {
-                    s += "  ";
-                }
-            }
-            return s;
+        	String s = "Sequence assignments" + System.getProperty("line.separator");
+        	for (int tx = 0; tx < seqassigns.length; tx++) {
+        		s += taxa[tx];
+        		s += ":";
+        		s += seqassigns[tx].seqIndex;
+        		if (tx+1 < seqassigns.length  &&  seqassigns[tx].spIndex != seqassigns[tx+1].spIndex) {
+        			s += System.getProperty("line.separator");
+        		} else {
+        			s += "  ";
+        		}
+        	}
+        	return s;
         }
-
-
-
-        public String genetreeAsText() {
-            GeneUnionTree gutree = new GeneUnionTree();
-            return gutree.asText();
-        }
-
-
-        public boolean fitsInNetwork(final AlloppSpeciesNetworkModel asnm) {
-            GeneUnionTree gutree = new GeneUnionTree();
-            boolean fits = gutree.subtreeFitsInNetwork(gutree.getRoot(), asnm);
-            if (AlloppSpeciesNetworkModel.DBUGTUNE) {
-                if (!fits) {
-                    System.err.println("INCOMPATIBLE");
-                    System.err.println(seqassignsAsText());
-                    System.err.println(gutree.asText());
-                    System.err.println(asnm.mullabTreeAsText());
-                }
-            }
-            return fits;
-        }
-
-
-        // returns log(P(g_i|S)) = probability that gene tree fits into species network
-        public double treeLogLikelihood(final AlloppSpeciesNetworkModel asnm) {
-            GeneUnionTree gutree = new GeneUnionTree();
-            asnm.clearCoalescences();
-            gutree.subtreeRecordCoalescences(gutree.getRoot(), asnm);
-            asnm.sortCoalescences();
-            asnm.recordLineageCounts();
-            double llhood = asnm.geneTreeInNetworkLogLikelihood();
-            if (AlloppSpeciesNetworkModel.DBUGTUNE) {
-                System.err.println("COMPATIBLE: log-likelihood = " + llhood);
-                System.err.println(seqassignsAsText());
-                System.err.println(gutree.asText());
-                System.err.println(asnm.mullabTreeAsText());
-            }
-            return llhood;
-        }
-
-
-        public void storeSequenceAssignments() {
-            for (int i = 0; i < seqassigns.length; i++) {
-                oldseqassigns[i].seqIndex = seqassigns[i].seqIndex;
-            }
-        }
-
-        public void restoreSequenceAssignments() {
-            for (int i = 0; i < seqassigns.length; i++) {
-                seqassigns[i].seqIndex = oldseqassigns[i].seqIndex;
-            }
-        }
-
-
-
-
-        public double spseqUpperBound(FixedBitSet spsq0, FixedBitSet spsq1) {
-            GeneUnionTree gutree = new GeneUnionTree();
-            return subtreeSpseqUpperBound(gutree.getRoot(), spsq0, spsq1, Double.MAX_VALUE);
-        }
-
-
-
-        public void permuteOneSpeciesOneIndiv() {
-            int sp = MathUtils.nextInt(apspecies.length);
-            int iv = MathUtils.nextInt(apspecies[sp].individuals.length);
-            flipOneAssignment(sp, iv);
-        }
+        
 
         
-		/* grjtodo-oneday
+        public String genetreeAsText() {
+        	GeneUnionTree gutree = new GeneUnionTree();
+        	return gutree.asText();
+        }
+        
+        
+		public boolean fitsInNetwork(final AlloppSpeciesNetworkModel asnm) {
+			GeneUnionTree gutree = new GeneUnionTree();
+			boolean fits = gutree.subtreeFitsInNetwork(gutree.getRoot(), asnm);
+			if (AlloppSpeciesNetworkModel.DBUGTUNE == true) {
+				if (!fits) {
+					System.err.println("INCOMPATIBLE");
+					System.err.println(seqassignsAsText());
+					System.err.println(gutree.asText());
+					System.err.println(asnm.mullabTreeAsText());
+				}
+			}
+			return fits; 
+		}
+    
+		
+		// returns log(P(g_i|S)) = probability that gene tree fits into species network
+		public double treeLogLikelihood(final AlloppSpeciesNetworkModel asnm) {
+			GeneUnionTree gutree = new GeneUnionTree();
+			asnm.clearCoalescences();
+			gutree.subtreeRecordCoalescences(gutree.getRoot(), asnm);
+			asnm.sortCoalescences();
+			asnm.recordLineageCounts();
+	     	double llhood = asnm.geneTreeInNetworkLogLikelihood();
+	     	if (AlloppSpeciesNetworkModel.DBUGTUNE == true) {
+	     		System.err.println("COMPATIBLE: log-likelihood = " + llhood);
+	     		System.err.println(seqassignsAsText());
+	     		System.err.println(gutree.asText());
+	     		System.err.println(asnm.mullabTreeAsText());
+	     	}
+			return llhood;
+		}	
+		
+		
+		public void storeSequenceAssignments() {
+			for (int i = 0; i < seqassigns.length; i++) {
+				oldseqassigns[i].seqIndex = seqassigns[i].seqIndex;
+			}
+		}
+        
+		public void restoreSequenceAssignments() {
+			for (int i = 0; i < seqassigns.length; i++) {
+				seqassigns[i].seqIndex = oldseqassigns[i].seqIndex;
+			}
+		}
+
+		
+		public double speciationUpperBound(FixedBitSet spp0, FixedBitSet spp1) {
+			GeneUnionTree gutree = new GeneUnionTree();
+			return subtreeSpeciationUpperBound(gutree.getRoot(), spp0, spp1, Double.MAX_VALUE);
+		}
+		
+		// grjtodo morethanonetree
+		public double diploidSplitUpperBound() {
+			GeneUnionTree gutree = new GeneUnionTree();
+			return subtreeDiploidSplitUpperBound(gutree.getRoot(), Double.MAX_VALUE);
+		}
+		
+
+		public void permuteOneSpeciesOneIndiv() {
+			int sp = MathUtils.nextInt(apspecies.length);
+			int iv = MathUtils.nextInt(apspecies[sp].individuals.length);
+			permuteOneAssignment(sp, iv);
+		}       
+
+        
+		/* grjtodo 
 		 * This is a bit odd. It collects individuals as (sp, iv) indices
 		 * that `belong' to a node in the sense that any taxon (sequence)
 		 * of an individual belongs to the clade of the node.
 		 * I've used a set but not made SpeciesIndivPair's comparable
 		 * so that if both sequences of an individual occurs in clade it appears
-		 * twice. Then flipOneAssignment() flips everything so that those
+		 * twice. Then permuteOneAssignment() flips everything so that those
 		 * occurring twice get flipped twice and so not changed.
 		 * 
 		 * Result is that individuals with one but not two sequences in
@@ -539,10 +544,9 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 			Set<SpeciesIndivPair> spivs = new HashSet<SpeciesIndivPair>();
 			collectIndivsOfNode(node, spivs);
 			for (SpeciesIndivPair spiv : spivs) {
-				flipOneAssignment(spiv.spIndex, spiv.ivIndex);
+				permuteOneAssignment(spiv.spIndex, spiv.ivIndex);
 			}
-		}
-
+		}        
 		
 		
 		
@@ -552,6 +556,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         
 
        // called when a gene tree has changed, which affects likelihood.
+       // grjtodo not clear if it is useful.
        // 2011-08-12 I am not using dirty flags (yet). I return 
        // false from getLikelihoodKnown() in AlloppMSCoalescent
        // and that seems to be sufficient.
@@ -573,28 +578,26 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 			}
 		}
 		
-
-
-
+        
 		
 		// start at root of gutree and recurse. 
 		// A node which has one child which contains some of species spp0
 		// and where the other contains some of species spp1, imposes a limit 
 		// on how early a speciation can occur.
-		private double subtreeSpseqUpperBound(GeneUnionNode node, 
-				              FixedBitSet spsq0, FixedBitSet spsq1, double bound) {
+		private double subtreeSpeciationUpperBound(GeneUnionNode node, 
+				              FixedBitSet spp0, FixedBitSet spp1, double bound) {
 			if (node.child.length == 0) {
 				return bound;
 			}
 			for (GeneUnionNode ch : node.child) {
-				bound = Math.min(bound, subtreeSpseqUpperBound(ch, spsq0, spsq1, bound));
+				bound = Math.min(bound, subtreeSpeciationUpperBound(ch, spp0, spp1, bound));
 			}
-			FixedBitSet genespp0 = node.child[0].union;
-			int int00 = genespp0.intersectCardinality(spsq0);
-			int int01 = genespp0.intersectCardinality(spsq1);
-			FixedBitSet genespp1 = node.child[1].union;
-			int int10 = genespp1.intersectCardinality(spsq0);
-			int int11 = genespp1.intersectCardinality(spsq1);
+			FixedBitSet genespp0 = spsqunion2spunion(node.child[0].union);
+			int int00 = genespp0.intersectCardinality(spp0);
+			int int01 = genespp0.intersectCardinality(spp1);
+			FixedBitSet genespp1 = spsqunion2spunion(node.child[1].union);
+			int int10 = genespp1.intersectCardinality(spp0);
+			int int11 = genespp1.intersectCardinality(spp1);
 			if ((int00 > 0 && int11 > 0)  ||  (int10 > 0 && int01 > 0)) {
 				bound = Math.min(bound, node.height);
 			}
@@ -602,27 +605,51 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		}
 
 
+		// start at root of gutree and recurse. 
+		// A node which has one child which contains one sequence index
+		// and where the other contains the other sequence index, imposes a limit 
+		// the initial diploid split can occur, in one tetra tree case.
+		private double subtreeDiploidSplitUpperBound(GeneUnionNode node, double bound) {
+			if (node.child.length == 0) {
+				return bound;
+			}
+			for (GeneUnionNode ch : node.child) {
+				bound = Math.min(bound, subtreeDiploidSplitUpperBound(ch, bound));
+			}
+			boolean ch0seq0 = false;
+			boolean ch0seq1 = false;
+			for(int i = node.child[0].union.nextOnBit(0); i >= 0; i = node.child[0].union.nextOnBit(i+1)) {
+				int seq = spseqindex2seq(i);
+				if (seq == 0) { ch0seq0 = true; }
+				if (seq == 1) { ch0seq1 = true; }
+			}
+			boolean ch1seq0 = false;
+			boolean ch1seq1 = false;
+			for(int i = node.child[1].union.nextOnBit(0); i >= 0; i = node.child[1].union.nextOnBit(i+1)) {
+				int seq = spseqindex2seq(i);
+				if (seq == 0) { ch1seq0 = true; }
+				if (seq == 1) { ch1seq1 = true; }
+			}
+			if ((ch0seq0 && ch1seq1) || (ch0seq1 && ch1seq0)) {
+				bound = Math.min(bound, node.height);
+			}
+			return bound;
+		}        
+        
+        
 
-        private void flipOneAssignment(int sp, int iv) {
-            // grjtodo-tetraonly
-            int tx;
-            if (apspecies[sp].individuals[iv].taxa.length == 2) {
-                tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[0]);
-                seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
-                tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[1]);
-                seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
-            }
-        }
+		private void permuteOneAssignment(int sp, int iv) {
+			// grjtodo tetraonly
+			int tx;
+			if (apspecies[sp].individuals[iv].taxa.length == 2) {
+				tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[0]);
+				seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
+				tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[1]);
+				seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
+			}
+		}
 
-
-
-        private void flipAssignmentsForSpecies(int sp) {
-            for (int iv = 0; iv < apspecies[sp].individuals.length; iv++) {
-                flipOneAssignment(sp, iv);
-            }
-        }
-
-
+        
 
     }
     // end of GeneTreeInfo
@@ -631,13 +658,9 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     
     
     /* ******************** Constructor *****************************/
-    
-	/*
-	 * The standard constructor calls this with permuteSequenceAssignments==true.
-	 * permuteSequenceAssignments==false is for testing.
-	 */
+	
 	public AlloppSpeciesBindings(ApSpInfo[] apspecies, TreeModel[] geneTrees, 
-			                      double minheight, double[] popFactors, boolean permuteSequenceAssignments) {
+			                      double minheight, double[] popFactors) {
         super(AlloppSpeciesBindingsParser.ALLOPPSPECIES);
         
         this.apspecies = apspecies;
@@ -647,7 +670,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         for (int s = 0; s < apspecies.length; s++) {
         	n += apspecies[s].individuals.length;
         }
-        Individual [] indivs = new Individual[n];
+        indivs = new Individual[n];
         n = 0;
         for (int s = 0; s < apspecies.length; s++) {
         	for (int i = 0; i < apspecies[s].individuals.length; i++, n++) {
@@ -681,7 +704,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         
         geneTreeInfos = new GeneTreeInfo[geneTrees.length];
         for (int i = 0; i < geneTrees.length; i++) {
-        	geneTreeInfos[i] = new GeneTreeInfo(geneTrees[i], popFactors[i], permuteSequenceAssignments);
+        	geneTreeInfos[i] = new GeneTreeInfo(geneTrees[i], popFactors[i]);
         }
         
 		for (GeneTreeInfo gti : geneTreeInfos) {
@@ -695,32 +718,18 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		}   
 	}
 	
-
-	/*
-	 * The normal constructor
-	 */
-	public AlloppSpeciesBindings(ApSpInfo[] apspecies, TreeModel[] geneTrees, 
-			double minheight, double[] popFactors) {
-		this(apspecies, geneTrees,  minheight, popFactors, true);
-	}
-
 	
-	/*
-	 * Minimal constructor for testing conversions network -> multree, diphist
-	 */
 	public AlloppSpeciesBindings(ApSpInfo[] apspecies,
-			AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST networkToMulLabTreeTEST) {
+			AlloppSpeciesNetworkModelTEST.NetworkToMulLabTreeTEST networkToMulLabTreeTEST) {
 		this(apspecies, new TreeModel[0], 0.0, new double[0]);
 	}
 
 
-    /*
-      * Minimal constructor for testing conversions network -> multree, diphist
-      */
-    public AlloppSpeciesBindings(ApSpInfo[] apspecies,
-                                 AlloppSpeciesNetworkModelTEST.LhoodMultreeTEST lhoodMultreeTEST) {
-        this(apspecies, new TreeModel[0], 0.0, new double[0]);
-    }
+
+	public AlloppSpeciesBindings(ApSpInfo[] apsp, TreeModel[] gtreemodels,
+			AlloppSpeciesNetworkModelTEST.LogLhoodGTreeInNetworkTEST llgtnTEST) {
+		this(apsp, llgtnTEST.gtreemodels, 0.0, llgtnTEST.popfactors);
+	}
 
 
 	public double initialMinGeneNodeHeight() {
@@ -728,26 +737,6 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	}
 	
 	
-	
-	public FixedBitSet speciesseqEmptyUnion() {
-		FixedBitSet union = new FixedBitSet(numberOfSpSeqs());
-		return union;
-	}	
-
-
-    // Taxons vs species.
-    // Taxons may have a final "0", "1",... to distinguish sequences, while
-    // species do not. AlloppLeggedTree uses a SimpleTree, which only has
-    // Taxons, so same thing there. Multree needs distinguishable Taxons
-    // so has suffices.
-	public FixedBitSet taxonseqToTipUnion(Taxon tx, int seq) {
-        FixedBitSet union = speciesseqEmptyUnion();
-        int sp = apspeciesId2index(tx.getId());
-        int spseq = spandseq2spseqindex(sp, seq);
-        union.set(spseq);
-        return union;
-	}
-
 		
 	public FixedBitSet spsqunion2spunion(FixedBitSet spsqunion) {
 		FixedBitSet spunion = new FixedBitSet(apspecies.length);
@@ -772,9 +761,6 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	
 	
 	public double maxGeneTreeHeight() {
-        if (geneTreeInfos.length == 0) {
-            return 999;   // for test code only
-        }
 		double maxheight = 0.0;
 		for (GeneTreeInfo gti : geneTreeInfos) {
 			double height = gti.tree.getNodeHeight(gti.tree.getRoot());
@@ -846,9 +832,6 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 				index = i;
 			}
 		}
-		if (index == -1) {
-			System.out.println("BUG in apspeciesId2index");
-		}
 		assert index != -1;
 		return index;
 	}
@@ -878,8 +861,8 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	public int numberOfSpSeqs() {
 		return numberOfSpSeqs;
 	}
-
-
+	
+	
     int nLineages(int speciesIndex) {
     	int n = geneTreeInfos[0].lineagesCount[speciesIndex];
     	for (GeneTreeInfo gti : geneTreeInfos) {
@@ -887,17 +870,28 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	}
         return n;
     }
-
 	
-	
-	public double spseqUpperBound(FixedBitSet left, FixedBitSet right) {
+    
+    Taxon taxonFromSpIndSeq(int sp, int i, int sq) {
+    	return apspecies[sp].individuals[i].taxa[sq];
+    	}
+    
+	public double speciationUpperBound(FixedBitSet left, FixedBitSet right) {
         double bound = Double.MAX_VALUE;
-        for (GeneTreeInfo gti : geneTreeInfos) {
-        	bound = Math.min(bound, gti.spseqUpperBound(left, right));
+        for (GeneTreeInfo g : geneTreeInfos) {
+        	bound = Math.min(bound, g.speciationUpperBound(left, right));
         }
         return bound;
 	}
-
+	
+	
+	public double diploidSplitUpperBound() {
+        double bound = Double.MAX_VALUE;
+        for (GeneTreeInfo g : geneTreeInfos) {
+        	bound = Math.min(bound, g.diploidSplitUpperBound());
+        }
+        return bound;
+	}
 	
 	
 	public void permuteOneSpeciesOneIndivForOneGene() {
@@ -910,16 +904,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		int i = MathUtils.nextInt(geneTreeInfos.length);
 		geneTreeInfos[i].permuteSetOfIndivs();
 	}
-
-
-    public void flipAssignmentsForAllGenesOneSpecies(int sp) {
-        for (GeneTreeInfo gti : geneTreeInfos) {
-            gti.flipAssignmentsForSpecies(sp);
-        }
-
-    }
-
-
+	
 	
 	public String seqassignsAsText(int g) {
 		return geneTreeInfos[g].seqassignsAsText();
@@ -947,7 +932,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	@Override
 	protected void handleVariableChangedEvent(Variable variable, int index,
 			ChangeType type) {
-		assert false; // copies SpeciesBindings; not understood
+		assert false; //grjtodo copies SpeciesBindings. OK?
 		if (AlloppSpeciesNetworkModel.DBUGTUNE)
 			System.err.println("AlloppSpeciesBindings.handleVariableChangedEvent() " + variable.getId());
 	}

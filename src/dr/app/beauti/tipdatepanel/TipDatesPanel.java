@@ -205,6 +205,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         clearDatesAction.setEnabled(false);
         guessDatesAction.setEnabled(false);
+        setDatesAction.setEnabled(false);
         directionCombo.setEnabled(false);
         unitsLabel.setEnabled(false);
         unitsCombo.setEnabled(false);
@@ -220,6 +221,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 boolean enabled = usingTipDates.isSelected();
                 clearDatesAction.setEnabled(enabled);
                 guessDatesAction.setEnabled(enabled);
+                setDatesAction.setEnabled(enabled);
                 unitsLabel.setEnabled(enabled);
                 unitsCombo.setEnabled(enabled);
                 directionCombo.setEnabled(enabled);

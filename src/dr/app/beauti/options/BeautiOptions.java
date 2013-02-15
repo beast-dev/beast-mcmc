@@ -1009,9 +1009,6 @@ public class BeautiOptions extends ModelOptions {
         if (traitExists(traitName)) {
             clearTraitValues(traitName); // Clear trait values
             traits.remove(getTrait(traitName));
-
-            // the UI will already have required this...
-//                dataPartitions.remove(getTrait(traitName));
         }
     }
 

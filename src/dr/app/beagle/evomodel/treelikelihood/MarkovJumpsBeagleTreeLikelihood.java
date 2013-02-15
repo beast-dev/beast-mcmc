@@ -1,31 +1,6 @@
-/*
- * MarkovJumpsBeagleTreeLikelihood.java
- *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.app.beagle.evomodel.treelikelihood;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -61,22 +36,22 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         implements MarkovJumpsRegisterAcceptor {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                           BranchModel branchModel,
-                                           SiteRateModel siteRateModel,
+                                           BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel,
                                            TipStatesModel tipStatesModel,
                                            boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme,
                                            Map<Set<String>, Parameter> partialsRestrictions,
                                            DataType dataType, String stateTag,
+                                           SubstitutionModel substModel,
                                            boolean useMAP,
                                            boolean returnMarginalLikelihood,
                                            boolean useUniformization,
                                            boolean reportUnconditionedColumns,
                                            int nSimulants) {
 
-        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
-                scalingScheme, partialsRestrictions, dataType, stateTag, useMAP, returnMarginalLikelihood);
+        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
+                scalingScheme, partialsRestrictions, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
 
         this.useUniformization = useUniformization;
         this.reportUnconditionedColumns = reportUnconditionedColumns;
@@ -107,11 +82,11 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         addVariable(addRegisterParameter);
         final String tag = addRegisterParameter.getId();
 
-        for (int i = 0; i < substitutionModelDelegate.getSubstitutionModelCount(); ++i) {
+        for (int i = 0; i < branchSubstitutionModel.getEigenCount(); ++i) {
 
             registerParameter.add(addRegisterParameter);
             MarkovJumpsSubstitutionModel mjModel;
-            SubstitutionModel substitutionModel = substitutionModelDelegate.getSubstitutionModel(i);
+            SubstitutionModel substitutionModel = branchSubstitutionModel.getSubstitutionModel(i, 0);
 
             if (useUniformization) {
                 mjModel = new UniformizedSubstitutionModel(substitutionModel, type, nSimulants);
@@ -128,7 +103,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
             String traitName;
 
-            if (substitutionModelDelegate.getSubstitutionModelCount() == 1) {
+            if (branchSubstitutionModel.getEigenCount() == 1) {
                 traitName = tag;
             } else {
                 traitName = tag + i;
@@ -197,49 +172,6 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                 historyRegisterNumber = numRegisters; // Record the complete history for this register
                 ((UniformizedSubstitutionModel) mjModel).setSaveCompleteHistory(true);
 
-                if (useCompactHistory && logHistory) {
-
-                    treeTraits.addTrait(ALL_HISTORY, new TreeTrait.SA() {
-                        public String getTraitName() {
-                            return ALL_HISTORY;
-                        }
-
-                        public Intent getIntent() {
-                            return Intent.BRANCH;
-                        }
-
-                        public boolean getFormatAsArray() {
-                            return true;
-                        }
-
-                        public String[] getTrait(Tree tree, NodeRef node) {
-
-                            List<String> events = new ArrayList<String>();
-                            for (int i = 0; i < patternCount; i++) {
-                                String eventString = getHistoryForNode(tree, node, i);
-                                if (eventString != null && eventString.compareTo("{}") != 0) {
-                                    eventString = eventString.substring(1, eventString.length() - 1);
-                                    if (eventString.contains("},{")) { // There are multiple events
-                                        String[] elements = eventString.split("(?<=\\}),(?=\\{)");
-                                        for (String e : elements) {
-                                            events.add(e);
-                                        }
-                                    } else {
-                                        events.add(eventString);
-                                    }
-                                }
-                            }
-                            String[] array = new String[events.size()];
-                            events.toArray(array);
-                            return array;
-                        }
-
-                        public boolean getLoggable() {
-                            return true;
-                        }
-                    });
-                }
-
                 for (int site = 0; site < patternCount; ++site) {
 
                     final String anonName = (patternCount == 1) ? HISTORY : HISTORY + "_" + (site + 1);
@@ -256,12 +188,11 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                         }
 
                         public String getTrait(Tree tree, NodeRef node) {
-                            String history = getHistoryForNode(tree, node, anonSite);
-                            return (history.compareTo("{}") != 0) ? history : null; // Return null if empty
+                            return getHistoryForNode(tree, node, anonSite);
                         }
 
                         public boolean getLoggable() {
-                            return logHistory && !useCompactHistory;
+                            return logHistory;
                         }
                     });
                 }
@@ -274,10 +205,6 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
     public void setLogHistories(boolean in) {
         logHistory = in;
-    }
-
-    public void setUseCompactHistory(boolean in) {
-        useCompactHistory = in;
     }
 
 //    public double[] getRewardsForNodeAndPattern(Tree tree, NodeRef node, int pattern) {
@@ -377,14 +304,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
 
             final int modelNumberFromrRegistry = branchModelNumber.get(r);
-//            int dummy = 0;
-//            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode, dummy);
-            // @todo AR - not sure about this - if this is an epoch this is just going to get the most
-            // @todo tipward model for the branch. I think this was what was happening before (in comment,
-            // @todo above).
-            BranchModel.Mapping mapping = branchModel.getBranchModelMapping(childNode);
+            int dummy = 0;
+            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode, dummy);
 
-            if (modelNumberFromrRegistry == mapping.getOrder()[0]) {
+            if (modelNumberFromrRegistry == modelNumberFromTree) {
                 if (useUniformization) {
                     computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
                             branchRate, childNum, parentStates, childStates, parentTime, childTime,probabilities, scaleByTime[r],
@@ -432,8 +355,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             }
             thisExpectedJumps[childNum][j] = value;
             if (saveHistory) {
-                int site = (useCompactHistory) ? j + 1 : -1;
-                histories[childNum][j] = thisMarkovJumps.getCompleteHistory(site, parentTime, childTime);
+                histories[childNum][j] = thisMarkovJumps.getCompleteHistory(parentTime, childTime);
             }
         }
     }
@@ -614,7 +536,6 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
     }
 
-    public static final String ALL_HISTORY = "history_all";
     public static final String HISTORY = "history";
     public static final String TOTAL_COUNTS = "allTransitions";
 
@@ -625,7 +546,6 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     private List<double[][]> expectedJumps;
 //    private List<double[][]> storedExpectedJumps;
     private boolean logHistory = false;
-    private boolean useCompactHistory = false;
     private String[][] histories = null;
     private boolean[] scaleByTime;
     private double[] tmpProbabilities;

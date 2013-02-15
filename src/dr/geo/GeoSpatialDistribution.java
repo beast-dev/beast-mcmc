@@ -1,7 +1,7 @@
 /*
  * GeoSpatialDistribution.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -26,6 +26,7 @@
 package dr.geo;
 
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
 import dr.xml.*;
@@ -91,7 +92,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public boolean getOutside() {
         return outside;
     }
-
+  
     public Polygon2D getRegion() {
         return region;
     }
@@ -152,10 +153,6 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 return likelihood;
             }
 
-            if (geoSpatialDistributions.size() == 0) {
-                throw new XMLParseException("Error constructing geo spatial distributions in " + xo.getId());
-            }
-
             if (parameters.size() == 1) {
                 Parameter parameter = parameters.get(0);
                 if (parameter.getDimension() % dimPoint != 0)
@@ -167,16 +164,16 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                                     "\tTaxon: " + label + "\n" +
                                     "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
                     MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
-                            new MultiRegionGeoSpatialDistribution(label, geoSpatialDistributions, union));
+                            new MultiRegionGeoSpatialDistribution(label,geoSpatialDistributions, union));
                     likelihood.addData(parameter);
                     return likelihood;
 
                 } else {
 
                     Logger.getLogger("dr.geo").info(
-                            "\nConstructing a GeoSpatialCollectionModel:\n" +
-                                    "\tParameter: " + parameter.getId() + "\n" +
-                                    "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
+                        "\nConstructing a GeoSpatialCollectionModel:\n" +
+                                "\tParameter: " + parameter.getId() + "\n" +
+                                "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
 
                     return new GeoSpatialCollectionModel(xo.getId(), parameter, geoSpatialDistributions, !union);
                 }
@@ -207,7 +204,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         }
 
         public Class getReturnType() {
-            return MultivariateDistributionLikelihood.class;
+            return Likelihood.class;
         }
     };
 

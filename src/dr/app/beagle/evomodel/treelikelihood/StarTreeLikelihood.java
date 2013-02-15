@@ -1,7 +1,7 @@
 /*
  * StarTreeLikelihood.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -45,7 +45,7 @@ import java.util.logging.Logger;
  * @author Philippe Lemey
  */
 
-public class StarTreeLikelihood extends OldBeagleTreeLikelihood {
+public class StarTreeLikelihood extends BeagleTreeLikelihood {
 
     public StarTreeLikelihood(PatternList patternList, TreeModel treeModel,
                               BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,

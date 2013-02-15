@@ -3,9 +3,6 @@ package dr.evomodel.epidemiology;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author Trevor Bedford
- */
 public class DynamicalForce {
 
     private String name = "force";

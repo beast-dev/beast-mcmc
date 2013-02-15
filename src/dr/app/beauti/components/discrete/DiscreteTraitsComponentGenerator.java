@@ -149,10 +149,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         boolean first = true;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (!first) {
-            writer.writeBlankLine();
+                writer.writeBlankLine();
             } else {
                 first = false;
-        }
+            }
             writeGeneralDataType(model, writer);
         }
 
@@ -356,7 +356,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeTreeLikelihoods(XMLWriter writer,
-                                               DiscreteTraitsComponentOptions component) {
+                                      DiscreteTraitsComponentOptions component) {
         // generate tree likelihoods for discrete trait partitions
         if (options.hasDiscreteTraitPartition()) {
             writer.writeComment("Likelihood for tree given discrete trait data");
@@ -504,7 +504,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeLogEntries(PartitionSubstitutionModel model, XMLWriter writer) {
         String prefix = model.getName() + ".";
 
-           writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
@@ -518,7 +518,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 //            if (partitionData.getPartitionTreeModel() == treeModel) {
 //                String prefix = partitionData.getName() + ".";
 //                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-//                        prefix + OldTreeLikelihoodParser.TREE_LIKELIHOOD);
+//                        prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
 //            }
 //        }
 //    }

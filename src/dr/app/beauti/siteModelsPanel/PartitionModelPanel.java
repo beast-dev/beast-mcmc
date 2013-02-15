@@ -87,6 +87,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox freqsUnlinkCheck = new JCheckBox(
             "Unlink base frequencies across codon positions");
 
+    private JButton setYang96Button;
     private JButton setSRD06Button;
 
     private JCheckBox dolloCheck = new JCheckBox("Use stochastic Dollo model");
@@ -232,8 +233,23 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         }
 
+        setYang96Button = new JButton("Use Yang96 model");
+        setYang96Button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                setYang96Model();
+            }
+        });
+        PanelUtils.setupComponent(setYang96Button);
+        setYang96Button
+                .setToolTipText("<html>Sets a 3 codon-position model with independent GTR and Gamma as described in<br>"
+                        + "Yang (1996) <i>J Mol Evol</i> <b>42</b>: 587–596. This model is named 3' in this paper.</html>");
+
         setSRD06Button = new JButton("Use SRD06 model");
-        setSRD06Button.addActionListener(new ListenSetSRD06Button());
+        setSRD06Button.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ev) {
+                setSRD06Model();
+            }
+        });
         PanelUtils.setupComponent(setSRD06Button);
         setSRD06Button
                 .setToolTipText("<html>Sets the SRD06 model as described in<br>"
@@ -494,6 +510,19 @@ public class PartitionModelPanel extends OptionsPanel {
     }
 
     /**
+     * Configure this panel for the Yang 96 codon
+     * position model
+     */
+    private void setYang96Model() {
+        nucSubstCombo.setSelectedIndex(1);
+        heteroCombo.setSelectedIndex(1);
+        codingCombo.setSelectedIndex(2);
+        substUnlinkCheck.setSelected(true);
+        heteroUnlinkCheck.setSelected(true);
+        freqsUnlinkCheck.setSelected(true);
+    }
+
+    /**
      * Configure this panel for the Shapiro, Rambaut and Drummond 2006 codon
      * position model
      */
@@ -503,6 +532,7 @@ public class PartitionModelPanel extends OptionsPanel {
         codingCombo.setSelectedIndex(1);
         substUnlinkCheck.setSelected(true);
         heteroUnlinkCheck.setSelected(true);
+        freqsUnlinkCheck.setSelected(false);
     }
 
     /**
@@ -537,6 +567,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addComponent(panel2);
 
+                addComponent(setYang96Button);
                 addComponent(setSRD06Button);
 
                 break;

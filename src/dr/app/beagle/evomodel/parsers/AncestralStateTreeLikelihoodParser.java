@@ -1,7 +1,7 @@
 /*
  * AncestralStateTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,7 +25,8 @@
 
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -50,7 +51,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  */
 
-public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodParser {
+public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
     public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
@@ -65,7 +66,8 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 	protected BeagleTreeLikelihood createTreeLikelihood(
 			PatternList patternList, //
 			TreeModel treeModel, //
-			BranchModel branchModel, //
+			BranchSubstitutionModel branchSubstitutionModel, //
+//			FrequencyModel freqModel,
 			GammaSiteRateModel siteRateModel, //
 			BranchRateModel branchRateModel, //
 			TipStatesModel tipStatesModel, //
@@ -76,10 +78,30 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 			XMLObject xo //
 	) throws XMLParseException {
 
-		
+
 //		System.err.println("XML object: " + xo.toString());
-	
-		DataType dataType = branchModel.getRootSubstitutionModel().getDataType();
+
+		DataType dataType = null;
+		SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+
+		// TODO
+		// both BSM and FM have to be specified, handle the exception
+		if(branchSubstitutionModel instanceof EpochBranchSubstitutionModel) {
+
+			FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+			dataType = freqModel.getDataType();
+
+		} else {
+
+			if (substModel == null) {
+
+				substModel = siteRateModel.getSubstitutionModel();
+
+			}
+
+			 dataType = substModel.getDataType();
+
+		}
 
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
@@ -87,10 +109,10 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
 
-        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a OldBeagleTreeLikelihood
+        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
                 patternList,
                 treeModel,
-                branchModel,
+                branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
                 tipStatesModel,
@@ -99,6 +121,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 partialsRestrictions,
                 dataType,
                 tag,
+                substModel,
                 useMAP,
                 useMarginalLogLikelihood
         );
@@ -106,21 +129,21 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                AttributeRule.newBooleanRule(OldTreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
                 AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(GammaSiteRateModel.class),
-                new ElementRule(BranchModel.class, true),
+                new ElementRule(BranchSubstitutionModel.class, true),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(TipStatesModel.class, true),
                 new ElementRule(SubstitutionModel.class, true),
-                AttributeRule.newStringRule(OldTreeLikelihoodParser.SCALING_SCHEME,true),
+                AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
                 new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                         new ElementRule(TaxonList.class),
                         new ElementRule(Parameter.class),
                 }, true),
-            new ElementRule(FrequencyModel.class, true),
+                new ElementRule(FrequencyModel.class, true),
         };
     }
 }

@@ -40,9 +40,6 @@ public class SequenceSimulator {
     /** nr of states in site model **/
     int m_stateCount;
 
-	static boolean has_ancestralSequence = false;
-	protected Sequence ancestralSequence;
-    
     /**
      * an array used to transfer transition probabilities
      */
@@ -79,67 +76,37 @@ public class SequenceSimulator {
 		return new Sequence(m_tree.getNodeTaxon(node), sSeq.toString());
     } // intArray2Sequence
 
-	void setAncestralSequence(Sequence seq) {
-		ancestralSequence = seq;
-		has_ancestralSequence = true;
-	}
-	
-	int[] sequence2intArray(Sequence seq) {
-
-		if(seq.getLength() != m_sequenceLength) {
-
-			throw new RuntimeException("Ancestral sequence length has "
-					+ seq.getLength() + " characters " + "expecting "
-					+ m_sequenceLength + " characters");
-
-		}
-		
-		int array[] = new int[m_sequenceLength];
-		for (int i = 0; i < m_sequenceLength; i++) {
-			array[i] = m_siteModel.getFrequencyModel().getDataType().getState(
-					seq.getChar(i));
-		}
-		return array;
-	}//END: sequence2intArray
-	
 	/**
 	 * perform the actual sequence generation
 	 * @return alignment containing randomly generated sequences for the nodes in the
 	 * leaves of the tree
 	 */
 	public Alignment simulate() {
-		NodeRef root = m_tree.getRoot();
+    	NodeRef root =  m_tree.getRoot();
 
-		double[] categoryProbs = m_siteModel.getCategoryProportions();
-		int[] category = new int[m_sequenceLength];
-		for (int i = 0; i < m_sequenceLength; i++) {
-			category[i] = MathUtils.randomChoicePDF(categoryProbs);
-		}
 
-		int[] seq = new int[m_sequenceLength];
+    	double [] categoryProbs = m_siteModel.getCategoryProportions();
+    	int [] category  = new int[m_sequenceLength];
+    	for (int i  = 0; i < m_sequenceLength; i++) {
+    		category[i] = MathUtils.randomChoicePDF(categoryProbs);
+    	}
 
-		if (has_ancestralSequence) {
+       	FrequencyModel frequencyModel = m_siteModel.getFrequencyModel();
+    	int [] seq = new int[m_sequenceLength];
+    	for (int i  = 0; i < m_sequenceLength; i++) {
+        	seq[i] = MathUtils.randomChoicePDF(frequencyModel.getFrequencies());
+    	}
 
-			seq = sequence2intArray(ancestralSequence);
-			
-		} else {
 
-			FrequencyModel frequencyModel = m_siteModel.getFrequencyModel();
-			for (int i = 0; i < m_sequenceLength; i++) {
-				seq[i] = MathUtils.randomChoicePDF(frequencyModel
-						.getFrequencies());
-			}
+    	SimpleAlignment alignment = new SimpleAlignment();
+          alignment.setDataType(m_siteModel.getFrequencyModel().getDataType());
 
-		}
+    	traverse(root, seq, category, alignment);
 
-		SimpleAlignment alignment = new SimpleAlignment();
-		alignment.setReportCountStatistics(false);
-		alignment.setDataType(m_siteModel.getFrequencyModel().getDataType());
 
-		traverse(root, seq, category, alignment);
 
-		return alignment;
-	} // END: simulate
+    	return alignment;
+    } // simulate
 
 	/**
 	 * recursively walk through the tree top down, and add sequence to alignment whenever
@@ -194,12 +161,14 @@ public class SequenceSimulator {
         m_siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probs);
     } // getTransitionProbabilities
 
+
     /** helper method **/
     public static void printUsageAndExit() {
 		System.err.println("Usage: java " + SequenceSimulator.class.getName() + " <nr of instantiations>");
 		System.err.println("where <nr of instantiations> is the number of instantiations to be replciated");
 		System.exit(0);
 	} // printUsageAndExit
+
 
     /* standard xml parser stuff follows */
     public static final String SEQUENCE_SIMULATOR = "sequenceSimulator";
@@ -221,17 +190,11 @@ public class SequenceSimulator {
             Tree tree = (Tree) xo.getChild(Tree.class);
             SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
             BranchRateModel rateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
-            Sequence ancestralSequence = (Sequence)xo.getChild(Sequence.class);
-            
+
             if (rateModel == null)
             	rateModel = new DefaultBranchRateModel();
 
             SequenceSimulator s = new SequenceSimulator(tree, siteModel, rateModel, nReplications);
-
-            if(ancestralSequence != null) {
-                s.setAncestralSequence(ancestralSequence);
-            }
-            
             return s.simulate();
         }
 
@@ -255,7 +218,6 @@ public class SequenceSimulator {
                 new ElementRule(Tree.class),
                 new ElementRule(SiteModel.class),
                 new ElementRule(BranchRateModel.class, true),
-                new ElementRule(Sequence.class, true),
                 AttributeRule.newIntegerRule(REPLICATIONS)
         };
     };
@@ -270,58 +232,28 @@ public class SequenceSimulator {
 	} // getDefaultSiteModel
 
     public static void main(String [] args) {
-    	
     	try {
-    	
-    		int nReplications = 10;
+    		if (args.length == 0) {
+    			printUsageAndExit();
+    		}
+    		int nReplications = Integer.parseInt(args[0]);
 
     		// create tree
     		NewickImporter importer = new NewickImporter("((A:1.0,B:1.0)AB:1.0,(C:1.0,D:1.0)CD:1.0)ABCD;");
     		Tree tree =  importer.importTree(null);
-    		
     		// create site model
     		SiteModel siteModel = getDefaultSiteModel();
-    		
     		// create branch rate model
     		BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
     		// feed to sequence simulator and generate leaves
     		SequenceSimulator treeSimulator = new SequenceSimulator(tree, siteModel, branchRateModel, nReplications);
-
-    		Sequence ancestralSequence = new Sequence();
-    		ancestralSequence.appendSequenceString("TCAGGTCAAG");
-    		treeSimulator.setAncestralSequence(ancestralSequence);
-    		
-    		System.out.println(treeSimulator.simulate().toString());
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}//END: try-catch block
-		
-	} // END: main
-    
-//    public static void main(String [] args) {
-//    	try {
-//    		if (args.length == 0) {
-//    			printUsageAndExit();
-//    		}
-//    		int nReplications = Integer.parseInt(args[0]);
-//
-//    		// create tree
-//    		NewickImporter importer = new NewickImporter("((A:1.0,B:1.0)AB:1.0,(C:1.0,D:1.0)CD:1.0)ABCD;");
-//    		Tree tree =  importer.importTree(null);
-//    		// create site model
-//    		SiteModel siteModel = getDefaultSiteModel();
-//    		// create branch rate model
-//    		BranchRateModel branchRateModel = new DefaultBranchRateModel();
-//
-//    		// feed to sequence simulator and generate leaves
-//    		SequenceSimulator treeSimulator = new SequenceSimulator(tree, siteModel, branchRateModel, nReplications);
-//    		System.err.println(treeSimulator.simulate().toString());
-//    		treeSimulator.simulate();
-//    	} catch (Exception e) {
-//    		e.printStackTrace();
-//    	}
-//	} // main
+    		System.err.println(treeSimulator.simulate().toString());
+    		treeSimulator.simulate();
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    	}
+	} // main
 
 } // class SequenceSimulator
+

@@ -1,7 +1,7 @@
 /*
  * CodonPartitionedRobustCountingParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -158,7 +158,6 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             AttributeRule.newBooleanRule(INCLUDE_INTERNAL, true),
             AttributeRule.newBooleanRule(DO_UNCONDITIONED_PER_BRANCH, true),
             AttributeRule.newStringRule(LABELING),
-            AttributeRule.newBooleanRule(SAVE_HISTORY, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

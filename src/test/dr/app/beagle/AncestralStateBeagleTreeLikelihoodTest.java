@@ -1,7 +1,5 @@
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.tree.FlexibleTree;
@@ -87,8 +85,9 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", mu, null, -1, null);
         siteRateModel.setSubstitutionModel(hky);
 
-        BranchModel branchModel = new HomogeneousBranchModel(
-                siteRateModel.getSubstitutionModel());
+        BranchSubstitutionModel branchSubstitutionModel = new HomogenousBranchSubstitutionModel(
+                siteRateModel.getSubstitutionModel(),
+                siteRateModel.getSubstitutionModel().getFrequencyModel());
 
         BranchRateModel branchRateModel = null;
 
@@ -96,7 +95,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
         AncestralStateBeagleTreeLikelihood treeLikelihood = new AncestralStateBeagleTreeLikelihood(
                 alignment,
                 treeModel,
-                branchModel,
+                branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
                 null,
@@ -105,6 +104,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
                 null,
                 hky.getDataType(),
                 "stateTag",
+                hky,
                 true, // useMap = true
                 false
         );

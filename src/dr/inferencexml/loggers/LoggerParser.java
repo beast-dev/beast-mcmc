@@ -94,9 +94,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
             final BeastVersion version = new BeastVersion();
 
-            final String title = "BEAST " + version.getVersionString() +
-                    ", " + version.getBuildString() + "\n" +
-
+            final String title = "BEAST " + version.getVersionString() + "\n" +
                     "Generated " + (new Date()).toString() + " [seed=" + MathUtils.getSeed() + "]";
             logger.setTitle(title);
         }

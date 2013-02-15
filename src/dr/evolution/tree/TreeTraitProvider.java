@@ -144,7 +144,7 @@ public interface TreeTraitProvider {
             return traits != null ? traits.hashCode() : 0;
         }
 
-        // Private members
+// Private members
 
         private Map<String, TreeTrait> traits = new HashMap<String, TreeTrait>();
     }

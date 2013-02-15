@@ -1,28 +1,3 @@
-/*
- * IntegratedMultivariateTraitLikelihood.java
- *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
@@ -44,6 +19,7 @@ import dr.util.Citation;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A multivariate trait likelihood that analytically integrates out the unobserved trait values at all internal
@@ -97,6 +73,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
         }
 
+        missing = new boolean[treeModel.getNodeCount()];
+        Arrays.fill(missing, true); // All internal and root nodes are missing
+
         // Set up reusable temporary storage
         Ay = new double[dimTrait];
         tmpM = new double[dimTrait][dimTrait];
@@ -104,20 +83,23 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         zeroDimVector = new double[dim];
 
-        missingTraits = new MissingTraits.CompletelyMissing(treeModel, missingIndices, dim);
-        setTipDataValuesForAllNodes();
+        setTipDataValuesForAllNodes(missingIndices);
 
     }
 
-    private void setTipDataValuesForAllNodes() {
+    private void setTipDataValuesForAllNodes(List<Integer> missingIndices) {
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
             setTipDataValuesForNode(node);
         }
-        missingTraits.handleMissingTips();
+        for (Integer i : missingIndices) {
+            int whichTip = i / dim;
+            Logger.getLogger("dr.evomodel").info(
+                    "\tMarking taxon " + treeModel.getTaxonId(whichTip) + " as completely missing");
+            missing[whichTip] = true;
+        }
     }
 
-    @SuppressWarnings("unused")
     public double getTotalTreePrecision() {
         getLogLikelihood(); // Do peeling if necessary
         final int rootIndex = treeModel.getRoot().getNumber();
@@ -132,6 +114,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
         }
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
+        missing[index] = false;
     }
 
     public double[] getTipDataValues(int index) {
@@ -183,7 +166,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         if (computeWishartStatistics) {
 //            if (wishartStatistics == null) {
-            wishartStatistics = new WishartSufficientStatistics(dimTrait);
+                wishartStatistics = new WishartSufficientStatistics(dimTrait);
 //            } else {
 //                wishartStatistics.clear();
 //            }
@@ -268,19 +251,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //            checkViaLargeMatrixInversion();
         }
 
-        if (DEBUG_PNAS) {
-            checkLogLikelihood(logLikelihood, sumLogRemainders(), conditionalRootMean,
-                    conditionalRootPrecision, traitPrecision);
-        }
-
         areStatesRedrawn = false;  // Should redraw internal node states when needed
         return logLikelihood;
-    }
-
-    protected void checkLogLikelihood(double loglikelihood, double logRemainders,
-                                      double[] conditionalRootMean, double conditionalRootPrecision,
-                                      double[][] traitPrecision) {
-        // Do nothing; for checking PNAS paper
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -290,11 +262,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
             meanCache[index] = traitParameter.getValue(index);
             likelihoodKnown = false;
-//            if (!cacheBranches) {
-//                throw new RuntimeException("Must cache means in IMTL if they are random");
-//            }
-            // TODO Need better solution.  If tips are random, cacheBranches should be true (to get reset).
-            // TODO However, jitter calls setParameterValue() on the tips at initialization
         }
         super.handleVariableChangedEvent(variable, index, type);
     }
@@ -340,7 +307,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
             // Fill in precision scalar, traitValues already filled in
 
-            if (missingTraits.isCompletelyMissing(thisNumber)) {
+            if (missing[thisNumber]) {
                 upperPrecisionCache[thisNumber] = 0;
                 lowerPrecisionCache[thisNumber] = 0; // Needed in the pre-order traversal
             } else { // not missing tip trait
@@ -368,26 +335,24 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         lowerPrecisionCache[thisNumber] = totalPrecision;
 
-        // Multiply child0 and child1 densities
+        // Multiple child0 and child1 densities
 
         if (totalPrecision == 0) {
             System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
         } else {
-            // Delegate in case either child is partially missing
-            missingTraits.computeWeightedAverage(meanCache,
-                    meanOffset0, precision0,
-                    meanOffset1, precision1,
-                    meanThisOffset, dim);
+
+//            computeWeightedMeanCache(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
+
+            computeWeightedAverage(
+                    meanCache, meanOffset0, precision0,
+                    meanCache, meanOffset1, precision1,
+                    meanCache, meanThisOffset, dim);
         }
 
         if (!treeModel.isRoot(node)) {
             // Integrate out trait value at this node
             double thisPrecision = 1.0 / getRescaledBranchLength(node);
-            if (Double.isInfinite(thisPrecision)) {
-                upperPrecisionCache[thisNumber] = totalPrecision;
-            } else {
-                upperPrecisionCache[thisNumber] = totalPrecision * thisPrecision / (totalPrecision + thisPrecision);
-            }
+            upperPrecisionCache[thisNumber] = totalPrecision * thisPrecision / (totalPrecision + thisPrecision);
         }
 
         // Compute logRemainderDensity
@@ -503,9 +468,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     public double[] getTraitForNode(Tree tree, NodeRef node, String traitName) {
 
-//        if (tree != treeModel) {
-//            throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
-//        }
+        if (tree != treeModel) {
+            throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
+        }
 
         getLogLikelihood();
 
@@ -583,10 +548,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     // Computes the weighted average of two vectors, used many times in these computations
 
-    public static void computeWeightedAverage(double[] in0, int offset0, double weight0,
-                                              double[] in1, int offset1, double weight1,
-                                              double[] out2, int offset2,
-                                              int length) {
+    protected static void computeWeightedAverage(double[] in0, int offset0, double weight0,
+                                                 double[] in1, int offset1, double weight1,
+                                                 double[] out2, int offset2,
+                                                 int length) {
 
         final double totalInverseWeight = 1.0 / (weight0 + weight1);
         for (int i = 0; i < length; i++) {
@@ -634,16 +599,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
         } else { // draw conditional on parentState
 
-            if (!missingTraits.isCompletelyMissing(thisIndex)
-                    && !missingTraits.isPartiallyMissing(thisIndex)) {
+            if (!missing[thisIndex]) {
 
                 System.arraycopy(meanCache, thisIndex * dim, drawnStates, thisIndex * dim, dim);
 
             } else {
 
-                if (missingTraits.isPartiallyMissing(thisIndex)) {
-                    throw new RuntimeException("Partially missing values are not yet implemented");
-                }
                 // This code should work for sampling a missing tip trait as well, but needs testing
 
                 // parent trait at drawnStates[parentOffset]
@@ -711,6 +672,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
 
+    protected boolean[] missing;
+
     private double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;
     private double[] storedLowerPrecisionCache;
@@ -721,7 +684,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     protected static boolean DEBUG = false;
     protected static boolean DEBUG_PREORDER = false;
-    protected static boolean DEBUG_PNAS = false;
 
     private double[] zeroDimVector;
 
@@ -731,7 +693,5 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] Ay;
     protected double[][] tmpM;
     protected double[] tmp2;
-
-    protected final MissingTraits missingTraits;
 
 }

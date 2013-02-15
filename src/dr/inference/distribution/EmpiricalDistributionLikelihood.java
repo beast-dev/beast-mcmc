@@ -1,7 +1,7 @@
 /*
- * EmpiricalDistributionLikelihood.java
+ * DistributionLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -56,8 +56,6 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
     private int from = -1;
     private int to = Integer.MAX_VALUE;
     private double offset = 0;
-    private double lower = Double.NEGATIVE_INFINITY;
-    private double upper = Double.POSITIVE_INFINITY;
 
     public EmpiricalDistributionLikelihood(String fileName, boolean inverse, boolean byColumn) {
         super(null);
@@ -69,11 +67,6 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             readFileByRow(fileName);
 
         this.inverse = inverse;    
-    }
-
-    public void setBounds(double lower, double upper) {
-        this.lower = lower;
-        this.upper = upper;
     }
 
     class ComparablePoint2D extends Point2D.Double implements Comparable<ComparablePoint2D> {
@@ -125,7 +118,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             // Find min density
             double minDensity = Double.POSITIVE_INFINITY;
             for(ComparablePoint2D pt : ptList) {
-                if (pt.getY() > 0.0 && pt.getY() < minDensity)
+                if (pt.getY() < minDensity)
                     minDensity = pt.getY();
             }
             // Set zeros in the middle to 1/100th of minDensity
@@ -135,22 +128,17 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             }
             values = new double[ptList.size()];
             density = new double[ptList.size()];
-            double total = 0.0;
             for(int i=0; i<ptList.size(); i++) {
                 ComparablePoint2D pt = ptList.get(i);
                 values[i] = pt.getX();
                 density[i] = pt.getY();
-                total += pt.getY();
-            }
-            for (int i = 0; i < density.length; ++i) {
-                density[i] /= total;
-            }
+            }         
             reader.close();
 
             if (DEBUG) {
                 System.err.println("EDL File : "+fileName);
                 System.err.println("Min value: "+values[0]);
-                System.err.println("Max value: "+values[values.length-1]);
+                System.err.println("Max value: "+values[values.length-1]);                
             }
 
         } catch (FileNotFoundException e) {
@@ -220,11 +208,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
 
                 double value = attributeValue[j] + offset;
-                if (value > lower && value < upper) {
-                    logL += logPDF(value);
-                } else {
-                    return Double.NEGATIVE_INFINITY;
-                }
+                logL += logPDF(value);
 
                 if (DEBUG) {
                     if (Double.isInfinite(logL)) {
@@ -232,7 +216,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
                                 (getId() != null ? getId() : fileName)                        
                         );
                         System.err.println("Evaluated at "+value);
-                        System.err.println("Min: " + values[0] + " Max: " + values[values.length - 1]);
+                        System.err.println("Min: "+values[0]+" Max: "+values[values.length-1]);
                     }
                 }
             }

@@ -54,6 +54,8 @@ public class CoalescentSimulatorParser extends AbstractXMLObjectParser {
             } else if (child instanceof TaxonList) {
                 taxonLists.add((TaxonList) child);
             } else if (xo.getChildName(i).equals(CONSTRAINED_TAXA)) {
+                rootHeight = -1; // ignore it? should we error?
+
                 XMLObject constrainedTaxa = (XMLObject) child;
 
                 // all taxa

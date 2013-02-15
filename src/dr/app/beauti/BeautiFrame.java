@@ -436,7 +436,7 @@ public class BeautiFrame extends DocumentFrame {
         FileInputStream fileIn =
                 new FileInputStream(file);
         try {
-        ObjectInputStream in = new ObjectInputStream(fileIn);
+            ObjectInputStream in = new ObjectInputStream(fileIn);
             options = (BeautiOptions) in.readObject();
             in.close();
         } catch (IOException ioe) {

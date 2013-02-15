@@ -53,8 +53,6 @@ import java.util.logging.Logger;
  */
 
 public class TreeLikelihood extends AbstractTreeLikelihood {
-    private static final boolean DEBUG = false;
-
     /**
      * Constructor.
      */
@@ -176,6 +174,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
 
                 addModel(tipStatesModel);
+                //useAmbiguities = true;
             } else {
                 for (int i = 0; i < extNodeCount; i++) {
                     // Find the id of tip i in the patternList
@@ -254,11 +253,6 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (index == -1) {
                 updateAllNodes();
             } else {
-                if (DEBUG) {
-                if (index >= treeModel.getNodeCount()) {
-                    throw new IllegalArgumentException("Node index out of bounds");
-                }
-                }
                 updateNode(treeModel.getNode(index));
             }
 

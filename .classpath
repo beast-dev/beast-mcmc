@@ -10,6 +10,7 @@
 	<classpathentry kind="lib" path="lib/jebl.jar"/>
 	<classpathentry kind="lib" path="lib/JRI.jar"/>
 	<classpathentry kind="lib" path="lib/junit-4.4.jar"/>
+	<classpathentry kind="lib" path="lib/libjri.jnilib"/>
 	<classpathentry kind="lib" path="lib/mpj.jar"/>
 	<classpathentry kind="lib" path="lib/mtj.jar"/>
 	<classpathentry kind="lib" path="lib/options.jar"/>
@@ -17,4 +18,3 @@
 	<classpathentry kind="lib" path="lib/commons-math-2.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
-

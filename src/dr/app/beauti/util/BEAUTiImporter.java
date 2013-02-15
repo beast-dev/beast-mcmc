@@ -271,7 +271,7 @@ public class BEAUTiImporter {
 
                         model = importer.parseMrBayesBlock(options, charSets);
 
-                    } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK) {
+                    } else if (block == NexusApplicationImporter.ASSUMPTIONS_BLOCK || block == NexusApplicationImporter.SETS_BLOCK) {
 
                         importer.parseAssumptionsBlock(charSets);
 

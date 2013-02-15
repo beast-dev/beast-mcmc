@@ -126,7 +126,7 @@ public class TreeLoggerParser extends LoggerParser {
                     List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
                     for (String match : matches) {
                         for (TreeTrait trait : traits) {
-                            if (trait.getTraitName().startsWith(match)) {
+                            if (trait.getTraitName().contains(match)) {
                                 filteredTraits.add(trait);
                             }
                         }
@@ -337,7 +337,7 @@ public class TreeLoggerParser extends LoggerParser {
             AttributeRule.newIntegerRule(DECIMAL_PLACES, true),
 
             new ElementRule(Tree.class, "The tree which is to be logged"),
-//            new ElementRule(BranchRates.class, true),
+            new ElementRule(BranchRates.class, "A branch rate model which is required to scale branches to expected substitutions", 0, 1),
 //            new ElementRule(TreeColouringProvider.class, true),
             new ElementRule(TREE_TRAIT,
                     new XMLSyntaxRule[] {

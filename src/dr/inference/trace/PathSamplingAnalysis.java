@@ -71,15 +71,11 @@ public class PathSamplingAnalysis {
             meanLogLikelihood.add(totalMean / lengthMean);
         }
 
-        mlContribution = new ArrayList<Double>();
-        
         logBayesFactor = 0;
         innerArea = 0;
         for (int i = 0; i < meanLogLikelihood.size() - 1; i++) {
-        	double contribution = (meanLogLikelihood.get(i + 1) + meanLogLikelihood.get(i)) / 2.0 *
-            (orderedTheta.get(i + 1) - orderedTheta.get(i));
-            logBayesFactor += contribution;
-            mlContribution.add(contribution);
+            logBayesFactor += (meanLogLikelihood.get(i + 1) + meanLogLikelihood.get(i)) / 2.0 *
+                    (orderedTheta.get(i + 1) - orderedTheta.get(i));
             if (i > 0 && i < (meanLogLikelihood.size() - 1)) {
                 innerArea += (meanLogLikelihood.get(i + 1) + meanLogLikelihood.get(i)) / 2.0 *
                         (orderedTheta.get(i + 1) - orderedTheta.get(i));
@@ -91,15 +87,11 @@ public class PathSamplingAnalysis {
     public String toString() {
         double bf = getLogBayesFactor();
         StringBuffer sb = new StringBuffer();
-        sb.append("PathParameter\tMeanPathLikelihood\tMLContribution\n");
+        sb.append("PathParameter\tMeanPathLikelihood\n");
         for (int i = 0; i < orderedTheta.size(); ++i) {
             sb.append(String.format(FORMAT, orderedTheta.get(i)));
             sb.append("\t");
             sb.append(String.format(FORMAT, meanLogLikelihood.get(i)));
-            sb.append("\t");
-            if (i != (orderedTheta.size()-1)) {
-            	sb.append(String.format(FORMAT, mlContribution.get(i)));
-            }
             sb.append("\n");
         }
 
@@ -243,7 +235,6 @@ public class PathSamplingAnalysis {
     private final List<Double> logLikelihoodSample;
     private final List<Double> thetaSample;
     private List<Double> meanLogLikelihood;
-    private List<Double> mlContribution;
     private final String logLikelihoodName;
     List<Double> orderedTheta;
     //private final String thetaName;

@@ -134,11 +134,9 @@ public interface Plot {
     /**
      * A point on the plot has been clicked
      */
-    void pointClicked(Point2D point, boolean isShiftDown);
+    void pointClicked(Point2D point);
 
-    void selectPoint(int index, boolean addToSelection);
-
-    void selectPoints(Rectangle2D dragRectangle, boolean addToSelection);
+    void selectPoints(Rectangle2D dragRectangle);
 
     void clearSelection();
 
@@ -152,9 +150,9 @@ public interface Plot {
 
     public interface Listener {
 
-        void pointClicked(double x, double y, boolean isShiftDown);
+        void pointClicked(double x, double y);
 
-        void markClicked(int index, double x, double y, boolean isShiftDown);
+        void markClicked(int index, double x, double y);
 
         void selectionChanged(Set<Integer> selectedPoints);
 
@@ -167,10 +165,10 @@ public interface Plot {
     }
 
     public class Adaptor implements Listener {
-        public void pointClicked(double x, double y, boolean isShiftDown) {
+        public void pointClicked(double x, double y) {
         }
 
-        public void markClicked(int index, double x, double y, boolean isShiftDown) {
+        public void markClicked(int index, double x, double y) {
         }
 
         public void selectionChanged(final Set<Integer> selectedPoints) {
@@ -535,22 +533,20 @@ public interface Plot {
         /**
          * A point on the plot has been clicked
          */
-        public void pointClicked(Point2D point, boolean isShiftDown) {
+        public void pointClicked(Point2D point) {
 
             double x = untransformX(point.getX());
             double y = untransformY(point.getY());
 
-            firePointClickedEvent(x, y, isShiftDown);
+            firePointClickedEvent(x, y);
         }
 
-        public void selectPoints(final Rectangle2D dragRectangle, final boolean addToSelection) {
+        public void selectPoints(final Rectangle2D dragRectangle) {
             if (dragRectangle == null) {
                 return;
             }
 
-            if (!addToSelection) {
-                selectedPoints.clear();
-            }
+            selectedPoints.clear();
 
             double x0 = untransformX(dragRectangle.getX());
             double y0 = untransformY(dragRectangle.getY() + dragRectangle.getHeight());
@@ -566,17 +562,6 @@ public interface Plot {
                     selectedPoints.add(i);
                 }
             }
-
-            fireSelectionChanged();
-        }
-
-        public void selectPoint(final int index, final boolean addToSelection) {
-
-            if (!addToSelection) {
-                selectedPoints.clear();
-            }
-
-            selectedPoints.add(index);
 
             fireSelectionChanged();
         }
@@ -610,31 +595,31 @@ public interface Plot {
         /**
          * Tells plot listeners that a point has been clicked.
          */
-        protected void firePointClickedEvent(double x, double y, boolean isShiftDown) {
+        protected void firePointClickedEvent(double x, double y) {
             for (int i = 0; i < listeners.size(); i++) {
                 final Listener listener = listeners.elementAt(i);
-                listener.pointClicked(x, y, isShiftDown);
-            }
-        }
+				listener.pointClicked(x, y);
+			}
+		}
 
-        /**
-         * Tells plot listeners that a point has been clicked.
-         */
-        protected void fireMarkClickedEvent(int index, double x, double y, boolean isShiftDown) {
-            for (int i=0; i < listeners.size(); i++) {
-                final Listener listener = listeners.elementAt(i);
-                listener.markClicked(index, x, y, isShiftDown);
-            }
-        }
+		/**
+		 * Tells plot listeners that a point has been clicked.
+		 */
+		protected void fireMarkClickedEvent(int index, double x, double y) {
+			for (int i=0; i < listeners.size(); i++) {
+				final Listener listener = listeners.elementAt(i);
+				listener.markClicked(index, x, y);
+			}
+		}
 
         protected void fireSelectionChanged() {
             for (int i = 0; i < listeners.size(); i++) {
                 final Listener listener = listeners.elementAt(i);
-                listener.selectionChanged(selectedPoints);
-            }
-        }
+				listener.selectionChanged(selectedPoints);
+			}
+		}
 
 
-    }
+	}
 }
 

@@ -1,12 +1,20 @@
 package dr.evomodelxml.speciation;
 
 
-import dr.evomodel.speciation.AlloppSpeciesBindings;
+import dr.util.Attributable;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
+import dr.evolution.tree.Tree;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
+import dr.evomodel.speciation.AlloppSpeciesBindings;
+import dr.evomodel.speciation.SpeciesBindings;
+import dr.evomodel.speciation.SpeciesTreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
-import dr.util.Attributable;
-import dr.xml.*;
 
 
 /**
@@ -66,14 +74,12 @@ import dr.xml.*;
 public class AlloppSpeciesNetworkModelParser extends AbstractXMLObjectParser {
 	public static final String ALLOPPSPECIESNETWORK = "alloppSpeciesNetwork";
     public static final String ONEHYBRIDIZATION = "oneHybridization";
-    public static final String TIP_POPULATIONS = "tipPopulations";
-    public static final String ROOT_POPULATIONS = "rootPopulations";
-    public static final String HYBRID_POPULATIONS = "hybridPopulations";
+    public static final String SPP_SPLIT_POPULATIONS = "sppSplitPopulations";
 
 
-
-
-    public String getParserName() {
+	
+	
+	public String getParserName() {
 		return ALLOPPSPECIESNETWORK;
 	}
 
@@ -82,61 +88,39 @@ public class AlloppSpeciesNetworkModelParser extends AbstractXMLObjectParser {
 		AlloppSpeciesBindings apspb = (AlloppSpeciesBindings) xo.getChild(AlloppSpeciesBindings.class);
 		boolean onehyb = xo.getBooleanAttribute(ONEHYBRIDIZATION);
 		
-		final XMLObject tippopxo = xo.getChild(TIP_POPULATIONS);
-		final double tippopvalue = tippopxo.getAttribute(Attributable.VALUE, 1.0);
-        final XMLObject rootpopxo = xo.getChild(ROOT_POPULATIONS);
-        final double rootpopvalue = rootpopxo.getAttribute(Attributable.VALUE, 1.0);
-        final XMLObject hybpopxo = xo.getChild(HYBRID_POPULATIONS);
-        final double hybpopvalue = hybpopxo.getAttribute(Attributable.VALUE, 1.0);
-
-		AlloppSpeciesNetworkModel asnm = new AlloppSpeciesNetworkModel(apspb, tippopvalue, rootpopvalue, hybpopvalue, onehyb);
-		// don't know dimensionality until network created, so replace parameters
-        ParameterParser.replaceParameter(tippopxo, asnm.tippopvalues);
-        final Parameter.DefaultBounds tippopbounds =
-                new Parameter.DefaultBounds(Double.MAX_VALUE, 0, asnm.tippopvalues.getDimension());
-        asnm.tippopvalues.addBounds(tippopbounds);
-
-        ParameterParser.replaceParameter(rootpopxo, asnm.rootpopvalues);
-        final Parameter.DefaultBounds rootpopbounds =
-                new Parameter.DefaultBounds(Double.MAX_VALUE, 0, asnm.rootpopvalues.getDimension());
-        asnm.rootpopvalues.addBounds(rootpopbounds);
-
-        ParameterParser.replaceParameter(hybpopxo, asnm.logginghybpopvalues);
-        final Parameter.DefaultBounds hybpopbounds =
-                new Parameter.DefaultBounds(Double.MAX_VALUE, 0, asnm.logginghybpopvalues.getDimension());
-        asnm.logginghybpopvalues.addBounds(hybpopbounds);
-        // note hybpopvalues are different and only work for logging.
-        return asnm;
+		final XMLObject sppxo = xo.getChild(SPP_SPLIT_POPULATIONS);
+		final double sppvalue = sppxo.getAttribute(Attributable.VALUE, 1.0);
+		
+		// JH in SpeciesTreeModelParser creates Parameter sppSplitPopulations
+		// here, calling SpeciesTreeModel.createSplitPopulationsParameter()
+		// which calls SpeciesBindings.nSpecies(). Seems complicated.
+        // Something must be done (replaceParameter) or MixedDistributionLikelihood
+		// gives an error data length != indicator length.
+		AlloppSpeciesNetworkModel asnm = new AlloppSpeciesNetworkModel(apspb, sppvalue, onehyb);
+		
+        ParameterParser.replaceParameter(sppxo, asnm.popvalues);
+        final Parameter.DefaultBounds sppbounds =
+                new Parameter.DefaultBounds(Double.MAX_VALUE, 0, asnm.popvalues.getDimension());
+        asnm.popvalues.addBounds(sppbounds);
+        
+		return asnm;
 	}
 
 	
-	private ElementRule tippopElementRule() {
-		return new ElementRule(TIP_POPULATIONS, new XMLSyntaxRule[]{
+	private ElementRule sppElementRule() {
+		return new ElementRule(SPP_SPLIT_POPULATIONS, new XMLSyntaxRule[]{
 	                        AttributeRule.newDoubleRule(Attributable.VALUE, true),
 	                        new ElementRule(Parameter.class)});
 		}
+	
+	
 
-    private ElementRule rootpopElementRule() {
-        return new ElementRule(ROOT_POPULATIONS, new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(Attributable.VALUE, true),
-                new ElementRule(Parameter.class)});
-    }
-    private ElementRule hybpopElementRule() {
-        return new ElementRule(HYBRID_POPULATIONS, new XMLSyntaxRule[]{
-                AttributeRule.newDoubleRule(Attributable.VALUE, true),
-                new ElementRule(Parameter.class)});
-    }
-
-
-
-    @Override
+	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
         		AttributeRule.newBooleanRule(ONEHYBRIDIZATION, true),
                 new ElementRule(AlloppSpeciesBindings.class),
-                tippopElementRule(),
-                rootpopElementRule(),
-                hybpopElementRule()
+                sppElementRule()
         };
 	}
 

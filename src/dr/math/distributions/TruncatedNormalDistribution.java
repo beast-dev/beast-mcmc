@@ -56,27 +56,13 @@ public class TruncatedNormalDistribution implements Distribution {
         this.lower = lower;
         this.upper = upper;
 
-        double upperCDF;
-        double lowerCDF;
 
-        if(upper!=Double.POSITIVE_INFINITY){
-            upperCDF = standardNormalCdf((upper-mean)/sd);
-        } else {
-            upperCDF = 1;
-        }
-
-        if(lower!=Double.NEGATIVE_INFINITY){
-            lowerCDF = standardNormalCdf((lower-mean)/sd);
-        } else {
-            lowerCDF = 0;
-        }
-
-        this.T = upperCDF - lowerCDF;
+        this.T = standardNormalCdf((upper - mean) / sd) - standardNormalCdf((lower - mean) / sd);
     }
 
 
     public double pdf(double x) {
-        if (x >= upper || x < lower)
+        if (x >= upper && x < lower)
             return 0.0;
         else
             return (standardNormalPdf((x - m) / sd) / sd) / T;
@@ -91,11 +77,7 @@ public class TruncatedNormalDistribution implements Distribution {
         if (x < lower)
             cdf = 0.;
         else if (x >= lower && x < upper)
-            if(lower!=Double.NEGATIVE_INFINITY){
-                cdf = (standardNormalCdf((x - m) / sd) - standardNormalCdf((lower - m) / sd)) / T;
-            } else {
-                cdf = (standardNormalCdf((x - m) / sd)) / T;
-            }
+            cdf = (standardNormalCdf((x - m) / sd) - standardNormalCdf((lower - m) / sd)) / T;
         else
             cdf = 1.0;
 

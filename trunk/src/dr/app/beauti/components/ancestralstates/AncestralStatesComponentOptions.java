@@ -81,12 +81,18 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         if (dNdSRobustCounting && partition.getPartitionSubstitutionModel().getCodonPartitionCount() != 3) {
             throw new IllegalArgumentException("dNdS Robust Counting can only be used with 3 codon partition models.");
         }
+        if (dNdSRobustCounting && (partition.getPartitionSubstitutionModel().isGammaHetero() ||
+                partition.getPartitionSubstitutionModel().isInvarHetero())) {
+            throw new IllegalArgumentException("dNdS Robust Counting can only be when site-specific rate heterogeneity is off.");
+        }
         getOptions(partition).dNdSRobustCounting = dNdSRobustCounting;
     }
 
     public boolean dNdSRobustCountingAvailable(final AbstractPartitionData partition) {
         // todo  - are there other constraints of the use of this model?
-        return partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 3;
+        return partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 3 &&
+                !partition.getPartitionSubstitutionModel().isGammaHetero() &&
+                !partition.getPartitionSubstitutionModel().isInvarHetero();
     }
 
     class AncestralStateOptions implements Serializable {

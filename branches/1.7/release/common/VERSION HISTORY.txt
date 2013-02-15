@@ -17,7 +17,7 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 13th February 2013
+Last updated: a.rambaut@ed.ac.uk - 14th February 2013
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
@@ -35,6 +35,7 @@ Version 1.7.5 released 14th February 2013
        BEAST runs on NSF Keeneland supercomputer in a massively parallel fashion.
        BEAUti site model options now has a 'Yang96' button to set a codon position model described in
        that paper.
+       TreeAnnotator now reads MrBayes clock trees.
 
 	Bug Fixes:	
         Issue 672:	BEAUti duplicates rates in phylograms

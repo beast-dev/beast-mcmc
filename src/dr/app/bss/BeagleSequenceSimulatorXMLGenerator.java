@@ -33,6 +33,11 @@ import dr.util.Attribute;
 import dr.xml.Report;
 import dr.xml.XMLParser;
 
+
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class BeagleSequenceSimulatorXMLGenerator {
 
 	private PartitionDataList dataList;

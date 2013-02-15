@@ -78,7 +78,10 @@ public class SimulationPanel extends JPanel implements Exportable {
 	}// END: SimulationPanel
 
 	public final void collectSettings() {
+
 		dataList.siteCount = sequenceLengthField.getValue();
+		dataList.simulationsCount = simulationsNumberField.getValue();
+
 		// frame.fireModelChanged();
 	}// END: collectSettings
 

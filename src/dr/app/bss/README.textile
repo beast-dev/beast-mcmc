@@ -20,8 +20,9 @@ Long overdue simulator in Beagle.
    
 h1. TODO
 * parse heights taxa panel
-* keep values set in Editors
+* keep drop-down choices set in Editors
 * animated buttons in Partitions Panel
 * icons in Simulate panel
 * simulate number of simulations times
-* connect sequence length and to fields
+  - for each tree in trees file ismulate number of simulations times
+* connect 'sequence length' and 'to' fields

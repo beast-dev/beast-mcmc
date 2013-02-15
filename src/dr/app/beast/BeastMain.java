@@ -297,8 +297,15 @@ public class BeastMain {
             System.exit(1);
         }
 
+        if (arguments.hasOption("version")) {
+            printTitle();
+        }
+
         if (arguments.hasOption("help")) {
             printUsage(arguments);
+        }
+
+        if (arguments.hasOption("version") || arguments.hasOption("help")) {
             System.exit(0);
         }
 

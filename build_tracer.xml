@@ -130,6 +130,7 @@
     </target>
 
     <property name="version" value="1.6pre" />
+    <property name="version_number" value="1.6.0" />
     <property name="release_dir" value="release_tracer" />
     <property name="name" value="Tracer" />
 
@@ -164,9 +165,9 @@
         <launch4j configFile="${Windows_dir}/tracer_launch4j.xml"
                   jar="${dist}/tracer.jar"
                   outfile="${Windows_package_dir}/${name} v${version}.exe"
-                  fileVersion="${version}.0.0"
+                  fileVersion="${version_number}.0"
                   txtFileVersion="${version}"
-                  productVersion="${version}.0.0"
+                  productVersion="${version_number}.0"
                   txtProductVersion="${version}"/>
 
         <zip destfile="${release_dir}/${name} v${version}.zip">

@@ -38,6 +38,9 @@ Version 1.7.5 released 14th February 2013
        TreeAnnotator now reads MrBayes clock trees.
 
 	Bug Fixes:
+        Issue 676:	Attempting to open a file that isn't a BEAUti file will now display a message warning
+                    about loading a BEAST XML file.
+        Issue 675:	The BirthDeath(Calibrated) model was not generating the calibration distribution model
         Issue 672:	BEAUti duplicates rates in phylograms
         Issue 671:	Exporting taxon names in Nexus format - names with apostrophes are enclosed in single quotes.
         Issue 667:	Dollo ambiguity code is incorrect when using BEAUti's no data option.

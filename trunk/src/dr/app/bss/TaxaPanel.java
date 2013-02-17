@@ -12,8 +12,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 
@@ -22,7 +20,7 @@ import dr.app.gui.table.TableEditorStopper;
 @SuppressWarnings("serial")
 public class TaxaPanel extends JPanel implements Exportable {
 
-	private BeagleSequenceSimulatorFrame frame = null;
+//	private BeagleSequenceSimulatorFrame frame = null;
 	private PartitionDataList dataList = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
@@ -31,10 +29,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	private double[] heights = null;
 
-	public TaxaPanel(BeagleSequenceSimulatorFrame frame,
+	public TaxaPanel(
 			PartitionDataList dataList) {
 
-		this.frame = frame;
+//		this.frame = frame;
 		this.dataList = dataList;
 
 		taxaTableModel = new TaxaTableModel();
@@ -73,12 +71,12 @@ public class TaxaPanel extends JPanel implements Exportable {
 		
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxaTable);
 
-		taxaTable.getSelectionModel().addListSelectionListener(
-				new ListSelectionListener() {
-					public void valueChanged(ListSelectionEvent evt) {
-						selectionChanged();
-					}
-				});
+//		taxaTable.getSelectionModel().addListSelectionListener(
+//				new ListSelectionListener() {
+//					public void valueChanged(ListSelectionEvent evt) {
+//						selectionChanged();
+//					}
+//				});
 
 		scrollPane = new JScrollPane(taxaTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -104,15 +102,15 @@ public class TaxaPanel extends JPanel implements Exportable {
 		return taxaTable;
 	}
 
-	public void selectionChanged() {
-
-		int[] selRows = taxaTable.getSelectedRows();
-		if (selRows == null || selRows.length == 0) {
-			frame.dataSelectionChanged(false);
-		} else {
-			frame.dataSelectionChanged(true);
-		}
-	}
+//	public void selectionChanged() {
+//
+//		int[] selRows = taxaTable.getSelectedRows();
+//		if (selRows == null || selRows.length == 0) {
+//			frame.dataSelectionChanged(false);
+//		} else {
+//			frame.dataSelectionChanged(true);
+//		}
+//	}
 
 	private void getHeights() {
 

@@ -217,8 +217,9 @@ public class TreePanel extends JPanel implements Exportable {
 				if (file != null) {
 
 					treesFileNameText.setText(file.getName());
-
-					importTreesFromFile(file);
+					dataList.treesFilename = file;
+					
+//					importTreesFromFile(file);
 
 					File tmpDir = chooser.getCurrentDirectory();
 					if (tmpDir != null) {
@@ -234,35 +235,34 @@ public class TreePanel extends JPanel implements Exportable {
 
 	}// END: doImport
 
-	public void importTreesFromFile(final File file) throws IOException,
-			ImportException {
-
-		frame.setBusy();
-		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-
-			// Executed in background thread
-			public Void doInBackground() {
-
-				try {
-
-					// TODO
-
-				} catch (Exception e) {
-					Utils.handleException(e);
-				}// END: try-catch block
-
-				return null;
-			}// END: doInBackground()
-
-			// Executed in event dispatch thread
-			public void done() {
-				frame.setIdle();
-			}// END: done
-		};
-
-		worker.execute();
-
-	}// END: importTreesFromFile
+//	public void importTreesFromFile(final File file) throws IOException,
+//			ImportException {
+//
+//		frame.setBusy();
+//		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+//
+//			// Executed in background thread
+//			public Void doInBackground() {
+//
+//				try {
+//
+//
+//				} catch (Exception e) {
+//					Utils.handleException(e);
+//				}// END: try-catch block
+//
+//				return null;
+//			}// END: doInBackground()
+//
+//			// Executed in event dispatch thread
+//			public void done() {
+//				frame.setIdle();
+//			}// END: done
+//		};
+//
+//		worker.execute();
+//
+//	}// END: importTreesFromFile
 
 	public JComponent getExportableComponent() {
 		return this;

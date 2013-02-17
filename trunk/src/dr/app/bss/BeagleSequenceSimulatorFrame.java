@@ -7,15 +7,12 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -63,7 +60,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			setSize(new Dimension(1100, 600));
 			setMinimumSize(new Dimension(260, 100));
 
-			taxaPanel = new TaxaPanel(this, dataList);
+			taxaPanel = new TaxaPanel(dataList);
 			treePanel = new TreePanel(this, dataList);
 			partitionsPanel = new PartitionsPanel(this, dataList);
 			simulationPanel = new SimulationPanel(this, dataList);
@@ -121,26 +118,21 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	// ---SIMULATE---//
 	// ////////////////
 
-	public Action getExportAction() {
-		return simulateAction;
-	}// END: getExportAction
-
-	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
-		public void actionPerformed(ActionEvent ae) {
-
-			doExport();
-
-		}// END: actionPerformed
-	};
-
-	public final void doExport() {
+	public void doExport() {
 
 		try {
 
-			if (dataList.forestMap.size() == 0) {
+			if (dataList.forestMap.size() == 0
+					&& simulationPanel.simulationType == SimulationPanel.FIRST_SIMULATION_TYPE) {
 
 				tabbedPane.setSelectedComponent(treePanel);
 				treePanel.doImportTree();
+
+			} else if (dataList.treesFilename == null
+					&& simulationPanel.simulationType == SimulationPanel.SECOND_SIMULATION_TYPE) {
+
+				tabbedPane.setSelectedComponent(treePanel);
+				treePanel.doImportTrees();
 
 			} else {
 
@@ -155,7 +147,22 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 				if (file != null) {
 
 					collectAllSettings();
-					generateFile(file);
+
+					switch (simulationPanel.simulationType) {
+
+					case SimulationPanel.FIRST_SIMULATION_TYPE:
+
+						generateNumberOfSimulations(file);
+						break;
+
+					case SimulationPanel.SECOND_SIMULATION_TYPE:
+						generateForEachTree(file);
+						break;
+
+					default:
+
+						throw new RuntimeException("Unknown analysis type!");
+					}
 
 					File tmpDir = chooser.getCurrentDirectory();
 					if (tmpDir != null) {
@@ -172,7 +179,41 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
-	private void generateFile(final File outFile) throws IOException,
+	private void generateForEachTree(final File outFile) throws IOException,
+			ImportException {
+
+		setBusy();
+
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+			// Executed in background thread
+			public Void doInBackground() {
+
+				try {
+
+					// TODO
+
+				} catch (Exception e) {
+					Utils.handleException(e);
+				}
+
+				return null;
+			}// END: doInBackground
+
+			// Executed in event dispatch thread
+			public void done() {
+
+				setStatus("Generated " + dataList.siteCount + " replicates.");
+				setIdle();
+
+			}// END: done
+		};
+
+		worker.execute();
+
+	}// END: generateForEachTree
+	
+	private void generateNumberOfSimulations(final File outFile) throws IOException,
 			ImportException {
 
 		setBusy();
@@ -190,7 +231,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 							Utils.printDataList(dataList);
 						}
 
-						String path = ((i == 0) ? outFile.toString() : outFile.toString() + i);
+						String path = ((i == 0) ? outFile.toString() : outFile
+								.toString() + i);
 
 						PrintWriter writer = new PrintWriter(new FileWriter(
 								path));
@@ -233,8 +275,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				setStatus("Generated " + dataList.siteCount
-						+ " replicates.");
+				setStatus("Generated " + dataList.siteCount + " replicates.");
 				setIdle();
 
 			}// END: done
@@ -242,7 +283,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 		worker.execute();
 
-	}// END: generateFile
+	}// END: generateNumberOfSimulations
 
 	// ////////////////////
 	// ---GENERATE XML---//
@@ -263,7 +304,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			if (file != null) {
 
 				collectAllSettings();
-				BeagleSequenceSimulatorXMLGenerator xmlGenerator = new BeagleSequenceSimulatorXMLGenerator(dataList);
+				BeagleSequenceSimulatorXMLGenerator xmlGenerator = new BeagleSequenceSimulatorXMLGenerator(
+						dataList);
 				xmlGenerator.generateXML(file);
 
 				File tmpDir = chooser.getCurrentDirectory();
@@ -279,19 +321,22 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doGenerateXML
 
-	@Override
-	public JComponent getExportableComponent() {
-		JComponent exportable = null;
-		Component component = tabbedPane.getSelectedComponent();
+	// /////////////////
+	// ---MAIN MENU---//
+	// /////////////////
 
-		if (component instanceof Exportable) {
-			exportable = ((Exportable) component).getExportableComponent();
-		} else if (component instanceof JComponent) {
-			exportable = (JComponent) component;
-		}
-
-		return exportable;
-	}// END: getExportableComponent
+	// public Action getExportAction() {
+	// return simulateAction;
+	// }// END: getExportAction
+	//
+	// private AbstractAction simulateAction = new AbstractAction("Simulate...")
+	// {
+	// public void actionPerformed(ActionEvent ae) {
+	//
+	// doExport();
+	//
+	// }// END: actionPerformed
+	// };
 
 	@Override
 	protected boolean readFromFile(File arg0) throws IOException {
@@ -303,6 +348,22 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		return false;
 	}
 
+	// public void fireModelChanged() {
+	// collectAllSettings();
+	// }// END: fireModelChanged
+
+	// //////////////////////
+	// ---SHARED METHODS---//
+	// //////////////////////
+
+	public File getWorkingDirectory() {
+		return workingDirectory;
+	}// END: getWorkingDirectory
+
+	public void setWorkingDirectory(File workingDirectory) {
+		this.workingDirectory = workingDirectory;
+	}// END: setWorkingDirectory
+
 	public void collectAllSettings() {
 
 		// frequencyPanel.collectSettings();
@@ -313,25 +374,13 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: collectAllSettings
 
-	public void dataSelectionChanged(boolean isSelected) {
-		if (isSelected) {
-			getDeleteAction().setEnabled(true);
-		} else {
-			getDeleteAction().setEnabled(false);
-		}
-	}// END: dataSelectionChanged
-
-	public File getWorkingDirectory() {
-		return workingDirectory;
-	}// END: getWorkingDirectory
-
-	public void setWorkingDirectory(File workingDirectory) {
-		this.workingDirectory = workingDirectory;
-	}// END: setWorkingDirectory
-
-//	public void fireModelChanged() {
-//		collectAllSettings();
-//	}// END: fireModelChanged
+//	public void dataSelectionChanged(boolean isSelected) {
+//		if (isSelected) {
+//			getDeleteAction().setEnabled(true);
+//		} else {
+//			getDeleteAction().setEnabled(false);
+//		}
+//	}// END: dataSelectionChanged
 
 	public void setBusy() {
 		progressBar.setIndeterminate(true);
@@ -344,7 +393,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	public void setStatus(String status) {
 		statusLabel.setText(status);
 	}
-	
+
 	public void enableTreeFileButton() {
 		treePanel.enableTreeFileButton();
 	}
@@ -360,13 +409,27 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	public void disableTreesFileButton() {
 		treePanel.disableTreesFileButton();
 	}
-	
+
 	public void hideTreeColumn() {
 		partitionsPanel.hideTreeColumn();
 	}
-	
+
 	public void showTreeColumn() {
 		partitionsPanel.showTreeColumn();
 	}
-	
+
+	@Override
+	public JComponent getExportableComponent() {
+		JComponent exportable = null;
+		Component component = tabbedPane.getSelectedComponent();
+
+		if (component instanceof Exportable) {
+			exportable = ((Exportable) component).getExportableComponent();
+		} else if (component instanceof JComponent) {
+			exportable = (JComponent) component;
+		}
+
+		return exportable;
+	}// END: getExportableComponent
+
 }// END: class

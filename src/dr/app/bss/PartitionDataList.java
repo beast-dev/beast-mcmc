@@ -22,8 +22,10 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	
 	public LinkedHashMap<File, TreeModel> forestMap = new LinkedHashMap<File, TreeModel>();
 	
+	public File treesFilename = null;
+	
 	public PartitionDataList() {
 		super();
 	}// END: Constructor
 	
-}//END:class
+}// END:class

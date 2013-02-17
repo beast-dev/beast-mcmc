@@ -21,6 +21,10 @@ import org.virion.jam.components.WholeNumberField;
 @SuppressWarnings("serial")
 public class SimulationPanel extends JPanel implements Exportable {
 
+	public int simulationType;
+	public static final int FIRST_SIMULATION_TYPE = 0;
+	public static final int SECOND_SIMULATION_TYPE = 1;
+	
 	private BeagleSequenceSimulatorFrame frame;
 	private PartitionDataList dataList;
 	private OptionsPanel optionPanel;
@@ -155,6 +159,9 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	private void setFirstSimulationType() {
 		simulationsNumberField.setEnabled(true);
+		generateXML.setEnabled(true);
+		simulationType = FIRST_SIMULATION_TYPE;
+		
 		frame.disableTreesFileButton();
 		frame.enableTreeFileButton();
 		frame.showTreeColumn();
@@ -162,6 +169,9 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	private void setSecondSimulationType() {
 		simulationsNumberField.setEnabled(false);
+		generateXML.setEnabled(false);
+		simulationType = SECOND_SIMULATION_TYPE;
+		
 		frame.enableTreesFileButton();
 		frame.disableTreeFileButton();
 		frame.hideTreeColumn();

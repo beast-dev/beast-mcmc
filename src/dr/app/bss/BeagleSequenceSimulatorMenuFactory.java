@@ -19,7 +19,7 @@ public class BeagleSequenceSimulatorMenuFactory extends SingleDocMenuBarFactory 
 		documentFrame.getSaveAsAction().setEnabled(false);
 
 		documentFrame.getCutAction().setEnabled(false);
-		documentFrame.getCopyAction().setEnabled(true);
+		documentFrame.getCopyAction().setEnabled(false);
 		documentFrame.getPasteAction().setEnabled(false);
 		documentFrame.getDeleteAction().setEnabled(false);
 		documentFrame.getSelectAllAction().setEnabled(false);

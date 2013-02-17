@@ -14,6 +14,7 @@ import java.io.IOException;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
@@ -35,7 +36,12 @@ public class TreePanel extends JPanel implements Exportable {
 
 	private JButton treeFileButton = new JButton("Choose File...");
 	private JTextField treeFileNameText = new JTextField("not selected", 16);
+	private JLabel treeFileLabel = new JLabel("Input Tree File: ");
 
+	private JButton treesFileButton = new JButton("Choose File...");
+	private JTextField treesFileNameText = new JTextField("not selected", 16);
+	private JLabel treesFileLabel = new JLabel("Input Trees File: ");
+	
 	public TreePanel(final BeagleSequenceSimulatorFrame frame,
 			final PartitionDataList dataList) {
 
@@ -43,7 +49,9 @@ public class TreePanel extends JPanel implements Exportable {
 
 		this.frame = frame;
 		this.dataList = dataList;
-
+		JPanel tmpPanel;
+		
+		
 		setOpaque(false);
 		setLayout(new BorderLayout());
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
@@ -52,23 +60,37 @@ public class TreePanel extends JPanel implements Exportable {
 		treeFileNameText.setEditable(false);
 		treeFileButton.addActionListener(new ListenTreeFileButton());
 
-		JPanel tmpPanel = new JPanel(new BorderLayout(0, 0));
+		tmpPanel = new JPanel(new BorderLayout(0, 0));
 		tmpPanel.setOpaque(false);
 		tmpPanel.add(treeFileNameText, BorderLayout.CENTER);
 		tmpPanel.add(treeFileButton, BorderLayout.EAST);
-		optionPanel.addComponentWithLabel("Input Tree File: ", tmpPanel);
+		optionPanel.addComponents(treeFileLabel, tmpPanel);
 
+		treesFileNameText.setEditable(false);
+		treesFileButton.addActionListener(new ListenTreesFileButton());
+		
+		tmpPanel = new JPanel(new BorderLayout(0, 0));
+		tmpPanel.setOpaque(false);
+		tmpPanel.add(treesFileNameText, BorderLayout.CENTER);
+		tmpPanel.add(treesFileButton, BorderLayout.EAST);
+		optionPanel.addComponents(treesFileLabel, tmpPanel);
+		
+		
 	}// END: Constructor
+
+	// ///////////////////
+	// ---IMPORT TREE---//
+	// ///////////////////
 
 	private class ListenTreeFileButton implements ActionListener {
 		public void actionPerformed(ActionEvent ae) {
 
-			doImport();
+			doImportTree();
 
 		}// END: actionPerformed
 	}// END: ListenTreeFileButton
 
-	public void doImport() {
+	public void doImportTree() {
 
 		try {
 
@@ -85,10 +107,9 @@ public class TreePanel extends JPanel implements Exportable {
 
 				if (file != null) {
 
-//					dataList.treeFilesList.add(file);
 					treeFileNameText.setText(file.getName());
 
-					importFromFile(file);
+					importTreeFromFile(file);
 
 					File tmpDir = chooser.getCurrentDirectory();
 					if (tmpDir != null) {
@@ -98,16 +119,14 @@ public class TreePanel extends JPanel implements Exportable {
 				}// END: file opened check
 			}// END: dialog cancelled check
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ImportException e) {
-			e.printStackTrace();
+		} catch (Exception e) {
+			Utils.handleException(e);
 		}// END: try-catch block
 
-	}// END: doImport
+	}// END: doImportTree
 
-	//TODO: this should import from all the different formats
-	public void importFromFile(final File file) throws IOException,
+	// TODO: this should import from all the different formats
+	public void importTreeFromFile(final File file) throws IOException,
 			ImportException {
 
 		frame.setBusy();
@@ -122,26 +141,21 @@ public class TreePanel extends JPanel implements Exportable {
 							file));
 
 					String line = reader.readLine();
-					
-//		            while (line != null && line.length() == 0) {
-//		                line = reader.readLine();
-//		                System.out.println(line);
-//		            }
-					
+
 					Tree tree = null;
 
 					if (line.toUpperCase().startsWith("#NEXUS")) {
-						
+
 						NexusImporter importer = new NexusImporter(reader);
 						tree = importer.importTree(null);
-						
+
 					} else {
-						
+
 						NewickImporter importer = new NewickImporter(reader);
 
 						// tree = importer.importNextTree();
 						tree = importer.importTree(null);
-						
+
 					}
 
 					dataList.forestMap.put(file, new TreeModel(tree));
@@ -152,9 +166,9 @@ public class TreePanel extends JPanel implements Exportable {
 						}// END: taxon exists check
 
 					}
-					
+
 					reader.close();
-					
+
 				} catch (Exception e) {
 					Utils.handleException(e);
 				}// END: try-catch block
@@ -171,10 +185,111 @@ public class TreePanel extends JPanel implements Exportable {
 
 		worker.execute();
 
-	}// END: importFromFile
+	}// END: importTreeFromFile
+
+	// ////////////////////
+	// ---IMPORT TREES---//
+	// ////////////////////
+
+	private class ListenTreesFileButton implements ActionListener {
+		public void actionPerformed(ActionEvent ae) {
+
+			doImportTrees();
+
+		}// END: actionPerformed
+	}// END: ListenTreeFileButton
+
+	public void doImportTrees() {
+
+		try {
+
+			JFileChooser chooser = new JFileChooser();
+			chooser.setDialogTitle("Select input trees file...");
+			chooser.setMultiSelectionEnabled(false);
+			chooser.setCurrentDirectory(frame.getWorkingDirectory());
+
+			int returnValue = chooser.showOpenDialog(Utils.getActiveFrame());
+
+			if (returnValue == JFileChooser.APPROVE_OPTION) {
+
+				File file = chooser.getSelectedFile();
+
+				if (file != null) {
+
+					treesFileNameText.setText(file.getName());
+
+					importTreesFromFile(file);
+
+					File tmpDir = chooser.getCurrentDirectory();
+					if (tmpDir != null) {
+						frame.setWorkingDirectory(tmpDir);
+					}
+
+				}// END: file opened check
+			}// END: dialog cancelled check
+
+		} catch (Exception e) {
+			Utils.handleException(e);
+		}// END: try-catch block
+
+	}// END: doImport
+
+	public void importTreesFromFile(final File file) throws IOException,
+			ImportException {
+
+		frame.setBusy();
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+			// Executed in background thread
+			public Void doInBackground() {
+
+				try {
+
+					// TODO
+
+				} catch (Exception e) {
+					Utils.handleException(e);
+				}// END: try-catch block
+
+				return null;
+			}// END: doInBackground()
+
+			// Executed in event dispatch thread
+			public void done() {
+				frame.setIdle();
+			}// END: done
+		};
+
+		worker.execute();
+
+	}// END: importTreesFromFile
 
 	public JComponent getExportableComponent() {
 		return this;
 	}// END: getExportableComponent
 
+	public void enableTreeFileButton() {
+		treeFileLabel.setEnabled(true);
+		treeFileNameText.setEnabled(true);
+		treeFileButton.setEnabled(true);
+	}
+	
+	public void disableTreeFileButton() {
+		treeFileLabel.setEnabled(false);
+		treeFileNameText.setEnabled(false);
+		treeFileButton.setEnabled(false);
+	}
+	
+	public void enableTreesFileButton() {
+		treesFileLabel.setEnabled(true);
+		treesFileNameText.setEnabled(true);
+		treesFileButton.setEnabled(true);
+	}
+	
+	public void disableTreesFileButton() {
+		treesFileLabel.setEnabled(false);
+		treesFileNameText.setEnabled(false);
+		treesFileButton.setEnabled(false);
+	}
+	
 }// END: class

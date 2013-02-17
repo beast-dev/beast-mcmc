@@ -35,6 +35,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private JTable partitionTable = null;
 	private PartitionTableModel partitionTableModel = null;
+	private TableColumnHider hider;
 	private JScrollPane scrollPane;
 
 	private TableColumn column;
@@ -79,6 +80,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		partitionTable.addMouseListener(new JTableButtonMouseListener(
 				partitionTable));
 
+	    hider = new TableColumnHider(partitionTable);
+		
 		setLayout(new BorderLayout());
 
 		scrollPane = new JScrollPane(partitionTable,
@@ -132,10 +135,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	}// END: Constructor
 
-	public JComponent getExportableComponent() {
-		return this;
-	}// END: getExportableComponent
-
 	private void setPartitions() {
 		addPartitionAction.setEnabled(true);
 		if (partitionsCount == 1) {
@@ -171,7 +170,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			}// END: event check
 
-			frame.fireModelChanged();
+			frame.collectAllSettings();
 
 		}// END: tableChanged
 	}// END: InteractiveTableModelListener
@@ -357,4 +356,16 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	}// END: JTableButtonMouseListener class
 
+	public void hideTreeColumn() {
+		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.PARTITION_TREE_INDEX]);
+	}
+	
+	public void showTreeColumn() {
+		hider.show(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.PARTITION_TREE_INDEX]);
+	}
+	
+	public JComponent getExportableComponent() {
+		return this;
+	}// END: getExportableComponent
+	
 }// END: class

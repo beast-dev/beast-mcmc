@@ -19,10 +19,11 @@ h1. PURPOSE
 Long overdue simulator in Beagle.  
    
 h1. TODO
+* simulate tree given taxa names only
+* for each tree in .trees file simulate a data-set
 * parse heights taxa panel
 * keep drop-down choices set in Editors
-* animated buttons in Partitions Panel
-* icons in Simulate panel
-* simulate number of simulations times
-  - for each tree in trees file ismulate number of simulations times
+* animate buttons in Partitions Panel
+* show icons in Simulate panel
 * connect 'sequence length' and 'to' fields
+* populate the main menu

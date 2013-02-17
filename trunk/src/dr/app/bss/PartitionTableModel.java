@@ -27,7 +27,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int CLOCK_RATE_MODEL_INDEX = 7;
 	public final static int FREQUENCY_MODEL_INDEX = 8;
 
-	private String[] COLUMN_NAMES = { "Partition Tree", "Data Type" ,"From", "To", "Every",
+	public static String[] COLUMN_NAMES = { "Partition Tree", "Data Type" ,"From", "To", "Every",
 			"Branch Substitution Model", "Site Rate Model", "Clock Rate Model",
 			"Frequency Model" };
 

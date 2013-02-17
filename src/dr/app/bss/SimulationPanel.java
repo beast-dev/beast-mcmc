@@ -4,10 +4,14 @@ import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 
 import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -63,14 +67,15 @@ public class SimulationPanel extends JPanel implements Exportable {
 		// Simulation Type
 		JPanel simulationTypeHolder = new JPanel();
 		simulationTypeHolder.setOpaque(false);
-		simulationTypeHolder.setLayout(new GridLayout(2, 1));
-
-		// Button group
-		ButtonGroup buttonGroup = new ButtonGroup();
-
+		GridBagLayout layout = new GridBagLayout();
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.anchor = GridBagConstraints.BASELINE_LEADING;
+//		constraints.insets = new Insets(0,0,0,0);
+//		constraints.fill = GridBagConstraints.VERTICAL ;
+		simulationTypeHolder.setLayout(layout);
+		
+		
 		// Add first radio button
-		JPanel simulationsNumberHolder = new JPanel();
-		simulationsNumberHolder.setOpaque(false);
 		firstSimulationType = new String("Number of simulations");
 		numberOfSimulationsRadioButton = new JRadioButton();
 		numberOfSimulationsRadioButton.setActionCommand(firstSimulationType);
@@ -79,30 +84,41 @@ public class SimulationPanel extends JPanel implements Exportable {
 		numberOfSimulationsRadioButton.setSelected(true);
 		numberOfSimulationsRadioButton
 				.addActionListener(new ChooseAnalysisTypeListener());
-		simulationsNumberHolder.add(numberOfSimulationsRadioButton);
+		constraints.gridx = 0;
+		constraints.gridy = 0; 
+		simulationTypeHolder.add(numberOfSimulationsRadioButton, constraints);
 
 		// Add label
-		JLabel simulationsNumberLabel = new JLabel(firstSimulationType);
-		simulationsNumberHolder.add(simulationsNumberLabel);
+		JLabel simulationsNumberLabel = new JLabel(firstSimulationType + ":");
+		constraints.gridx = 1;
+		simulationTypeHolder.add(simulationsNumberLabel, constraints);
 
 		// Add number field
 		simulationsNumberField = new WholeNumberField(1, Integer.MAX_VALUE);
 		simulationsNumberField.setColumns(8);
 		simulationsNumberField.setValue(dataList.simulationsCount);
-		simulationsNumberHolder.add(simulationsNumberField);
-		simulationTypeHolder.add(simulationsNumberHolder);
+		constraints.gridx = 2;
+		simulationTypeHolder.add(simulationsNumberField, constraints);
 
 		// Add second radio button
 		secondSimulationType = new String("Simulate for each tree");
-		simulateForEachTreeRadioButton = new JRadioButton(secondSimulationType);
+		simulateForEachTreeRadioButton = new JRadioButton();
 		simulateForEachTreeRadioButton.setActionCommand(secondSimulationType);
 		simulateForEachTreeRadioButton
 				.setToolTipText("Generate one dataset for each tree topology in .trees file.");
 		simulateForEachTreeRadioButton
 				.addActionListener(new ChooseAnalysisTypeListener());
-		simulationTypeHolder.add(simulateForEachTreeRadioButton);
-
+		constraints.gridx = 0;
+		constraints.gridy = 1; 
+		simulationTypeHolder.add(simulateForEachTreeRadioButton, constraints);
+		
+		// Add label
+		JLabel simulateForEachTreeLabel = new JLabel(secondSimulationType);
+		constraints.gridx = 1;
+		simulationTypeHolder.add(simulateForEachTreeLabel, constraints);
+		
 		// Group radio buttons
+		ButtonGroup buttonGroup = new ButtonGroup();
 		buttonGroup.add(numberOfSimulationsRadioButton);
 		buttonGroup.add(simulateForEachTreeRadioButton);
 

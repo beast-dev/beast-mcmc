@@ -69,7 +69,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			simulationPanel = new SimulationPanel(this, dataList);
 
 			tabbedPane.addTab("Taxa", null, taxaPanel);
-			tabbedPane.addTab("Tree", null, treePanel);
+			tabbedPane.addTab("Trees", null, treePanel);
 			tabbedPane.addTab("Partitions", null, partitionsPanel);
 			tabbedPane.addTab("Simulation", null, simulationPanel);
 
@@ -140,7 +140,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			if (dataList.forestMap.size() == 0) {
 
 				tabbedPane.setSelectedComponent(treePanel);
-				treePanel.doImport();
+				treePanel.doImportTree();
 
 			} else {
 
@@ -172,7 +172,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
-	//TODO: generate number of simulations time (incrementing seed?)
 	private void generateFile(final File outFile) throws IOException,
 			ImportException {
 
@@ -185,8 +184,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 				try {
 
-					System.out.println("SimCount: " + dataList.simulationsCount);
-					
 					for (int i = 0; i < dataList.simulationsCount; i++) {
 
 						if (BeagleSequenceSimulatorApp.DEBUG) {
@@ -306,7 +303,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		return false;
 	}
 
-	private void collectAllSettings() {
+	public void collectAllSettings() {
 
 		// frequencyPanel.collectSettings();
 		// substModelPanel.collectSettings();
@@ -332,9 +329,9 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		this.workingDirectory = workingDirectory;
 	}// END: setWorkingDirectory
 
-	public void fireModelChanged() {
-		collectAllSettings();
-	}// END: fireModelChanged
+//	public void fireModelChanged() {
+//		collectAllSettings();
+//	}// END: fireModelChanged
 
 	public void setBusy() {
 		progressBar.setIndeterminate(true);
@@ -346,6 +343,30 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	public void setStatus(String status) {
 		statusLabel.setText(status);
+	}
+	
+	public void enableTreeFileButton() {
+		treePanel.enableTreeFileButton();
+	}
+
+	public void disableTreeFileButton() {
+		treePanel.disableTreeFileButton();
+	}
+
+	public void enableTreesFileButton() {
+		treePanel.enableTreesFileButton();
+	}
+
+	public void disableTreesFileButton() {
+		treePanel.disableTreesFileButton();
+	}
+	
+	public void hideTreeColumn() {
+		partitionsPanel.hideTreeColumn();
+	}
+	
+	public void showTreeColumn() {
+		partitionsPanel.showTreeColumn();
 	}
 	
 }// END: class

@@ -51,7 +51,6 @@ public class TreePanel extends JPanel implements Exportable {
 		this.dataList = dataList;
 		JPanel tmpPanel;
 		
-		
 		setOpaque(false);
 		setLayout(new BorderLayout());
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);

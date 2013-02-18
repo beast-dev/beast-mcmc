@@ -25,7 +25,14 @@ public class ProductStatisticParser extends AbstractXMLObjectParser {
 
         boolean elementwise = xo.getAttribute(ELEMENT_WISE, false);
 
-        ProductStatistic productStatistic = new ProductStatistic(PRODUCT_STATISTIC, elementwise);
+        String name = PRODUCT_STATISTIC;
+        if (xo.hasAttribute(Statistic.NAME)) {
+            name = xo.getAttribute(Statistic.NAME, xo.getId());
+        } else if (xo.hasAttribute(XMLParser.ID)) {
+            name = xo.getAttribute(XMLParser.ID, xo.getId());
+        }
+
+        ProductStatistic productStatistic = new ProductStatistic(name, elementwise);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object child = xo.getChild(i);
@@ -61,6 +68,7 @@ public class ProductStatisticParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(ELEMENT_WISE, true),
+            AttributeRule.newStringRule(Statistic.NAME, true),
             new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
     };
 }

@@ -30,7 +30,7 @@ import dr.evomodel.tree.TreeModel;
 @SuppressWarnings("serial")
 public class TreePanel extends JPanel implements Exportable {
 
-	private BeagleSequenceSimulatorFrame frame = null;
+	private MainFrame frame = null;
 	private PartitionDataList dataList = null;
 	private OptionsPanel optionPanel;
 
@@ -42,7 +42,7 @@ public class TreePanel extends JPanel implements Exportable {
 	private JTextField treesFileNameText = new JTextField("not selected", 16);
 	private JLabel treesFileLabel = new JLabel("Input Trees File: ");
 	
-	public TreePanel(final BeagleSequenceSimulatorFrame frame,
+	public TreePanel(final MainFrame frame,
 			final PartitionDataList dataList) {
 
 		super();
@@ -166,11 +166,9 @@ public class TreePanel extends JPanel implements Exportable {
 							taxon.setAttribute(Utils.ABSOLUTE_HEIGHT, absoluteHeight);
 							dataList.taxonList.addTaxon(taxon);
 							
-//							System.out.println(taxon.getId() + "  " + taxon.getAttribute(Utils.ABSOLUTE_HEIGHT));
-							
 						}// END: taxon exists check
 
-					}
+					}// END: taxon loop
 
 					reader.close();
 

@@ -151,8 +151,6 @@ public class TreePanel extends JPanel implements Exportable {
 					} else {
 
 						NewickImporter importer = new NewickImporter(reader);
-
-						// tree = importer.importNextTree();
 						tree = importer.importTree(null);
 
 					}
@@ -193,12 +191,12 @@ public class TreePanel extends JPanel implements Exportable {
 	private class ListenTreesFileButton implements ActionListener {
 		public void actionPerformed(ActionEvent ae) {
 
-			doImportTrees();
+			doSelectTreesFilename();
 
 		}// END: actionPerformed
 	}// END: ListenTreeFileButton
 
-	public void doImportTrees() {
+	public void doSelectTreesFilename() {
 
 		try {
 
@@ -217,6 +215,8 @@ public class TreePanel extends JPanel implements Exportable {
 
 					treesFileNameText.setText(file.getName());
 					dataList.treesFilename = file;
+					
+					frame.setStatus("Selected " + file.getName());
 					
 //					importTreesFromFile(file);
 

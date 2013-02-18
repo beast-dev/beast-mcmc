@@ -102,7 +102,7 @@ public class BeagleSequenceSimulatorApp {
 		}
 
 		SingleDocApplication app = new SingleDocApplication(
-				new BeagleSequenceSimulatorMenuFactory(), //
+				new MenuFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
 				PartitionDataList.VERSION.concat(" ").concat(
 						PartitionDataList.DATE_STRING), //
@@ -110,7 +110,7 @@ public class BeagleSequenceSimulatorApp {
 		);
 
 		beagleSequenceSimulatorImage = CreateImage("icons/bss.png");
-		BeagleSequenceSimulatorFrame frame = new BeagleSequenceSimulatorFrame(
+		MainFrame frame = new MainFrame(
 				BEAGLE_SEQUENCE_SIMULATOR);
 		frame.setIconImage(beagleSequenceSimulatorImage);
 		app.setDocumentFrame(frame);

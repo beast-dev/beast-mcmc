@@ -22,6 +22,7 @@ h1. TODO
 * simulate tree given taxa names only
 * for each tree in .trees file simulate a data-set
 * parse heights taxa panel
+* add tree column in Taxa panel
 * keep drop-down choices set in Editors
 * animate buttons in Partitions Panel
 * show icons in Simulate panel

@@ -7,7 +7,9 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -26,6 +28,10 @@ import javax.swing.plaf.BorderUIResource;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.NewickImporter;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeImporter;
+import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
 public class BeagleSequenceSimulatorFrame extends DocumentFrame {
@@ -132,7 +138,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 					&& simulationPanel.simulationType == SimulationPanel.SECOND_SIMULATION_TYPE) {
 
 				tabbedPane.setSelectedComponent(treePanel);
-				treePanel.doImportTrees();
+				treePanel.doSelectTreesFilename();
 
 			} else {
 
@@ -160,9 +166,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 						break;
 
 					default:
-
 						throw new RuntimeException("Unknown analysis type!");
-					}
+					}// END: switch
 
 					File tmpDir = chooser.getCurrentDirectory();
 					if (tmpDir != null) {
@@ -179,6 +184,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
+	// TODO
 	private void generateForEachTree(final File outFile) throws IOException,
 			ImportException {
 
@@ -191,11 +197,71 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 				try {
 
-					// TODO
+					Partition partition;
+					ArrayList<Partition> partitionsList;
+					PrintWriter writer;
+					TreeModel treeModel;
+					BeagleSequenceSimulator beagleSequenceSimulator;
+					TreeImporter importer = null;
+
+					BufferedReader reader = new BufferedReader(new FileReader(
+							dataList.treesFilename));
+
+					String line = reader.readLine();
+					if (line.toUpperCase().startsWith("#NEXUS")) {
+
+						importer = new NexusImporter(reader);
+
+					} else {
+
+						importer = new NewickImporter(reader);
+
+					}// END: nexus check
+
+					int treesRead = 0;
+					while (importer.hasTree()) {
+
+						setStatus("Generating for tree # " + treesRead+1);
+
+						treeModel = new TreeModel(importer.importNextTree());
+
+						String path = ((treesRead == 0) ? outFile.toString()
+								: outFile.toString() + treesRead);
+
+						writer = new PrintWriter(new FileWriter(path));
+
+						partitionsList = new ArrayList<Partition>();
+
+						for (PartitionData data : dataList) {
+
+							// create partition
+							partition = new Partition(treeModel, //
+									data.createBranchModel(), //
+									data.createSiteRateModel(), //
+									data.createBranchRateModel(), //
+									data.createFrequencyModel(), //
+									0, // from
+									data.to - 1, // to
+									1 // every
+							);
+
+							partitionsList.add(partition);
+
+						}// END: partition loop
+
+						beagleSequenceSimulator = new BeagleSequenceSimulator(
+								partitionsList, dataList.siteCount);
+
+						writer.println(beagleSequenceSimulator.simulate()
+								.toString());
+						writer.close();
+
+						treesRead++;
+					}// END: trees loop
 
 				} catch (Exception e) {
 					Utils.handleException(e);
-				}
+				}// END: try-catch block
 
 				return null;
 			}// END: doInBackground
@@ -203,7 +269,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				setStatus("Generated " + dataList.siteCount + " replicates.");
+				// setStatus("Generated " + treesRead + " replicates.");
 				setIdle();
 
 			}// END: done
@@ -212,9 +278,9 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		worker.execute();
 
 	}// END: generateForEachTree
-	
-	private void generateNumberOfSimulations(final File outFile) throws IOException,
-			ImportException {
+
+	private void generateNumberOfSimulations(final File outFile)
+			throws IOException, ImportException {
 
 		setBusy();
 
@@ -241,18 +307,30 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 						for (PartitionData data : dataList) {
 
-							// create partition
-							Partition partition = new Partition(data.treeModel, //
-									data.createBranchModel(), //
-									data.createSiteRateModel(), //
-									data.createBranchRateModel(), //
-									data.createFrequencyModel(), //
-									0, // from
-									data.to - 1, // to
-									1 // every
-							);
+							if (data.treeModel == null) {
 
-							partitionsList.add(partition);
+								throw new RuntimeException(
+										"Set Tree Model in Partitions tab for "
+												+ (partitionsList.size() + 1)
+												+ " partition.");
+								
+							} else {
+
+								// create partition
+								Partition partition = new Partition(
+										data.treeModel, //
+										data.createBranchModel(), //
+										data.createSiteRateModel(), //
+										data.createBranchRateModel(), //
+										data.createFrequencyModel(), //
+										0, // from
+										data.to - 1, // to
+										1 // every
+								);
+
+								partitionsList.add(partition);
+
+							}
 
 						}// END: data list loop
 
@@ -374,19 +452,21 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: collectAllSettings
 
-//	public void dataSelectionChanged(boolean isSelected) {
-//		if (isSelected) {
-//			getDeleteAction().setEnabled(true);
-//		} else {
-//			getDeleteAction().setEnabled(false);
-//		}
-//	}// END: dataSelectionChanged
+	// public void dataSelectionChanged(boolean isSelected) {
+	// if (isSelected) {
+	// getDeleteAction().setEnabled(true);
+	// } else {
+	// getDeleteAction().setEnabled(false);
+	// }
+	// }// END: dataSelectionChanged
 
 	public void setBusy() {
+		simulationPanel.setBusy();
 		progressBar.setIndeterminate(true);
 	}
 
 	public void setIdle() {
+		simulationPanel.setIdle();
 		progressBar.setIndeterminate(false);
 	}
 

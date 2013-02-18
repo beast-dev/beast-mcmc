@@ -75,7 +75,6 @@ public class BeagleSequenceSimulator {
 	private boolean fieldsSet = false;
 	private SubstitutionModelDelegate substitutionModelDelegate;
     
-    
     private int gapFlag = Integer.MAX_VALUE;
     
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions, //

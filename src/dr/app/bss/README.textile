@@ -19,6 +19,7 @@ h1. PURPOSE
 Long overdue simulator in Beagle.  
    
 h1. TODO
+* update ant buildfile
 * simulate tree given taxa names only
 * add tree column in Taxa panel
 * keep drop-down choices set in Editors

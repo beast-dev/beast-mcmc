@@ -136,6 +136,7 @@ public class BeagleSequenceSimulatorApp {
 
 				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
+				
 				// Cool sub-title for a software note
 				System.out.println("Do the evolution baby!");
 

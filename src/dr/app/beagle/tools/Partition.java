@@ -55,7 +55,8 @@ public class Partition {
 	// public static final ThreadLocal threadLocal = new ThreadLocal();
 
 	public Partition(TreeModel treeModel, //
-			BranchModel branchModel, GammaSiteRateModel siteModel, //
+			BranchModel branchModel, //
+			GammaSiteRateModel siteModel, //
 			BranchRateModel branchRateModel, //
 			FrequencyModel freqModel, //
 			int from, //

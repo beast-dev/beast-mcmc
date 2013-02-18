@@ -106,20 +106,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: initializeComponents
 
-	public void fireTaxaChanged() {
-
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-
-				taxaPanel.fireTableDataChanged();
-				setStatus(Integer.toString(dataList.taxonList.getTaxonCount())
-						+ " taxa loaded.");
-
-			}
-		});
-
-	}// END: fireTaxaChanged
-
 	// ////////////////
 	// ---SIMULATE---//
 	// ////////////////
@@ -221,7 +207,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 					int treesRead = 0;
 					while (importer.hasTree()) {
 
-						setStatus("Generating for tree # " + treesRead+1);
+						setStatus("Generating for tree # " + treesRead + 1);
 
 						treeModel = new TreeModel(importer.importNextTree());
 
@@ -313,7 +299,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 										"Set Tree Model in Partitions tab for "
 												+ (partitionsList.size() + 1)
 												+ " partition.");
-								
+
 							} else {
 
 								// create partition
@@ -426,10 +412,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		return false;
 	}
 
-	// public void fireModelChanged() {
-	// collectAllSettings();
-	// }// END: fireModelChanged
-
 	// //////////////////////
 	// ---SHARED METHODS---//
 	// //////////////////////
@@ -452,51 +434,195 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: collectAllSettings
 
-	// public void dataSelectionChanged(boolean isSelected) {
-	// if (isSelected) {
-	// getDeleteAction().setEnabled(true);
-	// } else {
-	// getDeleteAction().setEnabled(false);
-	// }
-	// }// END: dataSelectionChanged
+	public void fireTaxaChanged() {
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			taxaPanel.fireTableDataChanged();
+			setStatus(Integer.toString(dataList.taxonList.getTaxonCount())
+					+ " taxa loaded.");
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					taxaPanel.fireTableDataChanged();
+					setStatus(Integer.toString(dataList.taxonList
+							.getTaxonCount()) + " taxa loaded.");
+
+				}
+			});
+		}// END: edt check
+
+	}// END: fireTaxaChanged
 
 	public void setBusy() {
-		simulationPanel.setBusy();
-		progressBar.setIndeterminate(true);
-	}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			simulationPanel.setBusy();
+			progressBar.setIndeterminate(true);
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					simulationPanel.setBusy();
+					progressBar.setIndeterminate(true);
+
+				}
+			});
+		}// END: edt check
+
+	}// END: setBusy
 
 	public void setIdle() {
-		simulationPanel.setIdle();
-		progressBar.setIndeterminate(false);
-	}
 
-	public void setStatus(String status) {
-		statusLabel.setText(status);
-	}
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			simulationPanel.setIdle();
+			progressBar.setIndeterminate(false);
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					simulationPanel.setIdle();
+					progressBar.setIndeterminate(false);
+
+				}
+			});
+		}// END: edt check
+
+	}// END: setIdle
+
+	public void setStatus(final String status) {
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			statusLabel.setText(status);
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					statusLabel.setText(status);
+
+				}
+			});
+		}// END: edt check
+
+	}// END: setStatus
 
 	public void enableTreeFileButton() {
-		treePanel.enableTreeFileButton();
-	}
+
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+
+				treePanel.enableTreeFileButton();
+
+			}
+		});
+	}// END: enableTreeFileButton
 
 	public void disableTreeFileButton() {
-		treePanel.disableTreeFileButton();
-	}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			treePanel.disableTreeFileButton();
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					treePanel.disableTreeFileButton();
+
+				}
+			});
+		}// END: edt check
+
+	}// END: disableTreeFileButton
 
 	public void enableTreesFileButton() {
-		treePanel.enableTreesFileButton();
-	}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			treePanel.enableTreesFileButton();
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					treePanel.enableTreesFileButton();
+
+				}
+			});
+		}// END: edt check
+
+	}// END: enableTreesFileButton
 
 	public void disableTreesFileButton() {
-		treePanel.disableTreesFileButton();
-	}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			treePanel.disableTreesFileButton();
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					treePanel.disableTreesFileButton();
+
+				}
+			});
+		}// END: edt check
+
+	}// END: disableTreesFileButton
 
 	public void hideTreeColumn() {
-		partitionsPanel.hideTreeColumn();
-	}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			partitionsPanel.hideTreeColumn();
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					partitionsPanel.hideTreeColumn();
+
+				}
+			});
+		}// END: edt check
+
+	}// END: hideTreeColumn
 
 	public void showTreeColumn() {
-		partitionsPanel.showTreeColumn();
-	}
+
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			partitionsPanel.showTreeColumn();
+
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					partitionsPanel.showTreeColumn();
+
+				}
+			});
+		}// END: edt check
+
+	}// END: showTreeColumn
 
 	@Override
 	public JComponent getExportableComponent() {

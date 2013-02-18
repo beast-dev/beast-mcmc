@@ -20,7 +20,7 @@ import dr.app.gui.table.TableEditorStopper;
 @SuppressWarnings("serial")
 public class TaxaPanel extends JPanel implements Exportable {
 
-//	private BeagleSequenceSimulatorFrame frame = null;
+	// private BeagleSequenceSimulatorFrame frame = null;
 	private PartitionDataList dataList = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
@@ -29,20 +29,19 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	private double[] heights = null;
 
-	public TaxaPanel(
-			PartitionDataList dataList) {
+	public TaxaPanel(PartitionDataList dataList) {
 
-//		this.frame = frame;
+		// this.frame = frame;
 		this.dataList = dataList;
 
 		taxaTableModel = new TaxaTableModel();
 		taxaTable = new JTable(taxaTableModel);
 
-//		TableSorter sorter = new TableSorter(taxaTableModel);
-//		sorter.setTableHeader(taxaTable.getTableHeader());
+		// TableSorter sorter = new TableSorter(taxaTableModel);
+		// sorter.setTableHeader(taxaTable.getTableHeader());
 
 		taxaTable.getTableHeader().setReorderingAllowed(false);
-		
+
 		taxaTable.getTableHeader()
 				.setDefaultRenderer(
 						new HeaderRenderer(SwingConstants.LEFT, new Insets(0,
@@ -54,7 +53,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 				.setCellRenderer(
 						new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
 								0, 2)));
-		
+
 		taxaTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 
 		taxaTable
@@ -63,32 +62,32 @@ public class TaxaPanel extends JPanel implements Exportable {
 				.setCellRenderer(
 						new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
 								0, 2)));
-	
+
 		taxaTable.getColumnModel().getColumn(1).setPreferredWidth(80);
 
-//		taxaTable.getColumnModel().getColumn(1)
-//		.setCellEditor(new DateCellEditor());
-		
+		// taxaTable.getColumnModel().getColumn(1)
+		// .setCellEditor(new DateCellEditor());
+
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxaTable);
 
-//		taxaTable.getSelectionModel().addListSelectionListener(
-//				new ListSelectionListener() {
-//					public void valueChanged(ListSelectionEvent evt) {
-//						selectionChanged();
-//					}
-//				});
+		// taxaTable.getSelectionModel().addListSelectionListener(
+		// new ListSelectionListener() {
+		// public void valueChanged(ListSelectionEvent evt) {
+		// selectionChanged();
+		// }
+		// });
 
 		scrollPane = new JScrollPane(taxaTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		
-//		RowNumberTable rowNumberTable = new RowNumberTable(taxaTable);
-//		scrollPane.setRowHeaderView(rowNumberTable);
-//		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
-//				rowNumberTable.getTableHeader());
+
+		// RowNumberTable rowNumberTable = new RowNumberTable(taxaTable);
+		// scrollPane.setRowHeaderView(rowNumberTable);
+		// scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+		// rowNumberTable.getTableHeader());
 
 		scrollPane.getViewport().setOpaque(false);
-		
+
 		setOpaque(false);
 		setBorder(new BorderUIResource.EmptyBorderUIResource(
 				new java.awt.Insets(12, 12, 12, 12)));
@@ -102,31 +101,17 @@ public class TaxaPanel extends JPanel implements Exportable {
 		return taxaTable;
 	}
 
-//	public void selectionChanged() {
-//
-//		int[] selRows = taxaTable.getSelectedRows();
-//		if (selRows == null || selRows.length == 0) {
-//			frame.dataSelectionChanged(false);
-//		} else {
-//			frame.dataSelectionChanged(true);
-//		}
-//	}
-
 	private void getHeights() {
 
-		System.out.println("Parsing heights");
-
-		heights = new double[dataList.taxonList.getTaxonCount()];;
+		heights = new double[dataList.taxonList.getTaxonCount()];
 		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
 
-			heights[i] = dataList.taxonList.getTaxon(i).getHeight();
+			heights[i] = (Double) dataList.taxonList.getTaxon(i).getAttribute(
+					Utils.ABSOLUTE_HEIGHT);
 
-			System.out.println(heights[i]);
-			
 		}// END: taxon loop
-		
-		taxaTableModel.fireTableDataChanged();
-	}//END: getHeights
+
+	}// END: getHeights
 
 	private class TaxaTableModel extends AbstractTableModel {
 
@@ -145,13 +130,11 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		public Object getValueAt(int row, int col) {
 			switch (col) {
-			
+
 			case 0:
 				return dataList.taxonList.getTaxonId(row);
-				
-			case 1:
 
-//				 getHeights();
+			case 1:
 
 				if (heights != null) {
 					return heights[row];
@@ -172,15 +155,14 @@ public class TaxaPanel extends JPanel implements Exportable {
 			case 0:
 				dataList.taxonList.getTaxon(row).setId(value.toString());
 				break;
-				
+
 			case 1:
-//				 getHeights();
-//				 dataList.get(0).taxonList.getTaxon(row).getHeight();
+				// dataList.get(0).taxonList.getTaxon(row).getHeight();
 				break;
-				
+
 			default:
 				break;
-				
+
 			}// END: switch
 		}// END: setValueAt
 
@@ -221,7 +203,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 	}// END: TaxaTableModel class
 
 	public void fireTableDataChanged() {
+		getHeights();
 		taxaTableModel.fireTableDataChanged();
 	}// END: fireTableDataChanged
-	
+
 }// END: class

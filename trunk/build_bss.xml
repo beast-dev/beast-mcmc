@@ -4,6 +4,7 @@
    <property name="build.sysclasspath" value="last" />
    <property name="Main-Class" value="dr.app.bss.BeagleSequenceSimulatorApp" />
    <property name="JDK_VERSION" value="1.6" />
+   <property name="src" location="src"/>
    <property name="build" location="build" />
    <property name="dist" location="dist" />
    <property name="lib" location="lib" />
@@ -79,7 +80,7 @@
          <zipgroupfileset dir="${lib}" includes="beagle.jar" />
          <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar" />
 
-		<fileset dir="">
+		<fileset dir="${src}">
 			<include name="dr/**/*.png"/>
 		</fileset>
 
@@ -90,7 +91,8 @@
    <target name="compile">
       <mkdir dir="${build}" />
 
-      <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="src" destdir="${build}" classpathref="classpath">
+      <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="${src}" destdir="${build}" classpathref="classpath">
+
          <include name="dr/app/bss/**" />
          <include name="dr/inference/model/**" />
          <include name="dr/inference/loggers/**" />
@@ -128,6 +130,7 @@
       </javac>
 
       <echo message="Successfully complied." />
+
    </target>
 
 

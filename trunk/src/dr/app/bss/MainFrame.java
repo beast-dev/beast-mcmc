@@ -60,7 +60,7 @@ public class MainFrame extends DocumentFrame {
 	@Override
 	protected void initializeComponents() {
 
-		try {
+//		try {
 
 			setSize(new Dimension(1100, 600));
 			setMinimumSize(new Dimension(260, 100));
@@ -99,9 +99,9 @@ public class MainFrame extends DocumentFrame {
 
 			tabbedPane.setSelectedComponent(treePanel);
 
-		} catch (NumberFormatException e) {
-			e.printStackTrace();
-		}
+//		} catch (NumberFormatException e) {
+//			e.printStackTrace();
+//		}
 
 	}// END: initializeComponents
 

@@ -17,7 +17,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	private ClockRateModelEditor clockRateModelEditor;
 	private FrequencyModelEditor frequencyModelEditor;
 
-	public final static int PARTITION_TREE_INDEX = 0;
+	public final static int TREE_MODEL_INDEX = 0;
 	public final static int DATA_TYPE_INDEX = 1;
 	public final static int FROM_INDEX = 2;
 	public final static int TO_INDEX = 3;
@@ -27,7 +27,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int CLOCK_RATE_MODEL_INDEX = 7;
 	public final static int FREQUENCY_MODEL_INDEX = 8;
 
-	public static String[] COLUMN_NAMES = { "Partition Tree", "Data Type" ,"From", "To", "Every",
+	public static String[] COLUMN_NAMES = { "Tree Model", "Data Type" ,"From", "To", "Every",
 			"Branch Substitution Model", "Site Rate Model", "Clock Rate Model",
 			"Frequency Model" };
 
@@ -59,7 +59,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	@Override
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
-		case PARTITION_TREE_INDEX:
+		case TREE_MODEL_INDEX:
 			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile;
 		case DATA_TYPE_INDEX:
 			return PartitionData.dataTypes[ dataList.get(row).dataTypeIndex];
@@ -124,7 +124,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public void setValueAt(Object value, int row, int column) {
 
 		switch (column) {
-		case PARTITION_TREE_INDEX:
+		case TREE_MODEL_INDEX:
 			dataList.get(row).treeFile = (File) value;
 			break;
 		case DATA_TYPE_INDEX:
@@ -188,7 +188,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public boolean isCellEditable(int row, int column) {
 		switch (column) {
-		case PARTITION_TREE_INDEX:
+		case TREE_MODEL_INDEX:
 			return true;
 		case DATA_TYPE_INDEX:
 			return true;

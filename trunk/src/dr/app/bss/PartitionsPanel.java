@@ -97,7 +97,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		add(scrollPane, BorderLayout.CENTER);
 
 		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.PARTITION_TREE_INDEX);
+				PartitionTableModel.TREE_MODEL_INDEX);
 		column.setCellEditor(new JTableComboBoxCellEditor());
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
@@ -156,7 +156,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				int row = ev.getFirstRow();
 				int column = ev.getColumn();
 
-				if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
+				if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
 					File value = (File) partitionTableModel.getValueAt(row,
 							column);
@@ -222,7 +222,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			((JComboBox) editorComponent).removeAllItems();
 
-			if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
+			if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
 				for (File file : dataList.forestMap.keySet()) {
 					((JComboBox) editorComponent).addItem(file);
@@ -357,11 +357,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	}// END: JTableButtonMouseListener class
 
 	public void hideTreeColumn() {
-		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.PARTITION_TREE_INDEX]);
+		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.TREE_MODEL_INDEX]);
 	}
 	
 	public void showTreeColumn() {
-		hider.show(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.PARTITION_TREE_INDEX]);
+		hider.show(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.TREE_MODEL_INDEX]);
 	}
 	
 	public JComponent getExportableComponent() {

@@ -27,14 +27,13 @@ import javax.swing.plaf.BorderUIResource;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
-import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
-public class BeagleSequenceSimulatorFrame extends DocumentFrame {
+public class MainFrame extends DocumentFrame {
 
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
@@ -48,7 +47,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private JProgressBar progressBar;
 	private File workingDirectory = null;
 
-	public BeagleSequenceSimulatorFrame(String title) {
+	public MainFrame(String title) {
 
 		super();
 
@@ -110,69 +109,63 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	// ---SIMULATE---//
 	// ////////////////
 
+	// file chooser
 	public void doExport() {
 
-		try {
+		if (dataList.forestMap.size() == 0
+				&& simulationPanel.simulationType == SimulationPanel.FIRST_SIMULATION_TYPE) {
 
-			if (dataList.forestMap.size() == 0
-					&& simulationPanel.simulationType == SimulationPanel.FIRST_SIMULATION_TYPE) {
+			tabbedPane.setSelectedComponent(treePanel);
+			treePanel.doImportTree();
 
-				tabbedPane.setSelectedComponent(treePanel);
-				treePanel.doImportTree();
+		} else if (dataList.treesFilename == null
+				&& simulationPanel.simulationType == SimulationPanel.SECOND_SIMULATION_TYPE) {
 
-			} else if (dataList.treesFilename == null
-					&& simulationPanel.simulationType == SimulationPanel.SECOND_SIMULATION_TYPE) {
+			tabbedPane.setSelectedComponent(treePanel);
+			treePanel.doSelectTreesFilename();
 
-				tabbedPane.setSelectedComponent(treePanel);
-				treePanel.doSelectTreesFilename();
+		} else {
 
-			} else {
+			JFileChooser chooser = new JFileChooser();
+			chooser.setDialogTitle("Simulate...");
+			chooser.setMultiSelectionEnabled(false);
+			chooser.setCurrentDirectory(workingDirectory);
 
-				JFileChooser chooser = new JFileChooser();
-				chooser.setDialogTitle("Simulate...");
-				chooser.setMultiSelectionEnabled(false);
-				chooser.setCurrentDirectory(workingDirectory);
+			int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-				chooser.showSaveDialog(Utils.getActiveFrame());
 				File file = chooser.getSelectedFile();
 
-				if (file != null) {
+				collectAllSettings();
 
-					collectAllSettings();
+				switch (simulationPanel.simulationType) {
 
-					switch (simulationPanel.simulationType) {
+				case SimulationPanel.FIRST_SIMULATION_TYPE:
 
-					case SimulationPanel.FIRST_SIMULATION_TYPE:
+					generateNumberOfSimulations(file);
+					break;
 
-						generateNumberOfSimulations(file);
-						break;
+				case SimulationPanel.SECOND_SIMULATION_TYPE:
+					generateForEachTree(file);
+					break;
 
-					case SimulationPanel.SECOND_SIMULATION_TYPE:
-						generateForEachTree(file);
-						break;
+				default:
+					throw new RuntimeException("Unknown analysis type!");
+				}// END: switch
 
-					default:
-						throw new RuntimeException("Unknown analysis type!");
-					}// END: switch
+				File tmpDir = chooser.getCurrentDirectory();
+				if (tmpDir != null) {
+					workingDirectory = tmpDir;
+				}
 
-					File tmpDir = chooser.getCurrentDirectory();
-					if (tmpDir != null) {
-						workingDirectory = tmpDir;
-					}
+			}// END: approve check
 
-				}// END: file selected check
-
-			}// END: tree loaded check
-
-		} catch (Exception e) {
-			Utils.handleException(e);
-		} // END: try catch block
+		}// END: tree loaded check
 
 	}// END: doExport
 
-	// TODO
-	private void generateForEachTree(final File outFile) throws IOException,
-			ImportException {
+	// threading, UI, exceptions handling
+	private void generateForEachTree(final File outFile) {
 
 		setBusy();
 
@@ -255,7 +248,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				// setStatus("Generated " + treesRead + " replicates.");
+				setStatus("Finished.");
 				setIdle();
 
 			}// END: done
@@ -265,8 +258,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: generateForEachTree
 
-	private void generateNumberOfSimulations(final File outFile)
-			throws IOException, ImportException {
+	// threading, UI, exceptions handling
+	private void generateNumberOfSimulations(final File outFile) {
 
 		setBusy();
 
@@ -353,37 +346,64 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	// ---GENERATE XML---//
 	// ////////////////////
 
+	// file chooser
 	public final void doGenerateXML() {
 
-		try {
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Generate XML...");
+		chooser.setMultiSelectionEnabled(false);
+		chooser.setCurrentDirectory(workingDirectory);
 
-			JFileChooser chooser = new JFileChooser();
-			chooser.setDialogTitle("Generate XML...");
-			chooser.setMultiSelectionEnabled(false);
-			chooser.setCurrentDirectory(workingDirectory);
+		int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-			chooser.showSaveDialog(Utils.getActiveFrame());
 			File file = chooser.getSelectedFile();
 
-			if (file != null) {
+			generateXML(file);
 
-				collectAllSettings();
-				BeagleSequenceSimulatorXMLGenerator xmlGenerator = new BeagleSequenceSimulatorXMLGenerator(
-						dataList);
-				xmlGenerator.generateXML(file);
+			File tmpDir = chooser.getCurrentDirectory();
+			if (tmpDir != null) {
+				workingDirectory = tmpDir;
+			}
 
-				File tmpDir = chooser.getCurrentDirectory();
-				if (tmpDir != null) {
-					workingDirectory = tmpDir;
-				}
-
-			}// END: file selected check
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}// END: try-catch block
+		}// END: approve check
 
 	}// END: doGenerateXML
+
+	private void generateXML(final File outFile) {
+
+		setBusy();
+
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+			// Executed in background thread
+			public Void doInBackground() {
+
+				try {
+
+					collectAllSettings();
+					XMLGenerator xmlGenerator = new XMLGenerator(dataList);
+					xmlGenerator.generateXML(outFile);
+
+				} catch (Exception e) {
+					Utils.handleException(e);
+				}
+
+				return null;
+			}// END: doInBackground
+
+			// Executed in event dispatch thread
+			public void done() {
+
+				setStatus("Generated " + outFile);
+				setIdle();
+
+			}// END: done
+		};
+
+		worker.execute();
+
+	}// END: generateNumberOfSimulations
 
 	// /////////////////
 	// ---MAIN MENU---//

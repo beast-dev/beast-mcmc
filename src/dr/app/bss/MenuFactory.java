@@ -6,7 +6,7 @@ import jam.framework.Application;
 import jam.framework.DocumentFrame;
 import jam.framework.SingleDocMenuBarFactory;
 
-public class BeagleSequenceSimulatorMenuFactory extends SingleDocMenuBarFactory {
+public class MenuFactory extends SingleDocMenuBarFactory {
 
 	public void populateMenuBar(JMenuBar menuBar, //
 			DocumentFrame documentFrame, //

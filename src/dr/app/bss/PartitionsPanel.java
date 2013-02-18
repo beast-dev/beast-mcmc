@@ -30,7 +30,7 @@ import org.virion.jam.panels.ActionPanel;
 @SuppressWarnings("serial")
 public class PartitionsPanel extends JPanel implements Exportable {
 
-	private BeagleSequenceSimulatorFrame frame = null;
+	private MainFrame frame = null;
 	private PartitionDataList dataList = null;
 
 	private JTable partitionTable = null;
@@ -62,7 +62,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}// END: actionPerformed
 	};
 
-	public PartitionsPanel(final BeagleSequenceSimulatorFrame frame,
+	public PartitionsPanel(final MainFrame frame,
 			final PartitionDataList dataList) {
 
 		super();

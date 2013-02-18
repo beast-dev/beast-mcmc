@@ -26,7 +26,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	public static final int SECOND_SIMULATION_TYPE = 1;
 	public int simulationType;
 	
-	private BeagleSequenceSimulatorFrame frame;
+	private MainFrame frame;
 	private PartitionDataList dataList;
 	private OptionsPanel optionPanel;
 
@@ -46,7 +46,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	private String firstSimulationType;
 	private String secondSimulationType;
 
-	public SimulationPanel(final BeagleSequenceSimulatorFrame frame,
+	public SimulationPanel(final MainFrame frame,
 			final PartitionDataList dataList) {
 
 		this.frame = frame;

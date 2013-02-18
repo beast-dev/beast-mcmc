@@ -2,11 +2,15 @@ package dr.app.bss;
 
 import java.awt.Frame;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
@@ -22,12 +26,21 @@ public class Utils {
 	public static final int SITE_RATE_MODEL_ELEMENT = 2;
 	public static final int BRANCH_RATE_MODEL_ELEMENT = 3;
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
-	
+	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
 	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
+	public static void printMap(Map<?, ?> mp) {
+		Iterator<?> it = mp.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<?, ?> pairs = (Entry<?, ?>) it.next();
+			System.out.println(pairs.getKey() + " = " + pairs.getValue());
+			// it.remove(); // avoids a ConcurrentModificationException
+		}
+	}// END: printMap
+	
 	public static int arrayIndex(String[] array, String element) {
 
 		List<String> vector = new ArrayList<String>();
@@ -63,6 +76,22 @@ public class Utils {
 		return exists;
 	}// END: taxonExists
 
+	public static double getAbsoluteTaxonHeight(Taxon taxon, TreeModel tree) {
+
+		double height = 0.0;
+		for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+
+			NodeRef externalNode = tree.getExternalNode(i);
+			Taxon externalNodeTaxon = tree.getNodeTaxon(externalNode);
+
+			if (externalNodeTaxon.equals(taxon)) {
+				height = tree.getNodeHeight(externalNode);
+			}
+		}// END: external node loop
+
+		return height;
+	}// END: getAbsoluteTaxonHeight
+	
 	public static boolean isTreeModelInList(TreeModel treeModel, ArrayList<TreeModel> treeModelList) {
 		
 		boolean exists = false;

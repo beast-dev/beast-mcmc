@@ -155,11 +155,19 @@ public class TreePanel extends JPanel implements Exportable {
 
 					}
 
-					dataList.forestMap.put(file, new TreeModel(tree));
+					TreeModel treeModel = new TreeModel(tree);
+					dataList.forestMap.put(file, treeModel);
 					for (Taxon taxon : tree.asList()) {
 
+						// set absolute height attribute, later it gets parsed in Taxa Panel
 						if (!Utils.taxonExists(taxon, dataList.taxonList)) {
+							
+							double absoluteHeight = Utils.getAbsoluteTaxonHeight(taxon, treeModel);
+							taxon.setAttribute(Utils.ABSOLUTE_HEIGHT, absoluteHeight);
 							dataList.taxonList.addTaxon(taxon);
+							
+//							System.out.println(taxon.getId() + "  " + taxon.getAttribute(Utils.ABSOLUTE_HEIGHT));
+							
 						}// END: taxon exists check
 
 					}

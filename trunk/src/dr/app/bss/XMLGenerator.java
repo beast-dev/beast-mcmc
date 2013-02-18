@@ -38,11 +38,11 @@ import dr.xml.XMLParser;
  * @author Filip Bielejec
  * @version $Id$
  */
-public class BeagleSequenceSimulatorXMLGenerator {
+public class XMLGenerator {
 
 	private PartitionDataList dataList;
 
-	public BeagleSequenceSimulatorXMLGenerator(PartitionDataList dataList) {
+	public XMLGenerator(PartitionDataList dataList) {
 
 		this.dataList = dataList;
 
@@ -76,7 +76,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		} catch (Exception e) {
 
-			System.err.println(e);
 			throw new RuntimeException("Taxon list generation has failed:\n"
 					+ e.getMessage());
 
@@ -92,23 +91,35 @@ public class BeagleSequenceSimulatorXMLGenerator {
 			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
 			for (PartitionData data : dataList) {
 
-				TreeModel treeModel = data.treeModel;
+				if (data.treeModel == null) {
 
-				if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
-
-					data.treeModelIdref += suffix;
-
-					writeStartingTree(treeModel, writer, String.valueOf(suffix));
-					writer.writeBlankLine();
-
-					treeModelList.add(treeModel);
+					throw new RuntimeException(
+							"Set Tree Model in Partitions tab for " + suffix
+									+ " partition.");
 
 				} else {
 
-					int index = Utils.treeModelIsIdenticalWith(treeModel, treeModelList) + 1;
-					data.treeModelIdref += index;
+					TreeModel treeModel = data.treeModel;
 
-				}
+					if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
+
+						data.treeModelIdref += suffix;
+
+						writeStartingTree(treeModel, writer,
+								String.valueOf(suffix));
+						writer.writeBlankLine();
+
+						treeModelList.add(treeModel);
+
+					} else {
+
+						int index = Utils.treeModelIsIdenticalWith(treeModel,
+								treeModelList) + 1;
+						data.treeModelIdref += index;
+
+					}
+
+				}// END: exception
 
 				suffix++;
 
@@ -116,7 +127,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		} catch (Exception e) {
 
-			System.err.println(e);
 			throw new RuntimeException("Starting tree generation has failed:\n"
 					+ e.getMessage());
 
@@ -149,7 +159,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		} catch (Exception e) {
 
-			System.err.println(e);
 			throw new RuntimeException("Tree model generation has failed:\n"
 					+ e.getMessage());
 
@@ -186,7 +195,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		} catch (Exception e) {
 
-			System.err.println(e);
 			throw new RuntimeException("Clock model generation has failed:\n"
 					+ e.getMessage());
 
@@ -223,7 +231,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		} catch (Exception e) {
 
-			System.err.println(e);
 			throw new RuntimeException(
 					"Frequency model generation has failed:\n" + e.getMessage());
 
@@ -260,7 +267,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		} catch (Exception e) {
 
-			System.err.println(e);
 			throw new RuntimeException("Branch model generation has failed:\n"
 					+ e.getMessage());
 
@@ -314,7 +320,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		} catch (Exception e) {
 
-			System.err.println(e);
 			throw new RuntimeException(
 					"Beagle Sequence Simulator element generation has failed:\n"
 							+ e.getMessage());

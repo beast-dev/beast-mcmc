@@ -198,7 +198,6 @@ public class AlloppLeggedTree implements  SlidableTree  {
                 formatter.format("%s", " ");
             }
             formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
-            formatter.format("%20s ", AlloppMisc.FixedBitSetasText(union));
             return s.toString();
         }
 
@@ -426,8 +425,8 @@ public class AlloppLeggedTree implements  SlidableTree  {
 
 
 
-    String asText() {
-        String header = "topology             height         union         legs" + System.getProperty("line.separator");
+    String asText(int tt) {
+        String header = "Tetraploid tree " + String.valueOf(tt) + "     height" + System.getProperty("line.separator");
         String s = "";
         Stack<Integer> x = new Stack<Integer>();
         return header + AlloppNode.Abstract.subtreeAsText(altnodes[rootn], s, x, 0, "");

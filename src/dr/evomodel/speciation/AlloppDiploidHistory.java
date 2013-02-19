@@ -208,24 +208,28 @@ public class AlloppDiploidHistory implements SlidableTree {
             StringBuilder s = new StringBuilder();
             Formatter formatter = new Formatter(s, Locale.US);
             if (lft < 0) {
-                formatter.format("%s ", taxon.getId());
+                String nodename;
+                if (tettree >= 0) {
+                    nodename = String.valueOf(tettree);
+                    String legtext = "*";
+                    if (leg == LegLorR.left) {
+                        legtext = "L";
+                    }
+                    if (leg == LegLorR.right) {
+                        legtext = "R";
+                    }
+                    nodename += legtext;
+                } else {
+                    nodename = taxon.getId();
+                }
+                formatter.format("%s ", nodename);
             } else {
                 formatter.format("%s ", "+");
             }
-            while (s.length() < 20-indentlen) {
+            while (s.length() < 25-indentlen) {
                 formatter.format("%s", " ");
             }
             formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
-            formatter.format("%20s ", AlloppMisc.FixedBitSetasText(union));
-            formatter.format("%3d ", tettree);
-            String legtext = " * ";
-            if (leg == LegLorR.left) {
-                legtext = " L ";
-            }
-            if (leg == LegLorR.right) {
-                legtext = " R ";
-            }
-            formatter.format("%s", legtext);
             return s.toString();
         }
 
@@ -271,7 +275,8 @@ public class AlloppDiploidHistory implements SlidableTree {
       * apsp needed for speciesseqEmptyUnion(). grjtodo-oneday really needed?
       *
       */
-    AlloppDiploidHistory(Taxon [] dipspp, ArrayList<AlloppLeggedTree> tettrees, double rate, AlloppSpeciesBindings apsp) {
+    AlloppDiploidHistory(Taxon [] dipspp, ArrayList<AlloppLeggedTree> tettrees,
+                         boolean diploidrootisroot, double rate, AlloppSpeciesBindings apsp) {
         this.apsp = apsp;
         int nofdips = dipspp.length;
         int ntips = nofdips + 2 * tettrees.size();
@@ -314,8 +319,8 @@ public class AlloppDiploidHistory implements SlidableTree {
             }
             int j = MathUtils.nextInt(numtojoin);
             JoiningNode child0 = tojoin.get(j);
-            // if down to 2 diploids, and still a tet, ensure ch0 has no dips
-            if (numtojoin > 2  &&  numwithdips == 2) {
+            // if diploidrootisroot, and down to 2 diploids, and still a tet, ensure ch0 has no dips
+            if (diploidrootisroot  &&  numtojoin > 2  &&  numwithdips == 2) {
                 while (child0.hasdip) {
                     j = MathUtils.nextInt(numtojoin);
                     child0 = tojoin.get(j);
@@ -333,7 +338,7 @@ public class AlloppDiploidHistory implements SlidableTree {
             nextn++;
         }
         rootn = nextn - 1;
-        assert diphistOK();
+        assert diphistOK(diploidrootisroot);
         makesimpletree();
     }
 
@@ -354,7 +359,7 @@ public class AlloppDiploidHistory implements SlidableTree {
 
     //  constructor for testing.
     public AlloppDiploidHistory(SimpleNode[] snodes, int sroot, ArrayList<AlloppLeggedTree> tettrees,
-                                AlloppSpeciesBindings apsp,
+                                boolean diprootisroot, AlloppSpeciesBindings apsp,
                                 AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
         this.apsp = apsp;
         // Make array of dud nodes
@@ -386,7 +391,7 @@ public class AlloppDiploidHistory implements SlidableTree {
             }
         }
         dhnodes[rootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
-        assert diphistOK();
+        assert diphistOK(diprootisroot);
         makesimpletree();
     }
 
@@ -461,7 +466,7 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
     String asText() {
-        String header = "topology             height         union         tettree leg" + System.getProperty("line.separator");
+        String header = "Diploid history            height" + System.getProperty("line.separator");
         String s = "";
         Stack<Integer> x = new Stack<Integer>();
         return header + AlloppNode.Abstract.subtreeAsText(dhnodes[rootn], s, x, 0, "");
@@ -737,7 +742,7 @@ public class AlloppDiploidHistory implements SlidableTree {
     /*
       * For testing
       */
-    public boolean diphistOK() {
+    public boolean diphistOK(boolean diprootisroot) {
         int nroots = 0;
         for (int i = 0; i < dhnodes.length; i++) {
             if (dhnodes[i].anc < 0) {
@@ -817,9 +822,12 @@ public class AlloppDiploidHistory implements SlidableTree {
                 }
             }
         }
-        if (!gotDipTipInSubtree(dhnodes[rootn].lft)  ||  !gotDipTipInSubtree(dhnodes[rootn].rgt)) {
-            return false;
+        if (diprootisroot) {
+            if (!gotDipTipInSubtree(dhnodes[rootn].lft)  ||  !gotDipTipInSubtree(dhnodes[rootn].rgt)) {
+                return false;
+            }
         }
+
 
         return true;
     }

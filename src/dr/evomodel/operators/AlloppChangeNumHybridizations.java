@@ -46,6 +46,9 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
 
     @Override
     public double doOperation() throws OperatorFailedException {
+        if (apspnet.getOneHybridization()) {
+            throw new RuntimeException("oneHybridization is true but changeNumHybridizations() called");
+        }
         apspnet.beginNetworkEdit();
         double hr = 0.0;
         if (MathUtils.nextBoolean()) {

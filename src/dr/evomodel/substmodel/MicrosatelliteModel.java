@@ -143,6 +143,9 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     }
 
     public double getOneTransitionProbabilityEntry(double distance, int parentState, int childState){
+        if(dataType.isAmbiguousState(childState)){
+            return 1.0;
+        }
 
        double probability = 0.0;
        double temp;

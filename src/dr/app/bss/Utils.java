@@ -1,6 +1,7 @@
 package dr.app.bss;
 
 import java.awt.Frame;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -339,6 +340,17 @@ public class Utils {
 		return result;
 	}
 
+	public static String getWritePath(File outFile, int i) {
+		
+		String path = outFile.getParent();
+		String[] nameArray = outFile.getName().split("\\.", 2);
+		String coreName = ((i == 0) ? nameArray[0] : nameArray[0] + i);
+		String extension = (nameArray.length == 1) ? (".fasta") : ("." + nameArray[1]);
+		String fullPath = path + System.getProperty("file.separator") + coreName + extension;
+		
+		return fullPath;
+	}// END: getFullPath
+	
 	// ////////////////////////////////
 	// ---EXCEPTION HANDLING UTILS---//
 	// ////////////////////////////////
@@ -386,6 +398,12 @@ public class Utils {
 		}
 	}// END: printArray
 
+	public static void printArray(String[] x) {
+		for (int i = 0; i < x.length; i++) {
+			System.out.println(x[i]);
+		}
+	}// END: printArray
+	
 	public static void print2DArray(double[][] array) {
 		for (int row = 0; row < array.length; row++) {
 			for (int col = 0; col < array[row].length; col++) {

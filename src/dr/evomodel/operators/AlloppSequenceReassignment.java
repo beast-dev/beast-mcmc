@@ -25,9 +25,9 @@ public class AlloppSequenceReassignment extends SimpleMCMCOperator {
 	private final AlloppSpeciesBindings apsp;
 
 
-	public AlloppSequenceReassignment(AlloppSpeciesNetworkModel apspnet, AlloppSpeciesBindings apsp, double weight) {
-		this.apspnet = apspnet;
-		this.apsp = apsp;
+        public AlloppSequenceReassignment(AlloppSpeciesNetworkModel apspnet, AlloppSpeciesBindings apsp, double weight) {
+            this.apspnet = apspnet;
+            this.apsp = apsp;
 		setWeight(weight);
 	}	
 

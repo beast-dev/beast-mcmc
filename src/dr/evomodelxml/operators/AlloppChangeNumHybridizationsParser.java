@@ -25,6 +25,9 @@ public class AlloppChangeNumHybridizationsParser extends AbstractXMLObjectParser
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         AlloppSpeciesBindings apsp = (AlloppSpeciesBindings) xo.getChild(AlloppSpeciesBindings.class);
         AlloppSpeciesNetworkModel apspnet = (AlloppSpeciesNetworkModel) xo.getChild(AlloppSpeciesNetworkModel.class);
+        if (apspnet.getOneHybridization()) {
+            throw new XMLParseException("oneHybridization is set to true but there is a changeNumHybridizations operator");
+        }
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         return new AlloppChangeNumHybridizations(apspnet, apsp, weight);

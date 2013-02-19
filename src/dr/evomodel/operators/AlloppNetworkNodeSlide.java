@@ -121,7 +121,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 
     private void operateOneNodeInNet(double factor)
             throws OperatorFailedException {
-        assert apspnet.getDiploidHistory().diphistOK();
+        assert apspnet.getDiploidHistory().diphistOK(apspnet.getDiploidRootIsRoot());
         NodeHeightInNetIndex nhi = randomnode();
         if (nhi.doHybheight) {
             operateHybridHeight(nhi.index);
@@ -204,6 +204,64 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 
 
 
+    private class RootHeightRange {
+        public double lowerlimit;
+        public double upperlimit;
+        RootHeightRange(double lowerlimit, double upperlimit) {
+            this.lowerlimit = lowerlimit;
+            this.upperlimit = upperlimit;
+        }
+    }
+
+
+
+    // find limit to keep root a diploid
+    // 1. If node to slide is the root, and the second highest node is to left or
+    // right of all diploids, then the root must stay the root: lowerlimit =  second highest.
+    // 2. If node to slide is not the root, and is to left or right of all diploids,
+    // then it must not become the root: upperlimit = root height.
+    RootHeightRange findRootRangeForDiploidRootIsRoot(AlloppDiploidHistory diphist, NodeRef[] order, int slidingn) {
+        RootHeightRange rootrange = new RootHeightRange(0.0, Double.MAX_VALUE);
+        int rootn = -1;
+        double maxhgt = 0.0;
+        for (int k = 1;  k < order.length;  k += 2) {
+            double hgt = diphist.getSlidableNodeHeight(order[k]);
+            if (hgt > maxhgt) {
+                maxhgt = hgt;
+                rootn = k;
+            }
+        }
+        int secondn = -1;
+        double secondhgt = 0.0;
+        for (int k = 1;  k < order.length;  k += 2) {
+            if (k != rootn) {
+                double hgt = diphist.getSlidableNodeHeight(order[k]);
+                if (hgt > secondhgt) {
+                    secondhgt = hgt;
+                    secondn = k;
+                }
+            }
+        }
+        int leftmostdip = -1;
+        int rightmostdip = -1;
+        for (int k = 0;  k < order.length;  k += 2) {
+            if (diphist.tipIsDiploidTip(order[k])) {
+                if (leftmostdip < 0) {
+                    leftmostdip = k;
+                }
+                rightmostdip = k;
+            }
+        }
+        if (slidingn == rootn  &&  (secondn < leftmostdip  ||  secondn > rightmostdip)) {
+            rootrange.lowerlimit = diphist.getSlidableNodeHeight(order[secondn]);
+        }
+        if (slidingn < leftmostdip  ||  slidingn > rightmostdip) {
+            rootrange.upperlimit = diphist.getSlidableNodeHeight(order[rootn]);
+        }
+        return rootrange;
+
+    }
+
 
     private void operateOneNodeInDiploidHistory(int which, double factor) {
         apspnet.beginNetworkEdit();
@@ -236,53 +294,12 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
         if (slidingn+1 < order.length) {
             hybtiplimit = Math.max(hybtiplimit, diphist.getSlidableNodeHeight(order[slidingn+1]));
         }
-
-        // find limit to keep root a diploid
-        // 1. If node to slide is the root, and the second highest node is to left or
-        // right of all diploids, then the root must stay the root: lowerlimit =  second highest.
-        // 2. If node to slide is not the root, and is to left or right of all diploids,
-        // then it must not become the root: upperlimit = root height.
-        double drootlowerlimit = 0.0;
-        double drootupperlimit = Double.MAX_VALUE;
-        int rootn = -1;
-        double maxhgt = 0.0;
-        for (int k = 1;  k < order.length;  k += 2) {
-            double hgt = diphist.getSlidableNodeHeight(order[k]);
-            if (hgt > maxhgt) {
-                maxhgt = hgt;
-                rootn = k;
-            }
+        RootHeightRange rootrange = new RootHeightRange(0.0, Double.MAX_VALUE);
+        if (apspnet.getDiploidRootIsRoot()) {
+            rootrange = findRootRangeForDiploidRootIsRoot(diphist, order, slidingn);
         }
-        int secondn = -1;
-        double secondhgt = 0.0;
-        for (int k = 1;  k < order.length;  k += 2) {
-            if (k != rootn) {
-                double hgt = diphist.getSlidableNodeHeight(order[k]);
-                if (hgt > secondhgt) {
-                    secondhgt = hgt;
-                    secondn = k;
-                }
-            }
-        }
-        int leftmostdip = -1;
-        int rightmostdip = -1;
-        for (int k = 0;  k < order.length;  k += 2) {
-            if (diphist.tipIsDiploidTip(order[k])) {
-                if (leftmostdip < 0) {
-                    leftmostdip = k;
-                }
-                rightmostdip = k;
-            }
-        }
-        if (slidingn == rootn  &&  (secondn < leftmostdip  ||  secondn > rightmostdip)) {
-            drootlowerlimit = diphist.getSlidableNodeHeight(order[secondn]);
-        }
-        if (slidingn < leftmostdip  ||  slidingn > rightmostdip) {
-            drootupperlimit = diphist.getSlidableNodeHeight(order[rootn]);
-        }
-
-        final double upperlimit = Math.min(genelimit, drootupperlimit);
-        final double lowerlimit = Math.max(hybtiplimit, drootlowerlimit);
+        final double upperlimit = Math.min(genelimit, rootrange.upperlimit);
+        final double lowerlimit = Math.max(hybtiplimit, rootrange.lowerlimit);
 
         // On direct call, factor==0.0 and use limit. Else use passed in scaling factor
         double newHeight = -1.0;
@@ -292,14 +309,14 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
             newHeight = MathUtils.uniform(lowerlimit, upperlimit);
         }
 
-        assert diphist.diphistOK();
+        assert diphist.diphistOK(apspnet.getDiploidRootIsRoot());
         final NodeRef node = order[slidingn];
         diphist.setSlidableNodeHeight(node, newHeight);
         SlidableTree.Utils.mnlReconstruct(diphist, order);
-        if (!diphist.diphistOK()) {
+        if (!diphist.diphistOK(apspnet.getDiploidRootIsRoot())) {
             System.out.println("BUG in operateOneNodeInDiploidHistory()");
         }
-        assert diphist.diphistOK();
+        assert diphist.diphistOK(apspnet.getDiploidRootIsRoot());
         apspnet.endNetworkEdit();
     }
 

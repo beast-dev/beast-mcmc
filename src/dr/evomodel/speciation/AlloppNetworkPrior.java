@@ -32,10 +32,11 @@ public class AlloppNetworkPrior extends Likelihood.Abstract {
 		this.prior = prior;
         asnm.setHybPopModel(prior.getHybridPopModel());
 
+        int ndips = asnm.getNofDiploids();
         numHybsLogL = new double[asnm.maxNumberOfHybPopParameters()+1];
         for (int h = 0; h < numHybsLogL.length; h++) {
-            numHybsLogL[h] = -h * Math.log(9.0);
-            // grjtodo-soon the form of the function and the 9.0 here is experimental
+            numHybsLogL[h] = -h * Math.log(7.0*Math.sqrt(ndips));
+            // grjtodo-soon the form of the function is experimental
         }
 
 		

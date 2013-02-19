@@ -14,21 +14,20 @@ import javax.swing.UnsupportedLookAndFeelException;
 public class BeagleSequenceSimulatorApp {
 
 	public final static boolean DEBUG = true;
-	
+
 	// Share those if neccessary
-	private Image beagleSequenceSimulatorImage;
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
-	public static final String STARTING_TREE = "startingTree";
 	public static final String VERSION = "0.0.5pre";
 	public static final String DATE_STRING = "2013";
-	
+
 	// Icons
+	private Image beagleSequenceSimulatorImage;
 	public static ImageIcon doneIcon;
 	public static ImageIcon errorIcon;
 	public static ImageIcon hammerIcon;
 	public static ImageIcon closeIcon;
 	public static ImageIcon biohazardIcon;
-	
+
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
 			UnsupportedLookAndFeelException {
@@ -73,10 +72,11 @@ public class BeagleSequenceSimulatorApp {
 
 			try {
 
-//				UIManager.setLookAndFeel(UIManager
-//						.getSystemLookAndFeelClassName());
+				// UIManager.setLookAndFeel(UIManager
+				// .getSystemLookAndFeelClassName());
 
-				 UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+				UIManager
+						.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 				lafLoaded = true;
 
 			} catch (Exception e) {
@@ -101,8 +101,7 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
-		SingleDocApplication app = new SingleDocApplication(
-				new MenuFactory(), //
+		SingleDocApplication app = new SingleDocApplication(new MenuFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
 				PartitionDataList.VERSION.concat(" ").concat(
 						PartitionDataList.DATE_STRING), //
@@ -110,8 +109,7 @@ public class BeagleSequenceSimulatorApp {
 		);
 
 		beagleSequenceSimulatorImage = CreateImage("icons/bss.png");
-		MainFrame frame = new MainFrame(
-				BEAGLE_SEQUENCE_SIMULATOR);
+		MainFrame frame = new MainFrame(BEAGLE_SEQUENCE_SIMULATOR);
 		frame.setIconImage(beagleSequenceSimulatorImage);
 		app.setDocumentFrame(frame);
 
@@ -121,7 +119,7 @@ public class BeagleSequenceSimulatorApp {
 		hammerIcon = CreateImageIcon("icons/hammer.png");
 		closeIcon = CreateImageIcon("icons/close.png");
 		biohazardIcon = CreateImageIcon("icons/biohazard.png");
-		
+
 	}// END: Constructor
 
 	public static void main(String args[]) {
@@ -136,7 +134,7 @@ public class BeagleSequenceSimulatorApp {
 
 				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
-				
+
 				// Cool sub-title for a software note
 				System.out.println("Do the evolution baby!");
 
@@ -194,5 +192,5 @@ public class BeagleSequenceSimulatorApp {
 		return icon;
 	}// END: CreateImageIcon
 
-}// END: BeagleSequenceSimulatorApp
+}// END: class
 

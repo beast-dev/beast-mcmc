@@ -17,7 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
 
-import org.virion.jam.components.WholeNumberField;
+import dr.app.gui.components.WholeNumberField;
+
 
 @SuppressWarnings("serial")
 public class SimulationPanel extends JPanel implements Exportable {

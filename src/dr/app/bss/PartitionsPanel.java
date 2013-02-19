@@ -26,7 +26,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-
 @SuppressWarnings("serial")
 public class PartitionsPanel extends JPanel implements Exportable {
 

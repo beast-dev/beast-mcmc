@@ -198,10 +198,8 @@ public class MainFrame extends DocumentFrame {
 
 						treeModel = new TreeModel(importer.importNextTree());
 
-						String path = ((treesRead == 0) ? outFile.toString()
-								: outFile.toString() + treesRead);
-
-						writer = new PrintWriter(new FileWriter(path));
+						String fullPath = Utils.getWritePath(outFile, treesRead);
+						writer = new PrintWriter(new FileWriter(fullPath));
 
 						partitionsList = new ArrayList<Partition>();
 
@@ -270,11 +268,9 @@ public class MainFrame extends DocumentFrame {
 							Utils.printDataList(dataList);
 						}
 
-						String path = ((i == 0) ? outFile.toString() : outFile
-								.toString() + i);
-
+						String fullPath = Utils.getWritePath(outFile, i);
 						PrintWriter writer = new PrintWriter(new FileWriter(
-								path));
+								fullPath));
 
 						ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 

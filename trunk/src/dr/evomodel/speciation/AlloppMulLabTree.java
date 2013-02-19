@@ -147,7 +147,7 @@ public class AlloppMulLabTree  {
                 formatter.format("%s", " ");
             }
             formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
-            formatter.format("%20s ", AlloppMisc.FixedBitSetasText(union));
+            formatter.format("%60s ", AlloppMisc.FixedBitSetasText(union));
             double tippop = (tippopindex >= 0) ? tippop() : -1.0;
             formatter.format("%s %s ", AlloppMisc.nonnegIntIn2Chars(tippopindex), AlloppMisc.nonnegIn8Chars(tippop));
             double hybpop = (hybpopindex >= 0) ? hybpop() : -1.0;
@@ -486,7 +486,7 @@ public class AlloppMulLabTree  {
     }
 
     String asText() {
-        String header = "topology             height         union         []  tippop  []  hybpop  [] rootpop  tetroot   hybhgt nlin coalheights" + System.getProperty("line.separator");
+        String header = "MUL-tree              height                          union                               []  tippop  []  hybpop  [] rootpop  tetroot   hybhgt nlin coalheights" + System.getProperty("line.separator");
 
         String s = "";
         Stack<Integer> x = new Stack<Integer>();

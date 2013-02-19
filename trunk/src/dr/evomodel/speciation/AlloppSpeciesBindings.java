@@ -246,7 +246,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         			} else {
         				formatter.format("%s ", "+");
         			}
-        			while (s.length() < 20-indentlen) {
+        			while (s.length() < 30-indentlen) {
         				formatter.format("%s", " "); 
         			}
         			formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
@@ -927,7 +927,9 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     
 	
 	public String genetreeAsText(int g) {
-		return geneTreeInfos[g].genetreeAsText();
+        String s = "Gene tree " + g + "                     height             union" + System.getProperty("line.separator");
+        s += geneTreeInfos[g].genetreeAsText();
+		return s;
 	}
 
 	

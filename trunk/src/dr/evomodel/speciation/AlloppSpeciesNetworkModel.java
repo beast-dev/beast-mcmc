@@ -74,6 +74,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     private AlloppDiploidHistory oldadhist;
     private ArrayList<AlloppLeggedTree> tettrees;
     private ArrayList<AlloppLeggedTree> oldtettrees;
+    private int nofdiploids;
+    private int noftetraploids;
+    private boolean onehybridization;
+    private boolean diploidrootisroot;
     private TreeTrait tti;
     private TreeTrait hh;
 
@@ -177,13 +181,18 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
       *
       */
     public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apspecies,
-                                     double tippopvalue, double rootpopvalue, double hybpopvalue, boolean onehyb) {
+                                     double tippopvalue, double rootpopvalue, double hybpopvalue,
+                                     boolean onehyb, boolean diprootisroot) {
         super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
         apsp = apspecies;
         addModel(apsp);
         tettrees = new ArrayList<AlloppLeggedTree>();
         Taxon[] dipspp = apsp.SpeciesWithinPloidyLevel(2);
+        nofdiploids = dipspp.length;
         Taxon[] tetspp = apsp.SpeciesWithinPloidyLevel(4);
+        noftetraploids = tetspp.length;
+        onehybridization = onehyb;
+        diploidrootisroot = diprootisroot;
         makeInitialNDipsNTetsNetwork(dipspp, tetspp);
 
         double maxrootheight = adhist.getRootHeight();
@@ -287,7 +296,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
                 return false;
             }
         }
-        if (!adhist.diphistOK()) {
+        if (!adhist.diphistOK(diploidrootisroot)) {
             return false;
         }
 
@@ -372,14 +381,13 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         String nl = System.getProperty("line.separator");
 
         String s = nl + adhist.asText() + nl;
-        s += "noftettrees" + tettrees.size() + nl;
-        for (AlloppLeggedTree tettree : tettrees) {
-            s += tettree.asText();
+        s += "noftettrees " + tettrees.size() + nl;
+        for (int tt = 0; tt < tettrees.size(); tt++) {
+            s += tettrees.get(tt).asText(tt);
         }
         s += mullabtree.asText() + nl;
         for (int g = 0; g < ngt; g++) {
-            s += "Gene tree " + g + nl;
-            s += apsp.genetreeAsText(g) + nl;
+            s += apsp.genetreeAsText(g);
             s += apsp.seqassignsAsText(g) + nl;
         }
         s += nl;
@@ -512,6 +520,14 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         return tettrees.size();
     }
 
+    public boolean getDiploidRootIsRoot() {
+        return diploidrootisroot;
+    }
+
+
+    public boolean getOneHybridization() {
+        return onehybridization;
+    }
 
     public int getNumberOfInternalNodesInTetTree(int n) {
         return tettrees.get(n).getInternalNodeCount();
@@ -529,6 +545,11 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
     public AlloppDiploidHistory getDiploidHistory() {
         return adhist;
+    }
+
+
+    public int getNofDiploids() {
+        return nofdiploids;
     }
 
 
@@ -673,24 +694,31 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         double rate = 1.0; // scale later
         assert tetspp.length > 0;
         assert dipspp.length > 1;
-        // Chinese restuarant process to partition tetraploids
         ArrayList<TetraTaxonGroup> tetgps = new ArrayList<TetraTaxonGroup>();
         TetraTaxonGroup gp1 = new TetraTaxonGroup();
-        gp1.add(tetspp[0]);
-        tetgps.add(gp1);
-        for (int t = 1;  t < tetspp.length; t++) {
-            double [] pdf = new double[tetgps.size() + 1];
-            for (int g = 0; g < tetgps.size(); g++) {
-                pdf[g] = tetgps.get(g).size();
+        if (onehybridization) {
+            for (int t = 0;  t < tetspp.length; t++) {
+                gp1.add(tetspp[t]);
             }
-            pdf[tetgps.size()] = 1;
-            int nextg = MathUtils.randomChoicePDF(pdf);
-            if (nextg == tetgps.size()) {
-                TetraTaxonGroup newgp = new TetraTaxonGroup();
-                newgp.add(tetspp[t]);
-                tetgps.add(newgp);
-            } else {
-                tetgps.get(nextg).add(tetspp[t]);
+            tetgps.add(gp1);
+        } else {
+            // Chinese restuarant process to partition tetraploids
+            gp1.add(tetspp[0]);
+            tetgps.add(gp1);
+            for (int t = 1;  t < tetspp.length; t++) {
+                double [] pdf = new double[tetgps.size() + 1];
+                for (int g = 0; g < tetgps.size(); g++) {
+                    pdf[g] = tetgps.get(g).size();
+                }
+                pdf[tetgps.size()] = 1;
+                int nextg = MathUtils.randomChoicePDF(pdf);
+                if (nextg == tetgps.size()) {
+                    TetraTaxonGroup newgp = new TetraTaxonGroup();
+                    newgp.add(tetspp[t]);
+                    tetgps.add(newgp);
+                } else {
+                    tetgps.get(nextg).add(tetspp[t]);
+                }
             }
         }
         // Make trees for each group of tetraploids
@@ -703,7 +731,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
             tettrees.add(tettree);
         }
         // Make diploid history given tetraploid subtrees
-        adhist = new AlloppDiploidHistory(dipspp, tettrees, rate, apsp);
+        adhist = new AlloppDiploidHistory(dipspp, tettrees, diploidrootisroot, rate, apsp);
     }
 
 
@@ -1141,7 +1169,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
                 dhroot = 14;
                 break;
         }
-        AlloppDiploidHistory adhist = new AlloppDiploidHistory(dhnodes, dhroot, tettrees, apsp, nmltTEST);
+        AlloppDiploidHistory adhist = new AlloppDiploidHistory(dhnodes, dhroot, tettrees, true, apsp, nmltTEST);
         int ntippopparams = numberOfTipPopParameters();
         int nrootpopparams = numberOfRootPopParameters();
         int maxnhybpopparams = maxNumberOfHybPopParameters();

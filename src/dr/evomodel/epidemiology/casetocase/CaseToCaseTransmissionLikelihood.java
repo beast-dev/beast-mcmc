@@ -423,6 +423,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return branchMap;
     }
 
+    public final void setBranchMap(AbstractCase[] map){
+        branchMap = map;
+    }
+
     public final TreeModel getTree(){
         return virusTree;
     }

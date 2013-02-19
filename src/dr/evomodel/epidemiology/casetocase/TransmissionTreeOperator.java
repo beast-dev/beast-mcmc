@@ -1,17 +1,22 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.operators.AbstractTreeOperator;
+import dr.evomodel.operators.ExchangeOperator;
+import dr.evomodel.operators.SubtreeSlideOperator;
+import dr.evomodel.operators.WilsonBalding;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * An operator that wraps a (phylogenetic) tree operator and adjusts the transmission tree accordingly. Only works
  * for the simpler (TT=TMRCA) version of the transmission tree. TT moves are deterministic, so the Hastings ratios
- * reported by the other operators are not affected.
+ * reported by the other operators are not affected. Needs pretty serious documentation written at some point.
  *
  * @author Matthew Hall
  */
@@ -26,6 +31,9 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         super(mode);
         this.c2cLikelihood = c2cLikelihood;
         this.innerOperator = operator;
+        if(c2cLikelihood.isExtended()){
+            throw new RuntimeException("TransmissionTreeOperator only works on non-extended tree paintings");
+        }
     }
 
     public TransmissionTreeOperator(CaseToCaseTransmissionLikelihood c2cLikelihood, AbstractTreeOperator operator) {
@@ -35,7 +43,9 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
     public double doOperation() throws OperatorFailedException {
         TreeModel tree = c2cLikelihood.getTree();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
+        AbstractCase[] newBranchMap = Arrays.copyOf(branchMap, branchMap.length);
         int[] oldParents = getParentsArray(tree);
+        double[] oldHeights = getHeightsArray(tree);
         double hr = innerOperator.doOperation();
         int[] newParents = getParentsArray(tree);
         ArrayList<Integer> changedNodes = new ArrayList<Integer>();
@@ -45,15 +55,88 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
             }
         }
         if(changedNodes.size()!=0){
-            if(changedNodes.size()==2){
+            if(innerOperator instanceof ExchangeOperator){
                 //this is a node swap operator
-            } else if(changedNodes.size()==3){
+                AbstractCase[] nodePaintings = new AbstractCase[2];
+                AbstractCase[] parentPaintings = new AbstractCase[2];
+                for(int i=0; i<2; i++){
+                    nodePaintings[i] = branchMap[changedNodes.get(i)];
+                    parentPaintings[i] = branchMap[oldParents[changedNodes.get(i)]];
+                }
+                if(parentPaintings[0]!=parentPaintings[1]){
+                    //If this is true there is nothing to do - all parental relationships remain the same
+                    for(int i=0; i<2; i++){
+                        paintUp(tree, nodePaintings[1-i], nodePaintings[i], branchMap, newBranchMap,
+                                tree.getNode(changedNodes.get(i)).getNumber());
+                    }
+                }
+            } else if(innerOperator instanceof SubtreeSlideOperator || innerOperator instanceof WilsonBalding){
                 //this is a node transplantation operator
+                int movedNode = -1;
+                int oldChild = -1;
+                int newChild = -1;
+                for(int i:changedNodes){
+                    //the chance of it having the same height as before is minuscule. If so, it will throw an exception
+                    //later, though.
+                    if(tree.getNodeHeight(tree.getNode(i))!=oldHeights[i]){
+                        movedNode = i;
+                        for(int j:changedNodes){
+                            if(j!=i){
+                                if(tree.getParent(tree.getNode(j))==tree.getNode(i)){
+                                    newChild = j;
+                                } else {
+                                    oldChild = j;
+                                }
+                            }
+                        }
+                    }
+                }
+                if(movedNode == -1 || oldChild == -1 || newChild == -1){
+                    throw new OperatorFailedException("Failed to establish relationship between relocated node and" +
+                            "others");
+                }
+                NodeRef movedNodeObject = tree.getNode(movedNode);
+                NodeRef oldChildObject = tree.getNode(oldChild);
+                NodeRef newChildObject = tree.getNode(newChild);
+                int otherChild = -1;
+                NodeRef otherChildObject = null;
+                //Find the other child of the moved node (the root of the transplanted subtree)
+                for(int i=0; i<tree.getChildCount(movedNodeObject);i++){
+                    if(tree.getChild(movedNodeObject,i)!=newChildObject){
+                        otherChildObject = tree.getChild(movedNodeObject,i);
+                        otherChild = otherChildObject.getNumber();
+                    }
+                }
+
+                //If the child of the moved node is the earliest node with its painting:
+                if(branchMap[otherChild]==branchMap[movedNode]){
+                    newBranchMap[movedNode]=branchMap[newChild];
+                } else {
+                    //Change all paintings up the tree from the moved node that used to match the new child to that
+                    //of the moved node
+                    paintUp(tree, branchMap[newChild],branchMap[movedNode],branchMap,newBranchMap,movedNode);
+                    //Change all paintings up the tree from the old child that used to match the moved node to that
+                    //of the old child
+                    paintUp(tree, branchMap[movedNode],branchMap[oldChild],branchMap,newBranchMap,movedNode);
+                }
             } else {
                 //I don't know what this is
+                throw new OperatorFailedException("Operator class "+innerOperator.getOperatorName()+" not yet " +
+                        "supported");
             }
         }
+        c2cLikelihood.setBranchMap(newBranchMap);
+        c2cLikelihood.makeDirty();
         return hr;
+    }
+
+    private void paintUp(TreeModel tree, AbstractCase oldCase, AbstractCase newCase, AbstractCase[] oldbranchMap,
+                         AbstractCase[] newBranchMap, int nodeNo){
+        NodeRef newParent = tree.getParent(tree.getNode(nodeNo));
+        while(newParent!=null && oldbranchMap[newParent.getNumber()]==oldCase){
+            newBranchMap[newParent.getNumber()]=newCase;
+            newParent=tree.isRoot(newParent) ? null : tree.getParent(newParent);
+        }
     }
 
     private int[] getParentsArray(TreeModel tree){
@@ -64,6 +147,14 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
             } else {
                 out[i]=tree.getParent(tree.getNode(i)).getNumber();
             }
+        }
+        return out;
+    }
+
+    private double[] getHeightsArray(TreeModel tree){
+        double[] out = new double[tree.getNodeCount()];
+        for(int i=0; i<tree.getNodeCount(); i++){
+            out[i]=tree.getNodeHeight(tree.getNode(i));
         }
         return out;
     }

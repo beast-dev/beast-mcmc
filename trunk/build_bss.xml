@@ -74,6 +74,13 @@
             <include name="dr/stats/**/*.class" />
             <include name="dr/util/**/*.class" />
             <include name="dr/xml/**/*.class" />
+			<include name="dr/evomodelxml/branchratemodel/**/*.class" />
+			<include name="dr/evomodelxml/coalescent/**/*.class" />
+			<include name="dr/evomodelxml/sitemodel/**/*.class" />
+			<include name="dr/evomodelxml/tree/**/*.class" />
+			<include name="dr/app/beagle/tools/parsers/**/*.class" />
+			<include name="dr/evolution/io/Importer/**/*.class" />
+
          </fileset>
 
          <zipgroupfileset dir="${lib}" includes="jam.jar" />
@@ -127,6 +134,12 @@
          <include name="dr/stats/**" />
          <include name="dr/util/**" />
          <include name="dr/xml/**" />
+		 <include name="dr/evomodelxml/branchratemodel/**" />
+		 <include name="dr/evomodelxml/coalescent/**" />
+		 <include name="dr/evomodelxml/sitemodel/**" />
+		 <include name="dr/evomodelxml/tree/**" />
+		 <include name="dr/app/beagle/tools/parsers/**" />
+		 <include name="dr/evolution/io/Importer/**" />
 
       </javac>
       <echo message="Successfully compiled." />

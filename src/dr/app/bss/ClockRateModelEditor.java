@@ -18,7 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
-import org.virion.jam.components.RealNumberField;
+import dr.app.gui.components.RealNumberField;
 
 public class ClockRateModelEditor {
 

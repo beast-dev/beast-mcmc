@@ -37,9 +37,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 		taxaTableModel = new TaxaTableModel();
 		taxaTable = new JTable(taxaTableModel);
 
-		// TableSorter sorter = new TableSorter(taxaTableModel);
-		// sorter.setTableHeader(taxaTable.getTableHeader());
-
 		taxaTable.getTableHeader().setReorderingAllowed(false);
 
 		taxaTable.getTableHeader()
@@ -65,17 +62,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		taxaTable.getColumnModel().getColumn(1).setPreferredWidth(80);
 
-		// taxaTable.getColumnModel().getColumn(1)
-		// .setCellEditor(new DateCellEditor());
-
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxaTable);
-
-		// taxaTable.getSelectionModel().addListSelectionListener(
-		// new ListSelectionListener() {
-		// public void valueChanged(ListSelectionEvent evt) {
-		// selectionChanged();
-		// }
-		// });
 
 		scrollPane = new JScrollPane(taxaTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,

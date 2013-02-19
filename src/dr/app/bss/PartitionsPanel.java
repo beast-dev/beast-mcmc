@@ -1,6 +1,7 @@
 package dr.app.bss;
 
 import jam.framework.Exportable;
+import jam.panels.ActionPanel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -25,7 +26,6 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-import org.virion.jam.panels.ActionPanel;
 
 @SuppressWarnings("serial")
 public class PartitionsPanel extends JPanel implements Exportable {

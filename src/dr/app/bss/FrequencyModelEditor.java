@@ -19,7 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
-import org.virion.jam.components.RealNumberField;
+import dr.app.gui.components.RealNumberField;
 
 public class FrequencyModelEditor {
 

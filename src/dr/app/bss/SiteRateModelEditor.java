@@ -22,7 +22,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.text.BadLocationException;
 
-import org.virion.jam.components.RealNumberField;
+import dr.app.gui.components.RealNumberField;
 
 public class SiteRateModelEditor {
 

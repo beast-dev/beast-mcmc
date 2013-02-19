@@ -33,13 +33,14 @@ import dr.util.Attribute;
 import dr.xml.Report;
 import dr.xml.XMLParser;
 
-
 /**
  * @author Filip Bielejec
  * @version $Id$
  */
 public class XMLGenerator {
 
+	public static final String STARTING_TREE = "startingTree";
+	
 	private PartitionDataList dataList;
 
 	public XMLGenerator(PartitionDataList dataList) {
@@ -484,7 +485,7 @@ public class XMLGenerator {
 		writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(
 				XMLParser.ID, treeModelName), false);
 
-		writer.writeIDref("tree", BeagleSequenceSimulatorApp.STARTING_TREE
+		writer.writeIDref("tree", STARTING_TREE
 				+ suffix);
 
 		writeParameter(TreeModelParser.ROOT_HEIGHT, treeModelName + "."
@@ -521,7 +522,7 @@ public class XMLGenerator {
 
 		writer.writeOpenTag(NewickParser.NEWICK,
 				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
-						BeagleSequenceSimulatorApp.STARTING_TREE + suffix) });
+						STARTING_TREE + suffix) });
 
 		writer.writeText(Tree.Utils.newick(tree));
 

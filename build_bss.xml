@@ -127,10 +127,9 @@
          <include name="dr/stats/**" />
          <include name="dr/util/**" />
          <include name="dr/xml/**" />
+
       </javac>
-
-      <echo message="Successfully complied." />
-
+      <echo message="Successfully compiled." />
    </target>
 
 

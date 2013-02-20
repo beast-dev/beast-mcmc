@@ -639,6 +639,33 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
     }
 
+    public boolean checkPaintingIntegrity(boolean verbose){
+        boolean out=true;
+        for(int i=0; i<virusTree.getInternalNodeCount(); i++){
+            NodeRef node = virusTree.getInternalNode(i);
+            NodeRef firstChild = virusTree.getChild(node,0);
+            NodeRef secondChild = virusTree.getChild(node,1);
+            NodeRef parent = virusTree.getParent(node);
+            if(branchMap[node.getNumber()]!=branchMap[firstChild.getNumber()] &&
+                    branchMap[node.getNumber()]!=branchMap[secondChild.getNumber()] &&
+                    (!extended || branchMap[node.getNumber()]!=branchMap[parent.getNumber()])){
+                out = false;
+                if(!verbose){
+                    break;
+                } else {
+                    System.out.println("Node "+node.getNumber()+" failed painting integrity check:");
+                    System.out.println("Node painting: "+branchMap[node.getNumber()].getName());
+                    System.out.println("Parent painting: "+branchMap[parent.getNumber()].getName());
+                    System.out.println("Parent painting: "+branchMap[firstChild.getNumber()].getName());
+                    System.out.println("Parent painting: "+branchMap[secondChild.getNumber()].getName());
+                    System.out.println();
+                }
+            }
+        }
+        return out;
+    }
+
+
     /* Return the case (painting) of the parent of this node */
 
     public AbstractCase getParentCase(NodeRef node){

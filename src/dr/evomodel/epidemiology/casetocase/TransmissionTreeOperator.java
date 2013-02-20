@@ -233,6 +233,4 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                 new ElementRule(AbstractTreeOperator.class, "A phylogenetic tree operator.")
         };
     };
-
-
 }

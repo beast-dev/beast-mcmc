@@ -51,6 +51,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     private int iterations, cutoff;
     private final Parameter parameter;
     private final int dim;
+    private final double constantFactor;
     private double[] oldMeans, newMeans;
 
     final double[][] matrix;
@@ -67,6 +68,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
         this.iterations = 0;
         setWeight(weight);
         dim = parameter.getDimension();
+        constantFactor = Math.pow(2.38, 2) / ((double)dim);
         this.cutoff = 2*dim;
         this.empirical = new double[dim][dim];
         this.oldMeans = new double[dim];
@@ -118,7 +120,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     private double calculateCovariance (int number, double currentMatrixEntry, double[] values, int firstIndex, int secondIndex) {
     	
     	//number will always be > 1 here
-    	double result  = currentMatrixEntry*(number - 1);
+    	double result = currentMatrixEntry*(number - 1);
     	result += (values[firstIndex]*values[secondIndex]);
     	result += ((number-1)*oldMeans[firstIndex]*oldMeans[secondIndex] - number*newMeans[firstIndex]*newMeans[secondIndex]);
     	result /= ((double)number);
@@ -130,12 +132,12 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     public double doOperation() throws OperatorFailedException {
     	
     	iterations++;
-    	System.err.println("Using adaptive Metropolis (AM) operator: " + iterations);
+    	//System.err.println("Using adaptive Metropolis (AM) operator: " + iterations);
     	
     	double[] x = parameter.getParameterValues();
     	
-		double[] oldX = new double[x.length];
-        System.arraycopy(x, 0, oldX, 0, x.length);
+		/*double[] oldX = new double[x.length];
+        System.arraycopy(x, 0, oldX, 0, x.length);*/
     	
     	if (iterations > 1) {
     		
@@ -146,34 +148,11 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     		
     		//here we can simply use the double[][] matrix
     		for (int i = 0; i < dim; i++) {
-    			for (int j = 0; j < dim; j++) {
+    			for (int j = i; j < dim; j++) {
     				empirical[i][j] = calculateCovariance(iterations, empirical[i][j], x, i, j);
+    				empirical[j][i] = empirical[i][j];
     			}
     		}
-    		
-    		//test routine: first update old and new means
-    		/*if (iterations == 2) {
-    			System.err.println("old means:");
-    			for (int i = 0; i < 5; i++) {
-    				System.err.println(oldMeans[i]);
-    			}
-    			System.err.println("new means:");
-    			for (int i = 0; i < 5; i++) {
-    				System.err.println(newMeans[i]);
-    			}
-    			System.err.println("new values:");
-    			for (int i = 0; i < 5; i++) {
-    				System.err.println(x[i]);
-    			}
-    			System.err.println("empirical covariance matrix:");
-    			for (int i = 0; i < 5; i++) {
-    				for (int j = 0; j < 5; j++) {
-    					System.err.print(empirical[i][j] + " ");
-    				}
-    				System.err.println();
-    			}
-    		}
-    		System.exit(0);*/
     		
     	} else {
     		
@@ -192,7 +171,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     	
     	if (iterations > cutoff) {
     		
-    		System.err.println("Using empirical covariance matrix");
+    		//System.err.println("Using empirical covariance matrix");
     		
     		/*double[] oldX = new double[x.length];
             System.arraycopy(x, 0, oldX, 0, x.length);*/
@@ -206,7 +185,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
             double[][] proposal = new double[dim][dim];
             for (int i = 0; i < dim; i++) {
             	for (int j = 0; j < dim; j++) {
-            		proposal[i][j] = (1 - beta)*Math.pow(2.38, 2)*empirical[i][j]/((double)dim) + beta*matrix[i][j];
+            		proposal[i][j] = (1 - beta)*constantFactor*empirical[i][j] + beta*matrix[i][j];
             	}
             }
             
@@ -228,12 +207,10 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
             /*for (int i = 0; i < dim; i++) {
             	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
             }*/
-            
-            //System.exit(0);
     		
     	} else {
     		
-    		System.err.println("Using initial covariance matrix");
+    		//System.err.println("Using initial covariance matrix");
     		
             /*double[] oldX = new double[x.length];
             System.arraycopy(x, 0, oldX, 0, x.length);*/

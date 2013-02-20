@@ -894,7 +894,7 @@ public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule("extended"),
-            new ElementRule("virusTree", Tree.class, "The (currently fixed) tree"),
+            new ElementRule("virusTree", Tree.class, "The tree"),
             new ElementRule(AbstractCaseSet.class, "The set of cases"),
             new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                     true)
@@ -913,7 +913,6 @@ public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         for(int i=0; i< cases.size(); i++){
             final AbstractCase infected = cases.getCase(i);
             columns[i] = new LogColumn.Abstract(infected.toString()){
-                @Override
                 protected String getFormattedValue() {
                     if(getInfector(infected)==null){
                         return "Start";

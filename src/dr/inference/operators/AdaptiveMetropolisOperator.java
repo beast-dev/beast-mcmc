@@ -1,5 +1,5 @@
 /*
- * MultivariateNormalMixtureOperator.java
+ * AdaptiveMetropolisOperator.java
  *
  * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
  *
@@ -37,7 +37,6 @@ import dr.xml.*;
 
 
 /**
- * @author Marc Suchard
  * @author Guy Baele
  */
 public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
@@ -45,26 +44,33 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     public static final String AM_OPERATOR = "adaptiveMetropolisOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String BETA = "beta";
-    //public static final String VARIANCE_MATRIX = "varMatrix";
     public static final String FORM_XTX = "formXtXInverse";
 
     private double scaleFactor;
-    private int iterations;
+    private double beta;
+    private int iterations, cutoff;
     private final Parameter parameter;
     private final int dim;
+    private double[] oldMeans, newMeans;
 
     final double[][] matrix;
+    private double[][] empirical;
     private double[][] cholesky;
 
     public AdaptiveMetropolisOperator(Parameter parameter, double scaleFactor, double[][] inMatrix, double weight,
-                                      CoercionMode mode, boolean isVarianceMatrix) {
+                                      double beta, CoercionMode mode, boolean isVarianceMatrix) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
         this.parameter = parameter;
+        this.beta = beta;
         this.iterations = 0;
         setWeight(weight);
         dim = parameter.getDimension();
+        this.cutoff = 2*dim;
+        this.empirical = new double[dim][dim];
+        this.oldMeans = new double[dim];
+        this.newMeans = new double[dim];
 
         SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(inMatrix));
         if (inMatrix[0].length != svd.rank()) {
@@ -85,8 +91,8 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     }
 
     public AdaptiveMetropolisOperator(Parameter parameter, double scaleFactor,
-                                      MatrixParameter varMatrix, double weight, CoercionMode mode, boolean isVariance) {
-        this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, mode, isVariance);
+                                      MatrixParameter varMatrix, double weight, double beta, CoercionMode mode, boolean isVariance) {
+        this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, mode, isVariance);
     }
 
     private double[][] formXtXInverse(double[][] X) {
@@ -108,41 +114,153 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
         matrix = new SymmetricMatrix(matrix).inverse().toComponents();
         return matrix;
     }
+    	
+    private double calculateCovariance (int number, double currentMatrixEntry, double[] values, int firstIndex, int secondIndex) {
+    	
+    	//number will always be > 1 here
+    	double result  = currentMatrixEntry*(number - 1);
+    	result += (values[firstIndex]*values[secondIndex]);
+    	result += ((number-1)*oldMeans[firstIndex]*oldMeans[secondIndex] - number*newMeans[firstIndex]*newMeans[secondIndex]);
+    	result /= ((double)number);
+    	
+    	return result;
+    	
+    }
 
     public double doOperation() throws OperatorFailedException {
     	
     	iterations++;
-    	//System.err.println("Using adaptive Metropolis (AM) operator: " + iterations);
+    	System.err.println("Using adaptive Metropolis (AM) operator: " + iterations);
     	
-    	//not necessary for first test phase, but will need to be performed when covariance matrix is being updated
-    	/*try {
-            cholesky = (new CholeskyDecomposition(matrix)).getL();
-        } catch (IllegalDimension illegalDimension) {
-            throw new RuntimeException("Unable to decompose matrix in MultivariateNormalMixtureOperator");
-        }*/
+    	double[] x = parameter.getParameterValues();
     	
-        double[] x = parameter.getParameterValues();
-        
-        /*double[] oldX = new double[x.length];
-        System.arraycopy(x, 0, oldX, 0, x.length);*/
-        
-        double[] epsilon = new double[dim];
-        //double[] y = new double[dim];
-        for (int i = 0; i < dim; i++)
-            epsilon[i] = scaleFactor * MathUtils.nextGaussian();
-
-        for (int i = 0; i < dim; i++) {
-            for (int j = i; j < dim; j++) {
-                x[i] += cholesky[j][i] * epsilon[j];
-                // caution: decomposition returns lower triangular
+		double[] oldX = new double[x.length];
+        System.arraycopy(x, 0, oldX, 0, x.length);
+    	
+    	if (iterations > 1) {
+    		
+    		//first recalculate the means using recursion
+    		for (int i = 0; i < dim; i++) {
+    			newMeans[i] = ((oldMeans[i]*(iterations-1)) + x[i])/iterations;
+    		}
+    		
+    		//here we can simply use the double[][] matrix
+    		for (int i = 0; i < dim; i++) {
+    			for (int j = 0; j < dim; j++) {
+    				empirical[i][j] = calculateCovariance(iterations, empirical[i][j], x, i, j);
+    			}
+    		}
+    		
+    		//test routine: first update old and new means
+    		/*if (iterations == 2) {
+    			System.err.println("old means:");
+    			for (int i = 0; i < 5; i++) {
+    				System.err.println(oldMeans[i]);
+    			}
+    			System.err.println("new means:");
+    			for (int i = 0; i < 5; i++) {
+    				System.err.println(newMeans[i]);
+    			}
+    			System.err.println("new values:");
+    			for (int i = 0; i < 5; i++) {
+    				System.err.println(x[i]);
+    			}
+    			System.err.println("empirical covariance matrix:");
+    			for (int i = 0; i < 5; i++) {
+    				for (int j = 0; j < 5; j++) {
+    					System.err.print(empirical[i][j] + " ");
+    				}
+    				System.err.println();
+    			}
+    		}
+    		System.exit(0);*/
+    		
+    	} else {
+    		
+    		//iterations == 1
+    		for (int i = 0; i < dim; i++) {
+        		oldMeans[i] = x[i];
+        		newMeans[i] = x[i];
+        	}
+    		
+    		for (int i = 0; i < dim; i++) {
+    			for (int j = 0; j < dim; j++) {
+    				empirical[i][j] = 0.0;
+    			}
+    		}
+    	}
+    	
+    	if (iterations > cutoff) {
+    		
+    		System.err.println("Using empirical covariance matrix");
+    		
+    		/*double[] oldX = new double[x.length];
+            System.arraycopy(x, 0, oldX, 0, x.length);*/
+            
+            double[] epsilon = new double[dim];
+            
+            for (int i = 0; i < dim; i++) {
+                epsilon[i] = scaleFactor * MathUtils.nextGaussian();
             }
-            parameter.setParameterValue(i, x[i]);
-        }
-        
-        /*for (int i = 0; i < dim; i++) {
-        	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-        }*/
-        
+            
+            double[][] proposal = new double[dim][dim];
+            for (int i = 0; i < dim; i++) {
+            	for (int j = 0; j < dim; j++) {
+            		proposal[i][j] = (1 - beta)*Math.pow(2.38, 2)*empirical[i][j]/((double)dim) + beta*matrix[i][j];
+            	}
+            }
+            
+            //not necessary for first test phase, but will need to be performed when covariance matrix is being updated
+        	try {
+                cholesky = (new CholeskyDecomposition(proposal)).getL();
+            } catch (IllegalDimension illegalDimension) {
+                throw new RuntimeException("Unable to decompose matrix in MultivariateNormalMixtureOperator");
+            }
+            
+            for (int i = 0; i < dim; i++) {
+                for (int j = i; j < dim; j++) {
+                    x[i] += cholesky[j][i] * epsilon[j];
+                    // caution: decomposition returns lower triangular
+                }
+                parameter.setParameterValue(i, x[i]);
+            }
+            
+            /*for (int i = 0; i < dim; i++) {
+            	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
+            }*/
+            
+            //System.exit(0);
+    		
+    	} else {
+    		
+    		System.err.println("Using initial covariance matrix");
+    		
+            /*double[] oldX = new double[x.length];
+            System.arraycopy(x, 0, oldX, 0, x.length);*/
+            
+            double[] epsilon = new double[dim];
+
+            for (int i = 0; i < dim; i++) {
+                epsilon[i] = scaleFactor * MathUtils.nextGaussian();
+            }
+
+            for (int i = 0; i < dim; i++) {
+                for (int j = i; j < dim; j++) {
+                    x[i] += cholesky[j][i] * epsilon[j];
+                    // caution: decomposition returns lower triangular
+                }
+                parameter.setParameterValue(i, x[i]);
+            }
+            
+            /*for (int i = 0; i < dim; i++) {
+            	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
+            }*/
+    		
+    	}
+    	
+    	//copy new means to old means for next update iteration
+    	System.arraycopy(newMeans, 0, oldMeans, 0, dim);
+    	
         return 0;
     }
 
@@ -213,6 +331,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
             CoercionMode mode = CoercionMode.parseMode(xo);
 
             double weight = xo.getDoubleAttribute(WEIGHT);
+            double beta = xo.getDoubleAttribute(BETA);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
             if (scaleFactor <= 0.0) {
@@ -223,10 +342,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
 
             boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
-            //XMLObject cxo = xo.getChild(VARIANCE_MATRIX);
-            //MatrixParameter varMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
-            
-            //varMatrix needs to be initialized (Roberts and Rosenthal, 2006-2008): N(x, (0.1)^2 I_d / d)
+            //varMatrix needs to be initialized
             int dim = parameter.getDimension();
             Parameter[] init = new Parameter[dim];
             for (int i = 0; i < dim; i++) {
@@ -255,7 +371,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
             if (varMatrix.getColumnDimension() != parameter.getDimension())
                 throw new XMLParseException("The parameter and variance matrix have differing dimensions");
 
-            return new AdaptiveMetropolisOperator(parameter, scaleFactor, varMatrix, weight, mode, !formXtXInverse);
+            return new AdaptiveMetropolisOperator(parameter, scaleFactor, varMatrix, weight, beta, mode, !formXtXInverse);
         }
 
         //************************************************************************
@@ -280,10 +396,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(BETA),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
-                new ElementRule(Parameter.class),
-                //new ElementRule(VARIANCE_MATRIX,
-                        //new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)})
-
+                new ElementRule(Parameter.class)
         };
 
     };

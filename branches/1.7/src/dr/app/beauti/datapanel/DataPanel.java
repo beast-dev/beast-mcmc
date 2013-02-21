@@ -608,9 +608,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         if (selectedPartitionData.size() > 1) {
             if (!options.hasIdenticalTaxa(selectedPartitionData)) {
-                JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
-                        "Illegal Configuration",
-                        JOptionPane.ERROR_MESSAGE);
+                String errMsg = "To share a tree, partitions need to have identical taxa.";
+                if (selectedPartitionData.get(0).getDataType().getType() == DataType.MICRO_SAT)
+                    errMsg += "\nThe data must be all diploid or all haploid when you want to link the tree.";
+                JOptionPane.showMessageDialog(this, errMsg, "Illegal Configuration", JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }

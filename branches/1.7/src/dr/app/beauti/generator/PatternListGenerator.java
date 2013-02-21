@@ -10,6 +10,7 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
@@ -158,13 +159,15 @@ public class PatternListGenerator extends Generator {
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
         if (model.getDataType().getType() == DataType.MICRO_SAT) {
+            Patterns patterns = partition.getPatterns();
+
             writer.writeComment("The patterns for microsatellite");
             writer.writeOpenTag(MicrosatellitePatternParser.MICROSATPATTERN,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, partition.getName()),
                     });
 
-            if (options.hasIdenticalTaxa()) {
+            if (options.hasIdenticalTaxa() && !patterns.hasMask()) {
                 writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
             } else {
                 writer.writeIDref(TaxaParser.TAXA, partition.getName() + "." + TaxaParser.TAXA);
@@ -191,12 +194,23 @@ public class PatternListGenerator extends Generator {
             }
 
             writer.writeOpenTag(MicrosatellitePatternParser.MICROSAT_SEQ);
+
             String seq = "";
-            for (int i = 0; i < partition.getPatterns().getTaxonCount(); i++) {
-                if (i > 0) seq +=",";
-                seq += partition.getPatterns().getPatternState(i, 0);
+            int c = 0;
+            for (int i = 0; i < patterns.getTaxonCount(); i++) {
+                if (!patterns.isMasked(i)) {
+                    if (c > 0) seq += ",";
+                    int state = patterns.getPatternState(i, 0);
+                    if (state == Microsatellite.UNKNOWN_STATE_LENGTH) {
+                        seq += Microsatellite.UNKNOWN_CHARACTER;
+                    } else {
+                        seq += Integer.toString(state);
+                    }
+                    c++;
+                }
             }
             writer.writeText(seq);
+
             writer.writeCloseTag(MicrosatellitePatternParser.MICROSAT_SEQ);
 
             writer.writeCloseTag(MicrosatellitePatternParser.MICROSATPATTERN);

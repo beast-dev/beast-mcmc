@@ -94,7 +94,7 @@ public class Microsatellite extends DataType {
     public int getState(String srtRawLength){
         char chRawLength =  srtRawLength.charAt(0);
         try{
-            if(chRawLength == Microsatellite.UNKNOWN_CHARACTER){
+            if(chRawLength == UNKNOWN_CHARACTER){
                 return getState(UNKNOWN_STATE_LENGTH);
             }else{
                 return getState(Integer.parseInt(srtRawLength));

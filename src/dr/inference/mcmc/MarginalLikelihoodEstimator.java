@@ -522,7 +522,7 @@ MCLogger logger) {
                     "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " + 
                     "\n          phylogenetic uncertainty. Mol. Biol. Evol. 29(9):2157-2167." +
                     "\n    and " + 
-                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2012" + 
+                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2013" + 
                     "\n    Accurate model selection of relaxed molecular clocks in Bayesian phylogenetics. Mol. Biol. Evol. 30(2):239-243.\n");
             return mle;
         }

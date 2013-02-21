@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.net.URL;
+import java.util.Locale;
 
 import javax.swing.ImageIcon;
 import javax.swing.UIManager;
@@ -101,10 +102,10 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
-		SingleDocApplication app = new SingleDocApplication(new MenuFactory(), //
+		SingleDocApplication app = new SingleDocApplication(new MenuBarFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
-				PartitionDataList.VERSION.concat(" ").concat(
-						PartitionDataList.DATE_STRING), //
+				VERSION.concat(" ").concat(
+				DATE_STRING), //
 				null //
 		);
 
@@ -124,6 +125,8 @@ public class BeagleSequenceSimulatorApp {
 
 	public static void main(String args[]) {
 
+		 Locale.setDefault(Locale.US);
+		
 		if (args.length > 1) {
 
 			System.out.println("Command-line interface not yet implemented");

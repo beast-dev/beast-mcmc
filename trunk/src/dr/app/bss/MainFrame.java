@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -15,6 +16,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -33,7 +36,7 @@ import dr.evolution.io.TreeImporter;
 import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
-public class MainFrame extends DocumentFrame {
+public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
@@ -55,6 +58,24 @@ public class MainFrame extends DocumentFrame {
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
 
+        AbstractAction importAction = new AbstractAction("Import Previously generated XML File...") {
+            public void actionPerformed(ActionEvent ae) {
+                doImport();
+            }
+        };
+        
+        getOpenAction().setEnabled(false);
+        getSaveAction().setEnabled(false);
+        getSaveAsAction().setEnabled(false);
+//        getCutAction().setEnabled(false);
+//        getCopyAction().setEnabled(false);
+//        getPasteAction().setEnabled(false);
+        getDeleteAction().setEnabled(false);
+        getSelectAllAction().setEnabled(false);
+        getFindAction().setEnabled(false);
+        
+        setImportAction(importAction);
+        
 	}// END: Constructor
 
 	@Override
@@ -399,19 +420,38 @@ public class MainFrame extends DocumentFrame {
 	// ---MAIN MENU---//
 	// /////////////////
 
-	// public Action getExportAction() {
-	// return simulateAction;
-	// }// END: getExportAction
-	//
-	// private AbstractAction simulateAction = new AbstractAction("Simulate...")
-	// {
-	// public void actionPerformed(ActionEvent ae) {
-	//
-	// doExport();
-	//
-	// }// END: actionPerformed
-	// };
-
+	@Override
+	public Action getGenerateXMLAction() {
+		return new AbstractAction("Generate XML...") {
+	        public void actionPerformed(ActionEvent ae) {
+	            doGenerateXML();
+	        }
+	    };
+	}//END: generateXMLAction
+	
+	// TODO: load settings from XML
+	  public final void doImport() {
+		 
+		  
+		  System.out.println("TODO");
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+		 
+	 }//END: doImport
+	 
 	@Override
 	protected boolean readFromFile(File arg0) throws IOException {
 		return false;

@@ -11,9 +11,6 @@ import dr.evomodel.tree.TreeModel;
 @SuppressWarnings("serial")
 public class PartitionDataList extends ArrayList<PartitionData> {
 
-	public static final String VERSION = "0.0.1";
-	public static final String DATE_STRING = "2012";
-	
 	public MutableTaxonList taxonList = new Taxa();
 	
 	//TODO: last partition should have this number as TO value

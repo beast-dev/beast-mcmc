@@ -19,6 +19,9 @@ h1. PURPOSE
 Long overdue simulator in Beagle.  
    
 h1. TODO
+* populate the main menu
+* command line interface
+* load settings from previously generated XML
 * update ant buildfile
 * simulate tree given taxa names only
 * add tree column in Taxa panel
@@ -26,5 +29,4 @@ h1. TODO
 * animate buttons in Partitions Panel
 * show icons in Simulate panel
 * connect 'sequence length' and 'to' fields
-* populate the main menu
-* ancestral sequence in XML generation and GUI
+* ancestral sequence in XML Generator and in GUI

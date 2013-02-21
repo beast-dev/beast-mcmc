@@ -656,8 +656,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     System.out.println("Node "+node.getNumber()+" failed painting integrity check:");
                     System.out.println("Node painting: "+branchMap[node.getNumber()].getName());
                     System.out.println("Parent painting: "+branchMap[parent.getNumber()].getName());
-                    System.out.println("Parent painting: "+branchMap[firstChild.getNumber()].getName());
-                    System.out.println("Parent painting: "+branchMap[secondChild.getNumber()].getName());
+                    System.out.println("Child 1 painting: "+branchMap[firstChild.getNumber()].getName());
+                    System.out.println("Child 2 painting: "+branchMap[secondChild.getNumber()].getName());
                     System.out.println();
                 }
             }

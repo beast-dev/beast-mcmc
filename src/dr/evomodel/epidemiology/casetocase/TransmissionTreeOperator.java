@@ -67,13 +67,14 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                     nodePaintings[i] = branchMap[changedNodes.get(i)];
                     parentPaintings[i] = branchMap[oldParents[changedNodes.get(i)]];
                 }
-                if(parentPaintings[0]!=parentPaintings[1]){
-                    //If this is true there is nothing to do - all parental relationships remain the same
+                if(nodePaintings[0]==parentPaintings[0] || nodePaintings[1]==parentPaintings[1]){
+                    //If this is not true there is nothing to do - all parental relationships remain the same
                     for(int i=0; i<2; i++){
                         paintUp(tree, nodePaintings[1-i], nodePaintings[i], branchMap, newBranchMap,
                                 tree.getNode(changedNodes.get(i)).getNumber(),newParents);
                     }
                 }
+
             } else if(innerOperator instanceof SubtreeSlideOperator || innerOperator instanceof WilsonBalding){
                 //this is a node transplantation operator
                 int movedNode = -1;

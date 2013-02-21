@@ -93,7 +93,7 @@ public class MicroSatImporter implements PatternImporter {
             line = reader.readLine();
         }
 
-        if (max < min) throw new Importer.ImportException("Importing invaild data: max < min !");
+        if (max < min) throw new Importer.ImportException("Importing invalid data: max < min !");
 //        if (min - 2 < 0) throw new Importer.ImportException("Importing invaild data: min-2 < 0 where min = " + min);
         // The min also = 1 and max should be the longest repeat length + 2.
         microsatellite = new Microsatellite(microsatName[1], 1, max + 2, 1);
@@ -123,7 +123,7 @@ public class MicroSatImporter implements PatternImporter {
                 }
 
                 if (unionSetTaxonList.containsAny(taxaDiploid))
-                    throw new Importer.ImportException("Importing invaild data: duplicate taxon name in this locus : " + names[i]);
+                    throw new Importer.ImportException("Importing invalid data: duplicate taxon name in this locus : " + names[i]);
 
                 unionSetTaxonList.addTaxa(taxaDiploid);
                 hasDifferentTaxon = true;
@@ -134,7 +134,7 @@ public class MicroSatImporter implements PatternImporter {
 
                 for (int v = 0; v < size; v++) {
                     value = data.get(i).get(v);
-                    if (!isUnknownChar(value)) {
+//                    if (!isUnknownChar(value)) {
                         Taxon t = taxaDiploid.getTaxon(v);
                         if (!taxa.contains(t)) {
                             taxa.addTaxon(t);
@@ -144,11 +144,11 @@ public class MicroSatImporter implements PatternImporter {
                                 if (i > 1) hasDifferentTaxon = true;
                             }
                         }
-                    }
+//                    }
                 }
                 for (int v = 0; v < data.get(i + 1).size(); v++) {
                     value = data.get(i + 1).get(v);
-                    if (!isUnknownChar(value)) {
+//                    if (!isUnknownChar(value)) {
                         Taxon t = taxaDiploid.getTaxon(v + size);
                         if (!taxa.contains(t)) {
                             taxa.addTaxon(t);
@@ -158,7 +158,7 @@ public class MicroSatImporter implements PatternImporter {
                                 if (i > 1) hasDifferentTaxon = true;
                             }
                         }
-                    }
+//                    }
                 }
 
                 i++;
@@ -168,7 +168,7 @@ public class MicroSatImporter implements PatternImporter {
 
                 for (int v = 0; v < data.get(i).size(); v++) {
                     String value = data.get(i).get(v);
-                    if (!isUnknownChar(value)) {
+//                    if (!isUnknownChar(value)) {
                         Taxon t = taxaHaploid.getTaxon(v);
                         if (!taxa.contains(t)) {
                             taxa.addTaxon(t);
@@ -178,7 +178,7 @@ public class MicroSatImporter implements PatternImporter {
                                 if (i > 1) hasDifferentTaxon = true;
                             }
                         }
-                    }
+//                    }
                 }
 
             }

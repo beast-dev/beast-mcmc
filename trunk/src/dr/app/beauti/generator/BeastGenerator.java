@@ -33,6 +33,7 @@ import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
@@ -125,6 +126,40 @@ public class BeastGenerator extends Generator {
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
     public void checkOptions() throws GeneratorException {
+        //++++++++++++++ Microsatellite +++++++++++++++
+        // this has to execute before all checking below
+        // mask all ? from microsatellite data for whose tree only has 1 data partition
+
+        try{
+            if (options.contains(Microsatellite.INSTANCE)) {
+                // clear all masks
+                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
+                    partitionPattern.getPatterns().clearMask();
+                }
+
+                // set mask
+                for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                    // if a tree only has 1 data partition, which mostly mean unlinked trees
+                    if (options.getDataPartitions(model).size() == 1) {
+                        PartitionPattern partition = (PartitionPattern) options.getDataPartitions(model).get(0);
+                        Patterns patterns = partition.getPatterns();
+
+                        for (int i = 0; i < patterns.getTaxonCount(); i++) {
+                            int state = patterns.getPatternState(i, 0);
+                            // mask ? from data
+                            if (state < 0) {
+                                patterns.addMask(i);
+                            }
+                        }
+
+                        System.out.println("mask set = " + patterns.getMaskSet() + " in partition " + partition.getName());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            throw new GeneratorException(e.getMessage());
+        }
+
         //++++++++++++++++ Taxon List ++++++++++++++++++
         TaxonList taxonList = options.taxonList;
         Set<String> ids = new HashSet<String>();
@@ -342,6 +377,13 @@ public class BeastGenerator extends Generator {
                 for (AbstractPartitionData partition : options.dataPartitions) {
                     if (partition.getTaxonList() != null) {
                         writeDifferentTaxa(partition, writer);
+                    }
+                }
+            } else {
+                // microsat
+                for (PartitionPattern partitionPattern : options.getPartitionPattern()) {
+                    if (partitionPattern.getTaxonList() != null && partitionPattern.getPatterns().hasMask()) {
+                        writeDifferentTaxa(partitionPattern, writer);
                     }
                 }
             }
@@ -746,8 +788,10 @@ public class BeastGenerator extends Generator {
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, name + "." + TaxaParser.TAXA)});
 
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            final Taxon taxon = taxonList.getTaxon(i);
-            writer.writeIDref(TaxonParser.TAXON, taxon.getId());
+            if ( !(dataPartition instanceof PartitionPattern && ((PartitionPattern) dataPartition).getPatterns().isMasked(i) ) ) {
+                final Taxon taxon = taxonList.getTaxon(i);
+                writer.writeIDref(TaxonParser.TAXON, taxon.getId());
+            }
         }
 
         writer.writeCloseTag(TaxaParser.TAXA);

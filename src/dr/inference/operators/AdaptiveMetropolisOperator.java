@@ -44,11 +44,12 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     public static final String AM_OPERATOR = "adaptiveMetropolisOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String BETA = "beta";
+    public static final String INITIAL = "initial";
     public static final String FORM_XTX = "formXtXInverse";
 
     private double scaleFactor;
     private double beta;
-    private int iterations, cutoff;
+    private int iterations, initial;
     private final Parameter parameter;
     private final int dim;
     private final double constantFactor;
@@ -59,7 +60,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     private double[][] cholesky;
 
     public AdaptiveMetropolisOperator(Parameter parameter, double scaleFactor, double[][] inMatrix, double weight,
-                                      double beta, CoercionMode mode, boolean isVarianceMatrix) {
+                                      double beta, int initial, CoercionMode mode, boolean isVarianceMatrix) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -69,7 +70,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
         setWeight(weight);
         dim = parameter.getDimension();
         constantFactor = Math.pow(2.38, 2) / ((double)dim);
-        this.cutoff = 2*dim;
+        this.initial = initial;
         this.empirical = new double[dim][dim];
         this.oldMeans = new double[dim];
         this.newMeans = new double[dim];
@@ -93,8 +94,8 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     }
 
     public AdaptiveMetropolisOperator(Parameter parameter, double scaleFactor,
-                                      MatrixParameter varMatrix, double weight, double beta, CoercionMode mode, boolean isVariance) {
-        this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, mode, isVariance);
+                                      MatrixParameter varMatrix, double weight, double beta, int initial, CoercionMode mode, boolean isVariance) {
+        this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, mode, isVariance);
     }
 
     private double[][] formXtXInverse(double[][] X) {
@@ -132,7 +133,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     public double doOperation() throws OperatorFailedException {
     	
     	iterations++;
-    	//System.err.println("Using adaptive Metropolis (AM) operator: " + iterations);
+    	System.err.println("Using adaptive Metropolis (AM) operator: " + iterations + " for " + parameter.getParameterName());
     	
     	double[] x = parameter.getParameterValues();
     	
@@ -154,6 +155,14 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     			}
     		}
     		
+    		System.err.println("Empirical covariance matrix:");
+    		for (int i = 0; i < dim; i++) {
+    			for (int j = 0; j < dim; j++) {
+    				System.err.print(empirical[i][j] + " ");
+    			}
+    			System.err.println();
+    		}
+    		
     	} else {
     		
     		//iterations == 1
@@ -169,12 +178,12 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
     		}
     	}
     	
-    	if (iterations > cutoff) {
+    	if (iterations > initial) {
     		
-    		//System.err.println("Using empirical covariance matrix");
+    		System.err.println("Using empirical covariance matrix");
     		
-    		/*double[] oldX = new double[x.length];
-            System.arraycopy(x, 0, oldX, 0, x.length);*/
+    		double[] oldX = new double[x.length];
+            System.arraycopy(x, 0, oldX, 0, x.length);
             
             double[] epsilon = new double[dim];
             
@@ -204,16 +213,16 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
                 parameter.setParameterValue(i, x[i]);
             }
             
-            /*for (int i = 0; i < dim; i++) {
+            for (int i = 0; i < dim; i++) {
             	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-            }*/
+            }
     		
     	} else {
     		
-    		//System.err.println("Using initial covariance matrix");
+    		System.err.println("Using initial covariance matrix");
     		
-            /*double[] oldX = new double[x.length];
-            System.arraycopy(x, 0, oldX, 0, x.length);*/
+            double[] oldX = new double[x.length];
+            System.arraycopy(x, 0, oldX, 0, x.length);
             
             double[] epsilon = new double[dim];
 
@@ -229,9 +238,9 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
                 parameter.setParameterValue(i, x[i]);
             }
             
-            /*for (int i = 0; i < dim; i++) {
+            for (int i = 0; i < dim; i++) {
             	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-            }*/
+            }
     		
     	}
     	
@@ -309,6 +318,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
 
             double weight = xo.getDoubleAttribute(WEIGHT);
             double beta = xo.getDoubleAttribute(BETA);
+            int initial = xo.getIntegerAttribute(INITIAL);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
             if (scaleFactor <= 0.0) {
@@ -321,6 +331,11 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
 
             //varMatrix needs to be initialized
             int dim = parameter.getDimension();
+            
+            if (initial <= 2*dim) {
+            	initial = 2*dim;
+            }
+            
             Parameter[] init = new Parameter[dim];
             for (int i = 0; i < dim; i++) {
                 init[i] = new Parameter.Default(dim, 0.0);
@@ -348,7 +363,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
             if (varMatrix.getColumnDimension() != parameter.getDimension())
                 throw new XMLParseException("The parameter and variance matrix have differing dimensions");
 
-            return new AdaptiveMetropolisOperator(parameter, scaleFactor, varMatrix, weight, beta, mode, !formXtXInverse);
+            return new AdaptiveMetropolisOperator(parameter, scaleFactor, varMatrix, weight, beta, initial, mode, !formXtXInverse);
         }
 
         //************************************************************************
@@ -371,6 +386,7 @@ public class AdaptiveMetropolisOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newDoubleRule(BETA),
+                AttributeRule.newDoubleRule(INITIAL),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
                 new ElementRule(Parameter.class)

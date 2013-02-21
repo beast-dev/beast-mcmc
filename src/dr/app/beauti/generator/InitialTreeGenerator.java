@@ -26,10 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
@@ -119,11 +116,13 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 String simulatorId = modelPrefix + STARTING_TREE;
 
-                String taxaId;
-                if (options.hasIdenticalTaxa() && options.getPartitionPattern().size() < 1) {
-                    taxaId = TaxaParser.TAXA;
-                } else { // Microsatellite always uses code below
-                    taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
+                String taxaId = TaxaParser.TAXA;
+                AbstractPartitionData abstractPartitionData = options.getDataPartitions(model).get(0);
+                if (!options.hasIdenticalTaxa()) {
+                    taxaId = abstractPartitionData.getPrefix() + TaxaParser.TAXA;
+                }
+                if (abstractPartitionData instanceof PartitionPattern && ((PartitionPattern) abstractPartitionData).getPatterns().hasMask()) {
+                    taxaId = abstractPartitionData.getPrefix() + TaxaParser.TAXA;
                 }
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
@@ -140,7 +139,7 @@ public class InitialTreeGenerator extends Generator {
                     writeTaxaRef(taxaId, model, writer);
 
                     writeInitialDemoModelRef(model, writer);
-                    writer.writeCloseTag(NewCoalescentSimulatorParser.COALESCENT_SIMULATOR);
+                    writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
                 }
                 break;
             default:
@@ -250,7 +249,7 @@ public class InitialTreeGenerator extends Generator {
             writeSubTree(null, null, taxa5, model, writer);
         }
 
-        if (taxaId != null) {
+        if (taxaId == null) {
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
         } else {
             writer.writeIDref(TaxaParser.TAXA, taxaId);

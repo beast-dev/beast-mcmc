@@ -71,7 +71,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                     //If this is true there is nothing to do - all parental relationships remain the same
                     for(int i=0; i<2; i++){
                         paintUp(tree, nodePaintings[1-i], nodePaintings[i], branchMap, newBranchMap,
-                                tree.getNode(changedNodes.get(i)).getNumber());
+                                tree.getNode(changedNodes.get(i)).getNumber(),newParents);
                     }
                 }
             } else if(innerOperator instanceof SubtreeSlideOperator || innerOperator instanceof WilsonBalding){
@@ -79,31 +79,32 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                 int movedNode = -1;
                 int oldChild = -1;
                 int newChild = -1;
-                for(int i:changedNodes){
-                    //the chance of it having the same height as before is minuscule. If so, it will throw an exception
-                    //later, though.
+                for(int i=0; i<tree.getNodeCount(); i++){
+                    //the chance of it having the same height as before is minuscule. If so, it will still throw an
+                    // exception later, though.
                     if(tree.getNodeHeight(tree.getNode(i))!=oldHeights[i]){
                         movedNode = i;
-                        for(int j:changedNodes){
-                            if(j!=i){
-                                if(tree.getParent(tree.getNode(j))==tree.getNode(i)){
-                                    newChild = j;
-                                } else {
-                                    oldChild = j;
-                                }
-                            }
+                        break;
+                    }
+                }
+                for(int j:changedNodes){
+                    if(j!=movedNode){
+                        if(tree.getParent(tree.getNode(j))==tree.getNode(movedNode)){
+                            newChild = j;
+                        } else {
+                            oldChild = j;
                         }
                     }
                 }
                 if(movedNode == -1 || oldChild == -1 || newChild == -1){
                     throw new OperatorFailedException("Failed to establish relationship between relocated node and" +
-                            "others");
+                            " others");
                 }
                 NodeRef movedNodeObject = tree.getNode(movedNode);
                 NodeRef oldChildObject = tree.getNode(oldChild);
                 NodeRef newChildObject = tree.getNode(newChild);
                 int otherChild = -1;
-                NodeRef otherChildObject = null;
+                NodeRef otherChildObject;
                 //Find the other child of the moved node (the root of the transplanted subtree)
                 for(int i=0; i<tree.getChildCount(movedNodeObject);i++){
                     if(tree.getChild(movedNodeObject,i)!=newChildObject){
@@ -113,15 +114,18 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                 }
 
                 //If the child of the moved node is the earliest node with its painting:
-                if(branchMap[otherChild]==branchMap[movedNode]){
+                if(branchMap[otherChild]!=branchMap[movedNode]){
                     newBranchMap[movedNode]=branchMap[newChild];
                 } else {
-                    //Change all paintings up the tree from the moved node that used to match the new child to that
-                    //of the moved node
-                    paintUp(tree, branchMap[newChild],branchMap[movedNode],branchMap,newBranchMap,movedNode);
                     //Change all paintings up the tree from the old child that used to match the moved node to that
                     //of the old child
-                    paintUp(tree, branchMap[movedNode],branchMap[oldChild],branchMap,newBranchMap,movedNode);
+                    paintUp(tree, branchMap[movedNode],branchMap[oldChild],branchMap,newBranchMap,oldChild,oldParents);
+                    //This may have resulted in the moved node being recoloured wrong.
+                    newBranchMap[movedNode]=branchMap[movedNode];
+                    branchMap = newBranchMap;
+                    //Change all paintings up the tree from the moved node that used to match the new child to that
+                    //of the moved node
+                    paintUp(tree, branchMap[newChild],branchMap[movedNode],branchMap,newBranchMap,movedNode,newParents);
                 }
             } else {
                 //I don't know what this is
@@ -134,12 +138,18 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         return hr;
     }
 
+
+
+
     private void paintUp(TreeModel tree, AbstractCase oldCase, AbstractCase newCase, AbstractCase[] oldbranchMap,
-                         AbstractCase[] newBranchMap, int nodeNo){
-        NodeRef newParent = tree.getParent(tree.getNode(nodeNo));
+                         AbstractCase[] newBranchMap, int nodeNo, int[] parents){
+        if(parents[nodeNo]==-1){
+            return;
+        }
+        NodeRef newParent = tree.getNode(parents[nodeNo]);
         while(newParent!=null && oldbranchMap[newParent.getNumber()]==oldCase){
             newBranchMap[newParent.getNumber()]=newCase;
-            newParent=tree.isRoot(newParent) ? null : tree.getParent(newParent);
+            newParent = parents[newParent.getNumber()]== -1 ? null : tree.getNode(parents[newParent.getNumber()]);
         }
     }
 

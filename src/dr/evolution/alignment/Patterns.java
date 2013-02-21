@@ -29,8 +29,10 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A concrete implementation of PatternList. Patterns can be added and
@@ -539,4 +541,41 @@ public class Patterns implements PatternList {
     public void setId(String id) {
         this.id = id;
     }
+
+    // ========= Mask =========
+    // indexes to mask sth., e.g. taxon index whose state is unknown character in microsatellite
+    protected Set<Integer> maskSet = new HashSet<Integer>();
+
+    // no duplication, if duplicate, not add
+    public boolean addMask(int index) {
+        return maskSet.add(index);
+    }
+
+    public boolean isMasked(int index) {
+        return maskSet.contains(index);
+    }
+
+    public boolean hasMask() {
+        return maskSet.size() > 0;
+    }
+
+    public void clearMask() {
+        maskSet.clear();
+    }
+
+    public Set<Integer> getMaskSet() {
+        return maskSet;
+    }
+
+    /**
+     * @return the ith taxon not masked.
+     */
+    public Taxon getTaxonMasked(int taxonIndex) {
+        if (taxonList == null) throw new RuntimeException("Patterns has no TaxonList");
+        if (isMasked(taxonIndex)) {
+            return null;
+        }
+        return taxonList.getTaxon(taxonIndex);
+    }
+
 }

@@ -81,7 +81,7 @@ public class IndependentNormalDistributionSampler extends SimpleMCMCOperator {
             //create standard normal distribution, internal states will be bypassed anyway
             coltNormal = new Normal(0.0, 1.0, randomEngine);
         } else {
-        	//no random draw implemented in the normal distribution in BEAST (as far as I know)
+        	//no random draw with specified mean and stdev implemented in the normal distribution in BEAST (as far as I know)
         	throw new RuntimeException("Normal distribution in BEAST still needs a random sampler.");
         }
 		

@@ -152,7 +152,7 @@ public class BeastGenerator extends Generator {
                             }
                         }
 
-                        System.out.println("mask set = " + patterns.getMaskSet() + " in partition " + partition.getName());
+//                        System.out.println("mask set = " + patterns.getMaskSet() + " in partition " + partition.getName());
                     }
                 }
             }

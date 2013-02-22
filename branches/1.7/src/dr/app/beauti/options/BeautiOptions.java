@@ -136,6 +136,8 @@ public class BeautiOptions extends ModelOptions {
         speciesSetsMono.clear();
         starBEASTOptions = new STARBEASTOptions(this);
 
+        microsatelliteOptions = new MicrosatelliteOptions(this);
+
         beautiTemplate = new BeautiTemplate(this);
 
         parameters.clear();
@@ -256,6 +258,10 @@ public class BeautiOptions extends ModelOptions {
             starBEASTOptions.selectParameters(parameters);
         }
 
+        if (contains(Microsatellite.INSTANCE)) {
+            microsatelliteOptions.selectParameters(parameters);
+        }
+
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
 //            if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
 //        	   trait.gets.selectParameters(parameters);
@@ -308,6 +314,10 @@ public class BeautiOptions extends ModelOptions {
 
         if (useStarBEAST) { // species
             starBEASTOptions.selectOperators(ops);
+        }
+
+        if (contains(Microsatellite.INSTANCE)) {
+            microsatelliteOptions.selectOperators(ops);
         }
 
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
@@ -1243,6 +1253,8 @@ public class BeautiOptions extends ModelOptions {
     public List<Taxa> speciesSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> speciesSetsMono = new HashMap<Taxa, Boolean>();
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
+
+    public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 

@@ -240,7 +240,7 @@ public class TreeLikelihoodGenerator extends Generator {
      */
     public void writeTreeLikelihood(PartitionPattern partition, XMLWriter writer) {
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+//        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         writer.writeComment("Microsatellite Sampler Tree Likelihood");
@@ -252,7 +252,7 @@ public class TreeLikelihoodGenerator extends Generator {
         writeMicrosatSubstModelRef(substModel, writer);
 
         writer.writeIDref(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
-                treeModel.getPrefix() + TreeModel.TREE_MODEL + ".microsatellite");
+                partition.getName() + "." + MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL);
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:

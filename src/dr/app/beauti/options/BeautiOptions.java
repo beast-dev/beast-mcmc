@@ -33,6 +33,7 @@ import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
@@ -135,6 +136,8 @@ public class BeautiOptions extends ModelOptions {
         speciesSets.clear();
         speciesSetsMono.clear();
         starBEASTOptions = new STARBEASTOptions(this);
+
+        microsatelliteOptions = new MicrosatelliteOptions(this);
 
         beautiTemplate = new BeautiTemplate(this);
 
@@ -256,6 +259,10 @@ public class BeautiOptions extends ModelOptions {
             starBEASTOptions.selectParameters(parameters);
         }
 
+        if (contains(Microsatellite.INSTANCE)) {
+            microsatelliteOptions.selectParameters(parameters);
+        }
+
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
 //            if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
 //        	   trait.gets.selectParameters(parameters);
@@ -308,6 +315,10 @@ public class BeautiOptions extends ModelOptions {
 
         if (useStarBEAST) { // species
             starBEASTOptions.selectOperators(ops);
+        }
+
+        if (contains(Microsatellite.INSTANCE)) {
+            microsatelliteOptions.selectOperators(ops);
         }
 
 //        for (TraitData trait : getTraitsList()) { // all traits including locations
@@ -885,14 +896,27 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
+    /**
+     * given a list of BEAUti AbstractPartitionData, take the union of taxon list from them
+     * but if partition instanceof PartitionPattern and taxon is masked in Patterns class, then not count.
+     * @param partitionDataList    can be BEAUti PartitionData or PartitionPattern or both
+     * @return  num of taxon
+     */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList == null) return 0;
 
         List<String> taxonNameList = new ArrayList<String>();
         for (AbstractPartitionData partition : partitionDataList) {
             for (Taxon t : partition.getTaxonList()) {
-                if (!taxonNameList.contains(t.getId()))
-                    taxonNameList.add(t.getId());
+                if (!taxonNameList.contains(t.getId())) {
+                    if (partition instanceof PartitionPattern) {
+                        Patterns patterns = ((PartitionPattern) partition).getPatterns();
+                        if (!patterns.isMasked(patterns.getTaxonIndex(t)))
+                            taxonNameList.add(t.getId());
+                    } else {
+                        taxonNameList.add(t.getId());
+                    }
+                }
             }
         }
         return taxonNameList.size();
@@ -1009,9 +1033,6 @@ public class BeautiOptions extends ModelOptions {
         if (traitExists(traitName)) {
             clearTraitValues(traitName); // Clear trait values
             traits.remove(getTrait(traitName));
-
-            // the UI will already have required this...
-//                dataPartitions.remove(getTrait(traitName));
         }
     }
 
@@ -1246,6 +1267,8 @@ public class BeautiOptions extends ModelOptions {
     public List<Taxa> speciesSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> speciesSetsMono = new HashMap<Taxa, Boolean>();
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
+
+    public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 

@@ -27,7 +27,6 @@ import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorType;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
@@ -100,12 +99,6 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
-
-        //=============== microsat ======================
-        createParameter("treeModel.microsatellite.internalNodesParameter", "Microsatellite sampler tree internal node parameter");
-        createOperator("microsatInternalNodesParameter", "Microsat tree internal node",
-                "Random integer walk on microsatellite sampler tree internal node parameter",
-                "treeModel.microsatellite.internalNodesParameter", OperatorType.RANDOM_WALK_INT, 1.0, branchWeights);
     }
 
     /**
@@ -134,10 +127,6 @@ public class PartitionTreeModel extends PartitionOptions {
             rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
             parameters.add(rootHeightParameter);
         }
-
-        if (getDataType().getType() == DataType.MICRO_SAT) {
-            getParameter("treeModel.microsatellite.internalNodesParameter");
-        }
     }
 
     /**
@@ -163,10 +152,6 @@ public class PartitionTreeModel extends PartitionOptions {
 
         operators.add(getOperator("treeModel.rootHeight"));
         operators.add(getOperator("uniformHeights"));
-
-        if (getDataType().getType() == DataType.MICRO_SAT) {
-            operators.add(getOperator("microsatInternalNodesParameter"));
-        }
     }
 
     /////////////////////////////////////////////////////////////

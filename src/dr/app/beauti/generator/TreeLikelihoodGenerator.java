@@ -86,8 +86,8 @@ public class TreeLikelihoodGenerator extends Generator {
                 // State change counting uses the MarkovJumpsTreeLikelihood but
                 // dNdS robust counting doesn't as it has its own counting code...
                 if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
-            treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
-        }
+                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                }
             }
         }
 
@@ -209,8 +209,8 @@ public class TreeLikelihoodGenerator extends Generator {
                     // dNdS robust counting doesn't as it has its own counting code...
                     if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
                         treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                    }
                 }
-            }
             }
 
             if (partition.getTaxonList() != null) {
@@ -240,7 +240,7 @@ public class TreeLikelihoodGenerator extends Generator {
      */
     public void writeTreeLikelihood(PartitionPattern partition, XMLWriter writer) {
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+//        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         writer.writeComment("Microsatellite Sampler Tree Likelihood");
@@ -252,7 +252,7 @@ public class TreeLikelihoodGenerator extends Generator {
         writeMicrosatSubstModelRef(substModel, writer);
 
         writer.writeIDref(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
-                treeModel.getPrefix() + TreeModel.TREE_MODEL + ".microsatellite");
+                partition.getName() + "." + MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL);
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:

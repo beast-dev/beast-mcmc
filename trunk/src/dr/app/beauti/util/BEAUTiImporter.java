@@ -131,6 +131,9 @@ public class BEAUTiImporter {
             for (Patterns patterns : microsatPatList) {
                 setData(file.getName(), unionSetTaxonList, patterns, substModel, null);
             }
+            // has to call after data is imported
+            options.microsatelliteOptions.initParametersAndOperators();
+
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
         } catch (IOException e) {

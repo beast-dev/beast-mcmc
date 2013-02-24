@@ -183,27 +183,31 @@ public class TreeModelGenerator extends Generator {
 //        }
 
         if (model.getDataType().getType() == DataType.MICRO_SAT) {
-            writer.writeComment("Generate a microsatellite tree model");
-            writer.writeTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
-                    new Attribute.Default<String>(XMLParser.ID, treeModelName + ".microsatellite"), false);
+            for (AbstractPartitionData partitionData : options.getDataPartitions(model)) {
+                writer.writeComment("Generate a microsatellite tree model");
+                writer.writeTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
+                        new Attribute.Default<String>(XMLParser.ID, partitionData.getName() + "." +
+                                MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL), false);
 
-            writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.TREE);
-            writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE);
+                writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.TREE);
+                writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
+                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE);
 
-            writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, treeModelName + ".microsatellite.internalNodesParameter"),
-                    new Attribute.Default<Integer>(ParameterParser.DIMENSION, model.getDimension())}, true);
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
+                writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, partitionData.getName() + "." +
+                               MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL + ".internalNodesParameter"),
+                        new Attribute.Default<Integer>(ParameterParser.DIMENSION, model.getDimension())}, true);
+                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
 
-            writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
-            for (AbstractPartitionData pattern : options.getDataPartitions(model)) {
-                writer.writeIDref(MicrosatellitePatternParser.MICROSATPATTERN, pattern.getName());
+                writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
+
+                writer.writeIDref(MicrosatellitePatternParser.MICROSATPATTERN, partitionData.getName());
+
+                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
+
+                writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL);
             }
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
-
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL);
         }
     }
 }

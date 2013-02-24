@@ -56,4 +56,9 @@ public class PartitionPattern extends AbstractPartitionData { // microsatellite
         }
         return prefix;
     }
+
+    public void setName(String name) {
+        this.name = name;
+        options.microsatelliteOptions.initParametersAndOperators();
+    }
 }

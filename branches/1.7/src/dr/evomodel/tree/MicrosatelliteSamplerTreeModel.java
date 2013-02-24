@@ -1,9 +1,10 @@
 package dr.evomodel.tree;
 
-import dr.inference.model.*;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
-import dr.evolution.alignment.Patterns;
+import dr.inference.model.*;
+import dr.math.MathUtils;
 
 import java.util.Map;
 
@@ -202,10 +203,22 @@ public class MicrosatelliteSamplerTreeModel extends AbstractModel {
             NodeRef node = tree.getNode(nodeNum);
             NodeRef leftChild = tree.getChild(node, 0);
             NodeRef rightChild = tree.getChild(node, 1);
-            int leftChildState = getNodeValue(leftChild);
-            int rightChildState = getNodeValue(rightChild);
-            int nodeValue = (leftChildState+rightChildState)/2;
-            parameter.setParameterValueQuietly(nodeNum-tree.getExternalNodeCount(), nodeValue);
+            int nodeValue;
+
+                int leftChildState = getNodeValue(leftChild);
+                int rightChildState = getNodeValue(rightChild);
+            if(leftChildState < maxState && rightChildState < maxState ){
+                nodeValue = (leftChildState+rightChildState)/2;
+            }else if(leftChildState < maxState){
+                nodeValue = leftChildState;
+
+            }else if(rightChildState < maxState){
+                nodeValue = rightChildState;
+
+            }else{
+                nodeValue = MathUtils.nextInt(maxState+1);
+            }
+            parameter.setParameterValueQuietly(nodeNum - tree.getExternalNodeCount(), nodeValue);
         }
         parameter.addBounds(bounds);
 

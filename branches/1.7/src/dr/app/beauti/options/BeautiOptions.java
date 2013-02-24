@@ -33,6 +33,7 @@ import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
@@ -895,14 +896,27 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
+    /**
+     * given a list of BEAUti AbstractPartitionData, take the union of taxon list from them
+     * but if partition instanceof PartitionPattern and taxon is masked in Patterns class, then not count.
+     * @param partitionDataList    can be BEAUti PartitionData or PartitionPattern or both
+     * @return  num of taxon
+     */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList == null) return 0;
 
         List<String> taxonNameList = new ArrayList<String>();
         for (AbstractPartitionData partition : partitionDataList) {
             for (Taxon t : partition.getTaxonList()) {
-                if (!taxonNameList.contains(t.getId()))
-                    taxonNameList.add(t.getId());
+                if (!taxonNameList.contains(t.getId())) {
+                    if (partition instanceof PartitionPattern) {
+                        Patterns patterns = ((PartitionPattern) partition).getPatterns();
+                        if (!patterns.isMasked(patterns.getTaxonIndex(t)))
+                            taxonNameList.add(t.getId());
+                    } else {
+                        taxonNameList.add(t.getId());
+                    }
+                }
             }
         }
         return taxonNameList.size();

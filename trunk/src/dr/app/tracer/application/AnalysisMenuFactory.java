@@ -43,8 +43,8 @@ public class AnalysisMenuFactory implements MenuFactory {
             item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesianSkylineAction());
             menu.add(item);
 
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getExtendedBayesianSkylineAction());
-            menu.add(item);
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getExtendedBayesianSkylineAction());
+//            menu.add(item);
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getGMRFSkyrideAction());
             menu.add(item);
@@ -66,8 +66,8 @@ public class AnalysisMenuFactory implements MenuFactory {
             item = new JMenuItem(((AnalysisMenuHandler) frame).getAddBayesianSkylineAction());
             menu.add(item);
 
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddExtendedBayesianSkylineAction());
-            menu.add(item);
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddExtendedBayesianSkylineAction());
+//            menu.add(item);
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getAddTimeDensityAction());
             menu.add(item);
@@ -91,9 +91,9 @@ public class AnalysisMenuFactory implements MenuFactory {
             item.setEnabled(false);
             menu.add(item);
 
-            item = new JMenuItem(EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION);
-            item.setEnabled(false);
-            menu.add(item);
+//            item = new JMenuItem(EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION);
+//            item.setEnabled(false);
+//            menu.add(item);
 
             item = new JMenuItem(GMRF_SKYRIDE_RECONSTRUCTION);
             item.setEnabled(false);
@@ -121,9 +121,9 @@ public class AnalysisMenuFactory implements MenuFactory {
             item.setEnabled(false);
             menu.add(item);
 
-            item = new JMenuItem(ADD_EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION);
-            item.setEnabled(false);
-            menu.add(item);
+//            item = new JMenuItem(ADD_EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION);
+//            item.setEnabled(false);
+//            menu.add(item);
 
             item = new JMenuItem(ADD_TIME_DENSITY);
             item.setEnabled(false);

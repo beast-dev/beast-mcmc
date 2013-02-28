@@ -202,7 +202,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        changeTraceTypePanel.add(new JLabel("Change type to:"));
+        changeTraceTypePanel.add(new JLabel("Data type:"));
 
         realButton = new JButton("(R)eal");
         realButton.setToolTipText(TraceFactory.TraceType.DOUBLE.toString());
@@ -244,7 +244,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         changeTraceTypePanel.add(realButton);
         changeTraceTypePanel.add(integerButton);
         changeTraceTypePanel.add(categoryButton);
-        changeTraceTypePanel.setToolTipText("<html> Alternatively use key word double, integer, string " +
+        changeTraceTypePanel.setToolTipText("<html> Change the data type of a selected parameter here. <br>" +
+                "Alternatively use key word double, integer, string " +
                 "followed by tab delimited column names <br> in the beginning of the log file, " +
                 "to define the trace type. For example: <br> # integer columnName1 columnName2 ... </html>");
         bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);

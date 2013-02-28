@@ -534,7 +534,7 @@ public class ExtendedBayesianSkylineDialog {
             return null;
         }
 
-        public Object doWork() {
+        public Object doWork() { // this code needs to be reviewed, it seems a copy of BSP.
 
             List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 

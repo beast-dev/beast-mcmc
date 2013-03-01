@@ -28,7 +28,7 @@ package dr.evomodel.coalescent;
 //import com.lowagie.text.Paragraph;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
+//import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.model.Parameter;
@@ -61,7 +61,7 @@ import java.util.List;
  * @author Vladimir Minin
  * @author Marc Suchard
  * @author Julia Palacios
- * @author Mandev
+ * Last change:
  */
 public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
@@ -80,11 +80,13 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    protected double [] GPchangePoints;
 //    protected double [] storedGPchangePoints;
     protected double [] GPcoalfactor;
-    protected double [] storedGPcoalfactor;
+//    protected double [] storedGPcoalfactor;
+    protected double [] GPCoalInterval;
     protected double [] coalfactor;
-    protected double [] storedcoalfactor;
+//    protected double [] storedcoalfactor;
     protected int [] GPcounts;   //It changes values, no need to storage
-    protected int [] storedGPcounts;
+//    protected int [] storedGPcounts;
+    protected int [] CoalPosIndicator;
     protected int numintervals;
     protected int numcoalpoints;
     protected double constlik;
@@ -95,12 +97,12 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    protected double GPintervalkey;         // membership that links with those that do not change in size
 //    protected Parameter GPcoalfactor2;        // choose(k,2) depending on membership
     protected int[] GPtype;  // 1 if observed, -1 if latent
-    protected int[] storedGPtype;
+//    protected int[] storedGPtype;
 
 //    public double[] GPvalues;     //may need to change type: Parameter? didn't know how to work with it
 
     protected double logGPLikelihood;
-    protected double storedLogGPLikelihood;
+//    protected double storedLogGPLikelihood;
     protected SymmTridiagMatrix weightMatrix;       //this now changes in dimension, no need to storage
 //	protected MatrixParameter dMatrix;
 	protected boolean rescaleByRootHeight;
@@ -166,15 +168,19 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 numcoalpoints=getCorrectFieldLength();
 
         GPcoalfactor = new double[numintervals];
-        storedGPcoalfactor = new double[numintervals];
+        GPCoalInterval=new double[numcoalpoints];
+        CoalPosIndicator= new int[numcoalpoints];
+
+
+//        storedGPcoalfactor = new double[numintervals];
         GPcounts = new int[numintervals];
-        storedGPcounts= new int[numintervals];
+//        storedGPcounts= new int[numintervals];
         GPtype=new int[numcoalpoints];
-        storedGPtype = new int[numcoalpoints];
+//        storedGPtype = new int[numcoalpoints];
         popSizeParameter.setDimension(numcoalpoints);
         changePoints.setDimension(numcoalpoints);
         coalfactor= new double[numcoalpoints];
-        storedcoalfactor= new double[numcoalpoints];
+//        storedcoalfactor= new double[numcoalpoints];
 
 
 
@@ -183,7 +189,6 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 setupSufficientStatistics();
 
                 setupGPvalues();
-
 
 
          }
@@ -283,7 +288,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                intervalsKnown = true;
            }
 
-           double currentLike = 0;
+           double currentLike;
            DenseVector diagonal1 = new DenseVector(numcoalpoints);
            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
 
@@ -323,29 +328,29 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         // Parameters (precision and popsizes do not change intervals or GMRF Q matrix (I DON'T UNDERSTAND THIS)
 	}
 
-
-protected void restoreState() {
-		super.restoreState();
-		System.arraycopy(storedcoalfactor, 0, coalfactor, 0, storedcoalfactor.length);
-        System.arraycopy(storedGPtype,0,GPtype,0,storedGPtype.length);
-        System.arraycopy(storedGPcoalfactor,0,GPcoalfactor,0,storedGPcoalfactor.length);
-        System.arraycopy(storedGPcounts,0,GPcounts,0,storedGPcounts.length);
-//		weightMatrix = storedWeightMatrix;
-        logGPLikelihood = storedLogGPLikelihood;
-    }
-
-
-
-protected void storeState() {
-		super.storeState();
-	 	System.arraycopy(GPtype, 0, storedGPtype, 0, GPtype.length);
-        System.arraycopy(GPcoalfactor,0,storedGPcoalfactor,0,GPcoalfactor.length);
-		System.arraycopy(coalfactor, 0, storedcoalfactor, 0, coalfactor.length);
-        System.arraycopy(GPcounts, 0, storedGPcounts,0,GPcounts.length);
-
-//		storedWeightMatrix = weightMatrix.copy();
-        storedLogGPLikelihood = logGPLikelihood;
-	}
+//
+//protected void restoreState() {
+//		super.restoreState();
+//		System.arraycopy(storedcoalfactor, 0, coalfactor, 0, storedcoalfactor.length);
+//        System.arraycopy(storedGPtype,0,GPtype,0,storedGPtype.length);
+//        System.arraycopy(storedGPcoalfactor,0,GPcoalfactor,0,storedGPcoalfactor.length);
+//        System.arraycopy(storedGPcounts,0,GPcounts,0,storedGPcounts.length);
+////		weightMatrix = storedWeightMatrix;
+//        logGPLikelihood = storedLogGPLikelihood;
+//    }
+//
+//
+//
+//protected void storeState() {
+//		super.storeState();
+//	 	System.arraycopy(GPtype, 0, storedGPtype, 0, GPtype.length);
+//        System.arraycopy(GPcoalfactor,0,storedGPcoalfactor,0,GPcoalfactor.length);
+//		System.arraycopy(coalfactor, 0, storedcoalfactor, 0, coalfactor.length);
+//        System.arraycopy(GPcounts, 0, storedGPcounts,0,GPcounts.length);
+//
+////		storedWeightMatrix = weightMatrix.copy();
+//        storedLogGPLikelihood = logGPLikelihood;
+//	}
 //                I don't understand this
        public String toString() {
         return getId() + "(" + Double.toString(getLogLikelihood()) + ")";
@@ -393,18 +398,21 @@ protected void storeState() {
 
 
 		double length = 0.0;
+        double prevLength=0.0;
         int countcoal = 0;
         constlik= 0;
 		for (int i = 0; i < getIntervalCount(); i++) {
 
-			length += getInterval(i);
+			  length += getInterval(i);
               GPcounts[i]=0;
-                GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
-                constlik+=GPcoalfactor[i]*getInterval(i);
-                if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+              GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
+              constlik+=GPcoalfactor[i]*getInterval(i);
+              if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                     GPcounts[i]=1;
                     GPtype[countcoal]=1;
+                    CoalPosIndicator[countcoal]=i;
                     changePoints.setParameterValue(countcoal,length);
+                    GPCoalInterval[countcoal]=length-prevLength;
                     coalfactor[countcoal]=getLineageCount(i)*(getLineageCount(i)-1)/2.0;
                     countcoal++;
 

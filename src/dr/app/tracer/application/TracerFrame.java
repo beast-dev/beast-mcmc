@@ -1393,7 +1393,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     message = "  " + filterDialog.showDialog(filterListPanel, filterStatus.getText());
                     filterStatus.setText(message);
                 } catch (RuntimeException e) {
-                    JOptionPane.showMessageDialog(this, "Error : " + e + "\nbecause " + e.getMessage(),
+                    JOptionPane.showMessageDialog(this, "Error : " + e.getMessage(),
                             "Filter Error", JOptionPane.ERROR_MESSAGE);
                 }
             }

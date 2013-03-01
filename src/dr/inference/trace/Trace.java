@@ -28,6 +28,7 @@ package dr.inference.trace;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.TreeSet;
 
 /**
  * A simple class that stores a trace for a single statistic
@@ -36,14 +37,14 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: Trace.java,v 1.11 2005/07/11 14:07:26 rambaut Exp $
  */
-public class Trace<T> {
+public class Trace<T> { // TODO get rid of generic to make things easy
 
 //    public static final int INITIAL_SIZE = 1000;
 //    public static final int INCREMENT_SIZE = 1000;
 
-    // use <Double> for integer, but traceType must = INTEGER
+    // use <Double> for integer, but traceType must = INTEGER, because of legacy issue at analyseCorrelationContinuous
     protected TraceFactory.TraceType traceType = TraceFactory.TraceType.DOUBLE;
-    protected List<T> values = new ArrayList<T>();
+    protected List<T> values = new ArrayList<T>(); // TODO change to String only, and parse to double, int or string in getValues according to trace type
     //    protected int valueCount = 0;
     protected String name;
 
@@ -83,36 +84,39 @@ public class Trace<T> {
     }
 
     public T getValue(int index) {
-        return values.get(index); // filter?
+//        TODO filtered ?
+//        if (getFilter() != null && !getFilter().isIn(index)) {
+//           return null; // filtered
+//        }
+        return values.get(index);
     }
 
-    public String[] getRange() { // Double => bounds; Integer and String => unique values
-        String[] range;
-        if (getTraceType() == TraceFactory.TraceType.DOUBLE) {
-            range = new String[2];
-            range[0] = Double.toString(Double.MAX_VALUE);
-            range[1] = Double.toString(Double.MIN_VALUE);
-            for (Object t : values) {
-                if (Double.parseDouble(range[0]) < (Double) t) range[0] = t.toString();
-                if (Double.parseDouble(range[1]) > (Double) t) range[1] = t.toString();
-            }
+    public TreeSet<String> getRange() { // Double => bounds; Integer and String => unique values
+        TreeSet<String> range;
+
+        if (getValuesSize() < 1) throw new IllegalArgumentException("Cannot find values in trace " + getName());
+
+        if (getTraceType() == TraceFactory.TraceType.STRING) {
+            range = new TreeSet<String>((List<String>) values);
 
         } else {
-            List<String> r = new ArrayList<String>();
+            range = new TreeSet<String>();
+
+            Double min = Double.MAX_VALUE;
+            Double max = Double.MIN_VALUE;
             for (Object t : values) {
-                if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
-                    if (!r.contains(Integer.toString(((Number) t).intValue())))
-                        r.add(Integer.toString(((Number) t).intValue()));
-                } else {
-                    if (!r.contains(t.toString()))
-                        r.add(t.toString());
+                if ((Double) t < min) {
+                    min = (Double) t;
+                } else if ((Double) t > max) {
+                    max = (Double) t;
                 }
             }
-
-            Collections.sort(r);
-            range = new String[r.size()];
-            range = r.toArray(range);
-
+            range.add(min.toString());
+            if (max == Double.MIN_VALUE) {
+                range.add(min.toString()); // only 1 unique value
+            } else {
+                range.add(max.toString());
+            }
         }
 
         return range;
@@ -121,27 +125,28 @@ public class Trace<T> {
     /**
      * @param fromIndex low endpoint (inclusive) of the subList.
      * @param toIndex   high endpoint (exclusive) of the subList.
-     * @param selected  if null then no filter, otherwise selected.length should = getValuesSize()
      * @return The list of values (which are selected values if filter applied)
      */
-    public List<T> getValues(int fromIndex, int toIndex, boolean[] selected) {
+    public List<T> getValues(int fromIndex, int toIndex) {
         if (toIndex > getValuesSize() || fromIndex > toIndex)
             throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
                     + "; List size = " + getValuesSize() + "; in Trace " + name);
 
-        if (selected != null) {
-            if (selected.length != getValuesSize())
-                throw new RuntimeException("size of values is different with selected[] in Trace " + name);
+        if (getFilter() == null) {
+            return values.subList(fromIndex, toIndex);
+        } else {
+//            if (filter.selected.length != getValuesSize())
+//                throw new IllegalArgumentException("Trace " + name + " size of values is different with filter selected[] ! ");
 
             List<T> valuesList = new ArrayList<T>();
             for (int i = fromIndex; i < toIndex; i++) {
-                if (selected[i])
+                if (getFilter().isIn(values.get(i)))
                     valuesList.add(values.get(i));
             }
-            if (valuesList.size() < 1) throw new RuntimeException("There is no value sent by getValue() !");
+
+            if (valuesList.size() < 1) throw new RuntimeException("There is no value left after applying filter !");
+
             return valuesList;
-        } else {
-            return values.subList(fromIndex, toIndex);
         }
     }
 
@@ -184,10 +189,6 @@ public class Trace<T> {
 
     public Filter getFilter() {
         return filter;
-    }
-
-    public boolean isIn(int i) {
-        return filter.isIn(values.get(i), traceType);
     }
 
     //******************** Trace Double ****************************

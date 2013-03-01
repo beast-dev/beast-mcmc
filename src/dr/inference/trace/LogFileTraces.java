@@ -157,7 +157,7 @@ public class LogFileTraces extends AbstractTraceList {
     public List getValues(int index, int fromIndex, int toIndex) {
         List newList = null;
         try {
-            newList = getTrace(index).getValues(fromIndex, toIndex, selected);
+            newList = getTrace(index).getValues(fromIndex, toIndex);
         } catch (Exception e) {
             System.err.println("getValues error: trace index = " + index);
         }
@@ -383,6 +383,8 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
+    // TODO get rid of generic to make things easy
+    // TODO change to String only, and parse to double, int or string in getValues according to trace type
     public void changeTraceType(int id, TraceFactory.TraceType newType) throws TraceException {
         if (id >= getTraceCount() || id < 0) throw new TraceException("trace id is invaild " + id);
         Trace trace = traces.get(id);
@@ -404,7 +406,7 @@ public class LogFileTraces extends AbstractTraceList {
                         newTrace.add(trace.getValue(i).toString());
                     }
                 } else {
-                    newTrace = createTrace(trace.getName(), newType); // not need to copy values, becaue they are both Double
+                    newTrace = createTrace(trace.getName(), newType); // not need to copy values, because they are both Double
                 }
             } catch (Exception e) {
                 throw new TraceException("Type change is failed, when parsing " + trace.getTraceType()

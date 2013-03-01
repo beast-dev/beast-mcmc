@@ -7,12 +7,12 @@ import javax.swing.*;
  */
 public abstract class FilterAbstractPanel extends JPanel {
 
-    abstract Object[] getSelectedValues();
+    abstract String[] getSelectedValues();
 
     boolean containsNullValue() {
         if (getSelectedValues() == null || getSelectedValues().length < 1) return true;
-        for (Object ob : getSelectedValues()) {
-            if (ob == null || ob.toString().equals("")) return true;
+        for (String ob : getSelectedValues()) {
+            if (ob == null || ob.equals("")) return true;
         }
         return false;
     }

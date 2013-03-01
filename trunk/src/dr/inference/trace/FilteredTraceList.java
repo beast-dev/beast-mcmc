@@ -5,35 +5,35 @@ package dr.inference.trace;
  */
 public abstract class FilteredTraceList implements TraceList {
 
-    protected boolean[] selected; // length = values[].length = valueCount, all must be true initially
+//    protected boolean[] selected; // length = values[].length = getValuesSize, all must be true initially
 
-    private void createSelected() { // will init in updateSelected()
-        if (getTrace(0) != null) {
-            selected = new boolean[getTrace(0).getValuesSize()];
-        } else {
-            throw new RuntimeException("Cannot initial filters ! getTrace(0) failed !");
-        }
-    }
+//    private void createSelected() { // will init in updateSelected()
+//        if (getTrace(0) != null) {
+//            selected = new boolean[getTrace(0).getValuesSize()];
+//        } else {
+//            throw new RuntimeException("Cannot initial filters ! getTrace(0) failed !");
+//        }
+//    }
 
-    private void initSelected() {
-        for (int i = 0; i < selected.length; i++) {
-            selected[i] = true;
-        }
-    }
+//    private void initSelected() {
+//        for (int i = 0; i < selected.length; i++) {
+//            selected[i] = true;
+//        }
+//    }
 
     public boolean hasFilter(int traceIndex) {
-        if (selected == null) return false;
+//        if (selected == null) return false;
         return getTrace(traceIndex).getFilter() != null;
     }
 
     public void setFilter(int traceIndex, Filter filter) {
-        if (selected == null) createSelected();
+//        if (selected == null) createSelected();
         getTrace(traceIndex).setFilter(filter);
         refreshStatistics();
     }
 
     public Filter getFilter(int traceIndex) {
-        if (selected == null) return null;
+//        if (selected == null) return null;
         return getTrace(traceIndex).getFilter();
     }
 
@@ -46,34 +46,34 @@ public abstract class FilteredTraceList implements TraceList {
         for (int i = 0; i < getTraceCount(); i++) {
             getTrace(i).setFilter(null);
         }
-        selected = null;
+//        selected = null;
         refreshStatistics();// must be after "selected = null"
     }
 
     protected void refreshStatistics() {
-        updateSelected();
+//        updateSelected();
         for (int i = 0; i < getTraceCount(); i++) {
             analyseTrace(i);
         }
     }
 
-    private void updateSelected() {
-        if (selected != null) {
-            initSelected();
-            for (int traceIndex = 0; traceIndex < getTraceCount(); traceIndex++) {
-                if (getFilter(traceIndex) != null) {
-                    Trace trace = getTrace(traceIndex);
-                    if (trace.getValuesSize() != selected.length)
-                        throw new RuntimeException("updateSelected: length of values[] is different with selected[] in Trace "
-                                + getTraceName(traceIndex));
-
-                    for (int i = 0; i < trace.getValuesSize(); i++) {
-                        if (!trace.isIn(i)) { // not selected
-                            selected[i] = false;
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    private void updateSelected() {
+//        if (selected != null) {
+//            initSelected();
+//            for (int traceIndex = 0; traceIndex < getTraceCount(); traceIndex++) {
+//                if (getFilter(traceIndex) != null) {
+//                    Trace trace = getTrace(traceIndex);
+//                    if (trace.getValuesSize() != selected.length)
+//                        throw new RuntimeException("updateSelected: length of values[] is different with selected[] in Trace "
+//                                + getTraceName(traceIndex));
+//
+//                    for (int i = 0; i < trace.getValuesSize(); i++) {
+//                        if (!trace.isIn(i)) { // not selected
+//                            selected[i] = false;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 }

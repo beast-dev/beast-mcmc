@@ -1,9 +1,11 @@
 package dr.app.tracer.traces;
 
 import javax.swing.*;
+import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.TreeSet;
 
 /**
  * @author Walter Xie
@@ -13,29 +15,29 @@ public class FilterDiscretePanel extends FilterAbstractPanel {
     JList selectedValues;
 //        JButton selectButton;
 
-    FilterDiscretePanel(String[] allValuesArray, String[] selectedValuesArray) {
-        setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
+    FilterDiscretePanel(TreeSet<String> allValuesSet, String[] selectedValuesArray) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
 
-        allValues = new JList(allValuesArray);
-        allValues.setVisibleRowCount(6);
-        allValues.setFixedCellWidth(100);
-        allValues.setFixedCellHeight(15);
+        allValues = new JList(allValuesSet.toArray());
+        allValues.setVisibleRowCount(8);
+        allValues.setFixedCellWidth(80);
+        allValues.setFixedCellHeight(20);
         allValues.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        add(new JScrollPane(allValues));
+        panel.add(new JScrollPane(allValues));
 
-        if (selectedValuesArray != null) {
-            int[] indices = new int[selectedValuesArray.length];
-            for (int i = 0; i < indices.length; i++) {
-                for (int j = 0; j < allValuesArray.length; j++) {
-                    if (selectedValuesArray[i].equals(allValuesArray[j])) {
-                        indices[i] = j;
-                        break;
-                    }
-                }
-            }
-
-            allValues.setSelectedIndices(indices);
-        }
+//        if (selectedValuesArray != null) {
+//            int[] indices = new int[selectedValuesArray.length];
+//            for (int i = 0; i < indices.length; i++) {
+//                for (int j = 0; j < allValuesSet.length; j++) {
+//                    if (selectedValuesArray[i].equals(allValuesSet[j])) {
+//                        indices[i] = j;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            allValues.setSelectedIndices(indices);
+//        }
 
         JButton selectButton = new JButton("Select >>>");
         selectButton.addActionListener(new ActionListener() {
@@ -43,28 +45,36 @@ public class FilterDiscretePanel extends FilterAbstractPanel {
                 selectedValues.setListData(allValues.getSelectedValues());
             }
         });
-        add(selectButton);
+        panel.add(selectButton);
 
         if (selectedValuesArray == null) {
             selectedValues = new JList();
         } else {
             selectedValues = new JList(selectedValuesArray);
         }
-        selectedValues.setVisibleRowCount(6);
-        selectedValues.setFixedCellWidth(100);
-        selectedValues.setFixedCellHeight(15);
+        selectedValues.setVisibleRowCount(8);
+        selectedValues.setFixedCellWidth(80);
+        selectedValues.setFixedCellHeight(20);
         selectedValues.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        add(new JScrollPane(selectedValues));
+        panel.add(new JScrollPane(selectedValues));
 
-        add(new JLabel("Hold Shift or Ctrl key for multi-selection"));
+        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panel1.add(new JLabel("<html>Hold Shift or Ctrl key for multi-selection,<br> and re-select values from left to correct" +
+                "<br> the selection list on the left.</html>"));
+
+        setOpaque(false);
+        setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
+        setLayout(new BorderLayout(0, 0));
+        add(panel, BorderLayout.CENTER);
+        add(panel1, BorderLayout.SOUTH);
     }
 
-    public Object[] getSelectedValues() {
+    public String[] getSelectedValues() {
         int size = selectedValues.getModel().getSize();
         if (size < 0) return null;
-        Object[] sel = new Object[size];
+        String[] sel = new String[size];
         for (int i=0; i < size; i++) {
-           sel[i] = selectedValues.getModel().getElementAt(i); 
+            sel[i] = selectedValues.getModel().getElementAt(i).toString();
         }
         return sel;
     }

@@ -2,6 +2,7 @@ package dr.app.tracer.traces;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.TreeSet;
 
 /**
  * @author Walter Xie
@@ -10,7 +11,7 @@ public class FilterContinuousPanel extends FilterAbstractPanel {
     JTextField minField;
     JTextField maxField;
 
-    FilterContinuousPanel(String[] minMax, String[] bound) {
+    FilterContinuousPanel(TreeSet<String> minMax, String[] bound) {
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
 
@@ -33,7 +34,7 @@ public class FilterContinuousPanel extends FilterAbstractPanel {
         add(minField, c);
 
         c.gridy = 2;
-        add(new JLabel("which should > " + minMax[0]), c);
+        add(new JLabel("which should > " + minMax.first()), c);
 
         maxField = new JTextField(bound[1]);
         maxField.setColumns(20);
@@ -47,10 +48,10 @@ public class FilterContinuousPanel extends FilterAbstractPanel {
         add(maxField, c);
 
         c.gridy = 5;   
-        add(new JLabel("which should < " + minMax[1]), c);
+        add(new JLabel("which should < " + minMax.last()), c);
     }
 
-    public Object[] getSelectedValues() {
+    public String[] getSelectedValues() {
         return new String[]{minField.getText(), maxField.getText()};
     }
 

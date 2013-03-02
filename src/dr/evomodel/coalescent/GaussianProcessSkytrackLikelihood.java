@@ -40,28 +40,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-//
-//import dr.evolution.tree.NodeRef;
-//import dr.evolution.tree.Tree;
-//import dr.evomodel.tree.TreeModel;
-//import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
-//import dr.inference.model.MatrixParameter;
-//import dr.inference.model.Parameter;
-//import dr.inference.model.Variable;
-//import dr.math.MathUtils;
-//import no.uib.cipr.matrix.DenseVector;
-//import no.uib.cipr.matrix.NotConvergedException;
-//import no.uib.cipr.matrix.SymmTridiagEVD;
-//import no.uib.cipr.matrix.SymmTridiagMatrix;
-//
-//import java.util.ArrayList;
-//import java.util.List;
 
 /**
  * @author Vladimir Minin
  * @author Marc Suchard
  * @author Julia Palacios
- * Last change:
  */
 public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
@@ -513,6 +496,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         }
 
 
+
         public int [] getGPtype(){
             return GPtype;
         }
@@ -529,4 +513,18 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 //    Methods needed for GP-based
 
+    public double [] getGPCoalInterval(){
+        return GPCoalInterval;
+    }
+
+
+    public double getGPCoalInterval(int j){
+        return GPCoalInterval[j];
+    }
+
+    public int [] getCoalPosIndicator() {
+        return CoalPosIndicator;
+    }
+
 }
+

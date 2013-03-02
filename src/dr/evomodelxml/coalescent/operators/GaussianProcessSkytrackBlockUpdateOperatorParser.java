@@ -61,6 +61,7 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
 
+
 //            if (scaleFactor <= 0.0) {
 //                throw new XMLParseException("scaleFactor must be greater than 0.0");
         if (scaleFactor < 1.0) {

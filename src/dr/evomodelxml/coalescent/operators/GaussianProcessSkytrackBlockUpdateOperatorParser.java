@@ -74,12 +74,12 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
 
         if (xo.getAttribute(OLD_SKYRIDE, true)) {
 
-            GaussianProcessSkytrackLikelihood gmrfLikelihood = (GaussianProcessSkytrackLikelihood) xo.getChild(GaussianProcessSkytrackLikelihood.class);
-            return new GaussianProcessSkytrackBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
+            GaussianProcessSkytrackLikelihood gpLikelihood = (GaussianProcessSkytrackLikelihood) xo.getChild(GaussianProcessSkytrackLikelihood.class);
+            return new GaussianProcessSkytrackBlockUpdateOperator(gpLikelihood, weight, mode, scaleFactor,
                 maxIterations, stopValue);
         }else{
-           GaussianProcessSkytrackLikelihood gmrfLikelihood = (GaussianProcessSkytrackLikelihood) xo.getChild(GaussianProcessSkytrackLikelihood.class);
-            return new GaussianProcessSkytrackBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
+           GaussianProcessSkytrackLikelihood gpLikelihood = (GaussianProcessSkytrackLikelihood) xo.getChild(GaussianProcessSkytrackLikelihood.class);
+            return new GaussianProcessSkytrackBlockUpdateOperator(gpLikelihood, weight, mode, scaleFactor,
                 maxIterations, stopValue);
         }
 
@@ -91,7 +91,7 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
 
 
     public String getParserDescription() {
-        return "This element returns a GMRF block-update operator for the joint distribution of the population sizes and precision parameter.";
+        return "This element returns a GP block-update operator for the joint distribution of the population sizes and precision parameter.";
     }
 
     public Class getReturnType() {

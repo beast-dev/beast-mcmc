@@ -90,6 +90,45 @@ public class EqualityConstraintModel extends AbstractModel {
         // Do nothing
     }
 
+    private static void setEqual(List<Variable> parameterList) {
+
+        final int dim = parameterList.get(0).getSize();
+
+
+        if (parameterList.get(0) instanceof Parameter) {
+            // Can take an average
+            double[] total = new double[dim];
+
+            for (Variable v : parameterList) {
+                Parameter p = (Parameter) v;
+                for (int j = 0; j < dim; ++j) {
+                    total[j] += p.getParameterValue(j);
+                }
+            }
+
+            for (int j = 0; j < dim; ++j) {
+                total[j] /= parameterList.size();
+            }
+
+            for (Variable v : parameterList) {
+                Parameter p = (Parameter) v;
+                for (int j = 0; j < dim; ++j) {
+                    p.setParameterValue(j, total[j]);
+                }
+            }
+        }
+    }
+
+    private static int checkDimensions(List<Parameter> parameterList) {
+        int dim = parameterList.get(0).getDimension();
+        for (Parameter p : parameterList) {
+            if (p.getDimension() != dim) {
+                return -1;
+            }
+        }
+        return dim;
+    }
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {

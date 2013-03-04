@@ -20,8 +20,8 @@ Long overdue simulator in Beagle.
    
 h1. TODO
 * populate the main menu
+* save / load settings (java serialize)
 * command line interface
-* load settings from previously generated XML
 * update ant buildfile
 * simulate tree given taxa names only
 * add tree column in Taxa panel

@@ -19,7 +19,7 @@ public class BeagleSequenceSimulatorApp {
 	// Share those if neccessary
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
 	public static final String VERSION = "0.0.5pre";
-	public static final String DATE_STRING = "2013";
+	public static final String DATES = "2013";
 
 	// Icons
 	private Image beagleSequenceSimulatorImage;
@@ -102,11 +102,12 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
+		ImageIcon bssIcon = CreateImageIcon("icons/bss.png");
 		SingleDocApplication app = new SingleDocApplication(new MenuBarFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
 				VERSION.concat(" ").concat(
-				DATE_STRING), //
-				null //
+				DATES), //
+				bssIcon //
 		);
 
 		beagleSequenceSimulatorImage = CreateImage("icons/bss.png");

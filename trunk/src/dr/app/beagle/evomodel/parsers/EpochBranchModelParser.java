@@ -25,20 +25,23 @@
 
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.branchratemodel.ContinuousEpochBranchRateModel;
-import dr.evomodel.branchratemodel.RateEpochBranchRateModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.tree.TreeModelParser;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Parameter;
-import dr.xml.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
+
+import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.branchratemodel.RateEpochBranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
 
 /**
  */
@@ -101,7 +104,7 @@ public class EpochBranchModelParser extends AbstractXMLObjectParser {
         return new EpochBranchModel(tree, substitutionModels, transitionTimes);
     }
 
-    class Epoch implements Comparable {
+    class Epoch implements Comparable<Object> {
 
         private final double transitionTime;
         private final SubstitutionModel substitutionModel;
@@ -131,7 +134,7 @@ public class EpochBranchModelParser extends AbstractXMLObjectParser {
                         "use of bounds or priors.";
     }
 
-    public Class getReturnType() {
+    public Class<RateEpochBranchRateModel> getReturnType() {
         return RateEpochBranchRateModel.class;
     }
 

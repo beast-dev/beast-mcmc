@@ -133,9 +133,18 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public double doOperation() throws OperatorFailedException {
     	
     	iterations++;
-    	System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());
+    	//System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());
     	
     	double[] x = parameter.getParameterValues();
+    	
+    	//transform to log scale
+    	double[] logx = new double[dim];
+    	for (int i = 0; i < dim; i++) {
+    		logx[i] = Math.log(x[i]);
+    	}
+    	
+    	//store MH-ratio in logq
+    	double jacobian = 1.0;
     	
 		/*double[] oldX = new double[x.length];
         System.arraycopy(x, 0, oldX, 0, x.length);*/
@@ -144,31 +153,31 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     		
     		//first recalculate the means using recursion
     		for (int i = 0; i < dim; i++) {
-    			newMeans[i] = ((oldMeans[i]*(iterations-1)) + x[i])/iterations;
+    			newMeans[i] = ((oldMeans[i]*(iterations-1)) + logx[i])/iterations;
     		}
     		
     		//here we can simply use the double[][] matrix
     		for (int i = 0; i < dim; i++) {
     			for (int j = i; j < dim; j++) {
-    				empirical[i][j] = calculateCovariance(iterations, empirical[i][j], x, i, j);
+    				empirical[i][j] = calculateCovariance(iterations, empirical[i][j], logx, i, j);
     				empirical[j][i] = empirical[i][j];
     			}
     		}
     		
-    		System.err.println("Empirical covariance matrix:");
+    		/*System.err.println("Empirical covariance matrix:");
     		for (int i = 0; i < dim; i++) {
     			for (int j = 0; j < dim; j++) {
     				System.err.print(empirical[i][j] + " ");
     			}
     			System.err.println();
-    		}
+    		}*/
     		
     	} else {
     		
     		//iterations == 1
     		for (int i = 0; i < dim; i++) {
-        		oldMeans[i] = x[i];
-        		newMeans[i] = x[i];
+        		oldMeans[i] = logx[i];
+        		newMeans[i] = logx[i];
         	}
     		
     		for (int i = 0; i < dim; i++) {
@@ -178,9 +187,32 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     		}
     	}
     	
+    	/*if (iterations <= 3) {
+    		System.err.println("Values: ");
+    		for (int i = 0; i < dim; i++) {
+    			System.err.print(x[i] + " ");
+    		}
+    		System.err.println("\nLog values: ");
+    		for (int i = 0; i < dim; i++) {
+    			System.err.print(logx[i] + " ");
+    		}
+    		System.err.println("\nOld log means: ");
+    		for (int i = 0; i < dim; i++) {
+    			System.err.print(oldMeans[i] + " ");
+    		}
+    		System.err.println("\nNew log means: ");
+    		for (int i = 0; i < dim; i++) {
+    			System.err.print(newMeans[i] + " ");
+    		}
+    	} else {
+    		System.exit(0);
+    	}*/
+    	
     	if (iterations > initial) {
     		
-    		System.err.println("Using empirical covariance matrix");
+    		//System.err.println("Using empirical covariance matrix");
+    		//System.err.println("Exiting ...");
+    		//System.exit(0);
     		
     		double[] oldX = new double[x.length];
             System.arraycopy(x, 0, oldX, 0, x.length);
@@ -207,22 +239,23 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             
             for (int i = 0; i < dim; i++) {
                 for (int j = i; j < dim; j++) {
-                    x[i] += cholesky[j][i] * epsilon[j];
+                    logx[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, x[i]);
+                parameter.setParameterValue(i, Math.exp(logx[i]));
+                jacobian *= Math.exp(logx[i])*(1/x[i]);
             }
             
-            for (int i = 0; i < dim; i++) {
+            /*for (int i = 0; i < dim; i++) {
             	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-            }
+            }*/
     		
     	} else {
     		
-    		System.err.println("Using initial covariance matrix");
+    		//System.err.println("Using initial covariance matrix");
     		
-            double[] oldX = new double[x.length];
-            System.arraycopy(x, 0, oldX, 0, x.length);
+            double[] oldLogX = new double[dim];
+            System.arraycopy(x, 0, oldLogX, 0, dim);
             
             double[] epsilon = new double[dim];
 
@@ -232,22 +265,26 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             for (int i = 0; i < dim; i++) {
                 for (int j = i; j < dim; j++) {
-                    x[i] += cholesky[j][i] * epsilon[j];
+                    logx[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, x[i]);
+                parameter.setParameterValue(i, Math.exp(logx[i]));
+                jacobian *= Math.exp(logx[i])*(1/x[i]);
             }
             
-            for (int i = 0; i < dim; i++) {
-            	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-            }
-    		
+            /*for (int i = 0; i < dim; i++) {
+            	System.err.println(oldLogX[i] + " -> " + parameter.getValue(i));
+            }*/
+            
     	}
     	
     	//copy new means to old means for next update iteration
     	System.arraycopy(newMeans, 0, oldMeans, 0, dim);
     	
-        return 0;
+    	//System.err.println("scale factor: " + scaleFactor);
+    	//System.err.println("log(Jacobian): " + Math.log(jacobian));
+    	
+        return Math.log(jacobian);
     }
 
     //MCMCOperator INTERFACE

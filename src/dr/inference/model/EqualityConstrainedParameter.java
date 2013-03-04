@@ -25,6 +25,9 @@
 
 package dr.inference.model;
 
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -33,20 +36,29 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class EqualityConstrainedParameter extends Parameter.Abstract implements VariableListener {
+public class EqualityConstrainedParameter extends Parameter.Abstract implements VariableListener, Citable {
     public static final String EQUALITY_CONSTRAINED_PARAMETER = "constrainedEqualParameter";
-
 
     public EqualityConstrainedParameter(String name, List<Parameter> params) {
         super(name);
         uniqueParameters = params;
+        dimension = uniqueParameters.get(0).getDimension();  // TODO Assumes that all parameters have the same dimension
+        bounds = makeIntersectionBounds();
 
         for (Parameter parameter : params) {
             parameter.addParameterListener(this);
+            // Convert all unique parameters' bounds into intersection bounds on all parameters
+            for (Parameter otherParameter : params) {
+                if (parameter != otherParameter) {
+                    parameter.addBounds(otherParameter.getBounds());
+                }
+            }
         }
-
-        // TODO Assumes that all parameters have the same dimension
-        dimension = uniqueParameters.get(0).getDimension();
+        StringBuilder sb = new StringBuilder("Constraining multiple parameters to be equal: ");
+        sb.append(getId()).append("\n");
+        sb.append("\tPlease cite:\n");
+        sb.append(Citable.Utils.getCitationString(this));
+        java.util.logging.Logger.getLogger("dr.inference.model").info(sb.toString());
     }
 
     public final String getParameterName() {
@@ -66,39 +78,15 @@ public class EqualityConstrainedParameter extends Parameter.Abstract implements 
     }
 
     public Bounds<Double> getBounds() {
-
-        if (bounds == null) {
-            bounds = new EqualityConstrainedBounds();
-        }
         return bounds;
     }
 
-    /**
-     * Returns the intersection of bounds
-     */
-    private class EqualityConstrainedBounds implements Bounds<Double> {
-
-        public Double getUpperLimit(int dim) {
-            double min = Double.POSITIVE_INFINITY;
-            for (Parameter p : uniqueParameters) {
-                double x = p.getBounds().getUpperLimit(dim);
-                if (x < min) min = x;
-            }
-            return min;
+    private Bounds<Double> makeIntersectionBounds() {
+        Bounds<Double> bounds = new IntersectionBounds(dimension);
+        for (Parameter p : uniqueParameters) {
+            ((IntersectionBounds) bounds).addBounds(p.getBounds());
         }
-
-        public Double getLowerLimit(int dim) {
-            double max = Double.NEGATIVE_INFINITY;
-            for (Parameter p : uniqueParameters) {
-                double x = p.getBounds().getLowerLimit(dim);
-                if (x > max) max = x;
-            }
-            return max;
-        }
-
-        public int getBoundsDimension() {
-            return getDimension();
-        }
+        return bounds;
     }
 
     public void addDimension(int index, double value) {
@@ -201,8 +189,6 @@ public class EqualityConstrainedParameter extends Parameter.Abstract implements 
             double[] firstValues = null;
             List<Parameter> parameterList = new ArrayList<Parameter>();
 
-            System.err.println("Parsing " + xo.getId());
-
             for (int i = 0; i < xo.getChildCount(); ++i) {
                 Parameter param = (Parameter) xo.getChild(i);
                 if (i == 0) {
@@ -217,9 +203,7 @@ public class EqualityConstrainedParameter extends Parameter.Abstract implements 
                     }
                 }
                 parameterList.add(param);
-                System.err.println("\tAdd " + param.getId());
             }
-//            System.exit(-1);
             return new EqualityConstrainedParameter(xo.getId(), parameterList);
         }
 
@@ -244,10 +228,22 @@ public class EqualityConstrainedParameter extends Parameter.Abstract implements 
         }
     };
 
+    public List<Citation> getCitations() {
+        List<Citation> list = new ArrayList<Citation>();
+        list.add(
+                new Citation(
+                        new Author[]{
+                                new Author("MA", "Suchard"),
+                        },
+                        Citation.Status.IN_PREPARATION
+                )
+        );
+        return list;
+    }
+
     private final List<Parameter> uniqueParameters;
 
-    private Bounds bounds = null;
+    private final Bounds bounds;
     private int dimension;
     private boolean isLocked = false;
-
 }

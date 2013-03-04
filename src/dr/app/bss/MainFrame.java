@@ -58,65 +58,65 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
 
-        AbstractAction importAction = new AbstractAction("Import Previously generated XML File...") {
-            public void actionPerformed(ActionEvent ae) {
-                doImport();
-            }
-        };
-        
-        getOpenAction().setEnabled(false);
-        getSaveAction().setEnabled(false);
-        getSaveAsAction().setEnabled(false);
-//        getCutAction().setEnabled(false);
-//        getCopyAction().setEnabled(false);
-//        getPasteAction().setEnabled(false);
-        getDeleteAction().setEnabled(false);
-        getSelectAllAction().setEnabled(false);
-        getFindAction().setEnabled(false);
-        
-        setImportAction(importAction);
-        
+		AbstractAction importAction = new AbstractAction(
+				"Import Previously generated XML File...") {
+			public void actionPerformed(ActionEvent ae) {
+				doImport();
+			}
+		};
+
+		getOpenAction().setEnabled(false);
+		getSaveAction().setEnabled(false);
+		getSaveAsAction().setEnabled(false);
+		// getCutAction().setEnabled(true);
+		// getCopyAction().setEnabled(false);
+		// getPasteAction().setEnabled(false);
+		getDeleteAction().setEnabled(false);
+		getSelectAllAction().setEnabled(false);
+		getFindAction().setEnabled(false);
+
+		setImportAction(importAction);
+
 	}// END: Constructor
 
 	@Override
 	protected void initializeComponents() {
 
-			setSize(new Dimension(1100, 600));
-			setMinimumSize(new Dimension(260, 100));
+		setSize(new Dimension(1100, 600));
+		setMinimumSize(new Dimension(260, 100));
 
-			taxaPanel = new TaxaPanel(dataList);
-			treePanel = new TreePanel(this, dataList);
-			partitionsPanel = new PartitionsPanel(this, dataList);
-			simulationPanel = new SimulationPanel(this, dataList);
+		taxaPanel = new TaxaPanel(dataList);
+		treePanel = new TreePanel(this, dataList);
+		partitionsPanel = new PartitionsPanel(this, dataList);
+		simulationPanel = new SimulationPanel(this, dataList);
 
-			tabbedPane.addTab("Taxa", null, taxaPanel);
-			tabbedPane.addTab("Trees", null, treePanel);
-			tabbedPane.addTab("Partitions", null, partitionsPanel);
-			tabbedPane.addTab("Simulation", null, simulationPanel);
+		tabbedPane.addTab("Taxa", null, taxaPanel);
+		tabbedPane.addTab("Trees", null, treePanel);
+		tabbedPane.addTab("Partitions", null, partitionsPanel);
+		tabbedPane.addTab("Simulation", null, simulationPanel);
 
-			statusLabel = new JLabel("No taxa loaded");
+		statusLabel = new JLabel("No taxa loaded");
 
-			JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
-			progressBar = new JProgressBar();
-			progressPanel.add(progressBar, BorderLayout.CENTER);
+		JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
+		progressBar = new JProgressBar();
+		progressPanel.add(progressBar, BorderLayout.CENTER);
 
-			JPanel statusPanel = new JPanel(new BorderLayout(0, 0));
-			statusPanel.add(statusLabel, BorderLayout.CENTER);
-			statusPanel.add(progressPanel, BorderLayout.EAST);
-			statusPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
-					new Insets(0, 6, 0, 6)));
+		JPanel statusPanel = new JPanel(new BorderLayout(0, 0));
+		statusPanel.add(statusLabel, BorderLayout.CENTER);
+		statusPanel.add(progressPanel, BorderLayout.EAST);
+		statusPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
+				new Insets(0, 6, 0, 6)));
 
-			JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
-			tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
-			tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
-			tabbedPanePanel
-					.setBorder(new BorderUIResource.EmptyBorderUIResource(
-							new Insets(12, 12, 12, 12)));
+		JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
+		tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
+		tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
+		tabbedPanePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
+				new Insets(12, 12, 12, 12)));
 
-			getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-			getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
+		getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
+		getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
-			tabbedPane.setSelectedComponent(treePanel);
+		tabbedPane.setSelectedComponent(treePanel);
 
 	}// END: initializeComponents
 
@@ -219,7 +219,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 						treeModel = new TreeModel(importer.importNextTree());
 
-						String fullPath = Utils.getWritePath(outFile, treesRead);
+						String fullPath = Utils
+								.getWritePath(outFile, treesRead);
 						writer = new PrintWriter(new FileWriter(fullPath));
 
 						partitionsList = new ArrayList<Partition>();
@@ -360,24 +361,33 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// file chooser
 	public final void doGenerateXML() {
 
-		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Generate XML...");
-		chooser.setMultiSelectionEnabled(false);
-		chooser.setCurrentDirectory(workingDirectory);
+		if (dataList.forestMap.size() == 0) {
 
-		int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
+			tabbedPane.setSelectedComponent(treePanel);
+			treePanel.doImportTree();
 
-			File file = chooser.getSelectedFile();
+		} else {
 
-			generateXML(file);
+			JFileChooser chooser = new JFileChooser();
+			chooser.setDialogTitle("Generate XML...");
+			chooser.setMultiSelectionEnabled(false);
+			chooser.setCurrentDirectory(workingDirectory);
 
-			File tmpDir = chooser.getCurrentDirectory();
-			if (tmpDir != null) {
-				workingDirectory = tmpDir;
-			}
+			int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-		}// END: approve check
+				File file = chooser.getSelectedFile();
+
+				generateXML(file);
+
+				File tmpDir = chooser.getCurrentDirectory();
+				if (tmpDir != null) {
+					workingDirectory = tmpDir;
+				}
+
+			}// END: approve check
+
+		}// END: tree loaded check
 
 	}// END: doGenerateXML
 
@@ -423,35 +433,57 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	@Override
 	public Action getGenerateXMLAction() {
 		return new AbstractAction("Generate XML...") {
-	        public void actionPerformed(ActionEvent ae) {
-	            doGenerateXML();
-	        }
-	    };
-	}//END: generateXMLAction
-	
+			public void actionPerformed(ActionEvent ae) {
+				doGenerateXML();
+			}
+		};
+	}// END: generateXMLAction
+
+	public final void doImport() {
+
+		String[] xmlFiles = new String[] { "xml", "XML"};
+		
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Import XML...");
+		chooser.setMultiSelectionEnabled(false);
+		chooser.addChoosableFileFilter(new SimpleFileFilter(xmlFiles,
+				"XML files (*.xml, *.XML)"));
+		chooser.setCurrentDirectory(workingDirectory);
+
+		int returnVal = chooser.showOpenDialog(Utils.getActiveFrame());
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+			File file = chooser.getSelectedFile();
+
+			importXML(file);
+
+			File tmpDir = chooser.getCurrentDirectory();
+			if (tmpDir != null) {
+				workingDirectory = tmpDir;
+			}
+
+		}// END: approve check
+
+	}// END: doImport
+
 	// TODO: load settings from XML
-	  public final void doImport() {
-		 
-		  
-		  System.out.println("TODO");
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-		 
-	 }//END: doImport
-	 
+	private void importXML(File file) {
+
+		System.out.println("TODO");
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	}// END: importXML
+
 	@Override
 	protected boolean readFromFile(File arg0) throws IOException {
 		return false;

@@ -17,7 +17,6 @@ public class DefaultFileMenuFactory implements MenuFactory {
 	public DefaultFileMenuFactory() {
 	}// END: Constructor
 
-	// TODO
 	@Override
 	public void populateMenu(JMenu menu, AbstractFrame frame) {
 
@@ -49,9 +48,19 @@ public class DefaultFileMenuFactory implements MenuFactory {
 
 		}// END: instanceof check
 
-		// Setup Exit
+		// TODO: setup Recent files
 		menu.addSeparator();
 
+		if (application.getRecentFileMenu() != null) {
+			JMenu subMenu = application.getRecentFileMenu();
+			menu.add(subMenu);
+
+			menu.addSeparator();
+		}
+		
+//		menu.addSeparator();
+
+		// Setup Exit
 		item = new JMenuItem(application.getExitAction());
 		menu.add(item);
 

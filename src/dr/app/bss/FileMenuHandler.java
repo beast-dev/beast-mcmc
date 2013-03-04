@@ -4,6 +4,7 @@ import javax.swing.Action;
 
 public interface FileMenuHandler {
 
-	Action getGenerateXMLAction();
-
+	Action getLoadSettingsAction();
+	Action getSaveSettingsAction();
+	
 }// END: interface

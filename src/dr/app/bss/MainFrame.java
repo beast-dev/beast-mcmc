@@ -58,13 +58,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
 
-		AbstractAction importAction = new AbstractAction(
-				"Import Previously generated XML File...") {
-			public void actionPerformed(ActionEvent ae) {
-				doImport();
-			}
-		};
-
 		getOpenAction().setEnabled(false);
 		getSaveAction().setEnabled(false);
 		getSaveAsAction().setEnabled(false);
@@ -75,7 +68,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		getSelectAllAction().setEnabled(false);
 		getFindAction().setEnabled(false);
 
-		setImportAction(importAction);
+		// AbstractAction importAction = new AbstractAction(
+		// "Import Previously generated XML File...") {
+		// public void actionPerformed(ActionEvent ae) {
+		// doImport();
+		// }
+		// };
+
+		// setImportAction(importAction);
 
 	}// END: Constructor
 
@@ -431,23 +431,60 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// /////////////////
 
 	@Override
-	public Action getGenerateXMLAction() {
-		return new AbstractAction("Generate XML...") {
+	public Action getSaveSettingsAction() {
+		return new AbstractAction("Save settings...") {
 			public void actionPerformed(ActionEvent ae) {
-				doGenerateXML();
+				doSaveSettings();
 			}
 		};
 	}// END: generateXMLAction
 
-	public final void doImport() {
+	private void doSaveSettings() {
 
-		String[] xmlFiles = new String[] { "xml", "XML"};
-		
 		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Import XML...");
+		chooser.setDialogTitle("Save as...");
 		chooser.setMultiSelectionEnabled(false);
-		chooser.addChoosableFileFilter(new SimpleFileFilter(xmlFiles,
-				"XML files (*.xml, *.XML)"));
+		chooser.setCurrentDirectory(workingDirectory);
+
+		int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
+		if (returnVal == JFileChooser.APPROVE_OPTION) {
+
+			File file = chooser.getSelectedFile();
+
+			saveSettings(file);
+
+			File tmpDir = chooser.getCurrentDirectory();
+			if (tmpDir != null) {
+				workingDirectory = tmpDir;
+			}
+
+			setStatus("Saved as " + file.getAbsolutePath());
+
+		}// END: approve check
+
+	}// END: saveSettings
+
+	// TODO: save settings
+	private void saveSettings(File file) {
+
+		System.out.println("TODO");
+
+	}// END: saveSettings
+
+	@Override
+	public Action getLoadSettingsAction() {
+		return new AbstractAction("Load settings...") {
+			public void actionPerformed(ActionEvent ae) {
+				doLoadSettings();
+			}
+		};
+	}// END: generateXMLAction
+
+	private void doLoadSettings() {
+
+		JFileChooser chooser = new JFileChooser();
+		chooser.setDialogTitle("Load...");
+		chooser.setMultiSelectionEnabled(false);
 		chooser.setCurrentDirectory(workingDirectory);
 
 		int returnVal = chooser.showOpenDialog(Utils.getActiveFrame());
@@ -455,33 +492,24 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 			File file = chooser.getSelectedFile();
 
-			importXML(file);
+			loadSettings(file);
 
 			File tmpDir = chooser.getCurrentDirectory();
 			if (tmpDir != null) {
 				workingDirectory = tmpDir;
 			}
 
+			setStatus("Loaded " + file.getAbsolutePath());
+
 		}// END: approve check
 
-	}// END: doImport
+	}// END: doLoadSettings
 
-	// TODO: load settings from XML
-	private void importXML(File file) {
+	// TODO: load settings
+	private void loadSettings(File file) {
 
 		System.out.println("TODO");
 
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
 	}// END: importXML
 
 	@Override

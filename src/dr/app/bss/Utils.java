@@ -33,6 +33,13 @@ public class Utils {
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
+    public static void centreLine(String line, int pageWidth) {
+        int n = pageWidth - line.length();
+        int n1 = n / 2;
+        for (int i = 0; i < n1; i++) { System.out.print(" "); }
+        System.out.println(line);
+    }
+	
 	public static void printMap(Map<?, ?> mp) {
 		Iterator<?> it = mp.entrySet().iterator();
 		while (it.hasNext()) {

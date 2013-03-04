@@ -278,7 +278,6 @@ public class BeagleSequenceSimulator {
 		return beagle;
 	}// END: loadBeagleInstance
 	
-	// TODO: traverse
 	private void traverse(Beagle beagle, //
 			Partition partition, //
 			NodeRef node, //
@@ -334,7 +333,7 @@ public class BeagleSequenceSimulator {
 				} else {
 
 					int[] sequence = new int[siteCount];
-					// TODO
+					// TODO: dirty solution for gaps when taxa between the tree topologies don't match
 					Arrays.fill(sequence, gapFlag);
 
 					int j = 0;

@@ -28,29 +28,29 @@ public class DefaultFileMenuFactory implements MenuFactory {
 
 		if (frame instanceof FileMenuHandler) {
 
-			// Setup Generate XML
-			action = ((FileMenuHandler) frame).getGenerateXMLAction();
+			// Setup Open
+			action = ((FileMenuHandler) frame).getLoadSettingsAction();
 			if (action != null) {
 				item = new JMenuItem(action);
-				item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_G,
+				item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
 						MenuBarFactory.MENU_MASK));
 				menu.add(item);
 			}
-
-			// Setup Import
-			action = frame.getImportAction();
+			
+			// Setup Save As
+			action = ((FileMenuHandler) frame).getSaveSettingsAction();
 			if (action != null) {
 				item = new JMenuItem(action);
-				item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I,
+				item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
 						MenuBarFactory.MENU_MASK));
 				menu.add(item);
 			}
 
 		}// END: instanceof check
 
-		// TODO: setup Recent files
 		menu.addSeparator();
 
+		// TODO: setup Recent files
 		if (application.getRecentFileMenu() != null) {
 			JMenu subMenu = application.getRecentFileMenu();
 			menu.add(subMenu);
@@ -58,8 +58,6 @@ public class DefaultFileMenuFactory implements MenuFactory {
 			menu.addSeparator();
 		}
 		
-//		menu.addSeparator();
-
 		// Setup Exit
 		item = new JMenuItem(application.getExitAction());
 		menu.add(item);

@@ -46,6 +46,8 @@ import java.util.List;
  * @author Marc Suchard
  * @author Julia Palacios
  */
+
+//For implementation,
 public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
 //    protected Parameter groupSizeParameter;
@@ -174,6 +176,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 setupGPvalues();
 
 
+
          }
 
 
@@ -205,7 +208,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //
 
 
-    //I will use specific input
+    //This is actually the Augmented loglikelihood for fixed genealogy. For sequence data directly
+//    this becomes the coalescent point process prior on an augmented "tree"
     public double calculateLogLikelihood(Parameter Gfunction, int[] latentCounts, int [] eventType, Parameter upper_Bound, double [] Gfactor) {
         double upperBound = upper_Bound.getParameterValue(0);
         logGPLikelihood=-upperBound*getConstlik();
@@ -251,17 +255,19 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     }
 
 
+//For fixed genealogy this contains the Augmented likelihood, the GP prior and prior on a the upper bound
 	public double getLogLikelihood() {
 		if (!likelihoodKnown) {
 			logLikelihood =
-              calculateLogLikelihood(popSizeParameter,GPcounts,GPtype,lambda_boundParameter,GPcoalfactor)+calculateLogGP();
+              calculateLogLikelihood(popSizeParameter,GPcounts,GPtype,lambda_boundParameter,GPcoalfactor)+calculateLogGP()
+                        +getLogPriorLambda(lambdaParameter.getParameterValue(0),0.01,lambda_boundParameter.getParameterValue(0));
 			likelihoodKnown = true;
 		}
 		return logLikelihood;
 //        return 0.0;
 	}
 
-
+//Calculates prior on g function
     protected double calculateLogGP() {
 
            if (!intervalsKnown) {
@@ -281,6 +287,14 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
            currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (numcoalpoints - 1) * LOG_TWO_TIMES_PI;
            return currentLike;
        }
+
+//    Calculates logprior on Upper Bound
+    private double getLogPriorLambda(double lambdaMean, double epsilon, double lambdaValue){
+    double res;
+    if (lambdaValue < lambdaMean) {res=epsilon*(1/lambdaMean);}
+    else {res=Math.log(1-epsilon)*(1/lambdaMean)*Math.exp(-(1/lambdaMean)*(lambdaValue-lambdaMean)); }
+    return res;
+}
 
 
     //log pseudo-determinant

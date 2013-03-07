@@ -2,7 +2,9 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.Taxon;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.math.MathUtils;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
@@ -19,10 +21,12 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class EmpiricalTreeDistributionModel extends TreeModel {
+public class EmpiricalTreeDistributionModel extends TreeModel implements BranchRateModel {
 
-    public EmpiricalTreeDistributionModel(final Tree[] trees) {
+    public EmpiricalTreeDistributionModel(final Tree[] trees, final String rateAttributeName) {
         super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
+
+        this.rateAttributeName = rateAttributeName;
 
         this.trees = trees;
         drawTreeIndex();
@@ -185,11 +189,11 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     }
 
     public void setUnits(final Type units) {
-         trees[currentTreeIndex].setUnits(units);
+        trees[currentTreeIndex].setUnits(units);
     }
 
     public void setAttribute(final String name, final Object value) {
-         trees[currentTreeIndex].setAttribute(name, value);
+        trees[currentTreeIndex].setAttribute(name, value);
     }
 
     public Object getAttribute(final String name) {
@@ -199,10 +203,65 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     public Iterator<String> getAttributeNames() {
         return trees[currentTreeIndex].getAttributeNames();
     }
-    
+
+    @Override
+    public double getBranchRate(Tree tree, NodeRef node) {
+        if (rateAttributeName != null) {
+            assert(tree == trees[currentTreeIndex]);
+
+            Object value = tree.getNodeAttribute(node, rateAttributeName);
+
+            return Double.parseDouble((String)value);
+        } else {
+            return 1.0;
+        }
+    }
+
+    @Override
+    public String getTraitName() {
+        return rateAttributeName;
+    }
+
+    @Override
+    public Intent getIntent() {
+        return Intent.BRANCH;
+    }
+
+    @Override
+    public Class getTraitClass() {
+        return Double.class;
+    }
+
+    @Override
+    public Double getTrait(Tree tree, NodeRef node) {
+        return getBranchRate(tree, node);
+    }
+
+    @Override
+    public String getTraitString(Tree tree, NodeRef node) {
+        return getTrait(tree, node).toString();
+    }
+
+    @Override
+    public boolean getLoggable() {
+        return true;
+    }
+
+    @Override
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { this };
+    }
+
+    @Override
+    public TreeTrait getTreeTrait(String key) {
+        return this;
+    }
+
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 
     private final Tree[] trees;
     private int currentTreeIndex;
     private int storedTreeIndex;
+
+    private final String rateAttributeName;
 }

@@ -13,7 +13,6 @@ import java.io.IOException;
  * @author Marc Suchard
  * @version $Id$
  */
-@Deprecated // for the moment at least
 public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
 
@@ -160,7 +159,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.mdsPrecisionParameter = mdsPrecision;
         addVariable(mdsPrecision);
 
-        this.isLeftTruncated = true; // Re-normalize likelihood for strictly positive distances
+        this.isLeftTruncated = false; // Re-normalize likelihood for strictly positive distances
 
         // make sure everything is calculated on first evaluation
         makeDirty();

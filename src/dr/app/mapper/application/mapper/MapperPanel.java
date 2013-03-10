@@ -1,9 +1,8 @@
 package dr.app.mapper.application.mapper;
 
 import dr.app.gui.chart.*;
-import dr.app.mapper.application.MapperFrame;
+import dr.app.mapper.application.MapperFrameOld;
 import dr.inference.trace.TraceList;
-import dr.stats.Variate;
 import jam.framework.Exportable;
 
 import javax.swing.*;
@@ -26,7 +25,7 @@ public class MapperPanel extends JPanel implements Exportable {
     TraceList[] traceLists;
     java.util.List<Layer> layers;
 
-    public MapperPanel(MapperFrame mapperFrame) {
+    public MapperPanel(MapperFrameOld mapperFrame) {
         for (int column = 0; column < columnCount; column++) {
             columnAxis[column] = new LinearAxis();
         }

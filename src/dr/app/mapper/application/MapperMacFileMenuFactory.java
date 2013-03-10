@@ -31,21 +31,30 @@ public class MapperMacFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
-        // On Windows and Linux platforms, each window has its own menu so items which are not needed
-        // are simply missing. In contrast, on Mac, the menu is for the application so items should
-        // be enabled/disabled as frames come to the front.
+        item = new JMenuItem(application.getOpenAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        if (application.getRecentFileMenu() != null) {
+            JMenu subMenu = application.getRecentFileMenu();
+            menu.add(subMenu);
+        }
+
         if (frame instanceof MapperFileMenuHandler) {
-            Action action = frame.getImportAction();
-            if (action != null) {
-                item = new JMenuItem(action);
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-                menu.add(item);
-            } else {
-                item = new JMenuItem("Import Trace File...");
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-                item.setEnabled(false);
-                menu.add(item);
-            }
+            menu.addSeparator();
+
+            item = new JMenuItem(frame.getImportAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+            menu.add(item);
+
+            item = new JMenuItem(((MapperFileMenuHandler)frame).getImportMeasurementsAction());
+            menu.add(item);
+
+            item = new JMenuItem(((MapperFileMenuHandler)frame).getImportLocationsAction());
+            menu.add(item);
+
+            item = new JMenuItem(((MapperFileMenuHandler)frame).getImportTreesAction());
+            menu.add(item);
 
             menu.addSeparator();
 
@@ -57,12 +66,26 @@ public class MapperMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK + KeyEvent.ALT_MASK));
             menu.add(item);
         } else {
-            // If the frame is not a TracerFileMenuHandler then create a dummy set of disabled menu options.
+            // If the frame is not a BeautiFrame then create a dummy set of disabled menu options.
             // At present the only situation where this may happen is in Mac OS X when no windows
             // are open and the menubar is created by the hidden frame.
 
-            item = new JMenuItem("Import Trace File...");
+            menu.addSeparator();
+
+            item = new JMenuItem("Import Strains...");
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Import Measurements...");
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Import Locations...");
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Import Trees...");
             item.setEnabled(false);
             menu.add(item);
 
@@ -74,7 +97,7 @@ public class MapperMacFileMenuFactory implements MenuFactory {
             menu.add(item);
 
             item = new JMenuItem("Export PDF...");
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK + KeyEvent.ALT_MASK));
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
             item.setEnabled(false);
             menu.add(item);
         }
@@ -83,6 +106,14 @@ public class MapperMacFileMenuFactory implements MenuFactory {
 
         item = new JMenuItem(frame.getCloseWindowAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAsAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
         menu.add(item);
 
         menu.addSeparator();

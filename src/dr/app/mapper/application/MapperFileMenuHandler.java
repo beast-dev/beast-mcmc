@@ -8,7 +8,15 @@ import javax.swing.*;
  */
 public interface MapperFileMenuHandler {
 
-	Action getExportDataAction();
+    Action getImportStrainsAction();
+
+    Action getImportMeasurementsAction();
+
+    Action getImportLocationsAction();
+
+    Action getImportTreesAction();
+
+    Action getExportDataAction();
 
 	Action getExportPDFAction();
 

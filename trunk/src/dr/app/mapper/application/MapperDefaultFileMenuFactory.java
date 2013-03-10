@@ -33,6 +33,19 @@ public class MapperDefaultFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
+        item = new JMenuItem(frame.getOpenAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAsAction());
+        menu.add(item);
+
+        menu.addSeparator();
+
         // On Windows and Linux platforms, each window has its own menu so items which are not needed
         // are simply missing. In contrast, on Mac, the menu is for the application so items should
         // be enabled/disabled as frames come to the front.
@@ -45,6 +58,15 @@ public class MapperDefaultFileMenuFactory implements MenuFactory {
 
                 menu.addSeparator();
             }
+
+            item = new JMenuItem(((MapperFileMenuHandler)frame).getImportMeasurementsAction());
+            menu.add(item);
+
+            item = new JMenuItem(((MapperFileMenuHandler)frame).getImportLocationsAction());
+            menu.add(item);
+
+            item = new JMenuItem(((MapperFileMenuHandler)frame).getImportTreesAction());
+            menu.add(item);
 
             item = new JMenuItem(((MapperFileMenuHandler)frame).getExportDataAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
@@ -70,6 +92,7 @@ public class MapperDefaultFileMenuFactory implements MenuFactory {
 
         item = new JMenuItem(application.getExitAction());
         menu.add(item);
+
     }
 
     public int getPreferredAlignment() {

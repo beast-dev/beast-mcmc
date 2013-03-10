@@ -25,11 +25,14 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.tipdatepanel.GuessDatesException;
 import dr.evolution.util.Date;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 
 import java.io.Serializable;
 import java.text.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,10 +61,21 @@ public class DateGuesser implements Serializable {
     private DateFormat dateFormat = new SimpleDateFormat(calendarDateFormat);
 
     public void guessDates(TaxonList taxonList) {
+        // To avoid duplicating code, add all the taxa into a list and
+        // pass it to guessDates(List<Taxon> taxonList)
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (Taxon taxon : taxonList) {
+            taxa.add(taxon);
+        }
+
+        guessDates(taxa);
+    }
+
+    public void guessDates(List<Taxon> taxonList) {
 
         dateFormat = new SimpleDateFormat(calendarDateFormat);
 
-        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+        for (int i = 0; i < taxonList.size(); i++) {
             java.util.Date origin = new java.util.Date(0);
 
             double d = 0.0;
@@ -69,13 +83,13 @@ public class DateGuesser implements Serializable {
             try {
                 switch (guessType) {
                     case ORDER:
-                        d = guessDateFromOrder(taxonList.getTaxonId(i), order, fromLast);
+                        d = guessDateFromOrder(taxonList.get(i).getId(), order, fromLast);
                         break;
                     case PREFIX:
-                        d = guessDateFromPrefix(taxonList.getTaxonId(i), prefix, order, fromLast);
+                        d = guessDateFromPrefix(taxonList.get(i).getId(), prefix, order, fromLast);
                         break;
                     case REGEX:
-                        d = guessDateFromRegex(taxonList.getTaxonId(i), regex);
+                        d = guessDateFromRegex(taxonList.get(i).getId(), regex);
                         break;
                     default:
                         throw new IllegalArgumentException("unknown GuessType");
@@ -98,7 +112,7 @@ public class DateGuesser implements Serializable {
             }
 
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            taxonList.getTaxon(i).setAttribute("date", date);
+            taxonList.get(i).setAttribute("date", date);
         }
     }
 

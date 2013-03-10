@@ -1,7 +1,7 @@
 package dr.app.mapper.application;
 
 import dr.app.util.OSType;
-import dr.inference.trace.LogFileTraces;
+import dr.util.Version;
 import jam.framework.*;
 
 import javax.swing.*;
@@ -14,6 +14,44 @@ import java.util.Locale;
  * @version $Id$
  */
 public class MapperApp extends MultiDocApplication {
+    private final static Version version = new Version() {
+        private static final String VERSION = "1.0pre";
+
+        public String getVersion() {
+            return VERSION;
+        }
+
+        public String getVersionString() {
+            return "v" + VERSION;
+        }
+
+        public String getDateString() {
+            return "2013";
+        }
+
+        public String getBuildString() {
+            return "Build r3656";
+        }
+
+        public String[] getCredits() {
+            return new String[0];
+        }
+
+        public String getHTMLCredits() {
+            return "<p>by<br>" +
+                    "Andrew Rambaut, Trevor Bedford & Marc A. Suchard</p>" +
+                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
+                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a>, <a href=\"mailto:t.bedford@ed.ac.uk\">t.bedford@ed.ac.uk</a></p>" +
+
+                    "<p>Departments of Biomathematics, Biostatistics and Human Genetics, UCLA<br>" +
+                    "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
+
+                    "<p>Part of the BEAST package:<br>" +
+                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>";
+        }
+
+    };
+
 
     public MapperApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
@@ -72,27 +110,14 @@ public class MapperApp extends MultiDocApplication {
             }
 
             final String nameString = "Mapper";
-            final String versionString = "v1.0pre";
-            String aboutString = "<html><center><p>MCMC Trace Analysis Tool<br>" +
-                    "Version " + versionString + ", 2003-2012</p>" +
-                    "<p>by<br>" +
-
-                    "Andrew Rambaut, Trevor Bedford & Marc A. Suchard</p>" +
-
-                    "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
-                    "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
-
-                    "<p>Departments of Biomathematics, Biostatistics and Human Genetics, UCLA<br>" +
-                    "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
-
-                    "<p>Available from the BEAST site:<br>" +
-                    "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
-                    "<p>Source code distributed under the GNU LGPL:<br>" +
-                    "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
+            final String versionString = version.getVersionString();
+            String aboutString = "<html><center><p>Antigenic Mapping Investigation Tool<br>" +
+                    "Version " + versionString + ", " + version.getDateString() + "</p>" +
+                    version.getHTMLCredits() +
                     "</center></html>";
 
-            String websiteURLString = "http://beast.bio.ed.ac.uk/";
-            String helpURLString = "http://beast.bio.ed.ac.uk/Mapper";
+            String websiteURLString = "http://tree.bio.ed.ac.uk/";
+            String helpURLString = "http://tree.bio.ed.ac.uk/software/pathogen";
 
             MapperApp app = new MapperApp(nameString, aboutString, icon, websiteURLString, helpURLString);
             app.setDocumentFrameFactory(new DocumentFrameFactory() {
@@ -109,9 +134,9 @@ public class MapperApp extends MultiDocApplication {
                 for (String fileName : args) {
 
                     File file = new File(fileName);
-                    LogFileTraces[] traces = { new LogFileTraces(fileName, file) };
+//                    LogFileTraces[] traces = { new LogFileTraces(fileName, file) };
 
-                    frame.processTraces(traces);
+//                    frame.processTraces(traces);
                 }
             }
         } catch (Exception e) {

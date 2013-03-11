@@ -257,6 +257,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 //For fixed genealogy this contains the Augmented likelihood, the GP prior and prior on a the upper bound
 	public double getLogLikelihood() {
+//            System.err.println("getlog used");
 		if (!likelihoodKnown) {
 			logLikelihood =
               calculateLogLikelihood(popSizeParameter,GPcounts,GPtype,lambda_boundParameter,GPcoalfactor)+calculateLogGP()
@@ -271,12 +272,14 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected double calculateLogGP() {
 
            if (!intervalsKnown) {
-               // intervalsKnown -> false when handleModelChanged event occurs in super.
+//               System.err.println("intervalsknown");
+//               intervalsKnown -> false when handleModelChanged event occurs in super.
                wrapSetupIntervals();
-               setupQmatrix(precisionParameter.getParameterValue(0));
+//               setupQmatrix(precisionParameter.getParameterValue(0));
                intervalsKnown = true;
            }
 
+           setupQmatrix(precisionParameter.getParameterValue(0));
            double currentLike;
            DenseVector diagonal1 = new DenseVector(numcoalpoints);
            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
@@ -285,7 +288,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
            currentQ.mult(currentGamma, diagonal1);
 
            currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (numcoalpoints - 1) * LOG_TWO_TIMES_PI;
-           return currentLike;
+
+        return currentLike;
        }
 
 //    Calculates logprior on Upper Bound
@@ -467,7 +471,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
         CholeskyUpper.solve(StandNorm,MultiNorm);
         for (int i=0; i<length;i++){
-            popSizeParameter.setParameterValue(i,MultiNorm.get(i));
+//            popSizeParameter.setParameterValue(i,MultiNorm.get(i));
+            popSizeParameter.setParameterValue(i,1.0);
             }
     }
 

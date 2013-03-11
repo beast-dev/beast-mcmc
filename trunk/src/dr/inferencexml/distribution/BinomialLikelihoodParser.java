@@ -1,7 +1,7 @@
 /*
  * BinomialLikelihoodParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -63,6 +63,11 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
             counts = new Parameter.Default(v);
         } else {
             counts = (Parameter) cxo.getChild(Parameter.class);
+        }
+
+        if (trialsParam.getDimension() != counts.getDimension()) {
+            throw new XMLParseException("Trials dimension (" + trialsParam.getDimension()
+                    + ") must equal counts dimension (" + counts.getDimension() + ")");
         }
 
         return new BinomialLikelihood(trialsParam, proportionParam, counts);

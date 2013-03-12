@@ -51,12 +51,16 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
 
     private final int categoryCount;
     private final double step;
-    private final double[] rates;
+    private final double[][] rates;
     private boolean normalize = false;
     private double normalizeBranchRateTo = Double.NaN;
     private double scaleFactor = 1.0;
     private TreeModel treeModel;
     private final double logDensityNormalizationConstant;
+
+    private boolean updateRateCategories = true;
+    private int currentRateArrayIndex = 0;
+    private int storedRateArrayIndex;
 
     //overSampling control the number of effective categories
 
@@ -84,7 +88,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         categoryCount = (tree.getNodeCount() - 1) * overSampling;
         step = 1.0 / (double) categoryCount;
 
-        rates = new double[categoryCount];
+        rates = new double[2][categoryCount];
 
         this.normalize = normalize;
 
@@ -121,7 +125,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             });
         }
 
-        setupRates();
+        updateRateCategories = true;
 
         // Each parameter take any value in [1, \ldots, categoryCount]
         // NB But this depends on the transition kernel employed.  Using swap-only results in a different constant
@@ -131,7 +135,6 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     // compute scale factor
 
     private void computeFactor() {
-
 
         //scale mean rate to 1.0 or separate parameter
 
@@ -143,7 +146,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             NodeRef node = treeModel.getNode(i);
             if (!treeModel.isRoot(node)) {
                 int rateCategory = (int) Math.round(rateCategories.getNodeValue(treeModel, node));
-                treeRate += rates[rateCategory] * treeModel.getBranchLength(node);
+                treeRate += rates[currentRateArrayIndex][rateCategory] * treeModel.getBranchLength(node);
                 treeTime += treeModel.getBranchLength(node);
 
                 //System.out.println("rates and time\t" + rates[rateCategory] + "\t" + treeModel.getBranchLength(node));
@@ -157,7 +160,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == distributionModel) {
-            setupRates();
+            updateRateCategories = true;
             fireModelChanged();
         } else if (model == rateCategories) {
             // AR - commented out: if just the rate categories have changed the rates will be the same
@@ -172,10 +175,11 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     }
 
     protected void storeState() {
+        storedRateArrayIndex = currentRateArrayIndex;
     }
 
     protected void restoreState() {
-        setupRates();
+        currentRateArrayIndex = storedRateArrayIndex;
     }
 
     protected void acceptState() {
@@ -185,10 +189,14 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
 
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
+        if (updateRateCategories) {
+            setupRates();
+        }
+
         int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
 
         //System.out.println(rates[rateCategory] + "\t"  + rateCategory);
-        return rates[rateCategory] * scaleFactor;
+        return rates[currentRateArrayIndex][rateCategory] * scaleFactor;
     }
 
     /**
@@ -196,9 +204,12 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
      */
     protected void setupRates() {
 
+        // flip the current array index
+        currentRateArrayIndex = 1 - currentRateArrayIndex;
+
         double z = step / 2.0;
         for (int i = 0; i < categoryCount; i++) {
-            rates[i] = distributionModel.quantile(z);
+            rates[currentRateArrayIndex][i] = distributionModel.quantile(z);
             //System.out.print(rates[i]+"\t");
             z += step;
         }
@@ -208,6 +219,8 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         }
         else { System.out.println(distributionModel.getClass().getName());}*/
         if (normalize) computeFactor();
+
+        updateRateCategories = false;
     }
 
     public double getLogLikelihood() {

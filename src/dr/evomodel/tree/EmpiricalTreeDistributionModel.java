@@ -21,7 +21,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class EmpiricalTreeDistributionModel extends TreeModel implements BranchRateModel {
+public class EmpiricalTreeDistributionModel extends TreeModel /* implements BranchRateModel */ {
 
     public EmpiricalTreeDistributionModel(final Tree[] trees, final String rateAttributeName) {
         super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
@@ -204,6 +204,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel implements BranchR
         return trees[currentTreeIndex].getAttributeNames();
     }
 
+    /*
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
         if (rateAttributeName != null) {
@@ -256,6 +257,7 @@ public class EmpiricalTreeDistributionModel extends TreeModel implements BranchR
     public TreeTrait getTreeTrait(String key) {
         return this;
     }
+    */
 
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 

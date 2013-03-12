@@ -405,19 +405,23 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 		for (int i = 0; i < getIntervalCount(); i++) {
 
 			  length += getInterval(i);
+
               GPcounts[i]=0;
               GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
               constlik+=GPcoalfactor[i]*getInterval(i);
+//            System.err.println("i: "+i+"val: "+length+" type: "+getIntervalType(i)+" lineages: "+getLineageCount(i));
               if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                     GPcounts[i]=1;
                     GPtype[countcoal]=1;
                     CoalPosIndicator[countcoal]=i;
                     changePoints.setParameterValue(countcoal,length);
+
                     GPCoalInterval[countcoal]=length-prevLength;
                     coalfactor[countcoal]=getLineageCount(i)*(getLineageCount(i)-1)/2.0;
                     countcoal++;
-
+                    prevLength=length;
 			        }
+
         }
 
 

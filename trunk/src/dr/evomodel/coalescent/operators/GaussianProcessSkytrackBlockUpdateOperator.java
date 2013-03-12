@@ -101,7 +101,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
     //change the 0.0005 to a parameter in BlockUpdate Parser
     private double getProposalLambda(double currentValue) {
-        double proposal= MathUtils.uniform(currentValue-0.005,currentValue+0.005);
+        double proposal= MathUtils.uniform(currentValue-0.00001,currentValue+0.00001);
                 //Symmetric proposal
         if (proposal<0){
          proposal=-proposal;
@@ -503,9 +503,12 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     }
 
      private double getNewPrecision(double currentValue, double quadraticTerm) {
-        double alphaPost=  alphaprior+popSizeParameter.getSize()*0.5;
-        double betaPost = betaprior+0.5*(1/currentValue)*quadraticTerm;
-        return MathUtils.nextGamma(alphaPost,betaPost);
+
+         double alphaPost=  alphaprior+popSizeParameter.getSize()*0.5;
+
+         double betaPost = betaprior+0.5*(1/currentValue)*quadraticTerm;
+
+         return MathUtils.nextGamma(alphaPost,betaPost);
     }
 
     public DenseVector getMultiNormalMean(DenseVector CanonVector, UpperTriangBandMatrix CholeskyUpper) {
@@ -720,19 +723,22 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
            int k1=0;
            int fix=0;
 
+
 //         Proposes to add/delete and proposes location uniformly in each intercoalescent interval
        for (int j=0; j<numberPoints; j++){
            uppL+=GPvalue.getGPCoalInterval(j);
+           System.err.println("uppL:"+uppL);
 
            if (MathUtils.nextDouble()<0.5) {
                indicator[j]=1;
                addPoints[k]=MathUtils.uniform(lowL,uppL);
                indAPoint[k]=wherePoint(addPoints[k],j-1,lowL);
-               System.err.println("add:"+addPoints[k]+"with coal factor"+GPcoalfactor[indAPoint[k]]+" and low end:"+lowL+" and pos:"+indAPoint[k]);
+               System.err.println(j+" add:"+addPoints[k]+"with coal factor"+GPcoalfactor[indAPoint[k]]+" and low end:"+lowL+" and pos:"+indAPoint[k]);
                k++;
            }
             lowL=uppL;
        }
+           System.exit(-1);
            double [] addPoints2 = new double[k];
            System.arraycopy(addPoints,0,addPoints2,0,k);
            tempG = getGPvalues(currentChangePoints, currentPopSize, addPoints2,currentPrecision);
@@ -1017,25 +1023,27 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 //    locationThinned, the GMRF (GP values), Gibbs sampling precision and the upper bound lambda
     public double doOperation() throws OperatorFailedException {
 
-        System.err.println("Here doOperation starts");
-        System.exit(-1);
+//        System.err.println("Here doOperation starts");
 
-//        double currentPrecision = this.precisionParameter.getParameterValue(0);
-//        DenseVector currentPopSize = new DenseVector(popSizeParameter.getParameterValues());
-//        double currentQuadratic = getQuadraticForm(currentQ, currentPopSize);
-////       Gibbs sample new precision
-//        getNewPrecision(currentPrecision,currentQuadratic);
-//        currentPrecision=this.precisionParameter.getParameterValue(0);
+
+        double currentPrecision = this.precisionParameter.getParameterValue(0);
+        DenseVector currentPopSize = new DenseVector(popSizeParameter.getParameterValues());
+        double currentQuadratic = getQuadraticForm(currentQ, currentPopSize);
+        double newprecision=getNewPrecision(currentPrecision,currentQuadratic);
+//       Gibbs sample new precision
+        precisionParameter.setParameterValue(0,newprecision);
+        currentPrecision=this.precisionParameter.getParameterValue(0);
 //
 ////        proposes and updates lambdaBoundParameter
-//        double currentLambda = this.lambdaBoundParameter.getParameterValue(0);
-//        getNewUpperBound(currentLambda);
-//        currentLambda=this.lambdaBoundParameter.getParameterValue(0);
+        double currentLambda = this.lambdaBoundParameter.getParameterValue(0);
+       getNewUpperBound(currentLambda);
+//          currentLambda=this.lambdaBoundParameter.getParameterValue(0);
 //
-//        double [] currentChangePoints = this.changePoints.getParameterValues();
+        double [] currentChangePoints = this.changePoints.getParameterValues();
 //
-////        numberThinned();
-//
+        numberThinned(currentChangePoints,currentPopSize,currentPrecision);
+
+
 //
 //
 ////        ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
@@ -1137,7 +1145,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 ////        return hRatio;
 ////        System.err.println("Prueba");
 ////        System.exit(-1);
-        return 0;
+        return 10000.0;
     }
 
     //MCMCOperator INTERFACE

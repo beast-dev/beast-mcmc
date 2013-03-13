@@ -1,4 +1,4 @@
-package dr.app.mapper.application;
+package dr.app.mapper.application.menus;
 
 import jam.framework.*;
 import jam.mac.*;

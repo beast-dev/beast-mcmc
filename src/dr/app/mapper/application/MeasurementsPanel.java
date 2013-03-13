@@ -25,19 +25,26 @@
 
 package dr.app.mapper.application;
 
+import dr.app.gui.FileDrop;
 import dr.app.gui.table.DateCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.util.DataTable;
 import jam.framework.Exportable;
 import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -119,6 +126,15 @@ public class MeasurementsPanel extends JPanel implements Exportable, MapperDocum
         add(toolBar1, "North");
         add(scrollPane, "Center");
 
+        Color focusColor = UIManager.getColor("Focus.color");
+        Border focusBorder = BorderFactory.createMatteBorder(2, 2, 2, 2, focusColor);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        new FileDrop(null, scrollPane, focusBorder, new FileDrop.Listener() {
+            public void filesDropped(java.io.File[] files) {
+                frame.importMeasurementFiles(files);
+            }   // end filesDropped
+        }); // end FileDrop.Listener
+
     }
 
     @Override
@@ -146,34 +162,26 @@ public class MeasurementsPanel extends JPanel implements Exportable, MapperDocum
         }
 
         public int getRowCount() {
-//            java.util.List<Taxon> taxonList = document.getTaxa();
-//
-//            if (taxonList == null) return 0;
-//
-//            return taxonList.size();
-            return 0;
+            java.util.List<MapperDocument.Measurement> measurementList = document.getMeasurements();
+            return measurementList.size();
         }
 
         public Object getValueAt(int row, int col) {
-//            java.util.List<Taxon> taxonList = document.getTaxa();
-//
-//            switch (col) {
-//                case 0:
-//                    return taxonList.get(row);
-//                case 1:
-//                    Date date = taxonList.get(row).getDate();
-//                    if (date != null) {
-//                        return date.getTimeValue();
-//                    } else {
-//                        return "-";
+            MapperDocument.Measurement measurement = document.getMeasurements().get(row);
+
+            switch (col) {
+                case 0:
+                    return measurement.columnStrain.getId();
+                case 1:
+                    return measurement.rowStrain.getId();
+                case 2:
+//                    if (measurement.type == MapperDocument.MeasurementType.THRESHOLD) {
+//                        return "<" + measurement.titre;
 //                    }
-//                case 2:
-//                    if (heights != null) {
-//                        return heights[row];
-//                    } else {
-//                        return "0.0";
-//                    }
-//            }
+                    return measurement.titre;
+                case 3:
+                    return measurement.column;
+            }
             return null;
         }
 

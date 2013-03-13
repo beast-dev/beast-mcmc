@@ -1,4 +1,4 @@
-package dr.app.mapper.application;
+package dr.app.mapper.application.menus;
 
 import jam.framework.MenuFactory;
 import jam.framework.AbstractFrame;
@@ -50,16 +50,8 @@ public class MapperDefaultFileMenuFactory implements MenuFactory {
         // are simply missing. In contrast, on Mac, the menu is for the application so items should
         // be enabled/disabled as frames come to the front.
         if (frame instanceof MapperFileMenuHandler) {
-            Action action = frame.getImportAction();
-            if (action != null) {
-                item = new JMenuItem(action);
-                item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-                menu.add(item);
-
-                menu.addSeparator();
-            }
-
             item = new JMenuItem(((MapperFileMenuHandler)frame).getImportMeasurementsAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
             menu.add(item);
 
             item = new JMenuItem(((MapperFileMenuHandler)frame).getImportLocationsAction());

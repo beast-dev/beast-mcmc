@@ -131,7 +131,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// file chooser
 	public void doExport() {
 
-		if (dataList.forestMap.size() == 0
+		if (dataList.forestList.size() == 0
 				&& simulationPanel.simulationType == SimulationPanel.FIRST_SIMULATION_TYPE) {
 
 			tabbedPane.setSelectedComponent(treePanel);
@@ -302,7 +302,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 						for (PartitionData data : dataList) {
 
-							if (data.treeModel == null) {
+							if (data.treeFile == null) {
 
 								throw new RuntimeException(
 										"Set Tree Model in Partitions tab for "
@@ -313,7 +313,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 								// create partition
 								Partition partition = new Partition(
-										data.treeModel, //
+										data.createTreeModel(), //
 										data.createBranchModel(), //
 										data.createSiteRateModel(), //
 										data.createBranchRateModel(), //
@@ -365,7 +365,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// file chooser
 	public final void doGenerateXML() {
 
-		if (dataList.forestMap.size() == 0) {
+		if (dataList.forestList.size() == 0) {
 
 			tabbedPane.setSelectedComponent(treePanel);
 			treePanel.doImportTree();

@@ -29,10 +29,13 @@ public class Test {
 
 		PartitionData data1 = new PartitionData();
 		data1.treeFile = new File("/home/filip/SimTree.figtree");
+//        TreeModel treeModel = Utils.importTreeFromFile(data1.treeFile);
+//		data1.treeModel = treeModel;
+        
 		dataList.add(data1);
 		
-		PartitionData data2 = new PartitionData();
-		dataList.add(data2);
+//		PartitionData data2 = new PartitionData();
+//		dataList.add(data2);
 		
 		Utils.printPartitionDataList(dataList);
 

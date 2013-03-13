@@ -1,7 +1,9 @@
 package dr.app.bss;
 
 import java.awt.Frame;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -11,7 +13,10 @@ import java.util.Map.Entry;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import dr.evolution.io.NewickImporter;
+import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
@@ -65,7 +70,7 @@ public class Utils {
 
 		ArrayList<TreeModel> treeModelsList = new ArrayList<TreeModel>();
 		for (PartitionData data : dataList) {
-			treeModelsList.add(data.treeModel);
+			treeModelsList.add(data.createTreeModel());
 		}
 
 		return treeModelsList;
@@ -508,4 +513,39 @@ public class Utils {
 
 	}// END: printDataList
 
+	public static TreeModel importTreeFromFile(File file) {
+
+		TreeModel treeModel = null;
+
+		try {
+
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+
+			String line = reader.readLine();
+
+			Tree tree = null;
+
+			if (line.toUpperCase().startsWith("#NEXUS")) {
+
+				NexusImporter importer = new NexusImporter(reader);
+				tree = importer.importTree(null);
+
+			} else {
+
+				NewickImporter importer = new NewickImporter(reader);
+				tree = importer.importTree(null);
+
+			}
+
+			reader.close();
+			treeModel = new TreeModel(tree);
+
+		} catch (Exception e) {
+			Utils.handleException(e);
+		}// END: try-catch block
+
+		return treeModel;
+
+	}// END: importTreeFromFile
+	
 }// END: class

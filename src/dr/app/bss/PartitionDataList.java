@@ -23,7 +23,7 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 	public File treesFilename = null;
 	
 	public PartitionDataList() {
-		super();
+//		super();
 	}// END: Constructor
 	
 }// END:class

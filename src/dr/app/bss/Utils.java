@@ -492,7 +492,7 @@ public class Utils {
 
 	}// END: printPartitionData
 
-	public static void printDataList(PartitionDataList dataList) {
+	public static void printPartitionDataList(PartitionDataList dataList) {
 
 		System.out.println("\tReplications: " + dataList.siteCount);
 

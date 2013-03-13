@@ -10,9 +10,13 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
@@ -220,7 +224,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 						treeModel = new TreeModel(importer.importNextTree());
 
 						String fullPath = Utils
-								.getWritePath(outFile, treesRead);
+								.getMultipleWritePath(outFile, "fasta", treesRead);
 						writer = new PrintWriter(new FileWriter(fullPath));
 
 						partitionsList = new ArrayList<Partition>();
@@ -290,7 +294,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 							Utils.printDataList(dataList);
 						}
 
-						String fullPath = Utils.getWritePath(outFile, i);
+						String fullPath = Utils.getMultipleWritePath(outFile, "fasta", i);
 						PrintWriter writer = new PrintWriter(new FileWriter(
 								fullPath));
 
@@ -467,7 +471,21 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// TODO: save settings
 	private void saveSettings(File file) {
 
-		System.out.println("TODO");
+		try {
+
+	    	String fullPath = Utils.getWritePath(file, "bss");
+			OutputStream fileOut = new FileOutputStream(new File(fullPath));
+			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+			
+			out.writeObject(dataList);
+			out.close();
+			fileOut.close();
+
+		} catch (FileNotFoundException e) {
+			Utils.handleException(e);
+		} catch (IOException e) {
+			Utils.handleException(e);
+		}
 
 	}// END: saveSettings
 

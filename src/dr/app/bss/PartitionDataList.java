@@ -1,6 +1,7 @@
 package dr.app.bss;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
@@ -9,7 +10,7 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
-public class PartitionDataList extends ArrayList<PartitionData> {
+public class PartitionDataList extends ArrayList<PartitionData> implements Serializable {
 
 	public MutableTaxonList taxonList = new Taxa();
 	

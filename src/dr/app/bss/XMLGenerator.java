@@ -92,7 +92,7 @@ public class XMLGenerator {
 			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
 			for (PartitionData data : dataList) {
 
-				if (data.treeModel == null) {
+				if (data.treeFile == null) {
 
 					throw new RuntimeException(
 							"Set Tree Model in Partitions tab for " + suffix
@@ -100,7 +100,7 @@ public class XMLGenerator {
 
 				} else {
 
-					TreeModel treeModel = data.treeModel;
+					TreeModel treeModel = data.createTreeModel();
 
 					if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
 
@@ -143,7 +143,7 @@ public class XMLGenerator {
 			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
 			for (PartitionData data : dataList) {
 
-				TreeModel treeModel = data.treeModel;
+				TreeModel treeModel = data.createTreeModel();
 
 				if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
 

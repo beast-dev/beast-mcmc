@@ -37,8 +37,15 @@ public class PartitionData implements Serializable {
 	// //////////////////
 	
 	public File treeFile = null;
-	public TreeModel treeModel = null;
 	public String treeModelIdref =  TreeModel.TREE_MODEL;
+
+	//TODO: change to create, store only treeFile
+//	public TreeModel treeModel = null;
+
+	public TreeModel createTreeModel() {
+		TreeModel treeModel =	Utils.importTreeFromFile(treeFile);
+		return treeModel;
+	}
 	
 	// /////////////////
 	// ---DATA TYPE---//

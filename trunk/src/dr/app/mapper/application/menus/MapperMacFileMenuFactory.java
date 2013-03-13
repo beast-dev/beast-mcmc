@@ -1,4 +1,4 @@
-package dr.app.mapper.application;
+package dr.app.mapper.application.menus;
 
 import jam.framework.MenuFactory;
 import jam.framework.AbstractFrame;
@@ -43,11 +43,8 @@ public class MapperMacFileMenuFactory implements MenuFactory {
         if (frame instanceof MapperFileMenuHandler) {
             menu.addSeparator();
 
-            item = new JMenuItem(frame.getImportAction());
-            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
-            menu.add(item);
-
             item = new JMenuItem(((MapperFileMenuHandler)frame).getImportMeasurementsAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
             menu.add(item);
 
             item = new JMenuItem(((MapperFileMenuHandler)frame).getImportLocationsAction());

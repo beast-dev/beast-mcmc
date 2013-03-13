@@ -159,8 +159,9 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 					File value = (File) partitionTableModel.getValueAt(row,
 							column);
-					dataList.get(row).treeModel = dataList.forestMap.get(value);
-
+//					dataList.get(row).treeModel = dataList.forestMap.get(value);
+					dataList.get(row).treeFile = value;
+					
 				}
 				// else if(column == PartitionTableModel.DATA_TYPE_INDEX) {
 				// } else {
@@ -223,7 +224,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
-				for (File file : dataList.forestMap.keySet()) {
+				for (File file : dataList.forestList) {
 					((JComboBox) editorComponent).addItem(file);
 				}// END: fill loop
 

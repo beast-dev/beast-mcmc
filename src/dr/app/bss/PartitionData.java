@@ -20,8 +20,6 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 
-//TODO: serialize
-
 @SuppressWarnings("serial")
 public class PartitionData implements Serializable {
 
@@ -37,13 +35,10 @@ public class PartitionData implements Serializable {
 	// //////////////////
 	
 	public File treeFile = null;
-	public String treeModelIdref =  TreeModel.TREE_MODEL;
-
-	//TODO: change to create, store only treeFile
-//	public TreeModel treeModel = null;
+	public transient String treeModelIdref =  TreeModel.TREE_MODEL;
 
 	public TreeModel createTreeModel() {
-		TreeModel treeModel =	Utils.importTreeFromFile(treeFile);
+		TreeModel treeModel = Utils.importTreeFromFile(treeFile);
 		return treeModel;
 	}
 	
@@ -84,7 +79,7 @@ public class PartitionData implements Serializable {
 	
 	public int substitutionModelIndex = 0;
 
-	public String substitutionModelIdref = createSubstitutionModelIdref();
+	public transient String substitutionModelIdref = createSubstitutionModelIdref();
 	
 	private String createSubstitutionModelIdref() {
 
@@ -223,7 +218,7 @@ public class PartitionData implements Serializable {
 
 	public int clockModelIndex = 0;
 
-	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
+	public transient String clockModelIdref = BranchRateModel.BRANCH_RATES;
 	
 	public static String[] clockModels = { "Strict Clock", //
 	};
@@ -259,7 +254,7 @@ public class PartitionData implements Serializable {
 	// ---FREQUENCY MODELS---//
 	// ////////////////////////
 
-	public String frequencyModelIdref = "freqModel";
+	public transient String frequencyModelIdref = "freqModel";
 	
 	public int frequencyModelIndex = 0;
 
@@ -476,7 +471,7 @@ public class PartitionData implements Serializable {
 
 	public int siteRateModelIndex = 0;
 
-	public String siteRateModelIdref = SiteModel.SITE_MODEL;
+	public transient String siteRateModelIdref = SiteModel.SITE_MODEL;
 	
 	public static String[] siteRateModels = { "No model", //
 			"Gamma Site Rate Model", //

@@ -291,7 +291,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 					for (int i = 0; i < dataList.simulationsCount; i++) {
 
 						if (BeagleSequenceSimulatorApp.DEBUG) {
-							Utils.printDataList(dataList);
+							Utils.printPartitionDataList(dataList);
 						}
 
 						String fullPath = Utils.getMultipleWritePath(outFile, "fasta", i);

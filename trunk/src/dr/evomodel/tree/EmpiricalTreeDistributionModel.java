@@ -21,12 +21,10 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class EmpiricalTreeDistributionModel extends TreeModel /* implements BranchRateModel */ {
+public class EmpiricalTreeDistributionModel extends TreeModel {
 
-    public EmpiricalTreeDistributionModel(final Tree[] trees, final String rateAttributeName) {
+    public EmpiricalTreeDistributionModel(final Tree[] trees) {
         super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
-
-        this.rateAttributeName = rateAttributeName;
 
         this.trees = trees;
         drawTreeIndex();
@@ -204,66 +202,9 @@ public class EmpiricalTreeDistributionModel extends TreeModel /* implements Bran
         return trees[currentTreeIndex].getAttributeNames();
     }
 
-    /*
-    @Override
-    public double getBranchRate(Tree tree, NodeRef node) {
-        if (rateAttributeName != null) {
-            assert(tree == trees[currentTreeIndex]);
-
-            Object value = tree.getNodeAttribute(node, rateAttributeName);
-
-            return Double.parseDouble((String)value);
-        } else {
-            return 1.0;
-        }
-    }
-
-    @Override
-    public String getTraitName() {
-        return rateAttributeName;
-    }
-
-    @Override
-    public Intent getIntent() {
-        return Intent.BRANCH;
-    }
-
-    @Override
-    public Class getTraitClass() {
-        return Double.class;
-    }
-
-    @Override
-    public Double getTrait(Tree tree, NodeRef node) {
-        return getBranchRate(tree, node);
-    }
-
-    @Override
-    public String getTraitString(Tree tree, NodeRef node) {
-        return getTrait(tree, node).toString();
-    }
-
-    @Override
-    public boolean getLoggable() {
-        return true;
-    }
-
-    @Override
-    public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[] { this };
-    }
-
-    @Override
-    public TreeTrait getTreeTrait(String key) {
-        return this;
-    }
-    */
-
     public static final String EMPIRICAL_TREE_DISTRIBUTION_MODEL = "empiricalTreeDistributionModel";
 
     private final Tree[] trees;
     private int currentTreeIndex;
     private int storedTreeIndex;
-
-    private final String rateAttributeName;
 }

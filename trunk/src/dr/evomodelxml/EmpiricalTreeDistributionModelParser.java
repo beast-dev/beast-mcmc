@@ -60,9 +60,6 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
 //            burnin = xo.getIntegerAttribute(BURNIN);
 //        }
 
-        final String rateAttributeName = (xo.hasAttribute(RATE_ATTRIBUTE_NAME) ?
-                xo.getStringAttribute(RATE_ATTRIBUTE_NAME) : null);
-
         Logger.getLogger("dr.evomodel").info("Creating the empirical tree distribution model, '" + xo.getId() + "'");
 
         TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
@@ -85,7 +82,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
         
         Logger.getLogger("dr.evomodel").info("    Read " + trees.length + " trees from file, " + fileName);
 
-        return new EmpiricalTreeDistributionModel(trees, rateAttributeName);
+        return new EmpiricalTreeDistributionModel(trees);
     }
 
     public static final String FILE_NAME = "fileName";
@@ -97,9 +94,6 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
                         "The name of a NEXUS tree file"),
 //                AttributeRule.newIntegerRule(BURNIN, true,
 //                        "The number of trees to exclude"),
-                new StringAttributeRule(RATE_ATTRIBUTE_NAME,
-                        "Optional name of a rate attribute to be read with the trees", true),
-
                 new ElementRule(TaxonList.class),
         };
     }

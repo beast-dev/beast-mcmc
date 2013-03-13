@@ -1,5 +1,6 @@
 package dr.app.mapper.application;
 
+import dr.app.mapper.application.menus.MapperMenuBarFactory;
 import dr.app.util.OSType;
 import dr.util.Version;
 import jam.framework.*;
@@ -117,7 +118,7 @@ public class MapperApp extends MultiDocApplication {
                     "</center></html>";
 
             String websiteURLString = "http://tree.bio.ed.ac.uk/";
-            String helpURLString = "http://tree.bio.ed.ac.uk/software/pathogen";
+            String helpURLString = "http://tree.bio.ed.ac.uk/software/mapper";
 
             MapperApp app = new MapperApp(nameString, aboutString, icon, websiteURLString, helpURLString);
             app.setDocumentFrameFactory(new DocumentFrameFactory() {

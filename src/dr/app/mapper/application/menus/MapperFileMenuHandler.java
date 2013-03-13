@@ -1,4 +1,4 @@
-package dr.app.mapper.application;
+package dr.app.mapper.application.menus;
 
 import javax.swing.*;
 
@@ -7,8 +7,6 @@ import javax.swing.*;
  * @version $Id$
  */
 public interface MapperFileMenuHandler {
-
-    Action getImportStrainsAction();
 
     Action getImportMeasurementsAction();
 

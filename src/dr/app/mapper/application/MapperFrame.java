@@ -33,12 +33,18 @@
  */
 package dr.app.mapper.application;
 
+import dr.app.mapper.application.menus.MapperFileMenuHandler;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.Tree;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceException;
+import dr.util.DataTable;
+import dr.xml.XMLParseException;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -54,11 +60,12 @@ import java.util.List;
  */
 public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler {
 
-    private JTabbedPane tabbedPane = new JTabbedPane();
-    private JLabel statusLabel = new JLabel("No data loaded");
+    private final JTabbedPane tabbedPane = new JTabbedPane();
+    private final JLabel statusLabel = new JLabel("No data loaded");
 
     private StrainsPanel strainsPanel;
     private MeasurementsPanel measurementsPanel;
+    private LocationsPanel locationsPanel;
 //    private AnalysisPanel analysisPanel;
 
     MapperDocument document = new MapperDocument();
@@ -97,10 +104,12 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler 
 
         strainsPanel = new StrainsPanel(this, document);
         measurementsPanel = new MeasurementsPanel(this, document);
+        locationsPanel = new LocationsPanel(this, document);
 //        analysisPanel = new AnalysisPanel(this, trees.get(0));
 
-        tabbedPane.addTab("Strains", strainsPanel);
         tabbedPane.addTab("Measurements", measurementsPanel);
+        tabbedPane.addTab("Strains", strainsPanel);
+        tabbedPane.addTab("Locations", locationsPanel);
 //        tabbedPane.addTab("Analysis", analysisPanel);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
@@ -190,6 +199,202 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler 
         return true;
     }
 
+    public final void doImport() {
+        final JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(true);
+
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Tab or Comma delimited tables", "csv", "txt");
+        chooser.setFileFilter(filter);
+
+        final int returnVal = chooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File[] files = chooser.getSelectedFiles();
+            importMeasurementFiles(files);
+        }
+    }
+
+    void importMeasurementFiles(File[] files) {
+        List<DataTable<String[]>> dataTables = new ArrayList<DataTable<String[]>>();
+
+        for (int i = 0; i < files.length; i++) {
+            String fileName = files[i].getName();
+
+            DataTable<String[]> dataTable;
+            try {
+                dataTable = DataTable.Text.parse(new FileReader(files[i]), true, false);
+                dataTables.add(dataTable);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Unable to read measurements from file, " + fileName,
+                        "Error reading file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+
+        for (DataTable<String[]> dataTable : dataTables) {
+            document.addTable(dataTable);
+        }
+    }
+
+
+    public final void doImportLocations() {
+        final JFileChooser chooser = new JFileChooser();
+        chooser.setMultiSelectionEnabled(true);
+
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("BEAST log (*.log) Files", "log", "txt");
+        chooser.setFileFilter(filter);
+
+        final int returnVal = chooser.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File[] files = chooser.getSelectedFiles();
+            importLocationFiles(files);
+        }
+    }
+
+    void importLocationFiles(File[] files) {
+        LogFileTraces[] traces = new LogFileTraces[files.length];
+
+        for (int i = 0; i < files.length; i++) {
+            traces[i] = new LogFileTraces(files[i].getName(), files[i]);
+        }
+
+        processTraces(traces);
+    }
+
+    protected void processTraces(final LogFileTraces[] tracesArray) {
+
+        final JFrame frame = this;
+
+        if (tracesArray.length == 1) {
+            try {
+                final LogFileTraces traces = tracesArray[0];
+
+                final String fileName = traces.getName();
+                final ProgressMonitorInputStream in = new ProgressMonitorInputStream(
+                        this,
+                        "Reading " + fileName,
+                        new FileInputStream(traces.getFile()));
+                in.getProgressMonitor().setMillisToDecideToPopup(0);
+                in.getProgressMonitor().setMillisToPopup(0);
+
+                final Reader reader = new InputStreamReader(in);
+
+                Thread readThread = new Thread() {
+                    public void run() {
+                        try {
+                            traces.loadTraces(reader);
+
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+//                                            analyseTraceList(traces);
+//                                            addTraceList(traces);
+                                        }
+                                    });
+
+                        } catch (final TraceException te) {
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+                                            JOptionPane.showMessageDialog(frame, "Problem with trace file: " + te.getMessage(),
+                                                    "Problem with tree file",
+                                                    JOptionPane.ERROR_MESSAGE);
+                                        }
+                                    });
+                        } catch (final InterruptedIOException iioex) {
+                            // The cancel dialog button was pressed - do nothing
+                        } catch (final IOException ioex) {
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+                                            JOptionPane.showMessageDialog(frame, "File I/O Error: " + ioex.getMessage(),
+                                                    "File I/O Error",
+                                                    JOptionPane.ERROR_MESSAGE);
+                                        }
+                                    });
+//                    } catch (final Exception ex) {
+//                        EventQueue.invokeLater (
+//                                new Runnable () {
+//                                    public void run () {
+//                                        JOptionPane.showMessageDialog(frame, "Fatal exception: " + ex.getMessage(),
+//                                                "Error reading file",
+//                                                JOptionPane.ERROR_MESSAGE);
+//                                    }
+//                                });
+                        }
+
+                    }
+                };
+                readThread.start();
+
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (IOException ioex) {
+                JOptionPane.showMessageDialog(this, "File I/O Error: " + ioex,
+                        "File I/O Error",
+                        JOptionPane.ERROR_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                        "Error reading file",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        } else {
+            Thread readThread = new Thread() {
+                public void run() {
+                    try {
+                        for (final LogFileTraces traces : tracesArray) {
+                            final Reader reader = new FileReader(traces.getFile());
+                            traces.loadTraces(reader);
+
+                            EventQueue.invokeLater(
+                                    new Runnable() {
+                                        public void run() {
+//                                            analyseTraceList(traces);
+//                                            addTraceList(traces);
+                                        }
+                                    });
+                        }
+
+                    } catch (final TraceException te) {
+                        EventQueue.invokeLater(
+                                new Runnable() {
+                                    public void run() {
+                                        JOptionPane.showMessageDialog(frame, "Problem with trace file: " + te.getMessage(),
+                                                "Problem with tree file",
+                                                JOptionPane.ERROR_MESSAGE);
+                                    }
+                                });
+                    } catch (final InterruptedIOException iioex) {
+                        // The cancel dialog button was pressed - do nothing
+                    } catch (final IOException ioex) {
+                        EventQueue.invokeLater(
+                                new Runnable() {
+                                    public void run() {
+                                        JOptionPane.showMessageDialog(frame, "File I/O Error: " + ioex.getMessage(),
+                                                "File I/O Error",
+                                                JOptionPane.ERROR_MESSAGE);
+                                    }
+                                });
+//                    } catch (final Exception ex) {
+//                        EventQueue.invokeLater (
+//                                new Runnable () {
+//                                    public void run () {
+//                                        JOptionPane.showMessageDialog(frame, "Fatal exception: " + ex.getMessage(),
+//                                                "Error reading file",
+//                                                JOptionPane.ERROR_MESSAGE);
+//                                    }
+//                                });
+                    }
+
+                }
+            };
+            readThread.start();
+
+        }
+    }
+
     protected boolean writeToFile(File file) throws IOException {
         return false;  //To change body of implemented methods use File | Settings | File Templates.
     }
@@ -264,12 +469,7 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler 
 
     @Override
     public Action getImportAction() {
-        return getImportStrainsAction();
-    }
-
-    @Override
-    public Action getImportStrainsAction() {
-        return importStrainsAction;
+        return getImportMeasurementsAction();
     }
 
     @Override
@@ -287,6 +487,10 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler 
         return importTreesAction;
     }
 
+    public Action getDeleteItemAction() {
+        return getDeleteAction();
+    }
+
     @Override
     public Action getExportAction() {
         return getExportDataAction();
@@ -302,15 +506,9 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler 
         return exportPDFAction;
     }
 
-    protected AbstractAction importStrainsAction = new AbstractAction("Import Strains...") {
-        public void actionPerformed(ActionEvent ae) {
-            doImport();
-        }
-    };
-
     protected AbstractAction importMeasurementsAction = new AbstractAction("Import Measurements...") {
         public void actionPerformed(ActionEvent ae) {
-//            doImportMeasurements();
+            doImport();
         }
     };
 

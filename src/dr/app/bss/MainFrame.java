@@ -10,11 +10,13 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -223,8 +225,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 						treeModel = new TreeModel(importer.importNextTree());
 
-						String fullPath = Utils
-								.getMultipleWritePath(outFile, "fasta", treesRead);
+						String fullPath = Utils.getMultipleWritePath(outFile,
+								"fasta", treesRead);
 						writer = new PrintWriter(new FileWriter(fullPath));
 
 						partitionsList = new ArrayList<Partition>();
@@ -294,7 +296,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 							Utils.printPartitionDataList(dataList);
 						}
 
-						String fullPath = Utils.getMultipleWritePath(outFile, "fasta", i);
+						String fullPath = Utils.getMultipleWritePath(outFile,
+								"fasta", i);
 						PrintWriter writer = new PrintWriter(new FileWriter(
 								fullPath));
 
@@ -468,15 +471,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: saveSettings
 
-	// TODO: save settings
 	private void saveSettings(File file) {
 
 		try {
 
-	    	String fullPath = Utils.getWritePath(file, "bss");
+			String fullPath = Utils.getWritePath(file, "bss");
 			OutputStream fileOut = new FileOutputStream(new File(fullPath));
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
-			
+
 			out.writeObject(dataList);
 			out.close();
 			fileOut.close();
@@ -526,9 +528,32 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// TODO: load settings
 	private void loadSettings(File file) {
 
-		System.out.println("TODO");
+		try {
 
-	}// END: importXML
+			FileInputStream fileIn = new FileInputStream(file);
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			
+			dataList = (PartitionDataList) in.readObject();
+			
+			in.close();
+			fileIn.close();
+
+			Utils.printPartitionDataList(dataList);
+			
+		} catch (IOException ioe) {
+
+			Utils.handleException(
+					ioe,
+					"Unable to read BSS file. BSS can only read files\n"
+							+ "created by 'Saving' within BSS\n. It cannot read XML files.");
+
+		} catch (ClassNotFoundException cnfe) {
+
+			Utils.handleException(cnfe);
+
+		}// END: try-catch block
+
+	}// END: loadSettings
 
 	@Override
 	protected boolean readFromFile(File arg0) throws IOException {

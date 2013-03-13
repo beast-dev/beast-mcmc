@@ -144,7 +144,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		ColumnResizer.adjustColumnPreferredWidths(partitionTable);
 		partitionTable.revalidate();
-		this.updateUI();
+//		this.updateUI();
 	}// END: setPartitions
 
 	// Listen to tree choices, set tree model in partition data
@@ -159,7 +159,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 					File value = (File) partitionTableModel.getValueAt(row,
 							column);
-//					dataList.get(row).treeModel = dataList.forestMap.get(value);
 					dataList.get(row).treeFile = value;
 					
 				}

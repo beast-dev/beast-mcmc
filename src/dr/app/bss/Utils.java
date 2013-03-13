@@ -472,33 +472,36 @@ public class Utils {
 		}
 	}// END: print2DArray
 
+	public static void printPartitionData(PartitionData data) {
+
+		System.out.println("\tTree model: " + data.treeFile);
+		System.out.println("\tData type: "
+				+ PartitionData.dataTypes[data.dataTypeIndex]);
+		System.out.println("\tFrom: " + data.from);
+		System.out.println("\tTo: " + data.to);
+		System.out.println("\tEvery: " + data.every);
+		System.out
+				.println("\tBranch Substitution model: "
+						+ PartitionData.substitutionModels[data.substitutionModelIndex]);
+		System.out.println("\tSite rate model: "
+				+ PartitionData.siteRateModels[data.siteRateModelIndex]);
+		System.out.println("\tClock rate model: "
+				+ PartitionData.clockModels[data.clockModelIndex]);
+		System.out.println("\tFrequency model: "
+				+ PartitionData.frequencyModels[data.frequencyModelIndex]);
+
+	}// END: printPartitionData
+
 	public static void printDataList(PartitionDataList dataList) {
+
+		System.out.println("\tReplications: " + dataList.siteCount);
 
 		int row = 1;
 		for (PartitionData data : dataList) {
 
 			System.out.println("Partition: " + row);
-			System.out.println("\tReplications: " + dataList.siteCount);
-			System.out.println("\tFrom: " + data.from);
-			System.out.println("\tTo: " + data.to);
-			System.out.println("\tEvery: " + data.every);
-			System.out.println("\tTree model: " + data.treeFile);
-			System.out.println("\tData type: "
-					+ PartitionData.dataTypes[data.dataTypeIndex]);
-			System.out
-					.println("\tSubstitution model: "
-							+ PartitionData.substitutionModels[data.substitutionModelIndex]);
-			System.out.println("\tSite rate model: "
-					+ PartitionData.siteRateModels[data.siteRateModelIndex]);
-			System.out.println("\tClock rate model: "
-					+ PartitionData.clockModels[data.clockModelIndex]);
-			System.out.println("\tFrequency model: "
-					+ PartitionData.frequencyModels[data.frequencyModelIndex]);
 
-			// System.out.println("Possible trees: ");
-			// for (int i = 0; i < dataList.treeFilesList.size(); i++) {
-			// System.out.println(dataList.treeFilesList.get(i).getName());
-			// }
+			printPartitionData(data);
 
 			row++;
 		}// END: data list loop

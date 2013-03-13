@@ -1,6 +1,7 @@
 package dr.app.bss;
 
 import java.io.File;
+import java.io.Serializable;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
@@ -21,7 +22,8 @@ import dr.inference.model.Parameter;
 
 //TODO: serialize
 
-public class PartitionData {
+@SuppressWarnings("serial")
+public class PartitionData implements Serializable {
 
 	public PartitionData() {
 	}// END: Constructor

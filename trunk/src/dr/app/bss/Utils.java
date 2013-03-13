@@ -22,24 +22,26 @@ public class Utils {
 	// ---CONSTANTS---//
 	// /////////////////
 
-//	public static final int TREE_MODEL_ELEMENT = 0;
+	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
 	public static final int SITE_RATE_MODEL_ELEMENT = 2;
 	public static final int BRANCH_RATE_MODEL_ELEMENT = 3;
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
-	
+
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
-    public static void centreLine(String line, int pageWidth) {
-        int n = pageWidth - line.length();
-        int n1 = n / 2;
-        for (int i = 0; i < n1; i++) { System.out.print(" "); }
-        System.out.println(line);
-    }
-	
+	public static void centreLine(String line, int pageWidth) {
+		int n = pageWidth - line.length();
+		int n1 = n / 2;
+		for (int i = 0; i < n1; i++) {
+			System.out.print(" ");
+		}
+		System.out.println(line);
+	}
+
 	public static void printMap(Map<?, ?> mp) {
 		Iterator<?> it = mp.entrySet().iterator();
 		while (it.hasNext()) {
@@ -48,7 +50,7 @@ public class Utils {
 			// it.remove(); // avoids a ConcurrentModificationException
 		}
 	}// END: printMap
-	
+
 	public static int arrayIndex(String[] array, String element) {
 
 		List<String> vector = new ArrayList<String>();
@@ -68,19 +70,19 @@ public class Utils {
 
 		return treeModelsList;
 	}// END: treesToList
-	
-	public static boolean taxonExists(Taxon taxon, MutableTaxonList taxonList) {
-		
-		boolean exists = false;
-		for(Taxon taxon2 : taxonList) {
 
-			if(taxon.equals(taxon2)) {
+	public static boolean taxonExists(Taxon taxon, MutableTaxonList taxonList) {
+
+		boolean exists = false;
+		for (Taxon taxon2 : taxonList) {
+
+			if (taxon.equals(taxon2)) {
 				exists = true;
 				break;
 			}
-			
+
 		}
-		
+
 		return exists;
 	}// END: taxonExists
 
@@ -99,39 +101,41 @@ public class Utils {
 
 		return height;
 	}// END: getAbsoluteTaxonHeight
-	
-	public static boolean isTreeModelInList(TreeModel treeModel, ArrayList<TreeModel> treeModelList) {
-		
+
+	public static boolean isTreeModelInList(TreeModel treeModel,
+			ArrayList<TreeModel> treeModelList) {
+
 		boolean exists = false;
-		
-		for(TreeModel treeModel2 : treeModelList) {
-			
-			if(treeModel.equals(treeModel2)) {
+
+		for (TreeModel treeModel2 : treeModelList) {
+
+			if (treeModel.equals(treeModel2)) {
 				exists = true;
 				break;
 			}
-			
+
 		}
-		
+
 		return exists;
-	}//END: isTreeModelInList
-	
-	public static int treeModelIsIdenticalWith(TreeModel treeModel, ArrayList<TreeModel> treeModelList) {
-		
+	}// END: isTreeModelInList
+
+	public static int treeModelIsIdenticalWith(TreeModel treeModel,
+			ArrayList<TreeModel> treeModelList) {
+
 		int index = -Integer.MAX_VALUE;
-		
-		for(TreeModel treeModel2 : treeModelList) {
-			
-			if(treeModel.equals(treeModel2)) {
+
+		for (TreeModel treeModel2 : treeModelList) {
+
+			if (treeModel.equals(treeModel2)) {
 				index = treeModelList.indexOf(treeModel2);
 				break;
 			}
-			
+
 		}
-		
+
 		return index;
 	}// END: treeModelIsIdenticalWith
-	
+
 	// TODO: horrible amount of code duplication
 	public static boolean isElementInList(PartitionData data,
 			ArrayList<PartitionData> partitionList, int elementIndex) {
@@ -181,7 +185,7 @@ public class Utils {
 			break;
 
 		case BRANCH_MODEL_ELEMENT:
-			
+
 			int substitutionModelIndex = data.substitutionModelIndex;
 			for (PartitionData data2 : partitionList) {
 
@@ -197,11 +201,11 @@ public class Utils {
 					}// END: parameters loop
 				}// END: model index check
 			}// END: list loop
-			
+
 			break;
-			
+
 		case SITE_RATE_MODEL_ELEMENT:
-			
+
 			int siteRateModelIndex = data.siteRateModelIndex;
 			for (PartitionData data2 : partitionList) {
 
@@ -217,9 +221,9 @@ public class Utils {
 					}// END: parameters loop
 				}// END: model index check
 			}// END: list loop
-			
+
 			break;
-			
+
 		default:
 
 			throw new RuntimeException("Unknown element");
@@ -228,7 +232,7 @@ public class Utils {
 
 		return exists;
 	}// END: isModelInList
-	
+
 	// TODO: horrible amount of code duplication
 	public static int isIdenticalWith(PartitionData data,
 			ArrayList<PartitionData> partitionList, int elementIndex) {
@@ -280,7 +284,7 @@ public class Utils {
 			break;
 
 		case BRANCH_MODEL_ELEMENT:
-			
+
 			int substitutionModelIndex = data.substitutionModelIndex;
 			for (PartitionData data2 : partitionList) {
 
@@ -297,11 +301,11 @@ public class Utils {
 					}// END: parameters loop
 				}// END: model index check
 			}// END: list loop
-			
+
 			break;
-			
+
 		case SITE_RATE_MODEL_ELEMENT:
-			
+
 			int siteRateModelIndex = data.siteRateModelIndex;
 			for (PartitionData data2 : partitionList) {
 
@@ -318,9 +322,9 @@ public class Utils {
 					}// END: parameters loop
 				}// END: model index check
 			}// END: list loop
-			
+
 			break;
-			
+
 		default:
 
 			throw new RuntimeException("Unknown element");
@@ -329,7 +333,7 @@ public class Utils {
 
 		return index;
 	}// END: isIdenticalWith
-	
+
 	// /////////////////
 	// ---GUI UTILS---//
 	// /////////////////
@@ -347,20 +351,53 @@ public class Utils {
 		return result;
 	}
 
-	public static String getWritePath(File outFile, int i) {
-		
+	public static String getMultipleWritePath(File outFile,
+			String defaultExtension, int i) {
+
 		String path = outFile.getParent();
 		String[] nameArray = outFile.getName().split("\\.", 2);
-		String coreName = ((i == 0) ? nameArray[0] : nameArray[0] + i);
-		String extension = (nameArray.length == 1) ? (".fasta") : ("." + nameArray[1]);
-		String fullPath = path + System.getProperty("file.separator") + coreName + extension;
-		
+		String name = ((i == 0) ? nameArray[0] : nameArray[0] + i);
+
+		String extension = (nameArray.length == 1) ? (defaultExtension)
+				: (nameArray[1]);
+		String fullPath = path + System.getProperty("file.separator") + name
+				+ "." + extension;
+
 		return fullPath;
-	}// END: getFullPath
-	
+	}// END: getMultipleWritePath
+
+	public static String getWritePath(File outFile, String defaultExtension) {
+
+		String path = outFile.getParent();
+		String[] nameArray = outFile.getName().split("\\.", 2);
+		String name = nameArray[0];
+
+		String extension = (nameArray.length == 1) ? (defaultExtension)
+				: (nameArray[1]);
+		String fullPath = path + System.getProperty("file.separator") + name
+				+ "." + extension;
+
+		return fullPath;
+	}// END: getWritePath
+
 	// ////////////////////////////////
 	// ---EXCEPTION HANDLING UTILS---//
 	// ////////////////////////////////
+
+	public static void handleException(final Throwable e, final String message) {
+
+		final Thread t = Thread.currentThread();
+
+		if (SwingUtilities.isEventDispatchThread()) {
+			showExceptionDialog(t, e, message);
+		} else {
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					showExceptionDialog(t, e, message);
+				}
+			});
+		}// END: edt check
+	}// END: uncaughtException
 
 	public static void handleException(final Throwable e) {
 
@@ -391,6 +428,21 @@ public class Utils {
 				BeagleSequenceSimulatorApp.errorIcon);
 	}// END: showExceptionDialog
 
+	private static void showExceptionDialog(Thread t, Throwable e,
+			String message) {
+
+		String msg = String.format("Unexpected problem on thread %s: %s" + "\n"
+				+ message, t.getName(), e.getMessage());
+
+		logException(t, e);
+
+		JOptionPane.showMessageDialog(Utils.getActiveFrame(), //
+				msg, //
+				"Error", //
+				JOptionPane.ERROR_MESSAGE, //
+				BeagleSequenceSimulatorApp.errorIcon);
+	}// END: showExceptionDialog
+
 	private static void logException(Thread t, Throwable e) {
 		e.printStackTrace();
 	}// END: logException
@@ -398,7 +450,7 @@ public class Utils {
 	// ///////////////////////
 	// ---DEBUGGING UTILS---//
 	// ///////////////////////
-	
+
 	public static void printArray(int[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);
@@ -410,7 +462,7 @@ public class Utils {
 			System.out.println(x[i]);
 		}
 	}// END: printArray
-	
+
 	public static void print2DArray(double[][] array) {
 		for (int row = 0; row < array.length; row++) {
 			for (int col = 0; col < array[row].length; col++) {
@@ -419,7 +471,7 @@ public class Utils {
 			System.out.print("\n");
 		}
 	}// END: print2DArray
-	
+
 	public static void printDataList(PartitionDataList dataList) {
 
 		int row = 1;
@@ -431,9 +483,11 @@ public class Utils {
 			System.out.println("\tTo: " + data.to);
 			System.out.println("\tEvery: " + data.every);
 			System.out.println("\tTree model: " + data.treeFile);
-			System.out.println("\tData type: " + PartitionData.dataTypes[data.dataTypeIndex]);
-			System.out.println("\tSubstitution model: "
-					+ PartitionData.substitutionModels[data.substitutionModelIndex]);
+			System.out.println("\tData type: "
+					+ PartitionData.dataTypes[data.dataTypeIndex]);
+			System.out
+					.println("\tSubstitution model: "
+							+ PartitionData.substitutionModels[data.substitutionModelIndex]);
 			System.out.println("\tSite rate model: "
 					+ PartitionData.siteRateModels[data.siteRateModelIndex]);
 			System.out.println("\tClock rate model: "

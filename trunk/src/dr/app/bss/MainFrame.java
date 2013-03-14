@@ -525,7 +525,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: doLoadSettings
 
-	// TODO: load settings
+	// TODO: update UI
 	private void loadSettings(File file) {
 
 		try {
@@ -538,14 +538,18 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			in.close();
 			fileIn.close();
 
-			Utils.printPartitionDataList(dataList);
+			Utils.printPartitionDataList(this.dataList);
+			
+//			taxaPanel.fireTableDataChanged();
+//			partitionsPanel.fireTableDataChanged();
+			
+			partitionsPanel.populatePartitionTable();
 			
 		} catch (IOException ioe) {
 
 			Utils.handleException(
 					ioe,
-					"Unable to read BSS file. BSS can only read files\n"
-							+ "created by 'Saving' within BSS\n. It cannot read XML files.");
+					"Unable to read BSS file. BSS can only read files created by 'Saving' within BSS. It cannot read XML files.");
 
 		} catch (ClassNotFoundException cnfe) {
 

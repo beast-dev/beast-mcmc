@@ -69,12 +69,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		this.frame = frame;
 		this.dataList = dataList;
 
-		partitionTableModel = new PartitionTableModel(this.dataList);
-		partitionTableModel
-				.addTableModelListener(new PartitionTableModelListener());
-
-		partitionTable = new JTable(partitionTableModel);
-		partitionTable.setFillsViewportHeight(true);
+		partitionTable = new JTable();
+		
+		//TODO: partition table should be bound to dataList
+		populatePartitionTable();
+		
 		partitionTable.getTableHeader().setReorderingAllowed(false);
 		partitionTable.addMouseListener(new JTableButtonMouseListener(
 				partitionTable));
@@ -143,7 +142,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}
 
 		ColumnResizer.adjustColumnPreferredWidths(partitionTable);
-		partitionTable.revalidate();
+//		partitionTable.revalidate();
 //		this.updateUI();
 	}// END: setPartitions
 
@@ -300,7 +299,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				button.setBackground(table.getBackground());
 			}
 
-			// TODO: set label from model name
 			label = (value == null) ? "" : value.toString();
 			button.setText(label);
 			isPushed = true;
@@ -366,5 +364,19 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	public JComponent getExportableComponent() {
 		return this;
 	}// END: getExportableComponent
+	
+	//TODO: for updating UI
+	public void populatePartitionTable() {
+		
+		partitionTableModel = new PartitionTableModel(this.dataList);
+		partitionTableModel
+				.addTableModelListener(new PartitionTableModelListener());
+		partitionTable.setModel(partitionTableModel);
+		
+	}
+	
+//	public void fireTableDataChanged() {
+//		partitionTableModel.fireTableDataChanged();
+//	}
 	
 }// END: class

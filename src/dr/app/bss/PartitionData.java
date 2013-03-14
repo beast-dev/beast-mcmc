@@ -35,7 +35,7 @@ public class PartitionData implements Serializable {
 	// //////////////////
 
 	public File treeFile = null;
-	public transient String treeModelIdref = TreeModel.TREE_MODEL;
+	public String treeModelIdref = TreeModel.TREE_MODEL;
 
 	public TreeModel createTreeModel() {
 		TreeModel treeModel = Utils.importTreeFromFile(treeFile);
@@ -79,7 +79,7 @@ public class PartitionData implements Serializable {
 
 	public int substitutionModelIndex = 0;
 
-	public transient String substitutionModelIdref = createSubstitutionModelIdref();
+	public String substitutionModelIdref = createSubstitutionModelIdref();
 
 	private String createSubstitutionModelIdref() {
 
@@ -232,7 +232,7 @@ public class PartitionData implements Serializable {
 
 	public int clockModelIndex = 0;
 
-	public transient String clockModelIdref = BranchRateModel.BRANCH_RATES;
+	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
 
 	public static String[] clockModels = { "Strict Clock", //
 	};
@@ -269,7 +269,7 @@ public class PartitionData implements Serializable {
 	// ---FREQUENCY MODELS---//
 	// ////////////////////////
 
-	public transient String frequencyModelIdref = "freqModel";
+	public String frequencyModelIdref = "freqModel";
 
 	public int frequencyModelIndex = 0;
 
@@ -485,7 +485,7 @@ public class PartitionData implements Serializable {
 
 	public int siteRateModelIndex = 0;
 
-	public transient String siteRateModelIdref = SiteModel.SITE_MODEL;
+	public String siteRateModelIdref = SiteModel.SITE_MODEL;
 
 	public static String[] siteRateModels = { "No model", //
 			"Gamma Site Rate Model", //

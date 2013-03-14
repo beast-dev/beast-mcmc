@@ -157,7 +157,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public void addRow(PartitionData row) {
 		dataList.add(row);
-		this.fireTableDataChanged();
+		fireTableDataChanged();
 	}
 
 	public void addDefaultRow() {

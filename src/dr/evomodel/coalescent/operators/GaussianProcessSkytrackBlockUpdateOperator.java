@@ -251,40 +251,44 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
 //          indexNew contains the index where the newData is stored (index ordered) in newList
 //          indexOld contains the index where OldData is stored (index ordered) index newList
+
           int  indexNew=0;
           int [] indexOld =new int[sortedData.length];
 
           int index2=sortedData.length;
-          double pivot=newData;
-          int k = 0;
-          int k2=0;
+          double pivot2=newData;
+          double pivot1=sortedData[0];
+          int k1 = 0;
 
-          for (int j = 0; j < sortedData.length-1; j++){
-             if (sortedData[j]<pivot) {
-                 newOrder[k]=j;
-                 newList[k]=sortedData[j];
-                 indexOld[k2]=k;
-                 k2+=1;
-                 k+=1; }
-             else {
+         for (int j = 0; j < newLength; j++){
+             if (index2<newLength) {
+                 if (pivot1<pivot2) {
+                     newList[j]=pivot1;
+                     newOrder[j]=k1;
+                     indexOld[k1]=j;
+                     k1++;
+                     pivot1=sortedData[k1];
+                 } else {
+                     newList[j]=pivot2;
+
+                     newOrder[j]=index2;
+
+                     indexNew=j;
+
+                     index2++;
                      if (index2<newLength){
-                     newOrder[k]=index2;
-                     index2+=1;
-                     newList[k]=pivot;
-                     j--;
-                     indexNew=k;
-                     pivot=newData;
-                     k+=1;}
-                     else {
-                         newOrder[k]=j;
-                         newList[k]=sortedData[j];
-                         indexOld[k2]=k;
-                         k2+=1;
-                         k+=1;
+                         pivot2=newData;
                      }
-
                  }
+
+             } else {
+                 newList[j]=sortedData[k1];
+                 newOrder[j]=k1;
+                 indexOld[k1]=j;
+                 k1++;
              }
+         }
+
 
       return new Quaduple1GP(newList,newOrder,indexNew,indexOld);
      }
@@ -650,34 +654,34 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 //      This is a silly thing to only compute the Q.matrix for the neighbors of the newChangePoints
 //      Takes the positions of the newData in the new complete sorted data and adds the positions of neighbors
 
+
         int [] NeighborsIndex =Neighbors(tempQuad.getPositionNew());
+
 
 //      Retrieves the positions indicated in NeigborsIndex from the complete sorted data
         DenseVector tempData = new DenseVector(SubsetData(tempQuad.getData(),NeighborsIndex));
 
         SymmTridiagMatrix Q = getQmatrix(precision, tempData);
 
-        System.err.println("neighbors"+NeighborsIndex[0]+"b:"+NeighborsIndex[1]+"c"+NeighborsIndex[2]);
+
 //        Retrieves the positions indicated in NeighborsIndex from the getOrder
-        int [] NeighborsOriginal= SubsetData(tempQuad.getOrder(),NeighborsIndex);
+//        int [] NeighborsOriginal= SubsetData(tempQuad.getOrder(),NeighborsIndex);
+
+//        System.err.println("neighborsOriginal"+NeighborsOriginal[0]+"b:"+NeighborsOriginal[1]+"c"+NeighborsOriginal[2]);
+//
 
         double part=0.0;
         double varf=1.0;
-        if (NeighborsOriginal.length==3){
+        if (NeighborsIndex.length==3){
            varf = Q.get(1,1);
-            System.err.println("passed 1"+NeighborsOriginal[0]+"a:"+NeighborsOriginal[1]+"a"+NeighborsOriginal[2]);
-            System.err.println("passed 2"+currentGPvalues);
-            System.err.println("position 0"+currentGPvalues.get(224));
-//Then the problem is with NeighborsOriginal!!
-            System.err.println("passed 3"+currentGPvalues.get(NeighborsOriginal[1]));
-            System.err.println("passed 4"+Q.get(1,2));
 
-            part = -currentGPvalues.get(NeighborsOriginal[0])*Q.get(1,0)-currentGPvalues.get(NeighborsOriginal[1])*Q.get(1,2);
+
+            part = -currentGPvalues.get(NeighborsIndex[0])*Q.get(1,0)-currentGPvalues.get(NeighborsIndex[1])*Q.get(1,2);
 
         }
-        if (NeighborsOriginal.length==2){
+        if (NeighborsIndex.length==2){
            varf = Q.get(0,0);
-           part = -currentGPvalues.get(NeighborsOriginal[1])*Q.get(0,1);
+           part = -currentGPvalues.get(NeighborsIndex[0])*Q.get(0,1);
         }
         double res =(part/varf)+(MathUtils.nextGaussian()/Math.sqrt(varf));
 
@@ -1174,12 +1178,12 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         double [] currentChangePoints1 = this.changePoints.getParameterValues();
 
         locationThinned(currentChangePoints1,currentPopSize1,currentPrecision);
-
-        DenseVector currentPopSize2 = new DenseVector(popSizeParameter.getParameterValues());
-        double [] currentChangePoints2 = this.changePoints.getParameterValues();
-
-        sliceSampling(currentChangePoints2,currentPopSize2,currentPrecision);
-
+//
+//        DenseVector currentPopSize2 = new DenseVector(popSizeParameter.getParameterValues());
+//        double [] currentChangePoints2 = this.changePoints.getParameterValues();
+//
+//        sliceSampling(currentChangePoints2,currentPopSize2,currentPrecision);
+//
 
 //        System.err.println("type after"+GPtype.getSize());
 

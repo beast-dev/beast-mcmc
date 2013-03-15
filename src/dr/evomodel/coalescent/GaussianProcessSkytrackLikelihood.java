@@ -314,7 +314,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
 
            SymmTridiagMatrix currentQ = weightMatrix;
-        System.err.println("Q.matrix sizes"+currentQ.numRows()+"and"+currentQ.numColumns());
+//        System.err.println("Q.matrix sizes"+currentQ.numRows()+"and"+currentQ.numColumns());
            currentQ.mult(currentGamma, diagonal1);
 
            currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (popSizeParameter.getSize() - 1) * LOG_TWO_TIMES_PI;
@@ -475,7 +475,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     }
 
     protected void setupQmatrix(double precision) {
-                   System.err.println("changepoints size"+changePoints.getSize());
+//                   System.err.println("changepoints size"+changePoints.getSize());
 
             //Set up the weight Matrix
             double trick=0.000001;

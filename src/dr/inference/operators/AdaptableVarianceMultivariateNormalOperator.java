@@ -33,7 +33,13 @@ import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
-import dr.xml.*;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLObjectParser;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
 
 
 /**
@@ -51,6 +57,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double beta;
     private int iterations, initial;
     private final Parameter parameter;
+    private final Transform[] transformations;
     private final int dim;
     private final double constantFactor;
     private double[] oldMeans, newMeans;
@@ -59,12 +66,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[][] empirical;
     private double[][] cholesky;
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, double scaleFactor, double[][] inMatrix, double weight,
-                                      double beta, int initial, CoercionMode mode, boolean isVarianceMatrix) {
+    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor, double[][] inMatrix, 
+    							double weight, double beta, int initial, CoercionMode mode, boolean isVarianceMatrix) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
         this.parameter = parameter;
+        this.transformations = transformations;
         this.beta = beta;
         this.iterations = 0;
         setWeight(weight);
@@ -93,9 +101,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         }
     }
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, double scaleFactor,
+    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor,
                                       MatrixParameter varMatrix, double weight, double beta, int initial, CoercionMode mode, boolean isVariance) {
-        this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, mode, isVariance);
+        this(parameter, transformations, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, mode, isVariance);
     }
 
     private double[][] formXtXInverse(double[][] X) {
@@ -137,29 +145,29 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     	
     	double[] x = parameter.getParameterValues();
     	
-    	//transform to log scale
-    	double[] logx = new double[dim];
+    	//transform to the appropriate scale
+    	double[] transformedX = new double[dim];
     	for (int i = 0; i < dim; i++) {
-    		logx[i] = Math.log(x[i]);
+    		transformedX[i] = transformations[i].transform(x[i]);
     	}
     	
     	//store MH-ratio in logq
-    	double jacobian = 1.0;
+    	double jacobian = 0.0;
     	
-		/*double[] oldX = new double[x.length];
-        System.arraycopy(x, 0, oldX, 0, x.length);*/
+		double[] oldX = new double[x.length];
+        System.arraycopy(x, 0, oldX, 0, x.length);
     	
     	if (iterations > 1) {
     		
     		//first recalculate the means using recursion
     		for (int i = 0; i < dim; i++) {
-    			newMeans[i] = ((oldMeans[i]*(iterations-1)) + logx[i])/iterations;
+    			newMeans[i] = ((oldMeans[i]*(iterations-1)) + transformedX[i])/iterations;
     		}
     		
     		//here we can simply use the double[][] matrix
     		for (int i = 0; i < dim; i++) {
     			for (int j = i; j < dim; j++) {
-    				empirical[i][j] = calculateCovariance(iterations, empirical[i][j], logx, i, j);
+    				empirical[i][j] = calculateCovariance(iterations, empirical[i][j], transformedX, i, j);
     				empirical[j][i] = empirical[i][j];
     			}
     		}
@@ -176,8 +184,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     		
     		//iterations == 1
     		for (int i = 0; i < dim; i++) {
-        		oldMeans[i] = logx[i];
-        		newMeans[i] = logx[i];
+        		oldMeans[i] = transformedX[i];
+        		newMeans[i] = transformedX[i];
         	}
     		
     		for (int i = 0; i < dim; i++) {
@@ -213,9 +221,6 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     		//System.err.println("Using empirical covariance matrix");
     		//System.err.println("Exiting ...");
     		//System.exit(0);
-    		
-    		double[] oldX = new double[x.length];
-            System.arraycopy(x, 0, oldX, 0, x.length);
             
             double[] epsilon = new double[dim];
             
@@ -239,11 +244,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             
             for (int i = 0; i < dim; i++) {
                 for (int j = i; j < dim; j++) {
-                    logx[i] += cholesky[j][i] * epsilon[j];
+                    transformedX[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, Math.exp(logx[i]));
-                jacobian *= Math.exp(logx[i])*(1/x[i]);
+                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
             }
             
             /*for (int i = 0; i < dim; i++) {
@@ -254,9 +259,6 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     		
     		//System.err.println("Using initial covariance matrix");
     		
-            double[] oldLogX = new double[dim];
-            System.arraycopy(x, 0, oldLogX, 0, dim);
-            
             double[] epsilon = new double[dim];
 
             for (int i = 0; i < dim; i++) {
@@ -265,15 +267,16 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             for (int i = 0; i < dim; i++) {
                 for (int j = i; j < dim; j++) {
-                    logx[i] += cholesky[j][i] * epsilon[j];
+                    transformedX[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, Math.exp(logx[i]));
-                jacobian *= Math.exp(logx[i])*(1/x[i]);
+                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
+                //jacobian *= Math.exp(logx[i])*(1/x[i]);
             }
             
             /*for (int i = 0; i < dim; i++) {
-            	System.err.println(oldLogX[i] + " -> " + parameter.getValue(i));
+            	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
             }*/
             
     	}
@@ -282,9 +285,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     	System.arraycopy(newMeans, 0, oldMeans, 0, dim);
     	
     	//System.err.println("scale factor: " + scaleFactor);
-    	//System.err.println("log(Jacobian): " + Math.log(jacobian));
+    	//System.err.println("log(Jacobian): " + jacobian);
     	
-        return Math.log(jacobian);
+        return jacobian;
     }
 
     //MCMCOperator INTERFACE
@@ -339,6 +342,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         } else if (prob > getMaximumGoodAcceptanceLevel()) {
             return "Try setting scaleFactor to about " + formatter.format(sf);
         } else return "";
+        
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -349,7 +353,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        	//System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
+        	System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
         	
             CoercionMode mode = CoercionMode.parseMode(xo);
 
@@ -390,6 +394,47 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             	System.err.println();
             }*/
             
+            Transform[] transformations = new Transform[dim];
+            for (int i = 0; i < dim; i++) {
+            	transformations[i] = NONE;
+            }
+            
+            //System.err.println("child count: " + xo.getChildCount());
+            for (int i = 0; i < xo.getChildCount(); i++) {
+            	Object child = xo.getChild(i);
+            	if(child instanceof XMLObject) {
+            		if(((XMLObject) child).getName().equals("transform")) {
+
+            			System.err.println("  " + ((XMLObject) child).getAttribute("type"));
+            			System.err.println("    " + ((XMLObject) child).getAttribute("start"));
+            			System.err.println("    " + ((XMLObject) child).getAttribute("end"));
+            			
+            			String type = (String)(((XMLObject) child).getAttribute("type"));
+            			if (type.equals("log")) {
+            				int start = Integer.parseInt((String)((XMLObject) child).getAttribute("start"));
+            				int end = Integer.parseInt((String)((XMLObject) child).getAttribute("end"));
+            				for (int j = start; j <= end; j++) {
+            					transformations[j] = LOG;
+            				}
+            			} else if (type.equals("logit")) {
+            				int start = Integer.parseInt((String)((XMLObject) child).getAttribute("start"));
+            				int end = Integer.parseInt((String)((XMLObject) child).getAttribute("end"));
+            				for (int j = start; j <= end; j++) {
+            					transformations[j] = LOGIT;
+            				}
+            			} else if (type.equals("none")) {
+            				//do nothing; default
+            			} else {
+            				throw new XMLParseException("Invalid transformation in AdaptableVarianceMultivariateNormalOperator");
+            			}
+            		}
+            	}
+            }
+            
+            for (int i = 0; i < dim; i++) {
+            	System.err.println(transformations[i]);
+            }
+            
             // Make sure varMatrix is square and dim(varMatrix) = dim(parameter)
 
             if (!formXtXInverse) {
@@ -400,7 +445,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             if (varMatrix.getColumnDimension() != parameter.getDimension())
                 throw new XMLParseException("The parameter and variance matrix have differing dimensions");
 
-            return new AdaptableVarianceMultivariateNormalOperator(parameter, scaleFactor, varMatrix, weight, beta, initial, mode, !formXtXInverse);
+            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, scaleFactor, varMatrix, weight, beta, initial, mode, !formXtXInverse);
         }
 
         //************************************************************************
@@ -430,4 +475,87 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         };
 
     };
+    
+    private interface Transform {
+    	
+    	public double transform(double value);
+    	
+    	public double inverse(double value);
+    	
+    	public String getTransformName();
+    	
+    	public double getLogJacobian(double oldValue, double newValue);
+    	
+    }
+    
+    private static class LogTransform implements Transform {
+
+        public LogTransform() {}
+
+        public double transform(double value) {
+            return Math.log(value);
+        }
+
+        public double inverse(double value) {
+            return Math.exp(value);
+        }
+
+        public String getTransformName() {
+            return "log";
+        }
+        
+        public double getLogJacobian(double oldValue, double newValue) {
+        	return Math.log(newValue*(1.0/oldValue));
+        }
+        
+    }
+    
+    private static class LogitTransform implements Transform {
+    	
+    	public LogitTransform() {}
+    	
+    	public double transform(double value) {
+            return Math.log(value/(1.0 - value));
+        }
+
+        public double inverse(double value) {
+            return 1.0/(1.0 + Math.exp(-value));
+        }
+
+        public String getTransformName() {
+            return "logit";
+        }
+        
+        public double getLogJacobian(double oldValue, double newValue) {
+        	return Math.log((1.0 - newValue)*(1.0/oldValue - 1.0/(1.0 - oldValue)));
+        }
+    	
+    }
+    
+    private static class NoTransform implements Transform {
+    	
+    	public NoTransform() {}
+    	
+    	public double transform(double value) {
+            return value;
+        }
+
+        public double inverse(double value) {
+            return value;
+        }
+
+        public String getTransformName() {
+            return "none";
+        }
+        
+        public double getLogJacobian(double oldValue, double newValue) {
+        	return 0.0;
+        }
+    	
+    }
+    
+    public static final LogTransform LOG = new LogTransform();
+    public static final LogitTransform LOGIT = new LogitTransform();
+    public static final NoTransform NONE = new NoTransform();
+    
 }

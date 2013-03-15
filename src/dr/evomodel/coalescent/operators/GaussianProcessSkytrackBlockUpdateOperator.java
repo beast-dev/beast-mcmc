@@ -1156,15 +1156,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         DenseVector currentPopSize = new DenseVector(popSizeParameter.getParameterValues());
         double [] currentChangePoints = this.changePoints.getParameterValues();
 
-        currentQ=getQmatrix(currentPrecision,currentChangePoints);
-
-        double currentQuadratic = getQuadraticForm(currentQ, currentPopSize);
-        double newprecision=getNewPrecision(currentPrecision,currentQuadratic);
-//         Gibbs sample new precision
-        precisionParameter.setParameterValue(0,newprecision);
-        currentPrecision=this.precisionParameter.getParameterValue(0);
-//
-////        proposes and updates lambdaBoundParameter
+//            proposes and updates lambdaBoundParameter
         double currentLambda = this.lambdaBoundParameter.getParameterValue(0);
         getNewUpperBound(currentLambda);
 //          currentLambda=this.lambdaBoundParameter.getParameterValue(0);
@@ -1178,13 +1170,25 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         double [] currentChangePoints1 = this.changePoints.getParameterValues();
 
         locationThinned(currentChangePoints1,currentPopSize1,currentPrecision);
+
 //
 //        DenseVector currentPopSize2 = new DenseVector(popSizeParameter.getParameterValues());
 //        double [] currentChangePoints2 = this.changePoints.getParameterValues();
 //
 //        sliceSampling(currentChangePoints2,currentPopSize2,currentPrecision);
 //
+        currentQ=getQmatrix(currentPrecision,currentChangePoints);
 
+        double currentQuadratic = getQuadraticForm(currentQ, currentPopSize);
+        double newprecision=getNewPrecision(currentPrecision,currentQuadratic);
+        System.err.println("oldpre"+currentPrecision+" and new:"+newprecision);
+//         Gibbs sample new precision
+        precisionParameter.setParameterValue(0,newprecision);
+        currentPrecision=this.precisionParameter.getParameterValue(0);
+        System.err.println("was it changed?"+currentPrecision);
+
+//
+////
 //        System.err.println("type after"+GPtype.getSize());
 
 //

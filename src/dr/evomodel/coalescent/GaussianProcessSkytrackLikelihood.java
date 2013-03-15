@@ -58,20 +58,25 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected Parameter lambdaParameter;    //prior for lambda_bound, will be used in operators only
     protected Parameter betaParameter;
     protected Parameter alphaParameter;
-
-//   Those that do not change in size  - fixed per tree -hence need to store/restore
+    protected Parameter GPtype;
+    protected Parameter GPcounts;
+    protected Parameter coalfactor;
     protected Parameter popSizeParameter;     //before called GPvalues
     protected Parameter changePoints;
+    protected Parameter popValue;
+    protected Parameter CoalCounts;
+
 //    protected double [] GPchangePoints;
 //    protected double [] storedGPchangePoints;
     protected double [] GPcoalfactor;
 //    protected double [] storedGPcoalfactor;
     protected double [] GPCoalInterval;
-    protected double [] coalfactor;
+
 //    protected double [] storedcoalfactor;
-    protected int [] GPcounts;   //It changes values, no need to storage
+//    protected int [] GPcounts;   //It changes values, no need to storage
 //    protected int [] storedGPcounts;
     protected int [] CoalPosIndicator;
+    protected double [] CoalTime;
     protected int numintervals;
     protected int numcoalpoints;
     protected double constlik;
@@ -81,7 +86,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    protected Parameter GPtimepoints;  //tree + latent
 //    protected double GPintervalkey;         // membership that links with those that do not change in size
 //    protected Parameter GPcoalfactor2;        // choose(k,2) depending on membership
-    protected int[] GPtype;  // 1 if observed, -1 if latent
+      // 1 if observed, -1 if latent
 //    protected int[] storedGPtype;
 
 //    public double[] GPvalues;     //may need to change type: Parameter? didn't know how to work with it
@@ -101,8 +106,9 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     public GaussianProcessSkytrackLikelihood(Tree tree,
                                              Parameter precParameter,
-                                             boolean rescaleByRootHeight, Parameter numGridPoints,  Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points) {
-        this(wrapTree(tree),  precParameter, rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter, alpha_parameter, beta_parameter, change_points);
+                                             boolean rescaleByRootHeight, Parameter numGridPoints,  Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points, Parameter GPtype, Parameter GPcounts, Parameter coalfactor, Parameter popValues, Parameter CoalCounts) {
+        this(wrapTree(tree),  precParameter, rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter, alpha_parameter, beta_parameter, change_points,GPtype,GPcounts,coalfactor,popValues,CoalCounts);
+
     }
 
 
@@ -115,12 +121,13 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     public GaussianProcessSkytrackLikelihood(List<Tree> treeList,
                                              Parameter precParameter,
-                                              boolean rescaleByRootHeight, Parameter numGridPoints, Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points) {
+                                              boolean rescaleByRootHeight, Parameter numGridPoints, Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points, Parameter GPtype, Parameter GPcounts, Parameter coalfactor, Parameter popValues, Parameter CoalCounts) {
         super(GaussianProcessSkytrackLikelihoodParser.SKYTRACK_LIKELIHOOD);
 
 
 
                 this.popSizeParameter = popParameter;
+                this.popValue=popValues;
                 this.changePoints=change_points;
 //                this.groupSizeParameter = groupParameter;
                 this.precisionParameter = precParameter;
@@ -131,9 +138,15 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 this.rescaleByRootHeight = rescaleByRootHeight;
                 this.numGridPoints = numGridPoints;
                 this.lambda_boundParameter= lambda_bound;
+                this.GPcounts=GPcounts;
+                this.GPtype=GPtype;
+                this.coalfactor=coalfactor;
+                this.CoalCounts=CoalCounts;
+
 
 //                addVariable(GPvalues);
                 addVariable(precisionParameter);
+
 //                addVariable(lambdaParameter);
 //                addVariable(lambda_boundParameter);
 //                if (betaParameter != null) {
@@ -155,16 +168,24 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         GPcoalfactor = new double[numintervals];
         GPCoalInterval=new double[numcoalpoints];
         CoalPosIndicator= new int[numcoalpoints];
+        CoalTime=new double[numcoalpoints];
 
 
 //        storedGPcoalfactor = new double[numintervals];
-        GPcounts = new int[numintervals];
+        GPcounts.setDimension(numintervals);
+        CoalCounts.setDimension(numcoalpoints);
+
+
 //        storedGPcounts= new int[numintervals];
-        GPtype=new int[numcoalpoints];
+        GPtype.setDimension(numcoalpoints);
 //        storedGPtype = new int[numcoalpoints];
         popSizeParameter.setDimension(numcoalpoints);
+
+        int gridpoint= (int) numGridPoints.getParameterValue(0);
+        popValue.setDimension(gridpoint);
+
         changePoints.setDimension(numcoalpoints);
-        coalfactor= new double[numcoalpoints];
+        coalfactor.setDimension(numcoalpoints);
 //        storedcoalfactor= new double[numcoalpoints];
 
 
@@ -173,8 +194,12 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 initializationReport();
                 setupSufficientStatistics();
 
-                setupGPvalues();
 
+        setupGPvalues();
+
+
+
+//              System.err.println(getLogLikelihood());
 
 
          }
@@ -210,18 +235,20 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     //This is actually the Augmented loglikelihood for fixed genealogy. For sequence data directly
 //    this becomes the coalescent point process prior on an augmented "tree"
-    public double calculateLogLikelihood(Parameter Gfunction, int[] latentCounts, int [] eventType, Parameter upper_Bound, double [] Gfactor) {
+    public double calculateLogLikelihood(Parameter Gfunction, Parameter latentCounts, Parameter eventType, Parameter upper_Bound, double [] Gfactor) {
         double upperBound = upper_Bound.getParameterValue(0);
+        System.err.println("Likelihood with "+getPopSizeParameter().getSize()+"and G-function"+eventType.getSize());
+
         logGPLikelihood=-upperBound*getConstlik();
 
-        for (int i=0; i<latentCounts.length; i++){
+        for (int i=0; i<latentCounts.getSize(); i++){
             if (Gfactor[i]>0) {
-          logGPLikelihood+=latentCounts[i]*Math.log(upperBound*Gfactor[i]);
+          logGPLikelihood+=latentCounts.getParameterValue(i)*Math.log(upperBound*Gfactor[i]);
             }
         }
         double[] currentGfunction = Gfunction.getParameterValues();
         for (int i=0; i<Gfunction.getSize();i++){
-        logGPLikelihood+= -Math.log(1+Math.exp(-eventType[i]*currentGfunction[i]));
+        logGPLikelihood+= -Math.log(1+Math.exp(-eventType.getParameterValue(i)*currentGfunction[i]));
         }
         return logGPLikelihood;
     }
@@ -279,15 +306,18 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                intervalsKnown = true;
            }
 
+
            setupQmatrix(precisionParameter.getParameterValue(0));
+
            double currentLike;
-           DenseVector diagonal1 = new DenseVector(numcoalpoints);
+           DenseVector diagonal1 = new DenseVector(popSizeParameter.getSize());
            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
 
            SymmTridiagMatrix currentQ = weightMatrix;
+        System.err.println("Q.matrix sizes"+currentQ.numRows()+"and"+currentQ.numColumns());
            currentQ.mult(currentGamma, diagonal1);
 
-           currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (numcoalpoints - 1) * LOG_TWO_TIMES_PI;
+           currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (popSizeParameter.getSize() - 1) * LOG_TWO_TIMES_PI;
 
         return currentLike;
        }
@@ -406,21 +436,33 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 			  length += getInterval(i);
 
-              GPcounts[i]=0;
-              GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
+//              if (GPcounts.getSize()<=i){
+//                  GPcounts.addDimension(i,0.0);
+//              }  else {
+              GPcounts.setParameterValue(i,0.0);
+
+//              }
+              GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1.0) / 2.0;
               constlik+=GPcoalfactor[i]*getInterval(i);
+
 //            System.err.println("i: "+i+"val: "+length+" type: "+getIntervalType(i)+" lineages: "+getLineageCount(i));
               if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
-                    GPcounts[i]=1;
-                    GPtype[countcoal]=1;
+                    GPcounts.setParameterValue(i,1.0);
+                    GPtype.setParameterValue(countcoal,1.0);
+
                     CoalPosIndicator[countcoal]=i;
                     changePoints.setParameterValue(countcoal,length);
+                    CoalCounts.setParameterValue(countcoal,0.0);
+                    CoalTime[countcoal]=length;
 
                     GPCoalInterval[countcoal]=length-prevLength;
-                    coalfactor[countcoal]=getLineageCount(i)*(getLineageCount(i)-1)/2.0;
+
+                    coalfactor.setParameterValue(countcoal,getLineageCount(i)*(getLineageCount(i)-1)/2.0);
+
                     countcoal++;
                     prevLength=length;
 			        }
+
 
         }
 
@@ -433,15 +475,15 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     }
 
     protected void setupQmatrix(double precision) {
-
+                   System.err.println("changepoints size"+changePoints.getSize());
 
             //Set up the weight Matrix
             double trick=0.000001;
-            double[] offdiag = new double[getCorrectFieldLength() - 1];
-            double[] diag = new double[getCorrectFieldLength()];
+            double[] offdiag = new double[changePoints.getSize() - 1];
+            double[] diag = new double[changePoints.getSize()];
 
 
-             for (int i = 0; i < getCorrectFieldLength() - 1; i++) {
+             for (int i = 0; i < changePoints.getSize() - 1; i++) {
                     offdiag[i] = precision*(-1.0 / (changePoints.getParameterValue(i+1)-changePoints.getParameterValue(i)));
                  if (i<getCorrectFieldLength()-2){
                     diag[i+1]= -offdiag[i]+precision*(1.0/(changePoints.getParameterValue(i+2)-changePoints.getParameterValue(i+1))+trick);
@@ -475,8 +517,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
         CholeskyUpper.solve(StandNorm,MultiNorm);
         for (int i=0; i<length;i++){
-//            popSizeParameter.setParameterValue(i,MultiNorm.get(i));
-            popSizeParameter.setParameterValue(i,1.0);
+            popSizeParameter.setParameterValue(i,MultiNorm.get(i));
+//            popSizeParameter.setParameterValue(i,1.0);
             }
     }
 
@@ -488,7 +530,11 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
             return popSizeParameter;
         }
 
-        public Parameter getLambdaParameter() {
+    public Parameter getPopValue() {
+        return popValue;
+    }
+
+    public Parameter getLambdaParameter() {
             return lambdaParameter;
         }
 
@@ -514,18 +560,21 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         }
 
 
-        public double [] getcoalfactor(){
+        public Parameter getcoalfactor(){
             return coalfactor;
         }
 
+         public Parameter getCoalCounts(){
+            return CoalCounts;
+        }
 
 
-        public int [] getGPtype(){
+        public Parameter getGPtype(){
             return GPtype;
         }
 
 
-        public int [] getGPcounts(){
+        public Parameter getGPcounts(){
             return GPcounts;
         }
 
@@ -540,6 +589,9 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         return GPCoalInterval;
     }
 
+    public double [] getCoalTime(){
+        return CoalTime;
+    }
 
     public double getGPCoalInterval(int j){
         return GPCoalInterval[j];

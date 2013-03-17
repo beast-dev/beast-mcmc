@@ -146,6 +146,18 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 //                addVariable(GPvalues);
                 addVariable(precisionParameter);
+                addVariable(popSizeParameter);
+                addVariable(changePoints);
+//                addVariable(popValue);
+                addVariable(GPcounts);
+//                addVariable(GPcoalfactor);
+                addVariable(GPtype);
+
+                addVariable(coalfactor);
+                addVariable(lambda_boundParameter);
+                addVariable(CoalCounts);
+
+
 
 //                addVariable(lambdaParameter);
 //                addVariable(lambda_boundParameter);
@@ -237,7 +249,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    this becomes the coalescent point process prior on an augmented "tree"
     public double calculateLogLikelihood(Parameter Gfunction, Parameter latentCounts, Parameter eventType, Parameter upper_Bound, double [] Gfactor) {
         double upperBound = upper_Bound.getParameterValue(0);
-        System.err.println("Likelihood with "+getPopSizeParameter().getSize()+"and G-function"+eventType.getSize());
+//        System.err.println("Likelihood with "+getPopSizeParameter().getSize()+"and G-function"+eventType.getSize());
 
         logGPLikelihood=-upperBound*getConstlik();
 
@@ -517,8 +529,9 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
         CholeskyUpper.solve(StandNorm,MultiNorm);
         for (int i=0; i<length;i++){
-            popSizeParameter.setParameterValue(i,MultiNorm.get(i));
-//            popSizeParameter.setParameterValue(i,1.0);
+//            popSizeParameter.setParameterValue(i,MultiNorm.get(i));
+            popSizeParameter.setParameterValue(i,1.0);
+//              popSizeParameter.setParameterValue(i,MathUtils.nextGaussian());
             }
     }
 

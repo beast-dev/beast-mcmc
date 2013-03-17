@@ -5,12 +5,13 @@ package dr.evomodel.coalescent.operators;
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
 
 import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperatorParser;
+//import dr.inference.mcmc.MCMCOptions;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import no.uib.cipr.matrix.*;
 
-/* A Metropolis-Hastings operator to update the log population sizes and precision parameter jointly under a GP  prior
+/* A Metropolis-Hastings/Gibbs operator to update the log population sizes and precision parameter jointly under a GP  prior
  *
  * @author Julia Palacios
  * @author Vladimir Minin
@@ -18,9 +19,9 @@ import no.uib.cipr.matrix.*;
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
 
-//TODO: create a new parameter "alpha" for the proposal on lambda
-public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercableOperator {
+//public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercableOperator{
 
+public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperator implements GibbsOperator{
     private double scaleFactor;
     private double lambdaScaleFactor;
 //    private int fieldLength;
@@ -60,7 +61,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     public GaussianProcessSkytrackBlockUpdateOperator(GaussianProcessSkytrackLikelihood GPLikelihood,
                                                       double weight, CoercionMode mode, double scaleFactor,
                                                       int maxIterations, double stopValue) {
-        super(mode);
+//        super(mode);
         GPvalue = GPLikelihood;     //before gmrfField
         popSizeParameter = GPLikelihood.getPopSizeParameter();
         popValue=GPLikelihood.getPopValue();
@@ -143,7 +144,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 // Assumes the input vector x is ordered
     protected SymmTridiagMatrix getQmatrix(double precision, DenseVector x ) {
             SymmTridiagMatrix res;
-            double trick=0.0;
+            double trick=0;
             double[] offdiag = new double[x.size() - 1];
             double[] diag = new double[x.size()];
 
@@ -166,7 +167,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
     protected SymmTridiagMatrix getQmatrix(double precision, double[] x ) {
               SymmTridiagMatrix res;
-              double trick=0.0;
+              double trick=0.00000000001;
               double[] offdiag = new double[x.length - 1];
               double[] diag = new double[x.length];
 
@@ -174,6 +175,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
                for (int i = 0; i < x.length - 1; i++) {
                       offdiag[i] = precision*(-1.0 / (x[i+1]-x[i]));
+
                    if (i< x.length-2){
                       diag[i+1]= -offdiag[i]+precision*(1.0/(x[i+2]-x[i+1])+trick);
                    }
@@ -1007,10 +1009,15 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         UpperSPDBandMatrix U = new UpperSPDBandMatrix(currentQ,1);
         BandCholesky U1 = new BandCholesky(zeross.length,1,true);
         U1.factor(U);
+
         v= getMultiNormal(v1,U1.getU());
+
         theta=MathUtils.uniform(0,TWO_TIMES_PI);
+        System.err.println("theta"+theta);
         v1.add(Math.sin(theta),currentPopSize);
+
         v1.add(Math.cos(theta),v);
+        System.err.println("v1 is"+v1);
         v2.add(Math.cos(theta),currentPopSize);
         v2.add(-Math.sin(theta),v);
 
@@ -1018,13 +1025,19 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         double thetaMax=TWO_TIMES_PI;
         double [] popSize = currentPopSize.getData();
         double loglik=Math.log(MathUtils.nextDouble())+forLikelihood(popSize,GPtype);
+        System.err.println(loglik+"is loglik"+thetaMax);
+
         double loglik2=0.0;
         while (keep==1){
             thetaPrime=MathUtils.uniform(thetaMin,thetaMax);
+            System.err.println("thetaPrime"+thetaPrime);
             proposal.add(Math.sin(thetaPrime),v1);
+            System.exit(-1);
             proposal.add(Math.cos(thetaPrime),v2);
             double [] popSize2 = proposal.getData();
-            loglik2-=forLikelihood(popSize2,GPtype);
+            loglik2=forLikelihood(popSize2,GPtype);
+            System.err.println(loglik2+"is loglik2");
+            System.exit(-1);
             if (loglik2>loglik) {keep=2;}
             else {
                 if (thetaPrime>theta) {thetaMin=thetaPrime;} else {thetaMax=thetaPrime;}
@@ -1152,40 +1165,46 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
 
         double currentPrecision = this.precisionParameter.getParameterValue(0);
-
         DenseVector currentPopSize = new DenseVector(popSizeParameter.getParameterValues());
+//        System.err.println(currentPopSize);
         double [] currentChangePoints = this.changePoints.getParameterValues();
 
-//            proposes and updates lambdaBoundParameter
+        currentQ=getQmatrix(currentPrecision,currentChangePoints);
+        double currentQuadratic = getQuadraticForm(currentQ, currentPopSize);
+        double newprecision=getNewPrecision(currentPrecision,currentQuadratic);
+//        System.err.println("oldpre"+currentPrecision+" and new:"+newprecision);
+//         Gibbs sample new precision
+//        precisionParameter.setParameterValue(0,newprecision);
+//        currentPrecision=this.precisionParameter.getParameterValue(0);
+
+//        System.err.println("was it changed?"+currentPrecision);
+
+
         double currentLambda = this.lambdaBoundParameter.getParameterValue(0);
-        getNewUpperBound(currentLambda);
+//        getNewUpperBound(currentLambda);
 //          currentLambda=this.lambdaBoundParameter.getParameterValue(0);
 //
 
 //
 //        System.err.println("type before"+GPtype.getSize());
-        numberThinned(currentChangePoints, currentPopSize, currentPrecision);
-
-        DenseVector currentPopSize1 = new DenseVector(popSizeParameter.getParameterValues());
-        double [] currentChangePoints1 = this.changePoints.getParameterValues();
-
-        locationThinned(currentChangePoints1,currentPopSize1,currentPrecision);
-
+//        numberThinned(currentChangePoints, currentPopSize, currentPrecision);
 //
-//        DenseVector currentPopSize2 = new DenseVector(popSizeParameter.getParameterValues());
-//        double [] currentChangePoints2 = this.changePoints.getParameterValues();
-//
-//        sliceSampling(currentChangePoints2,currentPopSize2,currentPrecision);
-//
-        currentQ=getQmatrix(currentPrecision,currentChangePoints);
+//        DenseVector currentPopSize1 = new DenseVector(popSizeParameter.getParameterValues());
+//        double [] currentChangePoints1 = this.changePoints.getParameterValues();
+//        System.err.println(currentPopSize1);
 
-        double currentQuadratic = getQuadraticForm(currentQ, currentPopSize);
-        double newprecision=getNewPrecision(currentPrecision,currentQuadratic);
-        System.err.println("oldpre"+currentPrecision+" and new:"+newprecision);
-//         Gibbs sample new precision
-        precisionParameter.setParameterValue(0,newprecision);
-        currentPrecision=this.precisionParameter.getParameterValue(0);
-        System.err.println("was it changed?"+currentPrecision);
+//        locationThinned(currentChangePoints1,currentPopSize1,currentPrecision);
+
+
+        DenseVector currentPopSize2 = new DenseVector(popSizeParameter.getParameterValues());
+        System.err.println("2:"+currentPopSize2);
+
+        double [] currentChangePoints2 = this.changePoints.getParameterValues();
+
+        sliceSampling(currentChangePoints2,currentPopSize2,currentPrecision);
+//
+
+
 
 //
 ////
@@ -1292,7 +1311,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 ////        return hRatio;
 ////        System.err.println("Prueba");
 ////        System.exit(-1);
-        return 10000.0;
+        return 0.0;
     }
 
     //MCMCOperator INTERFACE
@@ -1301,9 +1320,19 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         return GaussianProcessSkytrackBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 
+
+    public  double getTemperature() {
+        return 0.0;
+    }
+
+
     public double getCoercableParameter() {
 //        return Math.log(scaleFactor);
         return Math.sqrt(scaleFactor - 1);
+    }
+
+    public int getStepCount() {
+        return 1;
     }
 
     public void setCoercableParameter(double value) {
@@ -1326,6 +1355,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     public double getMinimumAcceptanceLevel() {
         return 0.1;
     }
+
 
     public double getMaximumAcceptanceLevel() {
         return 0.4;

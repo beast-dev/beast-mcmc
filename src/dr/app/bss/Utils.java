@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.swing.JOptionPane;
+import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import dr.evolution.io.NewickImporter;
@@ -342,6 +343,23 @@ public class Utils {
 	// /////////////////
 	// ---GUI UTILS---//
 	// /////////////////
+
+	public static int getTabbedPaneComponentIndex(JTabbedPane tabbedPane,
+			String title) {
+
+		int index = -Integer.MAX_VALUE;
+
+		int count = tabbedPane.getTabCount();
+		for (int i = 0; i < count; i++) {
+			if (tabbedPane.getTitleAt(i).toString().equalsIgnoreCase(title)) {
+				index = i;
+				break;
+			}// END: title check
+
+		}// END: i loop
+
+		return index;
+	}// END: getComponentIndex
 
 	public static Frame getActiveFrame() {
 		Frame result = null;

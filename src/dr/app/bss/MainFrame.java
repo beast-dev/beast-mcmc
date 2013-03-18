@@ -44,13 +44,18 @@ import dr.evomodel.tree.TreeModel;
 @SuppressWarnings("serial")
 public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
+	private PartitionDataList dataList;
+	
+	private final String TAXA_TAB_NAME = "Taxa";
+	private final String TREES_TAB_NAME = "Trees";
+	private final String PARTITIONS_TAB_NAME = "Partitions";
+	private final String SIMULATION_TAB_NAME = "Simulation";
+	
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
 	private TreePanel treePanel;
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
-
-	private PartitionDataList dataList;
 
 	private JLabel statusLabel;
 	private JProgressBar progressBar;
@@ -93,15 +98,13 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		taxaPanel = new TaxaPanel(dataList);
 		treePanel = new TreePanel(this, dataList);
-		partitionsPanel = new PartitionsPanel(
-//				this, 
-				dataList);
+		partitionsPanel = new PartitionsPanel(dataList);
 		simulationPanel = new SimulationPanel(this, dataList);
 
-		tabbedPane.addTab("Taxa", null, taxaPanel);
-		tabbedPane.addTab("Trees", null, treePanel);
-		tabbedPane.addTab("Partitions", null, partitionsPanel);
-		tabbedPane.addTab("Simulation", null, simulationPanel);
+		tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
+		tabbedPane.addTab(TREES_TAB_NAME, null, treePanel);
+		tabbedPane.addTab(PARTITIONS_TAB_NAME, null, partitionsPanel);
+		tabbedPane.addTab(SIMULATION_TAB_NAME, null, simulationPanel);
 
 		statusLabel = new JLabel("No taxa loaded");
 
@@ -527,7 +530,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: doLoadSettings
 
-	// TODO: update taxa table
+	// TODO: update simulations panel
 	private void loadSettings(File file) {
 
 		try {
@@ -545,7 +548,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 			partitionsPanel.updatePartitionTable(dataList);
 			taxaPanel.updateTaxaTable(dataList);
-			
+
 		} catch (IOException ioe) {
 
 			Utils.handleException(
@@ -598,7 +601,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		if (SwingUtilities.isEventDispatchThread()) {
 
-			taxaPanel.fireTableDataChanged();
+			taxaPanel.fireTaxaChanged();
 			setStatus(Integer.toString(dataList.taxonList.getTaxonCount())
 					+ " taxa loaded.");
 
@@ -607,7 +610,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 
-					taxaPanel.fireTableDataChanged();
+					taxaPanel.fireTaxaChanged();
 					setStatus(Integer.toString(dataList.taxonList
 							.getTaxonCount()) + " taxa loaded.");
 
@@ -783,6 +786,48 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		}// END: edt check
 
 	}// END: showTreeColumn
+
+	public void disableTaxaPanel() {
+
+		final int index = Utils.getTabbedPaneComponentIndex(tabbedPane, TAXA_TAB_NAME);
+		
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			tabbedPane.setEnabledAt(index, false);
+			
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					tabbedPane.setEnabledAt(index, false);
+					
+				}
+			});
+		}// END: edt check
+
+	}// END: disableTaxaPanel
+
+	public void enableTaxaPanel() {
+
+		final int index = Utils.getTabbedPaneComponentIndex(tabbedPane, TAXA_TAB_NAME);
+		
+		if (SwingUtilities.isEventDispatchThread()) {
+
+			tabbedPane.setEnabledAt(index, true);
+			
+		} else {
+
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+
+					tabbedPane.setEnabledAt(index, true);
+					
+				}
+			});
+		}// END: edt check
+
+	}// END: enableTaxaPanel
 
 	@Override
 	public JComponent getExportableComponent() {

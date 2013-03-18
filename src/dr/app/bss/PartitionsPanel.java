@@ -72,7 +72,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		this.dataList = dataList;
 		
 		partitionTable = new JTable();
-		partitionTableModel = new PartitionTableModel(dataList);
+		partitionTableModel = new PartitionTableModel(this.dataList);
 		partitionTableModel
 				.addTableModelListener(new PartitionTableModelListener());
 		partitionTable.setModel(partitionTableModel);

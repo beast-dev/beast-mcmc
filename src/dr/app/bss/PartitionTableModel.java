@@ -71,48 +71,48 @@ public class PartitionTableModel extends AbstractTableModel {
 			return dataList.get(row).every;
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
 
-			branchSubstitutionModelEditor = new BranchSubstitutionModelEditor(
-					dataList, row);
+//			branchSubstitutionModelEditor = new BranchSubstitutionModelEditor(
+//					dataList, row);
 			final JButton branchSubstModelButton = new JButton(
 					COLUMN_NAMES[column]);
 			branchSubstModelButton
-					.addActionListener(new ListenOpenBranchSubstitutionModelEditor());
+					.addActionListener(new ListenOpenBranchSubstitutionModelEditor(row));
 			return branchSubstModelButton;
 
 		case SITE_RATE_MODEL_INDEX:
 
-			try {
+//			try {
 
-				siteRateModelEditor = new SiteRateModelEditor(dataList, row);
+//				siteRateModelEditor = new SiteRateModelEditor(dataList, row);
 				final JButton siteRateModelButton = new JButton(
 						COLUMN_NAMES[column]);
 				siteRateModelButton
-						.addActionListener(new ListenOpenSiteRateModelEditor());
+						.addActionListener(new ListenOpenSiteRateModelEditor(row));
 
 				return siteRateModelButton;
 
-			} catch (NumberFormatException e) {
-				e.printStackTrace();
-			} catch (BadLocationException e) {
-				e.printStackTrace();
-			}
+//			} catch (NumberFormatException e) {
+//				Utils.handleException(e);
+//			} catch (BadLocationException e) {
+//				Utils.handleException(e);
+//			}
 
 		case CLOCK_RATE_MODEL_INDEX:
 
-			clockRateModelEditor = new ClockRateModelEditor(dataList, row);
+//			clockRateModelEditor = new ClockRateModelEditor(dataList, row);
 			final JButton clockRateModelButton = new JButton(
 					COLUMN_NAMES[column]);
 			clockRateModelButton
-					.addActionListener(new ListenOpenClockRateModelEditor());
+					.addActionListener(new ListenOpenClockRateModelEditor(row));
 			return clockRateModelButton;
 
 		case FREQUENCY_MODEL_INDEX:
 
-			frequencyModelEditor = new FrequencyModelEditor(dataList, row);
+//			frequencyModelEditor = new FrequencyModelEditor(dataList, row);
 			final JButton frequencyModelButton = new JButton(
 					COLUMN_NAMES[column]);
 			frequencyModelButton
-					.addActionListener(new ListenOpenFrequencyModelEditor());
+					.addActionListener(new ListenOpenFrequencyModelEditor( row));
 			return frequencyModelButton;
 
 		default:
@@ -236,32 +236,68 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	private class ListenOpenBranchSubstitutionModelEditor implements
 			ActionListener {
+		
+		private int row;
+		
+		public ListenOpenBranchSubstitutionModelEditor(int row) {
+		this.row = row;
+		}//END: Constructor
+		
 		public void actionPerformed(ActionEvent ev) {
 
+			//TODO: new instance here?
+			branchSubstitutionModelEditor = new BranchSubstitutionModelEditor(
+					dataList, row);
 			branchSubstitutionModelEditor.launch();
 
 		}// END: actionPerformed
 	}// END: ListenOpenBranchSubstitutionModelEditor
 
 	private class ListenOpenSiteRateModelEditor implements ActionListener {
+		private int row;
+
+		public ListenOpenSiteRateModelEditor(int row) {
+			this.row = row;
+		}
+
 		public void actionPerformed(ActionEvent ev) {
 
-			siteRateModelEditor.launch();
+			try {
+				siteRateModelEditor = new SiteRateModelEditor(dataList, row);
+				siteRateModelEditor.launch();
+			} catch (NumberFormatException e) {
+				Utils.handleException(e);
+			} catch (BadLocationException e) {
+				Utils.handleException(e);
+			}
 
 		}// END: actionPerformed
 	}// END: ListenOpenSiteRateModelEditor
 
 	private class ListenOpenClockRateModelEditor implements ActionListener {
+		private int row;
+
+		public ListenOpenClockRateModelEditor(int row) {
+			this.row = row;
+		}
+		
 		public void actionPerformed(ActionEvent ev) {
 
+			clockRateModelEditor = new ClockRateModelEditor(dataList, row);
 			clockRateModelEditor.launch();
 
 		}// END: actionPerformed
 	}// END: ListenOpenSiteRateModelEditor
 
 	private class ListenOpenFrequencyModelEditor implements ActionListener {
+		private int row;
+
+		public ListenOpenFrequencyModelEditor(int row) {
+			this.row = row;
+		}
 		public void actionPerformed(ActionEvent ev) {
 
+			frequencyModelEditor = new FrequencyModelEditor(dataList, row);
 			frequencyModelEditor.launch();
 
 		}// END: actionPerformed

@@ -486,15 +486,15 @@ public class Utils {
 		System.out.println("\tTo: " + data.to);
 		System.out.println("\tEvery: " + data.every);
 		System.out
-				.println("\tBranch Substitution model: "
+				.print("\tBranch Substitution model: "
 						+ PartitionData.substitutionModels[data.substitutionModelIndex]);
 		
-//		System.out.print(" (");
-//		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
-//			System.out.print(data.substitutionParameterValues[i]);
-//			System.out.print(" ");
-//		}// END: fill loop
-//		System.out.print(")");
+		System.out.print(" ( ");
+		for (int i = 0; i < data.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
+			System.out.print(data.substitutionParameterValues[data.substitutionParameterIndices[data.substitutionModelIndex][i]]);
+			System.out.print(" ");
+		}// END: indices loop
+		System.out.print(")\n");
 		
 		System.out.println("\tSite rate model: "
 				+ PartitionData.siteRateModels[data.siteRateModelIndex]);

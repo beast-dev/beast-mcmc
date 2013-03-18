@@ -897,13 +897,13 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         double cum=0.0;
         boolean got=false;
         double Tlen=0.0;
+        double numberPoints=CoalCounts.getSize();
         for (int j=0; j<numberPoints; j++){
             if (CoalCounts.getParameterValue(j)>0) {
-            Tlen+=GPvalue.getGPCoalInterval(j);
+          Tlen+=GPvalue.getGPCoalInterval(j);
             }
         }
-//        System.err.println("the total is:"+Tlen);
-//        Need to only consider the intevals with latent points
+//          Need to only consider the intevals with latent points
         int j=0;
         int [] ind;
         int [] ind2;
@@ -911,6 +911,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         int position =0;
         int oldPos=0;
         double accept;
+        if (Tlen>0){
         where= MathUtils.uniform(0,Tlen);
 //        System.err.println("where"+where);
 //        for (int i=0;i<currentChangePoints.length;i++){
@@ -986,6 +987,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
             }
         }
     }
+    }
 
     public double forLikelihood(double [] Gvalues, Parameter Gtype){
         double loglik=0.0;
@@ -1024,13 +1026,18 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         double thetaMax=TWO_TIMES_PI;
         double [] popSize = currentPopSize.getData();
         double loglik=Math.log(MathUtils.nextDouble())+forLikelihood(popSize,GPtype);
+//        System.err.println("loglik"+loglik);
         double loglik2=0.0;
+
         while (keep==1){
             thetaPrime=MathUtils.uniform(thetaMin,thetaMax);
+//            System.err.println("theta Prime"+thetaPrime+"theta"+theta+"thetaMin"+thetaMin+"thetaMax"+thetaMax);
+            proposal.zero();
             proposal.add(Math.sin(thetaPrime),v1);
             proposal.add(Math.cos(thetaPrime),v2);
             double [] popSize2 = proposal.getData();
             loglik2=forLikelihood(popSize2,GPtype);
+//            System.err.println("loglik2"+loglik2);
 
             if (loglik2>loglik) {keep=2;}
             else {
@@ -1174,22 +1181,136 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         currentLambda=this.lambdaBoundParameter.getParameterValue(0);
 
         numberThinned(currentChangePoints, currentPopSize, currentPrecision);
-
+//
         DenseVector currentPopSize1 = new DenseVector(popSizeParameter.getParameterValues());
         double [] currentChangePoints1 = this.changePoints.getParameterValues();
+//        System.err.println("finished number"+popSizeParameter.getSize());
 
         locationThinned(currentChangePoints1,currentPopSize1,currentPrecision);
 
+//        System.err.println("finished location"+popSizeParameter.getSize());
 
         DenseVector currentPopSize2 = new DenseVector(popSizeParameter.getParameterValues());
+//        System.err.println("2:"+currentPopSize2);
+
         double [] currentChangePoints2 = this.changePoints.getParameterValues();
+//        System.exit(-1);
 
         sliceSampling(currentChangePoints2,currentPopSize2,currentPrecision);
+        System.err.println("size:"+popSizeParameter.getSize());
+//
 
+
+
+//
+////
+//        System.err.println("type after"+GPtype.getSize());
+
+//
+//
+////        ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
+////                ArrayList<Integer> childs = new ArrayList<Integer>();
+////                collectAllTimes(tree, root, exclude, times, childs);
+////                int[] indices = new int[times.size()];
+//
+//
+//
+////        double currentPrecision = precisionParameter.getParameterValue(0);
+//        double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
+//
+////        double currentLambda = this.lambdaParameter.getParameterValue(0);
+//        double proposedLambda = currentLambda;
+//
+//        precisionParameter.setParameterValue(0, proposedPrecision);
+//        lambdaParameter.setParameterValue(0, proposedLambda);
+//
+//        DenseVector currentGamma = new DenseVector(GPvalue.getPopSizeParameter().getParameterValues());
+//        DenseVector proposedGamma;
+//
+////        SymmTridiagMatrix currentQ = GPvalue.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
+////        SymmTridiagMatrix proposedQ = GPvalue.getScaledWeightMatrix(proposedPrecision, proposedLambda);
+//
+//
+//
+//
+////        double[] wNative = gmrfField.getSufficientStatistics();
+//
+////        UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ, 1);
+////        UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ, 1);
+////
+////        BandCholesky forwardCholesky = new BandCholesky(wNative.length, 1, true);
+////        BandCholesky backwardCholesky = new BandCholesky(wNative.length, 1, true);
+////
+////        DenseVector diagonal1 = new DenseVector(fieldLength);
+////        DenseVector diagonal2 = new DenseVector(fieldLength);
+////        DenseVector diagonal3 = new DenseVector(fieldLength);
+////
+////        DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
+////
+////        for (int i = 0; i < fieldLength; i++) {
+////            diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
+////            diagonal2.set(i, modeForward.get(i) + 1);
+////
+////            forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
+////            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
+////        }
+////
+////        forwardCholesky.factor(forwardQW.copy());
+////
+////        DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
+////
+////        DenseVector stand_norm = new DenseVector(zeros);
+////
+////        for (int i = 0; i < zeros.length; i++)
+////            stand_norm.set(i, MathUtils.nextGaussian());
+////
+////        proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
+////
+////
+////        for (int i = 0; i < fieldLength; i++)
+////            popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
+////
+////        ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
+////
+//
+//        double hRatio = 0;
+//
+////        diagonal1.zero();
+////        diagonal2.zero();
+////        diagonal3.zero();
+////
+////        DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
+////
+////        for (int i = 0; i < fieldLength; i++) {
+////            diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
+////            diagonal2.set(i, modeBackward.get(i) + 1);
+////
+////            backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
+////            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
+////        }
+////
+////        backwardCholesky.factor(backwardQW.copy());
+////
+////        DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
+////
+////        for (int i = 0; i < fieldLength; i++) {
+////            diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
+////        }
+////
+////        backwardQW.mult(diagonal1, diagonal3);
+////
+////        // Removed 0.5 * 2
+////        hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
+////        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
+//
+//
+////        return hRatio;
+////        System.err.println("Prueba");
+////        System.exit(-1);
         return 0.0;
     }
 
-    //MCMCOperator INTERFACE --Most of these are no longer needed since It's GibssOperator. I am leaving them in case I change it in the future.
+    //MCMCOperator INTERFACE
   // This is the only part where GPSBUOperateroParser is used
     public final String getOperatorName() {
         return GaussianProcessSkytrackBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;

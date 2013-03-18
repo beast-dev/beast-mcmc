@@ -16,7 +16,7 @@ h1. LICENSE
    
 h1. PURPOSE
 
-Long overdue simulator in Beagle.  
+Fast & furious sequence simulator in Beagle.  
    
 h1. TODO
 
@@ -24,7 +24,6 @@ h1. TODO
 * save / load settings (java serialize)
 * populate the Edit and Help menus with custom items
 * update ant buildfile
-* keep drop-down choices set in Editors
 * show icons in Simulate panel
 * animate buttons in Partitions Panel
 * ancestral sequence in XML Generator and in GUI
@@ -32,6 +31,4 @@ h1. TODO
 * command line interface
 * simulate tree given taxa names only
 * connect 'sequence length' and 'to' fields
-
-
 

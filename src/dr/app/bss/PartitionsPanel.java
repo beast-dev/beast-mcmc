@@ -71,32 +71,32 @@ public class PartitionsPanel extends JPanel implements Exportable {
 //		this.frame = frame;
 		this.dataList = dataList;
 		
-//		partitionTable = new JTable();
+		partitionTable = new JTable();
 //		partitionTableModel = new PartitionTableModel(this.dataList);
 //		partitionTableModel
 //				.addTableModelListener(new PartitionTableModelListener());
 //		partitionTable.setModel(partitionTableModel);
 //		
-//		partitionTable.getTableHeader().setReorderingAllowed(false);
-//		partitionTable.addMouseListener(new JTableButtonMouseListener(
-//				partitionTable));
-//
-//	    hider = new TableColumnHider(partitionTable);
-//		
-//		setLayout(new BorderLayout());
-//
-//		scrollPane = new JScrollPane(partitionTable,
-//				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-//				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-//		RowNumberTable rowNumberTable = new RowNumberTable(partitionTable);
-//		scrollPane.setRowHeaderView(rowNumberTable);
-//		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
-//				rowNumberTable.getTableHeader());
-//
-//		scrollPane.getViewport().setOpaque(false);
-//
-//		add(scrollPane, BorderLayout.CENTER);
-//
+		partitionTable.getTableHeader().setReorderingAllowed(false);
+		partitionTable.addMouseListener(new JTableButtonMouseListener(
+				partitionTable));
+
+	    hider = new TableColumnHider(partitionTable);
+		
+		setLayout(new BorderLayout());
+
+		scrollPane = new JScrollPane(partitionTable,
+				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		RowNumberTable rowNumberTable = new RowNumberTable(partitionTable);
+		scrollPane.setRowHeaderView(rowNumberTable);
+		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+				rowNumberTable.getTableHeader());
+
+		scrollPane.getViewport().setOpaque(false);
+
+		add(scrollPane, BorderLayout.CENTER);
+
 //		column = partitionTable.getColumnModel().getColumn(
 //				PartitionTableModel.TREE_MODEL_INDEX);
 //		column.setCellEditor(new JTableComboBoxCellEditor());
@@ -127,10 +127,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 //		column.setCellRenderer(new JTableButtonCellRenderer());
 //		column.setCellEditor(new JTableButtonCellEditor());
 //
-//		ActionPanel actionPanel = new ActionPanel(false);
-//		actionPanel.setAddAction(addPartitionAction);
-//		actionPanel.setRemoveAction(removePartitionAction);
-//		add(actionPanel, BorderLayout.SOUTH);
+		ActionPanel actionPanel = new ActionPanel(false);
+		actionPanel.setAddAction(addPartitionAction);
+		actionPanel.setRemoveAction(removePartitionAction);
+		add(actionPanel, BorderLayout.SOUTH);
 
 		
 		//TODO: partition table should be bound to dataList
@@ -378,31 +378,31 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			PartitionDataList dataList
 			) {
 		
-		partitionTable = new JTable();
+//		partitionTable = new JTable();
 		partitionTableModel = new PartitionTableModel(dataList);
 		partitionTableModel
 				.addTableModelListener(new PartitionTableModelListener());
 		partitionTable.setModel(partitionTableModel);
 		
-		partitionTable.getTableHeader().setReorderingAllowed(false);
-		partitionTable.addMouseListener(new JTableButtonMouseListener(
-				partitionTable));
-
-	    hider = new TableColumnHider(partitionTable);
-		
-		setLayout(new BorderLayout());
-
-		scrollPane = new JScrollPane(partitionTable,
-				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		RowNumberTable rowNumberTable = new RowNumberTable(partitionTable);
-		scrollPane.setRowHeaderView(rowNumberTable);
-		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
-				rowNumberTable.getTableHeader());
-
-		scrollPane.getViewport().setOpaque(false);
-
-		add(scrollPane, BorderLayout.CENTER);
+//		partitionTable.getTableHeader().setReorderingAllowed(false);
+//		partitionTable.addMouseListener(new JTableButtonMouseListener(
+//				partitionTable));
+//
+//	    hider = new TableColumnHider(partitionTable);
+//		
+//		setLayout(new BorderLayout());
+//
+//		scrollPane = new JScrollPane(partitionTable,
+//				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+//				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+//		RowNumberTable rowNumberTable = new RowNumberTable(partitionTable);
+//		scrollPane.setRowHeaderView(rowNumberTable);
+//		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+//				rowNumberTable.getTableHeader());
+//
+//		scrollPane.getViewport().setOpaque(false);
+//
+//		add(scrollPane, BorderLayout.CENTER);
 
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.TREE_MODEL_INDEX);
@@ -434,45 +434,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
-		ActionPanel actionPanel = new ActionPanel(false);
-		actionPanel.setAddAction(addPartitionAction);
-		actionPanel.setRemoveAction(removePartitionAction);
-		add(actionPanel, BorderLayout.SOUTH);
+//		ActionPanel actionPanel = new ActionPanel(false);
+//		actionPanel.setAddAction(addPartitionAction);
+//		actionPanel.setRemoveAction(removePartitionAction);
+//		add(actionPanel, BorderLayout.SOUTH);
 		
 		partitionTableModel.fireTableDataChanged();
 		
 	}
-	
-//	public void populatePartitionTable(
-//			PartitionDataList dataList
-//			) {
-//
-//		partitionsCount = dataList.size();
-//
-//		for(int rowIndex = 0; rowIndex<partitionsCount; rowIndex++) {
-//			
-//			PartitionData data = dataList.get(rowIndex);
-//			
-////			if(rowIndex > dataList.size()) {
-////				partitionTableModel.addDefaultRow();
-////			}
-//			
-//			partitionTableModel.setValueAt(data.treeFile, rowIndex, PartitionTableModel.TREE_MODEL_INDEX);
-//			partitionTableModel.setValueAt(PartitionData.dataTypes[data.dataTypeIndex], rowIndex, PartitionTableModel.DATA_TYPE_INDEX);
-//			partitionTableModel.setValueAt(data.from, rowIndex, PartitionTableModel.FROM_INDEX);
-//			partitionTableModel.setValueAt(data.to, rowIndex, PartitionTableModel.TO_INDEX);
-//			partitionTableModel.setValueAt(data.every, rowIndex, PartitionTableModel.EVERY_INDEX);
-//			
-//			partitionTableModel.setValueAt(data.substitutionModelIndex, rowIndex, PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
-//			partitionTableModel.setValueAt(data.siteRateModelIndex, rowIndex, PartitionTableModel.SITE_RATE_MODEL_INDEX);
-//			partitionTableModel.setValueAt(data.clockModelIndex, rowIndex, PartitionTableModel.CLOCK_RATE_MODEL_INDEX);
-//			partitionTableModel.setValueAt(data.frequencyModelIndex, rowIndex, PartitionTableModel.FREQUENCY_MODEL_INDEX);
-//			
-//		}
-//		
-//		partitionTableModel.fireTableDataChanged();
-//		
-//	}// END: populatePartitionTable
-	
 	
 }// END: class

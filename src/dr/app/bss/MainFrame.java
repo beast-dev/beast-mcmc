@@ -543,11 +543,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			Utils.printPartitionDataList(dataList);
 			// Utils.printForestList(dataList);
 
-			partitionsPanel.populatePartitionTable(
-					dataList
-					);
-
-			taxaPanel.populateTaxaTable(dataList);
+			partitionsPanel.updatePartitionTable(dataList);
+			taxaPanel.updateTaxaTable(dataList);
 			
 		} catch (IOException ioe) {
 

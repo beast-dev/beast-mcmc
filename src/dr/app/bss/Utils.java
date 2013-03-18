@@ -488,14 +488,15 @@ public class Utils {
 		System.out
 				.print("\tBranch Substitution model: "
 						+ PartitionData.substitutionModels[data.substitutionModelIndex]);
-		
+
 		System.out.print(" ( ");
 		for (int i = 0; i < data.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
-			System.out.print(data.substitutionParameterValues[data.substitutionParameterIndices[data.substitutionModelIndex][i]]);
+			System.out
+					.print(data.substitutionParameterValues[data.substitutionParameterIndices[data.substitutionModelIndex][i]]);
 			System.out.print(" ");
 		}// END: indices loop
 		System.out.print(")\n");
-		
+
 		System.out.println("\tSite rate model: "
 				+ PartitionData.siteRateModels[data.siteRateModelIndex]);
 		System.out.println("\tClock rate model: "
@@ -507,8 +508,9 @@ public class Utils {
 
 	public static void printPartitionDataList(PartitionDataList dataList) {
 
+		// printTaxonList(dataList);
 		System.out.println("\tReplications: " + dataList.siteCount);
-		
+
 		int row = 1;
 		for (PartitionData data : dataList) {
 
@@ -528,7 +530,18 @@ public class Utils {
 		}
 
 	}// END: printForestList
-	
+
+	public static void printTaxonList(PartitionDataList dataList) {
+		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
+
+			System.out.println(dataList.taxonList.getTaxon(i).getId()
+					+ ": "
+					+ dataList.taxonList.getTaxon(i).getAttribute(
+							Utils.ABSOLUTE_HEIGHT));
+
+		}// END: taxon loop
+	}// END: printTaxonList
+
 	public static TreeModel importTreeFromFile(File file) {
 
 		TreeModel treeModel = null;
@@ -563,5 +576,5 @@ public class Utils {
 		return treeModel;
 
 	}// END: importTreeFromFile
-	
+
 }// END: class

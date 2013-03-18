@@ -25,33 +25,33 @@ public class PartitionData implements Serializable {
 
 	public PartitionData() {
 	}// END: Constructor
-
+	
 	public int from = 1;
 	public int to = 1000;
 	public int every = 1;
-
+	
 	// //////////////////
 	// ---TREE MODEL---//
 	// //////////////////
-
+	
 	public File treeFile = null;
-	public String treeModelIdref = TreeModel.TREE_MODEL;
+	public String treeModelIdref =  TreeModel.TREE_MODEL;
 
 	public TreeModel createTreeModel() {
 		TreeModel treeModel = Utils.importTreeFromFile(treeFile);
 		return treeModel;
-	}// END: createTreeModel
-
+	}
+	
 	// /////////////////
 	// ---DATA TYPE---//
 	// /////////////////
-
+	
 	public int dataTypeIndex = 0;
 
 	public static String[] dataTypes = { "Nucleotide", //
 			"Codon" //
 	};
-
+	
 	public DataType createDataType() {
 
 		DataType dataType = null;
@@ -72,15 +72,15 @@ public class PartitionData implements Serializable {
 
 		return dataType;
 	}// END: createDataType
-
+	
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//
 	// ///////////////////////////
-
+	
 	public int substitutionModelIndex = 0;
 
 	public String substitutionModelIdref = createSubstitutionModelIdref();
-
+	
 	private String createSubstitutionModelIdref() {
 
 		String substitutionModelIdref = "";
@@ -100,14 +100,12 @@ public class PartitionData implements Serializable {
 			break;
 
 		case 2: // TNF93
-			substitutionModelIdref = PartitionData.substitutionModels[2]
-					.toLowerCase();
+			substitutionModelIdref = PartitionData.substitutionModels[2].toLowerCase();
 			break;
 
 		case 3: // Yang Codon Model
 
-			substitutionModelIdref = PartitionData.substitutionModels[3]
-					.replaceAll(" +", ".").toLowerCase();
+			substitutionModelIdref = PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase();
 			break;
 
 		}// END: switch
@@ -116,8 +114,8 @@ public class PartitionData implements Serializable {
 	}
 
 	public static String[] substitutionModels = { "HKY", //
-			"GTR", //
-			"TN93", //
+		    "GTR", //
+		    "TN93", //
 			"Yang Codon Model" //
 	};
 
@@ -160,67 +158,55 @@ public class PartitionData implements Serializable {
 
 		if (this.substitutionModelIndex == 0) { // HKY
 
-			Parameter kappa = new Parameter.Default(1,
-					substitutionParameterValues[0]);
-
+			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[0]);
+			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 
 			HKY hky = new HKY(kappa, frequencyModel);
-
+			
 			branchModel = new HomogeneousBranchModel(hky);
 
 		} else if (this.substitutionModelIndex == 1) { // GTR
 
-			Parameter ac = new Parameter.Default(1,
-					substitutionParameterValues[1]);
-			Parameter ag = new Parameter.Default(1,
-					substitutionParameterValues[2]);
-			Parameter at = new Parameter.Default(1,
-					substitutionParameterValues[3]);
-			Parameter cg = new Parameter.Default(1,
-					substitutionParameterValues[4]);
-			Parameter ct = new Parameter.Default(1,
-					substitutionParameterValues[5]);
-			Parameter gt = new Parameter.Default(1,
-					substitutionParameterValues[6]);
-
+			Parameter ac = new Parameter.Default(1, substitutionParameterValues[1]);
+			Parameter ag = new Parameter.Default(1, substitutionParameterValues[2]);
+			Parameter at = new Parameter.Default(1, substitutionParameterValues[3]);
+			Parameter cg = new Parameter.Default(1, substitutionParameterValues[4]);
+			Parameter ct = new Parameter.Default(1, substitutionParameterValues[5]);
+			Parameter gt = new Parameter.Default(1, substitutionParameterValues[6]);
+			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
-
+			
 			GTR gtr = new GTR(ac, ag, at, cg, ct, gt, frequencyModel);
 
 			branchModel = new HomogeneousBranchModel(gtr);
-
+			
 		} else if (this.substitutionModelIndex == 2) { // TN93
 
-			Parameter kappa1 = new Parameter.Default(1,
-					substitutionParameterValues[7]);
-			Parameter kappa2 = new Parameter.Default(1,
-					substitutionParameterValues[8]);
-
+			Parameter kappa1 = new Parameter.Default(1, substitutionParameterValues[7]);
+			Parameter kappa2 = new Parameter.Default(1, substitutionParameterValues[8]);
+			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 
 			TN93 tn93 = new TN93(kappa1, kappa2, frequencyModel);
-
+			
 			branchModel = new HomogeneousBranchModel(tn93);
-
+			
 		} else if (this.substitutionModelIndex == 3) { // Yang Codon Model
 
-			FrequencyModel frequencyModel = this.createFrequencyModel();
+            FrequencyModel frequencyModel = this.createFrequencyModel();
 
-			Parameter kappa = new Parameter.Default(1,
-					substitutionParameterValues[9]);
-			Parameter omega = new Parameter.Default(1,
-					substitutionParameterValues[10]);
-
-			GY94CodonModel yangCodonModel = new GY94CodonModel(
-					Codons.UNIVERSAL, omega, kappa, frequencyModel);
-
+			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[9]);
+			Parameter omega = new Parameter.Default(1, substitutionParameterValues[10]);
+			
+			GY94CodonModel yangCodonModel = new GY94CodonModel(Codons.UNIVERSAL, omega, kappa, frequencyModel);
+			
 			branchModel = new HomogeneousBranchModel(yangCodonModel);
 
-		} else if (this.substitutionModelIndex == 4) {
-
+		} else if (this.substitutionModelIndex == 4) { 
+			
 			System.out.println("Not yet implemented");
-
+			
 		}
 
 		return branchModel;
@@ -233,7 +219,7 @@ public class PartitionData implements Serializable {
 	public int clockModelIndex = 0;
 
 	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
-
+	
 	public static String[] clockModels = { "Strict Clock", //
 	};
 
@@ -252,8 +238,7 @@ public class PartitionData implements Serializable {
 
 		if (this.clockModelIndex == 0) { // Strict Clock
 
-			Parameter rateParameter = new Parameter.Default(1,
-					clockParameterValues[0]);
+			Parameter rateParameter = new Parameter.Default(1, clockParameterValues[0]);
 			branchRateModel = new StrictClockBranchRates(rateParameter);
 
 		} else if (this.clockModelIndex == 1) {
@@ -264,17 +249,18 @@ public class PartitionData implements Serializable {
 
 		return branchRateModel;
 	}// END: createBranchRateModel
-
+	
 	// ////////////////////////
 	// ---FREQUENCY MODELS---//
 	// ////////////////////////
 
 	public String frequencyModelIdref = "freqModel";
-
+	
 	public int frequencyModelIndex = 0;
 
 	public static String[] frequencyModels = { "Nucleotide frequencies", //
-			"Codon frequencies" };
+		"Codon frequencies"
+	};
 
 	public static String[] frequencyParameterNames = new String[] {
 			"Nucleotide frequencies 1", //
@@ -471,9 +457,9 @@ public class PartitionData implements Serializable {
 			frequencyModel = new FrequencyModel(Codons.UNIVERSAL, freqs);
 
 		} else if (this.frequencyModelIndex == 2) {
-
+			
 			System.out.println("Not yet implemented");
-
+			
 		}
 
 		return frequencyModel;
@@ -486,7 +472,7 @@ public class PartitionData implements Serializable {
 	public int siteRateModelIndex = 0;
 
 	public String siteRateModelIdref = SiteModel.SITE_MODEL;
-
+	
 	public static String[] siteRateModels = { "No model", //
 			"Gamma Site Rate Model", //
 	};
@@ -515,8 +501,7 @@ public class PartitionData implements Serializable {
 
 		} else if (this.siteRateModelIndex == 1) { // GammaSiteRateModel
 
-			siteModel = new GammaSiteRateModel(name,
-					siteRateModelParameterValues[1],
+			siteModel = new GammaSiteRateModel(name, siteRateModelParameterValues[1],
 					(int) siteRateModelParameterValues[0]);
 
 		} else if (this.siteRateModelIndex == 2) {
@@ -527,6 +512,6 @@ public class PartitionData implements Serializable {
 
 		return siteModel;
 	}// END: createGammaSiteRateModel
-
+	
 }// END: class
 

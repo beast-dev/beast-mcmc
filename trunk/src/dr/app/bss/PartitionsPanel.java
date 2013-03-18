@@ -29,7 +29,7 @@ import javax.swing.table.TableColumn;
 @SuppressWarnings("serial")
 public class PartitionsPanel extends JPanel implements Exportable {
 
-	private MainFrame frame = null;
+//	private MainFrame frame = null;
 	private PartitionDataList dataList = null;
 
 	private JTable partitionTable = null;
@@ -45,6 +45,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
 
 			partitionTableModel.addDefaultRow();
+//			partitionTableModel.copyPreviousRow();
 
 			partitionsCount++;
 			setPartitions();
@@ -61,18 +62,23 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}// END: actionPerformed
 	};
 
-	public PartitionsPanel(final MainFrame frame,
+	public PartitionsPanel(
+//			final MainFrame frame,
 			final PartitionDataList dataList) {
 
 		super();
 
-		this.frame = frame;
+//		this.frame = frame;
 		this.dataList = dataList;
-
+		
 		partitionTable = new JTable();
+		partitionTableModel = new PartitionTableModel(dataList);
+		partitionTableModel
+				.addTableModelListener(new PartitionTableModelListener());
+		partitionTable.setModel(partitionTableModel);
 		
 		//TODO: partition table should be bound to dataList
-		populatePartitionTable();
+//		populatePartitionTable(this.dataList);
 		
 		partitionTable.getTableHeader().setReorderingAllowed(false);
 		partitionTable.addMouseListener(new JTableButtonMouseListener(
@@ -168,7 +174,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			}// END: event check
 
-			frame.collectAllSettings();
+//			frame.collectAllSettings();
 
 		}// END: tableChanged
 	}// END: InteractiveTableModelListener
@@ -366,12 +372,33 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	}// END: getExportableComponent
 	
 	//TODO: for updating UI
-	public void populatePartitionTable() {
+	public void populatePartitionTable(PartitionDataList dataList) {
+
+		//TODO: shrink or grow to that size
+		partitionsCount = dataList.size();
+//		setPartitions();
 		
-		partitionTableModel = new PartitionTableModel(this.dataList);
-		partitionTableModel
-				.addTableModelListener(new PartitionTableModelListener());
-		partitionTable.setModel(partitionTableModel);
+		
+		
+//		int tableSize = Math.max(partitionTableModel.getRowCount(), partitionsCount);
+		for(int rowIndex = 0; rowIndex<partitionsCount; rowIndex++) {
+			
+			PartitionData data = dataList.get(rowIndex);
+			
+			if(rowIndex > dataList.size()) {
+				partitionTableModel.addDefaultRow();
+			}
+			
+			partitionTableModel.setValueAt(data.treeFile, rowIndex, PartitionTableModel.TREE_MODEL_INDEX);
+			partitionTableModel.setValueAt(PartitionData.dataTypes[data.dataTypeIndex], rowIndex, PartitionTableModel.DATA_TYPE_INDEX);
+			partitionTableModel.setValueAt(data.from, rowIndex, PartitionTableModel.FROM_INDEX);
+			partitionTableModel.setValueAt(data.to, rowIndex, PartitionTableModel.TO_INDEX);
+			partitionTableModel.setValueAt(data.every, rowIndex, PartitionTableModel.EVERY_INDEX);
+			
+//			partitionTableModel.setValueAt(data.substitutionModelIndex, rowIndex, PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
+			
+		}
+		
 		
 	}
 	

@@ -33,7 +33,7 @@ public class SiteRateModelEditor {
 	// Settings	
 	private OptionsPanel optionPanel;
 	private JComboBox siteCombo;
-	private RealNumberField[] siteParameterFields = new RealNumberField[PartitionData.siteRateModelParameterNames.length];
+	private RealNumberField[] siteParameterFields;
     private JSpinner gammaCategoriesSpinner;
 	
 	//Buttons
@@ -49,6 +49,7 @@ public class SiteRateModelEditor {
 		this.dataList = dataList;
 		this.row = row;
 		
+		siteParameterFields = new RealNumberField[PartitionData.siteRateModelParameterNames.length];
 		window = new JDialog(owner, "Setup site rate model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 
@@ -88,6 +89,10 @@ public class SiteRateModelEditor {
 		window.getContentPane().add(optionPanel, BorderLayout.CENTER);
 		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
 		window.pack();
+		
+		//return to the previously chosen index on start
+		siteCombo.setSelectedIndex(dataList.get(row).siteRateModelIndex);
+		
 	}// END: Constructor
 
 	private void setSiteArguments() throws NumberFormatException, BadLocationException {

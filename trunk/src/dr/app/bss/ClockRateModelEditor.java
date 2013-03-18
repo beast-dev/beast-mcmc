@@ -29,8 +29,8 @@ public class ClockRateModelEditor {
 	// Settings
 	private OptionsPanel optionPanel;
 	private JComboBox clockCombo;
-	private RealNumberField[] clockParameterFields = new RealNumberField[PartitionData.clockParameterNames.length];
-
+	private RealNumberField[] clockParameterFields;
+	
 	// Buttons
 	private JButton done;
 	private JButton cancel;
@@ -44,6 +44,7 @@ public class ClockRateModelEditor {
 		this.dataList = dataList;
 		this.row = row;
 
+		clockParameterFields = new RealNumberField[PartitionData.clockParameterNames.length];
 		window = new JDialog(owner, "Setup clock rate model for partition "
 				+ (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
@@ -86,6 +87,10 @@ public class ClockRateModelEditor {
 		window.getContentPane().add(optionPanel, BorderLayout.CENTER);
 		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
 		window.pack();
+		
+		//return to the previously chosen index on start
+		clockCombo.setSelectedIndex(dataList.get(row).clockModelIndex);
+		
 	}// END: Constructor
 
 	private void setClockArguments() {

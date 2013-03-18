@@ -93,7 +93,9 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		taxaPanel = new TaxaPanel(dataList);
 		treePanel = new TreePanel(this, dataList);
-		partitionsPanel = new PartitionsPanel(this, dataList);
+		partitionsPanel = new PartitionsPanel(
+//				this, 
+				dataList);
 		simulationPanel = new SimulationPanel(this, dataList);
 
 		tabbedPane.addTab("Taxa", null, taxaPanel);
@@ -532,24 +534,24 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 			FileInputStream fileIn = new FileInputStream(file);
 			ObjectInputStream in = new ObjectInputStream(fileIn);
-			
+
 			dataList = (PartitionDataList) in.readObject();
-			
+
 			in.close();
 			fileIn.close();
 
-			Utils.printPartitionDataList(this.dataList);
-			
-//			taxaPanel.fireTableDataChanged();
-//			partitionsPanel.fireTableDataChanged();
-			
-			partitionsPanel.populatePartitionTable();
-			
+			Utils.printPartitionDataList(dataList);
+			// Utils.printForestList(dataList);
+
+			partitionsPanel.populatePartitionTable(dataList);
+
 		} catch (IOException ioe) {
 
 			Utils.handleException(
 					ioe,
-					"Unable to read BSS file. BSS can only read files created by 'Saving' within BSS. It cannot read XML files.");
+					"Unable to read BSS file. "
+							+ "BSS can only read files created by 'Saving' within BSS. "
+							+ "It cannot read XML files.");
 
 		} catch (ClassNotFoundException cnfe) {
 

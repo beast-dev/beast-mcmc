@@ -47,7 +47,7 @@ public class FrequencyModelEditor {
 		this.row = row;
 
 		frequencyParameterFields = new RealNumberField[PartitionData.frequencyParameterNames.length];
-		window = new JDialog(owner, "Setup branch substitution model for partition " + (row + 1));
+		window = new JDialog(owner, "Setup frequency model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
 		scrollPane = new JScrollPane();

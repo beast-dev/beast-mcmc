@@ -162,8 +162,8 @@ public class PartitionTableModel extends AbstractTableModel {
 			break;
 			
 		default:
-			System.out.println("invalid index");
-			break;
+			throw new RuntimeException("Invalid index.");
+//			break;
 		}
 
 		fireTableCellUpdated(row, column);

@@ -380,8 +380,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		partitionsCount = dataList.size();
 //		setPartitions();
 		
-		
-		
 //		int tableSize = Math.max(partitionTableModel.getRowCount(), partitionsCount);
 		for(int rowIndex = 0; rowIndex<partitionsCount; rowIndex++) {
 			
@@ -404,6 +402,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			partitionTableModel.setValueAt(data.frequencyModelIndex, rowIndex, PartitionTableModel.FREQUENCY_MODEL_INDEX);
 			
 		}
+		
+		partitionTableModel.fireTableDataChanged();
 		
 	}// END: populatePartitionTable
 	

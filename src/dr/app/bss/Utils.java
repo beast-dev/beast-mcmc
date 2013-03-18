@@ -488,6 +488,14 @@ public class Utils {
 		System.out
 				.println("\tBranch Substitution model: "
 						+ PartitionData.substitutionModels[data.substitutionModelIndex]);
+		
+//		System.out.print(" (");
+//		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
+//			System.out.print(data.substitutionParameterValues[i]);
+//			System.out.print(" ");
+//		}// END: fill loop
+//		System.out.print(")");
+		
 		System.out.println("\tSite rate model: "
 				+ PartitionData.siteRateModels[data.siteRateModelIndex]);
 		System.out.println("\tClock rate model: "

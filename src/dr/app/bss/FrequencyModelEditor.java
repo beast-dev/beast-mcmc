@@ -31,7 +31,7 @@ public class FrequencyModelEditor {
 	private OptionsPanel optionPanel;
 	private JScrollPane scrollPane;
 	private JComboBox frequencyCombo;
-	private RealNumberField[] frequencyParameterFields = new RealNumberField[PartitionData.frequencyParameterNames.length];
+	private RealNumberField[] frequencyParameterFields;
 	
 	//Buttons
 	private JButton done;
@@ -46,6 +46,7 @@ public class FrequencyModelEditor {
 		this.dataList = dataList;
 		this.row = row;
 
+		frequencyParameterFields = new RealNumberField[PartitionData.frequencyParameterNames.length];
 		window = new JDialog(owner, "Setup branch substitution model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
@@ -91,6 +92,10 @@ public class FrequencyModelEditor {
 		window.getContentPane().add(scrollPane, BorderLayout.CENTER);
 		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
 		window.pack();
+		
+		//return to the previously chosen index on start
+		frequencyCombo.setSelectedIndex(dataList.get(row).frequencyModelIndex);
+		
 	}//END: Constructor
 
 	private void setFrequencyArguments() {

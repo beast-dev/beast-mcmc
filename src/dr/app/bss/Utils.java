@@ -500,7 +500,7 @@ public class Utils {
 	public static void printPartitionDataList(PartitionDataList dataList) {
 
 		System.out.println("\tReplications: " + dataList.siteCount);
-
+		
 		int row = 1;
 		for (PartitionData data : dataList) {
 
@@ -513,6 +513,14 @@ public class Utils {
 
 	}// END: printDataList
 
+	public static void printForestList(PartitionDataList dataList) {
+
+		for (File treeFile : dataList.forestList) {
+			System.out.println(treeFile);
+		}
+
+	}// END: printForestList
+	
 	public static TreeModel importTreeFromFile(File file) {
 
 		TreeModel treeModel = null;

@@ -161,11 +161,19 @@ public class PartitionTableModel extends AbstractTableModel {
 	}
 
 	public void addDefaultRow() {
-		//TODO: this could copy the previous line (new constructor that takes all the elements)
 		dataList.add(new PartitionData());
 		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
 	}
 
+	public void copyPreviousRow() {
+		// TODO: not working, this should call new constructor with all the elements
+		int size = dataList.size();
+		if (size > 0) {
+			dataList.add(dataList.get(dataList.size()-1));
+			fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
+		}
+	}
+	
 	public void deleteRow(int row) {
 		dataList.remove(row);
 		this.fireTableDataChanged();

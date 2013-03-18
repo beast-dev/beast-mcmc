@@ -20,6 +20,7 @@ Long overdue simulator in Beagle.
    
 h1. TODO
 
+* Idref for branch subs model does not update with editor choices
 * save / load settings (java serialize)
 * populate the Edit and Help menus with custom items
 * update ant buildfile

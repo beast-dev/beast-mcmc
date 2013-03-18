@@ -29,7 +29,7 @@ public class BranchSubstitutionModelEditor {
 	// Settings
 	private OptionsPanel optionPanel;
 	private JComboBox substitutionCombo;
-	private RealNumberField[] substitutionParameterFields = new RealNumberField[PartitionData.substitutionParameterNames.length];
+	private RealNumberField[] substitutionParameterFields;
 
 	//Buttons
 	private JButton done;
@@ -44,6 +44,7 @@ public class BranchSubstitutionModelEditor {
 		this.dataList = dataList;
 		this.row = row;
 		
+		substitutionParameterFields = new RealNumberField[PartitionData.substitutionParameterNames.length];
 		window = new JDialog(owner, "Setup branch substitution model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
@@ -83,6 +84,10 @@ public class BranchSubstitutionModelEditor {
 		window.getContentPane().add(optionPanel, BorderLayout.CENTER);
 		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
 		window.pack();
+		
+		//return to the previously chosen index on start
+		substitutionCombo.setSelectedIndex(dataList.get(row).substitutionModelIndex);
+		
 	}//END: Constructor
 	
 	private void setSubstitutionArguments() {

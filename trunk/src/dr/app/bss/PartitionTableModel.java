@@ -245,7 +245,6 @@ public class PartitionTableModel extends AbstractTableModel {
 		
 		public void actionPerformed(ActionEvent ev) {
 
-			//TODO: new instance here?
 			branchSubstitutionModelEditor = new BranchSubstitutionModelEditor(
 					dataList, row);
 			branchSubstitutionModelEditor.launch();

@@ -34,9 +34,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 		// this.frame = frame;
 		this.dataList = dataList;
 
-		taxaTableModel = new TaxaTableModel();
-		taxaTable = new JTable(taxaTableModel);
+		taxaTable = new JTable();
 
+//		taxaTableModel = new TaxaTableModel();
+//		taxaTable.setModel(taxaTableModel);
+		
+		populateTaxaTable(this.dataList);
+		
 		taxaTable.getTableHeader().setReorderingAllowed(false);
 
 		taxaTable.getTableHeader()
@@ -68,10 +72,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-		// RowNumberTable rowNumberTable = new RowNumberTable(taxaTable);
-		// scrollPane.setRowHeaderView(rowNumberTable);
-		// scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
-		// rowNumberTable.getTableHeader());
+		 RowNumberTable rowNumberTable = new RowNumberTable(taxaTable);
+		 scrollPane.setRowHeaderView(rowNumberTable);
+		 scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+		 rowNumberTable.getTableHeader());
 
 		scrollPane.getViewport().setOpaque(false);
 
@@ -82,6 +86,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		add(scrollPane, "Center");
 
+//		populateTaxaTable(this.dataList);
+		
 	}// END: Constructor
 
 	public JComponent getExportableComponent() {
@@ -102,9 +108,12 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	private class TaxaTableModel extends AbstractTableModel {
 
+		private PartitionDataList dataList;
+		
 		String[] columnNames = { "Name", "Height" };
 
-		public TaxaTableModel() {
+		public TaxaTableModel(PartitionDataList dataList) {
+		this.dataList = dataList;
 		}
 
 		public int getColumnCount() {
@@ -112,14 +121,14 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public int getRowCount() {
-			return dataList.taxonList.getTaxonCount();
+			return this.dataList.taxonList.getTaxonCount();
 		}
 
 		public Object getValueAt(int row, int col) {
 			switch (col) {
 
 			case 0:
-				return dataList.taxonList.getTaxonId(row);
+				return this.dataList.taxonList.getTaxonId(row);
 
 			case 1:
 
@@ -140,7 +149,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 			switch (col) {
 
 			case 0:
-				dataList.taxonList.getTaxon(row).setId(value.toString());
+				this.dataList.taxonList.getTaxon(row).setId(value.toString());
 				break;
 
 			case 1:
@@ -189,6 +198,11 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	}// END: TaxaTableModel class
 
+	public void populateTaxaTable(PartitionDataList dataList) {
+		taxaTableModel = new TaxaTableModel(dataList);
+		taxaTable.setModel(taxaTableModel);
+	}
+	
 	public void fireTableDataChanged() {
 		getHeights();
 		taxaTableModel.fireTableDataChanged();

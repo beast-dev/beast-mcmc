@@ -19,14 +19,13 @@ import javax.swing.SwingConstants;
 
 import dr.app.gui.components.WholeNumberField;
 
-
 @SuppressWarnings("serial")
 public class SimulationPanel extends JPanel implements Exportable {
 
 	public static final int FIRST_SIMULATION_TYPE = 0;
 	public static final int SECOND_SIMULATION_TYPE = 1;
 	public int simulationType;
-	
+
 	private MainFrame frame;
 	private PartitionDataList dataList;
 	private OptionsPanel optionPanel;
@@ -59,8 +58,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 		siteCountField = new WholeNumberField(1, Integer.MAX_VALUE);
 		siteCountField.setColumns(8);
 		siteCountField.setValue(dataList.siteCount);
-		optionPanel.addComponentWithLabel("Number of sites:",
-				siteCountField);
+		optionPanel.addComponentWithLabel("Number of sites:", siteCountField);
 
 		// Simulation Type
 		JPanel simulationTypeHolder = new JPanel();
@@ -168,9 +166,9 @@ public class SimulationPanel extends JPanel implements Exportable {
 	}// END: ListenSaveLocationCoordinates
 
 	private void setFirstSimulationType() {
-		
+
 		numberOfSimulationsRadioButton.setSelected(true);
-		
+
 		simulationsNumberField.setEnabled(true);
 		generateXML.setEnabled(true);
 		simulationType = FIRST_SIMULATION_TYPE;
@@ -199,18 +197,20 @@ public class SimulationPanel extends JPanel implements Exportable {
 		simulate.setEnabled(true);
 		generateXML.setEnabled(true);
 	}// END: setIdle
-	
+
 	class ChooseAnalysisTypeListener implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 
 			if (ev.getActionCommand() == firstSimulationType) {
 
 				setFirstSimulationType();
+				frame.enableTaxaPanel();
 				frame.setStatus(firstSimulationType + " selected");
 
 			} else if (ev.getActionCommand() == secondSimulationType) {
 
 				setSecondSimulationType();
+				frame.disableTaxaPanel();
 				frame.setStatus(secondSimulationType + " selected");
 
 			} else {
@@ -226,8 +226,8 @@ public class SimulationPanel extends JPanel implements Exportable {
 		return this;
 	}// END: getExportableComponent
 
-	public void setDataList(PartitionDataList  dataList) {
+	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}
-	
+
 }// END: class

@@ -159,6 +159,7 @@ public class ClockRateModelEditor {
 		window.setSize(new Dimension(450, 400));
 		window.setMinimumSize(new Dimension(100, 100));
 		window.setResizable(true);
+		window.setModal(true);
 		window.setVisible(true);
 	}// END: launch
 

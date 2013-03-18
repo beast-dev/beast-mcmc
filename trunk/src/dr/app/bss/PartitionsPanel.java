@@ -372,7 +372,9 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	}// END: getExportableComponent
 	
 	//TODO: for updating UI
-	public void populatePartitionTable(PartitionDataList dataList) {
+	public void populatePartitionTable(
+			PartitionDataList dataList
+			) {
 
 		//TODO: shrink or grow to that size
 		partitionsCount = dataList.size();
@@ -385,9 +387,9 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			
 			PartitionData data = dataList.get(rowIndex);
 			
-			if(rowIndex > dataList.size()) {
-				partitionTableModel.addDefaultRow();
-			}
+//			if(rowIndex > dataList.size()) {
+//				partitionTableModel.addDefaultRow();
+//			}
 			
 			partitionTableModel.setValueAt(data.treeFile, rowIndex, PartitionTableModel.TREE_MODEL_INDEX);
 			partitionTableModel.setValueAt(PartitionData.dataTypes[data.dataTypeIndex], rowIndex, PartitionTableModel.DATA_TYPE_INDEX);
@@ -395,12 +397,15 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			partitionTableModel.setValueAt(data.to, rowIndex, PartitionTableModel.TO_INDEX);
 			partitionTableModel.setValueAt(data.every, rowIndex, PartitionTableModel.EVERY_INDEX);
 			
-//			partitionTableModel.setValueAt(data.substitutionModelIndex, rowIndex, PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
+			//TODO: values
+			partitionTableModel.setValueAt(data.substitutionModelIndex, rowIndex, PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
+			partitionTableModel.setValueAt(data.siteRateModelIndex, rowIndex, PartitionTableModel.SITE_RATE_MODEL_INDEX);
+			partitionTableModel.setValueAt(data.clockModelIndex, rowIndex, PartitionTableModel.CLOCK_RATE_MODEL_INDEX);
+			partitionTableModel.setValueAt(data.frequencyModelIndex, rowIndex, PartitionTableModel.FREQUENCY_MODEL_INDEX);
 			
 		}
 		
-		
-	}
+	}// END: populatePartitionTable
 	
 //	public void fireTableDataChanged() {
 //		partitionTableModel.fireTableDataChanged();

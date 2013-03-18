@@ -83,6 +83,8 @@ public class PartitionData implements Serializable {
 	
 	private String createSubstitutionModelIdref() {
 
+//		System.out.println("FUBAR");
+		
 		String substitutionModelIdref = "";
 
 		switch (this.substitutionModelIndex) {
@@ -100,18 +102,23 @@ public class PartitionData implements Serializable {
 			break;
 
 		case 2: // TNF93
-			substitutionModelIdref = PartitionData.substitutionModels[2].toLowerCase();
+			substitutionModelIdref = PartitionData.substitutionModels[2]
+					.toLowerCase();
 			break;
 
 		case 3: // Yang Codon Model
 
-			substitutionModelIdref = PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase();
+			substitutionModelIdref = PartitionData.substitutionModels[3]
+					.replaceAll(" +", ".").toLowerCase();
+			break;
+			
+		default:
 			break;
 
 		}// END: switch
 
 		return substitutionModelIdref;
-	}
+	}// END: createSubstitutionModelIdref
 
 	public static String[] substitutionModels = { "HKY", //
 		    "GTR", //

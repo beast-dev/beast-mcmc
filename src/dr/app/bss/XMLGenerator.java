@@ -249,6 +249,7 @@ public class XMLGenerator {
 
 				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.BRANCH_MODEL_ELEMENT)) {
 
+					//TODO: this f**cks things up if generating multiple docs from one instance of the program
 					data.substitutionModelIdref += suffix;
 
 					writeBranchModel(data, writer, String.valueOf(suffix));
@@ -258,6 +259,7 @@ public class XMLGenerator {
 				} else {
 
 					int index = Utils.isIdenticalWith(data, partitionList, Utils.BRANCH_MODEL_ELEMENT) + 1;
+					//TODO: this too btw
 					data.substitutionModelIdref += index;
 
 				}

@@ -124,31 +124,46 @@ public class PartitionTableModel extends AbstractTableModel {
 	public void setValueAt(Object value, int row, int column) {
 
 		switch (column) {
+		
 		case TREE_MODEL_INDEX:
 			dataList.get(row).treeFile = (File) value;
 			break;
+			
 		case DATA_TYPE_INDEX:
 			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(PartitionData.dataTypes, (String)value);
 			break;
+			
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
 			break;
+			
 		case TO_INDEX:
 			dataList.get(row).to = (Integer) value;
 			break;
+			
 		case EVERY_INDEX:
 			dataList.get(row).every = (Integer) value;
 			break;
+			
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
 			dataList.get(row).substitutionModelIndex = (Integer) value;
+			break;		
+			
 		case SITE_RATE_MODEL_INDEX:
 			dataList.get(row).siteRateModelIndex = (Integer) value;
+			break;
+			
 		case CLOCK_RATE_MODEL_INDEX:
 			dataList.get(row).clockModelIndex = (Integer) value;
+			break;
+			
 		case FREQUENCY_MODEL_INDEX:
 			dataList.get(row).frequencyModelIndex = (Integer) value;
+			break;
+			
 		default:
 			System.out.println("invalid index");
+			break;
 		}
 
 		fireTableCellUpdated(row, column);

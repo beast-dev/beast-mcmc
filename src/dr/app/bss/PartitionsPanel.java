@@ -29,7 +29,6 @@ import javax.swing.table.TableColumn;
 @SuppressWarnings("serial")
 public class PartitionsPanel extends JPanel implements Exportable {
 
-//	private MainFrame frame = null;
 	private PartitionDataList dataList = null;
 
 	private JTable partitionTable = null;
@@ -39,13 +38,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private TableColumn column;
 
-	private int partitionsCount;// = 1;
+	private int partitionsCount;
 
 	private Action addPartitionAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
 
 			partitionTableModel.addDefaultRow();
-//			partitionTableModel.copyPreviousRow();
+			// partitionTableModel.copyPreviousRow();
 
 			partitionsCount++;
 			setPartitions();
@@ -62,22 +61,24 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}// END: actionPerformed
 	};
 
-	public PartitionsPanel(
-//			final MainFrame frame,
-			final PartitionDataList dataList) {
+	public PartitionsPanel(PartitionDataList dataList) {
 
 		super();
 
-//		this.frame = frame;
 		this.dataList = dataList;
-		
+
 		partitionTable = new JTable();
 		partitionTable.getTableHeader().setReorderingAllowed(false);
 		partitionTable.addMouseListener(new JTableButtonMouseListener(
 				partitionTable));
 
-	    hider = new TableColumnHider(partitionTable);
-		
+		partitionTableModel = new PartitionTableModel(dataList);
+		partitionTableModel
+				.addTableModelListener(new PartitionTableModelListener());
+		partitionTable.setModel(partitionTableModel);
+
+		hider = new TableColumnHider(partitionTable);
+
 		setLayout(new BorderLayout());
 
 		scrollPane = new JScrollPane(partitionTable,
@@ -92,47 +93,49 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		add(scrollPane, BorderLayout.CENTER);
 
-//		column = partitionTable.getColumnModel().getColumn(
-//				PartitionTableModel.TREE_MODEL_INDEX);
-//		column.setCellEditor(new JTableComboBoxCellEditor());
-//		column.setCellRenderer(new JTableComboBoxCellRenderer());
-//
-//		column = partitionTable.getColumnModel().getColumn(
-//				PartitionTableModel.DATA_TYPE_INDEX);
-//		column.setCellEditor(new JTableComboBoxCellEditor());
-//		column.setCellRenderer(new JTableComboBoxCellRenderer());
-//
-//		column = partitionTable.getColumnModel().getColumn(
-//				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
-//		column.setCellRenderer(new JTableButtonCellRenderer());
-//		column.setCellEditor(new JTableButtonCellEditor());
-//
-//		column = partitionTable.getColumnModel().getColumn(
-//				PartitionTableModel.SITE_RATE_MODEL_INDEX);
-//		column.setCellRenderer(new JTableButtonCellRenderer());
-//		column.setCellEditor(new JTableButtonCellEditor());
-//
-//		column = partitionTable.getColumnModel().getColumn(
-//				PartitionTableModel.CLOCK_RATE_MODEL_INDEX);
-//		column.setCellRenderer(new JTableButtonCellRenderer());
-//		column.setCellEditor(new JTableButtonCellEditor());
-//
-//		column = partitionTable.getColumnModel().getColumn(
-//				PartitionTableModel.FREQUENCY_MODEL_INDEX);
-//		column.setCellRenderer(new JTableButtonCellRenderer());
-//		column.setCellEditor(new JTableButtonCellEditor());
-//
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.TREE_MODEL_INDEX);
+		column.setCellEditor(new JTableComboBoxCellEditor());
+		column.setCellRenderer(new JTableComboBoxCellRenderer());
+
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.DATA_TYPE_INDEX);
+		column.setCellEditor(new JTableComboBoxCellEditor());
+		column.setCellRenderer(new JTableComboBoxCellRenderer());
+
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
+
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.SITE_RATE_MODEL_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
+
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.CLOCK_RATE_MODEL_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
+
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.FREQUENCY_MODEL_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
+
 		ActionPanel actionPanel = new ActionPanel(false);
 		actionPanel.setAddAction(addPartitionAction);
 		actionPanel.setRemoveAction(removePartitionAction);
 		add(actionPanel, BorderLayout.SOUTH);
-		
-		populatePartitionTable(this.dataList);
-		
+
+		setPartitions();
+
 	}// END: Constructor
 
 	private void setPartitions() {
-		
+
+		partitionsCount = dataList.size();
+
 		addPartitionAction.setEnabled(true);
 		if (partitionsCount == 1) {
 			removePartitionAction.setEnabled(false);
@@ -145,13 +148,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	// Listen to tree choices, set tree model in partition data
 	private class PartitionTableModelListener implements TableModelListener {
-		
-		private PartitionDataList dataList;
-		
-		public PartitionTableModelListener(PartitionDataList dataList) {
-			this.dataList = dataList;
+
+		public PartitionTableModelListener() {
 		}
-		
+
 		public void tableChanged(TableModelEvent ev) {
 
 			if (ev.getType() == TableModelEvent.UPDATE) {
@@ -160,9 +160,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 				if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
-					File value = (File) partitionTableModel.getValueAt(row, column);
-					this.dataList.get(row).treeFile = value;
-					
+					File value = (File) partitionTableModel.getValueAt(row,
+							column);
+					// this.
+					dataList.get(row).treeFile = value;
+
 				}
 				// else if(column == PartitionTableModel.DATA_TYPE_INDEX) {
 				// } else {
@@ -171,7 +173,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			}// END: event check
 
-//			frame.collectAllSettings();
+			// frame.collectAllSettings();
 
 		}// END: tableChanged
 	}// END: InteractiveTableModelListener
@@ -214,11 +216,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private class JTableComboBoxCellEditor extends DefaultCellEditor {
 
-		private PartitionDataList dataList;
-		
-		public JTableComboBoxCellEditor(PartitionDataList dataList) {
+		public JTableComboBoxCellEditor() {
 			super(new JComboBox());
-			this.dataList = dataList;
 		}
 
 		public Component getTableCellEditorComponent(JTable table,
@@ -228,7 +227,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
-				for (File file : this.dataList.forestList) {
+				for (File file : dataList.forestList) {
 					((JComboBox) editorComponent).addItem(file);
 				}// END: fill loop
 
@@ -362,58 +361,26 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	public void hideTreeColumn() {
 		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.TREE_MODEL_INDEX]);
 	}
-	
+
 	public void showTreeColumn() {
 		hider.show(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.TREE_MODEL_INDEX]);
 	}
-	
+
 	public JComponent getExportableComponent() {
 		return this;
 	}// END: getExportableComponent
-	
-	public void populatePartitionTable(
-			PartitionDataList dataList
-			) {
-		
-		partitionsCount = dataList.size();
-		
-		partitionTableModel = new PartitionTableModel(dataList);
-		partitionTableModel
-				.addTableModelListener(new PartitionTableModelListener(dataList));
-		partitionTable.setModel(partitionTableModel);
-		
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.TREE_MODEL_INDEX);
-		column.setCellEditor(new JTableComboBoxCellEditor(dataList));
-		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.DATA_TYPE_INDEX);
-		column.setCellEditor(new JTableComboBoxCellEditor(dataList));
-		column.setCellRenderer(new JTableComboBoxCellRenderer());
+	public void updatePartitionTable(PartitionDataList dataList) {
 
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor());
-
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.SITE_RATE_MODEL_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor());
-
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.CLOCK_RATE_MODEL_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor());
-
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.FREQUENCY_MODEL_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor());
+		partitionTableModel.setDataList(dataList);
+		setDataList(dataList);
 
 		setPartitions();
-
+		partitionTableModel.fireTableDataChanged();
 	}// END: populatePartitionTable
-	
+
+	public void setDataList(PartitionDataList dataList) {
+		this.dataList = dataList;
+	}
+
 }// END: class

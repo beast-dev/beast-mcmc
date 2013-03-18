@@ -226,4 +226,8 @@ public class SimulationPanel extends JPanel implements Exportable {
 		return this;
 	}// END: getExportableComponent
 
+	public void setDataList(PartitionDataList  dataList) {
+		this.dataList = dataList;
+	}
+	
 }// END: class

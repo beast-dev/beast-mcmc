@@ -20,7 +20,6 @@ import dr.app.gui.table.TableEditorStopper;
 @SuppressWarnings("serial")
 public class TaxaPanel extends JPanel implements Exportable {
 
-	// private BeagleSequenceSimulatorFrame frame = null;
 	private PartitionDataList dataList = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
@@ -31,16 +30,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	public TaxaPanel(PartitionDataList dataList) {
 
-		// this.frame = frame;
 		this.dataList = dataList;
 
 		taxaTable = new JTable();
 
-//		taxaTableModel = new TaxaTableModel();
-//		taxaTable.setModel(taxaTableModel);
-		
-		populateTaxaTable(this.dataList);
-		
+		taxaTableModel = new TaxaTableModel(dataList);
+		taxaTable.setModel(taxaTableModel);
+
 		taxaTable.getTableHeader().setReorderingAllowed(false);
 
 		taxaTable.getTableHeader()
@@ -72,10 +68,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-		 RowNumberTable rowNumberTable = new RowNumberTable(taxaTable);
-		 scrollPane.setRowHeaderView(rowNumberTable);
-		 scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
-		 rowNumberTable.getTableHeader());
+		RowNumberTable rowNumberTable = new RowNumberTable(taxaTable);
+		scrollPane.setRowHeaderView(rowNumberTable);
+		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+				rowNumberTable.getTableHeader());
 
 		scrollPane.getViewport().setOpaque(false);
 
@@ -86,8 +82,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		add(scrollPane, "Center");
 
-//		populateTaxaTable(this.dataList);
-		
 	}// END: Constructor
 
 	public JComponent getExportableComponent() {
@@ -109,11 +103,14 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private class TaxaTableModel extends AbstractTableModel {
 
 		private PartitionDataList dataList;
-		
-		String[] columnNames = { "Name", "Height" };
+		private String[] columnNames = { "Name", "Height" };
 
 		public TaxaTableModel(PartitionDataList dataList) {
-		this.dataList = dataList;
+			this.dataList = dataList;
+		}
+
+		public void setDataList(PartitionDataList dataList) {
+			this.dataList = dataList;
 		}
 
 		public int getColumnCount() {
@@ -198,14 +195,19 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	}// END: TaxaTableModel class
 
-	public void populateTaxaTable(PartitionDataList dataList) {
-		taxaTableModel = new TaxaTableModel(dataList);
-		taxaTable.setModel(taxaTableModel);
-	}
-	
+	public void updateTaxaTable(PartitionDataList dataList) {
+		taxaTableModel.setDataList(dataList);
+		setDataList(dataList);
+		fireTableDataChanged();
+	}// END: updateTaxaTable
+
 	public void fireTableDataChanged() {
 		getHeights();
 		taxaTableModel.fireTableDataChanged();
 	}// END: fireTableDataChanged
+
+	public void setDataList(PartitionDataList dataList) {
+		this.dataList = dataList;
+	}
 
 }// END: class

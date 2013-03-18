@@ -27,13 +27,14 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int CLOCK_RATE_MODEL_INDEX = 7;
 	public final static int FREQUENCY_MODEL_INDEX = 8;
 
-	public static String[] COLUMN_NAMES = { "Tree Model", "Data Type" ,"From", "To", "Every",
-			"Branch Substitution Model", "Site Rate Model", "Clock Rate Model",
-			"Frequency Model" };
+	public static String[] COLUMN_NAMES = { "Tree Model", "Data Type", "From",
+			"To", "Every", "Branch Substitution Model", "Site Rate Model",
+			"Clock Rate Model", "Frequency Model" };
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
-			JComboBox.class, JComboBox.class ,Integer.class, Integer.class, Integer.class,
-			JButton.class, JButton.class, JButton.class, JButton.class };
+			JComboBox.class, JComboBox.class, Integer.class, Integer.class,
+			Integer.class, JButton.class, JButton.class, JButton.class,
+			JButton.class };
 
 	private PartitionDataList dataList;
 
@@ -60,9 +61,10 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
 		case TREE_MODEL_INDEX:
-			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile;
+			return dataList.get(row).treeFile == null ? new File("") : dataList
+					.get(row).treeFile;
 		case DATA_TYPE_INDEX:
-			return PartitionData.dataTypes[ dataList.get(row).dataTypeIndex];
+			return PartitionData.dataTypes[dataList.get(row).dataTypeIndex];
 		case FROM_INDEX:
 			return dataList.get(row).from;
 		case TO_INDEX:
@@ -71,35 +73,24 @@ public class PartitionTableModel extends AbstractTableModel {
 			return dataList.get(row).every;
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
 
-//			branchSubstitutionModelEditor = new BranchSubstitutionModelEditor(
-//					dataList, row);
 			final JButton branchSubstModelButton = new JButton(
 					COLUMN_NAMES[column]);
 			branchSubstModelButton
-					.addActionListener(new ListenOpenBranchSubstitutionModelEditor(row));
+					.addActionListener(new ListenOpenBranchSubstitutionModelEditor(
+							row));
 			return branchSubstModelButton;
 
 		case SITE_RATE_MODEL_INDEX:
 
-//			try {
+			final JButton siteRateModelButton = new JButton(
+					COLUMN_NAMES[column]);
+			siteRateModelButton
+					.addActionListener(new ListenOpenSiteRateModelEditor(row));
 
-//				siteRateModelEditor = new SiteRateModelEditor(dataList, row);
-				final JButton siteRateModelButton = new JButton(
-						COLUMN_NAMES[column]);
-				siteRateModelButton
-						.addActionListener(new ListenOpenSiteRateModelEditor(row));
-
-				return siteRateModelButton;
-
-//			} catch (NumberFormatException e) {
-//				Utils.handleException(e);
-//			} catch (BadLocationException e) {
-//				Utils.handleException(e);
-//			}
+			return siteRateModelButton;
 
 		case CLOCK_RATE_MODEL_INDEX:
 
-//			clockRateModelEditor = new ClockRateModelEditor(dataList, row);
 			final JButton clockRateModelButton = new JButton(
 					COLUMN_NAMES[column]);
 			clockRateModelButton
@@ -108,11 +99,10 @@ public class PartitionTableModel extends AbstractTableModel {
 
 		case FREQUENCY_MODEL_INDEX:
 
-//			frequencyModelEditor = new FrequencyModelEditor(dataList, row);
 			final JButton frequencyModelButton = new JButton(
 					COLUMN_NAMES[column]);
 			frequencyModelButton
-					.addActionListener(new ListenOpenFrequencyModelEditor( row));
+					.addActionListener(new ListenOpenFrequencyModelEditor(row));
 			return frequencyModelButton;
 
 		default:
@@ -124,50 +114,50 @@ public class PartitionTableModel extends AbstractTableModel {
 	public void setValueAt(Object value, int row, int column) {
 
 		switch (column) {
-		
+
 		case TREE_MODEL_INDEX:
 			dataList.get(row).treeFile = (File) value;
 			break;
-			
+
 		case DATA_TYPE_INDEX:
-			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(PartitionData.dataTypes, (String)value);
+			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(
+					PartitionData.dataTypes, (String) value);
 			break;
-			
+
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
 			break;
-			
+
 		case TO_INDEX:
 			dataList.get(row).to = (Integer) value;
 			break;
-			
+
 		case EVERY_INDEX:
 			dataList.get(row).every = (Integer) value;
 			break;
-			
+
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
 			dataList.get(row).substitutionModelIndex = (Integer) value;
-			break;		
-			
+			break;
+
 		case SITE_RATE_MODEL_INDEX:
 			dataList.get(row).siteRateModelIndex = (Integer) value;
 			break;
-			
+
 		case CLOCK_RATE_MODEL_INDEX:
 			dataList.get(row).clockModelIndex = (Integer) value;
 			break;
-			
+
 		case FREQUENCY_MODEL_INDEX:
 			dataList.get(row).frequencyModelIndex = (Integer) value;
 			break;
-			
+
 		default:
 			throw new RuntimeException("Invalid index.");
-//			break;
 		}
 
 		fireTableCellUpdated(row, column);
-		
+
 	}// END: setValueAt
 
 	public void addRow(PartitionData row) {
@@ -181,14 +171,15 @@ public class PartitionTableModel extends AbstractTableModel {
 	}
 
 	public void copyPreviousRow() {
-		// TODO: not working, this should call new constructor with all the elements
+		// TODO: not working, this should call new constructor with all the
+		// elements
 		int size = dataList.size();
 		if (size > 0) {
-			dataList.add(dataList.get(dataList.size()-1));
+			dataList.add(dataList.get(dataList.size() - 1));
 			fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
 		}
 	}
-	
+
 	public void deleteRow(int row) {
 		dataList.remove(row);
 		this.fireTableDataChanged();
@@ -236,13 +227,13 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	private class ListenOpenBranchSubstitutionModelEditor implements
 			ActionListener {
-		
+
 		private int row;
-		
+
 		public ListenOpenBranchSubstitutionModelEditor(int row) {
-		this.row = row;
-		}//END: Constructor
-		
+			this.row = row;
+		}// END: Constructor
+
 		public void actionPerformed(ActionEvent ev) {
 
 			branchSubstitutionModelEditor = new BranchSubstitutionModelEditor(
@@ -279,7 +270,7 @@ public class PartitionTableModel extends AbstractTableModel {
 		public ListenOpenClockRateModelEditor(int row) {
 			this.row = row;
 		}
-		
+
 		public void actionPerformed(ActionEvent ev) {
 
 			clockRateModelEditor = new ClockRateModelEditor(dataList, row);
@@ -294,6 +285,7 @@ public class PartitionTableModel extends AbstractTableModel {
 		public ListenOpenFrequencyModelEditor(int row) {
 			this.row = row;
 		}
+
 		public void actionPerformed(ActionEvent ev) {
 
 			frequencyModelEditor = new FrequencyModelEditor(dataList, row);
@@ -301,5 +293,9 @@ public class PartitionTableModel extends AbstractTableModel {
 
 		}// END: actionPerformed
 	}// END: ListenOpenSiteRateModelEditor
+
+	public void setDataList(PartitionDataList dataList) {
+		this.dataList = dataList;
+	}
 
 }// END: class

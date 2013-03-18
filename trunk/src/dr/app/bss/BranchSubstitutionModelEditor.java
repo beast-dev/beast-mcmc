@@ -41,6 +41,8 @@ public class BranchSubstitutionModelEditor {
 	
 	public BranchSubstitutionModelEditor(PartitionDataList dataList, int row) {
 		
+//		System.out.println("AND LAUNCH!");
+		
 		this.dataList = dataList;
 		this.row = row;
 		

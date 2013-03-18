@@ -147,6 +147,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	// Listen to tree choices, set tree model in partition data
 	private class PartitionTableModelListener implements TableModelListener {
+		
+		private PartitionDataList dataList;
+		
+		public PartitionTableModelListener(PartitionDataList dataList) {
+			this.dataList = dataList;
+		}
+		
 		public void tableChanged(TableModelEvent ev) {
 
 			if (ev.getType() == TableModelEvent.UPDATE) {
@@ -156,7 +163,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
 					File value = (File) partitionTableModel.getValueAt(row, column);
-					dataList.get(row).treeFile = value;
+					this.dataList.get(row).treeFile = value;
 					
 				}
 				// else if(column == PartitionTableModel.DATA_TYPE_INDEX) {
@@ -209,8 +216,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private class JTableComboBoxCellEditor extends DefaultCellEditor {
 
-		public JTableComboBoxCellEditor() {
+		private PartitionDataList dataList;
+		
+		public JTableComboBoxCellEditor(PartitionDataList dataList) {
 			super(new JComboBox());
+			this.dataList = dataList;
 		}
 
 		public Component getTableCellEditorComponent(JTable table,
@@ -220,7 +230,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
-				for (File file : dataList.forestList) {
+				for (File file : this.dataList.forestList) {
 					((JComboBox) editorComponent).addItem(file);
 				}// END: fill loop
 
@@ -371,17 +381,17 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		
 		partitionTableModel = new PartitionTableModel(dataList);
 		partitionTableModel
-				.addTableModelListener(new PartitionTableModelListener());
+				.addTableModelListener(new PartitionTableModelListener(dataList));
 		partitionTable.setModel(partitionTableModel);
 		
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.TREE_MODEL_INDEX);
-		column.setCellEditor(new JTableComboBoxCellEditor());
+		column.setCellEditor(new JTableComboBoxCellEditor(dataList));
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.DATA_TYPE_INDEX);
-		column.setCellEditor(new JTableComboBoxCellEditor());
+		column.setCellEditor(new JTableComboBoxCellEditor(dataList));
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
 		column = partitionTable.getColumnModel().getColumn(

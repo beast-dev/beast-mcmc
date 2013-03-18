@@ -371,10 +371,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	}// END: getExportableComponent
 
 	public void updatePartitionTable(PartitionDataList dataList) {
-
 		partitionTableModel.setDataList(dataList);
 		setDataList(dataList);
-
 		setPartitions();
 		partitionTableModel.fireTableDataChanged();
 	}// END: populatePartitionTable

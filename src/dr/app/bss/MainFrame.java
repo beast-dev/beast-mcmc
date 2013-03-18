@@ -527,7 +527,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: doLoadSettings
 
-	// TODO: update UI
+	// TODO: update taxa table
 	private void loadSettings(File file) {
 
 		try {
@@ -547,6 +547,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 					dataList
 					);
 
+			taxaPanel.populateTaxaTable(dataList);
+			
 		} catch (IOException ioe) {
 
 			Utils.handleException(

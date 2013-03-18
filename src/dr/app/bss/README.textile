@@ -21,7 +21,7 @@ Fast & furious sequence simulator in Beagle.
 h1. TODO
 
 * Idref for branch subs model does not update with editor choices
-* update tree list and taxa panel on load
+* update taxa panel upon load
 * populate the Edit and Help menus with custom items
 * update ant buildfile
 * show icons in Simulate panel

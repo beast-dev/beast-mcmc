@@ -133,8 +133,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private void setPartitions() {
 		
-//		partitionsCount = dataList.size();
-		
 		addPartitionAction.setEnabled(true);
 		if (partitionsCount == 1) {
 			removePartitionAction.setEnabled(false);

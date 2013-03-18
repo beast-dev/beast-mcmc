@@ -72,11 +72,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		this.dataList = dataList;
 		
 		partitionTable = new JTable();
-//		partitionTableModel = new PartitionTableModel(this.dataList);
-//		partitionTableModel
-//				.addTableModelListener(new PartitionTableModelListener());
-//		partitionTable.setModel(partitionTableModel);
-//		
 		partitionTable.getTableHeader().setReorderingAllowed(false);
 		partitionTable.addMouseListener(new JTableButtonMouseListener(
 				partitionTable));
@@ -131,17 +126,14 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		actionPanel.setAddAction(addPartitionAction);
 		actionPanel.setRemoveAction(removePartitionAction);
 		add(actionPanel, BorderLayout.SOUTH);
-
 		
-		//TODO: partition table should be bound to dataList
 		populatePartitionTable(this.dataList);
-		setPartitions();
 		
 	}// END: Constructor
 
 	private void setPartitions() {
 		
-		partitionsCount = dataList.size();
+//		partitionsCount = dataList.size();
 		
 		addPartitionAction.setEnabled(true);
 		if (partitionsCount == 1) {
@@ -151,8 +143,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}
 
 		ColumnResizer.adjustColumnPreferredWidths(partitionTable);
-//		partitionTable.revalidate();
-//		this.updateUI();
 	}// END: setPartitions
 
 	// Listen to tree choices, set tree model in partition data
@@ -165,8 +155,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 				if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
-					File value = (File) partitionTableModel.getValueAt(row,
-							column);
+					File value = (File) partitionTableModel.getValueAt(row, column);
 					dataList.get(row).treeFile = value;
 					
 				}
@@ -378,32 +367,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			PartitionDataList dataList
 			) {
 		
-//		partitionTable = new JTable();
+		partitionsCount = dataList.size();
+		
 		partitionTableModel = new PartitionTableModel(dataList);
 		partitionTableModel
 				.addTableModelListener(new PartitionTableModelListener());
 		partitionTable.setModel(partitionTableModel);
 		
-//		partitionTable.getTableHeader().setReorderingAllowed(false);
-//		partitionTable.addMouseListener(new JTableButtonMouseListener(
-//				partitionTable));
-//
-//	    hider = new TableColumnHider(partitionTable);
-//		
-//		setLayout(new BorderLayout());
-//
-//		scrollPane = new JScrollPane(partitionTable,
-//				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-//				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-//		RowNumberTable rowNumberTable = new RowNumberTable(partitionTable);
-//		scrollPane.setRowHeaderView(rowNumberTable);
-//		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
-//				rowNumberTable.getTableHeader());
-//
-//		scrollPane.getViewport().setOpaque(false);
-//
-//		add(scrollPane, BorderLayout.CENTER);
-
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.TREE_MODEL_INDEX);
 		column.setCellEditor(new JTableComboBoxCellEditor());
@@ -434,13 +404,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
-//		ActionPanel actionPanel = new ActionPanel(false);
-//		actionPanel.setAddAction(addPartitionAction);
-//		actionPanel.setRemoveAction(removePartitionAction);
-//		add(actionPanel, BorderLayout.SOUTH);
-		
-		partitionTableModel.fireTableDataChanged();
-		
-	}
+		setPartitions();
+
+	}// END: populatePartitionTable
 	
 }// END: class

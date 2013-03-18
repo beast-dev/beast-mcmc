@@ -12,6 +12,12 @@ import javax.swing.text.BadLocationException;
 @SuppressWarnings("serial")
 public class PartitionTableModel extends AbstractTableModel {
 
+	private PartitionDataList dataList;
+
+	public static String[] COLUMN_NAMES = { "Tree Model", "Data Type", "From",
+			"To", "Every", "Branch Substitution Model", "Site Rate Model",
+			"Clock Rate Model", "Frequency Model" };
+
 	private BranchSubstitutionModelEditor branchSubstitutionModelEditor;
 	private SiteRateModelEditor siteRateModelEditor;
 	private ClockRateModelEditor clockRateModelEditor;
@@ -27,20 +33,39 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int CLOCK_RATE_MODEL_INDEX = 7;
 	public final static int FREQUENCY_MODEL_INDEX = 8;
 
-	public static String[] COLUMN_NAMES = { "Tree Model", "Data Type", "From",
-			"To", "Every", "Branch Substitution Model", "Site Rate Model",
-			"Clock Rate Model", "Frequency Model" };
-
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JComboBox.class, JComboBox.class, Integer.class, Integer.class,
 			Integer.class, JButton.class, JButton.class, JButton.class,
 			JButton.class };
 
-	private PartitionDataList dataList;
-
 	public PartitionTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}// END: Constructor
+
+	public void addRow(PartitionData row) {
+		dataList.add(row);
+		fireTableDataChanged();
+	}
+
+	public void addDefaultRow() {
+		dataList.add(new PartitionData());
+		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
+	}
+
+	public void copyPreviousRow() {
+		// TODO: not working, this should call new constructor with all the
+		// elements
+		int size = dataList.size();
+		if (size > 0) {
+			dataList.add(dataList.get(dataList.size() - 1));
+			fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
+		}
+	}
+
+	public void deleteRow(int row) {
+		dataList.remove(row);
+		this.fireTableDataChanged();
+	}
 
 	@Override
 	public int getColumnCount() {
@@ -56,6 +81,46 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Class<?> getColumnClass(int columnIndex) {
 		return COLUMN_TYPES[columnIndex];
 	}// END: getColumnClass
+
+	public boolean isCellEditable(int row, int column) {
+		switch (column) {
+		case TREE_MODEL_INDEX:
+			return true;
+		case DATA_TYPE_INDEX:
+			return true;
+		case FROM_INDEX:
+			return true;
+		case TO_INDEX:
+			return true;
+		case EVERY_INDEX:
+			return true;
+		case BRANCH_SUBSTITUTION_MODEL_INDEX:
+			return false;
+		case SITE_RATE_MODEL_INDEX:
+			return false;
+		case CLOCK_RATE_MODEL_INDEX:
+			return false;
+		case FREQUENCY_MODEL_INDEX:
+			return false;
+		default:
+			return false;
+		}
+	}// END: isCellEditable
+
+	public String getColumnName(int column) {
+		return COLUMN_NAMES[column];
+	}// END: getColumnName
+
+	public String[] getColumn(int index) {
+
+		String[] column = new String[dataList.size()];
+
+		for (int i = 0; i < dataList.size(); i++) {
+			column[i] = String.valueOf(getValueAt(i, index));
+		}
+
+		return column;
+	}// END: getColumn
 
 	@Override
 	public Object getValueAt(final int row, final int column) {
@@ -159,71 +224,6 @@ public class PartitionTableModel extends AbstractTableModel {
 		fireTableCellUpdated(row, column);
 
 	}// END: setValueAt
-
-	public void addRow(PartitionData row) {
-		dataList.add(row);
-		fireTableDataChanged();
-	}
-
-	public void addDefaultRow() {
-		dataList.add(new PartitionData());
-		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
-	}
-
-	public void copyPreviousRow() {
-		// TODO: not working, this should call new constructor with all the
-		// elements
-		int size = dataList.size();
-		if (size > 0) {
-			dataList.add(dataList.get(dataList.size() - 1));
-			fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
-		}
-	}
-
-	public void deleteRow(int row) {
-		dataList.remove(row);
-		this.fireTableDataChanged();
-	}
-
-	public String getColumnName(int column) {
-		return COLUMN_NAMES[column];
-	}// END: getColumnName
-
-	public String[] getColumn(int index) {
-
-		String[] column = new String[dataList.size()];
-
-		for (int i = 0; i < dataList.size(); i++) {
-			column[i] = String.valueOf(getValueAt(i, index));
-		}
-
-		return column;
-	}// END: getColumn
-
-	public boolean isCellEditable(int row, int column) {
-		switch (column) {
-		case TREE_MODEL_INDEX:
-			return true;
-		case DATA_TYPE_INDEX:
-			return true;
-		case FROM_INDEX:
-			return true;
-		case TO_INDEX:
-			return true;
-		case EVERY_INDEX:
-			return true;
-		case BRANCH_SUBSTITUTION_MODEL_INDEX:
-			return false;
-		case SITE_RATE_MODEL_INDEX:
-			return false;
-		case CLOCK_RATE_MODEL_INDEX:
-			return false;
-		case FREQUENCY_MODEL_INDEX:
-			return false;
-		default:
-			return false;
-		}
-	}// END: isCellEditable
 
 	private class ListenOpenBranchSubstitutionModelEditor implements
 			ActionListener {

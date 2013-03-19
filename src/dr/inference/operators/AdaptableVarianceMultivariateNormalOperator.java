@@ -348,7 +348,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
+            //System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
 
             CoercionMode mode = CoercionMode.parseMode(xo);
 
@@ -405,9 +405,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 }
             }
 
-            for (int i = 0; i < dim; i++) {
+            /*for (int i = 0; i < dim; i++) {
                 System.err.println(transformations[i]);
-            }
+            }*/
 
             // Make sure varMatrix is square and dim(varMatrix) = dim(parameter)
 
@@ -445,7 +445,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newDoubleRule(INITIAL),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
-                new ElementRule(Parameter.class)
+                new ElementRule(Parameter.class),
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
         };
 
     };

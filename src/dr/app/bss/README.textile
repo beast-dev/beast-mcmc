@@ -20,7 +20,6 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* fix siteCount, TO and BSS
 * Idref for branch subs model does not update with editor choices
 * populate the Edit and Help menus with custom items
 * update ant buildfile
@@ -30,5 +29,5 @@ h1. TODO
 * add tree column in Taxa panel
 * command line interface
 * simulate tree given taxa names only
-* connect 'sequence length' and 'to' fields
+* connect siteCount, sequence length and to fields
 

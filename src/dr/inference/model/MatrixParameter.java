@@ -1,7 +1,7 @@
 /*
  * MatrixParameter.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -219,7 +219,8 @@ public class MatrixParameter extends CompoundParameter {
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
                 AttributeRule.newIntegerRule(ROW_DIMENSION, true),
-                AttributeRule.newIntegerRule(COLUMN_DIMENSION, true)
+                AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
+                AttributeRule.newBooleanRule(TRANSPOSE, true),
         };
 
         public Class getReturnType() {

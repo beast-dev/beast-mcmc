@@ -1,7 +1,7 @@
 /*
  * MultivariateNormalDistributionModel.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.util.Transform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -40,7 +41,8 @@ import org.w3c.dom.Element;
 
 public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel {
 
-    public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
+    public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter,
+                                               Transform[] transforms) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
         this.mean = meanParameter;
         addVariable(meanParameter);
@@ -52,6 +54,11 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
 
         distribution = createNewDistribution();
         distributionKnown = true;
+        this.transforms = transforms;
+    }
+
+    public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
+        this(meanParameter, precParameter, null);
     }
 
     public MatrixParameter getPrecisionMatrixParameter() {
@@ -72,7 +79,18 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
             distribution = createNewDistribution();
             distributionKnown = true;
         }
-        return distribution.logPdf(x);
+
+        double rtnValue;
+        if (transforms == null) {
+            rtnValue = distribution.logPdf(x);
+        } else {
+            double[] y = new double[x.length];
+            for (int i = 0; i < x.length; ++i) {
+                y[i] = transforms[i].transform(x[i]);
+            }
+            rtnValue = distribution.logPdf(y);
+        }
+        return rtnValue;
     }
 
     public double[][] getScaleMatrix() {
@@ -128,6 +146,8 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     private final MatrixParameter precision;
     private MultivariateNormalDistribution distribution;
     private MultivariateNormalDistribution storedDistribution;
+
+    private final Transform[] transforms;
 
     private boolean distributionKnown;
     private boolean storedDistributionKnown;

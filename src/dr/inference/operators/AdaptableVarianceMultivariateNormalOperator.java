@@ -39,6 +39,7 @@ import dr.xml.*;
 
 /**
  * @author Guy Baele
+ * @author Marc Suchard
  */
 public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercableOperator {
 
@@ -147,7 +148,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         }
 
         //store MH-ratio in logq
-        double jacobian = 0.0;
+        double logJacobian = 0.0;
 
         double[] oldX = new double[x.length];
         System.arraycopy(x, 0, oldX, 0, x.length);
@@ -243,7 +244,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     // caution: decomposition returns lower triangular
                 }
                 parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
+//                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
+                logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
+                        - transformations[i].getLogJacobian(x[i]);
             }
 
             /*for (int i = 0; i < dim; i++) {
@@ -266,7 +269,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     // caution: decomposition returns lower triangular
                 }
                 parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
+//                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
+                logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
+                        - transformations[i].getLogJacobian(x[i]);
                 //jacobian *= Math.exp(logx[i])*(1/x[i]);
             }
 
@@ -282,7 +287,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         //System.err.println("scale factor: " + scaleFactor);
         //System.err.println("log(Jacobian): " + jacobian);
 
-        return jacobian;
+        return logJacobian;
     }
 
     //MCMCOperator INTERFACE

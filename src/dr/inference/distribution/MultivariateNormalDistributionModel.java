@@ -28,9 +28,6 @@ package dr.inference.distribution;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.util.Transform;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A class that acts as a model for multivariate normally distributed data.
@@ -41,8 +38,7 @@ import org.w3c.dom.Element;
 
 public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel {
 
-    public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter,
-                                               Transform[] transforms) {
+    public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
         this.mean = meanParameter;
         addVariable(meanParameter);
@@ -54,11 +50,6 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
 
         distribution = createNewDistribution();
         distributionKnown = true;
-        this.transforms = transforms;
-    }
-
-    public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
-        this(meanParameter, precParameter, null);
     }
 
     public MatrixParameter getPrecisionMatrixParameter() {
@@ -80,17 +71,7 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
             distributionKnown = true;
         }
 
-        double rtnValue;
-        if (transforms == null) {
-            rtnValue = distribution.logPdf(x);
-        } else {
-            double[] y = new double[x.length];
-            for (int i = 0; i < x.length; ++i) {
-                y[i] = transforms[i].transform(x[i]);
-            }
-            rtnValue = distribution.logPdf(y);
-        }
-        return rtnValue;
+        return distribution.logPdf(x);
     }
 
     public double[][] getScaleMatrix() {
@@ -130,10 +111,6 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     protected void acceptState() {
     } // no additional state needs accepting
 
-    public Element createElement(Document document) {
-        throw new RuntimeException("Not implemented!");
-    }
-
     // **************************************************************
     // Private instance variables and functions
     // **************************************************************
@@ -146,8 +123,6 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     private final MatrixParameter precision;
     private MultivariateNormalDistribution distribution;
     private MultivariateNormalDistribution storedDistribution;
-
-    private final Transform[] transforms;
 
     private boolean distributionKnown;
     private boolean storedDistributionKnown;

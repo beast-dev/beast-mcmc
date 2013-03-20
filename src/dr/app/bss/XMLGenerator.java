@@ -116,12 +116,16 @@ public class XMLGenerator {
 
 						treeModelList.add(treeModel);
 
+						System.out.println("NOT IN LIST");
+						
 					} else {
 
 						int index = Utils.treeModelIsIdenticalWith(treeModel,
 								treeModelList) + 1;
 						data.treeModelIdref += index;
 
+						System.out.println("IDENTICAL WITH " + index);
+						
 					}
 
 				}// END: exception
@@ -263,7 +267,6 @@ public class XMLGenerator {
 				} else {
 
 					int index = Utils.isIdenticalWith(data, partitionList, Utils.BRANCH_MODEL_ELEMENT) + 1;
-					//TODO: this too btw
 					data.substitutionModelIdref += index;
 
 				}
@@ -367,7 +370,6 @@ public class XMLGenerator {
 
 		for (PartitionData data : dataList) {
 
-			// TODO: not always all three are needed
 			writer.writeOpenTag(
 					PartitionParser.PARTITION,
 					new Attribute[] {

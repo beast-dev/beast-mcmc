@@ -27,6 +27,9 @@ package dr.util;
 
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * interface for the one-to-one transform of a continuous variable.
  * A static member Transform.LOG provides an instance of LogTransform
@@ -38,11 +41,13 @@ import dr.xml.*;
  */
 public interface Transform {
     /**
+     * @param value evaluation point
      * @return the transformed value
      */
     double transform(double value);
 
     /**
+     * @param value evaluation point
      * @return the inverse transformed value
      */
     double inverse(double value);
@@ -52,11 +57,15 @@ public interface Transform {
      */
     String getTransformName();
 
+    /**
+     * @param value evaluation point
+     * @return the log of the transform's jacobian
+     */
 
-    public double getLogJacobian(double oldValue, double newValue);
+    public double getLogJacobian(double value);
 
 
-    public static class LogTransform implements Transform {
+    public static class LogTransform implements Transform, Citable {
 
         public LogTransform() {
         }
@@ -73,8 +82,25 @@ public interface Transform {
             return "log";
         }
 
-        public double getLogJacobian(double oldValue, double newValue) {
-            return Math.log(newValue * (1.0 / oldValue));
+//        public double getLogJacobian(double oldValue, double newValue) {
+//            return Math.log(newValue * (1.0 / oldValue));
+//        }
+
+        public double getLogJacobian(double value) {
+            return -Math.log(value);
+        }
+
+        public List<Citation> getCitations() {
+            List<Citation> citations = new ArrayList<Citation>();
+            citations.add(new Citation(
+                    new Author[]{
+                            new Author("MA", "Suchard"),
+                            new Author("G", "Baele"),
+                            new Author("P", "Lemey"),
+                    },
+                    Citation.Status.IN_PREPARATION
+            ));
+            return citations;
         }
     }
 
@@ -95,8 +121,13 @@ public interface Transform {
             return "logit";
         }
 
-        public double getLogJacobian(double oldValue, double newValue) {
-            return Math.log((1.0 - newValue) * (1.0 / oldValue - 1.0 / (1.0 - oldValue)));
+//        public double getLogJacobian(double oldValue, double newValue) {
+//            // TODO Code review; this seems wrong, as it is lacking symmetric in old/newValue
+//            return Math.log((1.0 - newValue) * (1.0 / oldValue - 1.0 / (1.0 - oldValue)));
+//        }
+
+        public double getLogJacobian(double value) {
+            return Math.log(1.0 - value) - Math.log(value);
         }
     }
 
@@ -117,7 +148,7 @@ public interface Transform {
             return "none";
         }
 
-        public double getLogJacobian(double oldValue, double newValue) {
+        public double getLogJacobian(double value) {
             return 0.0;
         }
     }
@@ -125,7 +156,8 @@ public interface Transform {
     public class ParsedTransform {
         public Transform transform;
         public int start; // zero-indexed
-        public int end; // zero-indexed
+        public int end; // zero-indexed, i.e, i = start; i < end; ++i
+        public int every;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -143,16 +175,20 @@ public interface Transform {
 
             ParsedTransform transform = new ParsedTransform();
             transform.transform = thisTransform;
-            transform.start = Integer.parseInt((String) xo.getAttribute(START)) - 1;
-            transform.end = Integer.parseInt((String) xo.getAttribute(END));
+            transform.start = xo.getAttribute(START, 1);
+            transform.end = xo.getAttribute(END, Integer.MAX_VALUE);
+            transform.every = xo.getAttribute(EVERY, 1);
+
+            transform.start--; // zero-indexed
             return transform;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
             return new XMLSyntaxRule[]{
                     AttributeRule.newStringRule(TYPE),
-                    AttributeRule.newIntegerRule(START),
-                    AttributeRule.newIntegerRule(END),
+                    AttributeRule.newIntegerRule(START, true),
+                    AttributeRule.newIntegerRule(END, true),
+                    AttributeRule.newIntegerRule(EVERY, true),
             };
         }
 
@@ -169,6 +205,15 @@ public interface Transform {
         }
     };
 
+    public class Util {
+        public static Transform[] getListOfNoTransforms(int size) {
+            Transform[] transforms = new Transform[size];
+            for (int i = 0; i < size; ++i) {
+                transforms[i] = NONE;
+            }
+            return transforms;
+        }
+    }
 
     public static final LogTransform LOG = new LogTransform();
     public static final LogitTransform LOGIT = new LogitTransform();
@@ -180,4 +225,5 @@ public interface Transform {
     public static final String TYPE = "type";
     public static final String START = "start";
     public static final String END = "end";
+    public static final String EVERY = "every";
 }

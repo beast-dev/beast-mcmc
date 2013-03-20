@@ -29,7 +29,6 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.util.Transform;
 import dr.xml.*;
 
 /**
@@ -38,8 +37,6 @@ import dr.xml.*;
 public class MultivariateNormalDistributionModelParser extends AbstractXMLObjectParser {
 
     public static final String NORMAL_DISTRIBUTION_MODEL = "multivariateNormalDistributionModel";
-//    public static final String MEAN = "mean";
-//    public static final String PREC = "precision";
 
     public String getParserName() {
         return NORMAL_DISTRIBUTION_MODEL;
@@ -57,28 +54,7 @@ public class MultivariateNormalDistributionModelParser extends AbstractXMLObject
                 mean.getDimension() != precision.getColumnDimension())
             throw new XMLParseException("Mean and precision have wrong dimensions in " + xo.getName() + " element");
 
-        Transform[] transforms = null;
-
-        for (int i = 0; i < xo.getChildCount(); i++) {
-            Object child = xo.getChild(i);
-            if (child instanceof Transform.ParsedTransform) {
-                Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
-                if (transforms == null) {
-                    transforms = new Transform[mean.getDimension()];
-                    for (Transform t : transforms) {
-                        t = Transform.NONE;
-                    }
-                }
-                if (thisObject.start < 0 || thisObject.end > mean.getDimension()) {
-                    throw new XMLParseException("Transformation dimension is out of bounds [1," + mean.getDimension() + "]");
-                }
-                for (int j = thisObject.start; j < thisObject.end; ++j) {
-                    transforms[j] = thisObject.transform;
-                }
-            }
-        }
-
-        return new MultivariateNormalDistributionModel(mean, precision, transforms);
+        return new MultivariateNormalDistributionModel(mean, precision);
     }
 
     //************************************************************************
@@ -94,34 +70,10 @@ public class MultivariateNormalDistributionModelParser extends AbstractXMLObject
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(MultivariateDistributionLikelihood.MVN_PRECISION,
                     new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
-            new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
-//            new ElementRule(MEAN,
-//                    new XMLSyntaxRule[]{
-//                            new XORRule(
-//                                    new ElementRule(Parameter.class),
-//                                    new ElementRule(Double.class)
-//                            )}
-//            ),
-//            new XORRule(
-//                    new ElementRule(STDEV,
-//                            new XMLSyntaxRule[]{
-//                                    new XORRule(
-//                                            new ElementRule(Parameter.class),
-//                                            new ElementRule(Double.class)
-//                                    )}
-//                    ),
-//                    new ElementRule(PREC,
-//                            new XMLSyntaxRule[]{
-//                                    new XORRule(
-//                                            new ElementRule(Parameter.class),
-//                                            new ElementRule(Double.class)
-//                                    )}
-//                    )
-//            )
     };
 
     public String getParserDescription() {
-        return "Describes a normal distribution with a given mean and standard deviation " +
+        return "Describes a normal distribution with a given mean and precision " +
                 "that can be used in a distributionLikelihood element";
     }
 

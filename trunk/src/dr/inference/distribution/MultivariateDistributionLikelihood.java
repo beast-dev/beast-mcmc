@@ -1,7 +1,7 @@
 /*
  * MultivariateDistributionLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,7 +29,11 @@ import dr.inference.model.*;
 import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.math.distributions.*;
 import dr.util.Attribute;
+import dr.util.Citable;
+import dr.util.Transform;
 import dr.xml.*;
+
+import java.util.logging.Logger;
 
 
 /**
@@ -56,26 +60,53 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String DATA = "data";
 
     private final MultivariateDistribution distribution;
+    private final Transform[] transforms;
 
     public MultivariateDistributionLikelihood(String name, ParametricMultivariateDistributionModel model) {
+        this(name, model, null);
+    }
+
+    public MultivariateDistributionLikelihood(String name, ParametricMultivariateDistributionModel model,
+                                              Transform[] transforms) {
         super(model);
         this.distribution = model;
+        this.transforms = transforms;
     }
 
     public MultivariateDistributionLikelihood(String name, MultivariateDistribution distribution) {
+        this(name, distribution, null);
+    }
+
+    public MultivariateDistributionLikelihood(String name, MultivariateDistribution distribution,
+                                              Transform[] transforms) {
         super(new DefaultModel(name));
         this.distribution = distribution;
+        this.transforms = transforms;
     }
 
     public MultivariateDistributionLikelihood(MultivariateDistribution distribution) {
-        this(distribution.getType(), distribution);
+        this(distribution, null);
+    }
+
+    public MultivariateDistributionLikelihood(MultivariateDistribution distribution, Transform[] transforms) {
+        this(distribution.getType(), distribution, transforms);
     }
 
     public double calculateLogLikelihood() {
         double logL = 0.0;
 
         for (Attribute<double[]> data : dataList) {
-            logL += distribution.logPdf(data.getAttributeValue());
+            double[] x = data.getAttributeValue();
+            if (transforms != null) {
+                double[] y = new double[x.length];
+                for (int i = 0; i < x.length; ++i) {
+                    logL += transforms[i].getLogJacobian(x[i]);
+                    y[i] = transforms[i].transform(x[i]);
+                }
+                logL += distribution.logPdf(y);
+            } else {
+                logL += distribution.logPdf(x);
+            }
         }
         return logL;
     }
@@ -91,6 +122,41 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
     public MultivariateDistribution getDistribution() {
         return distribution;
+    }
+
+    public static Transform[] parseListOfTransforms(XMLObject xo, int maxDim) throws XMLParseException {
+        Transform[] transforms = null;
+
+        boolean anyTransforms = false;
+        for (int i = 0; i < xo.getChildCount(); ++i) {
+            if (xo.getChild(i) instanceof Transform.ParsedTransform) {
+                Transform.ParsedTransform t = (Transform.ParsedTransform) xo.getChild(i);
+                if (transforms == null) {
+                    transforms = Transform.Util.getListOfNoTransforms(maxDim);
+                }
+
+                t.end = Math.max(t.end, maxDim);
+                if (t.start < 0 || t.end < 0 || t.start > t.end) {
+                    throw new XMLParseException("Invalid bounds for transform in " + xo.getId());
+                }
+                for (int j = t.start; j < t.end; j += t.every) {
+                    transforms[j] = t.transform;
+                    anyTransforms = true;
+                }
+            }
+        }
+        if (anyTransforms) {
+            StringBuilder sb = new StringBuilder("Using distributional transforms in " + xo.getId() + "\n");
+            for (int i = 0; i < transforms.length; ++i) {
+                if (transforms[i] != Transform.NONE) {
+                    sb.append("\t").append(transforms[i].getTransformName()).append(" on index ")
+                            .append(i + 1).append("\n");
+                }
+            }
+            sb.append("Please cite:\n").append(Citable.Utils.getCitationString(Transform.LOG));
+            Logger.getLogger("dr.utils.Transform").info(sb.toString());
+        }
+        return transforms;
     }
 
     public static XMLObjectParser DIRICHLET_PRIOR_PARSER = new AbstractXMLObjectParser() {
@@ -270,8 +336,13 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             XMLObject cxo = xo.getChild(DistributionLikelihoodParser.DISTRIBUTION);
             ParametricMultivariateDistributionModel distribution = (ParametricMultivariateDistributionModel)
                     cxo.getChild(ParametricMultivariateDistributionModel.class);
+
+            // Parse transforms here
+            int maxDim = distribution.getMean().length;
+            Transform[] transforms = parseListOfTransforms(xo, maxDim);
+
             MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(xo.getId(),
-                    distribution);
+                    distribution, transforms);
 
             cxo = xo.getChild(DATA);
             if (cxo != null) {
@@ -312,6 +383,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 new ElementRule(DistributionLikelihoodParser.DISTRIBUTION,
                         new XMLSyntaxRule[]{new ElementRule(ParametricMultivariateDistributionModel.class)}
                 ),
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)
         };
@@ -344,10 +416,12 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                     mean.getDimension() != precision.getColumnDimension())
                 throw new XMLParseException("Mean and precision have wrong dimensions in " + xo.getName() + " element");
 
+            Transform[] transforms = parseListOfTransforms(xo, mean.getDimension());
+
             MultivariateDistributionLikelihood likelihood =
                     new MultivariateDistributionLikelihood(
                             new MultivariateNormalDistribution(mean.getParameterValues(),
-                                    precision.getParameterAsMatrix())
+                                    precision.getParameterAsMatrix()), transforms
                     );
             cxo = xo.getChild(DATA);
             if (cxo != null) {
@@ -389,6 +463,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(MVN_PRECISION,
                         new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}),
+                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)
         };

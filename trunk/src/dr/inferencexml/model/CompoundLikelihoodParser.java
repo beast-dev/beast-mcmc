@@ -1,7 +1,7 @@
 /*
  * CompoundLikelihoodParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -41,13 +41,14 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     public static final String POSTERIOR = "posterior";
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
+    public static final String PSEUDO_PRIOR = "pseudoPrior";
 
     public String getParserName() {
         return COMPOUND_LIKELIHOOD;
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD};
+        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD, PSEUDO_PRIOR};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

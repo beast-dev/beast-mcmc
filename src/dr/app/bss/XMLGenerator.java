@@ -16,6 +16,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
@@ -28,7 +29,10 @@ import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
+import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.ParameterParser;
+import dr.inferencexml.distribution.DistributionModelParser;
+import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.Report;
 import dr.xml.XMLParser;
@@ -446,7 +450,7 @@ public class XMLGenerator {
 					new Attribute[] { new Attribute.Default<String>(
 							XMLParser.ID, data.clockModelIdref) });
 
-			writeParameter("rate", "clock.rate" + suffix, 1,
+			writeParameter(StrictClockBranchRatesParser.RATE, PartitionData.clockParameterNames[0] + suffix, 1,
 					String.valueOf(data.clockParameterValues[0]), null, null,
 					writer);
 
@@ -454,8 +458,73 @@ public class XMLGenerator {
 
 			break;
 
+        case 1: // Lognormal relaxed clock
+			
+			writer.writeOpenTag(
+					DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+					new Attribute[] { new Attribute.Default<String>(
+							XMLParser.ID, data.clockModelIdref) });
+        	
+			
+			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
+			
+			writer.writeOpenTag(DiscretizedBranchRatesParser.DISTRIBUTION);
+			
+			writer.writeOpenTag(
+					LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+					new Attribute[] { new Attribute.Default<String>(
+							LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"),
+							new Attribute.Default<String>(
+									LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE, "true")		
+					});
+			
+			
+			writeParameter(LogNormalDistributionModelParser.MEAN, PartitionData.clockParameterNames[1] + suffix , 1, String.valueOf(data.clockParameterValues[1]), null, null, writer);
+			
+			writeParameter(LogNormalDistributionModelParser.STDEV, PartitionData.clockParameterNames[2] + suffix , 1, String.valueOf(data.clockParameterValues[2]), null, null, writer);
+			
+			writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
+			
+			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
+			
+			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES, "branchRates.categories" + suffix, 1, null, null, null, writer);
+			
+			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
+			
+			break;
+			
+        case 2: // Exponential relaxed clock
+			
+			writer.writeOpenTag(
+					DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+					new Attribute[] { new Attribute.Default<String>(
+							XMLParser.ID, data.clockModelIdref) });
+        	
+			
+			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
+			
+			writer.writeOpenTag(DiscretizedBranchRatesParser.DISTRIBUTION);
+			
+			writer.writeOpenTag(
+					ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
+					new Attribute[] { new Attribute.Default<String>(
+							LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true")	
+					});
+			
+			
+			writeParameter(DistributionModelParser.MEAN, PartitionData.clockParameterNames[3] + suffix , 1, String.valueOf(data.clockParameterValues[3]), null, null, writer);
+			
+			writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+			
+			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
+			
+			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES, "branchRates.categories" + suffix, 1, null, null, null, writer);
+			
+			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
+			
+			break;			
 		}// END: switch
-
+		
 	}// END: writeBranchRatesModel
 
 	private void writeTaxa(TaxonList taxonList, XMLWriter writer) {
@@ -689,11 +758,11 @@ public class XMLGenerator {
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-			writeParameter(TN93Parser.KAPPA1, "kappa1" + suffix, 1,
+			writeParameter(TN93Parser.KAPPA1, TN93Parser.KAPPA1 + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[7]), null,
 					null, writer);
 
-			writeParameter(TN93Parser.KAPPA2, "kappa2" + suffix, 1,
+			writeParameter(TN93Parser.KAPPA2, TN93Parser.KAPPA2 + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[8]), null,
 					null, writer);
 
@@ -714,11 +783,11 @@ public class XMLGenerator {
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-			writeParameter(YangCodonModelParser.OMEGA, "omega" + suffix, 1,
+			writeParameter(YangCodonModelParser.OMEGA, YangCodonModelParser.OMEGA + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[9]), null,
 					null, writer);
 
-			writeParameter(YangCodonModelParser.KAPPA, "kappa" + suffix, 1,
+			writeParameter(YangCodonModelParser.KAPPA, YangCodonModelParser.KAPPA + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[10]), null,
 					null, writer);
 
@@ -751,7 +820,7 @@ public class XMLGenerator {
 					new Attribute[] { // attributes[]
 							new Attribute.Default<String>(XMLParser.ID,
 									data.frequencyModelIdref), // id
-							new Attribute.Default<String>("dataType", dataType
+							new Attribute.Default<String>(DataType.DATA_TYPE, dataType
 									.getDescription()) // dataType
 					});
 
@@ -775,7 +844,7 @@ public class XMLGenerator {
 					new Attribute[] { // attributes[]
 							new Attribute.Default<String>(XMLParser.ID,
 									"freqModel"), // id
-							new Attribute.Default<String>("dataType", dataType
+							new Attribute.Default<String>(DataType.DATA_TYPE, dataType
 									.getDescription()) // dataType
 					});
 

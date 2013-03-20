@@ -23,11 +23,12 @@ h1. TODO
 * site rate model with invariant sites
 * get rid of siteCount
 * fix multiple trees 
+* frequency labels for codon triplets
 * table for trees files
 * amino acid models and data type
 * sequence length and to fields
-* relaxed clock (exponential, lognormal...)
 * Idref for branch subs model does not update with editor choices
+* Idrefs are not zeroed between XML generations
 * populate the Edit and Help menus with custom items
 * update ant buildfile
 * show icons in Simulate panel
@@ -36,4 +37,4 @@ h1. TODO
 * add tree column in Taxa panel
 * command line interface
 * simulate tree given taxa names only
-
+* amino acid models

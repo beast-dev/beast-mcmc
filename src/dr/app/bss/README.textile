@@ -28,7 +28,7 @@ h1. TODO
 * amino acid models and data type
 * sequence length and to fields
 * Idref for branch subs model does not update with editor choices
-* Idrefs are not zeroed between XML generations
+* Idrefs are not zeroed between XML generations (re-set them after processing partitions)
 * populate the Edit and Help menus with custom items
 * update ant buildfile
 * show icons in Simulate panel

@@ -422,6 +422,20 @@ public class XMLGenerator {
 						data.clockModelIdref);
 				break;
 
+			case 1: // LognormalRelaxedClock
+
+				writer.writeIDref(
+						DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+						data.clockModelIdref);
+				break;
+				
+			case 2: // ExponentialRelaxedClock
+
+				writer.writeIDref(
+						DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+						data.clockModelIdref);
+				break;	
+				
 			}// END: switch
 
 			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
@@ -451,7 +465,8 @@ public class XMLGenerator {
 							XMLParser.ID, data.clockModelIdref) });
 
 			writeParameter(StrictClockBranchRatesParser.RATE, PartitionData.clockParameterNames[0] + suffix, 1,
-					String.valueOf(data.clockParameterValues[0]), null, null,
+					String.valueOf(data.clockParameterValues[0]), 
+//					null, null,
 					writer);
 
 			writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
@@ -479,15 +494,21 @@ public class XMLGenerator {
 					});
 			
 			
-			writeParameter(LogNormalDistributionModelParser.MEAN, PartitionData.clockParameterNames[1] + suffix , 1, String.valueOf(data.clockParameterValues[1]), null, null, writer);
+			writeParameter(LogNormalDistributionModelParser.MEAN, PartitionData.clockParameterNames[1] + suffix , 1, String.valueOf(data.clockParameterValues[1]), 
+//					null, null, 
+					writer);
 			
-			writeParameter(LogNormalDistributionModelParser.STDEV, PartitionData.clockParameterNames[2] + suffix , 1, String.valueOf(data.clockParameterValues[2]), null, null, writer);
+			writeParameter(LogNormalDistributionModelParser.STDEV, PartitionData.clockParameterNames[2] + suffix , 1, String.valueOf(data.clockParameterValues[2]), 
+//					null, null, 
+					writer);
 			
 			writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
 			
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 			
-			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES, "branchRates.categories" + suffix, 1, null, null, null, writer);
+			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES, "branchRates.categories" + suffix, 1, null, 
+//					null, null, 
+					writer);
 			
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 			
@@ -512,13 +533,17 @@ public class XMLGenerator {
 					});
 			
 			
-			writeParameter(DistributionModelParser.MEAN, PartitionData.clockParameterNames[3] + suffix , 1, String.valueOf(data.clockParameterValues[3]), null, null, writer);
+			writeParameter(DistributionModelParser.MEAN, PartitionData.clockParameterNames[3] + suffix , 1, String.valueOf(data.clockParameterValues[3]), 
+//					null, null, 
+					writer);
 			
 			writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 			
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 			
-			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES, "branchRates.categories" + suffix, 1, null, null, null, writer);
+			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES, "branchRates.categories" + suffix, 1, null, 
+//					null, null, 
+					writer);
 			
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 			
@@ -560,7 +585,8 @@ public class XMLGenerator {
 				+ suffix);
 
 		writeParameter(TreeModelParser.ROOT_HEIGHT, treeModelName + "."
-				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, null, null,
+				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, 
+//				null, null,
 				writer);
 
 		writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
@@ -568,7 +594,9 @@ public class XMLGenerator {
 						"true"));
 
 		writeParameter(null, treeModelName + "." + "internalNodeHeights", 1,
-				null, null, null, writer);
+				null, 
+//				null, null, 
+				writer);
 
 		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
@@ -580,7 +608,9 @@ public class XMLGenerator {
 								TreeModelParser.ROOT_NODE, "true") });
 
 		writeParameter(null, treeModelName + "." + "allInternalNodeHeights", 1,
-				null, null, null, writer);
+				null, 
+//				null, null, 
+				writer);
 
 		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
@@ -670,8 +700,10 @@ public class XMLGenerator {
 							String.valueOf(data.siteRateModelParameterValues[0])));
 
 			writeParameter(null, "alpha", 1,
-					String.valueOf(data.siteRateModelParameterValues[1]), null,
-					null, writer);
+					String.valueOf(data.siteRateModelParameterValues[1]), 
+//					null,
+//					null, 
+					writer);
 
 			writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
 			break;
@@ -702,8 +734,10 @@ public class XMLGenerator {
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
 			writeParameter(HKYParser.KAPPA, HKYParser.KAPPA + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[0]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[0]), 
+//					null,
+//					null, 
+					writer);
 
 			writer.writeCloseTag(NucModelType.HKY.getXMLName());
 
@@ -723,23 +757,35 @@ public class XMLGenerator {
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
 			writeParameter(GTRParser.A_TO_C, "ac" + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[1]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[1]), 
+//					null,
+//					null, 
+					writer);
 			writeParameter(GTRParser.A_TO_G, "ag" + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[2]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[2]), 
+//					null,
+//					null, 
+					writer);
 			writeParameter(GTRParser.A_TO_T, "at" + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[3]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[3]), 
+//					null,
+//					null, 
+					writer);
 			writeParameter(GTRParser.C_TO_G, "cg" + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[4]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[4]), 
+//					null,
+//					null, 
+					writer);
 			writeParameter(GTRParser.C_TO_T, "ct" + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[5]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[5]), 
+//					null,
+//					null, 
+					writer);
 			writeParameter(GTRParser.G_TO_T, "gt" + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[6]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[6]), 
+//					null,
+//					null, 
+					writer);
 
 			writer.writeCloseTag(GTRParser.GTR_MODEL);
 
@@ -759,12 +805,16 @@ public class XMLGenerator {
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
 			writeParameter(TN93Parser.KAPPA1, TN93Parser.KAPPA1 + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[7]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[7]), 
+//					null,
+//					null, 
+					writer);
 
 			writeParameter(TN93Parser.KAPPA2, TN93Parser.KAPPA2 + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[8]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[8]), 
+//					null,
+//					null, 
+					writer);
 
 			writer.writeCloseTag(NucModelType.TN93.getXMLName());
 
@@ -784,12 +834,16 @@ public class XMLGenerator {
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
 			writeParameter(YangCodonModelParser.OMEGA, YangCodonModelParser.OMEGA + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[9]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[9]), 
+//					null,
+//					null, 
+					writer);
 
 			writeParameter(YangCodonModelParser.KAPPA, YangCodonModelParser.KAPPA + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[10]), null,
-					null, writer);
+					String.valueOf(data.substitutionParameterValues[10]), 
+//					null,
+//					null, 
+					writer);
 
 			writer.writeCloseTag(YangCodonModelParser.YANG_CODON_MODEL);
 
@@ -825,7 +879,9 @@ public class XMLGenerator {
 					});
 
 			writeParameter(FrequencyModelParser.FREQUENCIES, null,
-					dataType.getStateCount(), frequencies, 0.0, 1.0, writer);
+					dataType.getStateCount(), frequencies, 
+//					0.0, 1.0, 
+					writer);
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
 
@@ -849,7 +905,9 @@ public class XMLGenerator {
 					});
 
 			writeParameter(FrequencyModelParser.FREQUENCIES, null,
-					dataType.getStateCount(), frequencies, 0.0, 1.0, writer);
+					dataType.getStateCount(), frequencies, 
+//					0.0, 1.0, 
+					writer);
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
 
@@ -859,7 +917,9 @@ public class XMLGenerator {
 
 	@SuppressWarnings("rawtypes")
 	private void writeParameter(String wrapper, String id, int dimension,
-			String value, Double lower, Double upper, XMLWriter writer) {
+			String value, 
+//			Double lower, Double upper, 
+			XMLWriter writer) {
 
 		if (wrapper != null) {
 			writer.writeOpenTag(wrapper);
@@ -881,15 +941,15 @@ public class XMLGenerator {
 					value));
 		}
 
-		if (lower != null) {
-			attributes.add(new Attribute.Default<String>(ParameterParser.LOWER,
-					String.valueOf(lower)));
-		}
-
-		if (upper != null) {
-			attributes.add(new Attribute.Default<String>(ParameterParser.UPPER,
-					String.valueOf(upper)));
-		}
+//		if (lower != null) {
+//			attributes.add(new Attribute.Default<String>(ParameterParser.LOWER,
+//					String.valueOf(lower)));
+//		}
+//
+//		if (upper != null) {
+//			attributes.add(new Attribute.Default<String>(ParameterParser.UPPER,
+//					String.valueOf(upper)));
+//		}
 
 		Attribute[] attrArray = new Attribute[attributes.size()];
 		for (int i = 0; i < attrArray.length; i++) {

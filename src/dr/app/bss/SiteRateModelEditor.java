@@ -111,7 +111,7 @@ public class SiteRateModelEditor {
 				int k = dataList.get(0).siteRateModelParameterIndices[index][i];
 				
 				Integer initValue = Integer.valueOf(siteParameterFields[k].getText(0, 1)); 
-				Integer	min = 0;
+				Integer	min = 1;
 				Integer max = Integer.MAX_VALUE;
 				Integer step = 1;
 				

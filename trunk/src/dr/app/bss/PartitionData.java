@@ -250,7 +250,7 @@ public class PartitionData implements Serializable {
 			"Exponential relaxed clock (Uncorrelated)" //
 	};
 
-	public static String[] clockParameterNames = new String[] { "Clock rate", // StrictClock
+	public static String[] clockParameterNames = new String[] { "clock.rate", // StrictClock
 			"ucld.mean", // Lognormal relaxed clock
 			"ucld.stdev", // Lognormal relaxed clock
 			"uced.mean" // Exponential relaxed clock

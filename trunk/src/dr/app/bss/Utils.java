@@ -108,6 +108,8 @@ public class Utils {
 		return height;
 	}// END: getAbsoluteTaxonHeight
 
+	
+	//TODO: compare their newick strings
 	public static boolean isTreeModelInList(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -115,7 +117,10 @@ public class Utils {
 
 		for (TreeModel treeModel2 : treeModelList) {
 
-			if (treeModel.equals(treeModel2)) {
+			if (
+					treeModel.getNewick().equalsIgnoreCase(treeModel2.getNewick())
+//					treeModel.equals(treeModel2)
+					) {
 				exists = true;
 				break;
 			}
@@ -125,6 +130,7 @@ public class Utils {
 		return exists;
 	}// END: isTreeModelInList
 
+	//TODO: compare their newick strings
 	public static int treeModelIsIdenticalWith(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -132,7 +138,10 @@ public class Utils {
 
 		for (TreeModel treeModel2 : treeModelList) {
 
-			if (treeModel.equals(treeModel2)) {
+			if (
+					treeModel.getNewick().equalsIgnoreCase(treeModel2.getNewick())
+//					treeModel.equals(treeModel2)
+					) {
 				index = treeModelList.indexOf(treeModel2);
 				break;
 			}

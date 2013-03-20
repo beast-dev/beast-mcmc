@@ -48,6 +48,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
     public static final String LAMBDA_BOUND_PARAMETER = "lambdaBoundParameter";
 	public static final String POPULATION_PARAMETER = "populationSizes";
     public static final String POPULATION_VALUES = "populationValues";
+    public static final String NUMBER_POINTS="pointsParameter";
     public static final String GPTYPE="GPtype";
     public static final String GPCOUNTS="GPcounts";
     public static final String COALFACTOR="coalfactor";
@@ -143,6 +144,15 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
             popValues = (Parameter) cxo.getChild(Parameter.class);
         } else {
             popValues = new Parameter.Default(1.0);
+
+        }
+
+        Parameter numPoints;
+        if (xo.getChild(NUMBER_POINTS) != null) {
+            cxo = xo.getChild(NUMBER_POINTS);
+            numPoints = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            numPoints = new Parameter.Default(1.0);
 
         }
 
@@ -286,7 +296,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 
              return new GaussianProcessSkytrackLikelihood(treeList, precParameter,
                  rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter,alpha_parameter,beta_parameter, change_points,
-                     GPtype, GPcounts, coalfactor, popValues, CoalCounts);
+                     GPtype, GPcounts, coalfactor, popValues, CoalCounts, numPoints);
 
     }
 

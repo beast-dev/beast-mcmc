@@ -11,6 +11,10 @@ import dr.inference.operators.*;
 import dr.math.MathUtils;
 import no.uib.cipr.matrix.*;
 
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+
 /* A Metropolis-Hastings/Gibbs operator to update the log population sizes and precision parameter jointly under a GP  prior
  *
  * @author Julia Palacios
@@ -38,6 +42,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
     private Parameter GPtype;
     private Parameter popValue;   //This will actually have the Effective Pop. Size for the grid
     private Parameter CoalCounts;
+    private Parameter numPoints;
 //    private double [] intervals;
     private double [] GPcoalfactor;
     private Parameter coalfactor;
@@ -64,6 +69,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 //        super(mode);
         GPvalue = GPLikelihood;     //before gmrfField
         popSizeParameter = GPLikelihood.getPopSizeParameter();
+
         popValue=GPLikelihood.getPopValue();
         changePoints=GPLikelihood.getChangePoints();
         GPcoalfactor=GPLikelihood.getGPcoalfactor();
@@ -82,6 +88,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         fixedNumberPoints=GPcounts.getSize();
         CoalCounts=GPLikelihood.getCoalCounts();
         numberPoints=CoalCounts.getSize();
+        numPoints=GPLikelihood.getNumPoints();
 //        int [] add = new int[fixedNumberPoints];
 //        double [] addPoints = new double[fixedNumberPoints];
 
@@ -792,6 +799,20 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         return currentPosition;
     }
 
+    public void writeChain(double [] current,String fileName){
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fileName,true));
+            for (int i=0;i<current.length;i++){
+                writer.write(current[i]+" ");
+            }
+            writer.newLine();
+            writer.close();
+        }
+        catch(java.io.IOException ioe){
+                System.err.println("IOException:"+ ioe.getMessage());
+            }
+        }
+
 
        public void numberThinned(double [] currentChangePoints, DenseVector currentPopSize, double currentPrecision) {
            numberPoints=CoalCounts.getSize();
@@ -1045,7 +1066,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
             }
         }
         for (int j=0; j<popSizeParameter.getSize();j++)
-            popSizeParameter.setParameterValue(j,proposal.get(j));
+            popSizeParameter.setParameterValue(j, proposal.get(j));
 //            popSizeParameter.setParameterValueQuietly(j,proposal.get(j));
 
 //        ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
@@ -1196,9 +1217,13 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         double [] currentChangePoints2 = this.changePoints.getParameterValues();
 //        System.exit(-1);
 
-        sliceSampling(currentChangePoints2,currentPopSize2,currentPrecision);
-        System.err.println("size:"+popSizeParameter.getSize());
+        sliceSampling(currentChangePoints2, currentPopSize2, currentPrecision);
+        numPoints.setParameterValue(0,popSizeParameter.getSize());
+
+        double [] currentPopSize3 = this.popSizeParameter.getParameterValues();
 //
+        writeChain(currentChangePoints2,"locations.txt");
+        writeChain(currentPopSize3,"gvalues.txt");
 
 
 

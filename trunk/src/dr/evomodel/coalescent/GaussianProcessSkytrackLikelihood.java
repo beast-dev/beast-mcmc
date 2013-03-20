@@ -65,6 +65,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected Parameter changePoints;
     protected Parameter popValue;
     protected Parameter CoalCounts;
+    protected Parameter numPoints;
 
 //    protected double [] GPchangePoints;
 //    protected double [] storedGPchangePoints;
@@ -106,8 +107,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     public GaussianProcessSkytrackLikelihood(Tree tree,
                                              Parameter precParameter,
-                                             boolean rescaleByRootHeight, Parameter numGridPoints,  Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points, Parameter GPtype, Parameter GPcounts, Parameter coalfactor, Parameter popValues, Parameter CoalCounts) {
-        this(wrapTree(tree),  precParameter, rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter, alpha_parameter, beta_parameter, change_points,GPtype,GPcounts,coalfactor,popValues,CoalCounts);
+                                             boolean rescaleByRootHeight, Parameter numGridPoints,  Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points, Parameter GPtype, Parameter GPcounts, Parameter coalfactor, Parameter popValues, Parameter CoalCounts, Parameter numPoints) {
+        this(wrapTree(tree),  precParameter, rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter, alpha_parameter, beta_parameter, change_points,GPtype,GPcounts,coalfactor,popValues,CoalCounts, numPoints);
 
     }
 
@@ -121,7 +122,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     public GaussianProcessSkytrackLikelihood(List<Tree> treeList,
                                              Parameter precParameter,
-                                              boolean rescaleByRootHeight, Parameter numGridPoints, Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points, Parameter GPtype, Parameter GPcounts, Parameter coalfactor, Parameter popValues, Parameter CoalCounts) {
+                                              boolean rescaleByRootHeight, Parameter numGridPoints, Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter, Parameter alpha_parameter, Parameter beta_parameter, Parameter change_points, Parameter GPtype, Parameter GPcounts, Parameter coalfactor, Parameter popValues, Parameter CoalCounts, Parameter numPoints) {
         super(GaussianProcessSkytrackLikelihoodParser.SKYTRACK_LIKELIHOOD);
 
 
@@ -129,6 +130,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 this.popSizeParameter = popParameter;
                 this.popValue=popValues;
                 this.changePoints=change_points;
+                this.numPoints=numPoints;
 //                this.groupSizeParameter = groupParameter;
                 this.precisionParameter = precParameter;
                 this.lambdaParameter = lambda_parameter;
@@ -148,6 +150,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 addVariable(precisionParameter);
                 addVariable(popSizeParameter);
                 addVariable(changePoints);
+                addVariable(numPoints);
 //                addVariable(popValue);
                 addVariable(GPcounts);
 //                addVariable(GPcoalfactor);
@@ -190,6 +193,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 //        storedGPcounts= new int[numintervals];
         GPtype.setDimension(numcoalpoints);
+        numPoints.setParameterValue(0,numcoalpoints);
 //        storedGPtype = new int[numcoalpoints];
         popSizeParameter.setDimension(numcoalpoints);
 
@@ -545,6 +549,9 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     public Parameter getPopValue() {
         return popValue;
+    }
+    public Parameter getNumPoints() {
+        return numPoints;
     }
 
     public Parameter getLambdaParameter() {

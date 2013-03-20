@@ -15,10 +15,16 @@ import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.distribution.ExponentialDistributionModel;
+import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
+import dr.inferencexml.distribution.DistributionModelParser;
+import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 
 @SuppressWarnings("serial")
 public class PartitionData implements Serializable {
@@ -240,15 +246,25 @@ public class PartitionData implements Serializable {
 	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
 
 	public static String[] clockModels = { "Strict Clock", //
+			"Lognormal relaxed clock (Uncorrelated)", //
+			"Exponential relaxed clock (Uncorrelated)" //
 	};
 
-	public static String[] clockParameterNames = new String[] { "Clock rate", //
+	public static String[] clockParameterNames = new String[] { "Clock rate", // StrictClock
+			"ucld.mean", // Lognormal relaxed clock
+			"ucld.stdev", // Lognormal relaxed clock
+			"uced.mean" // Exponential relaxed clock
 	};
 
 	public int[][] clockParameterIndices = { { 0 }, // StrictClock
+			{ 1, 2 }, // Lognormal relaxed clock
+			{ 3 } // Exponential relaxed clock
 	};
 
 	public double[] clockParameterValues = new double[] { 1.2E-2, // clockrate
+			1.0, // ucld.mean
+			2.0, // ucld.stdev
+			1.0 // uced.mean
 	};
 
 	public BranchRateModel createBranchRateModel() {
@@ -257,11 +273,34 @@ public class PartitionData implements Serializable {
 
 		if (this.clockModelIndex == 0) { // Strict Clock
 
-			Parameter rateParameter = new Parameter.Default(1,
-					clockParameterValues[0]);
+			Parameter rateParameter = new Parameter.Default(1, clockParameterValues[0]);
+			
 			branchRateModel = new StrictClockBranchRates(rateParameter);
 
-		} else if (this.clockModelIndex == 1) {
+		} else if (this.clockModelIndex == 1) {// Lognormal relaxed clock
+
+			double numberOfBranches = Math.pow(2, createTreeModel().getTaxonCount());
+			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
+			
+			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
+			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
+	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, 0.0, true, true);
+			
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
+	                distributionModel, 1, false, Double.NaN);
+
+		} else if(this.clockModelIndex == 2) { // Exponential relaxed clock
+		
+			double numberOfBranches = Math.pow(2, createTreeModel().getTaxonCount());
+			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
+			
+			Parameter mean = new Parameter.Default(DistributionModelParser.MEAN, 1, clockParameterValues[3]);
+	        ParametricDistributionModel distributionModel = new ExponentialDistributionModel(mean);
+			
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
+	                distributionModel, 1, false, Double.NaN);
+			
+		} else {
 
 			System.out.println("Not yet implemented");
 

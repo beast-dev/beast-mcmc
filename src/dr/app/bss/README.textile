@@ -20,6 +20,13 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
+* site rate model with invariant sites
+* get rid of siteCount
+* fix multiple trees 
+* table for trees files
+* amino acid models and data type
+* sequence length and to fields
+* relaxed clock (exponential, lognormal...)
 * Idref for branch subs model does not update with editor choices
 * populate the Edit and Help menus with custom items
 * update ant buildfile
@@ -29,5 +36,4 @@ h1. TODO
 * add tree column in Taxa panel
 * command line interface
 * simulate tree given taxa names only
-* connect siteCount, sequence length and to fields
 

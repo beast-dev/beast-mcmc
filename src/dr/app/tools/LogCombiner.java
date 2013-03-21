@@ -269,6 +269,12 @@ public class LogCombiner {
                                 if (!renumberOutput){
                                     stateLineEntry = stateCount;
                                 } else {
+                                	
+//                                	System.out.println("stateCount: " + stateCount);
+//                                	System.out.println("resample: " + resample);
+//                                	System.out.println("stateStep: " + stateStep);
+//                                	System.out.println("resample / stateStep: " + (resample / stateStep));
+                                	
                                     stateLineEntry = stateCount / (resample / stateStep);
                                 }
 

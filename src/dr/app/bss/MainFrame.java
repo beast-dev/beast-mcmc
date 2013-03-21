@@ -341,7 +341,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 						BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 								partitionsList
-//								, dataList.siteCount
 								);
 
 						writer.println(beagleSequenceSimulator.simulate()
@@ -360,7 +359,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			// Executed in event dispatch thread
 			public void done() {
 
-				setStatus("Generated " + dataList.siteCount + " replicates.");
+				setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
 				setIdle();
 
 			}// END: done

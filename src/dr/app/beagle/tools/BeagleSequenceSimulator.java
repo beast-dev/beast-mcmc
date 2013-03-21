@@ -77,10 +77,7 @@ public class BeagleSequenceSimulator {
     
     private int gapFlag = Integer.MAX_VALUE;
     
-	public BeagleSequenceSimulator(ArrayList<Partition> partitions
-//			, //
-//			int siteCount //
-	) {
+	public BeagleSequenceSimulator(ArrayList<Partition> partitions) {
 
 		this.partitions = partitions;
 
@@ -248,7 +245,6 @@ public class BeagleSequenceSimulator {
 			) {
 
 		TreeModel treeModel = partition.treeModel;
-//		BranchModel branchModel = partition.getBranchModel();
 		GammaSiteRateModel siteModel = partition.siteModel;
 		int partitionSiteCount = partition.getPartitionSiteCount();
 		
@@ -257,7 +253,6 @@ public class BeagleSequenceSimulator {
 		int patternCount = partitionSiteCount;
 		int categoryCount = siteModel.getCategoryCount();
 		int internalNodeCount = treeModel.getInternalNodeCount();
-//		int scaleBufferCount = internalNodeCount + 1;
 
 		int[] resourceList = new int[] { 0 };
 		long preferenceFlags = 0;
@@ -372,15 +367,12 @@ public class BeagleSequenceSimulator {
 
 		double[][] probabilities = new double[categoryCount][stateCount * stateCount];
 
-//		BranchModel branchModel = partition.getBranchModel();
 		TreeModel treeModel = partition.treeModel;
 		BranchRateModel branchRateModel = partition.branchRateModel;
 		
 		int nodeNum = node.getNumber();
 		matrixBufferHelper.flipOffset(nodeNum);
 		int branchIndex = nodeNum;//matrixBufferHelper.getOffsetIndex(nodeNum);
-		
-//		int eigenIndex = branchModel.getBranchIndex(treeModel, node, branchIndex);
 		
 		double branchRate = branchRateModel.getBranchRate(treeModel, node);
 		double branchTime = treeModel.getBranchLength(node) * branchRate;
@@ -392,16 +384,6 @@ public class BeagleSequenceSimulator {
         int count = 1;
         substitutionModelDelegate.updateTransitionMatrices(beagle, new int[] { branchIndex }, new double[] { branchTime }, count);
         
-//		branchSubstitutionModel.updateTransitionMatrices(beagle, //
-//				eigenIndex, //
-//				eigenBufferHelper, //
-//				new int[] { branchIndex }, //
-//				null, //
-//				null, //
-//				new double[] { branchTime }, //
-//				count //
-//				);
-
 		double transitionMatrix[] = new double[categoryCount * stateCount * stateCount];
 		
 		beagle.getTransitionMatrix(branchIndex, //

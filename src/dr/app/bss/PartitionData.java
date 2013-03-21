@@ -36,6 +36,10 @@ public class PartitionData implements Serializable {
 	public int to = 1000;
 	public int every = 1;
 
+	public int createPartitionSiteCount() {
+		return ((to - from) / every) + 1;
+	}
+	
 	// //////////////////
 	// ---TREE MODEL---//
 	// //////////////////

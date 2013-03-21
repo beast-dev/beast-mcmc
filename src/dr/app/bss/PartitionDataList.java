@@ -12,8 +12,7 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 
 	public MutableTaxonList taxonList = new Taxa();
 
-	// TODO: last partition should have siteCount as TO value
-	public int siteCount = 1000;
+//	public int siteCount = 1000;
 	public int simulationsCount = 1;
 
 	public LinkedHashSet<File> forestList = new LinkedHashSet<File>();

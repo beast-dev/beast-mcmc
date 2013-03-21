@@ -77,14 +77,20 @@ public class BeagleSequenceSimulator {
     
     private int gapFlag = Integer.MAX_VALUE;
     
-	public BeagleSequenceSimulator(ArrayList<Partition> partitions, //
-			int siteCount //
+	public BeagleSequenceSimulator(ArrayList<Partition> partitions
+//			, //
+//			int siteCount //
 	) {
 
 		this.partitions = partitions;
-		this.siteCount = siteCount;
 
 		alignmentMap = new ConcurrentHashMap<Taxon, int[]>();
+
+		int siteCount = 0;
+		for(Partition partition : partitions) {
+			siteCount += partition.getPartitionSiteCount();
+		}
+		this.siteCount = siteCount;
 		
 	}// END: Constructor
 
@@ -553,7 +559,9 @@ public class BeagleSequenceSimulator {
 			partitionsList.add(partition1);
 
 			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
+			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
+//					, sequenceLength
+					);
 			System.out.println(simulator.simulate().toString());
 			
 		} catch (Exception e) {

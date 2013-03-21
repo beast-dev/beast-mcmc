@@ -371,10 +371,11 @@ public class XMLGenerator {
 		writer.writeOpenTag(
 				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,
 				new Attribute[] {
-						new Attribute.Default<String>(XMLParser.ID, "simulator"),
-						new Attribute.Default<String>(
-								BeagleSequenceSimulatorParser.SITE_COUNT,
-								String.valueOf(dataList.siteCount)) });
+						new Attribute.Default<String>(XMLParser.ID, "simulator")
+//						, new Attribute.Default<String>(
+//								BeagleSequenceSimulatorParser.SITE_COUNT,
+//								String.valueOf(dataList.siteCount)) 
+								});
 
 		for (PartitionData data : dataList) {
 

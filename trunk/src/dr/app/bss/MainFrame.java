@@ -254,7 +254,9 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 						}// END: partition loop
 
 						beagleSequenceSimulator = new BeagleSequenceSimulator(
-								partitionsList, dataList.siteCount);
+								partitionsList
+//								, dataList.siteCount
+								);
 
 						writer.println(beagleSequenceSimulator.simulate()
 								.toString());
@@ -338,7 +340,9 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 						}// END: data list loop
 
 						BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-								partitionsList, dataList.siteCount);
+								partitionsList
+//								, dataList.siteCount
+								);
 
 						writer.println(beagleSequenceSimulator.simulate()
 								.toString());

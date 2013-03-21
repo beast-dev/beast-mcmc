@@ -116,7 +116,7 @@ public class XMLGenerator {
 
 						treeModelList.add(treeModel);
 
-						System.out.println("NOT IN LIST");
+//						System.out.println("NOT IN LIST");
 						
 					} else {
 
@@ -124,7 +124,7 @@ public class XMLGenerator {
 								treeModelList) + 1;
 						data.treeModelIdref += index;
 
-						System.out.println("IDENTICAL WITH " + index);
+//						System.out.println("IDENTICAL WITH " + index);
 						
 					}
 
@@ -191,11 +191,15 @@ public class XMLGenerator {
 					writer.writeBlankLine();
 					partitionList.add(data);
 
+//					System.out.println("NOT IN LIST");
+					
 				} else {
 
 					int index = Utils.isIdenticalWith(data, partitionList, Utils.BRANCH_RATE_MODEL_ELEMENT) + 1;
 					data.clockModelIdref += index;
 
+//					System.out.println("IDENTICAL WITH " + index);					
+					
 				}
 
 				suffix++;
@@ -227,11 +231,15 @@ public class XMLGenerator {
 					writer.writeBlankLine();
 					partitionList.add(data);
 
+					System.out.println("NOT IN LIST");
+					
 				} else {
 
 					int index = Utils.isIdenticalWith(data, partitionList, Utils.FREQUENCY_MODEL_ELEMENT) + 1;
 					data.frequencyModelIdref += index;
 
+					System.out.println("IDENTICAL WITH " + index);						
+					
 				}
 
 				suffix++;
@@ -699,12 +707,10 @@ public class XMLGenerator {
 					GammaSiteModelParser.GAMMA_SHAPE,
 					new Attribute.Default<String>(
 							GammaSiteModelParser.GAMMA_CATEGORIES,
-							String.valueOf(data.siteRateModelParameterValues[0])));
+							String.valueOf((int)data.siteRateModelParameterValues[0])));
 
 			writeParameter(null, "alpha", 1,
 					String.valueOf(data.siteRateModelParameterValues[1]), 
-//					null,
-//					null, 
 					writer);
 
 			writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);

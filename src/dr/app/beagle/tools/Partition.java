@@ -82,8 +82,7 @@ public class Partition {
 	}// END: setAncestralSequence
 
 	public int getPartitionSiteCount() {
-		int partitionSiteCount = ((to - from) / every) + 1;
-		return partitionSiteCount;
+		return ((to - from) / every) + 1;
 	}// END: getPartitionSiteCount
 
 	public BranchModel getBranchModel() {

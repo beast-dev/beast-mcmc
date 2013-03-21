@@ -108,8 +108,6 @@ public class Utils {
 		return height;
 	}// END: getAbsoluteTaxonHeight
 
-	
-	//TODO: compare their newick strings
 	public static boolean isTreeModelInList(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -117,10 +115,7 @@ public class Utils {
 
 		for (TreeModel treeModel2 : treeModelList) {
 
-			if (
-					treeModel.getNewick().equalsIgnoreCase(treeModel2.getNewick())
-//					treeModel.equals(treeModel2)
-					) {
+			if (treeModel.getNewick().equalsIgnoreCase(treeModel2.getNewick())) {
 				exists = true;
 				break;
 			}
@@ -130,7 +125,6 @@ public class Utils {
 		return exists;
 	}// END: isTreeModelInList
 
-	//TODO: compare their newick strings
 	public static int treeModelIsIdenticalWith(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -138,10 +132,7 @@ public class Utils {
 
 		for (TreeModel treeModel2 : treeModelList) {
 
-			if (
-					treeModel.getNewick().equalsIgnoreCase(treeModel2.getNewick())
-//					treeModel.equals(treeModel2)
-					) {
+			if (treeModel.getNewick().equalsIgnoreCase(treeModel2.getNewick())) {
 				index = treeModelList.indexOf(treeModel2);
 				break;
 			}
@@ -151,7 +142,6 @@ public class Utils {
 		return index;
 	}// END: treeModelIsIdenticalWith
 
-	// TODO: horrible amount of code duplication
 	public static boolean isElementInList(PartitionData data,
 			ArrayList<PartitionData> partitionList, int elementIndex) {
 
@@ -161,81 +151,45 @@ public class Utils {
 
 		case BRANCH_RATE_MODEL_ELEMENT:
 
-			int clockModelIndex = data.clockModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (clockModelIndex == data2.clockModelIndex) {
-
-					for (int i = 0; i < data2.clockParameterValues.length; i++) {
-
-						if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
-
-							exists = true;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
-
+				if(clockRateModelToString(data).equalsIgnoreCase(clockRateModelToString(data2))) {
+					exists = true;
+					break;
+				}
+			}
+			
 			break;
 
 		case FREQUENCY_MODEL_ELEMENT:
 
-			int frequencyModelIndex = data.frequencyModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (frequencyModelIndex == data2.frequencyModelIndex) {
-
-					for (int i = 0; i < data2.frequencyParameterValues.length; i++) {
-
-						if (data.frequencyParameterValues[i] == data2.frequencyParameterValues[i]) {
-
-							exists = true;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
+				if(frequencyModelToString(data).equalsIgnoreCase(frequencyModelToString(data2))) {
+					exists = true;
+					break;
+				}
+			}
 
 			break;
 
 		case BRANCH_MODEL_ELEMENT:
 
-			int substitutionModelIndex = data.substitutionModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (substitutionModelIndex == data2.substitutionModelIndex) {
-
-					for (int i = 0; i < data2.substitutionParameterValues.length; i++) {
-
-						if (data.substitutionParameterValues[i] == data2.substitutionParameterValues[i]) {
-
-							exists = true;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
-
+				if(branchSubstitutionModelToString(data).equalsIgnoreCase(branchSubstitutionModelToString(data2))) {
+					exists = true;
+					break;
+				}
+			}
+			
 			break;
 
 		case SITE_RATE_MODEL_ELEMENT:
 
-			int siteRateModelIndex = data.siteRateModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (siteRateModelIndex == data2.siteRateModelIndex) {
-
-					for (int i = 0; i < data2.siteRateModelParameterValues.length; i++) {
-
-						if (data.siteRateModelParameterValues[i] == data2.siteRateModelParameterValues[i]) {
-
-							exists = true;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
+				if(siteRateModelToString(data).equalsIgnoreCase(siteRateModelToString(data2))) {
+					exists = true;
+					break;
+				}
+			}
 
 			break;
 
@@ -248,7 +202,6 @@ public class Utils {
 		return exists;
 	}// END: isModelInList
 
-	// TODO: horrible amount of code duplication
 	public static int isIdenticalWith(PartitionData data,
 			ArrayList<PartitionData> partitionList, int elementIndex) {
 
@@ -258,85 +211,45 @@ public class Utils {
 
 		case BRANCH_RATE_MODEL_ELEMENT:
 
-			int clockModelIndex = data.clockModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (clockModelIndex == data2.clockModelIndex) {
-
-					for (int i = 0; i < data2.clockParameterValues.length; i++) {
-
-						if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
-
-							index = partitionList.indexOf(data2);
-							break;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
-
+				if(clockRateModelToString(data).equalsIgnoreCase(clockRateModelToString(data2))) {
+					index = partitionList.indexOf(data2);
+					break;
+				}
+			}
+			
 			break;
 
 		case FREQUENCY_MODEL_ELEMENT:
 
-			int frequencyModelIndex = data.frequencyModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (frequencyModelIndex == data2.frequencyModelIndex) {
-
-					for (int i = 0; i < data2.frequencyParameterValues.length; i++) {
-
-						if (data.frequencyParameterValues[i] == data2.frequencyParameterValues[i]) {
-
-							index = partitionList.indexOf(data2);
-							break;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
-
+				if(frequencyModelToString(data).equalsIgnoreCase(frequencyModelToString(data2))) {
+					index = partitionList.indexOf(data2);
+					break;
+				}
+			}
+			
 			break;
 
 		case BRANCH_MODEL_ELEMENT:
 
-			int substitutionModelIndex = data.substitutionModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (substitutionModelIndex == data2.substitutionModelIndex) {
-
-					for (int i = 0; i < data2.substitutionParameterValues.length; i++) {
-
-						if (data.substitutionParameterValues[i] == data2.substitutionParameterValues[i]) {
-
-							index = partitionList.indexOf(data2);
-							break;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
-
+				if(branchSubstitutionModelToString(data).equalsIgnoreCase(branchSubstitutionModelToString(data2))) {
+					index = partitionList.indexOf(data2);
+					break;
+				}
+			}
+			
 			break;
 
 		case SITE_RATE_MODEL_ELEMENT:
 
-			int siteRateModelIndex = data.siteRateModelIndex;
 			for (PartitionData data2 : partitionList) {
-
-				if (siteRateModelIndex == data2.siteRateModelIndex) {
-
-					for (int i = 0; i < data2.siteRateModelParameterValues.length; i++) {
-
-						if (data.siteRateModelParameterValues[i] == data2.siteRateModelParameterValues[i]) {
-
-							index = partitionList.indexOf(data2);
-							break;
-
-						}// END: parameters check
-					}// END: parameters loop
-				}// END: model index check
-			}// END: list loop
+				if(siteRateModelToString(data).equalsIgnoreCase(siteRateModelToString(data2))) {
+					index = partitionList.indexOf(data2);
+					break;
+				}
+			}
 
 			break;
 
@@ -349,6 +262,66 @@ public class Utils {
 		return index;
 	}// END: isIdenticalWith
 
+	// /////////////////////////
+	// ---TO STRING METHODS---//
+	// /////////////////////////
+	
+	public static String clockRateModelToString(PartitionData data) {
+		
+		String string = PartitionData.clockModels[data.clockModelIndex];
+		
+		string += (" ( ");
+		for (int i = 0; i < data.clockParameterIndices[data.clockModelIndex].length; i++) {
+			string += data.clockParameterValues[data.clockParameterIndices[data.clockModelIndex][i]];
+			string +=" ";
+		}// END: indices loop
+		string +=")";
+		
+		return string;
+	}
+
+	public static String frequencyModelToString(PartitionData data) {
+		
+		String string = PartitionData.frequencyModels[data.frequencyModelIndex];
+		
+		string += (" ( ");
+		for (int i = 0; i < data.frequencyParameterIndices[data.frequencyModelIndex].length; i++) {
+			string += data.frequencyParameterValues[data.frequencyParameterIndices[data.frequencyModelIndex][i]];
+			string +=" ";
+		}// END: indices loop
+		string +=")";
+		
+		return string;
+	}
+	
+	public static String branchSubstitutionModelToString(PartitionData data) {
+		
+		String string = PartitionData.substitutionModels[data.substitutionModelIndex];
+		
+		string += (" ( ");
+		for (int i = 0; i < data.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
+			string += data.substitutionParameterValues[data.substitutionParameterIndices[data.substitutionModelIndex][i]];
+			string +=" ";
+		}// END: indices loop
+		string +=")";
+		
+		return string;
+	}
+	
+	public static String siteRateModelToString(PartitionData data) {
+		
+		String string = PartitionData.siteRateModels[data.siteRateModelIndex];
+		
+		string += (" ( ");
+		for (int i = 0; i < data.siteRateModelParameterIndices[data.siteRateModelIndex].length; i++) {
+			string += data.siteRateModelParameterValues[data.siteRateModelParameterIndices[data.siteRateModelIndex][i]];
+			string +=" ";
+		}// END: indices loop
+		string +=")";
+		
+		return string;
+	}
+	
 	// /////////////////
 	// ---GUI UTILS---//
 	// /////////////////
@@ -504,33 +477,42 @@ public class Utils {
 		}
 	}// END: print2DArray
 
+	public static void printBranchSubstitutionModel(PartitionData data) {
+		System.out.print("\tBranch Substitution model: ");
+		System.out.print(branchSubstitutionModelToString(data));
+		System.out.print("\n");
+	}// END: printBranchSubstitutionModel
+
+	public static void printClockRateModel(PartitionData data) {
+		System.out.print("\tClock rate model: ");
+		System.out.print(clockRateModelToString(data));
+		System.out.print("\n");
+	}// END: printClockRateModel
+
+	public static void printFrequencyModel(PartitionData data) {
+		System.out.print("\tFrequency model: ");
+		System.out.print(frequencyModelToString(data));
+		System.out.print("\n");
+	}// END: printFrequencyModel
+	
+	public static void printSiteRateModel(PartitionData data) {
+		System.out.print("\tSite rate model: ");
+		System.out.print(siteRateModelToString(data));
+		System.out.print("\n");
+	}// END: printFrequencyModel
+	
 	public static void printPartitionData(PartitionData data) {
 
 		System.out.println("\tTree model: " + data.treeFile);
-		System.out.println("\tData type: "
-				+ PartitionData.dataTypes[data.dataTypeIndex]);
+		System.out.println("\tData type: "+ PartitionData.dataTypes[data.dataTypeIndex]);
 		System.out.println("\tFrom: " + data.from);
 		System.out.println("\tTo: " + data.to);
 		System.out.println("\tEvery: " + data.every);
-		System.out
-				.print("\tBranch Substitution model: "
-						+ PartitionData.substitutionModels[data.substitutionModelIndex]);
-
-		System.out.print(" ( ");
-		for (int i = 0; i < data.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
-			System.out
-					.print(data.substitutionParameterValues[data.substitutionParameterIndices[data.substitutionModelIndex][i]]);
-			System.out.print(" ");
-		}// END: indices loop
-		System.out.print(")\n");
-
-		System.out.println("\tSite rate model: "
-				+ PartitionData.siteRateModels[data.siteRateModelIndex]);
-		System.out.println("\tClock rate model: "
-				+ PartitionData.clockModels[data.clockModelIndex]);
-		System.out.println("\tFrequency model: "
-				+ PartitionData.frequencyModels[data.frequencyModelIndex]);
-
+		printBranchSubstitutionModel(data);
+		printClockRateModel(data);
+		printFrequencyModel(data);
+	    printSiteRateModel(data);
+		
 	}// END: printPartitionData
 
 	public static void printPartitionDataList(PartitionDataList dataList) {

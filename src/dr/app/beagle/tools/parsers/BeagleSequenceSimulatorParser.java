@@ -34,7 +34,6 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -47,7 +46,7 @@ import dr.xml.XMLSyntaxRule;
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
-	public static final String SITE_COUNT = "siteCount";
+//	public static final String SITE_COUNT = "siteCount";
 	
 	public String getParserName() {
 		return BEAGLE_SEQUENCE_SIMULATOR;
@@ -67,7 +66,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public XMLSyntaxRule[] getSyntaxRules() {
 		
 		return new XMLSyntaxRule[] {
-				AttributeRule.newIntegerRule(SITE_COUNT), 
+//				AttributeRule.newIntegerRule(SITE_COUNT), 
 				new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
 				};
 		
@@ -75,61 +74,60 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-		String msg = "";
 		
-		int replications = xo.getIntegerAttribute(SITE_COUNT);
-		msg += "\n\t" + replications + ( (replications > 1) ? " replications " : " replication");
+		String msg = "";
+		int siteCount = 0;
+
+		for (int i = 0; i < xo.getChildCount(); i++) {
+			Partition partition = (Partition) xo.getChild(i);
+			siteCount+=partition.getPartitionSiteCount();
+		}
 		
 		ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 		for (int i = 0; i < xo.getChildCount(); i++) {
 
 			Partition partition = (Partition) xo.getChild(i);
 			
-			if (partition.from > replications) {
+			if (partition.from > siteCount) {
 				throw new XMLParseException(
 						"Illegal 'from' attribute in " + PartitionParser.PARTITION + " element");
 			}
 
-			if (partition.to > replications) {
+			if (partition.to > siteCount) {
 				throw new XMLParseException(
 						"Illegal 'to' attribute in " + PartitionParser.PARTITION + " element");
 			}
 
 			if (partition.to == -1) {
-				partition.to = replications - 1;
+				partition.to = siteCount - 1;
 			}
 			
 			if (partition.ancestralSequence != null) {
 
-				if (partition.ancestralSequence.getLength() != 3 * replications && partition.freqModel.getDataType() instanceof Codons) {
+				if (partition.ancestralSequence.getLength() != 3 * siteCount && partition.freqModel.getDataType() instanceof Codons) {
 
 					throw new RuntimeException("Ancestral codon sequence has "
 							+ partition.ancestralSequence.getLength() + " characters "
-							+ "expecting " + 3 * replications + " characters");
+							+ "expecting " + 3 * siteCount + " characters");
 
-				} else if (partition.ancestralSequence.getLength() != replications && partition.freqModel.getDataType() instanceof Nucleotides) {
+				} else if (partition.ancestralSequence.getLength() != siteCount && partition.freqModel.getDataType() instanceof Nucleotides) {
 
 					throw new RuntimeException("Ancestral nuleotide sequence has "
 							+ partition.ancestralSequence.getLength() + " characters "
-							+ "expecting " + replications + " characters");
+							+ "expecting " + siteCount + " characters");
 
 				}// END: dataType check
 			}// END: ancestralSequence check
 			
-			// TODO: print partition info
-//			msg += "\n\t" + "partition" + (i + 1) + " from " + partition.from + " to " + partition.to + " every " + partition.every;
-			
 			partitionsList.add(partition);
 		}// END: partitions loop
 
+		 msg += "\n\t" + siteCount + ( (siteCount > 1) ? " replications " : " replication");
 		 if (msg.length() > 0) {
 	            Logger.getLogger("dr.app.beagle.tools").info("Using Beagle Sequence Simulator: " + msg);
 		 }
 		
-		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList, //
-				replications //
-		);
+		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
 
 		return s.simulate();
 	}// END: parseXMLObject

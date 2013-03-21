@@ -39,6 +39,7 @@ import dr.app.beagle.tools.Partition;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
@@ -244,9 +245,9 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 									data.createSiteRateModel(), //
 									data.createBranchRateModel(), //
 									data.createFrequencyModel(), //
-									0, // from
+									data.from - 1, // from
 									data.to - 1, // to
-									1 // every
+									data.every // every
 							);
 
 							partitionsList.add(partition);
@@ -285,6 +286,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: generateForEachTree
 
+	// TODO: BUG when using multiple partitions
+	// TODO: only create new treeModel when it doesn't exist
 	// threading, UI, exceptions handling
 	private void generateNumberOfSimulations(final File outFile) {
 
@@ -297,11 +300,13 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 				try {
 
+//					Utils.printPartitionDataList(dataList);
+//					Utils.printTaxonList(dataList);
+//					Utils.printForestList(dataList);
+					
+//					TreeModel treeModel = Utils.importTreeFromFile(new File("/home/filip/SimTree.figtree"));
+					
 					for (int i = 0; i < dataList.simulationsCount; i++) {
-
-						if (BeagleSequenceSimulatorApp.DEBUG) {
-							Utils.printPartitionDataList(dataList);
-						}
 
 						String fullPath = Utils.getMultipleWritePath(outFile,
 								"fasta", i);
@@ -323,16 +328,20 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 								// create partition
 								Partition partition = new Partition(
+										
 										data.createTreeModel(), //
+										
 										data.createBranchModel(), //
 										data.createSiteRateModel(), //
 										data.createBranchRateModel(), //
 										data.createFrequencyModel(), //
-										0, // from
+										data.from - 1, // from
 										data.to - 1, // to
-										1 // every
+										data.every // every
 								);
 
+//								System.out.println("FROM: " + data.from + " TO: " + data.to +" EVERY: " + data.every);
+								
 								partitionsList.add(partition);
 
 							}
@@ -533,7 +542,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: doLoadSettings
 
-	// TODO: update simulations panel
 	private void loadSettings(File file) {
 
 		try {
@@ -546,7 +554,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			in.close();
 			fileIn.close();
 
-			Utils.printPartitionDataList(dataList);
+//			Utils.printPartitionDataList(dataList);
 			// Utils.printForestList(dataList);
 
 			partitionsPanel.updatePartitionTable(dataList);

@@ -57,6 +57,16 @@ public class Utils {
 		}
 	}// END: printMap
 
+	public static int getSiteCount(PartitionDataList dataList) {
+		
+		int siteCount = 0;
+		for(PartitionData data : dataList) {
+			siteCount += data.createPartitionSiteCount();
+		}
+		
+		return siteCount;
+	}//END: getSiteCount
+	
 	public static int arrayIndex(String[] array, String element) {
 
 		List<String> vector = new ArrayList<String>();
@@ -518,16 +528,15 @@ public class Utils {
 	public static void printPartitionDataList(PartitionDataList dataList) {
 
 		// printTaxonList(dataList);
-		System.out.println("\tReplications: " + dataList.siteCount);
+		System.out.println("\tSite count: " + getSiteCount(dataList));
 
 		int row = 1;
 		for (PartitionData data : dataList) {
 
 			System.out.println("Partition: " + row);
-
 			printPartitionData(data);
-
 			row++;
+			
 		}// END: data list loop
 
 	}// END: printDataList

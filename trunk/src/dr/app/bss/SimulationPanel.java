@@ -30,7 +30,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	private PartitionDataList dataList;
 	private OptionsPanel optionPanel;
 
-	private WholeNumberField siteCountField;
+//	private WholeNumberField siteCountField;
 
 	private WholeNumberField simulationsNumberField;
 
@@ -54,11 +54,11 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 
-		// number of sites
-		siteCountField = new WholeNumberField(1, Integer.MAX_VALUE);
-		siteCountField.setColumns(8);
-		siteCountField.setValue(dataList.siteCount);
-		optionPanel.addComponentWithLabel("Number of sites:", siteCountField);
+//		// number of sites
+//		siteCountField = new WholeNumberField(1, Integer.MAX_VALUE);
+//		siteCountField.setColumns(8);
+//		siteCountField.setValue(dataList.siteCount);
+//		optionPanel.addComponentWithLabel("Number of sites:", siteCountField);
 
 		// Simulation Type
 		JPanel simulationTypeHolder = new JPanel();
@@ -143,7 +143,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	public final void collectSettings() {
 
-		dataList.siteCount = siteCountField.getValue();
+//		dataList.siteCount = siteCountField.getValue();
 		dataList.simulationsCount = simulationsNumberField.getValue();
 
 		// frame.fireModelChanged();

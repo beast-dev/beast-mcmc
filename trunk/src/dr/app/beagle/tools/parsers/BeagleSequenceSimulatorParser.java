@@ -46,7 +46,6 @@ import dr.xml.XMLSyntaxRule;
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
-//	public static final String SITE_COUNT = "siteCount";
 	
 	public String getParserName() {
 		return BEAGLE_SEQUENCE_SIMULATOR;
@@ -66,7 +65,6 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public XMLSyntaxRule[] getSyntaxRules() {
 		
 		return new XMLSyntaxRule[] {
-//				AttributeRule.newIntegerRule(SITE_COUNT), 
 				new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
 				};
 		

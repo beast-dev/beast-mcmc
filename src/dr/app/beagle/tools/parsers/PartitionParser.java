@@ -138,7 +138,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 				AttributeRule.newIntegerRule(TO, true,
 						"The site position to finish at, must be greater than <b>"
 								+ FROM
-								+ "</b>, default is number of sites (replications)"), //
+								+ "</b>, default is number of sites"), //
 				AttributeRule.newIntegerRule(
 								EVERY,
 								true,

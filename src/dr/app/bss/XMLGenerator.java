@@ -106,13 +106,11 @@ public class XMLGenerator {
 
 					TreeModel treeModel = data.createTreeModel();
 
-					if (treeModelList.size() == 0
-							| !Utils.isTreeModelInList(treeModel, treeModelList)) {
+					if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
 
 						data.treeModelIdref += suffix;
 
-						writeStartingTree(treeModel, writer,
-								String.valueOf(suffix));
+						writeStartingTree(treeModel, writer, String.valueOf(suffix));
 						writer.writeBlankLine();
 
 						treeModelList.add(treeModel);
@@ -238,7 +236,7 @@ public class XMLGenerator {
 					writer.writeBlankLine();
 					partitionList.add(data);
 
-					System.out.println("NOT IN LIST");
+//					System.out.println("NOT IN LIST");
 
 				} else {
 
@@ -246,7 +244,7 @@ public class XMLGenerator {
 							Utils.FREQUENCY_MODEL_ELEMENT) + 1;
 					data.frequencyModelIdref += index;
 
-					System.out.println("IDENTICAL WITH " + index);
+//					System.out.println("IDENTICAL WITH " + index);
 
 				}
 

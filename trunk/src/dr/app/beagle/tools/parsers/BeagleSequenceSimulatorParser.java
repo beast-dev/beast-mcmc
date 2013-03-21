@@ -78,7 +78,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 		for (int i = 0; i < xo.getChildCount(); i++) {
 			Partition partition = (Partition) xo.getChild(i);
-			siteCount+=partition.getPartitionSiteCount();
+			siteCount += partition.getPartitionSiteCount();
 		}
 		
 		ArrayList<Partition> partitionsList = new ArrayList<Partition>();

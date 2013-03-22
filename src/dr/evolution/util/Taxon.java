@@ -167,6 +167,11 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
         return getId().equals(((Taxon)o).getId());
     }
 
+    @Override
+    public int hashCode() {
+    	return getId().hashCode();
+    }
+
     // **************************************************************
     // Comparable IMPLEMENTATION
     // **************************************************************

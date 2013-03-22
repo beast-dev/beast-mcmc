@@ -26,8 +26,10 @@ import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 
-@SuppressWarnings("serial")
+//@SuppressWarnings("serial")
 public class PartitionData implements Serializable {
+
+	private static final long serialVersionUID = 5509947183257673786L;
 
 	public PartitionData() {
 	}// END: Constructor
@@ -40,6 +42,14 @@ public class PartitionData implements Serializable {
 		return ((to - from) / every) + 1;
 	}
 	
+	public void resetIdrefs() {
+		resetClockModelIdref();
+		resetFrequencyModelIdref();
+		resetSiteRateModelIdref();
+		resetSubstitutionModelIdref();
+		resetTreeModelIdref();
+	}
+	
 	// //////////////////
 	// ---TREE MODEL---//
 	// //////////////////
@@ -47,6 +57,10 @@ public class PartitionData implements Serializable {
 	public File treeFile = null;
 	public String treeModelIdref = TreeModel.TREE_MODEL;
 
+	public void resetTreeModelIdref() {
+	this.treeModelIdref = TreeModel.TREE_MODEL;
+	}
+	
 	public TreeModel createTreeModel() {
 		TreeModel treeModel = Utils.importTreeFromFile(treeFile);
 		return treeModel;
@@ -89,46 +103,56 @@ public class PartitionData implements Serializable {
 
 	public int substitutionModelIndex = 0;
 
-	public String substitutionModelIdref = createSubstitutionModelIdref();
+	//TODO: doesn't work
+	public String substitutionModelIdref = Utils.SUBSTITUTION_MODEL;//createSubstitutionModelIdref();
 
-	private String createSubstitutionModelIdref() {
-
-		// System.out.println("FUBAR");
-
-		String substitutionModelIdref = "";
-
-		switch (this.substitutionModelIndex) {
-
-		case 0: // HKY
-
-			substitutionModelIdref = PartitionData.substitutionModels[0]
-					.toLowerCase();
-			break;
-
-		case 1: // GTR
-
-			substitutionModelIdref = PartitionData.substitutionModels[1]
-					.toLowerCase();
-			break;
-
-		case 2: // TNF93
-			substitutionModelIdref = PartitionData.substitutionModels[2]
-					.toLowerCase();
-			break;
-
-		case 3: // Yang Codon Model
-
-			substitutionModelIdref = PartitionData.substitutionModels[3]
-					.replaceAll(" +", ".").toLowerCase();
-			break;
-
-		default:
-			break;
-
-		}// END: switch
-
-		return substitutionModelIdref;
-	}// END: createSubstitutionModelIdref
+	public void resetSubstitutionModelIdref() {
+		this.substitutionModelIdref = Utils.SUBSTITUTION_MODEL;
+	}
+	
+//	public String createSubstitutionModelIdref() {
+//
+//		 System.out.println(substitutionModelIndex);
+//
+//		String substitutionModelIdref = "";
+//
+//		switch (this.substitutionModelIndex) {
+//
+//		case 0: // HKY
+//
+//			System.out.println("FUBAR1");
+//			
+//			substitutionModelIdref = PartitionData.substitutionModels[0]
+//					.toLowerCase();
+//			break;
+//
+//		case 1: // GTR
+//
+//			System.out.println("FUBAR2");
+//			
+//			substitutionModelIdref = PartitionData.substitutionModels[1]
+//					.toLowerCase();
+//			break;
+//
+//		case 2: // TNF93
+//			substitutionModelIdref = PartitionData.substitutionModels[2]
+//					.toLowerCase();
+//			break;
+//
+//		case 3: // Yang Codon Model
+//
+//			substitutionModelIdref = PartitionData.substitutionModels[3]
+//					.replaceAll(" +", ".").toLowerCase();
+//			break;
+//
+//		default:
+//			break;
+//
+//		}// END: switch
+//
+//		this.substitutionModelIdref = substitutionModelIdref;
+//		return substitutionModelIdref;
+//	}// END: createSubstitutionModelIdref
 
 	public static String[] substitutionModels = { "HKY", //
 			"GTR", //
@@ -249,6 +273,10 @@ public class PartitionData implements Serializable {
 
 	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
 
+	public void resetClockModelIdref() {
+		this.clockModelIdref = BranchRateModel.BRANCH_RATES;
+	}
+	
 	public static String[] clockModels = { "Strict Clock", //
 			"Lognormal relaxed clock (Uncorrelated)", //
 			"Exponential relaxed clock (Uncorrelated)" //
@@ -317,8 +345,12 @@ public class PartitionData implements Serializable {
 	// ---FREQUENCY MODELS---//
 	// ////////////////////////
 
-	public String frequencyModelIdref = "freqModel";
+	public String frequencyModelIdref = Utils.FREQUENCY_MODEL;
 
+	public void resetFrequencyModelIdref() {
+		this.frequencyModelIdref = Utils.FREQUENCY_MODEL;
+	}
+	
 	public int frequencyModelIndex = 0;
 
 	public static String[] frequencyModels = { "Nucleotide frequencies", //
@@ -535,6 +567,10 @@ public class PartitionData implements Serializable {
 
 	public String siteRateModelIdref = SiteModel.SITE_MODEL;
 
+	public void resetSiteRateModelIdref() {
+		this.siteRateModelIdref = SiteModel.SITE_MODEL;
+	}
+	
 	public static String[] siteRateModels = { "No model", //
 			"Gamma Site Rate Model", //
 	};

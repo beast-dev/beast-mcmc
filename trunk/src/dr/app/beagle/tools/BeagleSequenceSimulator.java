@@ -321,7 +321,6 @@ public class BeagleSequenceSimulator {
 
 				Taxon taxon = treeModel.getNodeTaxon(child);
 
-				//TODO: check if really unique
 				if (alignmentMap.containsKey(taxon)) {
 
 					int j = 0;

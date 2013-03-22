@@ -551,6 +551,14 @@ public class Utils {
 
 	}// END: printForestList
 
+	public static void printTreeFileList(PartitionDataList dataList) {
+
+		for (File treeFile : dataList.treeFileList) {
+			System.out.println(treeFile);
+		}
+
+	}// END: printForestList
+	
 	public static void printTaxonList(PartitionDataList dataList) {
 		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
 

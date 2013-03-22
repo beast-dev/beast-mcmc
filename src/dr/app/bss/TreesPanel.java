@@ -29,13 +29,12 @@ public class TreesPanel extends JPanel implements Exportable {
 	private PartitionDataList dataList;
 	private MainFrame frame;
 	
-	
 	private JTable treesTable = null;
 	private TreesTableModel treesTableModel = null;
+	
 	private JScrollPane scrollPane;
 	private TableColumn column;
 	private int treesCount;
-	
 	
 	private Action addTreeAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
@@ -43,6 +42,8 @@ public class TreesPanel extends JPanel implements Exportable {
 			treesTableModel.addDefaultRow();
 			setTrees();
 
+//			Utils.printTreeFileList(dataList);
+			
 		}// END: actionPerformed
 	};
 
@@ -60,6 +61,8 @@ public class TreesPanel extends JPanel implements Exportable {
 	public TreesPanel(MainFrame frame,
 			PartitionDataList dataList) {
 		
+//		super();
+		
 		this.frame = frame;
 		this.dataList = dataList;
 		
@@ -72,6 +75,21 @@ public class TreesPanel extends JPanel implements Exportable {
 		treesTableModel
 				.addTableModelListener(new TreesTableModelListener());
 		treesTable.setModel(treesTableModel);
+		
+		
+		setLayout(new BorderLayout());
+		
+		scrollPane = new JScrollPane(treesTable,
+				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		RowNumberTable rowNumberTable = new RowNumberTable(treesTable);
+		scrollPane.setRowHeaderView(rowNumberTable);
+		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+				rowNumberTable.getTableHeader());
+
+		scrollPane.getViewport().setOpaque(false);
+
+		add(scrollPane, BorderLayout.CENTER);
 		
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TREE_FILE_INDEX);
@@ -89,21 +107,6 @@ public class TreesPanel extends JPanel implements Exportable {
 		column.setCellRenderer(
 				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
 						0, 2)));
-		
-		
-		setLayout(new BorderLayout());
-		
-		scrollPane = new JScrollPane(treesTable,
-				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		RowNumberTable rowNumberTable = new RowNumberTable(treesTable);
-		scrollPane.setRowHeaderView(rowNumberTable);
-		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
-				rowNumberTable.getTableHeader());
-
-		scrollPane.getViewport().setOpaque(false);
-
-		add(scrollPane, BorderLayout.CENTER);
 		
 		ActionPanel actionPanel = new ActionPanel(false);
 		actionPanel.setAddAction(addTreeAction);
@@ -143,8 +146,7 @@ public class TreesPanel extends JPanel implements Exportable {
 							column);
 					
 					//TODO
-//					dataList.get(row).treeFile = value;
-//					dataList.treeFileList = dataList.treeFileList.add(value);
+					dataList.get(row).treeFile = value;
 					
 				}
 

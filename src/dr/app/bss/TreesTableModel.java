@@ -26,9 +26,11 @@ public class TreesTableModel extends AbstractTableModel {
 		this.dataList = dataList;
 	}// END: Constructor
 	
-	public void addRow(File treeFile) {
-		dataList.treeFileList.add(treeFile);
-		fireTableDataChanged();
+	public void addDefaultRow() {
+		//TODO: set path upon actual loading
+		dataList.treeFileList.add(new File(""));
+		fireTableRowsInserted(dataList.treeFileList.size() - 1, dataList.treeFileList.size() - 1);
+//		fireTableDataChanged();
 	}
 	
 	public void deleteRow(int row) {
@@ -67,7 +69,7 @@ public class TreesTableModel extends AbstractTableModel {
 	@Override
 	public int getRowCount() {
 		//TODO
-		return 1;//dataList.treeFileList.size();
+		return dataList.treeFileList.size();
 	}
 
 	@Override

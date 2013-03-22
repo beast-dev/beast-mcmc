@@ -7,15 +7,18 @@ public class TaxaTableModel extends AbstractTableModel {
 
 	private PartitionDataList dataList;
 
-	private String[] columnNames = { "Name", "Height" };
+	private String[] COLUMN_NAMES = { "Name", "Height" };
 	private double[] heights = null;
 
+	public final static int NAME_INDEX = 0;
+	public final static int HEIGHT_INDEX = 1;
+	
 	public TaxaTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}// END: Constructor
 
 	public int getColumnCount() {
-		return columnNames.length;
+		return COLUMN_NAMES.length;
 	}
 
 	public int getRowCount() {
@@ -31,7 +34,7 @@ public class TaxaTableModel extends AbstractTableModel {
 	}
 
 	public String getColumnName(int column) {
-		return columnNames[column];
+		return COLUMN_NAMES[column];
 	}
 
 	public Object getValueAt(int row, int col) {

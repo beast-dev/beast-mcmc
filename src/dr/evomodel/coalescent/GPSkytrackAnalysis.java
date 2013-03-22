@@ -41,7 +41,7 @@ public class GPSkytrackAnalysis extends TabularData {
 //    final File locations = FileHelpers.getFile("locations.txt");
 
     //    private final double[] HPDLevels;
-    private Parameter numGridpoints;
+    private Parameter numGridPoints;
     // each bin covers xPoints[-1]/coalBins.length
 //    private int[] coalBins;
 
@@ -53,7 +53,7 @@ public class GPSkytrackAnalysis extends TabularData {
 
     public GPSkytrackAnalysis(File log,  double burnIn, Parameter numGridPoints) throws IOException, Importer.ImportException, TraceException {
         GaussianProcessSkytrackBlockUpdateOperator GPOperator=new GaussianProcessSkytrackBlockUpdateOperator();
-        this.numGridpoints=numGridPoints;
+        this.numGridPoints=numGridPoints;
         LogFileTraces ltraces = new LogFileTraces(log.getCanonicalPath(), log);
         ltraces.loadTraces();
 
@@ -131,122 +131,39 @@ public class GPSkytrackAnalysis extends TabularData {
             gValues=new double[nStates][];
             tValues=new double[nStates][];
             newGvalues=new double[nStates][];
-            popValues=new double[nStates][];
+            popValues=new double[(int) numGridPoints.getParameterValue(0)+1][];
             readChain(gValues,"gvalues.txt");
             readChain(tValues,"locations.txt");
-
+          for (int i=0;i<=numGridPoints.getParameterValue(0);i++){
+            popValues[i]=new double[nStates] ;
+           }
+//
            for (int j=0;j<nStates;j++){
 //               newGvalues[j]=new double[numPoints[j]];
                newGvalues[j]=GPOperator.getGPvaluesS(tValues[j], gValues[j], xPoints, kappa[j]);
-//               popValues[j]=(1+Math.exp(-newGvalues[j].))/lambda[j];
+//               popValues[j]=new double[nStates];
+                for (int i=0;i<=numGridPoints.getParameterValue(0);i++){
+                    popValues[i][j]=(1+Math.exp(-newGvalues[j][i]))/lambda[j];
+                }
                }
-
-
-//            System.err.println(gvalTraces.getTrace(0).getValues(0,5));
-
-
-//             for (int j=0;j<nStates)
-//        GaussianProcessSkytrackBlockUpdateOperator.getGPvaluesS(currentChangePoints, currentPopSize, xPoints,currentPrecision);
-
-
 //
-//        int nDataPoints = 0;
-//        VDdemographicFunction[] allDemog = new VDdemographicFunction[nStates];
-//        {
-//            double[] indicators = new double[nIndicators];
-//            double[] pop = new double[nIndicators + 1];
-//            Tree[] tt = new Tree[treeFiles.length];
-//
-//            boolean match = true;
-//            for (int ns = 0; ns < nStates; ++ns) {
-//
-//                ltraces.getStateValues(ns, indicators, indicatorsFirstColumn);
-//                ltraces.getStateValues(ns, pop, populationFirstColumn);
-//
-//                if (match) {
-//                    for (int nt = 0; nt < tt.length; ++nt) {
-//                        tt[nt] = treeImporters[nt].importNextTree();
-//                        if( tt[nt] == null ) {
-//                           throw new TraceException("All NEXUS tree files should contain the same number of states");
-//                        }
-//                    }
-//                }
-//                //Get tree state number
-//                final String name1 = tt[0].getId();
-//                final int state1 = Integer.parseInt(name1.substring(name1.indexOf('_') + 1, name1.length()));
-//
-//                for (int j = 1; j < tt.length; ++j) {
-//                    final String name2 = tt[j].getId();
-//                    int state2 = Integer.parseInt(name1.substring(name2.indexOf('_') + 1, name2.length()));
-//                    if (state1 != state2) {
-//                        throw new TraceException("NEXUS tree files have different rates or corrupted!!!!");
-//                    }
-//                }
-//
-//                if ((ns + intBurnIn) * ltraces.getStepSize() == state1) {                   //Check if log state matches tree state
-//                    match = true;
-//                    final VDdemographicFunction demoFunction =
-//                            new VDdemographicFunction(tt, modelType, indicators, pop, logSpace, mid);
-//
-//                    if (restrictToNchanges >= 0 && demoFunction.numberOfChanges() != restrictToNchanges) {
-//                        continue;
-//                    }
-//
-//                    double[] xs = demoFunction.allTimePoints();
-//                    for (int k = 0; k < xs.length; ++k) {
-//                        xPoints[k + 1] += xs[k];
-//                    }
-//                    if (coalPointBins > 0) {
-//                        for (double x : xs) {
-//                            coalBins[Math.min((int) (x / binSize), coalBins.length - 1)]++;
-//                        }
-//                    }
-//                    allDemog[nDataPoints] = demoFunction;
-//                    ++nDataPoints;
-//
-//                    demoFunction.freeze();
-//                } else {
-//                    match = false;
-//                }
-//            }
-//
-//            for (int k = 0; k < xPoints.length; ++k) {
-//                xPoints[k] /= nStates;
-//            }
-//
-//            if (nStates != nDataPoints) {                                                     //Warning if log file and tree files
-//                // have different rates
-//                System.err.println("Different Rates is \"main\" and \"tree\" log files");
-//
-//            }
-//            if (nDataPoints < 10) {                                                           //Warning if number of states is not sufficient
-//                // enough to do the analysis
-//                System.err.println("Warning!!! Not Sufficient number of data points");
-//            }
-//        }
-//
-//        double[] popValues = new double[nDataPoints];
-//        means = new double[nXaxisPoints];
-//        medians = new double[nXaxisPoints];
+////
 //        hpdLower = new double[HPDLevels.length][];
 //        hpdHigh = new double[HPDLevels.length][];
 //
-//        for (int i = 0; i < HPDLevels.length; ++i) {
-//            hpdLower[i] = new double[nXaxisPoints];
-//            hpdHigh[i] = new double[nXaxisPoints];
-//        }
+
+        for (int nx = 0; nx < xPoints.length; ++nx) {
+            means[nx] = DiscreteStatistics.mean(popValues[nx]);
+            medians[nx]=DiscreteStatistics.median(popValues[nx]);
+            hpdLower[nx]=DiscreteStatistics.quantile(0.025,popValues[nx]);
+            hpdHigh[nx]=DiscreteStatistics.quantile(0.975,popValues[nx]);
+
+        }
+
+
+
 //
-//        for (int nx = 0; nx < xPoints.length; ++nx) {
-//            final double x = xPoints[nx];
-//
-//            for (int ns = 0; ns < nDataPoints; ++ns) {
-//                popValues[ns] = allDemog[ns].getDemographic(x);
-//            }
-//            int[] indices = new int[popValues.length];
-//            HeapSort.sort(popValues, indices);
-//
-//            means[nx] = DiscreteStatistics.mean(popValues);
-//            for (int i = 0; i < HPDLevels.length; ++i) {
+//          for (int i = 0; i < HPDLevels.length; ++i) {
 //                if (quantiles) {
 //                    hpdLower[i][nx] = DiscreteStatistics.quantile((1 - HPDLevels[i]) / 2, popValues, indices);
 //                    hpdHigh[i][nx] = DiscreteStatistics.quantile((1 + HPDLevels[i]) / 2, popValues, indices);
@@ -322,7 +239,7 @@ public class GPSkytrackAnalysis extends TabularData {
 //    }
 
     public int nRows() {
-        return (int) numGridpoints.getParameterValue(0)+1;
+        return (int) numGridPoints.getParameterValue(0)+1;
     }
 
 

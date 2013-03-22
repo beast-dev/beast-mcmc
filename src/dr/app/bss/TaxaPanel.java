@@ -13,6 +13,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.plaf.BorderUIResource;
+import javax.swing.table.TableColumn;
 
 import dr.app.gui.table.TableEditorStopper;
 
@@ -24,7 +25,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private JScrollPane scrollPane = new JScrollPane();
 	private JTable taxaTable = null;
 	private TaxaTableModel taxaTableModel = null;
-
+	private TableColumn column;
+	
 	public TaxaPanel(PartitionDataList dataList) {
 
 		this.dataList = dataList;
@@ -34,6 +36,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 		taxaTableModel = new TaxaTableModel(this.dataList);
 		taxaTable.setModel(taxaTableModel);
 
+		setLayout(new BorderLayout());
+		
 		taxaTable.getTableHeader().setReorderingAllowed(false);
 
 		taxaTable.getTableHeader()
@@ -41,24 +45,20 @@ public class TaxaPanel extends JPanel implements Exportable {
 						new HeaderRenderer(SwingConstants.LEFT, new Insets(0,
 								2, 0, 2)));
 
-		taxaTable
-				.getColumnModel()
-				.getColumn(0)
-				.setCellRenderer(
-						new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
-								0, 2)));
-
-		taxaTable.getColumnModel().getColumn(0).setPreferredWidth(80);
-
-		taxaTable
-				.getColumnModel()
-				.getColumn(1)
-				.setCellRenderer(
-						new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
-								0, 2)));
-
-		taxaTable.getColumnModel().getColumn(1).setPreferredWidth(80);
-
+		column = taxaTable.getColumnModel().getColumn(
+				TaxaTableModel.NAME_INDEX);
+		column.setCellRenderer(
+				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+						0, 2)));
+		column.setPreferredWidth(80);
+		
+		column = taxaTable.getColumnModel().getColumn(
+				TaxaTableModel.HEIGHT_INDEX);
+		column.setCellRenderer(
+				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+						0, 2)));
+		column.setPreferredWidth(80);
+		
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxaTable);
 
 		scrollPane = new JScrollPane(taxaTable,
@@ -77,7 +77,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 				new java.awt.Insets(12, 12, 12, 12)));
 		setLayout(new BorderLayout(0, 0));
 
-		add(scrollPane, "Center");
+		add(scrollPane, BorderLayout.CENTER);
 
 	}// END: Constructor
 

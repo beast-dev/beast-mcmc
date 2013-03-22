@@ -38,7 +38,7 @@ public class GPSkytrackAnalysisParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        System.err.println("The Analysis Parser is being called");
+        System.err.println("The Summary Statistics are being created...");
 
         try {
 

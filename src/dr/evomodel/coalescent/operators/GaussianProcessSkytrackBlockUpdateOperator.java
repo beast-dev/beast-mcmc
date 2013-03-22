@@ -110,6 +110,9 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
     }
 
 
+    public GaussianProcessSkytrackBlockUpdateOperator() {
+
+    }
     //change the 0.0005 to a parameter in BlockUpdate Parser
     private double getProposalLambda(double currentValue) {
         double proposal= MathUtils.uniform(currentValue-0.00001,currentValue+0.00001);
@@ -633,6 +636,62 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 
     }
 
+
+    public double[] getGPvaluesS(double[] currentChangePoints, double[] currentGPvalues1, double[] newChangePoints, double precision){
+        int currentLength=currentChangePoints.length;
+        int addLength=newChangePoints.length;
+        int newLength = currentLength+addLength;
+
+//       Takes the currentChangePoints and the newChangePoints into getData() but ordered and the order in getOrder()
+//        assumes that order numbers 0..currentLength are the positions of currentChangePoints
+//        and currentLength..newLength  - currentLentgth are the positions of newChangePoints
+
+        QuadupleGP tempQuad= sortUpdate(currentChangePoints, newChangePoints);
+//          index=tempPair.getOrder();
+//        totalChangePoints=tempPair.getData();
+//      This is a silly thing to only compute the Q.matrix for the neighbors of the newChangePoints
+//      Takes the positions of the newData in the new complete sorted data and adds the positions of neighbors
+
+
+
+//      Takes the positions of the newData in the new complete sorted data and adds the positions of neighbors
+        int [] NeighborsIndex =Neighbors(tempQuad.getPositionNew(), newLength);
+
+//      Retrieves the positions indicated in NeigborsIndex from the complete sorted data
+        no.uib.cipr.matrix.DenseVector tempData = new DenseVector(SubsetData(tempQuad.getData(),NeighborsIndex));
+
+        SymmTridiagMatrix Q = getQmatrix(precision, tempData);
+
+
+
+//        Retrieves the positions indicated in NeighborsIndex from the getOrder
+        int [] NeighborsOriginal= SubsetData(tempQuad.getOrder(),NeighborsIndex);
+//      Generates two arrays: one with the positions of newData and other with the positions of OldData in the Neighbors data TempData
+        PairIndex Indicators = SubIndex(NeighborsOriginal,currentLength,addLength);
+
+        UpperSPDBandMatrix varf = new UpperSPDBandMatrix(Matrices.getSubMatrix(Q, Indicators.getOrderNew(), Indicators.getOrderNew()),1);
+        BandCholesky U1 = new BandCholesky(addLength,1,true);
+
+        U1.factor(varf);
+
+
+        DenseVector part = new DenseVector(addLength);
+        int [] GPpositions =SubsetData(NeighborsOriginal,Indicators.getOrderOld());
+        DenseVector currentGPvalues= new DenseVector(currentGPvalues1);
+        DenseVector currentGPneighbors = new DenseVector(SubsetData(currentGPvalues,GPpositions));
+
+        Matrix first = Matrices.getSubMatrix(Q,Indicators.getOrderNew(),Indicators.getOrderOld());
+
+        first.mult(-1,currentGPneighbors,part);
+
+        DenseVector mean = new DenseVector(getMultiNormalMean(part, U1.getU()));
+
+        double [] addGPvalues = getMultiNormal(mean,U1.getU()).getData();
+
+
+        return addGPvalues;
+
+    }
 
 //    public PairGP sortNew(double [] newPoints){
 //        double [] newPoints2= new double[newPoints.length];

@@ -70,7 +70,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         GPvalue = GPLikelihood;     //before gmrfField
         popSizeParameter = GPLikelihood.getPopSizeParameter();
 
-        popValue=GPLikelihood.getPopValue();
+//        popValue=GPLikelihood.getPopValue();
         changePoints=GPLikelihood.getChangePoints();
         GPcoalfactor=GPLikelihood.getGPcoalfactor();
         coalfactor=GPLikelihood.getcoalfactor();

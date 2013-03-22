@@ -47,13 +47,13 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 
     public static final String LAMBDA_BOUND_PARAMETER = "lambdaBoundParameter";
 	public static final String POPULATION_PARAMETER = "populationSizes";
-    public static final String POPULATION_VALUES = "populationValues";
     public static final String NUMBER_POINTS="pointsParameter";
     public static final String GPTYPE="GPtype";
     public static final String GPCOUNTS="GPcounts";
     public static final String COALFACTOR="coalfactor";
     public static final String CHANGE_POINTS="changePoints";
     public static final String COALCOUNT="CoalCounts";
+    public static final String TMRCA="timeMRCA";
 //	public static final String GROUP_SIZES = "groupSizes";
 	public static final String PRECISION_PARAMETER = "precisionParameter";
 	public static final String POPULATION_TREE = "populationTree";
@@ -67,7 +67,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
     public static final String RESCALE_BY_ROOT_ISSUE = "rescaleByRootHeight";
 //    public static final String GRID_POINTS = "gridPoints";
 //    public static final String OLD_SKYRIDE = "oldSkyride";      //True=No multiple loci
-    public static final String NUM_GRID_POINTS = "numGridPoints";
+//    public static final String NUM_GRID_POINTS = "numGridPoints";
 //    public static final String CUT_OFF = "cutOff";
 //    public static final String PHI_PARAMETER = "phiParameter";
 
@@ -138,14 +138,15 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 
         }
 
-        Parameter popValues;
-        if (xo.getChild(POPULATION_VALUES) != null) {
-            cxo = xo.getChild(POPULATION_VALUES);
-            popValues = (Parameter) cxo.getChild(Parameter.class);
+        Parameter Tmrca;
+        if (xo.getChild(TMRCA) != null) {
+            cxo = xo.getChild(TMRCA);
+            Tmrca = (Parameter) cxo.getChild(Parameter.class);
         } else {
-            popValues = new Parameter.Default(1.0);
+            Tmrca = new Parameter.Default(1.0);
 
         }
+
 
         Parameter numPoints;
         if (xo.getChild(NUMBER_POINTS) != null) {
@@ -227,11 +228,11 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
         */
 
 
-        Parameter numGridPoints = new Parameter.Default(0,1);
-        if (xo.getChild(NUM_GRID_POINTS) != null) {
-            cxo = xo.getChild(NUM_GRID_POINTS);
-            numGridPoints = (Parameter) cxo.getChild(Parameter.class);
-        }
+//        Parameter numGridPoints = new Parameter.Default(0,1);
+//        if (xo.getChild(NUM_GRID_POINTS) != null) {
+//            cxo = xo.getChild(NUM_GRID_POINTS);
+//            numGridPoints = (Parameter) cxo.getChild(Parameter.class);
+//        }
 
 //        Parameter cutOff = null;
 //        if (xo.getChild(CUT_OFF) != null) {
@@ -295,8 +296,8 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 
 
              return new GaussianProcessSkytrackLikelihood(treeList, precParameter,
-                 rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter,alpha_parameter,beta_parameter, change_points,
-                     GPtype, GPcounts, coalfactor, popValues, CoalCounts, numPoints);
+                 rescaleByRootHeight, lambda_bound, lambda_parameter, popParameter,alpha_parameter,beta_parameter, change_points,
+                     GPtype, GPcounts, coalfactor, CoalCounts, numPoints,Tmrca);
 
     }
 
@@ -326,9 +327,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
             new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
-            new ElementRule(NUM_GRID_POINTS, new XMLSyntaxRule[]{
-                               new ElementRule(Parameter.class)
-                       }),
+
             new ElementRule(LAMBDA_BOUND_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),

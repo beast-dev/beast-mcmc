@@ -39,7 +39,6 @@ import dr.app.beagle.tools.Partition;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
@@ -255,9 +254,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 						}// END: partition loop
 
 						beagleSequenceSimulator = new BeagleSequenceSimulator(
-								partitionsList
-//								, dataList.siteCount
-								);
+								partitionsList);
 
 						writer.println(beagleSequenceSimulator.simulate()
 								.toString());

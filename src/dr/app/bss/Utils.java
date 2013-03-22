@@ -34,7 +34,9 @@ public class Utils {
 	public static final int BRANCH_RATE_MODEL_ELEMENT = 3;
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
-
+	public static final String SUBSTITUTION_MODEL = "substitutionModel";
+	public static final String FREQUENCY_MODEL = "frequencyModel";
+	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////

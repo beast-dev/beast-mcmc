@@ -160,6 +160,7 @@ public class XMLGenerator {
 
 					treeModelList.add(treeModel);
 
+					
 				}
 
 				suffix++;
@@ -377,6 +378,12 @@ public class XMLGenerator {
 		writer.writeCloseTag("beast");
 		writer.flush();
 		writer.close();
+
+		// reset all idrefs
+		for (PartitionData data : dataList) {
+			data.resetIdrefs();
+		}
+
 	}// END: generateXML
 
 	private void writeBeagleSequenceSimulator(XMLWriter writer) {

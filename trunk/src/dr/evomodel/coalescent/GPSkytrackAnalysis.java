@@ -6,17 +6,18 @@ import dr.inference.model.Parameter;
 //import dr.evolution.io.NexusImporter;
 //import dr.evolution.io.TreeImporter;
 //import dr.evolution.tree.Tree;
+import dr.inference.operators.CoercionMode;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
+import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
 import dr.stats.DiscreteStatistics;
 import dr.util.FileHelpers;
 import dr.util.HeapSort;
 import dr.util.TabularData;
+import no.uib.cipr.matrix.*;
 
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 //import java.io.PrintWriter;
 import java.util.Arrays;
 
@@ -30,8 +31,14 @@ public class GPSkytrackAnalysis extends TabularData {
     private final double[] medians;
     private final double[] hpdLower;
     private final double[] hpdHigh;
-    final File gvalues = FileHelpers.getFile("gvalues.txt");
-    final File locations = FileHelpers.getFile("locations.txt");
+    private final double [][] gValues;
+    private final double [][] tValues;
+    private final double [][] newGvalues;
+    private final double [][] popValues;
+
+
+//    final File gvalues = FileHelpers.getFile("gvalues.txt");
+//    final File locations = FileHelpers.getFile("locations.txt");
 
     //    private final double[] HPDLevels;
     private Parameter numGridpoints;
@@ -40,13 +47,15 @@ public class GPSkytrackAnalysis extends TabularData {
 
 //    private final boolean quantiles;
 
+//    GaussianProcessSkytrackLikelihood gpLikelihood = (GaussianProcessSkytrackLikelihood) xo.getChild(GaussianProcessSkytrackLikelihood.class);
+//    return new GaussianProcessSkytrackBlockUpdateOperator(gpLikelihood, weight, mode, scaleFactor,
+//                                                          maxIterations, stopValue);
+
     public GPSkytrackAnalysis(File log,  double burnIn, Parameter numGridPoints) throws IOException, Importer.ImportException, TraceException {
+        GaussianProcessSkytrackBlockUpdateOperator GPOperator=new GaussianProcessSkytrackBlockUpdateOperator();
         this.numGridpoints=numGridPoints;
         LogFileTraces ltraces = new LogFileTraces(log.getCanonicalPath(), log);
-        System.err.println("path:"+log.getCanonicalPath());
         ltraces.loadTraces();
-        LogFileTraces gvalTraces=new LogFileTraces(gvalues.getCanonicalPath(),gvalues);
-        LogFileTraces locTraces=new LogFileTraces(locations.getCanonicalPath(),locations);
 
         ltraces.setBurnIn(0);
         final int runLengthIncludingBurnin = ltraces.getStateCount();
@@ -56,100 +65,90 @@ public class GPSkytrackAnalysis extends TabularData {
 //        System.err.println("runl"+runLengthIncludingBurnin+"burnin");
         //intBurnIn *= ltraces.getStepSize();
         ltraces.setBurnIn(intBurnIn * ltraces.getStepSize());
-
         assert ltraces.getStateCount() == nStates;
 
 //        this.quantiles = quantiles;
 //        HPDLevels = new double[]{0.95};
 
-        xPoints = new double[(int) numGridPoints.getParameterValue(0)];
-        means = new double[(int) numGridPoints.getParameterValue(0)];
-        medians = new double[(int) numGridPoints.getParameterValue(0)];
-        hpdHigh = new double[(int) numGridPoints.getParameterValue(0)];
-        hpdLower = new double[(int) numGridPoints.getParameterValue(0)];
+        xPoints = new double[(int) numGridPoints.getParameterValue(0)+1];
+        means = new double[(int) numGridPoints.getParameterValue(0)+1];
+        medians = new double[(int) numGridPoints.getParameterValue(0)+1];
+        hpdHigh = new double[(int) numGridPoints.getParameterValue(0)+1];
+        hpdLower = new double[(int) numGridPoints.getParameterValue(0)+1];
 
         int numbPointsColumn = -1;
         int lambdaColumn = -1;
         int precColumn = -1;
+        int tmrcaColumn=-1;
+
+
 
         for (int n = 0; n < ltraces.getTraceCount(); ++n) {
             final String traceName = ltraces.getTraceName(n);
-            System.err.println("trace name"+n+"is"+traceName);
             if (traceName.equals("skyride.points")) {
                numbPointsColumn = n;
             } else if (traceName.equals("skyride.lambda_bound")) {
                 lambdaColumn = n;
             } else if (traceName.equals("skyride.precision")) {
                 precColumn = n;
+            } else if (traceName.equals("skyride.tmrca")) {
+                tmrcaColumn = n;
             }
+
         }
 
-        if (numbPointsColumn < 0 || lambdaColumn < 0 || precColumn<0) {
-            throw new TraceException("incorrect trace column names: unable to find lambda_bound, points or precision");
+        if (numbPointsColumn < 0 || lambdaColumn < 0 || precColumn<0 || tmrcaColumn<0) {
+            throw new TraceException("incorrect trace column names: unable to find lambda_bound, points, tmrca or precision");
         }
 
+//        TODO: Check if it is ok to define the grid from 0 to max(TMRCA) always
         double binSize = 0;
 //            double hSum = -0;
-        System.err.println("NumPoints Column"+numbPointsColumn);
-        System.err.println("lambda Column"+lambdaColumn);
-        System.err.println("precision Column"+precColumn);
 
 
             int [] numPoints = new int[nStates];
             double[] lambda = new double[nStates];
             double[] kappa= new double[nStates];
+            double tmrca=0;
+//            double binSize=0;
+            double tempTmrca=0.0;
+            int maxpts=0;
             for (int ns = 0; ns < nStates; ++ns) {
                 lambda[ns]= (Double) ltraces.getTrace(lambdaColumn).getValue(ns);
                 numPoints[ns]=(int)Math.round((Double) ltraces.getTrace(numbPointsColumn).getValue(ns));
                 kappa[ns]=(Double) ltraces.getTrace(precColumn).getValue(ns);
-
+                tempTmrca=(Double) ltraces.getTrace(tmrcaColumn).getValue(ns);
+                if (tempTmrca>tmrca){tmrca=tempTmrca;}
+                if (numPoints[ns]>maxpts) {maxpts=numPoints[ns];}
             }
 
+            binSize = tmrca / numGridPoints.getParameterValue(0);
+            xPoints[0]=0.0;
+            for (int np=1;np<xPoints.length;np++){
+             xPoints[np]=xPoints[np-1]+binSize;
+            }
 
-//        double[]  test=new double[numPoints[0]];
-//        for (int ns = 0; ns < numPoints[0]; ++ns) {
-//            test[ns]= (Double) gvalTraces.getTrace(0).getValue(ns);
-//            System.err.println("test:"+test[ns]);
-////            numPoints[ns]=(Integer) ltraces.getTrace(numbPointsColumn).getValue(ns);
-////            kappa[ns]=(Double) ltraces.getTrace(precColumn).getValue(ns);
-//
-//        }
+            gValues=new double[nStates][];
+            tValues=new double[nStates][];
+            newGvalues=new double[nStates][];
+            popValues=new double[nStates][];
+            readChain(gValues,"gvalues.txt");
+            readChain(tValues,"locations.txt");
+
+           for (int j=0;j<nStates;j++){
+//               newGvalues[j]=new double[numPoints[j]];
+               newGvalues[j]=GPOperator.getGPvaluesS(tValues[j], gValues[j], xPoints, kappa[j]);
+//               popValues[j]=(1+Math.exp(-newGvalues[j].))/lambda[j];
+               }
 
 
-//        System.exit(-1);
+//            System.err.println(gvalTraces.getTrace(0).getValues(0,5));
 
-//                hSum += h[0];
-//            }
-//
-//            binSize = hSum / (nStates * coalPointBins);
-//            coalBins = new int[coalPointBins];
-//            Arrays.fill(coalBins, 0);
-//
 
-//        TreeImporter[] treeImporters = new TreeImporter[treeFiles.length];
-//        final boolean isStepWise = modelType == VariableDemographicModel.Type.STEPWISE;
-//
-//        int nIndicators = 0;
-//
-//        for (int k = 0; k < treeFiles.length; ++k) {
-//
-//            // System.err.println("burnin " + treeFiles[k] + "(" + k + ")");
-//
-//            treeImporters[k] = new NexusImporter(new FileReader(treeFiles[k]));
-//            assert intBurnIn > 0;
-//            for (int z = 0; z < intBurnIn - 1; ++z) {
-//                treeImporters[k].importNextTree();
-//            }
-//            nIndicators += treeImporters[k].importNextTree().getExternalNodeCount() - 1;
-//        }
-//
-//        if (isStepWise) {
-//            nIndicators -= 1;
-//        }
-//
-//        final int nXaxisPoints = nIndicators + (isStepWise ? 1 : 0) + 1;
-//        xPoints = new double[nXaxisPoints];
-//        Arrays.fill(xPoints, 0.0);
+//             for (int j=0;j<nStates)
+//        GaussianProcessSkytrackBlockUpdateOperator.getGPvaluesS(currentChangePoints, currentPopSize, xPoints,currentPrecision);
+
+
 //
 //        int nDataPoints = 0;
 //        VDdemographicFunction[] allDemog = new VDdemographicFunction[nStates];
@@ -277,6 +276,30 @@ public class GPSkytrackAnalysis extends TabularData {
 //        }
     }
 
+    public void readChain(double [][] current,String fileName){
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(fileName));
+
+            String line=null;
+            int i=0;
+//            System.err.println("will read line1");
+            while ((line=br.readLine())!=null){
+                String[] parts=line.split(" ");
+//                System.err.println(i+"with cols:"+parts.length);
+                current[i]=new double[parts.length];
+                    for (int j=0;j<parts.length;j++){
+                        current[i][j]=Double.parseDouble(parts[j]);
+                    }
+                i++;
+        }   br.close();
+        }
+        catch(java.io.IOException ioe){
+            System.err.println("IOException:"+ ioe.getMessage());
+        }
+    }
+
+
+
     private final String[] columnNames = {"time", "mean", "median","upper","lower"};
 
     public int nColumns() {
@@ -299,8 +322,9 @@ public class GPSkytrackAnalysis extends TabularData {
 //    }
 
     public int nRows() {
-        return (int) numGridpoints.getParameterValue(0);
+        return (int) numGridpoints.getParameterValue(0)+1;
     }
+
 
     public Object data(int nRow, int nColumn) {
         switch (nColumn) {

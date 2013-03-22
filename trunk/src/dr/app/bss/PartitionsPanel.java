@@ -2,9 +2,11 @@ package dr.app.bss;
 
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
+import jam.table.TableRenderer;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.io.File;
 
@@ -16,6 +18,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellRenderer;
@@ -28,30 +31,29 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private JTable partitionTable = null;
 	private PartitionTableModel partitionTableModel = null;
+	
 	private TableColumnHider hider;
 	private JScrollPane scrollPane;
-
 	private TableColumn column;
-
 	private int partitionsCount;
 
 	private Action addPartitionAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
 
-			partitionTableModel.addDefaultRow();
 			// partitionTableModel.copyPreviousRow();
-
-			partitionsCount++;
+			partitionTableModel.addDefaultRow();
 			setPartitions();
+			
 		}// END: actionPerformed
 	};
 
 	private Action removePartitionAction = new AbstractAction("-") {
 		public void actionPerformed(ActionEvent ae) {
 			if (partitionsCount > 1) {
+				
 				partitionTableModel.deleteRow(partitionsCount - 1);
-				partitionsCount--;
 				setPartitions();
+			
 			}
 		}// END: actionPerformed
 	};
@@ -67,7 +69,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		partitionTable.addMouseListener(new JTableButtonMouseListener(
 				partitionTable));
 
-		partitionTableModel = new PartitionTableModel(dataList);
+		partitionTableModel = new PartitionTableModel(this.dataList);
 		partitionTableModel
 				.addTableModelListener(new PartitionTableModelListener());
 		partitionTable.setModel(partitionTableModel);
@@ -98,6 +100,27 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellEditor(new JTableComboBoxCellEditor());
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.FROM_INDEX);
+		column.setCellRenderer(
+				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+						0, 2)));
+		column.setPreferredWidth(80);
+		
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.TO_INDEX);
+		column.setCellRenderer(
+				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+						0, 2)));
+		column.setPreferredWidth(80);
+		
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.EVERY_INDEX);
+		column.setCellRenderer(
+				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+						0, 2)));
+		column.setPreferredWidth(80);
+		
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
@@ -144,8 +167,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	// Listen to tree choices, set tree model in partition data
 	private class PartitionTableModelListener implements TableModelListener {
 
-		public PartitionTableModelListener() {
-		}
+//		public PartitionTableModelListener() {
+//		}
 
 		public void tableChanged(TableModelEvent ev) {
 
@@ -157,7 +180,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 					File value = (File) partitionTableModel.getValueAt(row,
 							column);
-					// this.
+					
 					dataList.get(row).treeFile = value;
 
 				}

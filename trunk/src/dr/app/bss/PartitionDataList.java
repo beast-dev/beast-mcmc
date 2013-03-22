@@ -19,6 +19,9 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public LinkedHashSet<File> forestList = new LinkedHashSet<File>();
 	public File treesFilename = null;
 
+	//TODO: when panel is ready this comes along
+	public LinkedHashSet<File> treeFileList = new LinkedHashSet<File>();
+	
 	public PartitionDataList() {
 		super();
 	}// END: Constructor

@@ -103,7 +103,6 @@ public class PartitionData implements Serializable {
 
 	public int substitutionModelIndex = 0;
 
-	//TODO: doesn't work
 	public String substitutionModelIdref = Utils.SUBSTITUTION_MODEL;//createSubstitutionModelIdref();
 
 	public void resetSubstitutionModelIdref() {

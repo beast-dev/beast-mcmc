@@ -60,7 +60,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	public PartitionsPanel(PartitionDataList dataList) {
 
-		super();
+//		super();
 
 		this.dataList = dataList;
 
@@ -393,7 +393,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		setDataList(dataList);
 		setPartitions();
 		partitionTableModel.fireTableDataChanged();
-	}// END: populatePartitionTable
+	}// END: updatePartitionTable
 
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;

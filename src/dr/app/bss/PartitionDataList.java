@@ -20,7 +20,8 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public File treesFilename = null;
 
 	//TODO: when panel is ready this comes along
-	public LinkedHashSet<File> treeFileList = new LinkedHashSet<File>();
+	//TODO: how to make it unique?
+	public ArrayList<File> treeFileList = new ArrayList<File>();
 	
 	public PartitionDataList() {
 		super();

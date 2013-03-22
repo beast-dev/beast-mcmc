@@ -69,7 +69,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		setTitle(title);
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
-
 		//TODO: add this empty file or start from 0?
 		dataList.treeFileList.add(new File(""));
 		

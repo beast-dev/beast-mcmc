@@ -64,7 +64,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public void deleteRow(int row) {
 		dataList.remove(row);
-		this.fireTableDataChanged();
+		fireTableDataChanged();
 	}
 
 	@Override

@@ -6,16 +6,11 @@ import jam.panels.ActionPanel;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultCellEditor;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -251,112 +246,112 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	}// END: JTableComboBoxCellEditor class
 
-	private class JTableButtonCellRenderer extends JButton implements
-			TableCellRenderer {
+//	private class JTableButtonCellRenderer extends JButton implements
+//			TableCellRenderer {
+//
+//		public JTableButtonCellRenderer() {
+//			super();
+//			setOpaque(true);
+//		}// END: Constructor
+//
+//		@Override
+//		public Component getTableCellRendererComponent(JTable table,
+//				Object value, boolean isSelected, boolean hasFocus, int row,
+//				int column) {
+//
+//			setEnabled(table.isEnabled());
+//
+//			JButton button = (JButton) value;
+//			setBackground(isSelected ? table.getSelectionBackground() : table
+//					.getBackground());
+//			// button.setText((value == null) ? "" : value.toString());
+//
+//			return button;
+//		}// END: getTableCellRendererComponent
+//
+//	}// END: JTableButtonRenderer class
 
-		public JTableButtonCellRenderer() {
-			super();
-			setOpaque(true);
-		}// END: Constructor
+//	private class JTableButtonCellEditor extends DefaultCellEditor {
+//
+//		protected JButton button;
+//		private String label;
+//		private boolean isPushed;
+//
+//		public JTableButtonCellEditor() {
+//			super(new JCheckBox());
+//			button = new JButton();
+//			button.setOpaque(true);
+//			button.addActionListener(new ActionListener() {
+//				public void actionPerformed(ActionEvent e) {
+//					fireEditingStopped();
+//				}
+//			});
+//		}
+//
+//		public Component getTableCellEditorComponent(JTable table,
+//				Object value, boolean isSelected, int row, int column) {
+//
+//			if (isSelected) {
+//				button.setForeground(table.getSelectionForeground());
+//				button.setBackground(table.getSelectionBackground());
+//			} else {
+//				button.setForeground(table.getForeground());
+//				button.setBackground(table.getBackground());
+//			}
+//
+//			label = (value == null) ? "" : value.toString();
+//			button.setText(label);
+//			isPushed = true;
+//
+//			return button;
+//		}
+//
+//		public Object getCellEditorValue() {
+//			if (isPushed) {
+//				//
+//			}
+//			isPushed = false;
+//			return new String(label);
+//		}
+//
+//		public boolean stopCellEditing() {
+//			isPushed = false;
+//			return super.stopCellEditing();
+//		}
+//
+//		protected void fireEditingStopped() {
+//			super.fireEditingStopped();
+//		}
+//
+//	}// END: JTableButtonCellEditor
 
-		@Override
-		public Component getTableCellRendererComponent(JTable table,
-				Object value, boolean isSelected, boolean hasFocus, int row,
-				int column) {
-
-			setEnabled(table.isEnabled());
-
-			JButton button = (JButton) value;
-			setBackground(isSelected ? table.getSelectionBackground() : table
-					.getBackground());
-			// button.setText((value == null) ? "" : value.toString());
-
-			return button;
-		}// END: getTableCellRendererComponent
-
-	}// END: JTableButtonRenderer class
-
-	private class JTableButtonCellEditor extends DefaultCellEditor {
-
-		protected JButton button;
-		private String label;
-		private boolean isPushed;
-
-		public JTableButtonCellEditor() {
-			super(new JCheckBox());
-			button = new JButton();
-			button.setOpaque(true);
-			button.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					fireEditingStopped();
-				}
-			});
-		}
-
-		public Component getTableCellEditorComponent(JTable table,
-				Object value, boolean isSelected, int row, int column) {
-
-			if (isSelected) {
-				button.setForeground(table.getSelectionForeground());
-				button.setBackground(table.getSelectionBackground());
-			} else {
-				button.setForeground(table.getForeground());
-				button.setBackground(table.getBackground());
-			}
-
-			label = (value == null) ? "" : value.toString();
-			button.setText(label);
-			isPushed = true;
-
-			return button;
-		}
-
-		public Object getCellEditorValue() {
-			if (isPushed) {
-				//
-			}
-			isPushed = false;
-			return new String(label);
-		}
-
-		public boolean stopCellEditing() {
-			isPushed = false;
-			return super.stopCellEditing();
-		}
-
-		protected void fireEditingStopped() {
-			super.fireEditingStopped();
-		}
-
-	}// END: JTableButtonCellEditor
-
-	private class JTableButtonMouseListener extends MouseAdapter {
-
-		private final JTable table;
-
-		public JTableButtonMouseListener(JTable table) {
-			this.table = table;
-		}// END: Constructor
-
-		public void mouseClicked(MouseEvent e) {
-
-			int column = table.getColumnModel().getColumnIndexAtX(e.getX());
-			int row = e.getY() / table.getRowHeight();
-
-			if (row < table.getRowCount() && row >= 0
-					&& column < table.getColumnCount() && column >= 0) {
-
-				Object value = table.getValueAt(row, column);
-				if (value instanceof JButton) {
-
-					((JButton) value).doClick();
-
-				}// END: JButton check
-
-			}// END: placement check
-		}// END: mouseClicked
-
-	}// END: JTableButtonMouseListener class
+//	private class JTableButtonMouseListener extends MouseAdapter {
+//
+//		private final JTable table;
+//
+//		public JTableButtonMouseListener(JTable table) {
+//			this.table = table;
+//		}// END: Constructor
+//
+//		public void mouseClicked(MouseEvent e) {
+//
+//			int column = table.getColumnModel().getColumnIndexAtX(e.getX());
+//			int row = e.getY() / table.getRowHeight();
+//
+//			if (row < table.getRowCount() && row >= 0
+//					&& column < table.getColumnCount() && column >= 0) {
+//
+//				Object value = table.getValueAt(row, column);
+//				if (value instanceof JButton) {
+//
+//					((JButton) value).doClick();
+//
+//				}// END: JButton check
+//
+//			}// END: placement check
+//		}// END: mouseClicked
+//
+//	}// END: JTableButtonMouseListener class
 
 	public void hideTreeColumn() {
 		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.TREE_MODEL_INDEX]);

@@ -47,13 +47,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	private PartitionDataList dataList;
 	
 	private final String TAXA_TAB_NAME = "Taxa";
-	private final String TREES_TAB_NAME = "Trees";
+	private final String TREE_TAB_NAME = "Tree";
 	private final String PARTITIONS_TAB_NAME = "Partitions";
 	private final String SIMULATION_TAB_NAME = "Simulation";
 	
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
 	private TreePanel treePanel;
+	private TreesPanel treesPanel;
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
 
@@ -98,11 +99,13 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		taxaPanel = new TaxaPanel(dataList);
 		treePanel = new TreePanel(this, dataList);
+		treesPanel = new TreesPanel(this, dataList);
 		partitionsPanel = new PartitionsPanel(dataList);
 		simulationPanel = new SimulationPanel(this, dataList);
 
 		tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
-		tabbedPane.addTab(TREES_TAB_NAME, null, treePanel);
+		tabbedPane.addTab(TREE_TAB_NAME, null, treePanel);
+		tabbedPane.addTab("Trees", null, treesPanel);
 		tabbedPane.addTab(PARTITIONS_TAB_NAME, null, partitionsPanel);
 		tabbedPane.addTab(SIMULATION_TAB_NAME, null, simulationPanel);
 

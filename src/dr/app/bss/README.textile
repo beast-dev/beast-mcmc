@@ -20,11 +20,9 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* Idref for branch substitution model does not update with editor choices
-* Idrefs are not zeroed between XML generations (re-set them after processing partitions)
+* table for trees files
 * site rate model with invariant sites
 * frequency labels for codon triplets
-* table for trees files
 * amino acid models and data type
 * populate the Edit and Help menus with custom items
 * ancestral sequence in XML Generator and in GUI

@@ -149,7 +149,14 @@ public class TreesTableModel extends AbstractTableModel {
 
 				if (file != null) {
 
-					loadTreeFile(file, row);
+					// check if file unique, throw exception if not
+					if (!isFileInList(file)) {
+
+						loadTreeFile(file, row);
+
+					} else {
+						throw new RuntimeException("File with this name already loaded.");
+					}
 
 					File tmpDir = chooser.getCurrentDirectory();
 					if (tmpDir != null) {
@@ -164,6 +171,22 @@ public class TreesTableModel extends AbstractTableModel {
 		}// END: try-catch block
 
 	}// END: doLoadTreeFile
+
+	private boolean isFileInList(File file) {
+		boolean exists = false;
+
+		for (File file2 : dataList.treeFileList) {
+
+			if (file.getName()
+					.equalsIgnoreCase(file2.getName())) {
+				exists = true;
+				break;
+			}
+
+		}
+
+		return exists;
+	}// END: isFileInList
 
 	private void loadTreeFile(final File file, final int row) {
 
@@ -185,12 +208,13 @@ public class TreesTableModel extends AbstractTableModel {
 
 							double absoluteHeight = Utils
 									.getAbsoluteTaxonHeight(taxon, tree);
-							
+
 							taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
 									absoluteHeight);
-							
-							taxon.setAttribute(Utils.TREE_FILENAME, file.getName());
-							
+
+							taxon.setAttribute(Utils.TREE_FILENAME,
+									file.getName());
+
 							dataList.taxonList.addTaxon(taxon);
 
 						}// END: taxon exists check
@@ -218,6 +242,7 @@ public class TreesTableModel extends AbstractTableModel {
 	private void setTreeFile(File file, int row) {
 		dataList.treeFileList.remove(row);
 		dataList.treeFileList.add(row, file);
+		// dataList.treeFileList.add(file);
 	}
 
 	public void setDataList(PartitionDataList dataList) {

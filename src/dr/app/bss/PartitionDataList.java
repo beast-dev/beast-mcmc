@@ -20,7 +20,7 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public File treesFilename = null;
 
 	//TODO: how to make it unique?
-//	public LinkedHashSet<File> forestList = new LinkedHashSet<File>();
+//	public LinkedHashSet<File> treeFileList = new LinkedHashSet<File>();
 	public ArrayList<File> treeFileList = new ArrayList<File>();
 	
 	public PartitionDataList() {

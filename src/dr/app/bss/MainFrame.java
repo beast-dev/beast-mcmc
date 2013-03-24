@@ -53,7 +53,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
-	private TreePanel treePanel;
+//	private TreePanel treePanel;
 	private TreesPanel treesPanel;
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
@@ -99,7 +99,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		setMinimumSize(new Dimension(260, 100));
 
 		taxaPanel = new TaxaPanel(dataList);
-		treePanel = new TreePanel(this, dataList);
+//		treePanel = new TreePanel(this, dataList);
 		treesPanel = new TreesPanel(this, dataList);
 		partitionsPanel = new PartitionsPanel(dataList);
 		simulationPanel = new SimulationPanel(this, dataList);
@@ -146,14 +146,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		if (dataList.treeFileList.size() == 0
 				&& simulationPanel.simulationType == SimulationPanel.FIRST_SIMULATION_TYPE) {
 
-			tabbedPane.setSelectedComponent(treePanel);
-			treePanel.doImportTree();
+			tabbedPane.setSelectedComponent(treesPanel);
+//			treePanel.doImportTree();
 
 		} else if (dataList.treesFilename == null
 				&& simulationPanel.simulationType == SimulationPanel.SECOND_SIMULATION_TYPE) {
 
-			tabbedPane.setSelectedComponent(treePanel);
-			treePanel.doSelectTreesFilename();
+			tabbedPane.setSelectedComponent(treesPanel);
+//			treePanel.doSelectTreesFilename();
 
 		} else {
 
@@ -387,8 +387,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		if (dataList.treeFileList.size() == 0) {
 
-			tabbedPane.setSelectedComponent(treePanel);
-			treePanel.doImportTree();
+			tabbedPane.setSelectedComponent(treesPanel);
+//			treePanel.doImportTree();
 
 		} else {
 
@@ -554,9 +554,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			in.close();
 			fileIn.close();
 
-//			Utils.printPartitionDataList(dataList);
-			// Utils.printForestList(dataList);
-
 			partitionsPanel.updatePartitionTable(dataList);
 			taxaPanel.updateTaxaTable(dataList);
 
@@ -589,6 +586,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// //////////////////////
 	// ---SHARED METHODS---//
 	// //////////////////////
+
+	// TODO: check which do we actually need
 
 	public File getWorkingDirectory() {
 		return workingDirectory;
@@ -697,7 +696,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 
-				treePanel.enableTreeFileButton();
+//				treePanel.enableTreeFileButton();
 
 			}
 		});
@@ -707,14 +706,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		if (SwingUtilities.isEventDispatchThread()) {
 
-			treePanel.disableTreeFileButton();
+//			treePanel.disableTreeFileButton();
 
 		} else {
 
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 
-					treePanel.disableTreeFileButton();
+//					treePanel.disableTreeFileButton();
 
 				}
 			});
@@ -726,14 +725,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		if (SwingUtilities.isEventDispatchThread()) {
 
-			treePanel.enableTreesFileButton();
+//			treePanel.enableTreesFileButton();
 
 		} else {
 
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 
-					treePanel.enableTreesFileButton();
+//					treePanel.enableTreesFileButton();
 
 				}
 			});
@@ -745,14 +744,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		if (SwingUtilities.isEventDispatchThread()) {
 
-			treePanel.disableTreesFileButton();
+//			treePanel.disableTreesFileButton();
 
 		} else {
 
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 
-					treePanel.disableTreesFileButton();
+//					treePanel.disableTreesFileButton();
 
 				}
 			});

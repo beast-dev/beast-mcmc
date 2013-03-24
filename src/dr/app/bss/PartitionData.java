@@ -26,10 +26,8 @@ import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 
-//@SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class PartitionData implements Serializable {
-
-	private static final long serialVersionUID = 5509947183257673786L;
 
 	public PartitionData() {
 	}// END: Constructor

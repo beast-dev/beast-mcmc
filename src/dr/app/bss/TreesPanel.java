@@ -17,10 +17,6 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.TableColumn;
 
-import dr.evolution.util.Taxon;
-
-//TODO: if filename changed in a row, update tax table
-
 @SuppressWarnings("serial")
 public class TreesPanel extends JPanel implements Exportable {
 
@@ -47,11 +43,7 @@ public class TreesPanel extends JPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
 			if (treesCount > 1) {
 
-				String value = dataList.treeFileList.get(treesCount - 1).getName();
-				removeTaxonWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
-				
 				treesTableModel.deleteRow(treesCount - 1);
-				
 				frame.fireTaxaChanged();
 				setTrees();
 				
@@ -124,23 +116,6 @@ public class TreesPanel extends JPanel implements Exportable {
 		ColumnResizer.adjustColumnPreferredWidths(treesTable);
 	}// END: setPartitions
 
-	private void removeTaxonWithAttributeValue(PartitionDataList dataList,
-			String attribute, String value) {
-
-		synchronized (dataList.taxonList) {
-			for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
-
-				Taxon taxon = dataList.taxonList.getTaxon(i);
-				if (taxon.getAttribute(attribute).toString()
-						.equalsIgnoreCase(value)) {
-					dataList.taxonList.removeTaxon(taxon);
-					i--;
-				}
-			}
-		}
-
-	}// END: removeTaxaWithAttributeValue
-	
 	@Override
 	public JComponent getExportableComponent() {
 		return this;

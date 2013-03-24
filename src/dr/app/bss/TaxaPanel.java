@@ -27,6 +27,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private TaxaTableModel taxaTableModel = null;
 	private TableColumn column;
 	
+	//TODO: add tree column
 	public TaxaPanel(PartitionDataList dataList) {
 
 		this.dataList = dataList;
@@ -54,6 +55,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 		
 		column = taxaTable.getColumnModel().getColumn(
 				TaxaTableModel.HEIGHT_INDEX);
+		column.setCellRenderer(
+				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+						0, 2)));
+		column.setPreferredWidth(80);
+		
+		column = taxaTable.getColumnModel().getColumn(
+				TaxaTableModel.TREE_INDEX);
 		column.setCellRenderer(
 				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
 						0, 2)));

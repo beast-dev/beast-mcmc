@@ -155,7 +155,7 @@ public class TreePanel extends JPanel implements Exportable {
 
 					}
 
-					dataList.forestList.add(file);
+					dataList.treeFileList.add(file);
 					
 					TreeModel treeModel = new TreeModel(tree);
 					for (Taxon taxon : tree.asList()) {

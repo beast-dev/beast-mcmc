@@ -9,12 +9,15 @@ import javax.swing.JFileChooser;
 import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
+import dr.evolution.util.Taxon;
+import dr.evomodel.tree.TreeModel;
+
 @SuppressWarnings("serial")
 public class TreesTableModel extends AbstractTableModel {
 
 	private PartitionDataList dataList;
 	private MainFrame frame;
-	
+
 	public static String[] COLUMN_NAMES = { "Tree File", "Taxa", "Trees" };
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JButton.class, Integer.class, Integer.class };
@@ -77,9 +80,7 @@ public class TreesTableModel extends AbstractTableModel {
 		case TREE_FILE_INDEX:
 
 			JButton treeFileButton = new JButton(Utils.CHOOSE_FILE);
-			treeFileButton.addActionListener(new ListenLoadTreeFile(row
-//					, treeFileButton
-					));
+			treeFileButton.addActionListener(new ListenLoadTreeFile(row));
 			return treeFileButton;
 
 		case TAXA_INDEX:
@@ -111,35 +112,27 @@ public class TreesTableModel extends AbstractTableModel {
 			throw new RuntimeException("Invalid index.");
 
 		}// END: switch
-		
+
 		fireTableCellUpdated(row, column);
-		
+
 	}// END: setValueAt
 
 	private class ListenLoadTreeFile implements ActionListener {
 
 		private int row;
-//		private JButton button;
 
-		public ListenLoadTreeFile(int row
-//				, JButton button
-				) {
+		public ListenLoadTreeFile(int row) {
 			this.row = row;
-//			this.button = button;
 		}// END: Constructor
 
 		public void actionPerformed(ActionEvent ev) {
 
-			doLoadTreeFile(row
-//					, button
-					);
+			doLoadTreeFile(row);
 
 		}// END: actionPerformed
 	}// END: ListenLoadTreeFile
 
-	public void doLoadTreeFile(int row
-//			, JButton button
-			) {
+	private void doLoadTreeFile(int row) {
 
 		try {
 
@@ -156,8 +149,6 @@ public class TreesTableModel extends AbstractTableModel {
 
 				if (file != null) {
 
-//					button.setText(file.getName());
-					
 					loadTreeFile(file, row);
 
 					File tmpDir = chooser.getCurrentDirectory();
@@ -173,8 +164,8 @@ public class TreesTableModel extends AbstractTableModel {
 		}// END: try-catch block
 
 	}// END: doLoadTreeFile
-	
-	public void loadTreeFile(final File file, final int row) {
+
+	private void loadTreeFile(final File file, final int row) {
 
 		frame.setBusy();
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
@@ -184,13 +175,27 @@ public class TreesTableModel extends AbstractTableModel {
 
 				try {
 
-					// TODO:
-					 dataList.treeFileList.remove(row);
-					 dataList.treeFileList.add(row, file);
-					
-					// treesFileNameText.setText(file.getName());
-					// frame.fireTaxaChanged();
-					// frame.setStatus("Selected " + file.getName());
+					setTreeFile(file, row);
+
+					TreeModel tree = Utils.importTreeFromFile(file);
+					for (Taxon taxon : tree.asList()) {
+
+						// set attributes to be parsed later in Taxa panel
+						if (!Utils.taxonExists(taxon, dataList.taxonList)) {
+
+							double absoluteHeight = Utils
+									.getAbsoluteTaxonHeight(taxon, tree);
+							
+							taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
+									absoluteHeight);
+							
+							taxon.setAttribute(Utils.TREE_FILENAME, file.getName());
+							
+							dataList.taxonList.addTaxon(taxon);
+
+						}// END: taxon exists check
+
+					}// END: taxon loop
 
 				} catch (Exception e) {
 					Utils.handleException(e);
@@ -209,7 +214,12 @@ public class TreesTableModel extends AbstractTableModel {
 		worker.execute();
 
 	}// END: loadTreeFile
-	
+
+	private void setTreeFile(File file, int row) {
+		dataList.treeFileList.remove(row);
+		dataList.treeFileList.add(row, file);
+	}
+
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}

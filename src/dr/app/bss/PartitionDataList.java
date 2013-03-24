@@ -6,6 +6,7 @@ import java.util.LinkedHashSet;
 
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
 
 //@SuppressWarnings("serial")
 public class PartitionDataList extends ArrayList<PartitionData> {
@@ -16,11 +17,10 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 
 	public int simulationsCount = 1;
 
-	public LinkedHashSet<File> forestList = new LinkedHashSet<File>();
 	public File treesFilename = null;
 
-	//TODO: when panel is ready this comes along
 	//TODO: how to make it unique?
+//	public LinkedHashSet<File> forestList = new LinkedHashSet<File>();
 	public ArrayList<File> treeFileList = new ArrayList<File>();
 	
 	public PartitionDataList() {

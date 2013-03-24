@@ -143,7 +143,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// file chooser
 	public void doExport() {
 
-		if (dataList.forestList.size() == 0
+		if (dataList.treeFileList.size() == 0
 				&& simulationPanel.simulationType == SimulationPanel.FIRST_SIMULATION_TYPE) {
 
 			tabbedPane.setSelectedComponent(treePanel);
@@ -385,7 +385,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// file chooser
 	public final void doGenerateXML() {
 
-		if (dataList.forestList.size() == 0) {
+		if (dataList.treeFileList.size() == 0) {
 
 			tabbedPane.setSelectedComponent(treePanel);
 			treePanel.doImportTree();

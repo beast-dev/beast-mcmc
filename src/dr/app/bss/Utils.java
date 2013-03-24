@@ -34,6 +34,7 @@ public class Utils {
 	public static final int BRANCH_RATE_MODEL_ELEMENT = 3;
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
+	public static final String TREE_FILENAME = "treeFilename";
 	public static final String SUBSTITUTION_MODEL = "substitutionModel";
 	public static final String FREQUENCY_MODEL = "frequencyModel";
 	public static final String CHOOSE_FILE = "Choose file...";
@@ -105,7 +106,23 @@ public class Utils {
 		return exists;
 	}// END: taxonExists
 
-	public static double getAbsoluteTaxonHeight(Taxon taxon, TreeModel tree) {
+//	public static double getAbsoluteTaxonHeight(Taxon taxon, TreeModel tree) {
+//
+//		double height = 0.0;
+//		for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+//
+//			NodeRef externalNode = tree.getExternalNode(i);
+//			Taxon externalNodeTaxon = tree.getNodeTaxon(externalNode);
+//
+//			if (externalNodeTaxon.equals(taxon)) {
+//				height = tree.getNodeHeight(externalNode);
+//			}
+//		}// END: external node loop
+//
+//		return height;
+//	}// END: getAbsoluteTaxonHeight
+
+	public static double getAbsoluteTaxonHeight(Taxon taxon, Tree tree) {
 
 		double height = 0.0;
 		for (int i = 0; i < tree.getExternalNodeCount(); i++) {
@@ -120,7 +137,7 @@ public class Utils {
 
 		return height;
 	}// END: getAbsoluteTaxonHeight
-
+	
 	public static boolean isTreeModelInList(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -544,13 +561,13 @@ public class Utils {
 
 	}// END: printDataList
 
-	public static void printForestList(PartitionDataList dataList) {
-
-		for (File treeFile : dataList.forestList) {
-			System.out.println(treeFile);
-		}
-
-	}// END: printForestList
+//	public static void printForestList(PartitionDataList dataList) {
+//
+//		for (File treeFile : dataList.forestList) {
+//			System.out.println(treeFile);
+//		}
+//
+//	}// END: printForestList
 
 	public static void printTreeFileList(PartitionDataList dataList) {
 

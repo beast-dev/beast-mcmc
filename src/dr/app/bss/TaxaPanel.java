@@ -27,7 +27,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private TaxaTableModel taxaTableModel = null;
 	private TableColumn column;
 	
-	//TODO: add tree column
 	public TaxaPanel(PartitionDataList dataList) {
 
 		this.dataList = dataList;

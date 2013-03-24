@@ -19,6 +19,8 @@ import javax.swing.table.TableColumn;
 
 import dr.evolution.util.Taxon;
 
+//TODO: if filename changed in a row, update tax table
+
 @SuppressWarnings("serial")
 public class TreesPanel extends JPanel implements Exportable {
 

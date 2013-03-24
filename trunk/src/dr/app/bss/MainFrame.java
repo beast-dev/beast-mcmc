@@ -69,7 +69,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		setTitle(title);
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
-		//TODO: add this empty file or start from 0?
 		dataList.treeFileList.add(new File(""));
 		
 		getOpenAction().setEnabled(false);
@@ -106,8 +105,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		simulationPanel = new SimulationPanel(this, dataList);
 
 		tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
-		tabbedPane.addTab(TREE_TAB_NAME, null, treePanel);
-		tabbedPane.addTab("Trees", null, treesPanel);
+//		tabbedPane.addTab(TREE_TAB_NAME, null, treePanel);
+		tabbedPane.addTab(TREE_TAB_NAME + "s", null, treesPanel);
 		tabbedPane.addTab(PARTITIONS_TAB_NAME, null, partitionsPanel);
 		tabbedPane.addTab(SIMULATION_TAB_NAME, null, simulationPanel);
 
@@ -132,7 +131,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
 		getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
-		tabbedPane.setSelectedComponent(treePanel);
+//		tabbedPane.setSelectedComponent(treePanel);
+		tabbedPane.setSelectedComponent(treesPanel);
 
 	}// END: initializeComponents
 
@@ -288,8 +288,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: generateForEachTree
 
-	// TODO: BUG when using multiple partitions
-	// TODO: only create new treeModel when it doesn't exist
 	// threading, UI, exceptions handling
 	private void generateNumberOfSimulations(final File outFile) {
 

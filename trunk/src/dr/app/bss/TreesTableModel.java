@@ -38,10 +38,21 @@ public class TreesTableModel extends AbstractTableModel {
 	}
 
 	public void deleteRow(int row) {
+		// remove taxa connected to this row 
+		String value = dataList.treeFileList.get(row).getName();
+		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
 		dataList.treeFileList.remove(row);
 		fireTableDataChanged();
 	}
 
+	public void setRow(File file, int row) {
+		// remove taxa connected to this row 
+		String value = dataList.treeFileList.get(row).getName();
+		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
+		dataList.treeFileList.remove(row);
+		dataList.treeFileList.add(row, file);
+	}
+	
 	@Override
 	public int getColumnCount() {
 		return COLUMN_NAMES.length;
@@ -198,7 +209,7 @@ public class TreesTableModel extends AbstractTableModel {
 
 				try {
 
-					setTreeFile(file, row);
+					setRow(file, row);
 
 					TreeModel tree = Utils.importTreeFromFile(file);
 					for (Taxon taxon : tree.asList()) {
@@ -239,12 +250,23 @@ public class TreesTableModel extends AbstractTableModel {
 
 	}// END: loadTreeFile
 
-	private void setTreeFile(File file, int row) {
-		dataList.treeFileList.remove(row);
-		dataList.treeFileList.add(row, file);
-		// dataList.treeFileList.add(file);
-	}
+	private void removeTaxaWithAttributeValue(PartitionDataList dataList,
+			String attribute, String value) {
 
+		synchronized (dataList.taxonList) {
+			for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
+
+				Taxon taxon = dataList.taxonList.getTaxon(i);
+				if (taxon.getAttribute(attribute).toString()
+						.equalsIgnoreCase(value)) {
+					dataList.taxonList.removeTaxon(taxon);
+					i--;
+				}
+			}
+		}
+
+	}// END: removeTaxaWithAttributeValue
+	
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}

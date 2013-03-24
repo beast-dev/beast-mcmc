@@ -2,16 +2,12 @@ package dr.app.bss;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 
-//@SuppressWarnings("serial")
+@SuppressWarnings("serial")
 public class PartitionDataList extends ArrayList<PartitionData> {
-
-	private static final long serialVersionUID = -7703343661531335551L;
 
 	public MutableTaxonList taxonList = new Taxa();
 
@@ -19,7 +15,6 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 
 	public File treesFilename = null;
 
-	//TODO: how to make it unique?
 //	public LinkedHashSet<File> treeFileList = new LinkedHashSet<File>();
 	public ArrayList<File> treeFileList = new ArrayList<File>();
 	

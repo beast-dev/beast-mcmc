@@ -36,6 +36,7 @@ public class Utils {
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
 	public static final String SUBSTITUTION_MODEL = "substitutionModel";
 	public static final String FREQUENCY_MODEL = "frequencyModel";
+	public static final String CHOOSE_FILE = "Choose file...";
 	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//

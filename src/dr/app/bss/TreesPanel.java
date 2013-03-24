@@ -43,6 +43,7 @@ public class TreesPanel extends JPanel implements Exportable {
 			setTrees();
 
 //			Utils.printTreeFileList(dataList);
+//			Utils.printPartitionDataList(dataList);
 			
 		}// END: actionPerformed
 	};
@@ -71,9 +72,8 @@ public class TreesPanel extends JPanel implements Exportable {
 		treesTable.addMouseListener(new JTableButtonMouseListener(
 				treesTable));
 		
-		treesTableModel = new TreesTableModel(this.dataList);
-		treesTableModel
-				.addTableModelListener(new TreesTableModelListener());
+		treesTableModel = new TreesTableModel(this.dataList, this.frame);
+//		treesTableModel.addTableModelListener(new TreesTableModelListener());
 		treesTable.setModel(treesTableModel);
 		
 		
@@ -93,7 +93,8 @@ public class TreesPanel extends JPanel implements Exportable {
 		
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TREE_FILE_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
+		//TODO: for labels on buttons
+		column.setCellRenderer(new JTableButtonCellRenderer(this.dataList));
 		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = treesTable.getColumnModel().getColumn(
@@ -131,29 +132,28 @@ public class TreesPanel extends JPanel implements Exportable {
 		ColumnResizer.adjustColumnPreferredWidths(treesTable);
 	}// END: setPartitions
 	
-	// Listen to tree choices, set tree model in partition data
-	private class TreesTableModelListener implements TableModelListener {
-
-		public void tableChanged(TableModelEvent ev) {
-
-			if (ev.getType() == TableModelEvent.UPDATE) {
-				int row = ev.getFirstRow();
-				int column = ev.getColumn();
-
-				if (column == TreesTableModel.TREE_FILE_INDEX) {
-
-					File value = (File) treesTableModel.getValueAt(row,
-							column);
-					
-					//TODO
-					dataList.get(row).treeFile = value;
-					
-				}
-
-			}// END: event check
-
-		}// END: tableChanged
-	}// END: InteractiveTableModelListener
+	// Listen to tree choices
+//	private class TreesTableModelListener implements TableModelListener {
+//
+//		public void tableChanged(TableModelEvent ev) {
+//
+//			if (ev.getType() == TableModelEvent.UPDATE) {
+//				int row = ev.getFirstRow();
+//				int column = ev.getColumn();
+//
+//				if (column == TreesTableModel.TREE_FILE_INDEX) {
+//
+//					File value = (File) treesTableModel.getValueAt(row,
+//							column);
+//					
+////					dataList.get(row).treeFile = value;
+//					
+//				}
+//
+//			}// END: event check
+//
+//		}// END: tableChanged
+//	}// END: InteractiveTableModelListener
 	
 	@Override
 	public JComponent getExportableComponent() {

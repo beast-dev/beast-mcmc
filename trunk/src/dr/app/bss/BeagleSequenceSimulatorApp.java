@@ -28,7 +28,8 @@ public class BeagleSequenceSimulatorApp {
 	public static ImageIcon hammerIcon;
 	public static ImageIcon closeIcon;
 	public static ImageIcon biohazardIcon;
-
+	public static ImageIcon bubbleBlueIcon;
+	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
 			UnsupportedLookAndFeelException {
@@ -102,7 +103,7 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
-		ImageIcon bssIcon = CreateImageIcon("icons/bss.png");
+		ImageIcon bssIcon = createImageIcon("icons/bss.png");
 		SingleDocApplication app = new SingleDocApplication(new MenuBarFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
 				VERSION.concat(" ").concat(
@@ -116,12 +117,13 @@ public class BeagleSequenceSimulatorApp {
 		app.setDocumentFrame(frame);
 
 		// Setup icons
-		doneIcon = CreateImageIcon("icons/check.png");
-		errorIcon = CreateImageIcon("icons/error.png");
-		hammerIcon = CreateImageIcon("icons/hammer.png");
-		closeIcon = CreateImageIcon("icons/close.png");
-		biohazardIcon = CreateImageIcon("icons/biohazard.png");
-
+		doneIcon = createImageIcon("icons/check.png");
+		errorIcon = createImageIcon("icons/error.png");
+		hammerIcon = createImageIcon("icons/hammer.png");
+		closeIcon = createImageIcon("icons/close.png");
+		biohazardIcon = createImageIcon("icons/biohazard.png");
+		bubbleBlueIcon =  createImageIcon("icons/bubble-blue.png");
+		
 	}// END: Constructor
 
 	public static void main(String args[]) {
@@ -176,7 +178,7 @@ public class BeagleSequenceSimulatorApp {
 
 	}// END: CreateImage
 
-	private ImageIcon CreateImageIcon(String path) {
+	private ImageIcon createImageIcon(String path) {
 
 		ImageIcon icon = null;
 

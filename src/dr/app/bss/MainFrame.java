@@ -69,7 +69,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		setTitle(title);
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
-		dataList.treeFileList.add(new File(""));
+//		dataList.treeFileList.add(new File(""));
 		
 		getOpenAction().setEnabled(false);
 		getSaveAction().setEnabled(false);

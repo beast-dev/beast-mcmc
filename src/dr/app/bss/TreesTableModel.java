@@ -3,6 +3,7 @@ package dr.app.bss;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -19,6 +20,8 @@ public class TreesTableModel extends AbstractTableModel {
 	private MainFrame frame;
 
 	public static String[] COLUMN_NAMES = { "Tree File", "Taxa", "Trees" };
+	private ArrayList<Integer> taxaCounts = new ArrayList<Integer>();
+	
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JButton.class, Integer.class, Integer.class };
 
@@ -29,29 +32,37 @@ public class TreesTableModel extends AbstractTableModel {
 	public TreesTableModel(PartitionDataList dataList, MainFrame frame) {
 		this.dataList = dataList;
 		this.frame = frame;
+		
+		addDefaultRow();
+		
 	}// END: Constructor
 
 	public void addDefaultRow() {
 		dataList.treeFileList.add(new File(""));
+		taxaCounts.add(new Integer(0));
 		fireTableRowsInserted(dataList.treeFileList.size() - 1,
 				dataList.treeFileList.size() - 1);
-	}
+		fireTableDataChanged();
+	}//END: addDefaultRow
 
 	public void deleteRow(int row) {
 		// remove taxa connected to this row 
 		String value = dataList.treeFileList.get(row).getName();
 		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
 		dataList.treeFileList.remove(row);
+		taxaCounts.remove(row);
 		fireTableDataChanged();
-	}
+	}//END: deleteRow
 
-	public void setRow(File file, int row) {
+	public void setRow(int row, File file, Integer taxaCount) {
 		// remove taxa connected to this row 
 		String value = dataList.treeFileList.get(row).getName();
 		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
 		dataList.treeFileList.remove(row);
 		dataList.treeFileList.add(row, file);
-	}
+		taxaCounts.add(row, taxaCount);
+		fireTableDataChanged();
+	}//END: setRow
 	
 	@Override
 	public int getColumnCount() {
@@ -95,7 +106,7 @@ public class TreesTableModel extends AbstractTableModel {
 			return treeFileButton;
 
 		case TAXA_INDEX:
-			return 0;
+			return taxaCounts.get(row);
 
 		case TREES_INDEX:
 			return 0;
@@ -166,7 +177,7 @@ public class TreesTableModel extends AbstractTableModel {
 						loadTreeFile(file, row);
 
 					} else {
-						throw new RuntimeException("File with this name already loaded.");
+						Utils.showDialog("File with this name already loaded. Choose different file.");
 					}
 
 					File tmpDir = chooser.getCurrentDirectory();
@@ -199,6 +210,7 @@ public class TreesTableModel extends AbstractTableModel {
 		return exists;
 	}// END: isFileInList
 
+	// TODO count number of taxa per row
 	private void loadTreeFile(final File file, final int row) {
 
 		frame.setBusy();
@@ -209,9 +221,9 @@ public class TreesTableModel extends AbstractTableModel {
 
 				try {
 
-					setRow(file, row);
 
 					TreeModel tree = Utils.importTreeFromFile(file);
+					int taxaCount = 0;
 					for (Taxon taxon : tree.asList()) {
 
 						// set attributes to be parsed later in Taxa panel
@@ -228,10 +240,13 @@ public class TreesTableModel extends AbstractTableModel {
 
 							dataList.taxonList.addTaxon(taxon);
 
+							taxaCount++;
 						}// END: taxon exists check
 
 					}// END: taxon loop
 
+					setRow(row, file, taxaCount);
+					
 				} catch (Exception e) {
 					Utils.handleException(e);
 				}// END: try-catch block

@@ -36,8 +36,6 @@ public class TreesTableModel extends AbstractTableModel {
 	public void addDefaultRow() {
 		dataList.treeFileList.add(new File(""));
 		dataList.taxaCounts.add(new Integer(0));
-		//TODO: both needed?
-		fireTableRowsInserted(dataList.treeFileList.size() - 1, dataList.treeFileList.size() - 1);
 		fireTableDataChanged();
 	}//END: addDefaultRow
 
@@ -51,13 +49,19 @@ public class TreesTableModel extends AbstractTableModel {
 	}//END: deleteRow
 
 	public void setRow(int row, File file, Integer taxaCount) {
+		
 		// remove taxa connected to this row 
 		String value = dataList.treeFileList.get(row).getName();
 		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
+		
 		dataList.treeFileList.remove(row);
 		dataList.treeFileList.add(row, file);
+		
+		dataList.taxaCounts.remove(row);
 		dataList.taxaCounts.add(row, taxaCount);
+		
 		fireTableDataChanged();
+		
 	}//END: setRow
 	
 	@Override
@@ -90,6 +94,11 @@ public class TreesTableModel extends AbstractTableModel {
 		return COLUMN_NAMES[column];
 	}// END: getColumnName
 
+	//TODO: like in taxa panel
+	private void getTaxaCount() {
+		
+	}
+	
 	@Override
 	public Object getValueAt(int row, int column) {
 		switch (column) {
@@ -106,26 +115,6 @@ public class TreesTableModel extends AbstractTableModel {
 			return "Error";
 		}
 	}// END: getValueAt
-
-	public void setValueAt(Object value, int row, int column) {
-
-		switch (column) {
-
-		case TREE_FILE_INDEX:
-			dataList.get(row).treeFile = (File) value;
-			break;
-
-		case TAXA_INDEX:
-			break;
-
-		default:
-			throw new RuntimeException("Invalid index.");
-
-		}// END: switch
-
-		fireTableCellUpdated(row, column);
-
-	}// END: setValueAt
 
 	private class ListenLoadTreeFile implements ActionListener {
 

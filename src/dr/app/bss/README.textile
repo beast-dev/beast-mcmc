@@ -20,10 +20,10 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* remove th emultiple trees option - let's make it into a script
+* BUG in Trees panel (load tree, then change it to another, then add another row - number of taxa is not 0)
+* command line interface
 * site rate model with invariant sites
 * frequency labels for codon triplets
 * amino acid models and data type
 * populate the Edit and Help menus with custom items
 * ancestral sequence in XML Generator and in GUI
-* command line interface

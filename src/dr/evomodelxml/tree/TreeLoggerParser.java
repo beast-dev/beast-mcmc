@@ -146,49 +146,79 @@ public class TreeLoggerParser extends LoggerParser {
 
                     TreeTraitProvider ttp = (TreeTraitProvider)xco.getChild(TreeTraitProvider.class);
 
-                    String name = xco.getStringAttribute(NAME);
-                    final TreeTrait trait = ttp.getTreeTrait(name);
+                    if (xo.hasAttribute(NAME)) {
+                        // a specific named trait is required (optionally with a tag to name it in the tree file)
 
-                    if (trait == null) {
-                        String childName = "TreeTraitProvider";
+                        String name = xco.getStringAttribute(NAME);
+                        final TreeTrait trait = ttp.getTreeTrait(name);
 
-                        if (ttp instanceof Likelihood) {
-                            childName = ((Likelihood)ttp).prettyName();
-                        } else  if (ttp instanceof Model) {
-                            childName = ((Model)ttp).getModelName();
+                        if (trait == null) {
+                            String childName = "TreeTraitProvider";
+
+                            if (ttp instanceof Likelihood) {
+                                childName = ((Likelihood)ttp).prettyName();
+                            } else  if (ttp instanceof Model) {
+                                childName = ((Model)ttp).getModelName();
+                            }
+
+                            throw new XMLParseException("Trait named, " + name + ", not found for " + childName);
                         }
 
-                        throw new XMLParseException("Trait named, " + name + ", not found for " + childName);
+                        final String tag;
+                        if (xco.hasAttribute(TAG)) {
+                            tag = xco.getStringAttribute(TAG);
+                        } else {
+                            tag = name;
+                        }
+
+                        ttps.add(new TreeTraitProvider.Helper(tag, new TreeTrait() {
+
+                            public String getTraitName() {
+                                return tag;
+                            }
+
+                            public Intent getIntent() {
+                                return trait.getIntent();
+                            }
+
+                            public Class getTraitClass() {
+                                return trait.getTraitClass();
+                            }
+
+                            public Object getTrait(Tree tree, NodeRef node) {
+                                return trait.getTrait(tree, node);
+                            }
+
+                            public String getTraitString(Tree tree, NodeRef node) {
+                                return trait.getTraitString(tree, node);
+                            }
+
+                            public boolean getLoggable() {
+                                return trait.getLoggable();
+                            }
+                        }));
+                    } else if (xo.hasAttribute(FILTER_TRAITS)) {
+                        // else a filter attribute is given to ask for all traits that starts with a specific
+                        // string
+
+                        String[] matches = ((String) xo.getAttribute(FILTER_TRAITS)).split("[\\s,]+");
+                        TreeTrait[] traits = ttp.getTreeTraits();
+                        List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
+                        for (String match : matches) {
+                            for (TreeTrait trait : traits) {
+                                if (trait.getTraitName().startsWith(match)) {
+                                    filteredTraits.add(trait);
+                                }
+                            }
+                        }
+                        if (filteredTraits.size() > 0) {
+                            ttps.add(new TreeTraitProvider.Helper(filteredTraits));
+                        }
+
+                    } else {
+                        // neither named or filtered traits so just add them all
+                        ttps.add(ttp);
                     }
-
-                    final String tag = xco.getStringAttribute(TAG);
-
-                    ttps.add(new TreeTraitProvider.Helper(tag, new TreeTrait() {
-
-                        public String getTraitName() {
-                            return tag;
-                        }
-
-                        public Intent getIntent() {
-                            return trait.getIntent();
-                        }
-
-                        public Class getTraitClass() {
-                            return trait.getTraitClass();
-                        }
-
-                        public Object getTrait(Tree tree, NodeRef node) {
-                            return trait.getTrait(tree, node);
-                        }
-
-                        public String getTraitString(Tree tree, NodeRef node) {
-                            return trait.getTraitString(tree, node);
-                        }
-
-                        public boolean getLoggable() {
-                            return trait.getLoggable();
-                        }
-                    }));
                 }
             }
             // Without this next block, branch rates get ignored :-(
@@ -239,7 +269,13 @@ public class TreeLoggerParser extends LoggerParser {
         // if we don't have any of the newer trait elements but we do have some tree trait providers
         // included directly then assume the user wanted to log these as tree traits (it may be an older
         // form XML).
-        if (ttps.size() == 0 && ttps2.size() > 0) {
+//        if (ttps.size() == 0 && ttps2.size() > 0) {
+//            ttps.addAll(ttps2);
+//        }
+
+        // The above code destroyed the logging of complete histories - which need to be logged by direct
+        // inclusion of the codon partitioned robust counting TTP...
+        if (ttps2.size() > 0) {
             ttps.addAll(ttps2);
         }
 

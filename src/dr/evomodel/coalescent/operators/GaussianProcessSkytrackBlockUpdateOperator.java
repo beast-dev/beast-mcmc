@@ -653,7 +653,6 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 //      Takes the positions of the newData in the new complete sorted data and adds the positions of neighbors
 
 
-
 //      Takes the positions of the newData in the new complete sorted data and adds the positions of neighbors
         int [] NeighborsIndex =Neighbors(tempQuad.getPositionNew(), newLength);
 
@@ -675,10 +674,12 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         U1.factor(varf);
 
 
+
         DenseVector part = new DenseVector(addLength);
         int [] GPpositions =SubsetData(NeighborsOriginal,Indicators.getOrderOld());
         DenseVector currentGPvalues= new DenseVector(currentGPvalues1);
         DenseVector currentGPneighbors = new DenseVector(SubsetData(currentGPvalues,GPpositions));
+
 
         Matrix first = Matrices.getSubMatrix(Q,Indicators.getOrderNew(),Indicators.getOrderOld());
 
@@ -687,7 +688,6 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         DenseVector mean = new DenseVector(getMultiNormalMean(part, U1.getU()));
 
         double [] addGPvalues = getMultiNormal(mean,U1.getU()).getData();
-
 
         return addGPvalues;
 
@@ -912,6 +912,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
        }
 
            double [] addPoints2 = new double[k];
+//           System.err.println("proposes to add "+k+" points");
 //           double [] addPoints2=new double[2];
 
            System.arraycopy(addPoints,0,addPoints2,0,k);

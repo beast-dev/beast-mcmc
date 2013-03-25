@@ -578,18 +578,12 @@ public class Utils {
 
 	}// END: printDataList
 
-//	public static void printForestList(PartitionDataList dataList) {
-//
-//		for (File treeFile : dataList.forestList) {
-//			System.out.println(treeFile);
-//		}
-//
-//	}// END: printForestList
-
 	public static void printTreeFileList(PartitionDataList dataList) {
 
+		int i = 0;
 		for (File treeFile : dataList.treeFileList) {
-			System.out.println(treeFile);
+			System.out.println(treeFile + " (" + dataList.taxaCounts.get(i) + ")");
+			i ++;
 		}
 
 	}// END: printForestList

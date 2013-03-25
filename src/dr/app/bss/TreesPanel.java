@@ -36,6 +36,8 @@ public class TreesPanel extends JPanel implements Exportable {
 			treesTableModel.addDefaultRow();
 			setTrees();
 
+			Utils.printTreeFileList(dataList);
+			
 		}// END: actionPerformed
 	};
 

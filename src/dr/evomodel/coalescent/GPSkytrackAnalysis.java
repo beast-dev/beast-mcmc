@@ -11,10 +11,10 @@ import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
 import dr.stats.DiscreteStatistics;
-import dr.util.FileHelpers;
-import dr.util.HeapSort;
+//import dr.util.FileHelpers;
+//import dr.util.HeapSort;
 import dr.util.TabularData;
-import no.uib.cipr.matrix.*;
+//import no.uib.cipr.matrix.*;
 
 
 import java.io.*;
@@ -61,6 +61,7 @@ public class GPSkytrackAnalysis extends TabularData {
         final int runLengthIncludingBurnin = ltraces.getStateCount();
 
         int intBurnIn = (int) Math.floor(burnIn < 1 ? runLengthIncludingBurnin * burnIn : burnIn);
+//        TODO: Need to change burnin, xml file set to 0
         final int nStates = runLengthIncludingBurnin - intBurnIn;
 //        System.err.println("runl"+runLengthIncludingBurnin+"burnin");
         //intBurnIn *= ltraces.getStepSize();
@@ -105,19 +106,19 @@ public class GPSkytrackAnalysis extends TabularData {
         double binSize = 0;
 //            double hSum = -0;
 
-
-            int [] numPoints = new int[nStates];
-            double[] lambda = new double[nStates];
-            double[] kappa= new double[nStates];
+//                           System.err.println("states"+nStates);
+            int [] numPoints = new int[nStates-1];
+            double[] lambda = new double[nStates-1];
+            double[] kappa= new double[nStates-1];
             double tmrca=0;
 //            double binSize=0;
             double tempTmrca=0.0;
             int maxpts=0;
-            for (int ns = 0; ns < nStates; ++ns) {
-                lambda[ns]= (Double) ltraces.getTrace(lambdaColumn).getValue(ns);
-                numPoints[ns]=(int)Math.round((Double) ltraces.getTrace(numbPointsColumn).getValue(ns));
-                kappa[ns]=(Double) ltraces.getTrace(precColumn).getValue(ns);
-                tempTmrca=(Double) ltraces.getTrace(tmrcaColumn).getValue(ns);
+            for (int ns = 0; ns < nStates-1; ++ns) {
+                lambda[ns]= (Double) ltraces.getTrace(lambdaColumn).getValue(ns+1);
+                numPoints[ns]=(int)Math.round((Double) ltraces.getTrace(numbPointsColumn).getValue(ns+1));
+                kappa[ns]=(Double) ltraces.getTrace(precColumn).getValue(ns+1);
+                tempTmrca=(Double) ltraces.getTrace(tmrcaColumn).getValue(ns+1);
                 if (tempTmrca>tmrca){tmrca=tempTmrca;}
                 if (numPoints[ns]>maxpts) {maxpts=numPoints[ns];}
             }
@@ -128,18 +129,19 @@ public class GPSkytrackAnalysis extends TabularData {
              xPoints[np]=xPoints[np-1]+binSize;
             }
 
-            gValues=new double[nStates][];
-            tValues=new double[nStates][];
-            newGvalues=new double[nStates][];
+            gValues=new double[nStates-1][];
+            tValues=new double[nStates-1][];
+            newGvalues=new double[nStates-1][];
             popValues=new double[(int) numGridPoints.getParameterValue(0)+1][];
             readChain(gValues,"gvalues.txt");
             readChain(tValues,"locations.txt");
           for (int i=0;i<=numGridPoints.getParameterValue(0);i++){
-            popValues[i]=new double[nStates] ;
+            popValues[i]=new double[nStates-1] ;
            }
 //
-           for (int j=0;j<nStates;j++){
+           for (int j=0;j<nStates-1;j++){
 //               newGvalues[j]=new double[numPoints[j]];
+
                newGvalues[j]=GPOperator.getGPvaluesS(tValues[j], gValues[j], xPoints, kappa[j]);
 //               popValues[j]=new double[nStates];
                 for (int i=0;i<=numGridPoints.getParameterValue(0);i++){
@@ -217,7 +219,7 @@ public class GPSkytrackAnalysis extends TabularData {
 
 
 
-    private final String[] columnNames = {"time", "mean", "median","upper","lower"};
+    private final String[] columnNames = {"time", "mean", "median","lower","upper"};
 
     public int nColumns() {
         return 5;

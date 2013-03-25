@@ -3,6 +3,7 @@ package dr.app.bss;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
@@ -13,8 +14,9 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 	public MutableTaxonList taxonList = new Taxa();
 	public int simulationsCount = 1;
 	public File treesFilename = null;
-	public ArrayList<File> treeFileList = new ArrayList<File>();
-	public ArrayList<Integer> taxaCounts = new ArrayList<Integer>();
+	
+	public  LinkedList<File> treeFileList = new  LinkedList<File>();
+	public  LinkedList<Integer> taxaCounts = new  LinkedList<Integer>();
 	
 	public PartitionDataList() {
 		super();

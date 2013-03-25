@@ -52,6 +52,8 @@ public class JTableButtonCellRenderer extends JButton implements
 			String label;
 			if (dataList.treeFileList.get(row).getName().equalsIgnoreCase("")) {
 				
+//				dataList.treeFilesMap.entrySet().iterator().
+				
 				label = Utils.CHOOSE_FILE;
 				
 			} else {

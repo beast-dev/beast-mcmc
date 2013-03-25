@@ -112,17 +112,6 @@ public class PartitionTableModel extends AbstractTableModel {
 		return COLUMN_NAMES[column];
 	}// END: getColumnName
 
-//	public String[] getColumn(int index) {
-//
-//		String[] column = new String[dataList.size()];
-//
-//		for (int i = 0; i < dataList.size(); i++) {
-//			column[i] = String.valueOf(getValueAt(i, index));
-//		}
-//
-//		return column;
-//	}// END: getColumn
-
 	@Override
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {

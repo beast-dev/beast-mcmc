@@ -20,7 +20,7 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* simulating for multiple trees with new tree table
+* remove th emultiple trees option - let's make it into a script
 * site rate model with invariant sites
 * frequency labels for codon triplets
 * amino acid models and data type

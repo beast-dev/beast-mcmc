@@ -41,8 +41,6 @@ public class BranchSubstitutionModelEditor {
 	
 	public BranchSubstitutionModelEditor(PartitionDataList dataList, int row) {
 		
-//		System.out.println("AND LAUNCH!");
-		
 		this.dataList = dataList;
 		this.row = row;
 		
@@ -63,9 +61,6 @@ public class BranchSubstitutionModelEditor {
 			substitutionParameterFields[i] = new RealNumberField();
 			substitutionParameterFields[i].setColumns(8);
 			substitutionParameterFields[i].setValue(this.dataList.get(row).substitutionParameterValues[i]);
-			
-//			System.out.println(dataList.get(row).substitutionParameterValues[i]);
-			
 		}// END: fill loop
 
 		setSubstitutionArguments();
@@ -115,10 +110,6 @@ public class BranchSubstitutionModelEditor {
 
 		}// END: indices loop
 
-//		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
-//			substitutionParameterFields[i].setValue(dataList.get(row).substitutionParameterValues[i]);
-//		}// END: fill loop
-		
 		window.validate();
 		window.repaint();
 	}// END: setSubstitutionArguments
@@ -127,7 +118,6 @@ public class BranchSubstitutionModelEditor {
 		public void itemStateChanged(ItemEvent ie) {
 
 			setSubstitutionArguments();
-//			frame.fireModelChanged();
 
 		}// END: actionPerformed
 	}// END: ListenSubstitutionCombo

@@ -80,7 +80,6 @@ public class ClockRateModelEditor {
 		buttonsHolder.add(done);
 		
 		// Window
-
 		owner = Utils.getActiveFrame();
 		window.setLocationRelativeTo(owner);
 		window.getContentPane().setLayout(new BorderLayout());
@@ -88,7 +87,7 @@ public class ClockRateModelEditor {
 		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
 		window.pack();
 		
-		//return to the previously chosen index on start
+		// return to the previously chosen index on start
 		clockCombo.setSelectedIndex(dataList.get(row).clockModelIndex);
 		
 	}// END: Constructor

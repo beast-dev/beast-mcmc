@@ -10,11 +10,11 @@ public class TaxaTableModel extends AbstractTableModel {
 	private String[] COLUMN_NAMES = { "Name", "Height", "Tree" };
 	private double[] heights = null;
 	private String[] trees = null;
-	
+
 	public final static int NAME_INDEX = 0;
 	public final static int HEIGHT_INDEX = 1;
 	public final static int TREE_INDEX = 2;
-	
+
 	public TaxaTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}// END: Constructor
@@ -54,37 +54,18 @@ public class TaxaTableModel extends AbstractTableModel {
 			}
 
 		case TREE_INDEX:
-			
+
 			if (trees != null) {
 				return trees[row];
 			} else {
 				return "";
 			}
-			
+
 		default:
 			return null;
 
 		}// END: switch
 	}// END: getValueAt
-
-//	public void setValueAt(Object value, int row, int col) {
-//
-//		switch (col) {
-//
-//		case 0:
-//			this.dataList.taxonList.getTaxon(row).setId(value.toString());
-//			break;
-//
-//		case 1:
-////			this.dataList.taxonList.getTaxon(row).getAttribute(
-////					Utils.ABSOLUTE_HEIGHT);
-//			break;
-//
-//		default:
-//			break;
-//
-//		}// END: switch
-//	}// END: setValueAt
 
 	private void getHeights() {
 
@@ -109,7 +90,7 @@ public class TaxaTableModel extends AbstractTableModel {
 		}// END: taxon loop
 
 	}// END: getHeights
-	
+
 	public String toString() {
 		StringBuffer buffer = new StringBuffer();
 
@@ -130,13 +111,13 @@ public class TaxaTableModel extends AbstractTableModel {
 		}
 
 		return buffer.toString();
-	}
+	}// END: toString
 
 	public void fireTaxaChanged() {
 		getHeights();
 		getTrees();
 		fireTableDataChanged();
-	}
+	}// END: fireTaxaChanged
 
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;

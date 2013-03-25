@@ -415,6 +415,23 @@ public class Utils {
 		return fullPath;
 	}// END: getWritePath
 
+	public static void showDialog(final String message) {
+
+		if (SwingUtilities.isEventDispatchThread()) {
+			
+			JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, BeagleSequenceSimulatorApp.bubbleBlueIcon);
+			
+		} else {
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					
+					JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, BeagleSequenceSimulatorApp.bubbleBlueIcon);
+				
+				}
+			});
+		}// END: edt check
+	}// END: showDialog
+	
 	// ////////////////////////////////
 	// ---EXCEPTION HANDLING UTILS---//
 	// ////////////////////////////////

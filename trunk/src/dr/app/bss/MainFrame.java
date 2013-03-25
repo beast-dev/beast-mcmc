@@ -8,12 +8,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -36,10 +34,6 @@ import javax.swing.plaf.BorderUIResource;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
-import dr.evolution.io.NewickImporter;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.TreeImporter;
-import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
 public class MainFrame extends DocumentFrame implements FileMenuHandler {
@@ -47,13 +41,12 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	private PartitionDataList dataList;
 	
 	private final String TAXA_TAB_NAME = "Taxa";
-	private final String TREE_TAB_NAME = "Tree";
+	private final String TREES_TAB_NAME = "Trees";
 	private final String PARTITIONS_TAB_NAME = "Partitions";
 	private final String SIMULATION_TAB_NAME = "Simulation";
 	
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
-//	private TreePanel treePanel;
 	private TreesPanel treesPanel;
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
@@ -69,8 +62,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		setTitle(title);
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
-//		dataList.treeFileList.add(new File(""));
 		
+		//TODO: clean this up
 		getOpenAction().setEnabled(false);
 		getSaveAction().setEnabled(false);
 		getSaveAsAction().setEnabled(false);
@@ -81,15 +74,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		getSelectAllAction().setEnabled(false);
 		getFindAction().setEnabled(false);
 
-		// AbstractAction importAction = new AbstractAction(
-		// "Import Previously generated XML File...") {
-		// public void actionPerformed(ActionEvent ae) {
-		// doImport();
-		// }
-		// };
-
-		// setImportAction(importAction);
-
 	}// END: Constructor
 
 	@Override
@@ -99,14 +83,12 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		setMinimumSize(new Dimension(260, 100));
 
 		taxaPanel = new TaxaPanel(dataList);
-//		treePanel = new TreePanel(this, dataList);
 		treesPanel = new TreesPanel(this, dataList);
 		partitionsPanel = new PartitionsPanel(dataList);
 		simulationPanel = new SimulationPanel(this, dataList);
 
 		tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
-//		tabbedPane.addTab(TREE_TAB_NAME, null, treePanel);
-		tabbedPane.addTab(TREE_TAB_NAME + "s", null, treesPanel);
+		tabbedPane.addTab(TREES_TAB_NAME, null, treesPanel);
 		tabbedPane.addTab(PARTITIONS_TAB_NAME, null, partitionsPanel);
 		tabbedPane.addTab(SIMULATION_TAB_NAME, null, simulationPanel);
 
@@ -131,7 +113,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
 		getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
-//		tabbedPane.setSelectedComponent(treePanel);
 		tabbedPane.setSelectedComponent(treesPanel);
 
 	}// END: initializeComponents
@@ -143,18 +124,12 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// file chooser
 	public void doExport() {
 
-		if (dataList.treeFileList.size() == 0
-				&& simulationPanel.simulationType == SimulationPanel.FIRST_SIMULATION_TYPE) {
+		//TODO: some action if topology not loaded
+		if (dataList.treeFileList.size() == 0){
 
 			tabbedPane.setSelectedComponent(treesPanel);
 //			treePanel.doImportTree();
-
-		} else if (dataList.treesFilename == null
-				&& simulationPanel.simulationType == SimulationPanel.SECOND_SIMULATION_TYPE) {
-
-			tabbedPane.setSelectedComponent(treesPanel);
-//			treePanel.doSelectTreesFilename();
-
+		
 		} else {
 
 			JFileChooser chooser = new JFileChooser();
@@ -168,22 +143,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 				File file = chooser.getSelectedFile();
 
 				collectAllSettings();
-
-				switch (simulationPanel.simulationType) {
-
-				case SimulationPanel.FIRST_SIMULATION_TYPE:
-
-					generateNumberOfSimulations(file);
-					break;
-
-				case SimulationPanel.SECOND_SIMULATION_TYPE:
-					generateForEachTree(file);
-					break;
-
-				default:
-					throw new RuntimeException("Unknown analysis type!");
-				}// END: switch
-
+				generateNumberOfSimulations(file);
+				
 				File tmpDir = chooser.getCurrentDirectory();
 				if (tmpDir != null) {
 					workingDirectory = tmpDir;
@@ -194,99 +155,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		}// END: tree loaded check
 
 	}// END: doExport
-
-	// threading, UI, exceptions handling
-	private void generateForEachTree(final File outFile) {
-
-		setBusy();
-
-		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-
-			// Executed in background thread
-			public Void doInBackground() {
-
-				try {
-
-					Partition partition;
-					ArrayList<Partition> partitionsList;
-					PrintWriter writer;
-					TreeModel treeModel;
-					BeagleSequenceSimulator beagleSequenceSimulator;
-					TreeImporter importer = null;
-
-					BufferedReader reader = new BufferedReader(new FileReader(
-							dataList.treesFilename));
-
-					String line = reader.readLine();
-					if (line.toUpperCase().startsWith("#NEXUS")) {
-
-						importer = new NexusImporter(reader);
-
-					} else {
-
-						importer = new NewickImporter(reader);
-
-					}// END: nexus check
-
-					int treesRead = 0;
-					while (importer.hasTree()) {
-
-						setStatus("Generating for tree # " + treesRead + 1);
-
-						treeModel = new TreeModel(importer.importNextTree());
-
-						String fullPath = Utils.getMultipleWritePath(outFile,
-								"fasta", treesRead);
-						writer = new PrintWriter(new FileWriter(fullPath));
-
-						partitionsList = new ArrayList<Partition>();
-
-						for (PartitionData data : dataList) {
-
-							// create partition
-							partition = new Partition(treeModel, //
-									data.createBranchModel(), //
-									data.createSiteRateModel(), //
-									data.createBranchRateModel(), //
-									data.createFrequencyModel(), //
-									data.from - 1, // from
-									data.to - 1, // to
-									data.every // every
-							);
-
-							partitionsList.add(partition);
-
-						}// END: partition loop
-
-						beagleSequenceSimulator = new BeagleSequenceSimulator(
-								partitionsList);
-
-						writer.println(beagleSequenceSimulator.simulate()
-								.toString());
-						writer.close();
-
-						treesRead++;
-					}// END: trees loop
-
-				} catch (Exception e) {
-					Utils.handleException(e);
-				}// END: try-catch block
-
-				return null;
-			}// END: doInBackground
-
-			// Executed in event dispatch thread
-			public void done() {
-
-				setStatus("Finished.");
-				setIdle();
-
-			}// END: done
-		};
-
-		worker.execute();
-
-	}// END: generateForEachTree
 
 	// threading, UI, exceptions handling
 	private void generateNumberOfSimulations(final File outFile) {
@@ -300,12 +168,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 				try {
 
-//					Utils.printPartitionDataList(dataList);
-//					Utils.printTaxonList(dataList);
-//					Utils.printForestList(dataList);
-					
-//					TreeModel treeModel = Utils.importTreeFromFile(new File("/home/filip/SimTree.figtree"));
-					
 					for (int i = 0; i < dataList.simulationsCount; i++) {
 
 						String fullPath = Utils.getMultipleWritePath(outFile,
@@ -340,8 +202,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 										data.every // every
 								);
 
-//								System.out.println("FROM: " + data.from + " TO: " + data.to +" EVERY: " + data.every);
-								
 								partitionsList.add(partition);
 
 							}
@@ -382,7 +242,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// ---GENERATE XML---//
 	// ////////////////////
 
-	// file chooser
+	// TODO: some action if topology not loaded
 	public final void doGenerateXML() {
 
 		if (dataList.treeFileList.size() == 0) {
@@ -554,8 +414,12 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			in.close();
 			fileIn.close();
 
+			Utils.printPartitionDataList(dataList);
+			Utils.printTreeFileList(dataList);
+			
 			partitionsPanel.updatePartitionTable(dataList);
 			taxaPanel.updateTaxaTable(dataList);
+			treesPanel.updateTreesTable(dataList);
 
 		} catch (IOException ioe) {
 
@@ -586,8 +450,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// //////////////////////
 	// ---SHARED METHODS---//
 	// //////////////////////
-
-	// TODO: check which do we actually need
 
 	public File getWorkingDirectory() {
 		return workingDirectory;
@@ -691,73 +553,73 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: setStatus
 
-	public void enableTreeFileButton() {
+//	public void enableTreeFileButton() {
+//
+//		SwingUtilities.invokeLater(new Runnable() {
+//			public void run() {
+//
+////				treePanel.enableTreeFileButton();
+//
+//			}
+//		});
+//	}// END: enableTreeFileButton
 
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
+//	public void disableTreeFileButton() {
+//
+//		if (SwingUtilities.isEventDispatchThread()) {
+//
+////			treePanel.disableTreeFileButton();
+//
+//		} else {
+//
+//			SwingUtilities.invokeLater(new Runnable() {
+//				public void run() {
+//
+////					treePanel.disableTreeFileButton();
+//
+//				}
+//			});
+//		}// END: edt check
+//
+//	}// END: disableTreeFileButton
 
-//				treePanel.enableTreeFileButton();
+//	public void enableTreesFileButton() {
+//
+//		if (SwingUtilities.isEventDispatchThread()) {
+//
+////			treePanel.enableTreesFileButton();
+//
+//		} else {
+//
+//			SwingUtilities.invokeLater(new Runnable() {
+//				public void run() {
+//
+////					treePanel.enableTreesFileButton();
+//
+//				}
+//			});
+//		}// END: edt check
+//
+//	}// END: enableTreesFileButton
 
-			}
-		});
-	}// END: enableTreeFileButton
-
-	public void disableTreeFileButton() {
-
-		if (SwingUtilities.isEventDispatchThread()) {
-
-//			treePanel.disableTreeFileButton();
-
-		} else {
-
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-
-//					treePanel.disableTreeFileButton();
-
-				}
-			});
-		}// END: edt check
-
-	}// END: disableTreeFileButton
-
-	public void enableTreesFileButton() {
-
-		if (SwingUtilities.isEventDispatchThread()) {
-
-//			treePanel.enableTreesFileButton();
-
-		} else {
-
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-
-//					treePanel.enableTreesFileButton();
-
-				}
-			});
-		}// END: edt check
-
-	}// END: enableTreesFileButton
-
-	public void disableTreesFileButton() {
-
-		if (SwingUtilities.isEventDispatchThread()) {
-
-//			treePanel.disableTreesFileButton();
-
-		} else {
-
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-
-//					treePanel.disableTreesFileButton();
-
-				}
-			});
-		}// END: edt check
-
-	}// END: disableTreesFileButton
+//	public void disableTreesFileButton() {
+//
+//		if (SwingUtilities.isEventDispatchThread()) {
+//
+////			treePanel.disableTreesFileButton();
+//
+//		} else {
+//
+//			SwingUtilities.invokeLater(new Runnable() {
+//				public void run() {
+//
+////					treePanel.disableTreesFileButton();
+//
+//				}
+//			});
+//		}// END: edt check
+//
+//	}// END: disableTreesFileButton
 
 	public void hideTreeColumn() {
 

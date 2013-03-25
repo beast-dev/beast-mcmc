@@ -39,6 +39,6 @@ public class ColumnResizer {
 			maxwidth = Math.max(maxwidth, headerComp.getPreferredSize().width);
 			column.setPreferredWidth(maxwidth);
 		}// END: col loop
-	}
+	}//END: adjustColumnPreferredWidths
 
 }// END: class

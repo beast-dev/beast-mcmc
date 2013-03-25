@@ -60,8 +60,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	public PartitionsPanel(PartitionDataList dataList) {
 
-//		super();
-
 		this.dataList = dataList;
 
 		partitionTable = new JTable();
@@ -167,9 +165,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	// Listen to tree choices, set tree model in partition data
 	private class PartitionTableModelListener implements TableModelListener {
 
-//		public PartitionTableModelListener() {
-//		}
-
 		public void tableChanged(TableModelEvent ev) {
 
 			if (ev.getType() == TableModelEvent.UPDATE) {
@@ -183,11 +178,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 					
 					dataList.get(row).treeFile = value;
 
-				}
-				// else if(column == PartitionTableModel.DATA_TYPE_INDEX) {
-				// } else {
-				// // do nothing
-				// }// END: column check
+				}// END: column check
 
 			}// END: event check
 
@@ -249,10 +240,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 					((JComboBox) editorComponent).addItem(file);
 				}// END: fill loop
 				
-//				for (File file : dataList.forestList) {
-//					((JComboBox) editorComponent).addItem(file);
-//				}// END: fill loop
-
 			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
 
 				for (String dataType : PartitionData.dataTypes) {

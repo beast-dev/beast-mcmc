@@ -31,7 +31,6 @@ public class JTableButtonCellRenderer extends JButton implements
 			boolean isSelected, boolean hasFocus, int row, int column) {
 
 		JButton button = (JButton) value;
-//		setEnabled(table.isEnabled());
 		
 		if (isSelected) {
 			button.setForeground(table.getSelectionForeground());

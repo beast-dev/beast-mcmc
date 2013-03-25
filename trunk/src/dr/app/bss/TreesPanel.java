@@ -77,19 +77,16 @@ public class TreesPanel extends JPanel implements Exportable {
 
 		add(scrollPane, BorderLayout.CENTER);
 
-		column = treesTable.getColumnModel().getColumn(
-				TreesTableModel.TREE_FILE_INDEX);
-		// pass dataList for labels on buttons
-		column.setCellRenderer(new JTableButtonCellRenderer(this.dataList));
-		column.setCellEditor(new JTableButtonCellEditor());
+//		column = treesTable.getColumnModel().getColumn(
+//				TreesTableModel.TREE_FILE_INDEX);
+//		// pass dataList for labels on buttons
+//		column.setCellRenderer(new JTableButtonCellRenderer(this.dataList));
+//		column.setCellEditor(new JTableButtonCellEditor());
 
+		setTreesColumn(this.dataList);
+		
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TAXA_INDEX);
-		column.setCellRenderer(new TableRenderer(SwingConstants.LEFT,
-				new Insets(0, 2, 0, 2)));
-
-		column = treesTable.getColumnModel().getColumn(
-				TreesTableModel.TREES_INDEX);
 		column.setCellRenderer(new TableRenderer(SwingConstants.LEFT,
 				new Insets(0, 2, 0, 2)));
 
@@ -102,6 +99,16 @@ public class TreesPanel extends JPanel implements Exportable {
 
 	}// END: Constructor
 
+	private void setTreesColumn(PartitionDataList dataList) {
+		
+		column = treesTable.getColumnModel().getColumn(
+				TreesTableModel.TREE_FILE_INDEX);
+		// pass dataList for labels on buttons
+		column.setCellRenderer(new JTableButtonCellRenderer(dataList));
+		column.setCellEditor(new JTableButtonCellEditor());
+		
+	}
+	
 	private void setTrees() {
 
 		treesCount = dataList.treeFileList.size();
@@ -116,6 +123,18 @@ public class TreesPanel extends JPanel implements Exportable {
 		ColumnResizer.adjustColumnPreferredWidths(treesTable);
 	}// END: setPartitions
 
+	public void updateTreesTable(PartitionDataList dataList) {
+		treesTableModel.setDataList(dataList);
+		setDataList(dataList);
+		setTreesColumn(dataList);
+		setTrees();
+		treesTableModel.fireTableDataChanged();
+	}// END: updateTreesTable
+	
+	public void setDataList(PartitionDataList dataList) {
+		this.dataList = dataList;
+	}
+	
 	@Override
 	public JComponent getExportableComponent() {
 		return this;

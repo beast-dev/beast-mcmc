@@ -274,8 +274,6 @@ public class XMLGenerator {
 						| !Utils.isElementInList(data, partitionList,
 								Utils.BRANCH_MODEL_ELEMENT)) {
 
-					// TODO: this f**cks things up if generating multiple docs
-					// from one instance of the program
 					data.substitutionModelIdref += suffix;
 
 					writeBranchModel(data, writer, String.valueOf(suffix));

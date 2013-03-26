@@ -1,7 +1,7 @@
 /*
  * Variable.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -99,7 +99,7 @@ public interface Variable<V> extends Identifiable {
 
     void addBounds(Bounds<V> bounds);
 
-    public abstract class Base<V> implements Variable<V>, Loggable  {
+    public abstract class Base<V> implements Variable<V>, Loggable {
         Base(String id) {
             this.id = id;
         }
@@ -153,6 +153,7 @@ public interface Variable<V> extends Identifiable {
                 return getValue(dim).doubleValue();
             }
         }
+
         /**
          * @return the log columns.
          */
@@ -264,7 +265,7 @@ public interface Variable<V> extends Identifiable {
                     }
 
                     public Double getLowerLimit(int dimension) {
-                        return -Double.MAX_VALUE;
+                        return Double.MIN_VALUE;
                     }
 
                     public int getBoundsDimension() {
@@ -339,7 +340,7 @@ public interface Variable<V> extends Identifiable {
             values = new double[v.length][v[0].length];
             for (int i = 0; i < v.length; i++) {
                 System.arraycopy(v[i], 0, values[i], 0, v[i].length);
-                lower[i] = -Double.MAX_VALUE;
+                lower[i] = Double.MIN_VALUE;
                 upper[i] = Double.MAX_VALUE;
             }
             storedValues = new double[values.length][values[0].length];
@@ -618,7 +619,7 @@ public interface Variable<V> extends Identifiable {
                     bounds = newBounds;
                 }
 
-                ((Bounds.Staircase)bounds).addBounds(b);
+                ((Bounds.Staircase) bounds).addBounds(b);
             }
 
         }

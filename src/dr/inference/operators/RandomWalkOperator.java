@@ -1,7 +1,7 @@
 /*
  * RandomWalkOperator.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -123,8 +123,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
         double newValue = value;
 
-        if (value < lower) {
-            if (Double.isInfinite(upper)) {
+        if (!Double.isInfinite(lower) && lower > Double.MIN_VALUE && value < lower) {
+            if (Double.isInfinite(upper) || upper == Double.MAX_VALUE) {
                 // we are only going to reflect once as the upper bound is at infinity...
                 newValue = lower + (lower - value);
             } else {
@@ -141,8 +141,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
                     newValue = upper - remainder;
                 }
             }
-        } else if (value > upper) {
-            if (Double.isInfinite(lower)) {
+        } else if (!Double.isInfinite(upper) && upper < Double.MAX_VALUE && value > upper) {
+            if (Double.isInfinite(lower) || lower == Double.MIN_VALUE) {
                 // we are only going to reflect once as the lower bound is at -infinity...
                 newValue = upper - (newValue - upper);
             } else {

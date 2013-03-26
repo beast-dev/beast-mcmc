@@ -49,7 +49,7 @@ public class DiagonalMatrix extends MatrixParameter {
     }
 
     public double[][] getParameterAsMatrix() {
-        final int I = getDimension();
+        final int I = getRowDimension();
         double[][] parameterAsMatrix = new double[I][I];
         for (int i = 0; i < I; i++) {
             parameterAsMatrix[i][i] = diagonalParameter.getParameterValue(i);

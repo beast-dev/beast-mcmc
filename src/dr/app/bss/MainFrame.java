@@ -128,7 +128,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		if (dataList.treeFileList.size() == 0){
 
 			tabbedPane.setSelectedComponent(treesPanel);
-//			treePanel.doImportTree();
+//			treePanels.doImportTree(row);
 		
 		} else {
 
@@ -552,74 +552,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		}// END: edt check
 
 	}// END: setStatus
-
-//	public void enableTreeFileButton() {
-//
-//		SwingUtilities.invokeLater(new Runnable() {
-//			public void run() {
-//
-////				treePanel.enableTreeFileButton();
-//
-//			}
-//		});
-//	}// END: enableTreeFileButton
-
-//	public void disableTreeFileButton() {
-//
-//		if (SwingUtilities.isEventDispatchThread()) {
-//
-////			treePanel.disableTreeFileButton();
-//
-//		} else {
-//
-//			SwingUtilities.invokeLater(new Runnable() {
-//				public void run() {
-//
-////					treePanel.disableTreeFileButton();
-//
-//				}
-//			});
-//		}// END: edt check
-//
-//	}// END: disableTreeFileButton
-
-//	public void enableTreesFileButton() {
-//
-//		if (SwingUtilities.isEventDispatchThread()) {
-//
-////			treePanel.enableTreesFileButton();
-//
-//		} else {
-//
-//			SwingUtilities.invokeLater(new Runnable() {
-//				public void run() {
-//
-////					treePanel.enableTreesFileButton();
-//
-//				}
-//			});
-//		}// END: edt check
-//
-//	}// END: enableTreesFileButton
-
-//	public void disableTreesFileButton() {
-//
-//		if (SwingUtilities.isEventDispatchThread()) {
-//
-////			treePanel.disableTreesFileButton();
-//
-//		} else {
-//
-//			SwingUtilities.invokeLater(new Runnable() {
-//				public void run() {
-//
-////					treePanel.disableTreesFileButton();
-//
-//				}
-//			});
-//		}// END: edt check
-//
-//	}// END: disableTreesFileButton
 
 	public void hideTreeColumn() {
 

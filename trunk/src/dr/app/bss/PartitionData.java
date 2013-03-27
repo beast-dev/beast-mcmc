@@ -154,7 +154,7 @@ public class PartitionData implements Serializable {
 	public static String[] substitutionModels = { "HKY", //
 			"GTR", //
 			"TN93", //
-			"Yang Codon Model" //
+			"GY94CodonModel" //
 	};
 
 	public static String[] substitutionParameterNames = new String[] {
@@ -568,7 +568,7 @@ public class PartitionData implements Serializable {
 		this.siteRateModelIdref = SiteModel.SITE_MODEL;
 	}
 	
-	public static String[] siteRateModels = { "No model", //
+	public static String[] siteRateModels = { "No Model", //
 			"Gamma Site Rate Model", //
 	};
 
@@ -577,7 +577,7 @@ public class PartitionData implements Serializable {
 			"alpha", //
 	};
 
-	public int[][] siteRateModelParameterIndices = { {}, // nomodel
+	public int[][] siteRateModelParameterIndices = { {}, // NoModel
 			{ 0, 1 }, // GammaSiteRateModel
 	};
 

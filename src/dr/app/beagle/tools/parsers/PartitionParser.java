@@ -81,7 +81,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 			
 			if (from < 0) {
 				throw new XMLParseException(
-						"illegal 'from' attribute in patterns element");
+						"Illegal 'from' attribute in patterns element");
 			}
 			
 		}// END: from check
@@ -91,7 +91,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 			to = xo.getIntegerAttribute(TO) - 1;
 			if (to < 0 || to < from) {
 				throw new XMLParseException(
-						"illegal 'to' attribute in patterns element");
+						"Illegal 'to' attribute in patterns element");
 			}
 			
 		}// END: to check

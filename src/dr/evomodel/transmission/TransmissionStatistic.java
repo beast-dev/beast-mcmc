@@ -150,7 +150,7 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
      */
     public boolean getBoolean(int dim) {
         Set<Integer> incompatibleSet = new HashSet<Integer>();
-
+        setupHosts();
         isCompatible(virusTree.getRoot(), incompatibleSet);
 
         return !incompatibleSet.contains(dim);

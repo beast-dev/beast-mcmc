@@ -173,7 +173,7 @@ public class TransmissionStatistic extends BooleanStatistic implements TreeStati
                 // This means that the sequence was sampled
                 // before the host was infected so we should probably flag
                 // this as an error before we get to this point...
-                throw new RuntimeException("Sequence " + virusTree.getNodeTaxon(node) + ", was sampled before host, " + hostTaxon + ", was infected");
+                throw new RuntimeException("Sequence " + virusTree.getNodeTaxon(node) + ", was sampled ("+height+") before host, " + hostTaxon + ", was infected ("+transmissionTime[host]+")");
             }
 
         } else {

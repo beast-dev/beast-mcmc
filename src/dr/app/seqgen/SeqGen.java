@@ -1,7 +1,7 @@
 package dr.app.seqgen;
 
 import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -12,15 +12,12 @@ import dr.evomodel.substmodel.HKY;
 import dr.evomodel.substmodel.SubstitutionModel;
 import jebl.evolution.alignments.Alignment;
 import jebl.evolution.alignments.BasicAlignment;
-import jebl.evolution.io.NexusExporter;
+import jebl.evolution.io.FastaExporter;
 import jebl.evolution.sequences.*;
 import jebl.evolution.taxa.Taxon;
 import jebl.math.Random;
 
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -216,14 +213,16 @@ public class SeqGen {
         String treeFileName = argv[0];
         String outputFileStem = argv[1];
 
-        int length = 470;
+        int length = 500;
 
         double[] frequencies = new double[]{0.25, 0.25, 0.25, 0.25};
         double kappa = 10.0;
         double alpha = 0.5;
-        double substitutionRate = 1.0E-9;
-        int categoryCount = 0;
-        double damageRate = 1.56E-6;
+        double substitutionRate = argv.length < 3 ? 1.0E-3 : Double.parseDouble(argv[2]);
+        int categoryCount = argv.length < 4 ? 8 : Integer.parseInt(argv[3]);
+        double damageRate = argv.length < 5 ? 0 : Double.parseDouble(argv[4]); //1.56E-6;
+
+        System.out.println("substitutionRate = " + substitutionRate  + "; categoryCount = " + categoryCount + "; damageRate = " + damageRate);
 
         FrequencyModel freqModel = new FrequencyModel(dr.evolution.datatype.Nucleotides.INSTANCE, frequencies);
 
@@ -242,11 +241,13 @@ public class SeqGen {
         FileReader reader = null;
         try {
             reader = new FileReader(treeFileName);
-            TreeImporter importer = new NexusImporter(reader);
+//            TreeImporter importer = new NexusImporter(reader);
+            TreeImporter importer = new NewickImporter(reader);
 
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
                 trees.add(tree);
+                System.out.println("tree height = " + tree.getNodeHeight(tree.getRoot()) + "; leave nodes = " + tree.getExternalNodeCount());
             }
 
         } catch (FileNotFoundException e) {
@@ -269,12 +270,22 @@ public class SeqGen {
 
             FileWriter writer = null;
             try {
-                writer = new FileWriter(outputFileStem + (i < 10 ? "00" : (i < 100 ? "0" : "")) + i + ".nex");
-                NexusExporter exporter = new NexusExporter(writer);
+//                writer = new FileWriter(outputFileStem + (i < 10 ? "00" : (i < 100 ? "0" : "")) + i + ".nex");
+//                NexusExporter exporter = new NexusExporter(writer);
+//
+//                exporter.exportAlignment(alignment);
+//
+//                writer.close();
+                String outputFileName = outputFileStem + "-" + substitutionRate + ".fasta";
 
-                exporter.exportAlignment(alignment);
+                writer = new FileWriter(outputFileName);
+                BufferedWriter bf = new BufferedWriter(writer);
+                FastaExporter exporter = new FastaExporter(bf);
 
-                writer.close();
+                exporter.exportSequences(alignment.getSequenceList());
+
+                bf.close();
+                System.out.println("Write " + i + "th sequence file : " + outputFileName);
 
                 i++;
             } catch (IOException e) {

@@ -130,10 +130,14 @@ public class BeagleSequenceSimulatorApp {
 
 		 Locale.setDefault(Locale.US);
 		
-		if (args.length > 1) {
+		if (args.length > 0) {
 
 			System.out.println("Command-line interface not yet implemented");
-
+			System.out.println();
+			
+			BeagleSequenceSimulatorConsoleApp app = new BeagleSequenceSimulatorConsoleApp(args);
+			app.simulate();
+			
 		} else {
 
 			try {
@@ -141,7 +145,7 @@ public class BeagleSequenceSimulatorApp {
 				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
 
-				// Cool sub-title for a software note
+				// sub-title for a software note
 				System.out.println("Do the evolution baby!");
 
 			} catch (UnsupportedClassVersionError e) {

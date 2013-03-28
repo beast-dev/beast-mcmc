@@ -51,6 +51,7 @@ public class GPSkytrackAnalysis extends TabularData {
 //    return new GaussianProcessSkytrackBlockUpdateOperator(gpLikelihood, weight, mode, scaleFactor,
 //                                                          maxIterations, stopValue);
 
+//    TODO: Change it to repeat the xvalues and GPvalues for the times when the operator is not called
     public GPSkytrackAnalysis(File log,  double burnIn, Parameter numGridPoints) throws IOException, Importer.ImportException, TraceException {
         GaussianProcessSkytrackBlockUpdateOperator GPOperator=new GaussianProcessSkytrackBlockUpdateOperator();
         this.numGridPoints=numGridPoints;

@@ -1245,6 +1245,8 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 //    locationThinned, the GMRF (GP values), Gibbs sampling precision and the upper bound lambda
     public double doOperation() throws OperatorFailedException {
 
+        System.err.println("Runs my operator");
+
         double currentPrecision = this.precisionParameter.getParameterValue(0);
         DenseVector currentPopSize = new DenseVector(popSizeParameter.getParameterValues());
         double [] currentChangePoints = this.changePoints.getParameterValues();

@@ -195,7 +195,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 										
 										data.createBranchModel(), //
 										data.createSiteRateModel(), //
-										data.createBranchRateModel(), //
+										data.createClockRateModel(), //
 										data.createFrequencyModel(), //
 										data.from - 1, // from
 										data.to - 1, // to

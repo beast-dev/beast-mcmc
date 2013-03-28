@@ -24,6 +24,7 @@ h1. TODO
 * command line interface
   - should accept data saved from UI
   - there are defaults and setting only override them 
+  - simulate for multiple trees file?
 * seed setting in UI and CLI
 * site rate model with invariant sites
 * frequency labels for codon triplets

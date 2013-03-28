@@ -296,7 +296,7 @@ public class PartitionData implements Serializable {
 			1.0 // uced.mean
 	};
 
-	public BranchRateModel createBranchRateModel() {
+	public BranchRateModel createClockRateModel() {
 
 		BranchRateModel branchRateModel = null;
 

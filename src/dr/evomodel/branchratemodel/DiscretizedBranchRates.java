@@ -43,6 +43,12 @@ import dr.inference.model.Variable;
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class DiscretizedBranchRates extends AbstractBranchRateModel {
+    // Turn on an off the caching on rates for categories -
+    // if off then the rates will be flagged to update on
+    // a restore.
+    // Currently turned off as it is not working with multiple partitions for
+    // some reason.
+    private static final boolean CACHE_RATES = false;
 
     private final ParametricDistributionModel distributionModel;
 
@@ -52,11 +58,14 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     private final int categoryCount;
     private final double step;
     private final double[][] rates;
-    private boolean normalize = false;
-    private double normalizeBranchRateTo = Double.NaN;
-    private double scaleFactor = 1.0;
-    private TreeModel treeModel;
+    private final boolean normalize;
+    private final double normalizeBranchRateTo;
+
+    private final TreeModel treeModel;
     private final double logDensityNormalizationConstant;
+
+    private double scaleFactor = 1.0;
+    private double storedScaleFactor;
 
     private boolean updateRateCategories = true;
     private int currentRateArrayIndex = 0;
@@ -106,24 +115,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         }
 
         addModel(model);
-        // AR - commented out: changes to the tree are handled by model changed events fired by rateCategories
-//        addModel(tree);
         addModel(rateCategories);
-        // AR - commented out: changes to rateCategoryParameter are handled by model changed events fired by rateCategories
-//        addVariable(rateCategoryParameter);
-
-        if (normalize) {
-            tree.addModelListener(new ModelListener() {
-
-                public void modelChangedEvent(Model model, Object object, int index) {
-                    computeFactor();
-                }
-
-                public void modelRestored(Model model) {
-                    computeFactor();
-                }
-            });
-        }
 
         updateRateCategories = true;
 
@@ -163,29 +155,34 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             updateRateCategories = true;
             fireModelChanged();
         } else if (model == rateCategories) {
-            // AR - commented out: if just the rate categories have changed the rates will be the same
-//            setupRates();
             fireModelChanged(null, index);
         }
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // AR - commented out: changes to rateCategoryParameter are handled by model changed events
-//        setupRates();
-    }
+        // nothing to do here
+   }
 
     protected void storeState() {
-        storedRateArrayIndex = currentRateArrayIndex;
+        if (CACHE_RATES) {
+            storedRateArrayIndex = currentRateArrayIndex;
+            storedScaleFactor = scaleFactor;
+        }
     }
 
     protected void restoreState() {
-        currentRateArrayIndex = storedRateArrayIndex;
+        if (CACHE_RATES) {
+            currentRateArrayIndex = storedRateArrayIndex;
+            scaleFactor = storedScaleFactor;
+        } else {
+            updateRateCategories = true;
+        }
     }
 
     protected void acceptState() {
     }
 
-    public double getBranchRate(final Tree tree, final NodeRef node) {
+    public final double getBranchRate(final Tree tree, final NodeRef node) {
 
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
@@ -202,10 +199,12 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     /**
      * Calculates the actual rates corresponding to the category indices.
      */
-    protected void setupRates() {
+    private void setupRates() {
 
-        // flip the current array index
-        currentRateArrayIndex = 1 - currentRateArrayIndex;
+        if (CACHE_RATES) {
+            // flip the current array index
+            currentRateArrayIndex = 1 - currentRateArrayIndex;
+        }
 
         double z = step / 2.0;
         for (int i = 0; i < categoryCount; i++) {
@@ -213,11 +212,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             //System.out.print(rates[i]+"\t");
             z += step;
         }
-        /*if(distributionModel.getClass().getName().equals("dr.inference.distribution.LogNormalDistributionModel")) {
-            LogNormalDistributionModel lndm = (LogNormalDistributionModel) distributionModel;
-            System.out.println("chur " + lndm.getS() +"\t" + lndm.getM());
-        }
-        else { System.out.println(distributionModel.getClass().getName());}*/
+
         if (normalize) computeFactor();
 
         updateRateCategories = false;

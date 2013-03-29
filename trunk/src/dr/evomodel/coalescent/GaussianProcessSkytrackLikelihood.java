@@ -75,6 +75,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected double [] storedGPcoalfactor;
     protected double [] GPCoalInterval;
     protected double [] storedGPCoalInterval;
+    protected double [] backupIntervals;
 
 
     //    protected double [] storedcoalfactor;
@@ -179,6 +180,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 numcoalpoints=getCorrectFieldLength();
 
         GPcoalfactor = new double[numintervals];
+        backupIntervals=new double[numintervals];
         GPCoalInterval=new double[numcoalpoints];
         storedGPCoalInterval=new double[numcoalpoints];
         CoalPosIndicator= new int[numcoalpoints];
@@ -215,6 +217,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 setupSufficientStatistics();
                 setupGPvalues();
                 System.err.println("initial GP likelihood +priors"+getLogLikelihood());
+                System.err.println("like"+intervalsKnown);
 //
 
 
@@ -238,10 +241,23 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         }
     }
 
+    protected void dobackupIntervals() {
+       for (int j=0; j<numintervals;j++){
+           backupIntervals[j]=getInterval(j);
+       }
+
+    }
+
+//    public final void makeDirty() {
+//        likelihoodKnown = false;
+//        intervalsKnown = false;
+//        System.err.println("setting intervalsknown false in makeDirty");
+//    }
 
     protected void wrapSetupIntervals() {
 
         setupIntervals();
+        intervalsKnown = true;
     }
 //
 //    protected int getCorrectFieldLength() {
@@ -256,6 +272,13 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     //This is actually the Augmented loglikelihood for fixed genealogy. For sequence data directly
 //    this becomes the coalescent point process prior on an augmented "tree"
     public double calculateLogLikelihood(Parameter Gfunction, Parameter latentCounts, Parameter eventType, Parameter upper_Bound, double [] Gfactor) {
+
+        if (!intervalsKnown) {
+//            System.err.println(intervalsKnown+"It recomputes");
+//            recomputeValues();
+            intervalsKnown = true;
+        }
+
         double upperBound = upper_Bound.getParameterValue(0);
 //        System.err.println("Likelihood with "+getPopSizeParameter().getSize()+"and G-function"+eventType.getSize());
           System.err.println("GP calculations used");
@@ -318,13 +341,13 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //Calculates prior on g function
     protected double calculateLogGP() {
 
-           if (!intervalsKnown) {
-//               System.err.println("intervalsknown");
-//               intervalsKnown -> false when handleModelChanged event occurs in super.
-               wrapSetupIntervals();
-//               setupQmatrix(precisionParameter.getParameterValue(0));
-               intervalsKnown = true;
-           }
+//           if (!intervalsKnown) {
+////               System.err.println("intervalsknown");
+////               intervalsKnown -> false when handleModelChanged event occurs in super.
+//               wrapSetupIntervals();
+////               setupQmatrix(precisionParameter.getParameterValue(0));
+//               intervalsKnown = true;
+//           }
 
 
            setupQmatrix(precisionParameter.getParameterValue(0));
@@ -376,8 +399,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
 		likelihoodKnown = false;
-        // Parameters (precision and popsizes do not change intervals or GMRF Q matrix (I DON'T UNDERSTAND THIS)
-	}
+       	}
 
 
 protected void restoreState() {
@@ -445,6 +467,65 @@ protected void storeState() {
 
 
      //Sufficient Statistics for GP - coal+sampling
+
+
+    protected void recomputeValues() {
+        System.err.println("There is a change in tree, then re-order and re-compute values");
+        dobackupIntervals();
+        wrapSetupIntervals();
+        if (GPcounts.getSize()!=getIntervalCount()){System.err.println("Error when recomputing Values in GP Likelihood");}
+
+//There should be a better way but for now, I will go over each possible change...
+
+//        Need to delete the node and add the new one
+        System.exit(-1);
+        double length = 0.0;
+        double length2=0.0;
+        double prevLength=0.0;
+        int countcoal = 0;
+        constlik= 0;
+        int j=0;
+        for (int i = 0; i < getIntervalCount(); i++) {
+            int sum=0;
+            length += getInterval(i);
+            while (changePoints.getParameterValue(j)<=length) {
+                sum++;
+                j++;
+               }
+//                if (GPcounts.getSize()<=i){
+//                  GPcounts.addDimension(i,0.0);
+//              }  else {
+            GPcounts.setParameterValue(i,sum);
+
+//              }
+            GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1.0) / 2.0;
+            constlik+=GPcoalfactor[i]*getInterval(i);
+
+//            System.err.println("i: "+i+"val: "+length+" type: "+getIntervalType(i)+" lineages: "+getLineageCount(i));
+            if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+                GPcounts.setParameterValue(i,1.0);
+                GPtype.setParameterValue(countcoal,1.0);
+
+                CoalPosIndicator[countcoal]=i;
+                changePoints.setParameterValue(countcoal,length);
+                CoalCounts.setParameterValue(countcoal,0.0);
+                CoalTime[countcoal]=length;
+                System.err.println(countcoal+"coal is:"+length+"with branches:"+getLineageCount(i));
+
+                GPCoalInterval[countcoal]=length-prevLength;
+
+                coalfactor.setParameterValue(countcoal,getLineageCount(i)*(getLineageCount(i)-1)/2.0);
+
+                countcoal++;
+                prevLength=length;
+            }
+
+
+
+        }
+        Tmrca.setParameterValue(0,CoalTime[countcoal-1]);
+
+    }
 
     protected void setupSufficientStatistics() {
         System.err.println("setting up sufficient statistics");

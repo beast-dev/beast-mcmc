@@ -33,12 +33,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
 
     // column indices in table
-    private static final int COLUMN_LABEL = 0;
-    private static final int SERUM_STRAIN = 2;
-    private static final int ROW_LABEL = 1;
-    private static final int VIRUS_STRAIN = 3;
-    private static final int SERUM_DATE = 4;
-    private static final int VIRUS_DATE = 5;
+    private static final int VIRUS_ISOLATE = 0;
+    private static final int VIRUS_STRAIN = 1;
+    private static final int VIRUS_DATE = 2;
+    private static final int SERUM_ISOLATE = 3;
+    private static final int SERUM_STRAIN = 4;
+    private static final int SERUM_DATE = 5;
     private static final int TITRE = 6;
 
     public enum MeasurementType {
@@ -81,7 +81,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         earliestDate = Double.POSITIVE_INFINITY;
         for (int i = 0; i < dataTable.getRowCount(); i++) {
             String[] values = dataTable.getRow(i);
-            int column = columnLabels.indexOf(values[COLUMN_LABEL]);
+            int column = columnLabels.indexOf(values[SERUM_ISOLATE]);
             if (column == -1) {
                 columnLabels.add(values[0]);
                 column = columnLabels.size() - 1;
@@ -92,7 +92,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             if (mergeColumnStrains) {
                 columnStrainName = values[SERUM_STRAIN];
             } else {
-                columnStrainName = values[COLUMN_LABEL];
+                columnStrainName = values[SERUM_ISOLATE];
             }
 
             if (strainTaxa != null) {
@@ -119,9 +119,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 throw new IllegalArgumentException("Error reading data table: Unrecognized serum strain name, " + values[SERUM_STRAIN] + ", in row " + (i+1));
             }
 
-            int row = rowLabels.indexOf(values[ROW_LABEL]);
+            int row = rowLabels.indexOf(values[VIRUS_ISOLATE]);
             if (row == -1) {
-                rowLabels.add(values[ROW_LABEL]);
+                rowLabels.add(values[VIRUS_ISOLATE]);
                 row = rowLabels.size() - 1;
             }
 
@@ -700,8 +700,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
         public static final String LOCATION_DRIFT = "locationDrift";
-        public static final String COLUMN_EFFECTS = "columnEffects";
-        public static final String ROW_EFFECTS = "rowEffects";
+        public static final String VIRUS_EFFECTS = "virusEffects";
+        public static final String SERUM_EFFECTS = "serumEffects";
         public final static String VIRUS_OFFSETS = "virusOffsets";
         public final static String SERUM_OFFSETS = "serumOffsets";
 
@@ -767,12 +767,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
 
             Parameter columnEffectsParameter = null;
-            if (xo.hasChildNamed(COLUMN_EFFECTS)) {
-                columnEffectsParameter = (Parameter) xo.getElementFirstChild(COLUMN_EFFECTS);
+            if (xo.hasChildNamed(SERUM_EFFECTS)) {
+                columnEffectsParameter = (Parameter) xo.getElementFirstChild(SERUM_EFFECTS);
             }
             Parameter rowEffectsParameter = null;
-            if (xo.hasChildNamed(ROW_EFFECTS)) {
-                rowEffectsParameter = (Parameter) xo.getElementFirstChild(ROW_EFFECTS);
+            if (xo.hasChildNamed(VIRUS_EFFECTS)) {
+                rowEffectsParameter = (Parameter) xo.getElementFirstChild(VIRUS_EFFECTS);
             }
 
             AntigenicLikelihood AGL = new AntigenicLikelihood(
@@ -823,8 +823,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(VIRUS_OFFSETS, Parameter.class, "An optional parameter for virus dates to be stored", true),
                 new ElementRule(SERUM_OFFSETS, Parameter.class, "An optional parameter for serum dates to be stored", true),
-                new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),
-                new ElementRule(ROW_EFFECTS, Parameter.class, "An optional parameter for row effects", true),
+                new ElementRule(SERUM_EFFECTS, Parameter.class, "An optional parameter for column effects", true),
+                new ElementRule(VIRUS_EFFECTS, Parameter.class, "An optional parameter for row effects", true),
                 new ElementRule(MDS_PRECISION, Parameter.class),
                 new ElementRule(LOCATION_DRIFT, Parameter.class)
         };
@@ -842,8 +842,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                         new Author("MA", "Suchard"),
                         new Author("P", "Lemey"),
                         new Author("G", "Dudas"),
-                        new Author("C", "Russell"),
-                        new Author("D", "Smith"),
+                        new Author("V", "Gregory"),
+                        new Author("AJ", "Hay"),
+                        new Author("JW", "McCauley"),
+                        new Author("CA", "Russell"),
+                        new Author("DJ", "Smith"),
                         new Author("A", "Rambaut")
                 },
                 Citation.Status.IN_PREPARATION

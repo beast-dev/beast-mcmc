@@ -383,6 +383,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
+        this.useAmbiguities = useAmbiguities;
         hasInitialized = true;
     }
 
@@ -1189,6 +1190,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      */
 
     private boolean ascertainedSitePatterns = false;
+
+
+    /***
+     * Flag to specify if ambiguity codes are in use
+     */
+    protected final boolean useAmbiguities;
 
     public static void main(String[] args) {
 

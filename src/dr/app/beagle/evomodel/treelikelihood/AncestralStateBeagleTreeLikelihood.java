@@ -1,7 +1,7 @@
 /*
  * AncestralStateBeagleTreeLikelihood.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -468,7 +468,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     getMatrix(nodeNum,probabilities);
                     System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
 
-                    if (!dataType.isUnknownState(thisState)) { // Not completely unknown
+                    if (useAmbiguities && !dataType.isUnknownState(thisState)) { // Not completely unknown
                         boolean[] stateSet = dataType.getStateSet(thisState);
 
                         for (int k = 0; k < stateCount; k++) {

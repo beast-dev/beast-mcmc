@@ -1,7 +1,7 @@
 /*
  * GaussianProcessSkytrackLikelihood.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,12 +26,12 @@
 package dr.evomodel.coalescent;
 
 //import com.lowagie.text.Paragraph;
+
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-//import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
-import dr.inference.markovchain.MarkovChain;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
@@ -39,6 +39,8 @@ import no.uib.cipr.matrix.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
+//import dr.evolution.tree.TreeTrait;
 
 
 
@@ -229,6 +231,28 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 // Methods that override existent methods
 
+    private boolean flagForJulia = false;
+
+    /**
+     * Demonstration of how to mark stuff as dirty
+     * @param model
+     * @param object
+     * @param index
+     */
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index); // Call super, since it may do something important
+        if (model == tree) {
+            // treeModel has changed; treeModel calls pushTreeChangedEvent that ultimately gets passed to here
+            if (object instanceof TreeModel.TreeChangedEvent) {
+                TreeModel.TreeChangedEvent tce = (TreeModel.TreeChangedEvent) object;
+                // tce tells much about what type of event happened.  In general, one does not care.
+                flagForJulia = true; // flag set, so lazy work can occur elsewhere.
+            } else {
+                throw new IllegalArgumentException("Not sure what type of model changed event occurred: " + object.getClass().toString());
+            }
+        }
+    }
 
     protected void setTree(List<Tree> treeList) {
         if (treeList.size() != 1) {

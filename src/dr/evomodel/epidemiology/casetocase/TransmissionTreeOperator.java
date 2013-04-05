@@ -68,7 +68,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                     parentPaintings[i] = branchMap[oldParents[changedNodes.get(i)]];
                 }
                 if(nodePaintings[0]==parentPaintings[0] || nodePaintings[1]==parentPaintings[1]){
-                    //If this is not true there is nothing to do - all parental relationships remain the same
+                    //If this is not true there is nothing to do - the result is already a valid painting
                     for(int i=0; i<2; i++){
                         paintUp(tree, nodePaintings[1-i], nodePaintings[i], branchMap, newBranchMap,
                                 tree.getNode(changedNodes.get(i)).getNumber(),newParents);
@@ -118,14 +118,14 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                 if(branchMap[otherChild]!=branchMap[movedNode]){
                     newBranchMap[movedNode]=branchMap[newChild];
                 } else {
-                    //Change all paintings up the tree from the old child that used to match the moved node to that
-                    //of the old child
+                    //Change all paintings up the tree from the old child that used to match the moved node to match
+                    //the old child
                     paintUp(tree, branchMap[movedNode],branchMap[oldChild],branchMap,newBranchMap,oldChild,oldParents);
                     //This may have resulted in the moved node being recoloured wrong.
                     newBranchMap[movedNode]=branchMap[movedNode];
                     branchMap = newBranchMap;
-                    //Change all paintings up the tree from the moved node that used to match the new child to that
-                    //of the moved node
+                    //Change all paintings up the tree from the moved node that used to match the new child to match
+                    //the moved node
                     paintUp(tree, branchMap[newChild],branchMap[movedNode],branchMap,newBranchMap,movedNode,newParents);
                 }
             } else {

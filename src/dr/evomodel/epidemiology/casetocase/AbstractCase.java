@@ -20,10 +20,7 @@ public abstract class AbstractCase extends AbstractModel {
     }
 
     protected String caseID;
-    //These can be either dates or probability distributions
-    protected Object infectionDate;
-    protected Object infectiousDate;
-    protected Object endOfInfectiousDate;
+
 
     public String getName(){
         return caseID;

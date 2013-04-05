@@ -31,6 +31,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
+import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -251,6 +252,46 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
             } else {
                 throw new IllegalArgumentException("Not sure what type of model changed event occurred: " + object.getClass().toString());
             }
+        }
+    }
+
+    public LogColumn[] getColumns() {
+        // Add more LogColumn to the array if there are more things to log
+        return new LogColumn[]{
+                new VariableLengthColumn(getId(), GPcounts)
+        };
+    }
+
+    private class VariableLengthColumn extends LogColumn.Abstract {
+
+        private final Parameter param;
+
+        public VariableLengthColumn(String label, Parameter param) {
+            super(label);
+            this.param = param;
+        }
+
+        protected String getFormattedValue() {
+            return convertToDelimited(param.getParameterValues());
+        }
+
+        // TODO The following functionality is generic and should be moved somewhere else and made static
+
+        private static final String OPEN = "{";
+        private static final String CLOSE = "}";
+        private static final String DELIMIT = ",";
+
+        private String convertToDelimited(double[] x) {
+            StringBuilder sb = new StringBuilder(OPEN);
+            final int dim = x.length;
+            for (int i = 0; i < dim; ++i) {
+                sb.append(Double.toString(x[i]));
+                if (i < dim - 1) {
+                    sb.append(DELIMIT);
+                }
+            }
+            sb.append(CLOSE);
+            return sb.toString();
         }
     }
 

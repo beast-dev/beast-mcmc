@@ -25,12 +25,13 @@ import java.util.ArrayList;
  * Date: 07/09/2012
  * Time: 16:17
  */
+
 public class Morelli12FarmCaseSet extends AbstractCaseSet{
 
     public Morelli12FarmCaseSet(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
                                 ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
         this(name,incubationPeriodDistribution,d,riemannSampleSize);
-        this.cases = farms;
+        cases = farms;
         for(AbstractCase farm : farms){
             addModel(farm);
         }
@@ -109,7 +110,6 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
         public static final String INCUBATION_PERIOD_DISTRIBUTION = "incubationPeriod";
         public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
         public static final String SQRT_INFECTIOUS_SCALE = "sqrtInfectiousScale";
-        public static final String CASE_NAME = "morelli12FarmCase";
 
         //for the cases
 
@@ -126,7 +126,7 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
             Morelli12FarmCaseSet cases = new Morelli12FarmCaseSet(incubationPeriodDistribution, d, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
-                if(xo.getName().equals(CASE_NAME)){
+                if(xo.getName().equals(Morelli12FarmCase.MORELLI_12_FARM_CASE)){
                     parseCase((XMLObject)xo.getChild(i),cases);
                 }
             }
@@ -180,7 +180,7 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
                 new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
                         "distribution of incubation periods (constructed in the XML so farm elements can inherit" +
                         "it).", false),
-                new ElementRule(CASE_NAME, caseRules, 1, Integer.MAX_VALUE),
+                new ElementRule(Morelli12FarmCase.MORELLI_12_FARM_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(SQRT_INFECTIOUS_SCALE, Parameter.class, "The square root of the scale parameter of " +
                         "all infectiousness periods (variances are proportional to the square of this, see Morelli" +
                         "2012).", false),
@@ -236,7 +236,6 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
             addModel(infectiousPeriod);
             addModel(incubationPeriod);
             addVariable(d);
-
         }
 
 
@@ -337,7 +336,6 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
 
         @Override
         protected void acceptState() {
-            //To change body of implemented methods use File | Settings | File Templates.
         }
 
     /* Probability for the infection date taking the value 'argument' and the incubation period being at most

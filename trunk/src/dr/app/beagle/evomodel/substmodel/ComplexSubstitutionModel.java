@@ -1,7 +1,7 @@
 /*
  * ComplexSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,13 +26,12 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.inference.model.Parameter;
-import dr.inference.model.Likelihood;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
-import dr.inference.model.Model;
 import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.MatrixEntryColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
 
 import java.util.Arrays;
@@ -44,6 +43,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
         super(name, dataType, freqModel, parameter, -1);
+        probability = new double[stateCount * stateCount];
     }
 
     protected EigenSystem getDefaultEigenSystem(int stateCount) {
@@ -187,6 +187,17 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     public void makeDirty() {
 
     }
+
+    public void printLastProbabilityMatrix() {
+        getLogLikelihood();
+        System.err.println((probability == null) ? "Null probability vector" : "Not null probability vector");
+        if (probability == null) {
+            boolean test = BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability, this);
+            System.err.println("BSSVS valid = " + test);
+        }
+        System.err.println(new Vector(probability));
+    }
+
 
     @Override
     public boolean isUsed() {

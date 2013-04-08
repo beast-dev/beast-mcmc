@@ -54,7 +54,7 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
     /**
      * The set of cases
      */
-    private AbstractCaseSet cases;
+    private AbstractOutbreak cases;
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
@@ -67,14 +67,14 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
 
     // Basic constructor.
 
-    public FelsensteinCaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractCaseSet caseData)
+    public FelsensteinCaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractOutbreak caseData)
             throws TaxonList.MissingTaxonException {
         this(FELSENSTEIN_CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData);
     }
 
     // Constructor for an instance with a non-default name
 
-    public FelsensteinCaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractCaseSet caseData)
+    public FelsensteinCaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData)
             throws TaxonList.MissingTaxonException {
 
         super(name);
@@ -414,7 +414,7 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
 
             TreeModel virusTree = new TreeModel(flexTree);
 
-            AbstractCaseSet caseSet = (AbstractCaseSet) xo.getChild(AbstractCaseSet.class);
+            AbstractOutbreak caseSet = (AbstractOutbreak) xo.getChild(AbstractOutbreak.class);
 
             FelsensteinCaseToCaseTransmissionLikelihood likelihood;
 
@@ -441,7 +441,7 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule("virusTree", Tree.class, "The (currently fixed) tree"),
-                new ElementRule(AbstractCaseSet.class, "The set of cases")
+                new ElementRule(AbstractOutbreak.class, "The set of cases")
         };
     };
 

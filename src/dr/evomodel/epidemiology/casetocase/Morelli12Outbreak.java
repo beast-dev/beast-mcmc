@@ -26,10 +26,10 @@ import java.util.ArrayList;
  * Time: 16:17
  */
 
-public class Morelli12FarmCaseSet extends AbstractCaseSet{
+public class Morelli12Outbreak extends AbstractOutbreak {
 
-    public Morelli12FarmCaseSet(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                                ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
+    public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+                             ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
         this(name,incubationPeriodDistribution,d,riemannSampleSize);
         cases = farms;
         for(AbstractCase farm : farms){
@@ -37,15 +37,15 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
         }
     }
 
-    public Morelli12FarmCaseSet(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                                ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
+    public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+                             ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
         this(MORELLI_12_FARM_CASE_SET, incubationPeriodDistribution, d, farms, riemannSampleSize);
     }
 
     // with the inner class, initialisation has to take places without cases - add them later
 
-    public Morelli12FarmCaseSet(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                                Parameter riemannSampleSize){
+    public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+                             Parameter riemannSampleSize){
         super(name);
         this.incubationPeriod = incubationPeriodDistribution;
         addModel(this.incubationPeriod);
@@ -54,14 +54,15 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
         cases = new ArrayList<AbstractCase>();
     }
 
-    public Morelli12FarmCaseSet(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                                Parameter riemannSampleSize){
+    public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+                             Parameter riemannSampleSize){
         this(MORELLI_12_FARM_CASE_SET, incubationPeriodDistribution, d, riemannSampleSize);
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Taxa associatedTaxa){
-        Morelli12FarmCase thisCase = new Morelli12FarmCase(caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
+        Morelli12Case thisCase = new Morelli12Case(caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
         cases.add(thisCase);
+        addModel(thisCase);
     }
 
     /* Likelihood of the root branch (the farm is infectious by the root node time).*/
@@ -74,7 +75,7 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
         if(farm.culledYet(farmInfectiousBy)){
             return Double.NEGATIVE_INFINITY;
         } else {
-            return Math.log(((Morelli12FarmCase) farm).infectiousCDF(farmInfectiousBy));
+            return Math.log(((Morelli12Case) farm).infectiousCDF(farmInfectiousBy));
         }
     }
 
@@ -93,7 +94,7 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
         } else if(parent==child){
             return 0;
         } else {
-            return Math.log(((Morelli12FarmCase)child).periodInfectionDistribution(childInfected - 1, childInfected,
+            return Math.log(((Morelli12Case)child).periodInfectionDistribution(childInfected - 1, childInfected,
                     childInfectiousBy));
         }
     }
@@ -107,7 +108,7 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         //for the case set
 
-        public static final String INCUBATION_PERIOD_DISTRIBUTION = "incubationPeriod";
+        public static final String INCUBATION_PERIOD_DISTRIBUTION = "incubationPeriodDistribution";
         public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
         public static final String SQRT_INFECTIOUS_SCALE = "sqrtInfectiousScale";
 
@@ -124,16 +125,17 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
                     (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
-            Morelli12FarmCaseSet cases = new Morelli12FarmCaseSet(incubationPeriodDistribution, d, riemannSampleSize);
+            Morelli12Outbreak cases = new Morelli12Outbreak(incubationPeriodDistribution, d, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
-                if(xo.getName().equals(Morelli12FarmCase.MORELLI_12_FARM_CASE)){
-                    parseCase((XMLObject)xo.getChild(i),cases);
+                Object cxo = xo.getChild(i);
+                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(Morelli12Case.MORELLI_12_FARM_CASE)){
+                    parseCase((XMLObject)cxo,cases);
                 }
             }
             return cases;
         }
 
-        public void parseCase(XMLObject xo, Morelli12FarmCaseSet caseSet) throws XMLParseException {
+        public void parseCase(XMLObject xo, Morelli12Outbreak caseSet) throws XMLParseException {
             String farmID = (String) xo.getAttribute(CASE_ID);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
@@ -154,7 +156,7 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
 
         @Override
         public Class getReturnType(){
-            return Morelli12FarmCaseSet.class;
+            return Morelli12Outbreak.class;
         }
 
         public String getParserName(){
@@ -180,7 +182,7 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
                 new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
                         "distribution of incubation periods (constructed in the XML so farm elements can inherit" +
                         "it).", false),
-                new ElementRule(Morelli12FarmCase.MORELLI_12_FARM_CASE, caseRules, 1, Integer.MAX_VALUE),
+                new ElementRule(Morelli12Case.MORELLI_12_FARM_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(SQRT_INFECTIOUS_SCALE, Parameter.class, "The square root of the scale parameter of " +
                         "all infectiousness periods (variances are proportional to the square of this, see Morelli" +
                         "2012).", false),
@@ -221,9 +223,10 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
 
     //Case class.
 
-    private class Morelli12FarmCase extends AbstractCase {
-        public Morelli12FarmCase(String name, String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
-                                           Taxa associatedTaxa){
+    private class Morelli12Case extends AbstractCase {
+
+        public Morelli12Case(String name, String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
+                             Taxa associatedTaxa){
             super(name);
             this.caseID = caseID;
             //The time value for end of these days is the numerical value of these dates plus 1.
@@ -233,14 +236,14 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
             this.oldestLesionAge = oldestLesionAge;
             infectionDate = new InfectionDatePDF();
             rebuildInfDistribution();
-            addModel(infectiousPeriod);
-            addModel(incubationPeriod);
-            addVariable(d);
+            this.addModel(infectiousPeriod);
+            this.addModel(incubationPeriod);
+            this.addVariable(d);
         }
 
 
-        public Morelli12FarmCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
-                                 Taxa associatedTaxa){
+        public Morelli12Case(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
+                             Taxa associatedTaxa){
             this(MORELLI_12_FARM_CASE, caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
         }
 
@@ -431,5 +434,4 @@ public class Morelli12FarmCaseSet extends AbstractCaseSet{
         private ParametricDistributionModel infectiousPeriod;
         private ParametricDistributionModel storedInfectiousPeriod;
     }
-
 }

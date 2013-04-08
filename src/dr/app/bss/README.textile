@@ -20,14 +20,13 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* BUG in Trees panel (load tree, then change it to another, then add another row - number of taxa is not 0)
+
 * command line interface
   - should accept data saved from UI
-  - there are defaults and setting only override them 
   - simulate for multiple trees file?
+* get rid of data type column
 * seed setting in UI and CLI
 * site rate model with invariant sites
 * frequency labels for codon triplets
-* amino acid models and data type
 * populate the Edit and Help menus with custom items
 * ancestral sequence in XML Generator and in GUI

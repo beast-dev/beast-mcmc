@@ -66,7 +66,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     /**
      * The set of cases
      */
-    private AbstractCaseSet cases;
+    private AbstractOutbreak cases;
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
@@ -93,7 +93,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     // Basic constructor.
 
-    public CaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractCaseSet caseData,
+    public CaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
                                             String startingNetworkFileName, boolean extended)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, extended);
@@ -101,7 +101,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     // Legacy constructor
 
-    public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractCaseSet caseData, String
+    public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
             startingNetworkFileName){
         this(name, virusTree, caseData, startingNetworkFileName, false);
     }
@@ -109,7 +109,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     // Constructor for an instance with a non-default name
 
-    public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractCaseSet caseData, String
+    public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
             startingNetworkFileName, boolean extended) {
 
         super(name);
@@ -891,7 +891,7 @@ public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         TreeModel virusTree = new TreeModel(flexTree);
 
-        AbstractCaseSet caseSet = (AbstractCaseSet) xo.getChild(AbstractCaseSet.class);
+        AbstractOutbreak caseSet = (AbstractOutbreak) xo.getChild(AbstractOutbreak.class);
 
         CaseToCaseTransmissionLikelihood likelihood;
 
@@ -922,7 +922,7 @@ public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule("extended"),
             new ElementRule("virusTree", Tree.class, "The tree"),
-            new ElementRule(AbstractCaseSet.class, "The set of cases"),
+            new ElementRule(AbstractOutbreak.class, "The set of cases"),
             new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                     true)
     };

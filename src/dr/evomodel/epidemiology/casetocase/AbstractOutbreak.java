@@ -12,9 +12,9 @@ import java.util.ArrayList;
  * Time: 14:40
  * To change this template use File | Settings | File Templates.
  */
-public abstract class AbstractCaseSet extends AbstractModel {
+public abstract class AbstractOutbreak extends AbstractModel {
 
-    public AbstractCaseSet(String name){
+    public AbstractOutbreak(String name){
         super(name);
     }
 

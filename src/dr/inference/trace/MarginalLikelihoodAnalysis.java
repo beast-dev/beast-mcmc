@@ -100,8 +100,9 @@ public class MarginalLikelihoodAnalysis {
      */
     public double logMarginalLikelihoodArithmetic(List<Double> v) {
     	
-    	double sum = 0;
-        final int size = v.size();
+    	final int size = v.size();
+    	
+    	double sum = LogTricks.logZero;
         
         for (int i = 0; i < size; i++) {
         	sum = LogTricks.logSum(sum, v.get(i));

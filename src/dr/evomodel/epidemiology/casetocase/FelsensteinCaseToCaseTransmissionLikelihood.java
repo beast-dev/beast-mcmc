@@ -14,6 +14,7 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -24,10 +25,11 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * A likelihood function for transmission between identified epidemiological cases. The network is not sampled;
- * instead the overall likelihood of the tree based on current values of epidemiological parameters are calculated
- * using a modification of the Felsenstein pruning algorithm. The maximum a posteriori network can then be reconstructed
- * when the phylogeny is sampled.
+ * A likelihood function for transmission between identified epidemiological cases. The network is not sampled by the
+ * MCMC; instead the overall likelihood of the tree based on current values of epidemiological parameters are calculated
+ * using a modification of the Felsenstein pruning algorithm. A network is reconstructed at sampling.
+ *
+ * WARNING: if the likelihood function relies on numerical integration then this is slow to put it _mildly_.
  *
  * This version assumes that the TMRCA of two sequences represents the time of the transmission that split
  * the lineages. The plan is to relax this in future.
@@ -57,6 +59,13 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
     private AbstractOutbreak cases;
     private boolean likelihoodKnown = false;
     private double logLikelihood;
+
+/*    Stored painting likelihoods for triplets of nodes. Order is: 1) node number 2) node painting 3) child 0 painting
+* 4) child 1 painting. Probably faster with a one-dimensional array, but do this for now. This is a _big_ array.*/
+
+    private double[][][][] tripletLikelihoods;
+
+
 
     // PUBLIC STUFF
 
@@ -88,6 +97,11 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
         cases = caseData;
         addModel(cases);
         verbose = false;
+
+        tripletLikelihoods = new double[virusTree.getInternalNodeCount()]
+                [virusTree.getExternalNodeCount()]
+                [virusTree.getExternalNodeCount()]
+                [virusTree.getExternalNodeCount()];
 
         tipMap = new HashMap<AbstractCase, Integer>();
 
@@ -224,7 +238,7 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
 
     private double L(NodeRef alpha, AbstractCase i){
         if(virusTree.isExternal(alpha)){
-            return tipMap.get(i)==alpha.getNumber() ? 1:0;
+            return tipMap.get(i)==alpha.getNumber() ? 1 : 0;
         } else {
             double totalLikelihood = 0;
             NodeRef[] children = getChildren(alpha);
@@ -235,34 +249,14 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
                     if(P_term!=0){
                         L_term = L(children[0],case_x)*L(children[1],case_y);
                     }
+                    tripletLikelihoods[alpha.getNumber()]
+                            [cases.getCases().indexOf(i)]
+                            [cases.getCases().indexOf(case_x)]
+                            [cases.getCases().indexOf(case_y)] = L_term;
                     totalLikelihood = totalLikelihood + L_term*P_term;
                 }
             }
             return totalLikelihood;
-        }
-    }
-
-    /* The maximum likelihood version of the above for ancestral state reconstruction. */
-
-    private double L_max(NodeRef alpha, AbstractCase i){
-        if(virusTree.isExternal(alpha)){
-            return tipMap.get(i)==alpha.getNumber() ? 1:0;
-        } else {
-            double maxLikelihood = 0;
-            NodeRef[] children = getChildren(alpha);
-            for(AbstractCase case_x: cases.getCases()){
-                for(AbstractCase case_y: cases.getCases()){
-                    double P_term = P(i, case_x, case_y, alpha);
-                    double L_term = 0;
-                    if(P_term!=0){
-                        L_term = L_max(children[0],case_x)*L_max(children[1],case_y);
-                    }
-                    if(L_term*P_term > maxLikelihood){
-                        maxLikelihood = L_term*P_term;
-                    }
-                }
-            }
-            return maxLikelihood;
         }
     }
 
@@ -273,18 +267,19 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
         if(virusTree.isExternal(alpha)){
             throw new RuntimeException("alpha must be external");
         }
+        // this is a standard painting, so a must be either b or c but not both
+        if((a!=b && a!=c) || (b==c)){
+            return 0;
+        }
         NodeRef[] children = getChildren(alpha);
-        int alphaDay = getNodeDay(alpha);
-        int[] childDays = getChildDays(alpha);
         //Tree must admit the cases in these positions
         if(!treeWillAdmitCaseHere(alpha, a)
                 || !treeWillAdmitCaseHere(children[0],b)
                 || !treeWillAdmitCaseHere(children[1],c)) {
             return 0;
         }
-        if((a!=b && a!=c) || (b==c)){
-            return 0;
-        }
+        int alphaDay = getNodeDay(alpha);
+        int[] childDays = getChildDays(alpha);
         if (a==b){
             double c_term = cases.transmissionBranchLikelihood(a, c, alphaDay, childDays[1]);
             double a_term = cases.noTransmissionBranchLikelihood(a, alphaDay)
@@ -306,59 +301,79 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
         }
     }
 
-    /* The method to get the maximum likelihood painting and thus network. I'm not yet sure that this procedure
-     actually results in a painting, and need to check hard for counterexamples. */
+    /* Sample a random transmission tree from the likelihoods for the paintings of each triplet of nodes */
 
-    private HashMap<AbstractCase, AbstractCase> getMaximumLikelihoodNetwork(){
-        HashMap<NodeRef, AbstractCase> maxLikelihoodPainting = new HashMap<NodeRef, AbstractCase>();
+    private HashMap<AbstractCase, AbstractCase> sampleTransmissionTree(){
+        HashMap<NodeRef, AbstractCase> samplePainting = new HashMap<NodeRef, AbstractCase>();
         NodeRef root = virusTree.getRoot();
-        AbstractCase rootPainting = null;
-        double maxRootPaintingLikelihood = 0;
-        for(AbstractCase thisCase: cases.getCases()){
-            double likelihood = L_max(root,thisCase);
-            if(likelihood>maxRootPaintingLikelihood){
-                maxRootPaintingLikelihood = likelihood;
-                rootPainting = thisCase;
-            }
+        double[] rootLikelihoods = transfer3DArray(tripletLikelihoods[root.getNumber()]);
+        int dim = virusTree.getExternalNodeCount();
+        int choice = MathUtils.randomChoicePDF(rootLikelihoods);
+        int[] choices = new int[3];
+        choices[0] = (choice - (choice % dim*dim))/(dim*dim);
+        choices[1] = ((choice % dim*dim) - ((choice % dim*dim) % dim)) / dim;
+        choices[2] = (choice % dim*dim) % dim;
+        samplePainting.put(root,cases.getCase(choices[0]));
+        samplePainting.put(virusTree.getChild(root,0),cases.getCase(choices[1]));
+        samplePainting.put(virusTree.getChild(root,1),cases.getCase(choices[2]));
+
+        for(int i=0; i<2; i++){
+            fillUp(virusTree.getChild(root,i),samplePainting);
         }
-        maxLikelihoodPainting.put(root,rootPainting);
-        fillUp(root,maxLikelihoodPainting);
+
+        fillUp(root,samplePainting);
         HashMap<AbstractCase, AbstractCase> network = new HashMap<AbstractCase, AbstractCase>();
         for(AbstractCase thisCase: cases.getCases()){
-            network.put(thisCase, getInfector(thisCase,maxLikelihoodPainting));
+            network.put(thisCase, getInfector(thisCase,samplePainting));
         }
         return network;
     }
 
     private void fillUp(NodeRef node, HashMap<NodeRef, AbstractCase> painting){
+
         if(!virusTree.isExternal(node)){
-            AbstractCase[] bestChildren = bestChildren(node, painting.get(node));
-            for(int i=0; i<bestChildren.length; i++){
-                NodeRef child = virusTree.getChild(node,i);
-                painting.put(child,bestChildren[i]);
-                fillUp(child, painting);
+            double[] childLikelihoods = transfer2DArray(tripletLikelihoods[node.getNumber()]
+                    [cases.getCases().indexOf(painting.get(node))]);
+            int dim = virusTree.getExternalNodeCount();
+            int choice = MathUtils.randomChoicePDF(childLikelihoods);
+            int[] choices = new int[2];
+            choices[0] = (choice - (choice % dim))/dim;
+            choices[1] = choice % dim;
+            for(int i=0; i<2; i++){
+                if(virusTree.isExternal(virusTree.getChild(node,i))){
+                    painting.put(virusTree.getChild(node,i),cases.getCase(choices[i]));
+                }
             }
         }
     }
 
-    private AbstractCase[] bestChildren(NodeRef node, AbstractCase nodePainting){
-        double maxLikelihood = 0;
-        AbstractCase[] bestPair = new AbstractCase[2];
-        for(AbstractCase left: cases.getCases()){
-            for(AbstractCase right: cases.getCases()){
-                double P_term = P(nodePainting, left, right, node);
-                double L_term = 0;
-                if(P_term>0){
-                    L_term = L_max(virusTree.getChild(node,0),left)*L_max(virusTree.getChild(node,1),right);
-                }
-                if(P_term*L_term>maxLikelihood){
-                    bestPair[0] = left;
-                    bestPair[1] = right;
+
+
+    private double[] transfer2DArray(double[][] array){
+        int dimension1 = array.length;
+        int dimension2 = array[0].length;
+        double[] out = new double[dimension1 * dimension2];
+        for(int i=0; i<dimension1; i++){
+            for(int j=0; j<dimension2; j++){
+                out[i*dimension2 + j] = array[i][j];
+            }
+        }
+        return out;
+    }
+
+    private double[] transfer3DArray(double[][][] array){
+        int dimension1 = array.length;
+        int dimension2 = array[0].length;
+        int dimension3 = array[0][0].length;
+        double[] out = new double[dimension1 * dimension2 * dimension3];
+        for(int i=0; i<dimension1; i++){
+            for(int j=0; j<dimension2; j++){
+                for(int k=0; k<dimension3; k++){
+                    out[i*dimension2*dimension3 + j*dimension2 + k] = array[i][j][k];
                 }
             }
         }
-        System.out.println("Best pair for node "+node.toString()+" found.");
-        return bestPair;
+        return out;
     }
 
     public AbstractCase getInfector(AbstractCase thisCase, HashMap<NodeRef, AbstractCase> branchMap){
@@ -454,7 +469,7 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
 
         LogColumn[] columns = new LogColumn[cases.size()];
 
-        final HashMap<AbstractCase,AbstractCase> reconstructedNetwork = getMaximumLikelihoodNetwork();
+        final HashMap<AbstractCase,AbstractCase> reconstructedNetwork = sampleTransmissionTree();
 
         for(int i=0; i< cases.size(); i++){
             final AbstractCase infected = cases.getCase(i);

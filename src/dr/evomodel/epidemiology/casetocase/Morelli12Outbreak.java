@@ -128,7 +128,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
             Morelli12Outbreak cases = new Morelli12Outbreak(incubationPeriodDistribution, d, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
-                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(Morelli12Case.MORELLI_12_FARM_CASE)){
+                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(Morelli12Case.MORELLI_12_CASE)){
                     parseCase((XMLObject)cxo,cases);
                 }
             }
@@ -182,7 +182,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
                 new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
                         "distribution of incubation periods (constructed in the XML so farm elements can inherit" +
                         "it).", false),
-                new ElementRule(Morelli12Case.MORELLI_12_FARM_CASE, caseRules, 1, Integer.MAX_VALUE),
+                new ElementRule(Morelli12Case.MORELLI_12_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(SQRT_INFECTIOUS_SCALE, Parameter.class, "The square root of the scale parameter of " +
                         "all infectiousness periods (variances are proportional to the square of this, see Morelli" +
                         "2012).", false),
@@ -244,7 +244,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
         public Morelli12Case(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
                              Taxa associatedTaxa){
-            this(MORELLI_12_FARM_CASE, caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
+            this(MORELLI_12_CASE, caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
         }
 
         private void rebuildInfDistribution(){
@@ -424,7 +424,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
             private double currentT;
         }
 
-        public static final String MORELLI_12_FARM_CASE = "morelli12FarmCase";
+        public static final String MORELLI_12_CASE = "morelli12Case";
         private Date examDate;
         private Date endOfInfectiousDate;
         private Parameter oldestLesionAge;

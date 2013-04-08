@@ -39,7 +39,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
     public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
                              ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
-        this(MORELLI_12_FARM_CASE_SET, incubationPeriodDistribution, d, farms, riemannSampleSize);
+        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, farms, riemannSampleSize);
     }
 
     // with the inner class, initialisation has to take places without cases - add them later
@@ -56,7 +56,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
     public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
                              Parameter riemannSampleSize){
-        this(MORELLI_12_FARM_CASE_SET, incubationPeriodDistribution, d, riemannSampleSize);
+        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, riemannSampleSize);
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Taxa associatedTaxa){
@@ -160,7 +160,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         }
 
         public String getParserName(){
-            return MORELLI_12_FARM_CASE_SET;
+            return MORELLI_12_OUTBREAK;
         }
 
         @Override
@@ -191,7 +191,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         };
     };
 
-    public static final String MORELLI_12_FARM_CASE_SET = "morelli12FarmCaseSet";
+    public static final String MORELLI_12_OUTBREAK = "morelli12Outbreak";
     private ParametricDistributionModel incubationPeriod;
     private RiemannApproximation numericalIntegrator;
     private Parameter d;

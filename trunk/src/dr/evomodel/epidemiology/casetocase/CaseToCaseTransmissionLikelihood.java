@@ -29,7 +29,6 @@ import java.util.*;
  * must be in days. Python scripts to write XML for it and analyse the posterior set of networks exist; contact MH.
  *
  * @author Matthew Hall
- * @author Matthew Hall
  * @author Andrew Rambaut
  * @version $Id: $
  */

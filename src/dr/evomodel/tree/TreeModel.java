@@ -653,17 +653,29 @@ public class TreeModel extends AbstractModel implements MutableTree {
      */
     public void adoptTreeStructure(Tree donor) {		
     	
+    	/*System.err.println("internalNodeCount: " + this.internalNodeCount);
+    	System.err.println("externalNodeCount: " + this.externalNodeCount);
+    	for (int i = 0; i < this.nodeCount; i++) {
+    		System.err.println(nodes[i]);
+    	}*/
+    	
+    	//first remove all the child nodes of the internal nodes
+		for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
+			int childCount = nodes[i].getChildCount();
+			for (int j = 0; j < childCount; j++) {
+				nodes[i].removeChild(j);
+			}
+		}
+		
 		// set-up nodes in this.nodes[] to mirror connectedness in donor via a simple recursion on donor.getRoot()
 		addNodeStructure(donor, donor.getRoot());
 		
-		//perhaps use the following (private) methods (not yet implemented) afterwards
-		//addNodeRates(donor, donor.getRoot());
-		//addNodeTraits(donor, donor.getRoot());
+		//Tree donor has no rates nor traits, only heights
         
 	}
     
     /**
-     * Recursive algorithm to copy a proposed tree into the current treeModel.
+     * Recursive algorithm to copy a proposed tree structure into the current treeModel.
      */
 	private void addNodeStructure(Tree donorTree, NodeRef donorNode) {
 		
@@ -678,13 +690,9 @@ public class TreeModel extends AbstractModel implements MutableTree {
 		
 		setNodeHeight(acceptorNode, donorTree.getNodeHeight(donorNode));
 		
-		//TODO: copy rates
-		//TODO: copy traits
-		
-		//TODO: removeChild() will screw up the parent relationship of previously handled nodes; but this hack isn't great either
-		//removing all child nodes up front currently won't work, since intermediate events fired from setting the height will cause errors
-		((Node)acceptorNode).leftChild = null;
-		((Node)acceptorNode).rightChild = null;
+		//removing all child nodes up front currently works
+		//((Node)acceptorNode).leftChild = null;
+		//((Node)acceptorNode).rightChild = null;
 		/*int nrChildren = getChildCount(acceptorNode);
 		for (int i = 0; i < nrChildren; i++) {
 			this.removeChild(acceptorNode, this.getChild(acceptorNode, i));

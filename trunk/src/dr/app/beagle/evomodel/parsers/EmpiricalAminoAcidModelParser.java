@@ -68,6 +68,8 @@ public class EmpiricalAminoAcidModelParser extends AbstractXMLObjectParser {
             rateMatrix = CPREV.INSTANCE;
         } else if (type.equals(AminoAcidModelType.WAG.getXMLName())) {
             rateMatrix = WAG.INSTANCE;
+        } else if (type.equals(AminoAcidModelType.LG.getXMLName())) {
+            rateMatrix = LG.INSTANCE;
         } else if (type.equals(AminoAcidModelType.FLU.getXMLName())) {
             rateMatrix = FLU.INSTANCE;
         } else {

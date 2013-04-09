@@ -349,7 +349,7 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
 
 
 
-    private double[] transfer2DArray(double[][] array){
+    private static double[] transfer2DArray(double[][] array){
         int dimension1 = array.length;
         int dimension2 = array[0].length;
         double[] out = new double[dimension1 * dimension2];
@@ -361,7 +361,7 @@ public class FelsensteinCaseToCaseTransmissionLikelihood extends AbstractModelLi
         return out;
     }
 
-    private double[] transfer3DArray(double[][][] array){
+    private static double[] transfer3DArray(double[][][] array){
         int dimension1 = array.length;
         int dimension2 = array[0].length;
         int dimension3 = array[0][0].length;

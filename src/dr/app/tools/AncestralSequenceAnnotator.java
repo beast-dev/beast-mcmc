@@ -24,6 +24,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 //import dr.evomodel.sitemodel.SiteModel;
 //import dr.evomodel.substmodel.*;
 import dr.evomodel.substmodel.JTT;
+import dr.evomodel.substmodel.LG;
 import dr.evomodel.substmodel.WAG;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
@@ -525,22 +526,18 @@ public class AncestralSequenceAnnotator {
                 substModel = new EmpiricalAminoAcidModel(WAG.INSTANCE, freqModel);
             }
             if(substModelName.equals(LG_TEXT)) {
-                //todo Implement Le Gascuel (2008) model
-                System.err.println("Sorry, LG substitution model is not yet implemented in BEAST");
-                System.exit(0);
-                //substModel = new EmpiricalAminoAcidModel(JTT.INSTANCE, freqModel);
-
+                substModel = new EmpiricalAminoAcidModel(LG.INSTANCE, freqModel);
             }
             //todo Allow proper file input of Empirical amino-acid models
             if(substModelName.matches(Empirical_TEXT)) {
                 String empiricalModelFileName = substModelName.replaceFirst("Empirical\\(", "").replaceFirst("\\).*","");
-                if(empiricalModelFileName.equals("wag.dat")) {
+                if (empiricalModelFileName.equals("wag.dat")) {
                     substModel = new EmpiricalAminoAcidModel(WAG.INSTANCE, freqModel);
-                }
-                else if(empiricalModelFileName.equals("jtt.dat")) {
+                } else if(empiricalModelFileName.equals("jtt.dat")) {
                     substModel = new EmpiricalAminoAcidModel(JTT.INSTANCE, freqModel);
-                }
-                else {
+                } else if(empiricalModelFileName.equals("lg.dat")) {
+                    substModel = new EmpiricalAminoAcidModel(LG.INSTANCE, freqModel);
+                } else {
                     System.err.println("Sorry, AncestralSequenceAnnotator does not currently support other files");
                     System.err.println("Soon, we will allow users to enter a file");
                     System.exit(0);

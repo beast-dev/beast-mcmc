@@ -211,6 +211,9 @@ public class BeautiTesterConfig {
 
         model.setAaSubstitutionModel(AminoAcidModelType.WAG);
         buildHeteroModels(key + "WAG", beautiOptions);
+        
+        model.setAaSubstitutionModel(AminoAcidModelType.LG);
+        buildHeteroModels(key + "LG", beautiOptions);
     }
 
     public void buildTreePriorModels(String key, BeautiOptions options) {

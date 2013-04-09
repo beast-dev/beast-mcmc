@@ -37,6 +37,7 @@ public enum AminoAcidModelType {
     MT_REV_24("mtREV", MTREV.INSTANCE),
     CP_REV_45("cpREV", CPREV.INSTANCE),
     WAG("WAG", dr.evomodel.substmodel.WAG.INSTANCE),
+    LG("LG", dr.evomodel.substmodel.LG.INSTANCE),
     FLU("FLU", dr.evomodel.substmodel.FLU.INSTANCE);
 
     AminoAcidModelType(String displayName, EmpiricalRateMatrix matrix) {

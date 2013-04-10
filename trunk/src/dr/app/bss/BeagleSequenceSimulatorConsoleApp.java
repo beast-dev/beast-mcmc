@@ -18,7 +18,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private PartitionDataList dataList;
 	
 	private static final boolean VERBOSE = true;
-	private static final String SPLIT_PARTITION = ";";
+	private static final String SPLIT_PARTITION = ":";
 	private static final String HELP = "help";
 
 	private static final String TREE_MODEL = "treeModel";
@@ -492,14 +492,21 @@ public class BeagleSequenceSimulatorConsoleApp {
 						+ "-frequencyModel NucleotideFrequencies -nucleotideFrequencyParameterValues 0.24 0.26 0.25 0.25 "
 						+ "-from 1 "
 						+ "-to 10 "
-						+ "-every 1 ; "
-						+ "sequences.fasta");
+						+ "-every 1"
+						+ " "
+						+ SPLIT_PARTITION + " " + "sequences.fasta");
 		System.out
 				.println("  Multiple partitions example: java -Djava.library.path=/usr/local/lib -jar bss.jar"
-						+ "-treeModel /home/filip/SimTree.figtree -from 1 -to 5 -every 1 -branchSubstitutionModel HKY - HKYsubstitutionParameterValues 1.0 ; "
-						+ "-treeModel /home/filip/SimTree.figtree -from 6 -to 8 -every 1 -branchSubstitutionModel HKY - HKYsubstitutionParameterValues 10.0 ; "
-						+ "-treeModel /home/filip/SimTree.figtree -from 9 -to 10 -every 1 -branchSubstitutionModel HKY - HKYsubstitutionParameterValues 1.0 ; "
-						+ "sequences.fasta");
+						+ "-treeModel /home/filip/SimTree.figtree -from 1 -to 5 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
+						+ " "
+						+ SPLIT_PARTITION
+						+ " "
+						+ "-treeModel /home/filip/SimTree.figtree -from 6 -to 8 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 10.0"
+						+ " "
+						+ SPLIT_PARTITION
+						+ " "
+						+ "-treeModel /home/filip/SimTree.figtree -from 9 -to 10 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
+						+ " " + SPLIT_PARTITION + " " + "sequences.fasta");
 		System.out.println();
 	}// END: printUsage
 

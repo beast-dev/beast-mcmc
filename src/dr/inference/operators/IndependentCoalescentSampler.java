@@ -32,6 +32,7 @@ import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
@@ -53,13 +54,15 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
     
     private TreeModel treeModel;
     private DemographicModel demoModel;
+    private CoalescentLikelihood coalescent;
     private XMLObject xo;
 	
-	public IndependentCoalescentSampler(XMLObject xo, TreeModel treeModel, DemographicModel demoModel, double weight) {
+	public IndependentCoalescentSampler(XMLObject xo, TreeModel treeModel, DemographicModel demoModel, CoalescentLikelihood coalescent, double weight) {
 		
 		this.xo = xo;
 		this.treeModel = treeModel;
 		this.demoModel = demoModel;
+		this.coalescent = coalescent;
 		setWeight(weight);
 		
 	}
@@ -82,6 +85,8 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
         List<TaxonList> taxonLists = new ArrayList<TaxonList>();
 
         double rootHeight = -1.0;
+        double oldLikelihood = 0.0;
+        double newLikelihood = 0.0;
 
         // should have one child that is node
         for (int i = 0; i < xo.getChildCount(); i++) {
@@ -106,14 +111,18 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
                 trees[i] = simulator.simulateTree(taxonLists.get(i), demoModel);
             }
 
+            oldLikelihood = coalescent.getLogLikelihood();
+            
             SimpleTree simTree = simulator.simulateTree(trees, demoModel, rootHeight, trees.length != 1);
-
+            
             //this would be the normal way to do it
             treeModel.beginTreeEdit();
             //now it's allowed to adjust the tree structure
             treeModel.adoptTreeStructure(simTree);
             //endTreeEdit() would then fire the events
             treeModel.endTreeEdit();
+            
+            newLikelihood = coalescent.getLogLikelihood();
             
         } catch (IllegalArgumentException iae) {
             try {
@@ -124,7 +133,7 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
 			}
         }
 		
-		return 0;
+		return oldLikelihood - newLikelihood;
 	}
 	
 	public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
@@ -138,8 +147,9 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
 			TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 			double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 	        DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
+	        CoalescentLikelihood coalescent = (CoalescentLikelihood) xo.getChild(CoalescentLikelihood.class);
 	        
-			return new IndependentCoalescentSampler(xo, treeModel, demoModel, weight);
+			return new IndependentCoalescentSampler(xo, treeModel, demoModel, coalescent, weight);
 			
 		}
 		
@@ -155,7 +165,8 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
 				AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
 				new ElementRule(Taxa.class),
                 new ElementRule(TreeModel.class),
-                new ElementRule(DemographicModel.class)
+                new ElementRule(DemographicModel.class),
+                new ElementRule(CoalescentLikelihood.class)
         };
 
 		public String getParserDescription() {

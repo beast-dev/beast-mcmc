@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.app.beagle.tools.parsers.PartitionParser;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -838,13 +840,15 @@ public class XMLGenerator {
 
 		DataType dataType = null;
 		String frequencies = null;
-		int dataTypeIndex = data.dataTypeIndex;
-
-		switch (dataTypeIndex) {
+//		int dataTypeIndex = data.dataTypeIndex;
+		int frequencyModelIndex = data.frequencyModelIndex;
+		
+		switch (frequencyModelIndex) {
 
 		case 0: // Nucleotide
 
-			dataType = data.createDataType();
+//			dataType = data.createDataType();
+			dataType = Nucleotides.INSTANCE;
 
 			frequencies = data.frequencyParameterValues[0] + "";
 			for (int i = 1; i < 4; i++) {
@@ -868,7 +872,8 @@ public class XMLGenerator {
 
 		case 1: // Codon
 
-			dataType = data.createDataType();
+//			dataType = data.createDataType();
+			dataType = Codons.UNIVERSAL;
 
 			frequencies = data.frequencyParameterValues[4] + "";
 			for (int i = 5; i < 64; i++) {

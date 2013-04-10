@@ -12,7 +12,6 @@ import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.TN93;
 import dr.evolution.datatype.Codons;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
@@ -68,32 +67,32 @@ public class PartitionData implements Serializable {
 	// ---DATA TYPE---//
 	// /////////////////
 
-	public int dataTypeIndex = 0;
-
-	public static String[] dataTypes = { "Nucleotide", //
-			"Codon" //
-	};
-
-	public DataType createDataType() {
-
-		DataType dataType = null;
-
-		if (this.dataTypeIndex == 0) { // Nucleotide
-
-			dataType = Nucleotides.INSTANCE;
-
-		} else if (this.dataTypeIndex == 1) { // Codon
-
-			dataType = Codons.UNIVERSAL;
-
-		} else {
-
-			System.out.println("Not yet implemented");
-
-		}
-
-		return dataType;
-	}// END: createDataType
+//	public int dataTypeIndex = 0;
+//
+//	public static String[] dataTypes = { "Nucleotide", //
+//			"Codon" //
+//	};
+//
+//	public DataType createDataType() {
+//
+//		DataType dataType = null;
+//
+//		if (this.dataTypeIndex == 0) { // Nucleotide
+//
+//			dataType = Nucleotides.INSTANCE;
+//
+//		} else if (this.dataTypeIndex == 1) { // Codon
+//
+//			dataType = Codons.UNIVERSAL;
+//
+//		} else {
+//
+//			System.out.println("Not yet implemented");
+//
+//		}
+//
+//		return dataType;
+//	}// END: createDataType
 
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//

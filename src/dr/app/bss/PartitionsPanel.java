@@ -93,10 +93,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellEditor(new JTableComboBoxCellEditor());
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.DATA_TYPE_INDEX);
-		column.setCellEditor(new JTableComboBoxCellEditor());
-		column.setCellRenderer(new JTableComboBoxCellRenderer());
+//		column = partitionTable.getColumnModel().getColumn(
+//				PartitionTableModel.DATA_TYPE_INDEX);
+//		column.setCellEditor(new JTableComboBoxCellEditor());
+//		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.FROM_INDEX);
@@ -240,11 +240,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 					((JComboBox) editorComponent).addItem(file);
 				}// END: fill loop
 				
-			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
-
-				for (String dataType : PartitionData.dataTypes) {
-					((JComboBox) editorComponent).addItem(dataType);
-				}// END: fill loop
+//			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
+//
+//				for (String dataType : PartitionData.dataTypes) {
+//					((JComboBox) editorComponent).addItem(dataType);
+//				}// END: fill loop
 
 			} else {
 

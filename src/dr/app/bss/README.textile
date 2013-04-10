@@ -20,11 +20,9 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-
 * command line interface
   - should accept data saved from UI
   - simulate for multiple trees file?
-* get rid of data type column
 * seed setting in UI and CLI
 * site rate model with invariant sites
 * frequency labels for codon triplets

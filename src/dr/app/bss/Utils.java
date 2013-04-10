@@ -550,7 +550,7 @@ public class Utils {
 	
 	public static void printPartitionData(PartitionData data) {
 
-		System.out.println("\tData type: "+ PartitionData.dataTypes[data.dataTypeIndex]);
+//		System.out.println("\tData type: "+ PartitionData.dataTypes[data.dataTypeIndex]);
 		System.out.println("\tTree model: " + data.treeFile);
 		System.out.println("\tFrom: " + data.from);
 		System.out.println("\tTo: " + data.to);

@@ -14,7 +14,9 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	private PartitionDataList dataList;
 
-	public static String[] COLUMN_NAMES = { "Tree Model", "Data Type", "From",
+	public static String[] COLUMN_NAMES = { "Tree Model", 
+//		"Data Type", 
+		"From",
 			"To", "Every", "Branch Substitution Model", "Site Rate Model",
 			"Clock Rate Model", "Frequency Model" };
 
@@ -24,17 +26,19 @@ public class PartitionTableModel extends AbstractTableModel {
 	private FrequencyModelEditor frequencyModelEditor;
 
 	public final static int TREE_MODEL_INDEX = 0;
-	public final static int DATA_TYPE_INDEX = 1;
-	public final static int FROM_INDEX = 2;
-	public final static int TO_INDEX = 3;
-	public final static int EVERY_INDEX = 4;
-	public final static int BRANCH_SUBSTITUTION_MODEL_INDEX = 5;
-	public final static int SITE_RATE_MODEL_INDEX = 6;
-	public final static int CLOCK_RATE_MODEL_INDEX = 7;
-	public final static int FREQUENCY_MODEL_INDEX = 8;
+//	public final static int DATA_TYPE_INDEX = 1;
+	public final static int FROM_INDEX = 1;
+	public final static int TO_INDEX = 2;
+	public final static int EVERY_INDEX = 3;
+	public final static int BRANCH_SUBSTITUTION_MODEL_INDEX = 4;
+	public final static int SITE_RATE_MODEL_INDEX = 5;
+	public final static int CLOCK_RATE_MODEL_INDEX = 6;
+	public final static int FREQUENCY_MODEL_INDEX = 7;
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
-			JComboBox.class, JComboBox.class, Integer.class, Integer.class,
+			JComboBox.class, 
+//			JComboBox.class, 
+			Integer.class, Integer.class,
 			Integer.class, JButton.class, JButton.class, JButton.class,
 			JButton.class };
 
@@ -87,8 +91,8 @@ public class PartitionTableModel extends AbstractTableModel {
 		switch (column) {
 		case TREE_MODEL_INDEX:
 			return true;
-		case DATA_TYPE_INDEX:
-			return true;
+//		case DATA_TYPE_INDEX:
+//			return true;
 		case FROM_INDEX:
 			return true;
 		case TO_INDEX:
@@ -118,8 +122,8 @@ public class PartitionTableModel extends AbstractTableModel {
 		case TREE_MODEL_INDEX:
 			return dataList.get(row).treeFile == null ? new File("") : dataList
 					.get(row).treeFile;
-		case DATA_TYPE_INDEX:
-			return PartitionData.dataTypes[dataList.get(row).dataTypeIndex];
+//		case DATA_TYPE_INDEX:
+//			return PartitionData.dataTypes[dataList.get(row).dataTypeIndex];
 		case FROM_INDEX:
 			return dataList.get(row).from;
 		case TO_INDEX:
@@ -174,10 +178,10 @@ public class PartitionTableModel extends AbstractTableModel {
 			dataList.get(row).treeFile = (File) value;
 			break;
 
-		case DATA_TYPE_INDEX:
-			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(
-					PartitionData.dataTypes, (String) value);
-			break;
+//		case DATA_TYPE_INDEX:
+//			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(
+//					PartitionData.dataTypes, (String) value);
+//			break;
 
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;

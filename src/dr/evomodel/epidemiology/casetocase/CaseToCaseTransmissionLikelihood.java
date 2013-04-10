@@ -78,8 +78,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // for Felsenstein version:
 
     private boolean felsenstein;
-    private double[][][][] tripletLikelihoods;
-    private double[][][][] storedTripletLikelihoods;
+    private double[] tripletLikelihoods;
+    private double[] storedTripletLikelihoods;
 
     // PUBLIC STUFF
 
@@ -138,10 +138,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         if(felsenstein){
-            tripletLikelihoods = new double[virusTree.getInternalNodeCount()]
-                    [virusTree.getExternalNodeCount()]
-                    [virusTree.getExternalNodeCount()]
-                    [virusTree.getExternalNodeCount()];
+            tripletLikelihoods = new double[virusTree.getInternalNodeCount()
+                    *virusTree.getExternalNodeCount()
+                    *virusTree.getExternalNodeCount()
+                    *virusTree.getExternalNodeCount()];
 
         } else {
             nodeRecalculationNeeded = new boolean[virusTree.getNodeCount()];
@@ -438,13 +438,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             storedNodeLogLikelihoods = Arrays.copyOf(nodeLogLikelihoods, nodeLogLikelihoods.length);
             storedRecalculationArray = Arrays.copyOf(nodeRecalculationNeeded, nodeRecalculationNeeded.length);
         } else {
-            for(double[][][] dim1: storedTripletLikelihoods){
-                for(double[][] dim2: dim1){
-                    for(double[] dim3: dim2){
-
-                    }
-                }
-            }
+            storedTripletLikelihoods = Arrays.copyOf(tripletLikelihoods, tripletLikelihoods.length);
 
         }
     }
@@ -878,7 +872,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     private boolean treeWillAdmitCaseHere (NodeRef node, AbstractCase thisCase){
         if(virusTree.isExternal(node)){
-            return tipMap.get(thisCase)==node;
+            return tipMap.get(thisCase).toString().equals(node.toString());
         } else {
             boolean check1 = treeWillAdmitCaseHere(virusTree.getChild(node,0), thisCase);
             boolean check2 = treeWillAdmitCaseHere(virusTree.getChild(node,1), thisCase);
@@ -890,7 +884,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     private double L(NodeRef alpha, AbstractCase i){
         if(virusTree.isExternal(alpha)){
-            return tipMap.get(i)==alpha ? 1 : 0;
+            return tipMap.get(i).toString().equals(alpha.toString()) ? 1 : 0;
         } else {
             double totalLikelihood = 0;
             NodeRef[] children = getChildren(alpha);
@@ -898,13 +892,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 for(AbstractCase case_y: cases.getCases()){
                     double P_term = P(i, case_x, case_y, alpha);
                     double L_term = 0;
+                    int noTips = virusTree.getExternalNodeCount();
                     if(P_term!=0){
                         L_term = L(children[0],case_x)*L(children[1],case_y);
                     }
-                    tripletLikelihoods[alpha.getNumber()-virusTree.getExternalNodeCount()]
-                            [cases.getCases().indexOf(i)]
-                            [cases.getCases().indexOf(case_x)]
-                            [cases.getCases().indexOf(case_y)] = L_term;
+                    tripletLikelihoods[(alpha.getNumber()-noTips)*noTips*noTips*noTips
+                            + cases.getCases().indexOf(i)*noTips*noTips
+                            + cases.getCases().indexOf(case_x)*noTips
+                            + cases.getCases().indexOf(case_y)] = L_term;
+
                     totalLikelihood = totalLikelihood + L_term*P_term;
                 }
             }
@@ -962,7 +958,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             samplePainting[tip.getNumber()]=cases.getCase(tip.taxon.toString());
         }
         NodeRef root = virusTree.getRoot();
-        double[] rootLikelihoods = transfer3DArray(tripletLikelihoods[root.getNumber()-virusTree.getExternalNodeCount()]);
+        int noTips = virusTree.getExternalNodeCount();
+        double[] rootLikelihoods = Arrays.copyOfRange(tripletLikelihoods,
+                (root.getNumber()-noTips)*noTips*noTips*noTips,
+                (root.getNumber()-noTips+1)*noTips*noTips*noTips);
         int dim = virusTree.getExternalNodeCount();
         int choice = MathUtils.randomChoicePDF(rootLikelihoods);
         int[] choices = new int[3];
@@ -987,9 +986,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private void fillUp(NodeRef node, AbstractCase[] painting){
 
         if(!virusTree.isExternal(node)){
-            double[] childLikelihoods = transfer2DArray(tripletLikelihoods[node.getNumber()-virusTree.getExternalNodeCount()]
-                    [cases.getCases().indexOf(painting[node.getNumber()])]);
             int dim = virusTree.getExternalNodeCount();
+            int nodePaintingNumber = cases.getCases().indexOf(painting[node.getNumber()]);
+            double[] childLikelihoods = Arrays.copyOfRange(tripletLikelihoods,
+                    (node.getNumber()-dim)*dim*dim*dim + nodePaintingNumber*dim*dim,
+                    (node.getNumber()-dim)*dim*dim*dim + (nodePaintingNumber+1)*dim*dim);
             int choice = MathUtils.randomChoicePDF(childLikelihoods);
             int[] choices = new int[2];
             choices[0] = (choice - (choice % dim))/dim;
@@ -1002,33 +1003,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 }
             }
         }
-    }
-
-    private static double[] transfer2DArray(double[][] array){
-        int dimension1 = array.length;
-        int dimension2 = array[0].length;
-        double[] out = new double[dimension1 * dimension2];
-        for(int i=0; i<dimension1; i++){
-            for(int j=0; j<dimension2; j++){
-                out[i*dimension2 + j] = array[i][j];
-            }
-        }
-        return out;
-    }
-
-    private static double[] transfer3DArray(double[][][] array){
-        int dimension1 = array.length;
-        int dimension2 = array[0].length;
-        int dimension3 = array[0][0].length;
-        double[] out = new double[dimension1 * dimension2 * dimension3];
-        for(int i=0; i<dimension1; i++){
-            for(int j=0; j<dimension2; j++){
-                for(int k=0; k<dimension3; k++){
-                    out[i*dimension2*dimension3 + j*dimension2 + k] = array[i][j][k];
-                }
-            }
-        }
-        return out;
     }
 
 

@@ -18,7 +18,7 @@ public class BeagleSequenceSimulatorApp {
 
 	// Share those if neccessary
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
-	public static final String VERSION = "0.0.7pre";
+	public static final String VERSION = "0.0.8pre";
 	public static final String DATES = "2013";
 
 	// Icons
@@ -132,11 +132,8 @@ public class BeagleSequenceSimulatorApp {
 		
 		if (args.length > 0) {
 
-			System.out.println("Command-line interface not yet implemented");
-			System.out.println();
-			
-			BeagleSequenceSimulatorConsoleApp app = new BeagleSequenceSimulatorConsoleApp(args);
-			app.simulate();
+			BeagleSequenceSimulatorConsoleApp app = new BeagleSequenceSimulatorConsoleApp();
+			app.simulate(args);
 			
 		} else {
 

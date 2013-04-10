@@ -2,6 +2,7 @@ package dr.app.bss;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
@@ -9,11 +10,12 @@ import dr.app.util.Arguments;
 
 public class BeagleSequenceSimulatorConsoleApp {
 
-	private String[] args;
 	private Arguments arguments;
-	// private PartitionDataList dataList;
 	private PartitionData data;
-
+	private PartitionDataList dataList;
+	
+	private static final boolean VERBOSE = true;
+	private static final String SPLIT_PARTITION = ";";
 	private static final String HELP = "help";
 
 	private static final String TREE_MODEL = "treeModel";
@@ -51,14 +53,11 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private static final String TO = "to";
 	private static final String EVERY = "every";
 
-	public BeagleSequenceSimulatorConsoleApp(String[] args) {
-
-		this.args = args;
-		// dataList = new PartitionDataList();
-		// dataList.add(new PartitionData());
+	public BeagleSequenceSimulatorConsoleApp() {
 
 		data = new PartitionData();
-
+		dataList =  new PartitionDataList();
+		
 		// //////////////////
 		// ---DEFINITION---//
 		// //////////////////
@@ -110,255 +109,319 @@ public class BeagleSequenceSimulatorConsoleApp {
 								new Arguments.RealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES, 4, "specify Strict Clock parameter values"),
 								new Arguments.RealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES, 61, "specify Strict Clock parameter values"),
 								
-						new Arguments.IntegerOption(FROM,
-								"specify 'from' attribute"),
-						new Arguments.IntegerOption(TO,
-								"specify 'to' attribute"),
-						new Arguments.IntegerOption(EVERY,
-								"specify 'every' attribute") });
+				new Arguments.IntegerOption(FROM, "specify 'from' attribute"),
+				new Arguments.IntegerOption(TO, "specify 'to' attribute"),
+				new Arguments.IntegerOption(EVERY, "specify 'every' attribute")
+
+		});
 
 	}// END: constructor
 
-	public void simulate() {
+	// TODO: multiple partitions, split on ;
+	
+//	-treeModel /home/filip/SimTree.figtree -from 1 -to 5 -every 1 ; 
+//	-treeModel /home/filip/SimTree.figtree -from 6 -to 8 -every 1 ; 
+//	-treeModel /home/filip/SimTree.figtree -from 9 -to 10 -every 1 ;
+//	 sequences.fasta
+	
+	public void simulate(String[] args) {
 
 		try {
 
-			// ///////////////
-			// ---PARSING---//
-			// ///////////////
+			// /////////////////////////////////
+			// ---SPLIT PARTITION ARGUMENTS---//
+			// /////////////////////////////////
 
-			arguments.parseArguments(args);
+			int from = 0;
+			int to = 0;
+			ArrayList<String[]> argsList = new ArrayList<String[]>();
+			for (String arg : args) {
 
-			// ///////////////////
-			// ---INTERROGATE---//
-			// ///////////////////
-			String option = null;
-            double[] values = null;
+				if (arg.equalsIgnoreCase(SPLIT_PARTITION)) {
+					argsList.add(Arrays.copyOfRange(args, from, to));
+					from = to + 1;
+				}// END: split check
+
+				to++;
+			}// END: args loop
+
+			if (argsList.size() == 0) {
+
+				gracefullyExit("Empty or incorrect arguments list.");
+
+			}// END: failed split check
 			
-			if (args.length == 0 || arguments.hasOption(HELP)) {
-				printUsage(arguments);
-				System.exit(0);
-			}// END: HELP option check
+			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+			for (String partitionArgs[] : argsList) {
 
-			// Tree Model
-			if (arguments.hasOption(TREE_MODEL)) {
+				// /////////////
+				// ---PARSE---//
+				// /////////////
 
-				data.treeFile = new File(arguments.getStringOption(TREE_MODEL));
+				arguments.parseArguments(partitionArgs);
 
-			} else {
+				// ///////////////////
+				// ---INTERROGATE---//
+				// ///////////////////
 
-				throw new RuntimeException("TreeModel not specified.");
+				String option = null;
+				double[] values = null;
 
-			}// END: TREE_MODEL option check
-
-			// Branch Substitution Model
-			if (arguments.hasOption(BRANCH_SUBSTITUTION_MODEL)) {
-
-				option = arguments.getStringOption(BRANCH_SUBSTITUTION_MODEL);
-
-				if (option.equalsIgnoreCase(HKY)) {
-					
-					int index = 0;
-					data.substitutionModelIndex = index;
-
-					if (arguments.hasOption(HKY_SUBSTITUTION_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(HKY_SUBSTITUTION_PARAMETER_VALUES);
-						parseSubstitutionValues(index, values);
-					}
-
-				} else if (option.equalsIgnoreCase(GTR)) {
-
-					int index = 1;
-					data.substitutionModelIndex = index;
-					
-					if (arguments.hasOption(GTR_SUBSTITUTION_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(GTR_SUBSTITUTION_PARAMETER_VALUES);
-						parseSubstitutionValues(index, values);
-					}
-					
-				} else if (option.equalsIgnoreCase(TN93)) {
-					
-					int index = 2;
-					data.substitutionModelIndex = index;
-					
-					if (arguments.hasOption(TN93_SUBSTITUTION_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(TN93_SUBSTITUTION_PARAMETER_VALUES);
-						parseSubstitutionValues(index, values);
-					}
-					
-				} else if (option.equalsIgnoreCase(GY94_CODON_MODEL)) {
-					
-					int index = 3;
-					data.substitutionModelIndex = index;
-					
-					if (arguments.hasOption(GY94_SUBSTITUTION_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(GY94_SUBSTITUTION_PARAMETER_VALUES);
-						parseSubstitutionValues(index, values);
-					}
-					
-				} else {
-					gracefullyExit("Unrecognized option.");
-				}
-
-			}// END: BRANCH_SUBSTITUTION_MODEL option check
-			
-			// Site Rate Model
-			if (arguments.hasOption(SITE_RATE_MODEL)) {
-
-				option = arguments.getStringOption(SITE_RATE_MODEL);
-
-				if (option.equalsIgnoreCase(NO_MODEL)) {
-					
-					int index = 0;
-					data.siteRateModelIndex = index;
-					
-				} else if (option.equalsIgnoreCase(GAMMA_SITE_RATE_MODEL)) {
-					
-					int index = 1;
-					data.siteRateModelIndex = index;
-					
-					if (arguments.hasOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES);
-						parseSiteRateValues(index, values);
-					}
-					
-				} else {
-					gracefullyExit("Unrecognized option.");
-				}
-
-			}// END: SITE_RATE_MODEL option check
-
-			// Clock Rate Model
-			if (arguments.hasOption(CLOCK_RATE_MODEL)) {
-
-				option = arguments.getStringOption(CLOCK_RATE_MODEL);
-
-				if (option.equalsIgnoreCase(STRICT_CLOCK)) {
-					
-					int index = 0;
-					data.clockModelIndex = index;
-					if (arguments.hasOption(STRICT_CLOCK_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(STRICT_CLOCK_PARAMETER_VALUES);
-						parseClockValues(index, values);
-					}
-					
-					
-				} else if (option.equalsIgnoreCase(LOGNORMAL_RELAXED_CLOCK)) {
-					
-					int index = 1;
-					data.clockModelIndex = index;
-					if (arguments.hasOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES);
-						parseClockValues(index, values);
-					}
-					
-				} else if (option.equalsIgnoreCase(EXPONENTIAL_RELAXED_CLOCK)) {
-					
-					int index = 2;
-					data.clockModelIndex = index;
-					if (arguments.hasOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES);
-						parseClockValues(index, values);
-					}
-					
-				} else {
-					gracefullyExit("Unrecognized option.");
-				}
-
-			}// END: CLOCK_RATE_MODEL option check
-
-			// Frequency Model
-			if (arguments.hasOption(FREQUENCY_MODEL)) {
-
-				option = arguments.getStringOption(FREQUENCY_MODEL);
-
-				if (option.equalsIgnoreCase(NUCLEOTIDE_FREQUENCIES)) {
-					
-					int index = 0;
-					data.frequencyModelIndex = index;
-					if (arguments.hasOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES);
-						parseFrequencyValues(index, values);
-					}
-					
-				} else if (option.equalsIgnoreCase(CODON_FREQUENCIES)) {
-					
-					int index = 1;
-					data.frequencyModelIndex = index;
-					if (arguments.hasOption(CODON_FREQUENCY_PARAMETER_VALUES)) {
-						values = arguments.getRealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES);
-						parseFrequencyValues(index, values);
-					}
-					
-				} else {
-					gracefullyExit("Unrecognized option.");
-				}
-
-			}// END: FREQUENCY_MODEL option check
-
-			if (arguments.hasOption(FROM)) {
-
-				data.from = arguments.getIntegerOption(FROM);
-
-			}// END: FROM option check
-
-			if (arguments.hasOption(TO)) {
-
-				data.to = arguments.getIntegerOption(TO);
-
-			}// END: TO option check
-
-			if (arguments.hasOption(EVERY)) {
-
-				data.every = arguments.getIntegerOption(EVERY);
-
-			}// END: EVERY option check
-			
-			String[] leftoverArguments = arguments.getLeftoverArguments();
-			if(leftoverArguments.length > 1) {
-				gracefullyExit("Unrecognized option " + leftoverArguments[1]);
-			}
-			
-			String outputFile = null;
-			if(leftoverArguments.length > 0) {
+				System.out.println("FUBAR: "+partitionArgs.length);
 				
-				outputFile = leftoverArguments[0];
+				// TODO: check if compatible with multiple partitions
+				if (partitionArgs.length == 0 || arguments.hasOption(HELP)) {
+					printUsage(arguments);
+					System.exit(0);
+				}// END: HELP option check
+
+				// Tree Model
+				if (arguments.hasOption(TREE_MODEL)) {
+
+					data.treeFile = new File(
+							arguments.getStringOption(TREE_MODEL));
+
+				} else {
+
+					throw new RuntimeException("TreeModel not specified.");
+
+				}// END: TREE_MODEL option check
+
+				// Branch Substitution Model
+				if (arguments.hasOption(BRANCH_SUBSTITUTION_MODEL)) {
+
+					option = arguments
+							.getStringOption(BRANCH_SUBSTITUTION_MODEL);
+
+					if (option.equalsIgnoreCase(HKY)) {
+
+						int index = 0;
+						data.substitutionModelIndex = index;
+
+						if (arguments
+								.hasOption(HKY_SUBSTITUTION_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(HKY_SUBSTITUTION_PARAMETER_VALUES);
+							parseSubstitutionValues(index, values);
+						}
+
+					} else if (option.equalsIgnoreCase(GTR)) {
+
+						int index = 1;
+						data.substitutionModelIndex = index;
+
+						if (arguments
+								.hasOption(GTR_SUBSTITUTION_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(GTR_SUBSTITUTION_PARAMETER_VALUES);
+							parseSubstitutionValues(index, values);
+						}
+
+					} else if (option.equalsIgnoreCase(TN93)) {
+
+						int index = 2;
+						data.substitutionModelIndex = index;
+
+						if (arguments
+								.hasOption(TN93_SUBSTITUTION_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(TN93_SUBSTITUTION_PARAMETER_VALUES);
+							parseSubstitutionValues(index, values);
+						}
+
+					} else if (option.equalsIgnoreCase(GY94_CODON_MODEL)) {
+
+						int index = 3;
+						data.substitutionModelIndex = index;
+
+						if (arguments
+								.hasOption(GY94_SUBSTITUTION_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(GY94_SUBSTITUTION_PARAMETER_VALUES);
+							parseSubstitutionValues(index, values);
+						}
+
+					} else {
+						gracefullyExit("Unrecognized option.");
+					}
+
+				}// END: BRANCH_SUBSTITUTION_MODEL option check
+
+				// Site Rate Model
+				if (arguments.hasOption(SITE_RATE_MODEL)) {
+
+					option = arguments.getStringOption(SITE_RATE_MODEL);
+
+					if (option.equalsIgnoreCase(NO_MODEL)) {
+
+						int index = 0;
+						data.siteRateModelIndex = index;
+
+					} else if (option.equalsIgnoreCase(GAMMA_SITE_RATE_MODEL)) {
+
+						int index = 1;
+						data.siteRateModelIndex = index;
+
+						if (arguments
+								.hasOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES);
+							parseSiteRateValues(index, values);
+						}
+
+					} else {
+						gracefullyExit("Unrecognized option.");
+					}
+
+				}// END: SITE_RATE_MODEL option check
+
+				// Clock Rate Model
+				if (arguments.hasOption(CLOCK_RATE_MODEL)) {
+
+					option = arguments.getStringOption(CLOCK_RATE_MODEL);
+
+					if (option.equalsIgnoreCase(STRICT_CLOCK)) {
+
+						int index = 0;
+						data.clockModelIndex = index;
+						if (arguments.hasOption(STRICT_CLOCK_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(STRICT_CLOCK_PARAMETER_VALUES);
+							parseClockValues(index, values);
+						}
+
+					} else if (option.equalsIgnoreCase(LOGNORMAL_RELAXED_CLOCK)) {
+
+						int index = 1;
+						data.clockModelIndex = index;
+						if (arguments
+								.hasOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES);
+							parseClockValues(index, values);
+						}
+
+					} else if (option
+							.equalsIgnoreCase(EXPONENTIAL_RELAXED_CLOCK)) {
+
+						int index = 2;
+						data.clockModelIndex = index;
+						if (arguments
+								.hasOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES);
+							parseClockValues(index, values);
+						}
+
+					} else {
+						gracefullyExit("Unrecognized option.");
+					}
+
+				}// END: CLOCK_RATE_MODEL option check
+
+				// Frequency Model
+				if (arguments.hasOption(FREQUENCY_MODEL)) {
+
+					option = arguments.getStringOption(FREQUENCY_MODEL);
+
+					if (option.equalsIgnoreCase(NUCLEOTIDE_FREQUENCIES)) {
+
+						int index = 0;
+						data.frequencyModelIndex = index;
+						if (arguments
+								.hasOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES);
+							parseFrequencyValues(index, values);
+						}
+
+					} else if (option.equalsIgnoreCase(CODON_FREQUENCIES)) {
+
+						int index = 1;
+						data.frequencyModelIndex = index;
+						if (arguments
+								.hasOption(CODON_FREQUENCY_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES);
+							parseFrequencyValues(index, values);
+						}
+
+					} else {
+						gracefullyExit("Unrecognized option.");
+					}
+
+				}// END: FREQUENCY_MODEL option check
+
+				if (arguments.hasOption(FROM)) {
+
+					data.from = arguments.getIntegerOption(FROM);
+
+				}// END: FROM option check
+
+				if (arguments.hasOption(TO)) {
+
+					data.to = arguments.getIntegerOption(TO);
+
+				}// END: TO option check
+
+				if (arguments.hasOption(EVERY)) {
+
+					data.every = arguments.getIntegerOption(EVERY);
+
+				}// END: EVERY option check
+
+				dataList.add(data);
 				
-			} else {
-				
-				outputFile = "sequences.fasta";
-				
-			}
-			
+				// create partition
+				Partition partition = new Partition(data.createTreeModel(), //
+						data.createBranchModel(), //
+						data.createSiteRateModel(), //
+						data.createClockRateModel(), //
+						data.createFrequencyModel(), //
+						data.from - 1, // from
+						data.to - 1, // to
+						data.every // every
+				);
+
+				partitionsList.add(partition);
+
+			}// END: partitionArgs loop
+
 			// ////////////////
 			// ---SIMULATE---//
 			// ////////////////
-			// TODO: loop over partitions here
-
-			Utils.printPartitionData(data);
-
-			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-			// create partition
-			Partition partition = new Partition(data.createTreeModel(), //
-					data.createBranchModel(), //
-					data.createSiteRateModel(), //
-					data.createClockRateModel(), //
-					data.createFrequencyModel(), //
-					data.from - 1, // from
-					data.to - 1, // to
-					data.every // every
-			);
-
-			partitionsList.add(partition);
-
+			
+			if (VERBOSE) {
+				Utils.printPartitionDataList(dataList);
+				System.out.println();
+			}
+			
 			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 					partitionsList);
 
-			beagleSequenceSimulator.simulate().toString();
+			System.out.println(beagleSequenceSimulator.simulate().toString());
 
 			//TODO: write to this file
-			System.out.println(outputFile);
+			String[] leftoverArguments = arguments.getLeftoverArguments();
+			
+			Utils.printArray(leftoverArguments);
+			
+//			if(leftoverArguments.length > 1) {
+//				gracefullyExit("Unrecognized option " + leftoverArguments[1]);
+//			}
+//			
+//			String outputFile = null;
+//			if(leftoverArguments.length > 0) {
+//				
+//				outputFile = leftoverArguments[0];
+//				
+//			} else {
+//				
+//				outputFile = "sequences.fasta";
+//				
+//			}
+			
+//			System.out.println(outputFile);
 			
 		} catch (Arguments.ArgumentException ae) {
 			System.out.println();
@@ -411,7 +474,8 @@ public class BeagleSequenceSimulatorConsoleApp {
 	}// END: parseFrequencyValues
 	
 	private void gracefullyExit(String message) {
-		System.err.println(message);
+		System.out.println(message);
+		System.out.println();
 		printUsage(arguments);
 		System.exit(0);
 	}// END: gracefullyExit
@@ -420,17 +484,24 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 		arguments.printUsage(
 				"java -Djava.library.path=/usr/local/lib -jar bss.jar",
-				"[<output-file-name>]");
+				"; [<output-file-name>]");
 		System.out.println();
 		System.out
-				.println("  Example: java -Djava.library.path=/usr/local/lib -jar bss.jar -treeModel /home/filip/SimTree.figtree "
+				.println("  Example: java -Djava.library.path=/usr/local/lib -jar bss.jar "
+						+ "-treeModel /home/filip/SimTree.figtree "
 						+ "-branchSubstitutionModel GTR -GTRsubstitutionParameterValues 10 10 10 10 10 10 "
 						+ "-siteRateModel GammaSiteRateModel -gammaSiteRateModelParameterValues 1 1 "
 						+ "-clockRateModel StrictClock -strictClockParameterValues 0.15 "
 						+ "-frequencyModel NucleotideFrequencies -nucleotideFrequencyParameterValues 0.24 0.26 0.25 0.25 "
 						+ "-from 1 "
 						+ "-to 10 "
-						+ "-every 1 "
+						+ "-every 1 ;"
+						+ "sequences.fasta");
+		System.out
+				.println("  Multiple partitions example: java -Djava.library.path=/usr/local/lib -jar bss.jar"
+						+ "-treeModel /home/filip/SimTree.figtree -from 1 -to 5 -every 1 -branchSubstitutionModel HKY - HKYsubstitutionParameterValues 1.0 ; "
+						+ "-treeModel /home/filip/SimTree.figtree -from 6 -to 8 -every 1 -branchSubstitutionModel HKY - HKYsubstitutionParameterValues 10.0 ; "
+						+ "-treeModel /home/filip/SimTree.figtree -from 9 -to 10 -every 1 -branchSubstitutionModel HKY - HKYsubstitutionParameterValues 1.0 ; "
 						+ "sequences.fasta");
 		System.out.println();
 	}// END: printUsage

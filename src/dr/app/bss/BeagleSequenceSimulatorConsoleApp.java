@@ -1,6 +1,9 @@
 package dr.app.bss;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -62,7 +65,6 @@ public class BeagleSequenceSimulatorConsoleApp {
 		// ---DEFINITION---//
 		// //////////////////
 
-		// TODO: verbose for printing state of data
 		arguments = new Arguments(
 				new Arguments.Option[] {
 
@@ -116,13 +118,6 @@ public class BeagleSequenceSimulatorConsoleApp {
 		});
 
 	}// END: constructor
-
-	// TODO: multiple partitions, split on ;
-	
-//	-treeModel /home/filip/SimTree.figtree -from 1 -to 5 -every 1 ; 
-//	-treeModel /home/filip/SimTree.figtree -from 6 -to 8 -every 1 ; 
-//	-treeModel /home/filip/SimTree.figtree -from 9 -to 10 -every 1 ;
-//	 sequences.fasta
 	
 	public void simulate(String[] args) {
 
@@ -151,6 +146,11 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 			}// END: failed split check
 			
+			String[] leftoverArguments = Arrays.copyOfRange(args, from, args.length);
+			if (leftoverArguments.length > 1) {
+				gracefullyExit("Unrecognized option " + leftoverArguments[1]);
+			}
+	
 			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 			for (String partitionArgs[] : argsList) {
 
@@ -167,12 +167,10 @@ public class BeagleSequenceSimulatorConsoleApp {
 				String option = null;
 				double[] values = null;
 
-				System.out.println("FUBAR: "+partitionArgs.length);
-				
-				// TODO: check if compatible with multiple partitions
 				if (partitionArgs.length == 0 || arguments.hasOption(HELP)) {
-					printUsage(arguments);
-					System.exit(0);
+					
+					gracefullyExit(null);
+					
 				}// END: HELP option check
 
 				// Tree Model
@@ -399,39 +397,36 @@ public class BeagleSequenceSimulatorConsoleApp {
 			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 					partitionsList);
 
-			System.out.println(beagleSequenceSimulator.simulate().toString());
-
-			//TODO: write to this file
-			String[] leftoverArguments = arguments.getLeftoverArguments();
+			String outputFile = null;
+			if (leftoverArguments.length > 0) {
+				outputFile = leftoverArguments[0];
+			} else {
+				outputFile = "output.fasta";
+			}
 			
-			Utils.printArray(leftoverArguments);
-			
-//			if(leftoverArguments.length > 1) {
-//				gracefullyExit("Unrecognized option " + leftoverArguments[1]);
-//			}
-//			
-//			String outputFile = null;
-//			if(leftoverArguments.length > 0) {
-//				
-//				outputFile = leftoverArguments[0];
-//				
-//			} else {
-//				
-//				outputFile = "sequences.fasta";
-//				
-//			}
-			
-//			System.out.println(outputFile);
+			PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
+			writer.println(beagleSequenceSimulator.simulate().toString());
+			writer.close();
 			
 		} catch (Arguments.ArgumentException ae) {
+
 			System.out.println();
 			System.out.println(ae.getMessage());
 			System.out.println();
 			printUsage(arguments);
 			System.exit(1);
-		}
 
-	}
+		} catch (IOException ioe) {
+
+			System.out.println();
+			System.out.println(ioe.getMessage());
+			System.out.println();
+			printUsage(arguments);
+			System.exit(1);
+
+		}// END: try-catch block
+
+	}// END: simulate
 
 	private void parseSubstitutionValues(int substitutionModelIndex,
 			double[] values) {
@@ -472,10 +467,12 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 		}
 	}// END: parseFrequencyValues
-	
+
 	private void gracefullyExit(String message) {
-		System.out.println(message);
-		System.out.println();
+		if (message != null) {
+			System.out.println(message);
+			System.out.println();
+		}
 		printUsage(arguments);
 		System.exit(0);
 	}// END: gracefullyExit
@@ -495,7 +492,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 						+ "-frequencyModel NucleotideFrequencies -nucleotideFrequencyParameterValues 0.24 0.26 0.25 0.25 "
 						+ "-from 1 "
 						+ "-to 10 "
-						+ "-every 1 ;"
+						+ "-every 1 ; "
 						+ "sequences.fasta");
 		System.out
 				.println("  Multiple partitions example: java -Djava.library.path=/usr/local/lib -jar bss.jar"

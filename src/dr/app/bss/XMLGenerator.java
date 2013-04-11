@@ -776,8 +776,8 @@ public class XMLGenerator {
 					String.valueOf(data.substitutionParameterValues[4]), writer);
 			writeParameter(GTRParser.C_TO_T, "ct" + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[5]), writer);
-			writeParameter(GTRParser.G_TO_T, "gt" + suffix, 1,
-					String.valueOf(data.substitutionParameterValues[6]), writer);
+//			writeParameter(GTRParser.G_TO_T, "gt" + suffix, 1,
+//					String.valueOf(data.substitutionParameterValues[6]), writer);
 
 			writer.writeCloseTag(GTRParser.GTR_MODEL);
 

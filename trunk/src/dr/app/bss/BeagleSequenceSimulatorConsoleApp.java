@@ -10,6 +10,7 @@ import java.util.Arrays;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.app.util.Arguments;
+import dr.math.MathUtils;
 
 public class BeagleSequenceSimulatorConsoleApp {
 
@@ -17,10 +18,12 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private PartitionData data;
 	private PartitionDataList dataList;
 	
+	//TODO: seed
 	private static final boolean VERBOSE = true;
 	private static final String SPLIT_PARTITION = ":";
+//	private static final String SEED = "-seed";	
+	
 	private static final String HELP = "help";
-
 	private static final String TREE_MODEL = "treeModel";
 
 	private static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
@@ -151,8 +154,8 @@ public class BeagleSequenceSimulatorConsoleApp {
 			}// END: failed split check
 			
 			String[] leftoverArguments = Arrays.copyOfRange(args, from, args.length);
-			if (leftoverArguments.length > 1) {
-				gracefullyExit("Unrecognized option " + leftoverArguments[1]);
+			if (leftoverArguments.length > 2) {
+				gracefullyExit("Unrecognized option " + leftoverArguments[2]);
 			}
 	
 			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
@@ -398,15 +401,24 @@ public class BeagleSequenceSimulatorConsoleApp {
 				System.out.println();
 			}
 			
-			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-					partitionsList);
-
 			String outputFile = null;
 			if (leftoverArguments.length > 0) {
 				outputFile = leftoverArguments[0];
 			} else {
 				outputFile = "output.fasta";
 			}
+			
+			if (leftoverArguments.length > 1) {
+				dataList.startingSeed = Long.parseLong(leftoverArguments[1]);
+				dataList.setSeed = true;
+			}
+			
+			if (dataList.setSeed) {
+				MathUtils.setSeed(dataList.startingSeed);
+			}
+			
+			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+					partitionsList);
 			
 			PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
 			writer.println(beagleSequenceSimulator.simulate().toString());
@@ -484,8 +496,8 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private void printUsage(Arguments arguments) {
 
 		arguments.printUsage(
-				"java -Djava.library.path=/usr/local/lib -jar bss.jar",
-				"; [<output-file-name>]");
+				"java -Djava.library.path=/usr/local/lib -jar bss.jar", " "
+						+ SPLIT_PARTITION + " " + "[<output-file-name>] [<seed>]");
 		System.out.println();
 		System.out
 				.println("  Example: java -Djava.library.path=/usr/local/lib -jar bss.jar "
@@ -498,7 +510,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 						+ "-to 10 "
 						+ "-every 1"
 						+ " "
-						+ SPLIT_PARTITION + " " + "sequences.fasta");
+						+ SPLIT_PARTITION + " " + "sequences.fasta 123");
 		System.out
 				.println("  Multiple partitions example: java -Djava.library.path=/usr/local/lib -jar bss.jar"
 						+ "-treeModel /home/filip/SimTree.figtree -from 1 -to 5 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"

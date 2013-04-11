@@ -20,11 +20,17 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* seed setting in GUI (starting seed) and CLI (seed, users will loop in their scripts)
+* check on:
+ - alpha value in gamma site rate model > 0
+ - clock rate > 0 
+ - nucleotide/codon frequencies > 0
+ - nucleotide/codon frequencies with compatible substitution models
+* test with large topologies ~ 15000 taxa
+* populate the Edit and Help menus with custom items
+* site rate model with invariant sites
+* Inverse Gaussian clock model (Li & Drummond's 2012)
+* frequency labels for codon triplets
+* ancestral sequence in XML Generator and in GUI
 * command line interface
   - should accept data saved from UI
-  - simulate for multiple trees file?
-* site rate model with invariant sites
-* frequency labels for codon triplets
-* populate the Edit and Help menus with custom items
-* ancestral sequence in XML Generator and in GUI
+* simulating indels  

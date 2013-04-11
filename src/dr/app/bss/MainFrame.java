@@ -34,6 +34,7 @@ import javax.swing.plaf.BorderUIResource;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
+import dr.math.MathUtils;
 
 @SuppressWarnings("serial")
 public class MainFrame extends DocumentFrame implements FileMenuHandler {
@@ -168,6 +169,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 				try {
 
+					long startingSeed = dataList.startingSeed;
 					for (int i = 0; i < dataList.simulationsCount; i++) {
 
 						String fullPath = Utils.getMultipleWritePath(outFile,
@@ -208,10 +210,17 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 						}// END: data list loop
 
+						if (dataList.setSeed) {
+							MathUtils.setSeed(startingSeed);
+							startingSeed += 1;
+						}
+						
 						BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 								partitionsList
 								);
 
+						Utils.printPartitionDataList(dataList);
+						
 						writer.println(beagleSequenceSimulator.simulate()
 								.toString());
 						writer.close();
@@ -415,7 +424,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			fileIn.close();
 
 			Utils.printPartitionDataList(dataList);
-			Utils.printTreeFileList(dataList);
+//			Utils.printTreeFileList(dataList);
 			
 			partitionsPanel.updatePartitionTable(dataList);
 			taxaPanel.updateTaxaTable(dataList);

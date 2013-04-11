@@ -140,7 +140,11 @@ public class BeagleSequenceSimulatorConsoleApp {
 				to++;
 			}// END: args loop
 
-			if (argsList.size() == 0) {
+			if (args[0].contains(HELP)) {
+
+				gracefullyExit(null);
+
+			} else if (argsList.size() == 0) {
 
 				gracefullyExit("Empty or incorrect arguments list.");
 

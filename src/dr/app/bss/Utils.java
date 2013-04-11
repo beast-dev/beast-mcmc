@@ -503,6 +503,12 @@ public class Utils {
 	// ---DEBUGGING UTILS---//
 	// ///////////////////////
 
+	public static void printArray(Object[] x) {
+		for (int i = 0; i < x.length; i++) {
+			System.out.println(x[i]);
+		}
+	}// END: printArray
+	
 	public static void printArray(int[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);
@@ -566,6 +572,9 @@ public class Utils {
 
 		// printTaxonList(dataList);
 		System.out.println("\tSite count: " + getSiteCount(dataList));
+		if (dataList.setSeed) {
+			System.out.println("\tStarting seed: " + dataList.startingSeed);
+		}
 
 		int row = 1;
 		for (PartitionData data : dataList) {
@@ -573,7 +582,7 @@ public class Utils {
 			System.out.println("Partition: " + row);
 			printPartitionData(data);
 			row++;
-			
+
 		}// END: data list loop
 
 	}// END: printDataList

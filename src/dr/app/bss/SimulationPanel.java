@@ -6,8 +6,11 @@ import jam.panels.OptionsPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -22,11 +25,15 @@ public class SimulationPanel extends JPanel implements Exportable {
 	private OptionsPanel optionPanel;
 
 	private WholeNumberField simulationsNumberField;
-
+	private WholeNumberField startingSeedNumberField;
+	
 	// Buttons
 	private JButton simulate;
 	private JButton generateXML;
 
+	//Check boxes
+	private JCheckBox setSeed;
+	
 	public SimulationPanel(final MainFrame frame,
 			final PartitionDataList dataList) {
 
@@ -35,11 +42,21 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 
-		//TODO: spinner?
 		simulationsNumberField = new WholeNumberField(1, Integer.MAX_VALUE);
-		simulationsNumberField.setColumns(8);
+		simulationsNumberField.setColumns(10);
 		simulationsNumberField.setValue(dataList.simulationsCount);
 		optionPanel.addComponentWithLabel("Number of simulations:", simulationsNumberField);
+		
+		setSeed = new JCheckBox();
+		setSeed.addItemListener(new CheckBoxListener());
+		setSeed.setSelected(dataList.setSeed);
+		optionPanel.addComponentWithLabel("Set seed:", setSeed);
+		
+		startingSeedNumberField = new WholeNumberField(1, Long.MAX_VALUE);
+		startingSeedNumberField.setColumns(10);
+		startingSeedNumberField.setValue(dataList.startingSeed);
+		startingSeedNumberField.setEnabled(dataList.setSeed);
+		optionPanel.addComponentWithLabel("Starting seed:", startingSeedNumberField);
 		
 		// Buttons holder
 		JPanel buttonsHolder = new JPanel();
@@ -64,11 +81,28 @@ public class SimulationPanel extends JPanel implements Exportable {
 	}// END: SimulationPanel
 
 	public final void collectSettings() {
-		
+
 		dataList.simulationsCount = simulationsNumberField.getValue();
-		
+		if (dataList.setSeed) {
+			dataList.startingSeed = startingSeedNumberField.getValue();
+		}
+
 	}// END: collectSettings
 
+	private class CheckBoxListener implements ItemListener {
+		public void itemStateChanged(ItemEvent e) {
+
+			if (setSeed.isSelected()) {
+				startingSeedNumberField.setEnabled(true);
+				dataList.setSeed = true;
+			} else {
+				startingSeedNumberField.setEnabled(false);
+				dataList.setSeed = false;
+			}
+
+		}
+	}// END: CheckBoxListener
+	
 	private class ListenSimulate implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 

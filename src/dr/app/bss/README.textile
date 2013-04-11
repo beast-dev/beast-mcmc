@@ -20,10 +20,10 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
+* seed setting in GUI (starting seed) and CLI (seed, users will loop in their scripts)
 * command line interface
   - should accept data saved from UI
   - simulate for multiple trees file?
-* seed setting in UI and CLI
 * site rate model with invariant sites
 * frequency labels for codon triplets
 * populate the Edit and Help menus with custom items

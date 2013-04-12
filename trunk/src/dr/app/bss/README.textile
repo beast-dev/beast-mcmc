@@ -20,7 +20,6 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* populate the Edit and Help menus with custom items
 * check on:
  - alpha value in gamma site rate model > 0
  - clock rate > 0 

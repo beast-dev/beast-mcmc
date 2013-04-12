@@ -18,7 +18,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.SwingConstants;
 
 @SuppressWarnings("serial")
 public class AboutDialog extends JDialog {
@@ -106,7 +105,8 @@ public class AboutDialog extends JDialog {
 				+ "</a></p></html>");
 		website.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		website.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
-		website.setVerticalAlignment(SwingConstants.TOP);
+//		website.setVerticalAlignment(SwingConstants.CENTER);
+//		website.setHorizontalAlignment(SwingConstants.CENTER);
 		website.addMouseListener(new ListenBrowse(addres));
 		add(website);
 

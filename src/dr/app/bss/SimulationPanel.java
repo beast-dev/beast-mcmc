@@ -109,7 +109,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 			frame.doExport();
 
 		}// END: actionPerformed
-	}// END: ListenSaveLocationCoordinates
+	}// END: ListenSimulate
 
 	private class ListenGenerateXML implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {

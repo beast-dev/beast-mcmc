@@ -1,5 +1,6 @@
 package dr.app.bss;
 
+import java.awt.Desktop;
 import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.File;
@@ -356,6 +357,19 @@ public class Utils {
 	// ---GUI UTILS---//
 	// /////////////////
 
+	public static boolean isBrowsingSupported() {
+		if (!Desktop.isDesktopSupported()) {
+			return false;
+		}
+		boolean result = false;
+		Desktop desktop = java.awt.Desktop.getDesktop();
+		if (desktop.isSupported(Desktop.Action.BROWSE)) {
+			result = true;
+		}
+		return result;
+
+	}// END: isBrowsingSupported
+	
 	public static int getTabbedPaneComponentIndex(JTabbedPane tabbedPane,
 			String title) {
 

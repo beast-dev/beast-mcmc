@@ -15,14 +15,17 @@ import javax.swing.UnsupportedLookAndFeelException;
 public class BeagleSequenceSimulatorApp {
 
 	public final static boolean DEBUG = true;
-
+//	 private static final boolean IS_PRERELEASE = true;
+	
 	// Share those if neccessary
-	public static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
+	public static final String NAME = "BSS";
+	public static final String LONG_NAME = "Beagle Sequence Simulator";
 	public static final String VERSION = "0.1.1beta";
 	public static final String DATE = "2013";
 
 	// Icons
 	private Image beagleSequenceSimulatorImage;
+	public static ImageIcon beagleSequenceSimulatorIcon;
 	public static ImageIcon doneIcon;
 	public static ImageIcon errorIcon;
 	public static ImageIcon hammerIcon;
@@ -105,18 +108,19 @@ public class BeagleSequenceSimulatorApp {
 
 		ImageIcon bssIcon = createImageIcon("icons/bss.png");
 		SingleDocApplication app = new SingleDocApplication(new MenuBarFactory(), //
-				BEAGLE_SEQUENCE_SIMULATOR, //
+				LONG_NAME, //
 				VERSION.concat(" ").concat(
 				DATE), //
 				bssIcon //
 		);
 
 		beagleSequenceSimulatorImage = CreateImage("icons/bss.png");
-		MainFrame frame = new MainFrame(BEAGLE_SEQUENCE_SIMULATOR);
+		MainFrame frame = new MainFrame(LONG_NAME);
 		frame.setIconImage(beagleSequenceSimulatorImage);
 		app.setDocumentFrame(frame);
 
 		// Setup icons
+		beagleSequenceSimulatorIcon = createImageIcon("icons/bss.png");
 		doneIcon = createImageIcon("icons/check.png");
 		errorIcon = createImageIcon("icons/error.png");
 		hammerIcon = createImageIcon("icons/hammer.png");

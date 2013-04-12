@@ -20,6 +20,7 @@ public abstract class AbstractCase extends AbstractModel {
     }
 
     protected String caseID;
+    protected Taxa associatedTaxa;
 
 
     public String getName(){
@@ -28,23 +29,17 @@ public abstract class AbstractCase extends AbstractModel {
 
     public abstract Date getLatestPossibleInfectionDate();
 
-    public abstract Taxa getAssociatedTaxa();
+    public Taxa getAssociatedTaxa() {
+        return associatedTaxa;
+    }
 
     public abstract boolean culledYet(int time);
-
-    public abstract Object getInfectionDate();
-
-    public abstract Object getInfectiousDate();
-
-    public abstract Object getEndOfInfectiousDate();
-
-    public abstract Double getEndOfInfectiousDateModeHeight(Date latestTaxonDate);
-
-    public abstract Double getInfectiousDateModeHeight(Date latestTaxonDate);
 
     public String toString(){
         return caseID;
     }
+
+
 
 
 }

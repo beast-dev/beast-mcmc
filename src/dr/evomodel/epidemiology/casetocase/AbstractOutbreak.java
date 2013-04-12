@@ -37,7 +37,9 @@ public abstract class AbstractOutbreak extends AbstractModel {
     public abstract double transmissionBranchLogLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected,
                                                            Integer childInfectiousBy);
 
-    public abstract ArrayList<AbstractCase> getCases();
+    public ArrayList<AbstractCase> getCases(){
+        return new ArrayList<AbstractCase>(cases);
+    }
 
     public int size(){
         return cases.size();

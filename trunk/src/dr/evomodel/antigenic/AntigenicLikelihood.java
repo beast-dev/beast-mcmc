@@ -83,7 +83,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             String[] values = dataTable.getRow(i);
             int column = columnLabels.indexOf(values[SERUM_ISOLATE]);
             if (column == -1) {
-                columnLabels.add(values[0]);
+                columnLabels.add(values[SERUM_ISOLATE]);
                 column = columnLabels.size() - 1;
             }
 

@@ -23,7 +23,6 @@ import java.util.ArrayList;
  *
  * User: Matthew Hall
  * Date: 07/09/2012
- * Time: 16:17
  */
 
 public class Morelli12Outbreak extends AbstractOutbreak {
@@ -80,7 +79,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     }
 
     /* Likelihood of a non-root branch (the farm is infected at the parent node time and infectious by the child node
-    time). */
+    time). @todo sort out nomenclature - non-root non-transmission branches are handled here*/
 
     public double transmissionBranchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
             childInfectiousBy) {
@@ -91,7 +90,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
             childInfectiousBy) {
         if(child.culledYet(childInfectiousBy)){
             return Double.NEGATIVE_INFINITY;
-        } else if(parent==child){
+        } else if(parent==child) {
             return 0;
         } else {
             return Math.log(((Morelli12Case)child).periodInfectionDistribution(childInfected - 1, childInfected,
@@ -99,9 +98,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         }
     }
 
-    public ArrayList<AbstractCase> getCases() {
-        return new ArrayList<AbstractCase>(cases);
-    }
 
     /* Parser. */
 
@@ -279,20 +275,8 @@ public class Morelli12Outbreak extends AbstractOutbreak {
             return infectionDate;
         }
 
-        public Object getInfectiousDate() {
-            return null;
-        }
-
         public Object getEndOfInfectiousDate() {
             return endOfInfectiousDate;
-        }
-
-        public Double getEndOfInfectiousDateModeHeight(Date latestTaxonDate) {
-            return latestTaxonDate.getTimeValue()-endOfInfectiousDate.getTimeValue();
-        }
-
-        public Double getInfectiousDateModeHeight(Date latestTaxonDate) {
-            return null;
         }
 
         public double infectiousCDF(double time){
@@ -430,7 +414,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         private Parameter oldestLesionAge;
         private ParametricDistributionModel infectiousDate;
         private InfectionDatePDF infectionDate;
-        private Taxa associatedTaxa;
         private ParametricDistributionModel infectiousPeriod;
         private ParametricDistributionModel storedInfectiousPeriod;
     }

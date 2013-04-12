@@ -1,7 +1,7 @@
 package dr.app.bss;
 
 //import jam.framework.DefaultEditMenuFactory;
-import jam.framework.DefaultHelpMenuFactory;
+//import jam.framework.DefaultHelpMenuFactory;
 import jam.framework.DefaultMenuBarFactory;
 
 public class MenuBarFactory extends DefaultMenuBarFactory {

@@ -19,7 +19,7 @@ public class BeagleSequenceSimulatorApp {
 	// Share those if neccessary
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
 	public static final String VERSION = "0.1.1beta";
-	public static final String DATES = "2013";
+	public static final String DATE = "2013";
 
 	// Icons
 	private Image beagleSequenceSimulatorImage;
@@ -107,7 +107,7 @@ public class BeagleSequenceSimulatorApp {
 		SingleDocApplication app = new SingleDocApplication(new MenuBarFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
 				VERSION.concat(" ").concat(
-				DATES), //
+				DATE), //
 				bssIcon //
 		);
 
@@ -147,9 +147,8 @@ public class BeagleSequenceSimulatorApp {
 
 			} catch (UnsupportedClassVersionError e) {
 
-				System.err
+				System.out
 						.println("Your Java Runtime Environment is too old. Please update");
-				e.printStackTrace();
 
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();

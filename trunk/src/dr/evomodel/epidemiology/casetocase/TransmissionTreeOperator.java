@@ -239,8 +239,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule("caseToCaseTransmissionLikelihood", CaseToCaseTransmissionLikelihood.class, "The" +
-                        "transmission network likelihood element"),
+                new ElementRule(CaseToCaseTransmissionLikelihood.class, "The transmission network likelihood element"),
                 new ElementRule(AbstractTreeOperator.class, "A phylogenetic tree operator.")
         };
     };

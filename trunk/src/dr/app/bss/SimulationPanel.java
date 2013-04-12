@@ -31,7 +31,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	private JButton simulate;
 	private JButton generateXML;
 
-	//Check boxes
+	// Check boxes
 	private JCheckBox setSeed;
 	
 	public SimulationPanel(final MainFrame frame,

@@ -87,7 +87,7 @@ public interface Transform {
 //        }
 
         public double getLogJacobian(double value) {
-            return -Math.log(value);
+            return Math.log(value);
         }
 
         public List<Citation> getCitations() {

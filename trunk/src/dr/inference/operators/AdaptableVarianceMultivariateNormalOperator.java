@@ -257,6 +257,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             //System.err.println("Using initial covariance matrix");
 
+            // TODO Get rid of the code duplication with immediately above.
+
             double[] epsilon = new double[dim];
 
             for (int i = 0; i < dim; i++) {

@@ -96,10 +96,10 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + rateCount + " dimensions.");
         }
 
-        boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, false);
+        boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, true);
 
         if (!xo.hasChildNamed(INDICATOR)) {
-            if (checkConditioning) {
+            if (!checkConditioning) {
                 return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter) {
                     protected EigenSystem getDefaultEigenSystem(int stateCount) {
                         return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
@@ -136,7 +136,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         }
 
         SVSComplexSubstitutionModel model;
-        if (checkConditioning) {
+        if (!checkConditioning) {
             model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter) {
                 protected EigenSystem getDefaultEigenSystem(int stateCount) {
                     return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);

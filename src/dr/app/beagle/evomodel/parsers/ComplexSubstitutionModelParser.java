@@ -1,7 +1,7 @@
 /*
  * ComplexSubstitutionModelParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,7 @@
 
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.SVSComplexSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.*;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
@@ -51,6 +48,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String INDICATOR = "rateIndicator";
     public static final String BSSVS_TOLERANCE = "bssvsTolerance";
     public static final String BSSVS_SCALAR = "bssvsScalar";
+    public static final String CHECK_CONDITIONING = "checkConditioning";
 
     public static final int maxRandomizationTries = 100;
 
@@ -98,8 +96,18 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + rateCount + " dimensions.");
         }
 
+        boolean checkConditioning = xo.getAttribute(CHECK_CONDITIONING, false);
+
         if (!xo.hasChildNamed(INDICATOR)) {
-            return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter);
+            if (checkConditioning) {
+                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter) {
+                    protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                        return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                    }
+                };
+            } else {
+                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter);
+            }
         }
 
         cxo = xo.getChild(INDICATOR);
@@ -127,7 +135,16 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        SVSComplexSubstitutionModel model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
+        SVSComplexSubstitutionModel model;
+        if (checkConditioning) {
+            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter) {
+                protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                    return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                }
+            };
+        } else {
+            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
+        }
         boolean randomize = xo.getAttribute(RANDOMIZE, false);
         if (randomize) {
             // Randomization may need multiple tries
@@ -183,5 +200,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                     },true),
             AttributeRule.newDoubleRule(BSSVS_TOLERANCE, true),
             AttributeRule.newDoubleRule(BSSVS_SCALAR, true),
+            AttributeRule.newBooleanRule(CHECK_CONDITIONING, true),
     };
 }

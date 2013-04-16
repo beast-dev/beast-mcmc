@@ -18,7 +18,6 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private PartitionData data;
 	private PartitionDataList dataList;
 	
-	//TODO: seed
 	private static final boolean VERBOSE = true;
 	private static final String SPLIT_PARTITION = ":";
 //	private static final String SEED = "-seed";	

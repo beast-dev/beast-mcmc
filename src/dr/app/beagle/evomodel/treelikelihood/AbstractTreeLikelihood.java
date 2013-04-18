@@ -1,7 +1,7 @@
 /*
  * AbstractTreeLikelihood.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,10 +29,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.xml.Reportable;
 
 /**
@@ -196,6 +193,9 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     public final double getLogLikelihood() {
         if (COUNT_TOTAL_OPERATIONS)
             totalGetLogLikelihoodCount++;
+        if (CompoundLikelihood.DEBUG_PARALLEL_EVALUATION) {
+            System.err.println((likelihoodKnown ? "lazy" : "evaluate"));
+        }
         if (!likelihoodKnown) {
             if (COUNT_TOTAL_OPERATIONS)
                 totalcalculateLikelihoodCount++;

@@ -34,6 +34,7 @@ import dr.evoxml.TaxonParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.DistributionModelParser;
+import dr.inferencexml.distribution.InverseGaussianDistributionModelParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.Report;
@@ -481,7 +482,9 @@ public class XMLGenerator {
 	private void writeBranchRatesModel(PartitionData data, XMLWriter writer,
 			String suffix) {
 
+		double numberOfBranches = 0;
 		int clockModel = data.clockModelIndex;
+		
 		switch (clockModel) {
 
 		case 0: // StrictClock
@@ -514,6 +517,9 @@ public class XMLGenerator {
 					LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
 					new Attribute[] {
 							new Attribute.Default<String>(
+									LogNormalDistributionModelParser.OFFSET,
+									String.valueOf(data.clockParameterValues[3]) ),
+							new Attribute.Default<String>(
 									LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE,
 									"true"),
 							new Attribute.Default<String>(
@@ -532,8 +538,9 @@ public class XMLGenerator {
 
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 
+			numberOfBranches = Math.pow(2, data.createTreeModel().getTaxonCount());
 			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES,
-					"branchRates.categories" + suffix, 1, null, writer);
+					"branchRates.categories" + suffix, (int) numberOfBranches, null, writer);
 
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
@@ -552,24 +559,67 @@ public class XMLGenerator {
 
 			writer.writeOpenTag(
 					ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL,
-					new Attribute[] { new Attribute.Default<String>(
+					new Attribute[] { 
+							new Attribute.Default<String>(
+									LogNormalDistributionModelParser.OFFSET,
+									String.valueOf(data.clockParameterValues[5]) ),
+							new Attribute.Default<String>(
 							LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE,
 							"true") });
 
 			writeParameter(DistributionModelParser.MEAN,
-					PartitionData.clockParameterNames[3] + suffix, 1,
-					String.valueOf(data.clockParameterValues[3]), writer);
+					PartitionData.clockParameterNames[4] + suffix, 1,
+					String.valueOf(data.clockParameterValues[4]), writer);
 
 			writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 
+			numberOfBranches = Math.pow(2, data.createTreeModel().getTaxonCount());
 			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES,
-					"branchRates.categories" + suffix, 1, null, writer);
+					"branchRates.categories" + suffix, (int) numberOfBranches, null, writer);
 
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
 			break;
+			
+		case 3: // Inverse Gaussian
+			
+			writer.writeOpenTag(
+					DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+					new Attribute[] { new Attribute.Default<String>(
+							XMLParser.ID, data.clockModelIdref) });
+
+			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
+
+			writer.writeOpenTag(DiscretizedBranchRatesParser.DISTRIBUTION);
+			
+			writer.writeOpenTag(
+					InverseGaussianDistributionModelParser.INVERSEGAUSSIAN_DISTRIBUTION_MODEL,
+					new Attribute[] { new Attribute.Default<String>(
+							InverseGaussianDistributionModelParser.OFFSET,
+							String.valueOf(data.clockParameterValues[8])) });
+			
+			writeParameter(InverseGaussianDistributionModelParser.MEAN,
+					PartitionData.clockParameterNames[7] + suffix, 1,
+					String.valueOf(data.clockParameterValues[7]), writer);
+			
+			writeParameter(InverseGaussianDistributionModelParser.STDEV,
+					PartitionData.clockParameterNames[6] + suffix, 1,
+					String.valueOf(data.clockParameterValues[6]), writer);
+			
+			writer.writeCloseTag(InverseGaussianDistributionModelParser.INVERSEGAUSSIAN_DISTRIBUTION_MODEL);
+			
+			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
+
+			numberOfBranches = Math.pow(2, data.createTreeModel().getTaxonCount());
+			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES,
+					"branchRates.categories" + suffix, (int) numberOfBranches, null, writer);
+
+			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
+			
+			
+			
 		}// END: switch
 
 	}// END: writeBranchRatesModel

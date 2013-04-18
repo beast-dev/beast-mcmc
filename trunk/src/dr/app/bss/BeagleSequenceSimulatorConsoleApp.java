@@ -47,6 +47,8 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private static final String LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES = "lognormalRelaxedClockParameterValues";
 	private static final String EXPONENTIAL_RELAXED_CLOCK = "exponentialRelaxedClock";
 	private static final String EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES = "exponentialRelaxedClockParameterValues";
+	private static final String INVERSE_GAUSSIAN_RELAXED_CLOCK = "inverseGaussianRelaxedClock";
+	private static final String INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES = "inverseGaussianRelaxedClockParameterValues";
 	
 	private static final String FREQUENCY_MODEL = "frequencyModel";
 	private static final String NUCLEOTIDE_FREQUENCIES = "nucleotideFrequencies";
@@ -98,12 +100,14 @@ public class BeagleSequenceSimulatorConsoleApp {
 						new Arguments.StringOption(CLOCK_RATE_MODEL,
 								new String[] { STRICT_CLOCK, //
 										LOGNORMAL_RELAXED_CLOCK, //
-										EXPONENTIAL_RELAXED_CLOCK //
+										EXPONENTIAL_RELAXED_CLOCK, //
+										INVERSE_GAUSSIAN_RELAXED_CLOCK
 								}, false, "specify clock rate model"),
 
 								new Arguments.RealArrayOption(STRICT_CLOCK_PARAMETER_VALUES, 1, "specify Strict Clock parameter values"),
-								new Arguments.RealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Strict Clock parameter values"),
-								new Arguments.RealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 1, "specify Strict Clock parameter values"),
+								new Arguments.RealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Lognormal Relaxed Clock parameter values"),
+								new Arguments.RealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Exponential Relaxed Clock parameter values"),
+								new Arguments.RealArrayOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussia Relaxed Clock parameter values"),
 								
 						new Arguments.StringOption(FREQUENCY_MODEL,
 								new String[] { NUCLEOTIDE_FREQUENCIES, //
@@ -316,7 +320,19 @@ public class BeagleSequenceSimulatorConsoleApp {
 									.getRealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES);
 							parseClockValues(index, values);
 						}
-
+						
+					} else if(option
+							.equalsIgnoreCase(INVERSE_GAUSSIAN_RELAXED_CLOCK)) { 
+					
+						int index = 3;
+						data.clockModelIndex = index;
+						if (arguments
+								.hasOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES)) {
+							values = arguments
+									.getRealArrayOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES);
+							parseClockValues(index, values);
+						}
+					
 					} else {
 						gracefullyExit("Unrecognized option.");
 					}

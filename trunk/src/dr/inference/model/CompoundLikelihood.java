@@ -1,7 +1,7 @@
 /*
  * CompoundLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -193,6 +193,10 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 //            System.err.println(getId() + ": " + getDiagnosis(0) + " = " + logLikelihood);
 //            DEBUG = t;
 //        }
+
+        if (DEBUG_PARALLEL_EVALUATION) {
+            System.err.println("");
+        }
         return logLikelihood;
     }
 
@@ -446,6 +450,9 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         }
 
         public Double call() throws Exception {
+            if (DEBUG_PARALLEL_EVALUATION) {
+                System.err.print("Invoking thread #" + index + " for " + likelihood.getId() + ": ");
+            }
             if (EVALUATION_TIMERS) {
                 long time = System.nanoTime();
                 double logL = likelihood.getLogLikelihood();
@@ -459,6 +466,8 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         private final Likelihood likelihood;
         private final int index;
     }
+
+    public static final boolean DEBUG_PARALLEL_EVALUATION = false;
 
 }
 

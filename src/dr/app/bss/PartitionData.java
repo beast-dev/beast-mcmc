@@ -102,56 +102,12 @@ public class PartitionData implements Serializable {
 
 	public int substitutionModelIndex = 0;
 
-	public String substitutionModelIdref = Utils.SUBSTITUTION_MODEL;//createSubstitutionModelIdref();
+	public String substitutionModelIdref = Utils.SUBSTITUTION_MODEL;
 
 	public void resetSubstitutionModelIdref() {
 		this.substitutionModelIdref = Utils.SUBSTITUTION_MODEL;
 	}
 	
-//	public String createSubstitutionModelIdref() {
-//
-//		 System.out.println(substitutionModelIndex);
-//
-//		String substitutionModelIdref = "";
-//
-//		switch (this.substitutionModelIndex) {
-//
-//		case 0: // HKY
-//
-//			System.out.println("FUBAR1");
-//			
-//			substitutionModelIdref = PartitionData.substitutionModels[0]
-//					.toLowerCase();
-//			break;
-//
-//		case 1: // GTR
-//
-//			System.out.println("FUBAR2");
-//			
-//			substitutionModelIdref = PartitionData.substitutionModels[1]
-//					.toLowerCase();
-//			break;
-//
-//		case 2: // TNF93
-//			substitutionModelIdref = PartitionData.substitutionModels[2]
-//					.toLowerCase();
-//			break;
-//
-//		case 3: // Yang Codon Model
-//
-//			substitutionModelIdref = PartitionData.substitutionModels[3]
-//					.replaceAll(" +", ".").toLowerCase();
-//			break;
-//
-//		default:
-//			break;
-//
-//		}// END: switch
-//
-//		this.substitutionModelIdref = substitutionModelIdref;
-//		return substitutionModelIdref;
-//	}// END: createSubstitutionModelIdref
-
 	public static String[] substitutionModels = { "HKY", //
 			"GTR", //
 			"TN93", //
@@ -278,28 +234,33 @@ public class PartitionData implements Serializable {
 	public static String[] clockModels = { "Strict Clock", //
 			"Lognormal relaxed clock (Uncorrelated)", //
 			"Exponential relaxed clock (Uncorrelated)", //
-			"Inverse Gaussian" //
+			"Inverse Gaussian relaxed clock" //
 	};
 
 	public static String[] clockParameterNames = new String[] { "clock.rate", // StrictClock
 			"ucld.mean", // Lognormal relaxed clock
 			"ucld.stdev", // Lognormal relaxed clock
+			"ucld.offset", // Lognormal relaxed clock
 			"uced.mean", // Exponential relaxed clock
+			"uced.offset", // Exponential relaxed clock
+			
 			"ig.mean", // Inverse Gaussian
 			"ig.stdev", // Inverse Gaussian
 			"ig.offset" // Inverse Gaussian
 	};
 
 	public int[][] clockParameterIndices = { { 0 }, // StrictClock
-			{ 1, 2 }, // Lognormal relaxed clock
-			{ 3 }, // Exponential relaxed clock
-			{ 4, 5, 6 } // Inverse Gaussian
+			{ 1, 2, 3 }, // Lognormal relaxed clock
+			{ 4, 5 }, // Exponential relaxed clock
+			{ 6, 7, 8 } // Inverse Gaussian
 	};
 
 	public double[] clockParameterValues = new double[] { 1.2E-2, // clockrate
 			1.0, // ucld.mean
 			2.0, // ucld.stdev
+			0.0, // ucld.offset
 			1.0, // uced.mean
+            0.0, // uced.offset
 			0.0, // ig.mean
 			1.0, // ig.stdev
 			0.0 // ig.offset
@@ -322,8 +283,8 @@ public class PartitionData implements Serializable {
 			
 			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
 			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
-	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, 0.0, true, true);
-			
+	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], true, true);
+	        
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
 	                distributionModel, 1, false, Double.NaN);
 
@@ -332,8 +293,8 @@ public class PartitionData implements Serializable {
 			double numberOfBranches = Math.pow(2, createTreeModel().getTaxonCount());
 			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
 			
-			Parameter mean = new Parameter.Default(DistributionModelParser.MEAN, 1, clockParameterValues[3]);
-	        ParametricDistributionModel distributionModel = new ExponentialDistributionModel(mean);
+			Parameter mean = new Parameter.Default(DistributionModelParser.MEAN, 1, clockParameterValues[4]);
+	        ParametricDistributionModel distributionModel = new ExponentialDistributionModel(mean, clockParameterValues[5]);
 			
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
 	                distributionModel, 1, false, Double.NaN);
@@ -343,10 +304,10 @@ public class PartitionData implements Serializable {
 			double numberOfBranches = Math.pow(2, createTreeModel().getTaxonCount());
 			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
 			
-			Parameter mean = new Parameter.Default(InverseGaussianDistributionModelParser.MEAN, 1, clockParameterValues[1]);
-			Parameter stdev = new Parameter.Default(InverseGaussianDistributionModelParser.STDEV, 1, clockParameterValues[2]);
+			Parameter mean = new Parameter.Default(InverseGaussianDistributionModelParser.MEAN, 1, clockParameterValues[6]);
+			Parameter stdev = new Parameter.Default(InverseGaussianDistributionModelParser.STDEV, 1, clockParameterValues[7]);
 	        ParametricDistributionModel distributionModel = new InverseGaussianDistributionModel(
-					mean, stdev, clockParameterValues[6], false);
+					mean, stdev, clockParameterValues[8], false);
      
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
 	                distributionModel, 1, false, Double.NaN);

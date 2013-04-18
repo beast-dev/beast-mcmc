@@ -101,6 +101,8 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             throw new IllegalArgumentException("Tree model and pattern list must have the same list of taxa!");
         }
 
+        ratesParameter.setDimension(patternList.getDataType().getStateCount());
+
         fitchParsimony = new FitchParsimony(patternList, false);
         mode = Mode.PARSIMONY;
     }
@@ -115,8 +117,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
      * @param indicatorParameter
      */
     public DiscreteTraitBranchRateModel(TreeTraitProvider traitProvider, DataType dataType, TreeModel treeModel,
-                                        TreeTrait trait, int traitIndex, Parameter rateParameter,
-                                        Parameter relativeRatesParameter, Parameter indicatorParameter) {
+                                        TreeTrait trait, int traitIndex, Parameter rateParameter, Parameter relativeRatesParameter, Parameter indicatorParameter) {
 
         this(treeModel, traitIndex, rateParameter, relativeRatesParameter, indicatorParameter);
 
@@ -129,7 +130,6 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         if (trait.getTraitName().equals("states")) {
             // Assume the trait is one or more discrete traits reconstructed at nodes
             mode = Mode.NODE_STATES;
-            rateParameter.setDimension(dataType.getStateCount());
         } else /*if (double[].class.isAssignableFrom(trait.getClass()))*/ {
             // Assume the trait itself is the dwell times for the individual states on the branch above the node
             mode = Mode.MARKOV_JUMP_PROCESS;
@@ -137,6 +137,39 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             throw new IllegalArgumentException("The trait class type is not suitable for use in this class.");
         } */
 
+        relativeRatesParameter.setDimension(dataType.getStateCount());
+
+        if (traitProvider instanceof Model) {
+            addModel((Model)traitProvider);
+        }
+
+        if (trait instanceof Model) {
+            addModel((Model)trait); // MAS: Does this ever occur?
+        }
+    }
+
+    public DiscreteTraitBranchRateModel(TreeTraitProvider traitProvider, DataType dataType, TreeModel treeModel,
+                                        TreeTrait trait, int traitIndex, Parameter ratesParameter) {
+
+        this(treeModel, traitIndex, ratesParameter, null, null);
+
+//        if (trait.getTreeModel() != treeModel)
+//            throw new IllegalArgumentException("Tree Models for ancestral state tree likelihood and target model of these rates must match!");
+
+        this.trait = trait;
+        this.dataType = dataType;
+
+        if (trait.getTraitName().equals("states")) {
+            // Assume the trait is one or more discrete traits reconstructed at nodes
+            mode = Mode.NODE_STATES;
+        } else /*if (double[].class.isAssignableFrom(trait.getClass()))*/ {
+            // Assume the trait itself is the dwell times for the individual states on the branch above the node
+            mode = Mode.MARKOV_JUMP_PROCESS;
+        } /* else {
+            throw new IllegalArgumentException("The trait class type is not suitable for use in this class.");
+        } */
+
+        ratesParameter.setDimension(dataType.getStateCount());
 
         if (traitProvider instanceof Model) {
             addModel((Model)traitProvider);

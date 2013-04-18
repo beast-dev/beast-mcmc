@@ -19,6 +19,8 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
 
     public static final String RATE = "rate";
     public static final String RATES = "rates";
+    public static final String RELATIVE_RATES = "relativeRates";
+
     public static final String INDICATORS = "indicators";
     public static final String TRAIT_INDEX = "traitIndex";
     public static final String TRAIT_NAME = "traitName";
@@ -36,12 +38,20 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
         TreeTraitProvider traitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
         DataType dataType = DataTypeUtils.getDataType(xo);
 
-        Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
-        Parameter ratesParameter = null;
+        Parameter rateParameter = null;
+        Parameter relativeRatesParameter = null;
         Parameter indicatorsParameter = null;
 
+        if (xo.getChild(RATE) != null) {
+            rateParameter = (Parameter) xo.getElementFirstChild(RATE);
+        }
+
         if (xo.getChild(RATES) != null) {
-            ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
+            rateParameter = (Parameter) xo.getElementFirstChild(RATES);
+        }
+
+        if (xo.getChild(RELATIVE_RATES) != null) {
+            relativeRatesParameter = (Parameter) xo.getElementFirstChild(RELATIVE_RATES);
         }
 
         if (xo.getChild(INDICATORS) != null) {
@@ -57,14 +67,18 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
 
         if (traitProvider == null) {
             // Use the version that reconstructs the trait using parsimony:
-            return new DiscreteTraitBranchRateModel(treeModel, patternList, traitIndex, ratesParameter);
+            return new DiscreteTraitBranchRateModel(treeModel, patternList, traitIndex, rateParameter);
         } else {
             if (traitName != null) {
                 TreeTrait trait = traitProvider.getTreeTrait(traitName);
                 if (trait == null) {
                     throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
                 }
-                return new DiscreteTraitBranchRateModel(traitProvider, dataType, treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
+                if (relativeRatesParameter != null) {
+                    return new DiscreteTraitBranchRateModel(traitProvider, dataType, treeModel, trait, traitIndex, rateParameter, relativeRatesParameter, indicatorsParameter);
+                } else {
+                    return new DiscreteTraitBranchRateModel(traitProvider, dataType, treeModel, trait, traitIndex, rateParameter);
+                }
             } else {
                 TreeTrait[] traits = new TreeTrait[dataType.getStateCount()];
                 for (int i =  0; i < dataType.getStateCount(); i++) {
@@ -73,7 +87,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                         throw new XMLParseException("A trait called, " + dataType.getCode(i) + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
                     }
                 }
-                return new DiscreteTraitBranchRateModel(traitProvider, traits, treeModel, ratesParameter);
+                return new DiscreteTraitBranchRateModel(traitProvider, traits, treeModel, rateParameter);
             }
 
         }
@@ -109,7 +123,12 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                                     new ElementRule(DataType.class))
                     ),
                     new ElementRule(PatternList.class)),
-            new ElementRule(RATES, Parameter.class, "The state-specific rates", true),
+            new XORRule(
+                    new AndRule(
+                            new ElementRule(RATE, Parameter.class, "The over-all rate"),
+                            new ElementRule(RELATIVE_RATES, Parameter.class, "The state-specific relative rates")
+                    ),
+                    new ElementRule(RATES, Parameter.class, "The state-specific rates")),
             AttributeRule.newIntegerRule(TRAIT_INDEX, true),
             AttributeRule.newStringRule(TRAIT_NAME, true)
     };

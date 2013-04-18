@@ -73,7 +73,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                         throw new XMLParseException("A trait called, " + dataType.getCode(i) + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
                     }
                 }
-                return new DiscreteTraitBranchRateModel(traitProvider, traits, treeModel, rateParameter);
+                return new DiscreteTraitBranchRateModel(traitProvider, traits, treeModel, ratesParameter);
             }
 
         }
@@ -109,7 +109,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                                     new ElementRule(DataType.class))
                     ),
                     new ElementRule(PatternList.class)),
-            new ElementRule(RATES, Parameter.class, "The relative rates of states", true),
+            new ElementRule(RATES, Parameter.class, "The state-specific rates", true),
             AttributeRule.newIntegerRule(TRAIT_INDEX, true),
             AttributeRule.newStringRule(TRAIT_NAME, true)
     };

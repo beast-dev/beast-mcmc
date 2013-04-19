@@ -41,6 +41,7 @@
             <include name="dr/app/bss/**/*.class" />
             <include name="dr/inference/model/**/*.class" />
             <include name="dr/inference/loggers/**/*.class" />
+            <include name="dr/inference/distribution/**/*.class" />
             <include name="dr/evomodel/branchratemodel/**/*.class" />
             <include name="dr/app/beagle/evomodel/substmodel/**/*.class" />
             <include name="dr/app/beagle/evomodel/branchmodel/**/*.class" />
@@ -103,6 +104,7 @@
          <include name="dr/app/bss/**" />
          <include name="dr/inference/model/**" />
          <include name="dr/inference/loggers/**" />
+          <include name="dr/inference/distribution/**" />
          <include name="dr/evomodel/branchratemodel/**" />
          <include name="dr/app/beagle/evomodel/substmodel/**" />
          <include name="dr/app/beagle/evomodel/branchmodel/**" />

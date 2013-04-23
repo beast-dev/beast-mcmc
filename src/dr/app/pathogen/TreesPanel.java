@@ -90,6 +90,7 @@ public class TreesPanel extends JPanel implements Exportable {
     JChart residualChart;
     ScatterPlot residualPlot;
 
+    ErrorBarPlot errorBarPlot;
     ParentPlot mrcaPlot;
 
     Map<Node, Integer> pointMap = new HashMap<Node, Integer>();
@@ -466,6 +467,22 @@ public class TreesPanel extends JPanel implements Exportable {
                     mrcaPlot.setLineStroke(new BasicStroke(0.5F));
 
                     rootToTipChart.addPlot(mrcaPlot);
+                }
+
+                if (true) {
+                    double[] datePrecisions = temporalRooting.getTipDatePrecisions(currentTree);
+
+                    Variate.D ed = new Variate.D();
+
+                    for (int i = 0; i < datePrecisions.length; i++) {
+                        ed.add(datePrecisions[i]);
+                    }
+
+                    errorBarPlot = new ErrorBarPlot(ErrorBarPlot.Orientation.HORIZONTAL, r.getXData(), r.getYData(), ed);
+                    errorBarPlot.setLineColor(new Color(44, 44, 44));
+                    errorBarPlot.setLineStroke(new BasicStroke(1.0F));
+
+                    rootToTipChart.addPlot(errorBarPlot);
                 }
 
                 rootToTipPlot = new ScatterPlot(r.getXData(), r.getYData());

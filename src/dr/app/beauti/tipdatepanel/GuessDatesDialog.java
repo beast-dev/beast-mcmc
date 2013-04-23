@@ -63,6 +63,7 @@ public class GuessDatesDialog {
 
     private final JRadioButton numericalRadio = new JRadioButton("Parse as a number", true);
     private final JRadioButton calendarRadio = new JRadioButton("Parse as a calendar date", true);
+    private final JRadioButton calendar2Radio = new JRadioButton("Parse calendar dates with variable precision", true);
 
     private final JCheckBox offsetCheck = new JCheckBox("Add the following value to each: ", false);
     private final RealNumberField offsetText = new RealNumberField();
@@ -131,8 +132,14 @@ public class GuessDatesDialog {
         optionPanel.addComponents(dateFormatLabel, panel);
         dateFormatText.setText("yyyy-MM-dd");
 
+        optionPanel.addSpanningComponent(calendar2Radio);
+
         dateFormatLabel.setEnabled(false);
         dateFormatText.setEnabled(false);
+
+        numericalRadio.setToolTipText("Parse the date field as a decimal number");
+        calendarRadio.setToolTipText("Parse the date field using a standard date format specification");
+        calendar2Radio.setToolTipText("Parse the date field yyyy[-mm[-dd]] with possibly missing month or day");
 
         helpButton.addActionListener(new ActionListener() {
             public void actionPerformed(final ActionEvent actionEvent) {
@@ -182,6 +189,7 @@ public class GuessDatesDialog {
         group = new ButtonGroup();
         group.add(numericalRadio);
         group.add(calendarRadio);
+        group.add(calendar2Radio);
         listener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 offsetCheck.setEnabled(numericalRadio.isSelected());
@@ -197,6 +205,7 @@ public class GuessDatesDialog {
         };
         numericalRadio.addItemListener(listener);
         calendarRadio.addItemListener(listener);
+        calendar2Radio.addItemListener(listener);
     }
 
     public int showDialog() {
@@ -243,6 +252,7 @@ public class GuessDatesDialog {
             throw new IllegalArgumentException("unknown radio button selected");
         }
 
+        guesser.parseCalendarDatesAndPrecision = calendar2Radio.isSelected();
         guesser.parseCalendarDates = calendarRadio.isSelected();
         guesser.calendarDateFormat = dateFormatText.getText();
 

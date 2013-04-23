@@ -56,7 +56,8 @@ public class DateGuesser implements Serializable {
     public double unlessLessThan = 0.0;
     public double offset2 = 0.0;
     public boolean parseCalendarDates = false;
-    public String calendarDateFormat = "dd/MM/yyyy";
+    public boolean parseCalendarDatesAndPrecision = false;
+    public String calendarDateFormat = "yyyy-MM-dd";
 
     private DateFormat dateFormat = new SimpleDateFormat(calendarDateFormat);
 
@@ -78,18 +79,18 @@ public class DateGuesser implements Serializable {
         for (int i = 0; i < taxonList.size(); i++) {
             java.util.Date origin = new java.util.Date(0);
 
-            double d = 0.0;
+            double[] values = new double[2];
 
             try {
                 switch (guessType) {
                     case ORDER:
-                        d = guessDateFromOrder(taxonList.get(i).getId(), order, fromLast);
+                        guessDateFromOrder(taxonList.get(i).getId(), order, fromLast, values);
                         break;
                     case PREFIX:
-                        d = guessDateFromPrefix(taxonList.get(i).getId(), prefix, order, fromLast);
+                        guessDateFromPrefix(taxonList.get(i).getId(), prefix, order, fromLast, values);
                         break;
                     case REGEX:
-                        d = guessDateFromRegex(taxonList.get(i).getId(), regex);
+                        guessDateFromRegex(taxonList.get(i).getId(), regex, values);
                         break;
                     default:
                         throw new IllegalArgumentException("unknown GuessType");
@@ -99,6 +100,7 @@ public class DateGuesser implements Serializable {
                 //
             }
 
+            double d = values[0];
             if (offset > 0) {
                 if (unlessLessThan > 0) {
                     if (d < unlessLessThan) {
@@ -112,11 +114,12 @@ public class DateGuesser implements Serializable {
             }
 
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
+            date.setPrecision(values[1]);
             taxonList.get(i).setAttribute("date", date);
         }
     }
 
-    private double guessDateFromOrder(String label, int order, boolean fromLast) throws GuessDatesException {
+    private void guessDateFromOrder(String label, int order, boolean fromLast, double[] values) throws GuessDatesException {
 
         String field;
 
@@ -182,12 +185,23 @@ public class DateGuesser implements Serializable {
             } while (count <= order);
         }
 
-        return parseDate(label, field);
+        parseDate(label, field, values);
     }
 
-    private double guessDateFromPrefix(String label, String prefix, int order, boolean fromLast) throws GuessDatesException {
+    private static final String REGEX_CHARACTERS = "|[].*()-^$";
 
-        String[] fields = label.split(prefix);
+    private void guessDateFromPrefix(String label, String prefix, int order, boolean fromLast, double[] values) throws GuessDatesException {
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < prefix.length(); i++) {
+            if (REGEX_CHARACTERS.contains("" + prefix.charAt(i))) {
+                sb.append("\\").append(prefix.charAt(i));
+            } else {
+                sb.append(prefix.charAt(i));
+            }
+        }
+
+        String[] fields = label.split(sb.toString());
         int index;
         if (fromLast) {
             index = fields.length - order - 1;
@@ -201,10 +215,10 @@ public class DateGuesser implements Serializable {
             index = fields.length - 1;
         }
 
-        return parseDate(label, fields[index]);
+        parseDate(label, fields[index], values);
     }
 
-    private double guessDateFromPrefix(String label, String prefix) throws GuessDatesException {
+    private void guessDateFromPrefix(String label, String prefix, double[] values) throws GuessDatesException {
 
         int i = label.indexOf(prefix);
 
@@ -224,11 +238,10 @@ public class DateGuesser implements Serializable {
 
         String field = label.substring(j, i + 1);
 
-        return parseDate(label, field);
+        parseDate(label, field, values);
     }
 
-    private double guessDateFromRegex(String label, String regex) throws GuessDatesException {
-        double d;
+    private void guessDateFromRegex(String label, String regex, double[] values) throws GuessDatesException {
 
         if (!regex.contains("(")) {
             // if user hasn't specified a replace element, assume the whole regex should match
@@ -245,23 +258,62 @@ public class DateGuesser implements Serializable {
             throw new GuessDatesException("Date group not defined in regular expression");
         }
 
-        return parseDate(label, matcher.group(0));
+        parseDate(label, matcher.group(0), values);
     }
 
-    private double parseDate(String label, String value) throws GuessDatesException {
+    private DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+    private DateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM");
+    private DateFormat dateFormat3 = new SimpleDateFormat("yyyy");
+
+    private void parseDate(String label, String value, double[] values) throws GuessDatesException {
         double d;
-        try {
-            d = Double.parseDouble(value);
-        } catch (NumberFormatException nfe) {
+        double p = 0.0;
+
+        if (parseCalendarDatesAndPrecision) {
+            try {
+                Date date = new Date(dateFormat1.parse(value));
+
+                d = date.getTimeValue();
+                p = 0.0;
+
+            } catch (ParseException pe) {
+                try {
+                    Date date = new Date(dateFormat2.parse(value));
+
+                    d = date.getTimeValue();
+                    p = 1.0 / 12.0;
+
+                } catch (ParseException pe2) {
+                    try {
+                        Date date = new Date(dateFormat3.parse(value));
+
+                        d = date.getTimeValue();
+                        p = 1.0;
+
+                    } catch (ParseException pe3) {
+                        throw new GuessDatesException("Badly formatted date in taxon label, " + label);
+                    }
+                }
+            }
+
+        } else if (parseCalendarDates) {
             try {
                 Date date = new Date(dateFormat.parse(value));
 
                 d = date.getTimeValue();
             } catch (ParseException pe) {
-                throw new GuessDatesException("Badly formated date in taxon label, " + label);
+                throw new GuessDatesException("Badly formatted date in taxon label, " + label);
+            }
+
+        } else {
+            try {
+                d = Double.parseDouble(value);
+            } catch (NumberFormatException nfe) {
+                throw new GuessDatesException("Badly formatted date in taxon label, " + label);
             }
         }
 
-        return d;
+        values[0] = d;
+        values[1] = p;
     }
 }

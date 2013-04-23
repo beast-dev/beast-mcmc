@@ -42,7 +42,7 @@ public class TemporalRooting {
 
     public enum RootingFunction {
         RESIDUAL_MEAN_SQUARED("residual mean squared"),
-//        SUM_RESIDUAL_SQUARED("sum squared residuals"),
+        //        SUM_RESIDUAL_SQUARED("sum squared residuals"),
         CORRELATION("correlation"),
         R_SQUARED("R squared");
 
@@ -61,6 +61,7 @@ public class TemporalRooting {
     private boolean contemporaneous = false;
     private final TaxonList taxa;
     private final Map<String, Double> dates;
+    private final Map<String, Double> precisions;
     private boolean useTargetRate = false;
     private double targetRate = 0.0;
     private double dateMin;
@@ -73,6 +74,7 @@ public class TemporalRooting {
         this.taxa = taxa;
 
         dates = new HashMap<String, Double>();
+        precisions = new HashMap<String, Double>();
 
         dateMin = Double.MAX_VALUE;
         dateMax = -Double.MAX_VALUE;
@@ -83,6 +85,10 @@ public class TemporalRooting {
             double d = 0.0;
             if (date != null) {
                 d = date.getAbsoluteTimeValue();
+                if (date.getPrecision() > 0.0) {
+                    d += date.getPrecision() / 2;
+                    precisions.put(taxon.getId(), date.getPrecision());
+                }
             }
             if (d > dateMax) {
                 dateMax = d;
@@ -216,6 +222,19 @@ public class TemporalRooting {
             d[i] = date;
         }
         return d;
+    }
+
+    public double[] getTipDatePrecisions(Tree tree) {
+        double[] p = new double[tree.getExternalNodeCount()];
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef tip = tree.getExternalNode(i);
+            Double precision = precisions.get(tree.getNodeTaxon(tip).getId());
+            if (precision == null) {
+                precision = 0.0;
+            }
+            p[i] = precision;
+        }
+        return p;
     }
 
     public String[] getTipLabels(Tree tree) {

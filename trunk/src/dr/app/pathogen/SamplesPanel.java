@@ -190,6 +190,8 @@ public class SamplesPanel extends JPanel implements Exportable {
 
             Date newDate = createDate(d, units, backwards, 0.0);
 
+            newDate.setPrecision(date.getPrecision());
+
             taxonList.getTaxon(i).setDate(newDate);
         }
 

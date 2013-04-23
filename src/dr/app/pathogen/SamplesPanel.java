@@ -79,8 +79,6 @@ public class SamplesPanel extends JPanel implements Exportable {
 
     DateGuesser guesser = new DateGuesser();
 
-
-
     double[] heights = null;
 
     GuessDatesDialog guessDatesDialog = null;
@@ -112,6 +110,12 @@ public class SamplesPanel extends JPanel implements Exportable {
         dataTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+        dataTable.getColumnModel().getColumn(2).setCellEditor(
+                new DateCellEditor());
+
+        dataTable.getColumnModel().getColumn(3).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(3).setPreferredWidth(80);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
@@ -314,7 +318,7 @@ public class SamplesPanel extends JPanel implements Exportable {
 
     private void calculateHeights() {
 
-         maximumTipHeight = 0.0;
+        maximumTipHeight = 0.0;
         if (taxonList == null || taxonList.getTaxonCount() == 0) return;
 
         heights = null;
@@ -349,7 +353,7 @@ public class SamplesPanel extends JPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Date", "Height"};
+        String[] columnNames = {"Name", "Date", "Precision", "Height"};
 
         public DataTableModel() {
         }
@@ -365,17 +369,23 @@ public class SamplesPanel extends JPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
+            Date date = taxonList.getTaxon(row).getDate();
             switch (col) {
                 case 0:
                     return taxonList.getTaxonId(row);
                 case 1:
-                    Date date = taxonList.getTaxon(row).getDate();
                     if (date != null) {
                         return date.getTimeValue();
                     } else {
                         return "-";
                     }
                 case 2:
+                    if (date != null) {
+                        return date.getPrecision();
+                    } else {
+                        return "-";
+                    }
+                case 3:
                     if (heights != null) {
                         return heights[row];
                     } else {
@@ -395,6 +405,14 @@ public class SamplesPanel extends JPanel implements Exportable {
                     Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
                     taxonList.getTaxon(row).setDate(newDate);
                 }
+            } else if (col == 2) {
+                Date date = taxonList.getTaxon(row).getDate();
+                if (date != null) {
+                    double d = (Double) aValue;
+                    if (d >= 0.0) {
+                        date.setPrecision(d);
+                    }
+                }
             }
 
             timeScaleChanged();
@@ -402,7 +420,7 @@ public class SamplesPanel extends JPanel implements Exportable {
 
         public boolean isCellEditable(int row, int col) {
             if (col == 0) return true;
-            if (col == 1) {
+            if (col == 1 || col == 2) {
                 Date date = taxonList.getTaxon(row).getDate();
                 return (date != null);
             }

@@ -62,6 +62,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     boolean verbose;
     protected TreeTraitProvider.Helper treeTraits = new Helper();
 
+    /* possible paintings for each node */
+
+    private HashMap<NodeRef, HashSet<AbstractCase>> nodePaintingPossibilities;
+    private HashMap<NodeRef, HashSet<AbstractCase>> storedNodePaintingPossibilities;
+
     /**
      * The set of cases
      */
@@ -69,17 +74,19 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
-    // for extended version
+    // for extended version (not implemented at present)
 
     private boolean extended;
     private boolean[] switchLocks;
     private boolean[] creepLocks;
 
-    // for Felsenstein version:
+    // for reconstructing version version:
 
-    private boolean felsenstein;
-    private double[] tripletLikelihoods;
-    private double[] storedTripletLikelihoods;
+    private boolean sampleTTs;
+    private double[] rootLikelihoods;
+    private double[] storedRootLikelihoods;
+    private double[] subLikelihoods;
+    private double[] storedSubLikelihoods;
     private boolean currentReconstructionExists;
 
     // PUBLIC STUFF
@@ -92,9 +99,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // Basic constructor.
 
     public CaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
-                                            String startingNetworkFileName, boolean extended, boolean felsenstein)
+                                            String startingNetworkFileName, boolean extended, boolean sampleTTs)
             throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, extended, felsenstein);
+        this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, extended, sampleTTs);
     }
 
     // Legacy constructor
@@ -108,7 +115,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
-            startingNetworkFileName, boolean extended, boolean felsenstein) {
+            startingNetworkFileName, boolean extended, boolean sampleTTs) {
 
         super(name);
         this.virusTree = virusTree;
@@ -120,11 +127,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         estimatedLastSampleTime = lastSampleDate.getTimeValue();
         cases = caseData;
         this.extended = extended;
-        this.felsenstein = felsenstein;
+        this.sampleTTs = sampleTTs;
         addModel(cases);
         verbose = false;
 
         tipMap = new HashMap<AbstractCase, NodeRef>();
+
+        nodePaintingPossibilities = possiblePaintingsMap(virusTree.getRoot(),
+                new HashMap<NodeRef, HashSet<AbstractCase>>());
 
         //map the cases to the external nodes
         for(int i=0; i<virusTree.getExternalNodeCount(); i++){
@@ -139,11 +149,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
         }
 
-        if(felsenstein){
-            tripletLikelihoods = new double[virusTree.getInternalNodeCount()
-                    *virusTree.getExternalNodeCount()
-                    *virusTree.getExternalNodeCount()
-                    *virusTree.getExternalNodeCount()];
+        if(sampleTTs){
+            rootLikelihoods = new double[virusTree.getExternalNodeCount()];
+            subLikelihoods = new double[virusTree.getInternalNodeCount()
+                    *virusTree.getExternalNodeCount()*virusTree.getExternalNodeCount()];
             currentReconstructionExists = false;
             branchMap = new AbstractCase[virusTree.getNodeCount()];
         } else {
@@ -176,14 +185,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         });
 
-        //@todo deal with felsenstein==true and extended==true (probably by prohibiting it)
+/*      @todo deal with sampleTTs==true and extended==true (probably by prohibiting it)
+        not considering the extended case just yet
         if(extended){
             switchLocks = new boolean[virusTree.getInternalNodeCount()];
             creepLocks = new boolean[virusTree.getInternalNodeCount()];
             for(int i=0; i<virusTree.getInternalNodeCount(); i++){
                 creepLocks[virusTree.getInternalNode(i).getNumber()] = isCreepLocked(virusTree.getInternalNode(i));
             }
-        }
+        }*/
 
     }
 
@@ -217,7 +227,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
     // ************************************************************************************
-    // EXTENDED VERSION METHODS
+    // EXTENDED VERSION METHODS - NOT CURRENTLY WORKING
     // ************************************************************************************
 
     /* check if the given node is tip-linked under the current painting (the tip corresponding to its painting is
@@ -305,6 +315,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
     }
 
+    public void recalculatePaintingSets(){
+        nodePaintingPossibilities.clear();
+        nodePaintingPossibilities = possiblePaintingsMap(virusTree.getRoot(),nodePaintingPossibilities);
+    }
+
     //Counts the children of the current node which have the same painting as itself under the current map.
     //This will always be 1 if extended==false.
 
@@ -337,6 +352,39 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
         return null;
     }
+
+    // find all valid paintings of the current node
+
+    public HashSet<AbstractCase> possiblePaintings(NodeRef node){
+        HashSet<AbstractCase> out = new HashSet<AbstractCase>();
+        if(virusTree.isExternal(node)){
+            out.add(branchMap[node.getNumber()]);
+            return out;
+        } else {
+            for(int i=0; i<virusTree.getChildCount(node); i++){
+                out.addAll(possiblePaintings(virusTree.getChild(node,i)));
+            }
+            return out;
+        }
+    }
+
+    // find all paintings of the current node and build an array of this information for this node and its children
+
+    public HashMap<NodeRef,HashSet<AbstractCase>> possiblePaintingsMap(NodeRef node,
+                                                                       HashMap<NodeRef,HashSet<AbstractCase>> map){
+        HashSet<AbstractCase> out = new HashSet<AbstractCase>();
+        if(virusTree.isExternal(node)){
+            out.add(branchMap[node.getNumber()]);
+            map.put(node,out);
+        } else {
+            for(int i=0; i<virusTree.getChildCount(node); i++){
+                out.addAll(possiblePaintings(virusTree.getChild(node,i)));
+            }
+            map.put(node,out);
+        }
+        return map;
+    }
+
 
     //Return a set of nodes that are not descendants of (or equal to) the current node and have the same painting as it.
     //The node recalculation is going to need reworking once the time comes to test the extended version,
@@ -424,10 +472,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
-        if(!felsenstein){
+        if(!sampleTTs){
             Arrays.fill(nodeRecalculationNeeded, true);
         } else {
             currentReconstructionExists = false;
+        }
+        if(model instanceof Tree){
+            recalculatePaintingSets();
         }
         likelihoodKnown = false;
     }
@@ -439,7 +490,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if(!felsenstein){
+        if(!sampleTTs){
             Arrays.fill(nodeRecalculationNeeded, true);
         } else {
             currentReconstructionExists = false;
@@ -454,28 +505,33 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     /**
      * Stores the precalculated state (in this case the node labels and subtree likelihoods)
      */
+
     protected final void storeState() {
-        if(!felsenstein){
+        if(!sampleTTs){
             storedBranchMap = Arrays.copyOf(branchMap, branchMap.length);
             storedNodeLogLikelihoods = Arrays.copyOf(nodeLogLikelihoods, nodeLogLikelihoods.length);
             storedRecalculationArray = Arrays.copyOf(nodeRecalculationNeeded, nodeRecalculationNeeded.length);
         } else {
-            storedTripletLikelihoods = Arrays.copyOf(tripletLikelihoods, tripletLikelihoods.length);
-
+            storedSubLikelihoods = Arrays.copyOf(subLikelihoods, subLikelihoods.length);
+            storedRootLikelihoods = Arrays.copyOf(rootLikelihoods, rootLikelihoods.length);
         }
+        storedNodePaintingPossibilities = new HashMap<NodeRef, HashSet<AbstractCase>>(nodePaintingPossibilities);
     }
 
     /**
      * Restores the precalculated state.
      */
+
     protected final void restoreState() {
-        if(!felsenstein){
+        if(!sampleTTs){
             branchMap = storedBranchMap;
             nodeLogLikelihoods = storedNodeLogLikelihoods;
             nodeRecalculationNeeded = storedRecalculationArray;
         } else {
-            tripletLikelihoods = storedTripletLikelihoods;
+            subLikelihoods = storedSubLikelihoods;
+            rootLikelihoods = storedRootLikelihoods;
         }
+        nodePaintingPossibilities = storedNodePaintingPossibilities;
         likelihoodKnown = false;
     }
 
@@ -492,6 +548,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public final AbstractCase[] getBranchMap(){
         return branchMap;
+    }
+
+    public final TreeModel getVirusTree(){
+        return virusTree;
     }
 
     public final void setBranchMap(AbstractCase[] map){
@@ -511,8 +571,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public final void makeDirty() {
-        // so every switch operator is forcing recalculation of the whole tree? Can't be necessary.
-        if(!felsenstein){
+        if(!sampleTTs){
             Arrays.fill(nodeRecalculationNeeded, true);
         } else {
             currentReconstructionExists = false;
@@ -521,6 +580,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             recalculateLocks();
         }
         likelihoodKnown = false;
+        recalculatePaintingSets();
     }
 
     public void makeDirty(boolean cleanTree){
@@ -538,13 +598,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      * Calculates the log likelihood of this set of node labels given the tree.
      */
     public double calculateLogLikelihood() {
-        if(felsenstein){
-            NodeRef root = virusTree.getRoot();
-            double totalLikelihood = 0;
-            for(AbstractCase thisCase: cases.getCases()){
-                totalLikelihood += L(root,thisCase);
-            }
-            return Math.log(totalLikelihood);
+        if(!sampleTTs){
+            return getLogNormalisationValue(true);
         } else {
             if(!checkPaintingIntegrity(true)){
                 throw new RuntimeException("Not a painting");
@@ -554,8 +609,110 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public double calculateLogLikelihood(AbstractCase[] map){
+        return getUnnormalisedLogLikelihood(map) - getLogNormalisationValue(false);
+    }
+
+    private double getUnnormalisedLogLikelihood(AbstractCase[] branchMap){
+        double logL = 0;
+        for(int i=0; i<virusTree.getInternalNodeCount(); i++){
+            NodeRef node = virusTree.getInternalNode(i);
+            AbstractCase[] paintings = new AbstractCase[] {
+                    branchMap[node.getNumber()],
+                    branchMap[virusTree.getChild(node,0).getNumber()],
+                    branchMap[virusTree.getChild(node,1).getNumber()]
+            };
+            double[] times = new double[] {
+                    getNodeTime(node),
+                    getNodeTime(virusTree.getChild(node, 0)),
+                    getNodeTime(virusTree.getChild(node, 1))
+            };
+            logL += cases.logP(paintings, times);
+        }
+        // root case infectious at the time of the root:
+        double rootTime = getNodeTime(virusTree.getRoot());
+        AbstractCase rootPainting = branchMap[virusTree.getRoot().getNumber()];
+        logL += cases.logProbInfectiousBy(rootPainting, rootTime);
+        return logL;
+    }
+
+    private double getLogNormalisationValue(boolean recordForReconstruction){
+        HashMap<NodeRef, HashSet<AbstractCase>> map = possiblePaintingsMap(virusTree.getRoot(),
+                new HashMap<NodeRef, HashSet<AbstractCase>>());
+        double L=0;
         NodeRef root = virusTree.getRoot();
-        return calculateNodeTransmissionLogLikelihood(root, Integer.MIN_VALUE, map);
+        for(AbstractCase rootCase: cases.getCases()){
+            double rootTime = getNodeTime(virusTree.getRoot());
+            double infectiousAtRoot = cases.probInfectiousBy(rootCase, rootTime);
+            double sumOfTripletLs = tripletUpwards(root, rootCase, recordForReconstruction);
+            L += infectiousAtRoot*Math.exp(sumOfTripletLs);
+            if(recordForReconstruction){
+                rootLikelihoods[cases.getCases().indexOf(rootCase)] = infectiousAtRoot*Math.exp(sumOfTripletLs);
+            }
+        }
+        return Math.log(L);
+    }
+
+    private double tripletUpwards(NodeRef node, AbstractCase painting, boolean recordForReconstruction){
+        if(virusTree.isExternal(node)){
+            if(getBranchMap()[node.getNumber()]==painting){
+                throw new RuntimeException("Problem with tip paintings");
+            }
+            return 0;
+        } else {
+            double L = 0;
+            int noTips = virusTree.getExternalNodeCount();
+            NodeRef[] children = new NodeRef[] {virusTree.getChild(node,0), virusTree.getChild(node,1)};
+            ArrayList<HashSet<AbstractCase>> childPossiblePaintings =
+                    new ArrayList<HashSet<AbstractCase>>(Arrays.asList(nodePaintingPossibilities.get(children[0]),
+                            nodePaintingPossibilities.get(children[1])));
+            // this for debugging only
+            HashSet<AbstractCase> intersection = new HashSet<AbstractCase>(childPossiblePaintings.get(0));
+            intersection.retainAll(childPossiblePaintings.get(1));
+            if(intersection.size()>0){
+                throw new RuntimeException("Problem with possible node paintings");
+            }
+            for(int i=0; i<2; i++){
+                if(childPossiblePaintings.get(i).contains(painting)){
+                    /* Child i has the same painting as 'node'. Child 1-i can have any painting that one of its
+                    descendant tips has*/
+                    double sum = 0;
+                    for(AbstractCase infected: childPossiblePaintings.get(1-i)){
+                        AbstractCase[] paintings = new AbstractCase[3];
+                        paintings[0] = painting;
+                        paintings[1+i] = painting;
+                        paintings[2-i] = infected;
+                        double[] times = new double[] {
+                                getNodeTime(node),
+                                getNodeTime(virusTree.getChild(node, 0)),
+                                getNodeTime(virusTree.getChild(node, 1))
+                        };
+                        double tempTerm = cases.P(paintings, times)*Math.exp(tripletUpwards(children[1-i], infected,
+                                recordForReconstruction));
+                        sum += tempTerm;
+                        if(recordForReconstruction){
+                            subLikelihoods[(children[1-i].getNumber() - noTips)*noTips*noTips
+                                    +cases.getCases().indexOf(painting)*noTips
+                                    +cases.getCases().indexOf(infected)]
+                                    = tempTerm;
+                        }
+
+                    }
+                    double tempTerm = Math.exp(tripletUpwards(children[i], painting, recordForReconstruction));
+                    L += sum*Math.exp(tripletUpwards(children[i], painting, recordForReconstruction));
+                    if(recordForReconstruction){
+                        for(AbstractCase thisCase: cases.getCases()){
+                            subLikelihoods[(children[i].getNumber() - noTips)*noTips*noTips
+                                    +cases.getCases().indexOf(painting)*noTips
+                                    +cases.getCases().indexOf(thisCase)]
+                                    = painting == thisCase ? tempTerm : 0;
+                        }
+                        // this will only happen once, no need to go on
+                        break;
+                    }
+                }
+            }
+            return Math.log(L);
+        }
     }
 
     /* Return the integer day on which the given node occurred */
@@ -568,43 +725,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return (int)Math.ceil(nodeDate.getTimeValue());
     }
 
+    /* Return the double time at which the given node occurred */
+
+    public double getNodeTime(NodeRef node){
+        double nodeHeight = getHeight(node);
+        return estimatedLastSampleTime-nodeHeight;
+    }
+
     /**
      * Given a node, calculates the log likelihood of its parent branch and then goes down the tree and calculates the
      * log likelihoods of lower branches.
      */
-
-    private double calculateNodeTransmissionLogLikelihood(NodeRef node, int parentDay, AbstractCase[]
-            currentBranchMap) {
-        double logLikelihood=0;
-        AbstractCase nodeCase = currentBranchMap[node.getNumber()];
-        Integer nodeDay = getNodeDay(node);
-        /* Likelihood of the branch leading to the node.*/
-        if(!nodeRecalculationNeeded[node.getNumber()]){
-            logLikelihood = logLikelihood + nodeLogLikelihoods[node.getNumber()];
-        } else {
-            double nodeLogLikelihood = 0;
-            if(virusTree.isRoot(node)){
-                /*Likelihood of root node case being infectious by the time of the root.*/
-                nodeLogLikelihood =  Math.log(cases.noTransmissionBranchLikelihood(nodeCase, nodeDay));
-            } else {
-                /*Likelihood of this case being infected at the time of the parent node and infectious by the time
-                of the child node.*/
-                NodeRef parent = virusTree.getParent(node);
-                nodeLogLikelihood = Math.log(cases.transmissionBranchLikelihood(currentBranchMap[parent.getNumber()],
-                        nodeCase, parentDay, nodeDay));
-            }
-            nodeLogLikelihoods[node.getNumber()]=nodeLogLikelihood;
-            nodeRecalculationNeeded[node.getNumber()]=false;
-            logLikelihood += nodeLogLikelihood;
-        }
-        if(!virusTree.isExternal(node)){
-            for(int i=0; i<virusTree.getChildCount(node); i++){
-                logLikelihood = logLikelihood + calculateNodeTransmissionLogLikelihood(virusTree.getChild(node,i),
-                        nodeDay, currentBranchMap);
-            }
-        }
-        return logLikelihood;
-    }
 
     public boolean[] getRecalculationArray(){
         return nodeRecalculationNeeded;
@@ -648,15 +779,20 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public AbstractCase getInfector(NodeRef node, AbstractCase[] branchMap){
-        if(virusTree.isRoot(node) || node.getNumber()==virusTree.getRoot().getNumber()){
-            return null;
-        } else {
-            AbstractCase nodeCase = branchMap[node.getNumber()];
-            if(branchMap[virusTree.getParent(node).getNumber()]!=nodeCase){
-                return branchMap[virusTree.getParent(node).getNumber()];
+        try{
+            if(virusTree.isRoot(node) || node.getNumber()==virusTree.getRoot().getNumber()){
+                return null;
             } else {
-                return getInfector(virusTree.getParent(node), branchMap);
+                AbstractCase nodeCase = branchMap[node.getNumber()];
+                if(branchMap[virusTree.getParent(node).getNumber()]!=nodeCase){
+                    return branchMap[virusTree.getParent(node).getNumber()];
+                } else {
+                    return getInfector(virusTree.getParent(node), branchMap);
+                }
             }
+        } catch (NullPointerException e) {
+            System.out.println();
+            return null;
         }
     }
 
@@ -800,9 +936,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     /*Given a new tree with no labels, associates each of the terminal branches with the relevant case and then
-  * generates a random painting of the rest of the tree to start off with. If checkNonZero is true in
-  * randomlyPaintNode then the network will be checked to prohibit links with zero (or rounded to zero)
-  * likelihood first.*/
+    * generates a random painting of the rest of the tree to start off with. If checkNonZero is true in
+    * randomlyPaintNode then the network will be checked to prohibit links with zero (or rounded to zero)
+    * likelihood first.*/
 
     private AbstractCase[] paintRandomNetwork(){
         boolean gotOne = false;
@@ -837,8 +973,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
     /* Paints a phylogenetic tree with a random compatible painting; if checkNonZero is true, make sure all branch
-   likelihoods are nonzero in the process (this sometimes still results in a zero likelihood for the whole tree, but
-   is much less likely to).
+    likelihoods are nonzero in the process (this sometimes still results in a zero likelihood for the whole tree, but
+    is much less likely to).
     */
 
     private AbstractCase[] paintRandomNetwork(AbstractCase[] map, boolean checkNonZero){
@@ -865,8 +1001,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(checkNonZero){
                 Double[] branchLogLs = new Double[2];
                 for(int i=0; i<2; i++){
-                    branchLogLs[i]= cases.transmissionBranchLogLikelihood(choices[i], choices[1 - i], getNodeDay(node),
-                            getNodeDay(node.getChild(1 - i)));
+                    AbstractCase[] paintings = new AbstractCase[] {
+                            choices[i], choices[0], choices[1]
+                    };
+                    double[] times = new double[] {
+                            getNodeTime(node),
+                            getNodeTime(virusTree.getChild(node, 0)),
+                            getNodeTime(virusTree.getChild(node, 1))
+                    };
+                    branchLogLs[i]= cases.logP(paintings, times);
                 }
                 if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
                     throw new BadPaintingException("Both branch possibilities have zero likelihood: "
@@ -893,89 +1036,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // Felsenstein version methods
     //************************************************************************
 
-
-    /* Check whether the tree will admit a particular painting for a particular node. This is true if a
-     * descendant external node is the one corresponding to the case */
-
-    private boolean treeWillAdmitCaseHere (NodeRef node, AbstractCase thisCase){
-        if(virusTree.isExternal(node)){
-            return tipMap.get(thisCase).toString().equals(node.toString());
-        } else {
-            boolean check1 = treeWillAdmitCaseHere(virusTree.getChild(node,0), thisCase);
-            boolean check2 = treeWillAdmitCaseHere(virusTree.getChild(node,1), thisCase);
-            return check1 || check2;
-        }
-    }
-
-    /* The likelihood of observing a case i at node alpha*/
-
-    private double L(NodeRef alpha, AbstractCase i){
-        if(virusTree.isExternal(alpha)){
-            return tipMap.get(i).toString().equals(alpha.toString()) ? 1 : 0;
-        } else {
-            double totalLikelihood = 0;
-            NodeRef[] children = getChildren(alpha);
-            for(AbstractCase case_x: cases.getCases()){
-                for(AbstractCase case_y: cases.getCases()){
-                    double P_term = P(i, case_x, case_y, alpha);
-                    double L_term = 0;
-                    int noTips = virusTree.getExternalNodeCount();
-                    if(P_term!=0){
-                        L_term = L(children[0],case_x)*L(children[1],case_y);
-                    }
-                    tripletLikelihoods[(alpha.getNumber()-noTips)*noTips*noTips*noTips
-                            + cases.getCases().indexOf(i)*noTips*noTips
-                            + cases.getCases().indexOf(case_x)*noTips
-                            + cases.getCases().indexOf(case_y)] = L_term;
-
-                    totalLikelihood = totalLikelihood + L_term*P_term;
-                }
-            }
-            return totalLikelihood;
-        }
-    }
-
-    /* The probability that you observe an a at alpha given a b at one child and a c at the other*/
-
-    private double P(AbstractCase a, AbstractCase b, AbstractCase c, NodeRef alpha){
-        // Internal nodes only
-        if(virusTree.isExternal(alpha)){
-            throw new RuntimeException("alpha must be external");
-        }
-        // this is a standard painting, so a must be either b or c but not both
-        if((a!=b && a!=c) || (b==c)){
-            return 0;
-        }
-        NodeRef[] children = getChildren(alpha);
-        //Tree must admit the cases in these positions
-        if(!treeWillAdmitCaseHere(alpha, a)
-                || !treeWillAdmitCaseHere(children[0],b)
-                || !treeWillAdmitCaseHere(children[1],c)) {
-            return 0;
-        }
-        int alphaDay = getNodeDay(alpha);
-        int[] childDays = getChildDays(alpha);
-        if (a==b){
-            double c_term = cases.transmissionBranchLikelihood(a, c, alphaDay, childDays[1]);
-            double a_term = cases.noTransmissionBranchLikelihood(a, alphaDay)
-                    /cases.noTransmissionBranchLikelihood(a, childDays[0]);
-            if(!Double.isNaN(a_term)){
-                return c_term*a_term;
-            } else {
-                return 0;
-            }
-        } else {
-            double b_term = cases.transmissionBranchLikelihood(a, b, alphaDay, childDays[0]);
-            double a_term = cases.noTransmissionBranchLikelihood(a, alphaDay)
-                    /cases.noTransmissionBranchLikelihood(a, childDays[1]);
-            if(!Double.isNaN(a_term)){
-                return b_term*a_term;
-            } else {
-                return 0;
-            }
-        }
-    }
-
     /* Sample a random transmission tree from the likelihoods for the paintings of each triplet of nodes */
 
     private AbstractCase[] sampleTransmissionTree(){
@@ -985,19 +1045,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             samplePainting[tip.getNumber()]=cases.getCase(tip.taxon.toString());
         }
         NodeRef root = virusTree.getRoot();
-        int noTips = virusTree.getExternalNodeCount();
-        double[] rootLikelihoods = Arrays.copyOfRange(tripletLikelihoods,
-                (root.getNumber()-noTips)*noTips*noTips*noTips,
-                (root.getNumber()-noTips+1)*noTips*noTips*noTips);
-        int dim = virusTree.getExternalNodeCount();
         int choice = MathUtils.randomChoicePDF(rootLikelihoods);
-        int[] choices = new int[3];
-        choices[0] = (choice - (choice % (dim*dim)))/(dim*dim);
-        choices[1] = ((choice % (dim*dim)) - ((choice % dim*dim) % dim)) / dim;
-        choices[2] = (choice % (dim*dim)) % dim;
-        samplePainting[root.getNumber()]=cases.getCase(choices[0]);
-        samplePainting[virusTree.getChild(root,0).getNumber()]=cases.getCase(choices[1]);
-        samplePainting[virusTree.getChild(root,1).getNumber()]=cases.getCase(choices[2]);
+        samplePainting[root.getNumber()]=cases.getCase(choice);
 
         for(int i=0; i<2; i++){
             fillUp(virusTree.getChild(root,i),samplePainting);
@@ -1011,17 +1060,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         if(!virusTree.isExternal(node)){
             int dim = virusTree.getExternalNodeCount();
-            int nodePaintingNumber = cases.getCases().indexOf(painting[node.getNumber()]);
-            double[] childLikelihoods = Arrays.copyOfRange(tripletLikelihoods,
-                    (node.getNumber()-dim)*dim*dim*dim + nodePaintingNumber*dim*dim,
-                    (node.getNumber()-dim)*dim*dim*dim + (nodePaintingNumber+1)*dim*dim);
+            int parentPaintingNumber = cases.getCases().indexOf(painting[virusTree.getParent(node).getNumber()]);
+            double[] childLikelihoods = Arrays.copyOfRange(subLikelihoods,
+                    (node.getNumber()-dim)*dim*dim + parentPaintingNumber*dim,
+                    (node.getNumber()-dim)*dim*dim + (parentPaintingNumber+1)*dim);
             int choice = MathUtils.randomChoicePDF(childLikelihoods);
-            int[] choices = new int[2];
-            choices[0] = (choice - (choice % dim))/dim;
-            choices[1] = choice % dim;
+            painting[node.getNumber()]=cases.getCase(choice);
             for(int i=0; i<2; i++){
                 NodeRef child = virusTree.getChild(node,i);
-                painting[child.getNumber()]=cases.getCase(choices[i]);
                 if(!virusTree.isExternal(child)){
                     fillUp(child, painting);
                 }
@@ -1058,7 +1104,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             CaseToCaseTransmissionLikelihood likelihood;
 
             final boolean extended = xo.getBooleanAttribute("extended");
-            final boolean felsenstein = xo.getBooleanAttribute("felsenstein");
+            final boolean felsenstein = xo.getBooleanAttribute("sampleTTs");
 
             try {
                 likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet, startingNetworkFileName,
@@ -1083,8 +1129,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule("extended"),
-                AttributeRule.newBooleanRule("felsenstein"),
+                AttributeRule.newBooleanRule("extended"),  // don't do this!!
+                AttributeRule.newBooleanRule("sampleTTs"),
                 new ElementRule("virusTree", Tree.class, "The tree"),
                 new ElementRule(AbstractOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
@@ -1100,7 +1146,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     public LogColumn[] getColumns(){
         LogColumn[] columns = new LogColumn[cases.size()];
 
-        if(felsenstein){
+        if(sampleTTs){
 
             for(int i=0; i<cases.size(); i++){
                 final AbstractCase infected = cases.getCase(i);
@@ -1170,12 +1216,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             likelihoodKnown = true;
         }
 
-        if(felsenstein && !currentReconstructionExists){
+        if(sampleTTs && !currentReconstructionExists){
             branchMap = sampleTransmissionTree();
         }
 
         return branchMap[node.getNumber()].toString();
-
     }
 
 

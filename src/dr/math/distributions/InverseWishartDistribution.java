@@ -1,3 +1,28 @@
+/*
+ * InverseWishartDistribution.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.math.distributions;
 
 import dr.math.GammaFunction;
@@ -7,11 +32,11 @@ import dr.math.matrixAlgebra.Matrix;
 /**
  * @author Marc Suchard
  */
-public class InverseWishartDistribution implements MultivariateDistribution {
+public class InverseWishartDistribution implements MultivariateDistribution, WishartStatistics {
 
     public static final String TYPE = "InverseWishart";
 
-    private int df;
+    private double df;
     private int dim;
     private double[][] scaleMatrix;
     private Matrix S;
@@ -25,7 +50,7 @@ public class InverseWishartDistribution implements MultivariateDistribution {
      * @param scaleMatrix
      */
 
-    public InverseWishartDistribution(int df, double[][] scaleMatrix) {
+    public InverseWishartDistribution(double df, double[][] scaleMatrix) {
         this.df = df;
         this.scaleMatrix = scaleMatrix;
         this.dim = scaleMatrix.length;
@@ -62,7 +87,7 @@ public class InverseWishartDistribution implements MultivariateDistribution {
         return null;
     }
 
-    public int df() {
+    public double getDF() {
         return df;
     }
 

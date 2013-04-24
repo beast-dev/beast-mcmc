@@ -56,6 +56,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String COUNTS = "countsParameter";
     public static final String NON_INFORMATIVE = "nonInformative";
     public static final String MULTIVARIATE_LIKELIHOOD = "multivariateDistributionLikelihood";
+    public static final String DATA_AS_MATRIX = "dataAsMatrix";
 
     public static final String DATA = "data";
 
@@ -344,6 +345,8 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(xo.getId(),
                     distribution, transforms);
 
+            boolean dataAsMatrix = xo.getAttribute(DATA_AS_MATRIX, false);
+
             cxo = xo.getChild(DATA);
             if (cxo != null) {
                 for (int j = 0; j < cxo.getChildCount(); j++) {
@@ -351,13 +354,17 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                         Parameter data = (Parameter) cxo.getChild(j);
                         if (data instanceof MatrixParameter) {
                             MatrixParameter matrix = (MatrixParameter) data;
-                            if (matrix.getParameter(0).getDimension() != distribution.getMean().length)
-                                throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + matrix.getParameter(0).getDimension()
-                                        + " is not equal to dim(" + distribution.getType() + ") = " + distribution.getMean().length
-                                        + " in " + xo.getName() + "element");
+                            if (dataAsMatrix) {
+                                likelihood.addData(matrix);
+                            } else {
+                                if (matrix.getParameter(0).getDimension() != distribution.getMean().length)
+                                    throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + matrix.getParameter(0).getDimension()
+                                            + " is not equal to dim(" + distribution.getType() + ") = " + distribution.getMean().length
+                                            + " in " + xo.getName() + "element");
 
-                            for (int i = 0; i < matrix.getParameterCount(); i++) {
-                                likelihood.addData(matrix.getParameter(i));
+                                for (int i = 0; i < matrix.getParameterCount(); i++) {
+                                    likelihood.addData(matrix.getParameter(i));
+                                }
                             }
                         } else {
                             if (data.getDimension() != distribution.getMean().length)
@@ -383,6 +390,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 new ElementRule(DistributionLikelihoodParser.DISTRIBUTION,
                         new XMLSyntaxRule[]{new ElementRule(ParametricMultivariateDistributionModel.class)}
                 ),
+                AttributeRule.newBooleanRule(DATA_AS_MATRIX, true),
                 new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)}, true)

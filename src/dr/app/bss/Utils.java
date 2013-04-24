@@ -28,7 +28,9 @@ public class Utils {
 	// /////////////////
 	// ---CONSTANTS---//
 	// /////////////////
-
+	
+	public static final boolean VERBOSE = false;
+	
 	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
 	public static final int SITE_RATE_MODEL_ELEMENT = 2;
@@ -59,18 +61,23 @@ public class Utils {
 		while (it.hasNext()) {
 			Entry<?, ?> pairs = (Entry<?, ?>) it.next();
 			System.out.println(pairs.getKey() + " = " + pairs.getValue());
-			// it.remove(); // avoids a ConcurrentModificationException
 		}
 	}// END: printMap
 
 	public static int getSiteCount(PartitionDataList dataList) {
 		
 		int siteCount = 0;
-		for(PartitionData data : dataList) {
-			siteCount += data.createPartitionSiteCount();
+		int to = 0;
+		for (PartitionData data : dataList) {
+			// siteCount += data.createPartitionSiteCount();
+			to = data.to;
+			if (to > siteCount) {
+				siteCount = to;
+			}
+
 		}
 		
-		return siteCount;
+		return siteCount + 1;
 	}//END: getSiteCount
 	
 	public static int arrayIndex(String[] array, String element) {
@@ -107,22 +114,6 @@ public class Utils {
 
 		return exists;
 	}// END: taxonExists
-
-//	public static double getAbsoluteTaxonHeight(Taxon taxon, TreeModel tree) {
-//
-//		double height = 0.0;
-//		for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-//
-//			NodeRef externalNode = tree.getExternalNode(i);
-//			Taxon externalNodeTaxon = tree.getNodeTaxon(externalNode);
-//
-//			if (externalNodeTaxon.equals(taxon)) {
-//				height = tree.getNodeHeight(externalNode);
-//			}
-//		}// END: external node loop
-//
-//		return height;
-//	}// END: getAbsoluteTaxonHeight
 
 	public static double getAbsoluteTaxonHeight(Taxon taxon, Tree tree) {
 

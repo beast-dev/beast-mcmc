@@ -14,9 +14,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 public class BeagleSequenceSimulatorApp {
 
-	public final static boolean DEBUG = true;
-//	 private static final boolean IS_PRERELEASE = true;
-	
 	// Share those if neccessary
 	public static final String NAME = "BSS";
 	public static final String LONG_NAME = "Beagle Sequence Simulator";
@@ -25,13 +22,6 @@ public class BeagleSequenceSimulatorApp {
 
 	// Icons
 	private Image beagleSequenceSimulatorImage;
-	public static ImageIcon beagleSequenceSimulatorIcon;
-	public static ImageIcon doneIcon;
-	public static ImageIcon errorIcon;
-	public static ImageIcon hammerIcon;
-	public static ImageIcon closeIcon;
-	public static ImageIcon biohazardIcon;
-	public static ImageIcon bubbleBlueIcon;
 	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
@@ -106,7 +96,7 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
-		ImageIcon bssIcon = createImageIcon("icons/bss.png");
+		ImageIcon bssIcon = Utils.createImageIcon(Utils.BSS_ICON);
 		SingleDocApplication app = new SingleDocApplication(new MenuBarFactory(), //
 				LONG_NAME, //
 				VERSION.concat(" ").concat(
@@ -114,20 +104,11 @@ public class BeagleSequenceSimulatorApp {
 				bssIcon //
 		);
 
-		beagleSequenceSimulatorImage = CreateImage("icons/bss.png");
+		beagleSequenceSimulatorImage = CreateImage(Utils.BSS_ICON);
 		MainFrame frame = new MainFrame(LONG_NAME);
 		frame.setIconImage(beagleSequenceSimulatorImage);
 		app.setDocumentFrame(frame);
 
-		// Setup icons
-		beagleSequenceSimulatorIcon = createImageIcon("icons/bss.png");
-		doneIcon = createImageIcon("icons/check.png");
-		errorIcon = createImageIcon("icons/error.png");
-		hammerIcon = createImageIcon("icons/hammer.png");
-		closeIcon = createImageIcon("icons/close.png");
-		biohazardIcon = createImageIcon("icons/biohazard.png");
-		bubbleBlueIcon =  createImageIcon("icons/bubble-blue.png");
-		
 	}// END: Constructor
 
 	public static void main(String args[]) {
@@ -181,26 +162,6 @@ public class BeagleSequenceSimulatorApp {
 		}
 
 	}// END: CreateImage
-
-	private ImageIcon createImageIcon(String path) {
-
-		ImageIcon icon = null;
-
-		try {
-
-			URL imgURL = getClass().getResource(path);
-			if (imgURL != null) {
-				icon = new ImageIcon(imgURL);
-			} else {
-				System.err.println("Couldn't find file: " + path + "\n");
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}// END: try-catch block
-
-		return icon;
-	}// END: CreateImageIcon
 
 }// END: class
 

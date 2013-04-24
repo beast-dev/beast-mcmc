@@ -50,7 +50,7 @@ public class AboutDialog extends JDialog {
 
 		// Setup image
 		label = new JLabel(
-				BeagleSequenceSimulatorApp.beagleSequenceSimulatorIcon);
+				Utils.createImageIcon(Utils.BSS_ICON));
 		label.setAlignmentX(0.5f);
 		add(label);
 

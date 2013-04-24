@@ -38,6 +38,7 @@ public class Utils {
 	public static final String TREE_FILENAME = "treeFilename";
 	public static final String SUBSTITUTION_MODEL = "substitutionModel";
 	public static final String FREQUENCY_MODEL = "frequencyModel";
+	public static final String CODON_UNIVERSAL = "codon-universal";
 	public static final String CHOOSE_FILE = "Choose file...";
 	
 	// ///////////////////////////////

@@ -862,12 +862,8 @@ public class XMLGenerator {
 					new Attribute[] { new Attribute.Default<String>(
 							XMLParser.ID, data.substitutionModelIdref) });
 
-			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-
 			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
 					data.frequencyModelIdref);
-
-			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
 			writeParameter(YangCodonModelParser.OMEGA,
 					YangCodonModelParser.OMEGA + suffix, 1,
@@ -926,16 +922,18 @@ public class XMLGenerator {
 			dataType = Codons.UNIVERSAL;
 
 			frequencies = data.frequencyParameterValues[4] + "";
-			for (int i = 5; i < 64; i++) {
+			for (int i = 5; i < 65; i++) {
 				frequencies += " " + data.frequencyParameterValues[i];
 			}
 
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, // tagname
 					new Attribute[] { // attributes[]
 							new Attribute.Default<String>(XMLParser.ID,
-									"freqModel"), // id
+									data.frequencyModelIdref), // id
 							new Attribute.Default<String>(DataType.DATA_TYPE,
-									dataType.getDescription()) // dataType
+//									dataType.getDescription()
+									Utils.CODON_UNIVERSAL
+									) // dataType
 					});
 
 			writeParameter(FrequencyModelParser.FREQUENCIES, null,

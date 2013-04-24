@@ -30,12 +30,11 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 				msg, //
 				"Error", //
 				JOptionPane.ERROR_MESSAGE, //
-				BeagleSequenceSimulatorApp.errorIcon);
+				Utils.createImageIcon(Utils.ERROR_ICON));
 	}// END: showExceptionDialog
 
 	private void logException(Thread t, Throwable e) {
 		// TODO: start a thread that logs it, also spying on the user and planting evidence
-		// CIA style MOFO!!!
 		e.printStackTrace();
 	}//END: logException
 

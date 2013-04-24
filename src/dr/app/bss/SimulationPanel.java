@@ -64,12 +64,12 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		// simulate button
 		simulate = new JButton("Simulate",
-				BeagleSequenceSimulatorApp.biohazardIcon);
+				Utils.createImageIcon(Utils.BIOHAZARD_ICON));
 		simulate.addActionListener(new ListenSimulate());
 		buttonsHolder.add(simulate);
 
 		generateXML = new JButton("Generate XML",
-				BeagleSequenceSimulatorApp.hammerIcon);
+				Utils.createImageIcon(Utils.HAMMER_ICON));
 		generateXML.addActionListener(new ListenGenerateXML());
 		buttonsHolder.add(generateXML);
 

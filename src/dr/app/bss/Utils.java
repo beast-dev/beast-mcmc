@@ -5,12 +5,14 @@ import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
@@ -42,6 +44,14 @@ public class Utils {
 	public static final String FREQUENCY_MODEL = "frequencyModel";
 	public static final String CODON_UNIVERSAL = "codon-universal";
 	public static final String CHOOSE_FILE = "Choose file...";
+	
+	public static final String BSS_ICON = "icons/bss.png";
+	public static final String CHECK_ICON =  "icons/check.png";
+	public static final String ERROR_ICON = "icons/error.png";
+	public static final String HAMMER_ICON = "icons/hammer.png";
+	public static final String CLOSE_ICON = "icons/close.png";
+	public static final String BIOHAZARD_ICON = "icons/biohazard.png";
+	public static final String BUBBLE_BLUE_ICON = "icons/bubble-blue.png";
 	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
@@ -77,7 +87,7 @@ public class Utils {
 
 		}
 		
-		return siteCount + 1;
+		return siteCount;// + 1;
 	}//END: getSiteCount
 	
 	public static int arrayIndex(String[] array, String element) {
@@ -349,6 +359,27 @@ public class Utils {
 	// ---GUI UTILS---//
 	// /////////////////
 
+	public static ImageIcon createImageIcon(String path) {
+
+		ImageIcon icon = null;
+
+		try {
+
+			URL imgURL = BeagleSequenceSimulatorApp.class.getResource(path);
+			
+			if (imgURL != null) {
+				icon = new ImageIcon(imgURL);
+			} else {
+				System.err.println("Couldn't find file: " + path + "\n");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}// END: try-catch block
+
+		return icon;
+	}// END: CreateImageIcon
+	
 	public static boolean isBrowsingSupported() {
 		if (!Desktop.isDesktopSupported()) {
 			return false;
@@ -425,13 +456,13 @@ public class Utils {
 
 		if (SwingUtilities.isEventDispatchThread()) {
 			
-			JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, BeagleSequenceSimulatorApp.bubbleBlueIcon);
+			JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, Utils.createImageIcon(Utils.BUBBLE_BLUE_ICON));
 			
 		} else {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
 					
-					JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, BeagleSequenceSimulatorApp.bubbleBlueIcon);
+					JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, Utils.createImageIcon(Utils.BUBBLE_BLUE_ICON));
 				
 				}
 			});
@@ -483,7 +514,7 @@ public class Utils {
 				msg, //
 				"Error", //
 				JOptionPane.ERROR_MESSAGE, //
-				BeagleSequenceSimulatorApp.errorIcon);
+				Utils.createImageIcon(Utils.ERROR_ICON));
 	}// END: showExceptionDialog
 
 	private static void showExceptionDialog(Thread t, Throwable e,
@@ -498,7 +529,7 @@ public class Utils {
 				msg, //
 				"Error", //
 				JOptionPane.ERROR_MESSAGE, //
-				BeagleSequenceSimulatorApp.errorIcon);
+				Utils.createImageIcon(Utils.ERROR_ICON));
 	}// END: showExceptionDialog
 
 	private static void logException(Thread t, Throwable e) {

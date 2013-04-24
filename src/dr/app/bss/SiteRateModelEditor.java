@@ -74,11 +74,11 @@ public class SiteRateModelEditor {
 		JPanel buttonsHolder = new JPanel();
 		buttonsHolder.setOpaque(false);
 		
-		cancel = new JButton("Cancel", BeagleSequenceSimulatorApp.closeIcon);
+		cancel = new JButton("Cancel", Utils.createImageIcon(Utils.CLOSE_ICON));
 		cancel.addActionListener(new ListenCancel());
 		buttonsHolder.add(cancel);
 		
-		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
+		done = new JButton("Done", Utils.createImageIcon(Utils.CHECK_ICON));
 		done.addActionListener(new ListenOk());
 		buttonsHolder.add(done);
 		

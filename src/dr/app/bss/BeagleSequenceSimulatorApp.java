@@ -17,7 +17,7 @@ public class BeagleSequenceSimulatorApp {
 	// Share those if neccessary
 	public static final String NAME = "BSS";
 	public static final String LONG_NAME = "Beagle Sequence Simulator";
-	public static final String VERSION = "0.1.1beta";
+	public static final String VERSION = "0.7.0beta";
 	public static final String DATE = "2013";
 
 	// Icons

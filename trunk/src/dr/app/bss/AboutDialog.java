@@ -49,8 +49,7 @@ public class AboutDialog extends JDialog {
 		add(Box.createRigidArea(new Dimension(0, 10)));
 
 		// Setup image
-		label = new JLabel(
-				Utils.createImageIcon(Utils.BSS_ICON));
+		label = new JLabel(Utils.createImageIcon(Utils.BSS_ICON));
 		label.setAlignmentX(0.5f);
 		add(label);
 
@@ -87,10 +86,6 @@ public class AboutDialog extends JDialog {
 		label.setAlignmentX(0.5f);
 		add(label);
 
-		// TODO
-		// JSeparator separator = new JSeparator(JSeparator.HORIZONTAL);
-		// add(separator);
-
 		add(Box.createRigidArea(new Dimension(0, 10)));
 
 		// Setup about
@@ -105,8 +100,8 @@ public class AboutDialog extends JDialog {
 				+ "</a></p></html>");
 		website.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		website.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
-//		website.setVerticalAlignment(SwingConstants.CENTER);
-//		website.setHorizontalAlignment(SwingConstants.CENTER);
+		// website.setVerticalAlignment(SwingConstants.CENTER);
+		// website.setHorizontalAlignment(SwingConstants.CENTER);
 		website.addMouseListener(new ListenBrowse(addres));
 		add(website);
 
@@ -123,7 +118,7 @@ public class AboutDialog extends JDialog {
 		add(label);
 
 		add(Box.createRigidArea(new Dimension(0, 10)));
-		
+
 		label = new JLabel("Computational and Evolutionary Virology");
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
 		label.setAlignmentX(0.5f);
@@ -131,16 +126,16 @@ public class AboutDialog extends JDialog {
 
 		contact = new JLabel();
 		addres = "filip.bielejec@rega.kuleuven.be";
-		contact.setText("<html><center><p><a href=\"mailto:" + addres + "\">" + addres
-				+ "</a></p></center></html>");
+		contact.setText("<html><center><p><a href=\"mailto:" + addres + "\">"
+				+ addres + "</a></p></center></html>");
 		contact.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		contact.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
-//		contact.setAlignmentX(0.0f);
+		// contact.setAlignmentX(0.0f);
 		contact.addMouseListener(new ListenSendMail(addres));
 		add(contact);
 
 		add(Box.createRigidArea(new Dimension(0, 10)));
-		
+
 		label = new JLabel(
 				"Institute of Evolutionary Biology, University of Edinburgh");
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
@@ -153,12 +148,12 @@ public class AboutDialog extends JDialog {
 				+ "</a></p></html>");
 		contact.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		contact.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
-//		contact.setAlignmentX(0.5f);
+		// contact.setAlignmentX(0.5f);
 		contact.addMouseListener(new ListenSendMail(addres));
 		add(contact);
 
 		add(Box.createRigidArea(new Dimension(0, 10)));
-		
+
 		label = new JLabel("Source code distributed under the GNU LGPL");
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
 		label.setAlignmentX(0.5f);
@@ -170,14 +165,12 @@ public class AboutDialog extends JDialog {
 				+ "</a></p></html>");
 		website.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		website.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
-//		website.setAlignmentX(0.5f);
+		// website.setAlignmentX(0.5f);
 		website.addMouseListener(new ListenBrowse(addres));
 		add(website);
 
-		
-		
 		add(Box.createRigidArea(new Dimension(0, 20)));
-		
+
 		JButton close = new JButton("Close");
 		close.addActionListener(new ActionListener() {
 

@@ -64,16 +64,15 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
 		
-		//TODO: clean this up
-		getOpenAction().setEnabled(false);
-		getSaveAction().setEnabled(false);
-		getSaveAsAction().setEnabled(false);
-		// getCutAction().setEnabled(true);
-		// getCopyAction().setEnabled(false);
-		// getPasteAction().setEnabled(false);
-		getDeleteAction().setEnabled(false);
-		getSelectAllAction().setEnabled(false);
-		getFindAction().setEnabled(false);
+//		getOpenAction().setEnabled(false);
+//		getSaveAction().setEnabled(false);
+//		getSaveAsAction().setEnabled(false);
+//		// getCutAction().setEnabled(true);
+//		// getCopyAction().setEnabled(false);
+//		// getPasteAction().setEnabled(false);
+//		getDeleteAction().setEnabled(false);
+//		getSelectAllAction().setEnabled(false);
+//		getFindAction().setEnabled(false);
 
 	}// END: Constructor
 
@@ -169,6 +168,11 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 				try {
 
+					if (Utils.VERBOSE) {
+						Utils.printPartitionDataList(dataList);
+						System.out.println();
+					}
+					
 					long startingSeed = dataList.startingSeed;
 					for (int i = 0; i < dataList.simulationsCount; i++) {
 
@@ -219,8 +223,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 								partitionsList
 								);
 
-						Utils.printPartitionDataList(dataList);
-						
 						writer.println(beagleSequenceSimulator.simulate()
 								.toString());
 						writer.close();
@@ -423,8 +425,10 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			in.close();
 			fileIn.close();
 
-			Utils.printPartitionDataList(dataList);
-//			Utils.printTreeFileList(dataList);
+			if (Utils.VERBOSE) {
+				Utils.printPartitionDataList(dataList);
+				System.out.println();
+			}
 			
 			partitionsPanel.updatePartitionTable(dataList);
 			taxaPanel.updateTaxaTable(dataList);

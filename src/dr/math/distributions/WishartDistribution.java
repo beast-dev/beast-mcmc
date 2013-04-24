@@ -34,7 +34,7 @@ import dr.math.matrixAlgebra.Matrix;
 /**
  * @author Marc Suchard
  */
-public class WishartDistribution implements MultivariateDistribution {
+public class WishartDistribution implements MultivariateDistribution, WishartStatistics {
 
     public static final String TYPE = "Wishart";
 
@@ -145,12 +145,8 @@ public class WishartDistribution implements MultivariateDistribution {
 
     }
 
-    public double df() {
+    public double getDF() {
         return df;
-    }
-
-    public double[][] scaleMatrix() {
-        return scaleMatrix;
     }
 
     public double[][] nextWishart() {

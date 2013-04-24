@@ -80,15 +80,19 @@ public class BeagleSequenceSimulator {
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions) {
 
 		this.partitions = partitions;
-
-		alignmentMap = new ConcurrentHashMap<Taxon, int[]>();
+		this.alignmentMap = new ConcurrentHashMap<Taxon, int[]>();
 
 		int siteCount = 0;
-		for(Partition partition : partitions) {
-			siteCount += partition.getPartitionSiteCount();
+		int to = 0;
+		for (Partition partition : partitions) {
+			// siteCount += partition.getPartitionSiteCount();
+			to = partition.to;
+			if (to > siteCount) {
+				siteCount = to;
+			}
 		}
-		this.siteCount = siteCount;
-		
+		this.siteCount = siteCount + 1;
+
 	}// END: Constructor
 
 	public Alignment simulate() {
@@ -459,6 +463,10 @@ public class BeagleSequenceSimulator {
 		return array;
 	}// END: sequence2intArray
 
+//	public int getSiteCount() {
+//		return this.siteCount;
+//	}
+	
 	// /////////////////
 	// ---DEBUGGING---//
 	// /////////////////

@@ -94,10 +94,10 @@ public class TreesTableModel extends AbstractTableModel {
 		return COLUMN_NAMES[column];
 	}// END: getColumnName
 
-	//TODO: like in taxa panel
-	private void getTaxaCount() {
-		
-	}
+//	//TODO: like in taxa panel
+//	private void getTaxaCount() {
+//		
+//	}
 	
 	@Override
 	public Object getValueAt(int row, int column) {

@@ -63,7 +63,26 @@ public class SiteRateModelEditor {
 		siteCombo.addItemListener(new ListenSiteCombo());
 
 		for (int i = 0; i < PartitionData.siteRateModelParameterNames.length; i++) {
-			siteParameterFields[i] = new RealNumberField();
+			
+			switch (i) {
+
+			case 0: // GammaCategories
+				siteParameterFields[i] = new RealNumberField(1.0, Double.valueOf(Integer.MAX_VALUE));
+				break;
+
+			case 1: // Alpha
+				siteParameterFields[i] = new RealNumberField(0.0, Double.MAX_VALUE);
+				break;
+
+			case 2: // Invariant sites proportion
+				siteParameterFields[i] = new RealNumberField(0.0, 1.0);
+				break;
+
+			default:
+				siteParameterFields[i] = new RealNumberField();
+
+			}//END: parameter switch
+			
 			siteParameterFields[i].setColumns(8);
 			siteParameterFields[i].setValue(dataList.get(0).siteRateModelParameterValues[i]);
 		}// END: fill loop
@@ -104,11 +123,11 @@ public class SiteRateModelEditor {
 
 		int index = siteCombo.getSelectedIndex();
 		
-		for (int i = 0; i < dataList.get(0).siteRateModelParameterIndices[index].length; i++) {
+		for (int i = 0; i < PartitionData.siteRateModelParameterIndices[index].length; i++) {
 
 			if(index == 1 && i == 0) {
 				
-				int k = dataList.get(0).siteRateModelParameterIndices[index][i];
+				int k = PartitionData.siteRateModelParameterIndices[index][i];
 				
 				Integer initValue = Integer.valueOf(siteParameterFields[k].getText(0, 1)); 
 				Integer	min = 1;
@@ -127,7 +146,7 @@ public class SiteRateModelEditor {
 				
 			} else {
 			
-			int k = dataList.get(0).siteRateModelParameterIndices[index][i];
+			int k = PartitionData.siteRateModelParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(siteParameterFields[k], BorderLayout.WEST);

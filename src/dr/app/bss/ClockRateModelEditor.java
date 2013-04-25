@@ -59,7 +59,49 @@ public class ClockRateModelEditor {
 		clockCombo.addItemListener(new ListenClockCombo());
 
 		for (int i = 0; i < PartitionData.clockParameterNames.length; i++) {
-			clockParameterFields[i] = new RealNumberField();
+			
+			switch (i) {
+
+			case 0:// clockrate
+				clockParameterFields[i] = new RealNumberField(0.0, Double.MAX_VALUE);
+				break;
+
+			case 1: // ucld.mean
+				clockParameterFields[i] = new RealNumberField(-Double.MAX_VALUE, Double.MAX_VALUE);
+				break;
+
+			case 2:// ucld.stdev
+				clockParameterFields[i] = new RealNumberField(0.0, Double.MAX_VALUE);
+				break;
+
+			case 3: // ucld.offset
+				clockParameterFields[i] = new RealNumberField(-Double.MAX_VALUE, Double.MAX_VALUE);
+				break;
+
+			case 4: // uced.mean
+				clockParameterFields[i] = new RealNumberField(-Double.MAX_VALUE, Double.MAX_VALUE);
+				break;
+
+			case 5: // uced.offset
+				clockParameterFields[i] = new RealNumberField(-Double.MAX_VALUE, Double.MAX_VALUE);
+				break;
+
+			case 6: // ig.mean
+				clockParameterFields[i] = new RealNumberField(-Double.MAX_VALUE, Double.MAX_VALUE);
+				break;
+
+			case 7: // ig.stdev
+				clockParameterFields[i] = new RealNumberField(0.0, Double.MAX_VALUE);
+				break;
+
+			case 8: // ig.offset
+				clockParameterFields[i] = new RealNumberField(-Double.MAX_VALUE, Double.MAX_VALUE);
+				break;
+
+			default:
+				clockParameterFields[i] = new RealNumberField();
+			}// END: parameter switch
+			
 			clockParameterFields[i].setColumns(8);
 			clockParameterFields[i]
 					.setValue(dataList.get(row).clockParameterValues[i]);

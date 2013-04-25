@@ -460,9 +460,9 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 	private void parseSubstitutionValues(int substitutionModelIndex,
 			double[] values) {
-		for (int i = 0; i < data.substitutionParameterIndices[substitutionModelIndex].length; i++) {
+		for (int i = 0; i < PartitionData.substitutionParameterIndices[substitutionModelIndex].length; i++) {
 
-			int k = data.substitutionParameterIndices[substitutionModelIndex][i];
+			int k = PartitionData.substitutionParameterIndices[substitutionModelIndex][i];
 			data.substitutionParameterValues[k] = values[i];
 
 		}
@@ -480,9 +480,9 @@ public class BeagleSequenceSimulatorConsoleApp {
 	
 	private void parseClockValues(int clockModelIndex,
 			double[] values) {
-		for (int i = 0; i < data.clockParameterIndices[clockModelIndex].length; i++) {
+		for (int i = 0; i < PartitionData.clockParameterIndices[clockModelIndex].length; i++) {
 
-			int k = data.clockParameterIndices[clockModelIndex][i];
+			int k = PartitionData.clockParameterIndices[clockModelIndex][i];
 			data.clockParameterValues[k] = values[i];
 
 		}

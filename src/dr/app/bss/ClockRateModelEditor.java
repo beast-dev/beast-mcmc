@@ -143,9 +143,9 @@ public class ClockRateModelEditor {
 
 		int index = clockCombo.getSelectedIndex();
 
-		for (int i = 0; i < dataList.get(row).clockParameterIndices[index].length; i++) {
+		for (int i = 0; i < PartitionData.clockParameterIndices[index].length; i++) {
 
-			int k = dataList.get(row).clockParameterIndices[index][i];
+			int k = PartitionData.clockParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(clockParameterFields[k], BorderLayout.WEST);

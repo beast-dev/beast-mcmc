@@ -304,8 +304,8 @@ public class Utils {
 		String string = PartitionData.clockModels[data.clockModelIndex];
 		
 		string += (" ( ");
-		for (int i = 0; i < data.clockParameterIndices[data.clockModelIndex].length; i++) {
-			string += data.clockParameterValues[data.clockParameterIndices[data.clockModelIndex][i]];
+		for (int i = 0; i < PartitionData.clockParameterIndices[data.clockModelIndex].length; i++) {
+			string += data.clockParameterValues[PartitionData.clockParameterIndices[data.clockModelIndex][i]];
 			string +=" ";
 		}// END: indices loop
 		string +=")";
@@ -332,8 +332,8 @@ public class Utils {
 		String string = PartitionData.substitutionModels[data.substitutionModelIndex];
 		
 		string += (" ( ");
-		for (int i = 0; i < data.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
-			string += data.substitutionParameterValues[data.substitutionParameterIndices[data.substitutionModelIndex][i]];
+		for (int i = 0; i < PartitionData.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
+			string += data.substitutionParameterValues[PartitionData.substitutionParameterIndices[data.substitutionModelIndex][i]];
 			string +=" ";
 		}// END: indices loop
 		string +=")";

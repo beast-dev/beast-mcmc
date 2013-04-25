@@ -20,9 +20,7 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* change acces to all INDICES to static
 * nucleotide/codon frequencies with compatible substitution models
-* setup recent files in main menu
 * parallel tree traversal:
   # start asynch task
   tree -> left

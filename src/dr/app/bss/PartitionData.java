@@ -128,7 +128,7 @@ public class PartitionData implements Serializable {
 			"Kappa value" // Yang Codon Model
 	};
 
-	public int[][] substitutionParameterIndices = { { 0 }, // HKY
+	public static int[][] substitutionParameterIndices = { { 0 }, // HKY
 			{ 1, 2, 3, 4, 5, 6 }, // GTR
 			{ 7, 8 }, // TN93
 			{ 9, 10 }, // Yang Codon Model
@@ -248,7 +248,7 @@ public class PartitionData implements Serializable {
 			"ig.offset" // Inverse Gaussian
 	};
 
-	public int[][] clockParameterIndices = { { 0 }, // StrictClock
+	public static int[][] clockParameterIndices = { { 0 }, // StrictClock
 			{ 1, 2, 3 }, // Lognormal relaxed clock
 			{ 4, 5 }, // Exponential relaxed clock
 			{ 6, 7, 8 } // Inverse Gaussian

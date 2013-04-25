@@ -66,7 +66,7 @@ public class FrequencyModelEditor {
 		frequencyCombo.addItemListener(new ListenFrequencyCombo());
 
 		for (int i = 0; i < PartitionData.frequencyParameterNames.length; i++) {
-			frequencyParameterFields[i] = new RealNumberField();
+			frequencyParameterFields[i] = new RealNumberField(0.0, 1.0);
 			frequencyParameterFields[i].setColumns(8);
 			frequencyParameterFields[i].setValue(dataList.get(0).frequencyParameterValues[i]);
 		}// END: fill loop
@@ -143,6 +143,7 @@ public class FrequencyModelEditor {
 		}// END: fill loop
 	}// END: collectSettings
 	
+	//TODO: maybe check whether sum to 1?
 	private class ListenOk implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 

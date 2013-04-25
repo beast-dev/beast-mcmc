@@ -470,9 +470,9 @@ public class BeagleSequenceSimulatorConsoleApp {
 	
 	private void parseSiteRateValues(int siteRateModelIndex,
 			double[] values) {
-		for (int i = 0; i < data.siteRateModelParameterIndices[siteRateModelIndex].length; i++) {
+		for (int i = 0; i < PartitionData.siteRateModelParameterIndices[siteRateModelIndex].length; i++) {
 
-			int k = data.siteRateModelParameterIndices[siteRateModelIndex][i];
+			int k = PartitionData.siteRateModelParameterIndices[siteRateModelIndex][i];
 			data.siteRateModelParameterValues[k] = values[i];
 
 		}

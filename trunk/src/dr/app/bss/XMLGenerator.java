@@ -758,6 +758,7 @@ public class XMLGenerator {
 			break;
 
 		case 1: // GammaSiteRateModel
+			
 			writer.writeOpenTag(
 					GammaSiteModelParser.GAMMA_SHAPE,
 					new Attribute.Default<String>(
@@ -769,6 +770,13 @@ public class XMLGenerator {
 					writer);
 
 			writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
+
+			if (data.siteRateModelParameterValues[2] > 0.0) {
+				writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", 1,
+						String.valueOf(data.siteRateModelParameterValues[2]),
+						writer);
+			}
+			
 			break;
 		}// END: switch
 

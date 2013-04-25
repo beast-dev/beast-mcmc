@@ -543,6 +543,8 @@ public class PartitionData implements Serializable {
 	// ---SITE RATE MODELS---//
 	// ////////////////////////
 
+	//TODO: invariant site rate model
+	
 	public int siteRateModelIndex = 0;
 
 	public String siteRateModelIdref = SiteModel.SITE_MODEL;
@@ -552,20 +554,22 @@ public class PartitionData implements Serializable {
 	}
 	
 	public static String[] siteRateModels = { "No Model", //
-			"Gamma Site Rate Model", //
+			"Gamma Site Rate Model" //
 	};
 
 	public static String[] siteRateModelParameterNames = new String[] {
-			"Gamma categories", //
-			"alpha", //
+			"Gamma categories", // Gamma Site Rate Model
+			"Alpha", // Gamma Site Rate Model
+			"Invariant sites proportion"
 	};
 
 	public int[][] siteRateModelParameterIndices = { {}, // NoModel
-			{ 0, 1 }, // GammaSiteRateModel
+			{ 0, 1, 2 }, // GammaSiteRateModel
 	};
 
 	public double[] siteRateModelParameterValues = new double[] { 4.0, // GammaCategories
-			0.5, // alpha
+			0.5, // Alpha
+			0.0 // Invariant sites proportion
 	};
 
 	public GammaSiteRateModel createSiteRateModel() {
@@ -575,13 +579,13 @@ public class PartitionData implements Serializable {
 
 		if (this.siteRateModelIndex == 0) { // no model
 
-			siteModel = new GammaSiteRateModel("siteModel");
+			siteModel = new GammaSiteRateModel(name);
 
 		} else if (this.siteRateModelIndex == 1) { // GammaSiteRateModel
 
 			siteModel = new GammaSiteRateModel(name,
 					siteRateModelParameterValues[1],
-					(int) siteRateModelParameterValues[0]);
+					(int) siteRateModelParameterValues[0], siteRateModelParameterValues[2]);
 
 		} else if (this.siteRateModelIndex == 2) {
 

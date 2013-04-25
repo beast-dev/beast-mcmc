@@ -28,7 +28,6 @@ h1. TODO
   # start asynch task
   tree -> right
   # wait
-* site rate model with invariant sites
 * check on:
  - alpha value in gamma site rate model > 0
  - clock rate > 0 

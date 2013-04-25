@@ -17,8 +17,8 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 	
 	public  LinkedList<File> treeFileList = new  LinkedList<File>();
 	public  LinkedList<Integer> taxaCounts = new  LinkedList<Integer>();
-	
-	//TODO: is it needed here?
+
+	// do not serialize this two
 	public transient boolean setSeed = false;
 	public transient long startingSeed;
 	

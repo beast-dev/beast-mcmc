@@ -99,9 +99,9 @@ public class BranchSubstitutionModelEditor {
 
 		int index = substitutionCombo.getSelectedIndex();
 
-		for (int i = 0; i < dataList.get(row).substitutionParameterIndices[index].length; i++) {
+		for (int i = 0; i < PartitionData.substitutionParameterIndices[index].length; i++) {
 
-			int k = dataList.get(row).substitutionParameterIndices[index][i];
+			int k = PartitionData.substitutionParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(substitutionParameterFields[k], BorderLayout.WEST);

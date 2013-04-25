@@ -346,8 +346,8 @@ public class Utils {
 		String string = PartitionData.siteRateModels[data.siteRateModelIndex];
 		
 		string += (" ( ");
-		for (int i = 0; i < data.siteRateModelParameterIndices[data.siteRateModelIndex].length; i++) {
-			string += data.siteRateModelParameterValues[data.siteRateModelParameterIndices[data.siteRateModelIndex][i]];
+		for (int i = 0; i < PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex].length; i++) {
+			string += data.siteRateModelParameterValues[PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex][i]];
 			string +=" ";
 		}// END: indices loop
 		string +=")";

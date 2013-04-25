@@ -243,7 +243,6 @@ public class PartitionData implements Serializable {
 			"ucld.offset", // Lognormal relaxed clock
 			"uced.mean", // Exponential relaxed clock
 			"uced.offset", // Exponential relaxed clock
-			
 			"ig.mean", // Inverse Gaussian
 			"ig.stdev", // Inverse Gaussian
 			"ig.offset" // Inverse Gaussian
@@ -560,10 +559,10 @@ public class PartitionData implements Serializable {
 	public static String[] siteRateModelParameterNames = new String[] {
 			"Gamma categories", // Gamma Site Rate Model
 			"Alpha", // Gamma Site Rate Model
-			"Invariant sites proportion"
+			"Invariant sites proportion" // Gamma Site Rate Model
 	};
 
-	public int[][] siteRateModelParameterIndices = { {}, // NoModel
+	public static int[][] siteRateModelParameterIndices = { {}, // NoModel
 			{ 0, 1, 2 }, // GammaSiteRateModel
 	};
 

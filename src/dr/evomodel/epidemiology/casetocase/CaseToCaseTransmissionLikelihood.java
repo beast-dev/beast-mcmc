@@ -611,7 +611,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      */
     private double calculateLogLikelihood() {
         if(!sampleTTs){
-            Arrays.fill(subLikelihoods, 0);
+            Arrays.fill(rootLikelihoods, Double.NEGATIVE_INFINITY);
+            Arrays.fill(subLikelihoods, Double.NEGATIVE_INFINITY);
             return totalTreeLogLikelihood(true);
         } else {
             if(!checkPaintingIntegrity(branchMap, true)){
@@ -685,7 +686,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                             if(recordForReconstruction){
                                 subLikelihoods[(node.getNumber()-noTips)*noTips*noTips
                                         +parentIndex*noTips
-                                        +childIndex] = Math.exp(term);
+                                        +childIndex] = term;
                             }
                             sum = LogTricks.logSum(sum, term);
                         }
@@ -703,7 +704,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     }
                     term+=cases.logProbInfectiousBy(nodePainting,getNodeTime(node));
                     if(recordForReconstruction){
-                        rootLikelihoods[index]=Math.exp(term);
+                        rootLikelihoods[index]=term;
                     }
                     out[index]=term;
                 }
@@ -1079,8 +1080,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         AbstractCase[] samplePainting = new AbstractCase[virusTree.getNodeCount()];
         samplePainting = prepareExternalNodeMap(samplePainting);
         NodeRef root = virusTree.getRoot();
-        int choice = MathUtils.randomChoicePDF(rootLikelihoods);
-        samplePainting[root.getNumber()]=cases.getCase(choice);
+        try{
+            int choice = MathUtils.randomChoicePDF(convertAndNormalise(rootLikelihoods));
+            samplePainting[root.getNumber()]=cases.getCase(choice);
+        } catch (Error e){
+            debugOutputTree();
+            throw new RuntimeException("Problem with painting reconstruction");
+        }
 
         for(int i=0; i<2; i++){
             fillUp(virusTree.getChild(root,i),samplePainting);
@@ -1094,6 +1100,21 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     }
 
+    //randomChoicePDF is failing because sometimes all the probabilities round to zero on the real scale. This takes
+    // an array of probabilities on the log scale, normalises, and returns the normalised probabilities in real space
+
+    private double[] convertAndNormalise(double[] array){
+        double sum = Double.NEGATIVE_INFINITY;
+        double[] out = new double[array.length];
+        for(double value: array){
+            sum = LogTricks.logSum(sum,value);
+        }
+        for(int i=0; i<array.length; i++){
+            out[i] = Math.exp(array[i] - sum);
+        }
+        return out;
+    }
+
 
     private void fillUp(NodeRef node, AbstractCase[] painting){
 
@@ -1105,7 +1126,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     (node.getNumber()-dim)*dim*dim + parentPaintingNumber*dim,
                     (node.getNumber()-dim)*dim*dim + (parentPaintingNumber+1)*dim);
             try{
-                int choice = MathUtils.randomChoicePDF(childLikelihoods);
+                int choice = MathUtils.randomChoicePDF(convertAndNormalise(childLikelihoods));
                 painting[node.getNumber()]=cases.getCase(choice);
             } catch(Error e){
                 debugOutputTree();

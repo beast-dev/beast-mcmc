@@ -18,6 +18,7 @@ import dr.math.UnivariateFunction;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -34,7 +35,7 @@ import java.util.HashSet;
 public class Morelli12Outbreak extends AbstractOutbreak {
 
     public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             ArrayList<Morelli12Case> farms, Parameter riemannSampleSize){
+                             ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
         this(name, incubationPeriodDistribution, d ,riemannSampleSize);
         cases = farms;
         for(AbstractCase farm : farms){
@@ -43,7 +44,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     }
 
     public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             ArrayList<Morelli12Case> farms, Parameter riemannSampleSize){
+                             ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
         this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, farms, riemannSampleSize);
     }
 
@@ -56,7 +57,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         addModel(this.latentPeriodDistribution);
         this.d = d;
         numericalIntegrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
-        cases = new ArrayList<Morelli12Case>();
+        cases = new ArrayList<AbstractCase>();
     }
 
     public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
@@ -85,49 +86,45 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     // this ignores whether the tree will actually accept the paintings at this node (although it must be a
     // non-extended painting) and just calculates the probability of these timings
 
-    public double logP(Morelli12Case[] paintings, double[] times){
-        if((paintings[0]!=paintings[1] && paintings[0]!=paintings[2]) || paintings[1]==paintings[2]){
-            throw new RuntimeException("Bad painting");
+    public double localLogP(Morelli12Case parentPainting, Morelli12Case childPainting, double infectedAt,
+                            double infectiousBy){
+        if(parentPainting==childPainting){
+            return 0;
         } else {
             //the event in question is that the case corresponding to the child whose painting is different infected
             // at the time of node and infectious by the time of that child.
-            for(int i=1; i<3; i++){
-                if(paintings[0]==paintings[i]){
-                    double infectedAt = times[0];
-                    double infectiousBy = times[i];
-                    return Math.log(paintings[i].infectedAtInfectiousBy(infectedAt,infectiousBy));
-                }
-            }
-            throw new RuntimeException("Bad painting?");
+            return Math.log(childPainting.infectedAtInfectiousBy(infectedAt, infectiousBy));
         }
     }
-
-    public double logP(AbstractCase[] paintings, double[] times){
-        return logP((Morelli12Case[])paintings, times);
+    public double localP(Morelli12Case parentPainting, Morelli12Case childPainting, double infectedAt,
+                         double infectiousBy){
+        return Math.exp(logP(parentPainting, childPainting, infectedAt, infectiousBy));
     }
 
-    public double P(Morelli12Case[] paintings, double[] times){
-        return Math.exp(logP(paintings, times));
+    public double P(AbstractCase parentPainting, AbstractCase childPainting, double infectedAt,
+                    double infectiousBy){
+        return localP((Morelli12Case)parentPainting, (Morelli12Case)childPainting, infectedAt, infectiousBy);
     }
 
-    public double P(AbstractCase[] paintings, double[] times){
-        return P((Morelli12Case[])paintings, times);
+    public double logP(AbstractCase parentPainting, AbstractCase childPainting, double infectedAt,
+                       double infectiousBy){
+        return localLogP((Morelli12Case)parentPainting, (Morelli12Case)childPainting, infectedAt, infectiousBy);
     }
 
-    public double probInfectiousBy(Morelli12Case painting, double time){
+    public double localProbInfectiousBy(Morelli12Case painting, double time){
         return Math.exp(logProbInfectiousBy(painting, time));
     }
 
-    public double logProbInfectiousBy(Morelli12Case painting, double time){
+    public double localLogProbInfectiousBy(Morelli12Case painting, double time){
         return Math.log(1-painting.getInfectiousPeriodDistribution().cdf(painting.getEndOfInfectiousPeriod() - time));
     }
 
     public double probInfectiousBy(AbstractCase painting, double time){
-        return probInfectiousBy((Morelli12Case)painting, time);
+        return localProbInfectiousBy((Morelli12Case)painting, time);
     }
 
     public double logProbInfectiousBy(AbstractCase painting, double time){
-        return logProbInfectiousBy((Morelli12Case)painting, time);
+        return localLogProbInfectiousBy((Morelli12Case)painting, time);
     }
 
 
@@ -226,7 +223,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     private ParametricDistributionModel latentPeriodDistribution;
     private final RiemannApproximation numericalIntegrator;
     private final Parameter d;
-    private ArrayList<Morelli12Case> cases;
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -327,7 +323,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
         public double infectedAtInfectiousBy(double infected, double infectious){
             JointDistribution tempDist = new JointDistribution(endOfInfectiousDate.getTimeValue()-infected);
-            return tempDist.evaluateIntegral(0, endOfInfectiousDate.getTimeValue()-infectious);
+            return tempDist.evaluateIntegral(0, infectious-infected);
         }
 
         @Override

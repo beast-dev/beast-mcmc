@@ -42,9 +42,11 @@ public abstract class AbstractOutbreak extends AbstractModel {
         return null;
     }
 
-    public abstract double P(AbstractCase[] paintings, double[] times);
+    public abstract double P(AbstractCase parentPainting, AbstractCase childPainting, double infectedAt,
+                             double InfectiousBy);
 
-    public abstract double logP(AbstractCase[] paintings, double[] times);
+    public abstract double logP(AbstractCase parentPainting, AbstractCase childPainting, double infectedAt,
+                             double InfectiousBy);
 
     public abstract double probInfectiousBy(AbstractCase painting, double time);
 

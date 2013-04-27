@@ -55,12 +55,16 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private final Parameter parameter;
     private final Transform[] transformations;
     private final int dim;
-    private final double constantFactor;
+    //    private final double constantFactor;
     private double[] oldMeans, newMeans;
 
     final double[][] matrix;
     private double[][] empirical;
     private double[][] cholesky;
+
+    // temporary storage, allocated once.
+    private double[] epsilon;
+    private double[][] proposal;
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor, double[][] inMatrix,
                                                        double weight, double beta, int initial, CoercionMode mode, boolean isVarianceMatrix) {
@@ -73,11 +77,14 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         this.iterations = 0;
         setWeight(weight);
         dim = parameter.getDimension();
-        constantFactor = Math.pow(2.38, 2) / ((double) dim);
+//        constantFactor = Math.pow(2.38, 2) / ((double) dim); // not necessary because scaleFactor is auto-tuned
         this.initial = initial;
         this.empirical = new double[dim][dim];
         this.oldMeans = new double[dim];
         this.newMeans = new double[dim];
+
+        this.epsilon = new double[dim];
+        this.proposal = new double[dim][dim];
 
         SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(inMatrix));
         if (inMatrix[0].length != svd.rank()) {
@@ -150,8 +157,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         //store MH-ratio in logq
         double logJacobian = 0.0;
 
-        double[] oldX = new double[x.length];
-        System.arraycopy(x, 0, oldX, 0, x.length);
+        // never used
+//        double[] oldX = new double[x.length];
+//        System.arraycopy(x, 0, oldX, 0, x.length);
 
         if (iterations > 1) {
 
@@ -214,20 +222,23 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         if (iterations > initial) {
 
+            // TODO: For speed, it may not be necessary to update decomposition each and every iteration
+
             //System.err.println("Using empirical covariance matrix");
             //System.err.println("Exiting ...");
             //System.exit(0);
 
-            double[] epsilon = new double[dim];
+//            double[] epsilon = new double[dim];
 
             for (int i = 0; i < dim; i++) {
                 epsilon[i] = scaleFactor * MathUtils.nextGaussian();
             }
 
-            double[][] proposal = new double[dim][dim];
+//            double[][] proposal = new double[dim][dim];
             for (int i = 0; i < dim; i++) {
-                for (int j = 0; j < dim; j++) {
-                    proposal[i][j] = (1 - beta) * constantFactor * empirical[i][j] + beta * matrix[i][j];
+                for (int j = i; j < dim; j++) { // symmetric matrix
+                    proposal[j][i] = proposal[i][j] = (1 - beta) * // constantFactor *  /* auto-tuning using scaleFactor */
+                            empirical[i][j] + beta * matrix[i][j];
                 }
             }
 
@@ -243,11 +254,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     transformedX[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-//                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
+//                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+
                 logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
                         - transformations[i].getLogJacobian(x[i]);
             }
+            parameter.fireParameterChangedEvent(); // Signal once.
 
             /*for (int i = 0; i < dim; i++) {
                 System.err.println(oldX[i] + " -> " + parameter.getValue(i));
@@ -259,7 +272,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             // TODO Get rid of the code duplication with immediately above.
 
-            double[] epsilon = new double[dim];
+//            double[] epsilon = new double[dim];
 
             for (int i = 0; i < dim; i++) {
                 epsilon[i] = scaleFactor * MathUtils.nextGaussian();
@@ -270,12 +283,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     transformedX[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-//                jacobian += transformations[i].getLogJacobian(x[i], parameter.getParameterValue(i));
+//                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+
                 logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
                         - transformations[i].getLogJacobian(x[i]);
-                //jacobian *= Math.exp(logx[i])*(1/x[i]);
             }
+            parameter.fireParameterChangedEvent(); // Signal once.
 
             /*for (int i = 0; i < dim; i++) {
                 System.err.println(oldX[i] + " -> " + parameter.getValue(i));
@@ -284,7 +298,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         }
 
         //copy new means to old means for next update iteration
-        System.arraycopy(newMeans, 0, oldMeans, 0, dim);
+//        System.arraycopy(newMeans, 0, oldMeans, 0, dim);
+        double[] tmp = oldMeans;
+        oldMeans = newMeans;
+        newMeans = tmp; // faster to swap pointers
 
         //System.err.println("scale factor: " + scaleFactor);
         //System.err.println("log(Jacobian): " + jacobian);

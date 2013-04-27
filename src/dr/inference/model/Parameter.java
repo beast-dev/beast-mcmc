@@ -1,7 +1,7 @@
 /*
  * Parameter.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -160,6 +160,8 @@ public interface Parameter extends Statistic, Variable<Double> {
      * @return the value of the dimension removed
      */
     public double removeDimension(int index);
+
+    public void fireParameterChangedEvent();
 
     boolean isUsed();
 
@@ -310,7 +312,7 @@ public interface Parameter extends Statistic, Variable<Double> {
             Bounds<Double> bounds = getBounds();
             for (int i = 0; i < getDimension(); i++) {
                 final double value = getParameterValue(i);
-                if ( value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
+                if (value < bounds.getLowerLimit(i) || value > bounds.getUpperLimit(i)) {
                     return false;
                 }
             }
@@ -511,7 +513,7 @@ public interface Parameter extends Statistic, Variable<Double> {
                     bounds = newBounds;
                 }
 
-                ((IntersectionBounds)bounds).addBounds(boundary);
+                ((IntersectionBounds) bounds).addBounds(boundary);
             }
 
             // can't change dimension after bounds are added!
@@ -576,7 +578,7 @@ public interface Parameter extends Statistic, Variable<Double> {
          */
         public void setDimension(int dim) {
             final int oldDim = getDimension();
-            if( oldDim == dim ) {
+            if (oldDim == dim) {
                 return;
             }
 
@@ -594,11 +596,11 @@ public interface Parameter extends Statistic, Variable<Double> {
             }
             values = newValues;
 
-            if( bounds != null ) {
+            if (bounds != null) {
                 //assert oldDim < dim :  "Can't decrease dimension when bounds are set";
-                for(int k = 1; k < oldDim; ++k) {
-                    assert ((double)bounds.getLowerLimit(k) == bounds.getLowerLimit(0)) &&
-                            ((double)bounds.getUpperLimit(k) == bounds.getUpperLimit(0) ) :
+                for (int k = 1; k < oldDim; ++k) {
+                    assert ((double) bounds.getLowerLimit(k) == bounds.getLowerLimit(0)) &&
+                            ((double) bounds.getUpperLimit(k) == bounds.getUpperLimit(0)) :
                             "Can't change dimension when bounds are not all equal";
                 }
                 final double low = bounds.getLowerLimit(0);
@@ -666,10 +668,10 @@ public interface Parameter extends Statistic, Variable<Double> {
         /**
          * Sets the values of the parameter and notify that all values of the parameter have changed.
          *
-         * @param i     index of the value
-         * @param val   to value to set
+         * @param i   index of the value
+         * @param val to value to set
          */
-        public void setParameterValueNotifyChangedAll(int i, double val){
+        public void setParameterValueNotifyChangedAll(int i, double val) {
             values[i] = val;
             fireParameterChangedEvent(i, Parameter.ChangeType.ALL_VALUES_CHANGED);
         }

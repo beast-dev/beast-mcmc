@@ -185,6 +185,11 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         return v;
     }
 
+    public void fireParameterChangedEvent() {
+        for (Parameter p : parameters) {
+            p.fireParameterChangedEvent();
+        }
+    }
 
     public double getParameterValue(int dim) {
         return parameters.get(dim).getParameterValue(pindex.get(dim));

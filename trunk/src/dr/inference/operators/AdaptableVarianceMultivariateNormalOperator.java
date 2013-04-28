@@ -96,13 +96,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         } else {
             matrix = formXtXInverse(inMatrix);
         }
-        
+
         /*System.err.println("matrix initialization: ");
         for (int i = 0; i < matrix.length; i++) {
-        	for (int j = 0; j < matrix.length; j++) {
-        		System.err.print(matrix[i][j] + " ");
-        	}
-        	System.err.println();
+            for (int j = 0; j < matrix.length; j++) {
+                System.err.print(matrix[i][j] + " ");
+            }
+            System.err.println();
         }*/
 
         try {
@@ -131,7 +131,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 matrix[i][j] = total;
             }
         }
-        
+
         // Take inverse
         matrix = new SymmetricMatrix(matrix).inverse().toComponents();
         return matrix;
@@ -157,7 +157,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         for (int i = 0; i < dim; i++) {
         	System.err.println(parameter.getParameterValue(i));
         }*/
-        
+
         double[] x = parameter.getParameterValues();
 
         //transform to the appropriate scale
@@ -245,13 +245,19 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     transformedX[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-                //parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+                if (MULTI) {
+                    parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+                } else {
+                    parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                }
+
 
                 logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
                         - transformations[i].getLogJacobian(x[i]);
             }
-            //parameter.fireParameterChangedEvent(); // Signal once.
+            if (MULTI) {
+                parameter.fireParameterChangedEvent(); // Signal once.
+            }
 
             /*for (int i = 0; i < dim; i++) {
                 System.err.println(oldX[i] + " -> " + parameter.getValue(i));
@@ -274,14 +280,19 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     transformedX[i] += cholesky[j][i] * epsilon[j];
                     // caution: decomposition returns lower triangular
                 }
-                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-                //parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+                if (MULTI) {
+                    parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+                } else {
+                    parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                }
+
 
                 logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
                         - transformations[i].getLogJacobian(x[i]);
             }
-            //parameter.fireParameterChangedEvent(); // Signal once.
-
+            if (MULTI) {
+                parameter.fireParameterChangedEvent(); // Signal once.
+            }
             /*for (int i = 0; i < dim; i++) {
                 System.err.println(oldX[i] + " -> " + parameter.getValue(i));
             }*/
@@ -304,6 +315,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         //return 0.0;
         return logJacobian;
     }
+
+
+    public static final boolean MULTI = true;
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {

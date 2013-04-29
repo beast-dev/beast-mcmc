@@ -60,7 +60,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     /* Matches cases to external nodes */
 
-    private HashMap<AbstractCase, NodeRef> tipMap;
+    private HashMap<AbstractCase, Integer> tipMap;
     private double estimatedLastSampleTime;
     boolean verbose;
     protected TreeTraitProvider.Helper treeTraits = new Helper();
@@ -142,7 +142,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         branchMap = new AbstractCase[virusTree.getNodeCount()];
         prepareExternalNodeMap(branchMap);
 
-        tipMap = new HashMap<AbstractCase, NodeRef>();
+        tipMap = new HashMap<AbstractCase, Integer>();
 
         //map the cases to the external nodes
         for(int i=0; i<virusTree.getExternalNodeCount(); i++){
@@ -151,7 +151,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             for(AbstractCase thisCase : cases.getCases()){
                 for(Taxon caseTaxon: thisCase.getAssociatedTaxa()){
                     if(caseTaxon.equals(currentTaxon)){
-                        tipMap.put(thisCase, currentExternalNode);
+                        tipMap.put(thisCase, currentExternalNode.getNumber());
                     }
                 }
             }
@@ -246,7 +246,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      */
 
     public boolean tipLinked(NodeRef node){
-        NodeRef tip = tipMap.get(branchMap[node.getNumber()]);
+        NodeRef tip = virusTree.getNode(tipMap.get(branchMap[node.getNumber()]));
         if(tip==node){
             return true;
         }
@@ -818,20 +818,34 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public AbstractCase getInfector(AbstractCase thisCase, AbstractCase[] branchMap){
-        NodeRef tip = tipMap.get(thisCase);
+        NodeRef tip = virusTree.getNode(tipMap.get(thisCase));
         return getInfector(tip, branchMap);
     }
 
     public AbstractCase getInfector(NodeRef node, AbstractCase[] branchMap){
 
-        if(virusTree.isRoot(node) || node.getNumber()==virusTree.getRoot().getNumber()){
-            return null;
-        } else {
-            AbstractCase nodeCase = branchMap[node.getNumber()];
-            if(branchMap[virusTree.getParent(node).getNumber()]!=nodeCase){
-                return branchMap[virusTree.getParent(node).getNumber()];
+        try{
+            if(virusTree.isRoot(node) || node.getNumber()==virusTree.getRoot().getNumber()){
+                return null;
             } else {
-                return getInfector(virusTree.getParent(node), branchMap);
+                AbstractCase nodeCase = branchMap[node.getNumber()];
+                if(branchMap[virusTree.getParent(node).getNumber()]!=nodeCase){
+                    return branchMap[virusTree.getParent(node).getNumber()];
+                } else {
+                    return getInfector(virusTree.getParent(node), branchMap);
+                }
+            }
+        } catch (NullPointerException e){
+            if(virusTree.isRoot(node) || node.getNumber()==virusTree.getRoot().getNumber()){
+                return null;
+            } else {
+                AbstractCase nodeCase = branchMap[node.getNumber()];
+                if(branchMap[virusTree.getParent(node).getNumber()]!=nodeCase){
+                    return branchMap[virusTree.getParent(node).getNumber()];
+                } else {
+                    return getInfector(virusTree.getParent(node), branchMap);
+                }
+
             }
         }
     }

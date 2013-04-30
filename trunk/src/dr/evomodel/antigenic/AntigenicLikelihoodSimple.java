@@ -42,6 +42,7 @@ import java.util.logging.Logger;
 */
 /*
     This is currently not working.  Giving "SEVERE: State was not correctly calculated after an operator move." errors.
+
  */
 public class AntigenicLikelihoodSimple extends AbstractModelLikelihood implements Citable {
     private static final boolean CHECK_INFINITE = false;

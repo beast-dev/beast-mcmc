@@ -48,6 +48,7 @@ import dr.math.matrixAlgebra.Vector;
  * @author Alexei Drummond
  * @author Marc Suchard
  * @author Andrew Rambaut
+ * @author Trevor Bedford
  */
 public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     enum Mode {
@@ -379,19 +380,11 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
             // if the states are being sampled - then there is only one possible state at each
             // end of the branch.
-            // check if parent exists, if exists, trait is split between parent node and child node
-            // otherwise, completely child node
+            int state = ((int[])trait.getTrait(tree, node))[traitIndex];
+            processValues[state] += branchTime / 2;
             NodeRef parent = tree.getParent(node);
-            if (parent.getNumber() != tree.getRoot().getNumber()) {
-                int state = ((int[])trait.getTrait(tree, node))[traitIndex];
-                processValues[state] += branchTime / 2;
-                int parentState = ((int[])trait.getTrait(tree, parent))[traitIndex];
-                processValues[parentState] += branchTime / 2;
-            }
-            else {
-                int state = ((int[])trait.getTrait(tree, node))[traitIndex];
-               processValues[state] += branchTime;
-            }
+            int parentState = ((int[])trait.getTrait(tree, parent))[traitIndex];
+            processValues[parentState] += branchTime / 2;
         }
 
  //       processValues[0] = 1.0;

@@ -260,61 +260,67 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         // nothing to do
     }
 
+    protected int getStateCount() {
+        int dimen = 0;
+        if (mode == Mode.NODE_STATES || mode == Mode.MARKOV_JUMP_PROCESS) {
+            dimen = dataType.getStateCount();
+        }
+        else if (mode == Mode.PARSIMONY) {
+            dimen = fitchParsimony.getPatterns().getStateCount();
+        }
+        return dimen;
+    }
+
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
         if (!rateKnown[node.getNumber()]) {
             rates[node.getNumber()] = getRawBranchRate(tree, node);
+    //         rates[node.getNumber()] = rateParameter.getParameterValue(0);
             rateKnown[node.getNumber()] = true;
         }
 
         return rates[node.getNumber()];
+
     }
 
-//    double calculateNorm(Tree tree) {
-//
-//        double time = 0.0;
-//        double rateTime = 0.0;
-//        for (int i = 0; i < tree.getNodeCount(); i++) {
-//
-//            NodeRef node = tree.getNode(i);
-//
-//            if (!tree.isRoot(node)) {
-//
-//                double branchTime = tree.getBranchLength(node);
-//
-//                rateTime += getRawBranchRate(tree, node) * branchTime;
-//                time += branchTime;
-//            }
-//
-//        }
-//        return rateTime / time;
-//    }
-
+    // produce weighted mean of rate for a branch
+    // rate = absRate * branchWeight[0] * relativeRates[0] + absRate * branchWeight[1] * relativeRates[1]
     protected double getRawBranchRate(final Tree tree, final NodeRef node) {
 
         double rate = 0.0;
+        int stateCount = getStateCount();
+
         double[] processValues = getProcessValues(tree, node);
-
+    //    double[] processValues = {1.0, 1.0};
+        double[] branchWeights = new double[stateCount];
         double totalTime = 0;
-        if (indicatorParameter != null) {
-            double absRate = rateParameter.getParameterValue(0);
 
-            for (int i = 0; i < indicatorParameter.getDimension(); i++) {
-                int index = (int)indicatorParameter.getParameterValue(i);
-                if (index == 0) {
-                    rate += absRate * processValues[i];
-                } else {
-                    rate += (absRate * (1.0 + relativeRatesParameter.getParameterValue(index - 1))) * processValues[i];
-                }
-                totalTime += processValues[i];
+        for (int i = 0; i < stateCount; i++) {
+            branchWeights[i] += processValues[i];
+            totalTime += processValues[i];
+        }
+
+        for (int i = 0; i < stateCount; i++) {
+            branchWeights[i] /= totalTime;
+        }
+
+        if (relativeRatesParameter != null && indicatorParameter == null) {
+            double absRate = rateParameter.getParameterValue(0);
+            for (int i = 0; i < stateCount; i++) {
+                rate += absRate * relativeRatesParameter.getParameterValue(i) * branchWeights[i];
+            }
+        }
+        else if (relativeRatesParameter != null && indicatorParameter != null) {
+            double absRate = rateParameter.getParameterValue(0);
+            for (int i = 0; i < stateCount; i++) {
+                rate += absRate * relativeRatesParameter.getParameterValue(i) * branchWeights[i] * (double) indicatorParameter.getParameterValue(i);
             }
         } else {
-            for (int i = 0; i < rateParameter.getDimension(); i++) {
+            for (int i = 0; i < stateCount; i++) {
                 rate += rateParameter.getParameterValue(i) * processValues[i];
                 totalTime += processValues[i];
             }
         }
-        rate /= totalTime;
 
         return rate;
     }
@@ -328,11 +334,12 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     private double[] getProcessValues(final Tree tree, final NodeRef node) {
 
         double[] processValues = null;
+        int stateCount = getStateCount();
         double branchTime = tree.getBranchLength(node);
 
         if (mode == Mode.MARKOV_JUMP_PROCESS) {
-            processValues = new double[traits.length];
-            for (int i = 0; i < traits.length; i++) {
+            processValues = new double[stateCount];
+            for (int i = 0; i < stateCount; i++) {
                 processValues[i] = ((TreeTrait.DA)traits[i]).getTrait(tree, node)[0];
             }
         } else if (mode == Mode.PARSIMONY) {
@@ -368,18 +375,27 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
                 processValues[i] /= (states.length + parentStates.length) / 2;
             }
         } else if (mode == Mode.NODE_STATES) {
-            processValues = new double[dataType.getStateCount()];
+            processValues = new double[stateCount];
 
             // if the states are being sampled - then there is only one possible state at each
             // end of the branch.
-            int state = ((int[])trait.getTrait(tree, node))[traitIndex];
-            processValues[state] += branchTime / 2;
-            int parentState = ((int[])trait.getTrait(tree, tree.getParent(node)))[traitIndex];
-            processValues[parentState] += branchTime / 2;
-
-//            processValues[state] = 1;
+            // check if parent exists, if exists, trait is split between parent node and child node
+            // otherwise, completely child node
+            NodeRef parent = tree.getParent(node);
+            if (parent.getNumber() != tree.getRoot().getNumber()) {
+                int state = ((int[])trait.getTrait(tree, node))[traitIndex];
+                processValues[state] += branchTime / 2;
+                int parentState = ((int[])trait.getTrait(tree, parent))[traitIndex];
+                processValues[parentState] += branchTime / 2;
+            }
+            else {
+                int state = ((int[])trait.getTrait(tree, node))[traitIndex];
+               processValues[state] += branchTime;
+            }
         }
 
+ //       processValues[0] = 1.0;
+ //       processValues[1] = 1.0;
         return processValues;
     }
 

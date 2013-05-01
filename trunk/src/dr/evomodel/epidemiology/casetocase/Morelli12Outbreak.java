@@ -15,9 +15,6 @@ import dr.math.RiemannApproximation;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Adaptation of the farm incubation and infectious period models from Morelli et al, PLoS Computational Biology, 2012
@@ -32,17 +29,12 @@ import java.util.HashSet;
 public class Morelli12Outbreak extends AbstractOutbreak {
 
     public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             Parameter alphas, Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
-        this(name, incubationPeriodDistribution, d, alphas, riemannSampleSize);
+                             Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
+        this(name, incubationPeriodDistribution, d, riemannSampleSize);
         cases = farms;
         for(AbstractCase farm : farms){
             addModel(farm);
         }
-    }
-
-    public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
-        this(name, incubationPeriodDistribution, d, null, riemannSampleSize, farms);
     }
 
     public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
@@ -53,32 +45,22 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     // with the inner class, initialisation has to take places without cases - add them later
 
     public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             Parameter alphas, Parameter riemannSampleSize){
+                             Parameter riemannSampleSize){
         super(name);
         this.latentPeriodDistribution = incubationPeriodDistribution;
         addModel(this.latentPeriodDistribution);
         this.d = d;
-        this.alphas = alphas;
-        hasGeography = alphas != null;
         numericalIntegrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
         cases = new ArrayList<AbstractCase>();
     }
 
     public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
                              Parameter riemannSampleSize){
-        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, null, riemannSampleSize);
+        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, riemannSampleSize);
     }
-
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Taxa associatedTaxa){
         Morelli12Case thisCase = new Morelli12Case(caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
-        cases.add(thisCase);
-        addModel(thisCase);
-    }
-
-    private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Parameter coords,
-                         Taxa associatedTaxa){
-        Morelli12Case thisCase = new Morelli12Case(caseID, examDate, cullDate, oldestLesionAge, coords, associatedTaxa);
         cases.add(thisCase);
         addModel(thisCase);
     }
@@ -100,12 +82,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         } else {
             //the event in question is that the case corresponding to the child whose painting is different infected
             // at the time of node and infectious by the time of that child.
-            double timingLogProbability = Math.log(childPainting.infectedAtInfectiousBy(infectedAt, infectiousBy));
-            if(!hasGeography){
-                return timingLogProbability;
-            } else {
-                return Math.log(kernelFunction(parentPainting, childPainting))+timingLogProbability;
-            }
+            return Math.log(childPainting.infectedAtInfectiousBy(infectedAt, infectiousBy));
         }
     }
 
@@ -140,18 +117,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         return localLogProbInfectiousBy((Morelli12Case)painting, time);
     }
 
-    private double kernelFunction(Morelli12Case a, Morelli12Case b){
-        Parameter aCoords = a.getCoordinates();
-        Parameter bCoords = b.getCoordinates();
-
-        double xdist = Math.abs(aCoords.getParameterValue(0)-bCoords.getParameterValue(0));
-        double ydist = Math.abs(aCoords.getParameterValue(1)-bCoords.getParameterValue(1));
-        double dist = Math.sqrt(xdist*xdist + ydist*ydist);
-        return alphas.getParameterValue(0)*Math.exp(-dist/alphas.getParameterValue(1))
-                /2*Math.PI*(Math.pow(alphas.getParameterValue(0),2));
-    }
-
-
     /* Parser. */
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -161,7 +126,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         public static final String INCUBATION_PERIOD_DISTRIBUTION = "latentPeriodDistribution";
         public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
         public static final String SQRT_INFECTIOUS_SCALE = "sqrtInfectiousScale";
-        public static final String ALPHAS = "alphas";
 
         //for the cases
 
@@ -169,7 +133,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         public static final String CULL_DAY = "cullDay";
         public static final String EXAMINATION_DAY = "examinationDay";
         public static final String OLDEST_LESION_AGE = "oldestLesionAge";
-        public static final String COORDINATES = "coordinates";
+        public static final String COORDINATES = "farmCoordinates";
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -177,21 +141,17 @@ public class Morelli12Outbreak extends AbstractOutbreak {
                     (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
-            Parameter alphas = null;
-            if (xo.hasChildNamed(ALPHAS)){
-                alphas  = (Parameter) xo.getElementFirstChild(ALPHAS);
-            }
             Morelli12Outbreak cases = new Morelli12Outbreak(incubationPeriodDistribution, d, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(Morelli12Case.MORELLI_12_CASE)){
-                    parseCase((XMLObject)cxo, cases, alphas!=null);
+                    parseCase((XMLObject)cxo, cases);
                 }
             }
             return cases;
         }
 
-        public void parseCase(XMLObject xo, Morelli12Outbreak outbreak, boolean lookForCoords)
+        public void parseCase(XMLObject xo, Morelli12Outbreak outbreak)
                 throws XMLParseException {
             String farmID = (String) xo.getAttribute(CASE_ID);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
@@ -203,18 +163,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
                     taxa.addTaxon((Taxon)xo.getChild(i));
                 }
             }
-            if(lookForCoords){
-                if(!xo.hasChildNamed(COORDINATES)){
-                    throw new XMLParseException("Outbreak element has spatial kernal parameters, but case " +
-                            farmID + " has no spatial information");
-                } else {
-                    final Parameter coordinates = (Parameter) xo.getElementFirstChild(COORDINATES);
-                    outbreak.addCase(farmID, examDate, cullDate, oldestLesionAge, coordinates, taxa);
-                }
-            } else {
-                outbreak.addCase(farmID, examDate, cullDate, oldestLesionAge, taxa);
-            }
-
+            outbreak.addCase(farmID, examDate, cullDate, oldestLesionAge, taxa);
         }
 
         @Override
@@ -243,7 +192,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
                 new ElementRule(OLDEST_LESION_AGE, Parameter.class, "The estimated oldest lesion date as determined" +
                         "by investigating vets"),
-                new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates (x,y) of the farm", true),
         };
 
         private final XMLSyntaxRule[] rules = {
@@ -257,8 +205,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
                         "2012).", false),
                 new ElementRule(RIEMANN_SAMPLE_SIZE, Parameter.class, "The sample size for the Riemann numerical" +
                         "integration method, used by all child cases.", true),
-                new ElementRule(ALPHAS, Parameter.class, "The parameters of the spatial model (source strength and" +
-                        "disperson parameter", true)
         };
     };
 
@@ -266,8 +212,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     private ParametricDistributionModel latentPeriodDistribution;
     private final RiemannApproximation numericalIntegrator;
     private final Parameter d;
-    private final boolean hasGeography;
-    private final Parameter alphas;
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -301,7 +245,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         // geography version
 
         public Morelli12Case(String name, String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
-                             Parameter coordinates, Taxa associatedTaxa){
+                             Taxa associatedTaxa){
             super(name);
             this.caseID = caseID;
             //The time value for end of these days is the numerical value of these dates plus 1.
@@ -309,7 +253,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
             endOfInfectiousDate = cullDate;
             this.associatedTaxa = associatedTaxa;
             this.oldestLesionAge = oldestLesionAge;
-            this.coordinates = coordinates;
             rebuildInfDistribution();
             this.addModel(infectiousPeriodDistribution);
             this.addModel(latentPeriodDistribution);
@@ -318,20 +261,12 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
         // non-geography version
 
-        public Morelli12Case(String name, String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
-                             Taxa associatedTaxa){
-            this(name, caseID, examDate, cullDate, oldestLesionAge, null, associatedTaxa);
-        }
 
         public Morelli12Case(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
                              Taxa associatedTaxa){
             this(MORELLI_12_CASE, caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
         }
 
-        public Morelli12Case(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
-                             Parameter coordinates, Taxa associatedTaxa){
-            this(MORELLI_12_CASE, caseID, examDate, cullDate, oldestLesionAge, coordinates, associatedTaxa);
-        }
 
         private void rebuildInfDistribution(){
             Parameter infectious_shape = new Parameter.Default
@@ -351,10 +286,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
         public double getEndOfInfectiousPeriod(){
             return endOfInfectiousDate.getTimeValue();
-        }
-
-        public Parameter getCoordinates(){
-            return coordinates;
         }
 
         public void setInfectiousPeriodDistribution(ParametricDistributionModel distribution){
@@ -445,7 +376,6 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         private final Parameter oldestLesionAge;
         private ParametricDistributionModel infectiousPeriodDistribution;
         private ParametricDistributionModel storedInfectiousPeriodDistribution;
-        private final Parameter coordinates;
     }
 
 }

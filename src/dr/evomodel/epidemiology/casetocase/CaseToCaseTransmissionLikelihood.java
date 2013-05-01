@@ -76,6 +76,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private AbstractOutbreak cases;
     private boolean likelihoodKnown = false;
     private double logLikelihood;
+    private double storedLogLikelihood;
 
     // for extended version (not implemented at present)
 
@@ -528,6 +529,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             storedRootLikelihoods = Arrays.copyOf(rootLikelihoods, rootLikelihoods.length);
         }
         storedNodePaintingPossibilities = new HashMap<Integer, HashSet<AbstractCase>>(nodePaintingPossibilities);
+        storedLogLikelihood = logLikelihood;
     }
 
     /**
@@ -544,7 +546,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             rootLikelihoods = storedRootLikelihoods;
         }
         nodePaintingPossibilities = storedNodePaintingPossibilities;
-        likelihoodKnown = false;
+        logLikelihood = storedLogLikelihood;
     }
 
     protected final void acceptState() {

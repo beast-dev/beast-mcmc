@@ -131,13 +131,12 @@ public class TreesPanel extends JPanel implements Exportable {
         controlPanel1.add(panel3);
 
         final JComboBox rootingFunctionCombo = new JComboBox(TemporalRooting.RootingFunction.values());
-        /*
+
         JPanel panel4 = new JPanel(new BorderLayout(0,0));
         panel4.setOpaque(false);
         panel4.add(new JLabel("Function: "), BorderLayout.WEST);
         panel4.add(rootingFunctionCombo, BorderLayout.CENTER);
         controlPanel1.add(panel4);
-        */
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
 
@@ -187,13 +186,13 @@ public class TreesPanel extends JPanel implements Exportable {
         if (SHOW_NODE_DENSITY) {
             nodeDensityChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
             nodeDensityPanel = new JChartPanel(nodeDensityChart, "", "time", "node density");
-            JPanel panel4 = new JPanel(new BorderLayout());
-            panel4.add(nodeDensityPanel, BorderLayout.CENTER);
-            panel4.setOpaque(false);
+            JPanel panel5 = new JPanel(new BorderLayout());
+            panel5.add(nodeDensityPanel, BorderLayout.CENTER);
+            panel5.setOpaque(false);
 
             ChartSelector selector3 = new ChartSelector(nodeDensityChart);
 
-            tabbedPane.add("Node density", panel4);
+            tabbedPane.add("Node density", panel5);
         }
 
 
@@ -413,7 +412,7 @@ public class TreesPanel extends JPanel implements Exportable {
                 rootToTipPlot.addListener(new Plot.Adaptor() {
                     @Override
                     public void markClicked(int index, double x, double y, boolean isShiftDown) {
-                         rootToTipPlot.selectPoint(index, isShiftDown);
+                        rootToTipPlot.selectPoint(index, isShiftDown);
                     }
 
                     public void selectionChanged(final Set<Integer> selectedPoints) {
@@ -592,7 +591,7 @@ public class TreesPanel extends JPanel implements Exportable {
         repaint();
     }
 
-private javax.swing.Timer timer = null;
+    private javax.swing.Timer timer = null;
 
 
     private void findRoot() {
@@ -622,165 +621,165 @@ private javax.swing.Timer timer = null;
 
     }
 
-class FindRootTask extends LongTask {
+    class FindRootTask extends LongTask {
 
-    public FindRootTask() {
+        public FindRootTask() {
+        }
+
+        public int getCurrent() {
+            return temporalRooting.getCurrentRootBranch();
+        }
+
+        public int getLengthOfTask() {
+            return temporalRooting.getTotalRootBranches();
+        }
+
+        public String getDescription() {
+            return "Calculating demographic reconstruction...";
+        }
+
+        public String getMessage() {
+            return null;
+        }
+
+        public Object doWork() {
+            bestFittingRootTree = temporalRooting.findRoot(tree, rootingFunction);
+            EventQueue.invokeLater(
+                    new Runnable() {
+                        public void run() {
+                            setupPanel();
+                        }
+                    });
+
+            return null;
+        }
+
     }
-
-    public int getCurrent() {
-        return temporalRooting.getCurrentRootBranch();
-    }
-
-    public int getLengthOfTask() {
-        return temporalRooting.getTotalRootBranches();
-    }
-
-    public String getDescription() {
-        return "Calculating demographic reconstruction...";
-    }
-
-    public String getMessage() {
-        return null;
-    }
-
-    public Object doWork() {
-        bestFittingRootTree = temporalRooting.findRoot(tree, rootingFunction);
-        EventQueue.invokeLater(
-                new Runnable() {
-                    public void run() {
-                        setupPanel();
-                    }
-                });
-
-        return null;
-    }
-
-}
 
 
     public TemporalRooting getTemporalRooting() {
         return temporalRooting;
     }
 
-class StatisticsModel extends AbstractTableModel {
+    class StatisticsModel extends AbstractTableModel {
 
-    String[] rowNamesDatedTips = {"Date range", "Slope (rate)", "X-Intercept (TMRCA)", "Correlation Coefficient", "R squared", "Residual Mean Squared"};
-    String[] rowNamesContemporaneousTips = {"Mean root-tip", "Coefficient of variation", "Stdev", "Variance"};
+        String[] rowNamesDatedTips = {"Date range", "Slope (rate)", "X-Intercept (TMRCA)", "Correlation Coefficient", "R squared", "Residual Mean Squared"};
+        String[] rowNamesContemporaneousTips = {"Mean root-tip", "Coefficient of variation", "Stdev", "Variance"};
 
-    private DecimalFormat formatter = new DecimalFormat("0.####E0");
-    private DecimalFormat formatter2 = new DecimalFormat("####0.####");
+        private DecimalFormat formatter = new DecimalFormat("0.####E0");
+        private DecimalFormat formatter2 = new DecimalFormat("####0.####");
 
-    public StatisticsModel() {
-    }
-
-    public int getColumnCount() {
-        return 2;
-    }
-
-    public int getRowCount() {
-        if (temporalRooting == null) {
-            return 0;
-        } else if (temporalRooting.isContemporaneous()) {
-            return rowNamesContemporaneousTips.length;
-        } else {
-            return rowNamesDatedTips.length;
+        public StatisticsModel() {
         }
-    }
 
-    public Object getValueAt(int row, int col) {
+        public int getColumnCount() {
+            return 2;
+        }
 
-        double value = 0;
-        if (temporalRooting.isContemporaneous()) {
-            if (col == 0) {
-                return rowNamesContemporaneousTips[row];
-            }
-            double values[] = temporalRooting.getRootToTipDistances(currentTree);
-
-            switch (row) {
-                case 0:
-                    value = DiscreteStatistics.mean(values);
-                    break;
-                case 1:
-                    value = DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values);
-                    break;
-                case 2:
-                    value = DiscreteStatistics.stdev(values);
-                    break;
-                case 3:
-                    value = DiscreteStatistics.variance(values);
-                    break;
-            }
-        } else {
-            Regression r = temporalRooting.getRootToTipRegression(currentTree);
-            if (col == 0) {
-                return rowNamesDatedTips[row];
-            }
-            switch (row) {
-                case 0:
-                    value = temporalRooting.getDateRange();
-                    break;
-                case 1:
-                    value = r.getGradient();
-                    break;
-                case 2:
-                    value = r.getXIntercept();
-                    break;
-                case 3:
-                    value = r.getCorrelationCoefficient();
-                    break;
-                case 4:
-                    value = r.getRSquared();
-                    break;
-                case 5:
-                    value = r.getResidualMeanSquared();
-                    break;
+        public int getRowCount() {
+            if (temporalRooting == null) {
+                return 0;
+            } else if (temporalRooting.isContemporaneous()) {
+                return rowNamesContemporaneousTips.length;
+            } else {
+                return rowNamesDatedTips.length;
             }
         }
 
-        if (value > 0 && (Math.abs(value) < 0.1 || Math.abs(value) >= 100000.0)) {
-            return formatter.format(value);
-        } else return formatter2.format(value);
-    }
+        public Object getValueAt(int row, int col) {
 
-    public String getColumnName(int column) {
-        if (column > 0) {
-            return "";
+            double value = 0;
+            if (temporalRooting.isContemporaneous()) {
+                if (col == 0) {
+                    return rowNamesContemporaneousTips[row];
+                }
+                double values[] = temporalRooting.getRootToTipDistances(currentTree);
+
+                switch (row) {
+                    case 0:
+                        value = DiscreteStatistics.mean(values);
+                        break;
+                    case 1:
+                        value = DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values);
+                        break;
+                    case 2:
+                        value = DiscreteStatistics.stdev(values);
+                        break;
+                    case 3:
+                        value = DiscreteStatistics.variance(values);
+                        break;
+                }
+            } else {
+                Regression r = temporalRooting.getRootToTipRegression(currentTree);
+                if (col == 0) {
+                    return rowNamesDatedTips[row];
+                }
+                switch (row) {
+                    case 0:
+                        value = temporalRooting.getDateRange();
+                        break;
+                    case 1:
+                        value = r.getGradient();
+                        break;
+                    case 2:
+                        value = r.getXIntercept();
+                        break;
+                    case 3:
+                        value = r.getCorrelationCoefficient();
+                        break;
+                    case 4:
+                        value = r.getRSquared();
+                        break;
+                    case 5:
+                        value = r.getResidualMeanSquared();
+                        break;
+                }
+            }
+
+            if (value > 0 && (Math.abs(value) < 0.1 || Math.abs(value) >= 100000.0)) {
+                return formatter.format(value);
+            } else return formatter2.format(value);
         }
-        if (temporalRooting == null) {
-            return "No tree loaded";
-        } else if (temporalRooting.isContemporaneous()) {
-            return "Contemporaneous Tips";
-        } else {
-            return "Dated Tips";
+
+        public String getColumnName(int column) {
+            if (column > 0) {
+                return "";
+            }
+            if (temporalRooting == null) {
+                return "No tree loaded";
+            } else if (temporalRooting.isContemporaneous()) {
+                return "Contemporaneous Tips";
+            } else {
+                return "Dated Tips";
+            }
         }
-    }
 
-    public Class getColumnClass(int c) {
-        return getValueAt(0, c).getClass();
-    }
-
-    public String toString() {
-        StringBuffer buffer = new StringBuffer();
-
-        buffer.append(getColumnName(0));
-        for (int j = 1; j < getColumnCount(); j++) {
-            buffer.append("\t");
-            buffer.append(getColumnName(j));
+        public Class getColumnClass(int c) {
+            return getValueAt(0, c).getClass();
         }
-        buffer.append("\n");
 
-        for (int i = 0; i < getRowCount(); i++) {
-            buffer.append(getValueAt(i, 0));
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
+
+            buffer.append(getColumnName(0));
             for (int j = 1; j < getColumnCount(); j++) {
                 buffer.append("\t");
-                buffer.append(getValueAt(i, j));
+                buffer.append(getColumnName(j));
             }
             buffer.append("\n");
+
+            for (int i = 0; i < getRowCount(); i++) {
+                buffer.append(getValueAt(i, 0));
+                for (int j = 1; j < getColumnCount(); j++) {
+                    buffer.append("\t");
+                    buffer.append(getValueAt(i, j));
+                }
+                buffer.append("\n");
+            }
+
+            return buffer.toString();
         }
-
-        return buffer.toString();
     }
-}
 
-private JCheckBox rootingCheck;
+    private JCheckBox rootingCheck;
 }

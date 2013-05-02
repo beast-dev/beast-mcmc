@@ -282,6 +282,7 @@ public class BeastMain {
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.IntegerOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
+                        new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 
@@ -452,7 +453,7 @@ public class BeastMain {
 
         File inputFile = null;
 
-        if (options) {
+        if (options && !beagleShowInfo) {
 
             String titleString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
                     "Version " + version.getVersionString() + ", " + version.getDateString() + "</p></center></html>";

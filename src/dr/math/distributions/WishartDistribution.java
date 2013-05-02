@@ -249,15 +249,13 @@ public class WishartDistribution implements MultivariateDistribution, WishartSta
         double logDensity = 0;
 
         try {
-            if (!W.isPD()) {
-                return Double.NEGATIVE_INFINITY;
-            }
+//            if (!W.isPD()) { // TODO isPD() does not appear to work
+//                return Double.NEGATIVE_INFINITY;
+//            }
 
-//            final double det = W.determinant();
+            logDensity = W.logDeterminant(); // Returns NaN is W is not positive-definite.
 
-            logDensity = W.logDeterminant();
-
-            if (Double.isInfinite(logDensity)) {
+            if (Double.isInfinite(logDensity) || Double.isNaN(logDensity)) {
                 return Double.NEGATIVE_INFINITY;
             }
 

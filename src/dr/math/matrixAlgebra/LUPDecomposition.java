@@ -142,13 +142,23 @@ public class LUPDecomposition {
         if (!decomposed()) {
             return Double.NaN;
         }
-        double determinant = Math.log(parity);
-        for (int i = 0; i < rows.length; i++)
-            determinant += Math.log(rows[i][i]);
-        return determinant;
+        int sign = parity;
+        double logDeterminant = 0.0;
+        for (int i = 0; i < rows.length; i++) {
+            if (rows[i][i] == 0.0) {
+                return Double.NaN;
+            }
+            logDeterminant += Math.log(Math.abs(rows[i][i]));
+            sign *= (rows[i][i] > 0 ? 1 : -1);
+        }
+        if (sign < 0) {
+            return Double.NaN;
+        } else {
+            return logDeterminant;
+        }
     }
 
-    public boolean isPD() {
+    public boolean isPD() { // TODO Fix; check sign and for 0 in rows[i][i]
         for (int i = 0; i < rows.length; i++) {
             if (rows[i][i] <= 0)
                 return false;

@@ -528,7 +528,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Name", "Date", "Height"};
+        String[] columnNames = {"Name", "Date", "Precision", "Height"};
 
         public DataTableModel() {
         }
@@ -545,17 +545,23 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
+            Date date = options.taxonList.getTaxon(row).getDate();
             switch (col) {
                 case 0:
                     return options.taxonList.getTaxonId(row);
                 case 1:
-                    Date date = options.taxonList.getTaxon(row).getDate();
                     if (date != null) {
                         return date.getTimeValue();
                     } else {
                         return "-";
                     }
                 case 2:
+                    if (date != null) {
+                        return date.getPrecision();
+                    } else {
+                        return "-";
+                    }
+                case 3:
                     if (heights != null) {
                         return heights[row];
                     } else {
@@ -575,6 +581,14 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                     Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
                     options.taxonList.getTaxon(row).setDate(newDate);
                 }
+            } else if (col == 2) {
+                Date date = options.taxonList.getTaxon(row).getDate();
+                if (date != null) {
+                    double d = (Double) aValue;
+                    if (d >= 0.0) {
+                        date.setPrecision(d);
+            }
+                }
             }
 
             timeScaleChanged();
@@ -582,7 +596,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         public boolean isCellEditable(int row, int col) {
             if (col == 0) return false;
-            if (col == 1) {
+            if (col == 1 || col == 2) {
                 Date date = options.taxonList.getTaxon(row).getDate();
                 return (date != null);
             }

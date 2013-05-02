@@ -74,6 +74,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      * The set of cases
      */
     private AbstractOutbreak cases;
+    private HashSet<AbstractCase> caseSet;
     private boolean likelihoodKnown = false;
     private double logLikelihood;
     private double storedLogLikelihood;
@@ -133,6 +134,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         estimatedLastSampleTime = lastSampleDate.getTimeValue();
         cases = caseData;
+        caseSet = new HashSet<AbstractCase>(cases.getCases());
         this.extended = extended;
         this.sampleTTs = sampleTTs;
         addModel(cases);
@@ -644,73 +646,156 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     private double[] prune(NodeRef node, boolean recordForReconstruction){
-        if(virusTree.isExternal(node)){
-            AbstractCase tipPainting = branchMap[node.getNumber()];
-            NodeRef parent = virusTree.getParent(node);
-            double[] out = new double[noTips];
-            Arrays.fill(out, Double.NEGATIVE_INFINITY);
-            HashSet<AbstractCase> possiblePaintings = nodePaintingPossibilities.get(parent.getNumber());
-            for(AbstractCase parentPainting: possiblePaintings){
-                double value = cases.logP(parentPainting, tipPainting, getNodeTime(parent), getNodeTime(node));
-                out[cases.getCases().indexOf(parentPainting)]=value;
-            }
-            return out;
-        } else {
-            NodeRef parent = virusTree.getParent(node);
-            double[][] subtreeLikelihoods = new double[2][noTips];
-            double[] out = new double[noTips];
-            Arrays.fill(out, Double.NEGATIVE_INFINITY);
-            for(int i=0; i<2; i++){
-                subtreeLikelihoods[i] = Arrays.copyOf(prune(virusTree.getChild(node,i), recordForReconstruction),
-                        noTips);
-            }
-
-            HashSet<AbstractCase> possibleNodePaintings = nodePaintingPossibilities.get(node.getNumber());
-            if(parent!=null){
-                // not the root - the likelihood of this subtree given that the parent node has a given painting
-                HashSet<AbstractCase> possibleParentPaintings = nodePaintingPossibilities.get(parent.getNumber());
-                for(AbstractCase parentPainting: possibleParentPaintings){
-                    int parentIndex=cases.getCases().indexOf(parentPainting);
-                    double sum = Double.NEGATIVE_INFINITY;
-                    for(AbstractCase nodePainting: possibleNodePaintings){
-                        // is the tip with the parent painting a descendant of this node?
-                        boolean paintingForcedByParent = possibleNodePaintings.contains(parentPainting);
-                        // If paintingForcedByParent is true, then the likelihood is nonzero only if the node
-                        // has the same painting as its parent
-                        boolean treeCompatibilityCheck = !paintingForcedByParent || parentPainting==nodePainting;
-                        if(treeCompatibilityCheck){
-                            double term = 0;
-                            int childIndex = cases.getCases().indexOf(nodePainting);
-                            for(int i=0; i<2; i++){
-                                term = term + subtreeLikelihoods[i][childIndex];
-                            }
-                            term = term + cases.logP(parentPainting,nodePainting,getNodeTime(parent),getNodeTime(node));
-                            if(recordForReconstruction){
-                                subLikelihoods[(node.getNumber()-noTips)*noTips*noTips
-                                        +parentIndex*noTips
-                                        +childIndex] = term;
-                            }
-                            sum = LogTricks.logSum(sum, term);
-                        }
-                    }
-                    out[parentIndex]=sum;
+        if(!extended){
+            if(virusTree.isExternal(node)){
+                AbstractCase tipPainting = branchMap[node.getNumber()];
+                NodeRef parent = virusTree.getParent(node);
+                double[] out = new double[noTips];
+                Arrays.fill(out, Double.NEGATIVE_INFINITY);
+                HashSet<AbstractCase> possiblePaintings;
+                possiblePaintings = nodePaintingPossibilities.get(parent.getNumber());
+                for(AbstractCase parentPainting: possiblePaintings){
+                    double value = cases.logP(parentPainting, tipPainting, getNodeTime(parent), getNodeTime(node), false);
+                    out[cases.getCases().indexOf(parentPainting)]=value;
                 }
                 return out;
             } else {
-                // root - these are the likelihoods of the root paintings
-                for(AbstractCase nodePainting: possibleNodePaintings){
-                    double term = 0;
-                    int index = cases.getCases().indexOf(nodePainting);
-                    for(int i=0; i<2; i++){
-                        term+=subtreeLikelihoods[i][index];
+                NodeRef parent = virusTree.getParent(node);
+                double[][] subtreeLikelihoods = new double[2][noTips];
+                double[] out = new double[noTips];
+                Arrays.fill(out, Double.NEGATIVE_INFINITY);
+                for(int i=0; i<2; i++){
+                    subtreeLikelihoods[i] = Arrays.copyOf(prune(virusTree.getChild(node,i), recordForReconstruction),
+                            noTips);
+                }
+                HashSet<AbstractCase> possibleNodePaintings = nodePaintingPossibilities.get(node.getNumber());
+                if(parent!=null){
+                    // not the root - the likelihood of this subtree given that the parent node has a given painting
+                    HashSet<AbstractCase> possibleParentPaintings = nodePaintingPossibilities.get(parent.getNumber());
+                    for(AbstractCase parentPainting: possibleParentPaintings){
+                        int parentIndex=cases.getCases().indexOf(parentPainting);
+                        double sum = Double.NEGATIVE_INFINITY;
+                        for(AbstractCase nodePainting: possibleNodePaintings){
+                            // is the tip with the parent painting a descendant of this node?
+                            boolean paintingForcedByParent = possibleNodePaintings.contains(parentPainting);
+                            // If paintingForcedByParent is true, then the likelihood is nonzero only if the node
+                            // has the same painting as its parent
+                            boolean treeCompatibilityCheck = !paintingForcedByParent || parentPainting==nodePainting;
+                            if(treeCompatibilityCheck){
+                                double term = 0;
+                                int childIndex = cases.getCases().indexOf(nodePainting);
+                                for(int i=0; i<2; i++){
+                                    term = term + subtreeLikelihoods[i][childIndex];
+                                }
+                                term = term + cases.logP(parentPainting,nodePainting,getNodeTime(parent),
+                                        getNodeTime(node), false);
+                                if(recordForReconstruction){
+                                    subLikelihoods[(node.getNumber()-noTips)*noTips*noTips
+                                            +parentIndex*noTips
+                                            +childIndex] = term;
+                                }
+                                sum = LogTricks.logSum(sum, term);
+                            }
+                        }
+                        out[parentIndex]=sum;
                     }
-                    term+=cases.logProbInfectiousBy(nodePainting,getNodeTime(node));
-                    if(recordForReconstruction){
-                        rootLikelihoods[index]=term;
+                    return out;
+                } else {
+                    // root - these are the likelihoods of the root paintings
+                    for(AbstractCase nodePainting: possibleNodePaintings){
+                        double term = 0;
+                        int index = cases.getCases().indexOf(nodePainting);
+                        for(int i=0; i<2; i++){
+                            term+=subtreeLikelihoods[i][index];
+                        }
+                        term+=cases.logProbInfectiousBy(nodePainting,getNodeTime(node), false);
+                        if(recordForReconstruction){
+                            rootLikelihoods[index]=term;
+                        }
+                        out[index]=term;
                     }
-                    out[index]=term;
+                    return out;
+                }
+            }
+        } else {
+            if(virusTree.isExternal(node)){
+                AbstractCase tipPainting = branchMap[node.getNumber()];
+                NodeRef parent = virusTree.getParent(node);
+                double[] out = new double[noTips];
+                Arrays.fill(out, Double.NEGATIVE_INFINITY);
+                for(AbstractCase parentPainting: caseSet){
+                    double value = cases.logP(parentPainting, tipPainting, getNodeTime(parent), getNodeTime(node),
+                            true);
+                    out[cases.getCases().indexOf(parentPainting)]=value;
                 }
                 return out;
+            } else {
+                NodeRef parent = virusTree.getParent(node);
+                double[][] subtreeLikelihoods = new double[2][noTips];
+                double[] out = new double[noTips];
+                Arrays.fill(out, Double.NEGATIVE_INFINITY);
+                for(int i=0; i<2; i++){
+                    subtreeLikelihoods[i] = Arrays.copyOf(prune(virusTree.getChild(node,i), recordForReconstruction),
+                            noTips);
+                }
+                HashSet<AbstractCase> nodeDescendantTips = nodePaintingPossibilities.get(node.getNumber());
+                if(parent!=null){
+                    // not the root - the likelihood of this subtree given that the parent node has a given painting
+                    HashSet<AbstractCase> parentDescendantTips = nodePaintingPossibilities.get(parent.getNumber());
+                    for(AbstractCase parentPainting: caseSet){
+                        int parentIndex=cases.getCases().indexOf(parentPainting);
+                        double sum = Double.NEGATIVE_INFINITY;
+                        for(AbstractCase nodePainting: caseSet){
+                            // is the tip with the parent painting a descendant of this node?
+                            boolean paintingForcedByParent = nodeDescendantTips.contains(parentPainting);
+                            // are the paintings NOT paintings of a tip descended from the nodes?
+                            boolean nodeCreep = !nodeDescendantTips.contains(nodePainting);
+                            boolean parentCreep = !parentDescendantTips.contains(parentPainting);
+                            // valid combinations:
+                            // 1) no creep in either case, paintingForcedByParent = false
+                            // 2) no creep in either case, paintingForcedByParent = true and both nodes have same
+                            // painting
+                            // 2) parent creep but no node creep
+                            // 3) parent creep, node creep, parent and child have same painting
+                            boolean treeCompatibilityCheck = (!nodeCreep && !parentCreep && (!paintingForcedByParent
+                                    || parentPainting == nodePainting)) || (parentCreep && (!nodeCreep ||
+                                    parentPainting == nodePainting));
+                            if(treeCompatibilityCheck){
+                                double term = 0;
+                                int childIndex = cases.getCases().indexOf(nodePainting);
+                                for(int i=0; i<2; i++){
+                                    term = term + subtreeLikelihoods[i][childIndex];
+                                }
+                                term = term + cases.logP(parentPainting,nodePainting,getNodeTime(parent),
+                                        getNodeTime(node), true);
+                                if(recordForReconstruction){
+                                    subLikelihoods[(node.getNumber()-noTips)*noTips*noTips
+                                            +parentIndex*noTips
+                                            +childIndex] = term;
+                                }
+                                sum = LogTricks.logSum(sum, term);
+                            }
+                        }
+                        out[parentIndex]=sum;
+                    }
+                    return out;
+                } else {
+                    // root - these are the likelihoods of the root paintings
+                    for(AbstractCase nodePainting: caseSet){
+                        double term = 0;
+                        int index = cases.getCases().indexOf(nodePainting);
+                        for(int i=0; i<2; i++){
+                            term+=subtreeLikelihoods[i][index];
+                        }
+                        term+=cases.logProbInfectiousBy(nodePainting,getNodeTime(node), true);
+                        if(recordForReconstruction){
+                            rootLikelihoods[index]=term;
+                        }
+                        out[index]=term;
+                    }
+                    return out;
+
+                }
             }
         }
     }
@@ -724,8 +809,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             NodeRef parent = virusTree.getParent(node);
             AbstractCase tipPainting = map[node.getNumber()];
             AbstractCase parentPainting = map[parent.getNumber()];
-            double out = cases.logP(parentPainting, tipPainting, getNodeTime(parent), getNodeTime(node));
-            return out;
+            return cases.logP(parentPainting, tipPainting, getNodeTime(parent), getNodeTime(node), extended);
         } else {
             NodeRef parent = virusTree.getParent(node);
             double[] subtreeLikelihoods = new double[2];
@@ -736,15 +820,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(parent!=null){
                 // not the root - the likelihood of this subtree given that the parent node has a given painting
                 AbstractCase parentPainting = map[parent.getNumber()];
-                // is the tip with the parent painting a descendant of this node?
-                // If paintingForcedByParent is true, then the likelihood is nonzero only if the node
-                // has the same painting as its parent
-
                 double term = 0;
                 for(int i=0; i<2; i++){
                     term+=subtreeLikelihoods[i];
                 }
-                term += cases.logP(parentPainting, nodePainting, getNodeTime(parent), getNodeTime(node));
+                term += cases.logP(parentPainting, nodePainting, getNodeTime(parent), getNodeTime(node), extended);
                 return term;
 
             } else {
@@ -753,7 +833,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 for(int i=0; i<2; i++){
                     term+=subtreeLikelihoods[i];
                 }
-                term+=cases.logProbInfectiousBy(nodePainting, getNodeTime(node));
+                term+=cases.logProbInfectiousBy(nodePainting, getNodeTime(node), extended);
                 return term;
             }
         }
@@ -859,7 +939,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             NodeRef firstChild = virusTree.getChild(node,0);
             NodeRef secondChild = virusTree.getChild(node,1);
             NodeRef parent = virusTree.getParent(node);
-
             if(map[node.getNumber()]!=map[firstChild.getNumber()] &&
                     map[node.getNumber()]!=map[secondChild.getNumber()] &&
                     (!extended || map[node.getNumber()]!=map[parent.getNumber()])){
@@ -876,6 +955,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 }
             }
         }
+
         return out;
     }
 
@@ -1057,13 +1137,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 Double[] branchLogLs = new Double[2];
                 for(int i=0; i<2; i++){
                     branchLogLs[i]= cases.logP(choices[i], choices[1-i], getNodeTime(node),
-                            getNodeTime(virusTree.getChild(node,1-i)));
+                            getNodeTime(virusTree.getChild(node,1-i)), extended);
                 }
                 if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
 
                     for(int i=0; i<2; i++){
                         branchLogLs[i]= cases.logP(choices[i], choices[1-i], getNodeTime(node),
-                                getNodeTime(virusTree.getChild(node,1-i)));
+                                getNodeTime(virusTree.getChild(node,1-i)), extended);
                     }
                     throw new BadPaintingException("Both branch possibilities have zero likelihood: "
                             +node.toString()+", cases " + choices[0].getName() + " and " + choices[1].getName() + ".");

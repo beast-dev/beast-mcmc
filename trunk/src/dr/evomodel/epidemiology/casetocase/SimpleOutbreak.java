@@ -17,50 +17,43 @@ import dr.xml.*;
 import java.util.ArrayList;
 
 /**
- * Adaptation of the farm incubation and infectious period models from Morelli et al, PLoS Computational Biology, 2012
- * (10.1371/journal.pcbi.1002768.g001)
- *
- * Non-extended paintings for now
+ * Simple version with no latent period; built for speed and extended paintings
  *
  * User: Matthew Hall
  * Date: 07/09/2012
  */
 
-public class Morelli12Outbreak extends AbstractOutbreak {
+public class SimpleOutbreak extends AbstractOutbreak {
 
-    public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
-        this(name, incubationPeriodDistribution, d, riemannSampleSize);
+    public SimpleOutbreak(String name, Parameter d, Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
+        this(name, d, riemannSampleSize);
         cases = farms;
         for(AbstractCase farm : farms){
             addModel(farm);
         }
     }
 
-    public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
-        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, riemannSampleSize, farms);
+    public SimpleOutbreak(Parameter d, ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
+        this(SIMPLE_OUTBREAK, d, riemannSampleSize, farms);
     }
 
     // with the inner class, initialisation has to take places without cases - add them later
 
-    public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             Parameter riemannSampleSize){
+    public SimpleOutbreak(String name, Parameter d,
+                          Parameter riemannSampleSize){
         super(name);
-        this.latentPeriodDistribution = incubationPeriodDistribution;
-        addModel(this.latentPeriodDistribution);
         this.d = d;
         numericalIntegrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
         cases = new ArrayList<AbstractCase>();
     }
 
-    public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             Parameter riemannSampleSize){
-        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, riemannSampleSize);
+    public SimpleOutbreak(Parameter d,
+                          Parameter riemannSampleSize){
+        this(SIMPLE_OUTBREAK, d, riemannSampleSize);
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Taxa associatedTaxa){
-        Morelli12Case thisCase = new Morelli12Case(caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
+        SimpleCase thisCase = new SimpleCase(caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
         cases.add(thisCase);
         addModel(thisCase);
     }
@@ -75,54 +68,54 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     // this ignores whether the tree will actually accept the paintings at this node (although it must be a
     // non-extended painting) and just calculates the probability of these timings
 
-    private double localLogP(Morelli12Case parentPainting, Morelli12Case childPainting, double time1,
-                             double time2, boolean extended){
+    private double localLogP(SimpleCase parentPainting, SimpleCase childPainting, double time1,
+                            double time2, boolean extended){
         if(!extended){
             if(parentPainting==childPainting){
                 return 0;
             } else {
                 //the event in question is that the case corresponding to the child whose painting is different infected
                 // at the time of node and infectious by the time of that child.
-                return Math.log(childPainting.infectedAtInfectiousBy(time1, time2));
+                return Math.log(childPainting.infectedAt(time1));
             }
         } else {
             if(parentPainting==childPainting){
                 return 0;
             } else {
-                return Math.log(childPainting.infectedAfterInfectiousBy(time1, time2));
+                return Math.log(childPainting.infectedBetween(time1, time2));
             }
         }
     }
 
-    private double localP(Morelli12Case parentPainting, Morelli12Case childPainting, double time1,
-                          double time2, boolean extended){
+    private double localP(SimpleCase parentPainting, SimpleCase childPainting, double time1,
+                         double time2, boolean extended){
         return Math.exp(logP(parentPainting, childPainting, time1, time2, extended));
     }
 
     public double P(AbstractCase parentPainting, AbstractCase childPainting, double time1,
                     double time2, boolean extended){
-        return localP((Morelli12Case)parentPainting, (Morelli12Case)childPainting, time1, time2, extended);
+        return localP((SimpleCase)parentPainting, (SimpleCase)childPainting, time1, time2, extended);
     }
 
     public double logP(AbstractCase parentPainting, AbstractCase childPainting, double time1,
                        double time2, boolean extended){
-        return localLogP((Morelli12Case)parentPainting, (Morelli12Case)childPainting, time1, time2, extended);
+        return localLogP((SimpleCase)parentPainting, (SimpleCase)childPainting, time1, time2, extended);
     }
 
-    private double localProbInfectiousBy(Morelli12Case painting, double time, boolean extended){
+    private double localProbInfectiousBy(SimpleCase painting, double time, boolean extended){
         return Math.exp(logProbInfectiousBy(painting, time, extended));
     }
 
-    private double localLogProbInfectiousBy(Morelli12Case painting, double time, boolean extended){
+    private double localLogProbInfectiousBy(SimpleCase painting, double time, boolean extended){
         return Math.log(1-painting.getInfectiousPeriodDistribution().cdf(painting.getEndOfInfectiousPeriod() - time));
     }
 
     public double probInfectiousBy(AbstractCase painting, double time, boolean extended){
-        return localProbInfectiousBy((Morelli12Case)painting, time, extended);
+        return localProbInfectiousBy((SimpleCase)painting, time, extended);
     }
 
     public double logProbInfectiousBy(AbstractCase painting, double time, boolean extended){
-        return localLogProbInfectiousBy((Morelli12Case)painting, time, extended);
+        return localLogProbInfectiousBy((SimpleCase)painting, time, extended);
     }
 
     /* Parser. */
@@ -148,17 +141,17 @@ public class Morelli12Outbreak extends AbstractOutbreak {
                     (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
-            Morelli12Outbreak cases = new Morelli12Outbreak(incubationPeriodDistribution, d, riemannSampleSize);
+            SimpleOutbreak cases = new SimpleOutbreak(d, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
-                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(Morelli12Case.MORELLI_12_CASE)){
+                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(SimpleCase.SIMPLE_CASE)){
                     parseCase((XMLObject)cxo, cases);
                 }
             }
             return cases;
         }
 
-        public void parseCase(XMLObject xo, Morelli12Outbreak outbreak)
+        public void parseCase(XMLObject xo, SimpleOutbreak outbreak)
                 throws XMLParseException {
             String farmID = (String) xo.getAttribute(CASE_ID);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
@@ -180,11 +173,11 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
         @Override
         public Class getReturnType(){
-            return Morelli12Outbreak.class;
+            return SimpleOutbreak.class;
         }
 
         public String getParserName(){
-            return MORELLI_12_OUTBREAK;
+            return SIMPLE_OUTBREAK;
         }
 
         @Override
@@ -203,10 +196,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ProductStatistic.class, 0,2),
-                new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
-                        "distribution of incubation periods (constructed in the XML so farm elements can inherit" +
-                        "it).", false),
-                new ElementRule(Morelli12Case.MORELLI_12_CASE, caseRules, 1, Integer.MAX_VALUE),
+                new ElementRule(SimpleCase.SIMPLE_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(SQRT_INFECTIOUS_SCALE, Parameter.class, "The square root of the scale parameter of " +
                         "all infectiousness periods (variances are proportional to the square of this, see Morelli" +
                         "2012).", false),
@@ -215,8 +205,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         };
     };
 
-    public static final String MORELLI_12_OUTBREAK = "morelli12Outbreak";
-    private ParametricDistributionModel latentPeriodDistribution;
+    public static final String SIMPLE_OUTBREAK = "simpleOutbreak";
     private final RiemannApproximation numericalIntegrator;
     private final Parameter d;
 
@@ -247,12 +236,12 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
     //Case class.
 
-    private class Morelli12Case extends AbstractCase {
+    private class SimpleCase extends AbstractCase {
 
         // geography version
 
-        public Morelli12Case(String name, String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
-                             Taxa associatedTaxa){
+        public SimpleCase(String name, String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
+                          Taxa associatedTaxa){
             super(name);
             this.caseID = caseID;
             //The time value for end of these days is the numerical value of these dates plus 1.
@@ -262,16 +251,15 @@ public class Morelli12Outbreak extends AbstractOutbreak {
             this.oldestLesionAge = oldestLesionAge;
             rebuildInfDistribution();
             this.addModel(infectiousPeriodDistribution);
-            this.addModel(latentPeriodDistribution);
             this.addVariable(d);
         }
 
         // non-geography version
 
 
-        public Morelli12Case(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
-                             Taxa associatedTaxa){
-            this(MORELLI_12_CASE, caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
+        public SimpleCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge,
+                          Taxa associatedTaxa){
+            this(SIMPLE_CASE, caseID, examDate, cullDate, oldestLesionAge, associatedTaxa);
         }
 
 
@@ -315,45 +303,21 @@ public class Morelli12Outbreak extends AbstractOutbreak {
             return endOfInfectiousDate;
         }
 
-        public double infectedAtInfectiousAt(double infected, double infectious){
-            if(infectious<infected){
-                throw new RuntimeException("Infectious before infected?");
-            }
-            if(culledYet(infectious)){
+        public double infectedAt(double infected){
+            if(culledYet(infected)){
                 return 0;
             } else {
-                return infectiousPeriodDistribution.pdf(endOfInfectiousDate.getTimeValue()-infectious)
-                        * latentPeriodDistribution.pdf(infectious-infected);
-
+                return infectiousPeriodDistribution.pdf(endOfInfectiousDate.getTimeValue()-infected);
             }
         }
 
-        public double infectedAtInfectiousBy(double infected, double infectious){
-            if(infectious<infected){
-                throw new RuntimeException("Infectious before infected?");
-            }
-            double totalTimeInfected = endOfInfectiousDate.getTimeValue()-infected;
-            if(totalTimeInfected<0){
+        public double infectedBetween(double start, double end){
+            if(culledYet(start)){
                 return 0;
             } else {
-                double maxLP = infectious<endOfInfectiousDate.getTimeValue() ?
-                        infectious-infected : endOfInfectiousDate.getTimeValue()-infected;
-                JointDistribution tempDist = new JointDistribution(totalTimeInfected);
-                return tempDist.evaluateIntegral(0, maxLP);
-            }
-        }
-
-        public double infectedAfterInfectiousBy(double infectedAfter, double infectiousBy){
-            if(infectiousBy<infectedAfter){
-                throw new RuntimeException("Infectious before infected?");
-            }
-            if(culledYet(infectedAfter)){
-                return 0;
-            } else {
-                double truncInfectiousBy = infectiousBy<endOfInfectiousDate.getTimeValue() ?
-                        infectiousBy : endOfInfectiousDate.getTimeValue();
-                JointDistributionIntegral jdi = new JointDistributionIntegral(truncInfectiousBy);
-                return jdi.evaluateIntegral(infectedAfter, truncInfectiousBy);
+                double endPoint = end<endOfInfectiousDate.getTimeValue() ? end : endOfInfectiousDate.getTimeValue();
+                return infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-endPoint)
+                        - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-start);
             }
 
         }
@@ -384,66 +348,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         protected void acceptState() {
         }
 
-    /* Probability distribution for the latent period being "argument" and the total time from infection to cull "t2".
-    The integral of this function is over values of "argument" and is important in normalising the likelihood of the
-    transmission tree given the phylogenetic tree*/
-
-        public class JointDistribution implements IntegrableUnivariateFunction {
-
-            public JointDistribution(double t2){
-                this.t2=t2;
-            }
-
-            public double evaluateIntegral(double a, double b) {
-                return numericalIntegrator.integrate(this, a, b);
-            }
-
-            public double evaluate(double argument) {
-                return latentPeriodDistribution.pdf(argument)*infectiousPeriodDistribution.pdf(t2-argument);
-            }
-
-            public double getLowerBound() {
-                return 0;
-            }
-
-            public double getUpperBound() {
-                return t2;
-            }
-
-            private double t2;
-        }
-
-    /* probability distribution for the date of infection being "argument" and the date of infectiousness being
-    before "branchEnd"
-    */
-
-        public class JointDistributionIntegral implements IntegrableUnivariateFunction {
-
-            public JointDistributionIntegral(double branchEnd){
-                this.branchEnd = branchEnd;
-            }
-
-            public double evaluateIntegral(double a, double b) {
-                return numericalIntegrator.integrate(this, a, b);
-            }
-
-            public double evaluate(double argument){
-                JointDistribution jointDist = new JointDistribution(endOfInfectiousDate.getTimeValue() - argument);
-                return jointDist.evaluateIntegral(0, endOfInfectiousDate.getTimeValue() - branchEnd);
-            }
-
-            public double getLowerBound() {
-                return Double.NEGATIVE_INFINITY;
-            }
-
-            public double getUpperBound() {
-                return endOfInfectiousDate.getTimeValue();
-            }
-
-            private double branchEnd;
-        }
-
-        public static final String MORELLI_12_CASE = "morelli12Case";
+        public static final String SIMPLE_CASE = "simpleCase";
         private final Date examDate;
         private final Date endOfInfectiousDate;
         private final Parameter oldestLesionAge;

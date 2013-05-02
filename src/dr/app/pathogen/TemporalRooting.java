@@ -123,6 +123,16 @@ public class TemporalRooting {
         return findGlobalRoot(tree, dates, rootingFunction);
     }
 
+    public Tree findLocalRoot(Tree tree, RootingFunction rootingFunction) {
+
+        double[] dates = getTipDates(tree);
+        FlexibleTree bestTree = new FlexibleTree(tree);
+
+        findLocalRoot(bestTree, dates, rootingFunction);
+
+        return bestTree;
+    }
+
     public Regression getRootToTipRegression(Tree tree) {
 
         if (contemporaneous) {

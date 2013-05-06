@@ -25,10 +25,10 @@
 
 package dr.evomodel.operators;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.distribution.WishartGammalDistributionModel;
@@ -72,7 +72,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
     private double priorDf;
     private SymmetricMatrix priorInverseScaleMatrix;
-    private final TreeModel treeModel;
+    private final MultivariateTraitTree treeModel;
     private final int dim;
     private double numberObservations;
     private final String traitName;
@@ -274,7 +274,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         try {
             S2 = new SymmetricMatrix(S);
             if (pathWeight != 1.0) {
-                 S2 = (SymmetricMatrix) S2.product(pathWeight);
+                S2 = (SymmetricMatrix) S2.product(pathWeight);
             }
             if (priorInverseScaleMatrix != null)
                 S2 = priorInverseScaleMatrix.add(S2);

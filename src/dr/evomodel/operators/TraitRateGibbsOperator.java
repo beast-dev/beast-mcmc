@@ -1,17 +1,42 @@
+/*
+ * TraitRateGibbsOperator.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.operators;
 
-import dr.evomodel.tree.TreeModel;
+import dr.evolution.tree.MultivariateTraitTree;
+import dr.evolution.tree.NodeRef;
+import dr.evomodel.branchratemodel.ArbitraryBranchRates;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
-import dr.evomodel.branchratemodel.ArbitraryBranchRates;
-import dr.inference.model.MatrixParameter;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.MCMCOperator;
-import dr.inference.operators.SimpleMCMCOperator;
-import dr.inference.operators.GibbsOperator;
-import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.DistributionLikelihood;
-import dr.evolution.tree.NodeRef;
+import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.model.MatrixParameter;
+import dr.inference.operators.GibbsOperator;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
@@ -26,7 +51,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
 
     public static final String GIBBS_OPERATOR = "traitRateGibbsOperator";
 
-    private final TreeModel treeModel;
+    private final MultivariateTraitTree treeModel;
     private final MatrixParameter precisionMatrixParameter;
     private final AbstractMultivariateTraitLikelihood traitModel;
     private final GammaDistributionModel ratePriorModel;
@@ -63,7 +88,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
         if (!branchRateModel.usingReciprocal()) {
             throw new RuntimeException("ArbitraryBranchRates in TraitRateGibbsOperatior must use reciprocal rates");
         }
-                
+
         Logger.getLogger("dr.evomodel").info("Using Gibbs operator and trait rates");
     }
 
@@ -72,14 +97,14 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
     }
 
     private void sampleRateForNode(NodeRef child, double[][] precision, double priorShape, double priorRate) {
-        
+
         NodeRef parent = treeModel.getParent(child);
 
-        final double[] trait       = treeModel.getMultivariateNodeTrait(child,  traitName);
+        final double[] trait = treeModel.getMultivariateNodeTrait(child, traitName);
         final double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
 
         final double precisionScalar = branchRateModel.getBranchRate(treeModel, child) /
-                                       traitModel.getRescaledBranchLength(child);
+                traitModel.getRescaledBranchLength(child);
 
         for (int i = 0; i < dim; i++) {
             trait[i] -= parentTrait[i];
@@ -94,7 +119,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
         }
 
         final double gammaShape = priorShape + 0.5 * dim;
-        final double gammaRate  = priorRate  + 0.5 * SSE * precisionScalar;
+        final double gammaRate = priorRate + 0.5 * SSE * precisionScalar;
 
         final double newValue = GammaDistribution.nextGamma(gammaShape, 1.0 / gammaRate);
 
@@ -111,7 +136,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
 
         if (ratePriorModel != null) {
             priorShape = ratePriorModel.getShape();
-            priorRate  = 1.0 / ratePriorModel.getScale();
+            priorRate = 1.0 / ratePriorModel.getScale();
         } else {
             priorShape = ratePrior.getShape();
             priorRate = 1.0 / ratePrior.getScale();

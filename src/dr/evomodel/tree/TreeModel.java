@@ -1,7 +1,7 @@
 /*
  * TreeModel.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -42,7 +42,7 @@ import java.util.*;
  * @author Alexei Drummond
  * @version $Id: TreeModel.java,v 1.129 2006/01/05 17:55:47 rambaut Exp $
  */
-public class TreeModel extends AbstractModel implements MutableTree {
+public class TreeModel extends AbstractModel implements MultivariateTraitTree {
 
     //
     // Public stuff
@@ -645,77 +645,77 @@ public class TreeModel extends AbstractModel implements MutableTree {
             }
         }
     }
-    
+
     /**
      * Copies a different tree into the current treeModel. Needs to reconnect
      * the existing internal and external nodes, taking into account that the
      * node numbers of the external nodes may differ between the two trees.
      */
-    public void adoptTreeStructure(Tree donor) {		
-    	
-    	/*System.err.println("internalNodeCount: " + this.internalNodeCount);
-    	System.err.println("externalNodeCount: " + this.externalNodeCount);
-    	for (int i = 0; i < this.nodeCount; i++) {
-    		System.err.println(nodes[i]);
-    	}*/
-    	
-    	//first remove all the child nodes of the internal nodes
-		for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
-			int childCount = nodes[i].getChildCount();
-			for (int j = 0; j < childCount; j++) {
-				nodes[i].removeChild(j);
-			}
-		}
-		
-		// set-up nodes in this.nodes[] to mirror connectedness in donor via a simple recursion on donor.getRoot()
-		addNodeStructure(donor, donor.getRoot());
-		
-		//Tree donor has no rates nor traits, only heights
-        
-	}
-    
+    public void adoptTreeStructure(Tree donor) {
+
+        /*System.err.println("internalNodeCount: " + this.internalNodeCount);
+          System.err.println("externalNodeCount: " + this.externalNodeCount);
+          for (int i = 0; i < this.nodeCount; i++) {
+              System.err.println(nodes[i]);
+          }*/
+
+        //first remove all the child nodes of the internal nodes
+        for (int i = this.externalNodeCount; i < this.nodeCount; i++) {
+            int childCount = nodes[i].getChildCount();
+            for (int j = 0; j < childCount; j++) {
+                nodes[i].removeChild(j);
+            }
+        }
+
+        // set-up nodes in this.nodes[] to mirror connectedness in donor via a simple recursion on donor.getRoot()
+        addNodeStructure(donor, donor.getRoot());
+
+        //Tree donor has no rates nor traits, only heights
+
+    }
+
     /**
      * Recursive algorithm to copy a proposed tree structure into the current treeModel.
      */
-	private void addNodeStructure(Tree donorTree, NodeRef donorNode) {
-		
-		NodeRef acceptorNode = null;
-		if (donorTree.isExternal(donorNode)) {
-			//external nodes can have different numbers between both trees
-			acceptorNode = this.nodes[this.getTaxonIndex(donorTree.getTaxonId(donorNode.getNumber()))];
-		} else {
-			//not really important for internal nodes
-			acceptorNode = this.nodes[donorNode.getNumber()];
-		}
-		
-		setNodeHeight(acceptorNode, donorTree.getNodeHeight(donorNode));
-		
-		//removing all child nodes up front currently works
-		//((Node)acceptorNode).leftChild = null;
-		//((Node)acceptorNode).rightChild = null;
-		/*int nrChildren = getChildCount(acceptorNode);
-		for (int i = 0; i < nrChildren; i++) {
-			this.removeChild(acceptorNode, this.getChild(acceptorNode, i));
-		}*/
-		
-		for (int i = 0; i < donorTree.getChildCount(donorNode); i++) {
-			//add a check when the added child is an external node
-			if (donorTree.isExternal(donorTree.getChild(donorNode, i))) {
-				addChild(acceptorNode, this.nodes[this.getTaxonIndex(donorTree.getTaxonId(donorTree.getChild(donorNode, i).getNumber()))]);
-			} else {
-				addChild(acceptorNode, this.nodes[donorTree.getChild(donorNode, i).getNumber()]);
-			}
-		}
-		
-		pushTreeChangedEvent(acceptorNode);
-		
-		if (!donorTree.isExternal(donorNode)) {
-			for (int i = 0; i < donorTree.getChildCount(donorNode); i++) {
-				addNodeStructure(donorTree, donorTree.getChild(donorNode, i));
-			}
-		} 
+    private void addNodeStructure(Tree donorTree, NodeRef donorNode) {
 
-	}	
+        NodeRef acceptorNode = null;
+        if (donorTree.isExternal(donorNode)) {
+            //external nodes can have different numbers between both trees
+            acceptorNode = this.nodes[this.getTaxonIndex(donorTree.getTaxonId(donorNode.getNumber()))];
+        } else {
+            //not really important for internal nodes
+            acceptorNode = this.nodes[donorNode.getNumber()];
+        }
+
+        setNodeHeight(acceptorNode, donorTree.getNodeHeight(donorNode));
+
+        //removing all child nodes up front currently works
+        //((Node)acceptorNode).leftChild = null;
+        //((Node)acceptorNode).rightChild = null;
+        /*int nrChildren = getChildCount(acceptorNode);
+          for (int i = 0; i < nrChildren; i++) {
+              this.removeChild(acceptorNode, this.getChild(acceptorNode, i));
+          }*/
+
+        for (int i = 0; i < donorTree.getChildCount(donorNode); i++) {
+            //add a check when the added child is an external node
+            if (donorTree.isExternal(donorTree.getChild(donorNode, i))) {
+                addChild(acceptorNode, this.nodes[this.getTaxonIndex(donorTree.getTaxonId(donorTree.getChild(donorNode, i).getNumber()))]);
+            } else {
+                addChild(acceptorNode, this.nodes[donorTree.getChild(donorNode, i).getNumber()]);
+            }
+        }
+
+        pushTreeChangedEvent(acceptorNode);
+
+        if (!donorTree.isExternal(donorNode)) {
+            for (int i = 0; i < donorTree.getChildCount(donorNode); i++) {
+                addNodeStructure(donorTree, donorTree.getChild(donorNode, i));
+            }
+        }
+
+    }
 
     /**
      * @return the number of statistics of this component.

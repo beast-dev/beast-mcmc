@@ -25,6 +25,7 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -331,7 +332,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         areStatesRedrawn = false;
     }
 
-    void postOrderTraverse(TreeModel treeModel, NodeRef node, double[][] precisionMatrix,
+    void postOrderTraverse(MultivariateTraitTree treeModel, NodeRef node, double[][] precisionMatrix,
                            double logDetPrecisionMatrix, boolean cacheOuterProducts) {
 
         final int thisNumber = node.getNumber();
@@ -600,7 +601,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                                      double conditionalRootPrecision);
 
 
-    private void preOrderTraverseSample(TreeModel treeModel, NodeRef node, int parentIndex, double[][] treePrecision,
+    private void preOrderTraverseSample(MultivariateTraitTree treeModel, NodeRef node, int parentIndex, double[][] treePrecision,
                                         double[][] treeVariance) {
 
         final int thisIndex = node.getNumber();

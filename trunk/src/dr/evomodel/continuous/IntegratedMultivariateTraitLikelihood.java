@@ -29,7 +29,6 @@ import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
@@ -57,7 +56,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     public static final double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 
     public IntegratedMultivariateTraitLikelihood(String traitName,
-                                                 TreeModel treeModel,
+                                                 MultivariateTraitTree treeModel,
                                                  MultivariateDiffusionModel diffusionModel,
                                                  CompoundParameter traitParameter,
                                                  List<Integer> missingIndices,
@@ -71,7 +70,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     public IntegratedMultivariateTraitLikelihood(String traitName,
-                                                 TreeModel treeModel,
+                                                 MultivariateTraitTree treeModel,
                                                  MultivariateDiffusionModel diffusionModel,
                                                  CompoundParameter traitParameter,
                                                  Parameter deltaParameter,

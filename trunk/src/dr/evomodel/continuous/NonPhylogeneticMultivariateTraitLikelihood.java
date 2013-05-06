@@ -1,7 +1,7 @@
 /*
  * NonPhylogeneticMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,10 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -54,7 +54,7 @@ import java.util.logging.Logger;
 public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMultivariateTraitLikelihood {
 
     public NonPhylogeneticMultivariateTraitLikelihood(String traitName,
-                                                     TreeModel treeModel,
+                                                     MultivariateTraitTree treeModel,
                                                      MultivariateDiffusionModel diffusionModel,
                                                      CompoundParameter traitParameter,
                                                      Parameter deltaParameter,

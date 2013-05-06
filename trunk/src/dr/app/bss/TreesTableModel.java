@@ -18,52 +18,59 @@ public class TreesTableModel extends AbstractTableModel {
 	private PartitionDataList dataList;
 	private MainFrame frame;
 
-	public static String[] COLUMN_NAMES = { "Tree File", "Taxa"};
-	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
-			JButton.class, Integer.class };
-
 	public final static int TREE_FILE_INDEX = 0;
-	public final static int TAXA_INDEX = 1;
+	public final static int DEMOGRAPHIC_MODEL_INDEX = 1;
+	public final static int TAXA_INDEX = 2;
+	
+	public static String[] COLUMN_NAMES = { "Tree File", "Demographic model", "Taxa" };
+	
+	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
+			JButton.class, // Tree File
+			JButton.class, // Topology
+			Integer.class // Taxa
+	};
+
+	private DemographicModelEditor demographicModelEditor;
 
 	public TreesTableModel(PartitionDataList dataList, MainFrame frame) {
 		this.dataList = dataList;
 		this.frame = frame;
-		
+
 		addDefaultRow();
-		
+
 	}// END: Constructor
 
 	public void addDefaultRow() {
 		dataList.treeFileList.add(new File(""));
 		dataList.taxaCounts.add(new Integer(0));
 		fireTableDataChanged();
-	}//END: addDefaultRow
+	}// END: addDefaultRow
 
 	public void deleteRow(int row) {
-		// remove taxa connected to this row 
+		// remove taxa connected to this row
 		String value = dataList.treeFileList.get(row).getName();
 		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
 		dataList.treeFileList.remove(row);
 		dataList.taxaCounts.remove(row);
 		fireTableDataChanged();
-	}//END: deleteRow
+	}// END: deleteRow
 
 	public void setRow(int row, File file, Integer taxaCount) {
-		
-		// remove taxa connected to this row 
+
+		// remove taxa connected to this row
 		String value = dataList.treeFileList.get(row).getName();
 		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
-		
+
 		dataList.treeFileList.remove(row);
 		dataList.treeFileList.add(row, file);
-		
+
 		dataList.taxaCounts.remove(row);
 		dataList.taxaCounts.add(row, taxaCount);
-		
+
 		fireTableDataChanged();
-		
-	}//END: setRow
-	
+
+	}// END: setRow
+
 	@Override
 	public int getColumnCount() {
 		return COLUMN_NAMES.length;
@@ -83,6 +90,8 @@ public class TreesTableModel extends AbstractTableModel {
 		switch (column) {
 		case TREE_FILE_INDEX:
 			return false;
+		case DEMOGRAPHIC_MODEL_INDEX:
+			return false;
 		case TAXA_INDEX:
 			return false;
 		default:
@@ -94,11 +103,11 @@ public class TreesTableModel extends AbstractTableModel {
 		return COLUMN_NAMES[column];
 	}// END: getColumnName
 
-//	//TODO: like in taxa panel
-//	private void getTaxaCount() {
-//		
-//	}
-	
+	// //TODO: like in taxa panel
+	// private void getTaxaCount() {
+	//
+	// }
+
 	@Override
 	public Object getValueAt(int row, int column) {
 		switch (column) {
@@ -108,9 +117,16 @@ public class TreesTableModel extends AbstractTableModel {
 			treeFileButton.addActionListener(new ListenLoadTreeFile(row));
 			return treeFileButton;
 
+		case DEMOGRAPHIC_MODEL_INDEX:
+
+			final JButton topologyButton = new JButton(COLUMN_NAMES[column]);
+			topologyButton
+					.addActionListener(new ListenOpenDemographicModelEditor(row));
+			return topologyButton;
+
 		case TAXA_INDEX:
 			return dataList.taxaCounts.get(row);
-			
+
 		default:
 			return "Error";
 		}
@@ -176,8 +192,7 @@ public class TreesTableModel extends AbstractTableModel {
 
 		for (File file2 : dataList.treeFileList) {
 
-			if (file.getName()
-					.equalsIgnoreCase(file2.getName())) {
+			if (file.getName().equalsIgnoreCase(file2.getName())) {
 				exists = true;
 				break;
 			}
@@ -221,7 +236,7 @@ public class TreesTableModel extends AbstractTableModel {
 					}// END: taxon loop
 
 					setRow(row, file, taxaCount);
-					
+
 				} catch (Exception e) {
 					Utils.handleException(e);
 				}// END: try-catch block
@@ -256,7 +271,23 @@ public class TreesTableModel extends AbstractTableModel {
 		}
 
 	}// END: removeTaxaWithAttributeValue
-	
+
+	private class ListenOpenDemographicModelEditor implements ActionListener {
+
+		private int row;
+
+		public ListenOpenDemographicModelEditor(int row) {
+			this.row = row;
+		}// END: Constructor
+
+		public void actionPerformed(ActionEvent ev) {
+
+			demographicModelEditor = new DemographicModelEditor(dataList, row);
+			demographicModelEditor.launch();
+
+		}// END: actionPerformed
+	}// END: ListenOpenDemographicModelEditor
+
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}

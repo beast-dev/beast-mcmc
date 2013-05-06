@@ -14,17 +14,6 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	private PartitionDataList dataList;
 
-	public static String[] COLUMN_NAMES = { "Tree Model", 
-//		"Data Type", 
-		"From",
-			"To", "Every", "Branch Substitution Model", "Site Rate Model",
-			"Clock Rate Model", "Frequency Model" };
-
-	private BranchSubstitutionModelEditor branchSubstitutionModelEditor;
-	private SiteRateModelEditor siteRateModelEditor;
-	private ClockRateModelEditor clockRateModelEditor;
-	private FrequencyModelEditor frequencyModelEditor;
-
 	public final static int TREE_MODEL_INDEX = 0;
 //	public final static int DATA_TYPE_INDEX = 1;
 	public final static int FROM_INDEX = 1;
@@ -34,6 +23,12 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int SITE_RATE_MODEL_INDEX = 5;
 	public final static int CLOCK_RATE_MODEL_INDEX = 6;
 	public final static int FREQUENCY_MODEL_INDEX = 7;
+	
+	public static String[] COLUMN_NAMES = { "Tree Model", 
+//		"Data Type", 
+		"From",
+			"To", "Every", "Branch Substitution Model", "Site Rate Model",
+			"Clock Rate Model", "Frequency Model" };
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JComboBox.class, 
@@ -42,6 +37,11 @@ public class PartitionTableModel extends AbstractTableModel {
 			Integer.class, JButton.class, JButton.class, JButton.class,
 			JButton.class };
 
+	private BranchSubstitutionModelEditor branchSubstitutionModelEditor;
+	private SiteRateModelEditor siteRateModelEditor;
+	private ClockRateModelEditor clockRateModelEditor;
+	private FrequencyModelEditor frequencyModelEditor;
+	
 	public PartitionTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}// END: Constructor

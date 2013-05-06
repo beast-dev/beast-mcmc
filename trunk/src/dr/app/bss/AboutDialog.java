@@ -23,7 +23,7 @@ import javax.swing.JLabel;
 public class AboutDialog extends JDialog {
 
 	private static final int WIDTH = 600;
-	private static final int HEIGHT = 600;
+	private static final int HEIGHT = 650;
 	private static final int FONT_SIZE = 15;
 
 	private static final String FILIP_BIELEJEC = "Filip Bielejec";
@@ -169,6 +169,13 @@ public class AboutDialog extends JDialog {
 		website.addMouseListener(new ListenBrowse(addres));
 		add(website);
 
+		add(Box.createRigidArea(new Dimension(0, 20)));
+
+		label = new JLabel("In case of any problems please contact your local witch doctor or a shaman.");
+		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
+		label.setAlignmentX(0.5f);
+		add(label);
+		
 		add(Box.createRigidArea(new Dimension(0, 20)));
 
 		JButton close = new JButton("Close");

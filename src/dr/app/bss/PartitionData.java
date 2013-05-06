@@ -13,6 +13,9 @@ import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.TN93;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.Expansion;
+import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evolution.coalescent.LogisticGrowth;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Units;
@@ -59,7 +62,7 @@ public class PartitionData implements Serializable {
 	public int demographicModelIndex = 0;
 	
     public static String[] demographicModels = {
-    	"No model",
+    	"No Model (user-specified tree)",
     	"Constant Population",
         "Exponential Growth (Growth Rate)",
         "Exponential Growth (Doubling Time)",
@@ -67,46 +70,29 @@ public class PartitionData implements Serializable {
         "Logistic Growth (Doubling Time)",
         "Expansion (Growth Rate)",
         "Expansion (Doubling Time)",
-        "Piecewise Constant (Skyline)",
-        "Piecewise Linear (Skyline)",
-        "Piecewise Linear (GMRF Skyride)"
         };
 	
 	public static String[] demographicParameterNames = new String[] {
 	        "Population Size", // Constant Population
-
 			"Population Size", // Exponential Growth (Growth Rate)
 			"Growth Rate", // Exponential Growth (Growth Rate)
-
 			"Population Size", // Exponential Growth (Doubling Time)
 			"Doubling Time", // Exponential Growth (Doubling Time)
-
 			"Population Size", // Logistic Growth (Growth Rate)
 			"Growth Rate", // Logistic Growth (Growth Rate)
 			"Logistic Shape (Half-life)", // Logistic Growth (Growth Rate)
-
 			"Population Size", // Logistic Growth (Doubling Time)
 			"Doubling Time", // Logistic Growth (Doubling Time)
 			"Logistic Shape (Half-life)", // Logistic Growth (Doubling Time)
-
 			"Population Size", // Expansion (Growth Rate)
 			"Ancestral Proportion", // Expansion (Growth Rate)
 			"Growth Rate", // Expansion (Growth Rate)
-
 			"Population Size", // Expansion (Doubling Time)
 			"Ancestral Proportion", // Expansion (Doubling Time)
 			"Doubling Time", // Expansion (Doubling Time)
-
-			"Population Size", // Piecewise Constant (Skyline)
-			"Group Sizes", // Piecewise Constant (Skyline)
-
-			"Population Size", // Piecewise Linear (Skyline)
-			"Group Sizes", // Piecewise Linear (Skyline)
-
-			"Population Size" // Piecewise Linear (GMRF Skyride)
 	};	
 	
-	public static int[][] demographicParameterIndices = { //
+	public static int[][] demographicParameterIndices = {
 		    {  }, // No model
 			{ 0 }, // Constant Population
 			{ 1, 2 }, // Exponential Growth (Growth Rate)
@@ -114,87 +100,82 @@ public class PartitionData implements Serializable {
 			{ 5, 6, 7 }, // Logistic Growth (Growth Rate)
 			{ 8, 9, 10 }, // Logistic Growth (Doubling Time)
 			{ 11, 12, 13 }, // Expansion (Growth Rate)
-			{ 14, 15, 16 }, // Expansion (Doubling Time)
-			{ 17, 18 }, // Piecewise Constant (Skyline)
-			{ 19, 20 }, // Piecewise Linear (Skyline)
-			{ 21 } // Piecewise Linear (GMRF Skyride)
+			{ 14, 15, 16 } // Expansion (Doubling Time)
 	};
 	
 	
-	public double[] demographicParameterValues = new double[] { // 
+	public double[] demographicParameterValues = new double[] {
 			1000.0, // Population Size
-			100.0,// Population Size
-			0.5,// Growth Rate
-			1000.0,// Population Size
-			10.0,// Doubling Time
-			1000.0,// Population Size
-			0.5,// Growth Rate
-			50.0,// Logistic Shape (Half-life)
-			1000.0,// Population Size
-			10.0,// Doubling Time
-			50.0,// Logistic Shape (Half-life)
-			1000.0,// Population Size
-			0.1,// Ancestral Proportion
-			0.5,// Growth Rate
-			1000.0,// Population Size
-			0.1,// Ancestral Proportion
-			10.0,// Doubling Time
-			1000.0,// Population Size
-			1.0,// Group Sizes
-			1000.0,// Population Size
-			1.0,// Group Sizes
-			1000.0 // Population Size
+			1000.0, // Population Size
+			0.5, // Growth Rate
+			1000.0, // Population Size
+			10.0, // Doubling Time
+			1000.0, // Population Size
+			0.5, // Growth Rate
+			50.0, // Logistic Shape (Half-life)
+			1000.0, // Population Size
+			10.0, // Doubling Time
+			50.0, // Logistic Shape (Half-life)
+			1000.0, // Population Size
+			0.1, // Ancestral Proportion
+			0.5, // Growth Rate
+			1000.0, // Population Size
+			0.1, // Ancestral Proportion
+			10.0 // Doubling Time
 	};
 
-	//TODO
 	public DemographicFunction createDemographicFunction() {
 
 		DemographicFunction demographicFunction = null;
 
 		if (this.demographicModelIndex == 0) { // No model
 
-			demographicFunction = new ConstantPopulation(Units.Type.YEARS);
-			((ConstantPopulation)demographicFunction).setN0(demographicParameterValues[0]);
+			// do nothing
 			
 		} else if (this.demographicModelIndex == 1) {// Constant Population
 
-			demographicFunction = null;
+			demographicFunction = new ConstantPopulation(Units.Type.YEARS);
+			((ConstantPopulation)demographicFunction).setN0(demographicParameterValues[0]);
 			
 		} else if (this.demographicModelIndex == 2) { // Exponential Growth (Growth Rate)
 
-			demographicFunction = null;
+			demographicFunction = new ExponentialGrowth(Units.Type.YEARS);
+            ((ExponentialGrowth) demographicFunction).setN0(demographicParameterValues[1]);
+            ((ExponentialGrowth) demographicFunction).setGrowthRate(demographicParameterValues[2]);
 			
 		} else if (this.demographicModelIndex == 3) {// Exponential Growth (Doubling Time)
 			
-			demographicFunction = null;
+			demographicFunction = new ExponentialGrowth(Units.Type.YEARS);
+            ((ExponentialGrowth) demographicFunction).setN0(demographicParameterValues[3]);
+            ((ExponentialGrowth) demographicFunction).setDoublingTime(demographicParameterValues[4]);
 			
 		} else if (this.demographicModelIndex == 4) {// Logistic Growth (Growth Rate)
 			
-			demographicFunction = null;
+			demographicFunction = new LogisticGrowth(Units.Type.YEARS);
+            ((LogisticGrowth) demographicFunction).setN0(demographicParameterValues[5]);
+            ((LogisticGrowth) demographicFunction).setGrowthRate(demographicParameterValues[6]);
+            ((LogisticGrowth) demographicFunction).setTime50(demographicParameterValues[7]);
 			
 		} else if (this.demographicModelIndex == 5) {// Logistic Growth (Doubling Time)
 			
-			demographicFunction = null;
+			demographicFunction = new LogisticGrowth(Units.Type.YEARS);
+            ((LogisticGrowth) demographicFunction).setN0(demographicParameterValues[8]);
+            ((LogisticGrowth) demographicFunction).setDoublingTime(demographicParameterValues[9]);
+            ((LogisticGrowth) demographicFunction).setTime50(demographicParameterValues[10]);
 			
 		} else if (this.demographicModelIndex == 6) {// Expansion (Growth Rate)
 			
-			demographicFunction = null;
+			demographicFunction = new Expansion(Units.Type.YEARS);
+            ((Expansion) demographicFunction).setN0(demographicParameterValues[11]);
+            ((Expansion) demographicFunction).setProportion(demographicParameterValues[12]);
+            ((Expansion) demographicFunction).setGrowthRate(demographicParameterValues[13]);
 			
 		} else if (this.demographicModelIndex == 7) {// Expansion (Doubling Time)
 			
-			demographicFunction = null;
-			
-		} else if (this.demographicModelIndex == 8) {// Piecewise Constant (Skyline)
-			
-			demographicFunction = null;
-			
-		} else if (this.demographicModelIndex == 9) {// Piecewise Linear (Skyline)
-			
-			demographicFunction = null;
-			
-		} else if (this.demographicModelIndex == 10) {// Piecewise Linear (GMRF Skyride)
-
-			demographicFunction = null;
+			demographicFunction = new Expansion(Units.Type.YEARS);
+            ((Expansion) demographicFunction).setN0(demographicParameterValues[14]);
+            ((Expansion) demographicFunction).setProportion(demographicParameterValues[15]);
+            ((Expansion) demographicFunction).setDoublingTime(demographicParameterValues[16]);
 			
 		} else {
 
@@ -204,7 +185,6 @@ public class PartitionData implements Serializable {
 
 		return demographicFunction;
 	}// END: createDemographicFunction
-	 
 	
 	// //////////////////
 	// ---TREE MODEL---//

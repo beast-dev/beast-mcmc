@@ -1,7 +1,7 @@
 /*
  * MissingTraits.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,7 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evomodel.tree.TreeModel;
 
 import java.util.Arrays;
@@ -50,7 +51,7 @@ public interface MissingTraits {
 
         protected static final boolean DEBUG = false;
 
-        Abstract(TreeModel treeModel, List<Integer> missingIndices, int dim) {
+        Abstract(MultivariateTraitTree treeModel, List<Integer> missingIndices, int dim) {
             this.treeModel = treeModel;
             this.dim = dim;
             this.missingIndices = missingIndices;
@@ -60,7 +61,7 @@ public interface MissingTraits {
             Arrays.fill(completelyMissing, treeModel.getExternalNodeCount() + 1, treeModel.getNodeCount(), true); // All internal and root nodes are missing
         }
 
-        final protected TreeModel treeModel;
+        final protected MultivariateTraitTree treeModel;
         final protected int dim;
         final protected List<Integer> missingIndices;
         final protected boolean[] completelyMissing;
@@ -68,7 +69,7 @@ public interface MissingTraits {
 
     public class CompletelyMissing extends Abstract {
 
-        CompletelyMissing(TreeModel treeModel, List<Integer> missingIndices, int dim) {
+        CompletelyMissing(MultivariateTraitTree treeModel, List<Integer> missingIndices, int dim) {
             super(treeModel, missingIndices, dim);
         }
 

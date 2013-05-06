@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
@@ -30,9 +31,9 @@ public class Utils {
 	// /////////////////
 	// ---CONSTANTS---//
 	// /////////////////
-	
+
 	public static final boolean VERBOSE = false;
-	
+
 	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
 	public static final int SITE_RATE_MODEL_ELEMENT = 2;
@@ -44,15 +45,15 @@ public class Utils {
 	public static final String FREQUENCY_MODEL = "frequencyModel";
 	public static final String CODON_UNIVERSAL = "codon-universal";
 	public static final String CHOOSE_FILE = "Choose file...";
-	
+
 	public static final String BSS_ICON = "icons/bss.png";
-	public static final String CHECK_ICON =  "icons/check.png";
+	public static final String CHECK_ICON = "icons/check.png";
 	public static final String ERROR_ICON = "icons/error.png";
 	public static final String HAMMER_ICON = "icons/hammer.png";
 	public static final String CLOSE_ICON = "icons/close.png";
 	public static final String BIOHAZARD_ICON = "icons/biohazard.png";
 	public static final String BUBBLE_BLUE_ICON = "icons/bubble-blue.png";
-	
+
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
@@ -75,7 +76,7 @@ public class Utils {
 	}// END: printMap
 
 	public static int getSiteCount(PartitionDataList dataList) {
-		
+
 		int siteCount = 0;
 		int to = 0;
 		for (PartitionData data : dataList) {
@@ -86,10 +87,10 @@ public class Utils {
 			}
 
 		}
-		
+
 		return siteCount;// + 1;
-	}//END: getSiteCount
-	
+	}// END: getSiteCount
+
 	public static int arrayIndex(String[] array, String element) {
 
 		List<String> vector = new ArrayList<String>();
@@ -140,7 +141,7 @@ public class Utils {
 
 		return height;
 	}// END: getAbsoluteTaxonHeight
-	
+
 	public static boolean isTreeModelInList(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -185,18 +186,20 @@ public class Utils {
 		case BRANCH_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(clockRateModelToString(data).equalsIgnoreCase(clockRateModelToString(data2))) {
+				if (clockRateModelToString(data).equalsIgnoreCase(
+						clockRateModelToString(data2))) {
 					exists = true;
 					break;
 				}
 			}
-			
+
 			break;
 
 		case FREQUENCY_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(frequencyModelToString(data).equalsIgnoreCase(frequencyModelToString(data2))) {
+				if (frequencyModelToString(data).equalsIgnoreCase(
+						frequencyModelToString(data2))) {
 					exists = true;
 					break;
 				}
@@ -207,18 +210,20 @@ public class Utils {
 		case BRANCH_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(branchSubstitutionModelToString(data).equalsIgnoreCase(branchSubstitutionModelToString(data2))) {
+				if (branchSubstitutionModelToString(data).equalsIgnoreCase(
+						branchSubstitutionModelToString(data2))) {
 					exists = true;
 					break;
 				}
 			}
-			
+
 			break;
 
 		case SITE_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(siteRateModelToString(data).equalsIgnoreCase(siteRateModelToString(data2))) {
+				if (siteRateModelToString(data).equalsIgnoreCase(
+						siteRateModelToString(data2))) {
 					exists = true;
 					break;
 				}
@@ -245,40 +250,44 @@ public class Utils {
 		case BRANCH_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(clockRateModelToString(data).equalsIgnoreCase(clockRateModelToString(data2))) {
+				if (clockRateModelToString(data).equalsIgnoreCase(
+						clockRateModelToString(data2))) {
 					index = partitionList.indexOf(data2);
 					break;
 				}
 			}
-			
+
 			break;
 
 		case FREQUENCY_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(frequencyModelToString(data).equalsIgnoreCase(frequencyModelToString(data2))) {
+				if (frequencyModelToString(data).equalsIgnoreCase(
+						frequencyModelToString(data2))) {
 					index = partitionList.indexOf(data2);
 					break;
 				}
 			}
-			
+
 			break;
 
 		case BRANCH_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(branchSubstitutionModelToString(data).equalsIgnoreCase(branchSubstitutionModelToString(data2))) {
+				if (branchSubstitutionModelToString(data).equalsIgnoreCase(
+						branchSubstitutionModelToString(data2))) {
 					index = partitionList.indexOf(data2);
 					break;
 				}
 			}
-			
+
 			break;
 
 		case SITE_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
-				if(siteRateModelToString(data).equalsIgnoreCase(siteRateModelToString(data2))) {
+				if (siteRateModelToString(data).equalsIgnoreCase(
+						siteRateModelToString(data2))) {
 					index = partitionList.indexOf(data2);
 					break;
 				}
@@ -298,63 +307,63 @@ public class Utils {
 	// /////////////////////////
 	// ---TO STRING METHODS---//
 	// /////////////////////////
-	
+
 	public static String clockRateModelToString(PartitionData data) {
-		
+
 		String string = PartitionData.clockModels[data.clockModelIndex];
-		
+
 		string += (" ( ");
 		for (int i = 0; i < PartitionData.clockParameterIndices[data.clockModelIndex].length; i++) {
 			string += data.clockParameterValues[PartitionData.clockParameterIndices[data.clockModelIndex][i]];
-			string +=" ";
+			string += " ";
 		}// END: indices loop
-		string +=")";
-		
+		string += ")";
+
 		return string;
 	}
 
 	public static String frequencyModelToString(PartitionData data) {
-		
+
 		String string = PartitionData.frequencyModels[data.frequencyModelIndex];
-		
+
 		string += (" ( ");
 		for (int i = 0; i < data.frequencyParameterIndices[data.frequencyModelIndex].length; i++) {
 			string += data.frequencyParameterValues[data.frequencyParameterIndices[data.frequencyModelIndex][i]];
-			string +=" ";
+			string += " ";
 		}// END: indices loop
-		string +=")";
-		
+		string += ")";
+
 		return string;
 	}
-	
+
 	public static String branchSubstitutionModelToString(PartitionData data) {
-		
+
 		String string = PartitionData.substitutionModels[data.substitutionModelIndex];
-		
+
 		string += (" ( ");
 		for (int i = 0; i < PartitionData.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
 			string += data.substitutionParameterValues[PartitionData.substitutionParameterIndices[data.substitutionModelIndex][i]];
-			string +=" ";
+			string += " ";
 		}// END: indices loop
-		string +=")";
-		
+		string += ")";
+
 		return string;
 	}
-	
+
 	public static String siteRateModelToString(PartitionData data) {
-		
+
 		String string = PartitionData.siteRateModels[data.siteRateModelIndex];
-		
+
 		string += (" ( ");
 		for (int i = 0; i < PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex].length; i++) {
 			string += data.siteRateModelParameterValues[PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex][i]];
-			string +=" ";
+			string += " ";
 		}// END: indices loop
-		string +=")";
-		
+		string += ")";
+
 		return string;
 	}
-	
+
 	// /////////////////
 	// ---GUI UTILS---//
 	// /////////////////
@@ -366,7 +375,7 @@ public class Utils {
 		try {
 
 			URL imgURL = BeagleSequenceSimulatorApp.class.getResource(path);
-			
+
 			if (imgURL != null) {
 				icon = new ImageIcon(imgURL);
 			} else {
@@ -379,7 +388,7 @@ public class Utils {
 
 		return icon;
 	}// END: CreateImageIcon
-	
+
 	public static boolean isBrowsingSupported() {
 		if (!Desktop.isDesktopSupported()) {
 			return false;
@@ -392,7 +401,7 @@ public class Utils {
 		return result;
 
 	}// END: isBrowsingSupported
-	
+
 	public static int getTabbedPaneComponentIndex(JTabbedPane tabbedPane,
 			String title) {
 
@@ -455,20 +464,24 @@ public class Utils {
 	public static void showDialog(final String message) {
 
 		if (SwingUtilities.isEventDispatchThread()) {
-			
-			JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, Utils.createImageIcon(Utils.BUBBLE_BLUE_ICON));
-			
+
+			JOptionPane.showMessageDialog(getActiveFrame(), message, "Message",
+					JOptionPane.ERROR_MESSAGE,
+					Utils.createImageIcon(Utils.BUBBLE_BLUE_ICON));
+
 		} else {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
-					
-					JOptionPane.showMessageDialog(getActiveFrame(), message, "Message", JOptionPane.ERROR_MESSAGE, Utils.createImageIcon(Utils.BUBBLE_BLUE_ICON));
-				
+
+					JOptionPane.showMessageDialog(getActiveFrame(), message,
+							"Message", JOptionPane.ERROR_MESSAGE,
+							Utils.createImageIcon(Utils.BUBBLE_BLUE_ICON));
+
 				}
 			});
 		}// END: edt check
 	}// END: showDialog
-	
+
 	// ////////////////////////////////
 	// ---EXCEPTION HANDLING UTILS---//
 	// ////////////////////////////////
@@ -540,12 +553,29 @@ public class Utils {
 	// ---DEBUGGING UTILS---//
 	// ///////////////////////
 
+	public static void printHashMap(ConcurrentHashMap<?, ?> hashMap) {
+
+		Iterator<?> iterator = hashMap.entrySet().iterator();
+		while (iterator.hasNext()) {
+
+			Entry<?, ?> pairs = (Entry<?, ?>) iterator.next();
+
+			Taxon taxon = (Taxon) pairs.getKey();
+			int[] sequence = (int[]) pairs.getValue();
+
+			System.out.println(taxon.toString());
+			Utils.printArray(sequence);
+
+		}// END: while has next
+
+	}// END: printHashMap
+
 	public static void printArray(Object[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);
 		}
 	}// END: printArray
-	
+
 	public static void printArray(int[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);
@@ -584,16 +614,17 @@ public class Utils {
 		System.out.print(frequencyModelToString(data));
 		System.out.print("\n");
 	}// END: printFrequencyModel
-	
+
 	public static void printSiteRateModel(PartitionData data) {
 		System.out.print("\tSite rate model: ");
 		System.out.print(siteRateModelToString(data));
 		System.out.print("\n");
 	}// END: printFrequencyModel
-	
+
 	public static void printPartitionData(PartitionData data) {
 
-//		System.out.println("\tData type: "+ PartitionData.dataTypes[data.dataTypeIndex]);
+		// System.out.println("\tData type: "+
+		// PartitionData.dataTypes[data.dataTypeIndex]);
 		System.out.println("\tTree model: " + data.treeFile);
 		System.out.println("\tFrom: " + data.from);
 		System.out.println("\tTo: " + data.to);
@@ -602,7 +633,7 @@ public class Utils {
 		printSiteRateModel(data);
 		printClockRateModel(data);
 		printFrequencyModel(data);
-		
+
 	}// END: printPartitionData
 
 	public static void printPartitionDataList(PartitionDataList dataList) {
@@ -628,12 +659,13 @@ public class Utils {
 
 		int i = 0;
 		for (File treeFile : dataList.treeFileList) {
-			System.out.println(treeFile + " (" + dataList.taxaCounts.get(i) + ")");
-			i ++;
+			System.out.println(treeFile + " (" + dataList.taxaCounts.get(i)
+					+ ")");
+			i++;
 		}
 
 	}// END: printForestList
-	
+
 	public static void printTaxonList(PartitionDataList dataList) {
 		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
 

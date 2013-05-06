@@ -94,7 +94,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 										GAMMA_SITE_RATE_MODEL, //
 								}, false, "specify site rate model"),
 
-								new Arguments.RealArrayOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES, 2, "specify Gamma Site Rate Model parameter values"),
+								new Arguments.RealArrayOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES, 3, "specify Gamma Site Rate Model parameter values"),
 								
 						new Arguments.StringOption(CLOCK_RATE_MODEL,
 								new String[] { STRICT_CLOCK, //

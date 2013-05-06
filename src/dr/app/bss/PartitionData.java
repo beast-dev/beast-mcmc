@@ -11,8 +11,11 @@ import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.TN93;
+import dr.evolution.coalescent.ConstantPopulation;
+import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -48,6 +51,160 @@ public class PartitionData implements Serializable {
 		resetSubstitutionModelIdref();
 		resetTreeModelIdref();
 	}
+
+	// /////////////////////////
+	// ---DEMOGRAPHIC MODEL---//
+	// /////////////////////////
+
+	public int demographicModelIndex = 0;
+	
+    public static String[] demographicModels = {
+    	"No model",
+    	"Constant Population",
+        "Exponential Growth (Growth Rate)",
+        "Exponential Growth (Doubling Time)",
+        "Logistic Growth (Growth Rate)",
+        "Logistic Growth (Doubling Time)",
+        "Expansion (Growth Rate)",
+        "Expansion (Doubling Time)",
+        "Piecewise Constant (Skyline)",
+        "Piecewise Linear (Skyline)",
+        "Piecewise Linear (GMRF Skyride)"
+        };
+	
+	public static String[] demographicParameterNames = new String[] {
+	        "Population Size", // Constant Population
+
+			"Population Size", // Exponential Growth (Growth Rate)
+			"Growth Rate", // Exponential Growth (Growth Rate)
+
+			"Population Size", // Exponential Growth (Doubling Time)
+			"Doubling Time", // Exponential Growth (Doubling Time)
+
+			"Population Size", // Logistic Growth (Growth Rate)
+			"Growth Rate", // Logistic Growth (Growth Rate)
+			"Logistic Shape (Half-life)", // Logistic Growth (Growth Rate)
+
+			"Population Size", // Logistic Growth (Doubling Time)
+			"Doubling Time", // Logistic Growth (Doubling Time)
+			"Logistic Shape (Half-life)", // Logistic Growth (Doubling Time)
+
+			"Population Size", // Expansion (Growth Rate)
+			"Ancestral Proportion", // Expansion (Growth Rate)
+			"Growth Rate", // Expansion (Growth Rate)
+
+			"Population Size", // Expansion (Doubling Time)
+			"Ancestral Proportion", // Expansion (Doubling Time)
+			"Doubling Time", // Expansion (Doubling Time)
+
+			"Population Size", // Piecewise Constant (Skyline)
+			"Group Sizes", // Piecewise Constant (Skyline)
+
+			"Population Size", // Piecewise Linear (Skyline)
+			"Group Sizes", // Piecewise Linear (Skyline)
+
+			"Population Size" // Piecewise Linear (GMRF Skyride)
+	};	
+	
+	public static int[][] demographicParameterIndices = { //
+		    {  }, // No model
+			{ 0 }, // Constant Population
+			{ 1, 2 }, // Exponential Growth (Growth Rate)
+			{ 3, 4 },// Exponential Growth (Doubling Time)
+			{ 5, 6, 7 }, // Logistic Growth (Growth Rate)
+			{ 8, 9, 10 }, // Logistic Growth (Doubling Time)
+			{ 11, 12, 13 }, // Expansion (Growth Rate)
+			{ 14, 15, 16 }, // Expansion (Doubling Time)
+			{ 17, 18 }, // Piecewise Constant (Skyline)
+			{ 19, 20 }, // Piecewise Linear (Skyline)
+			{ 21 } // Piecewise Linear (GMRF Skyride)
+	};
+	
+	
+	public double[] demographicParameterValues = new double[] { // 
+			1000.0, // Population Size
+			100.0,// Population Size
+			0.5,// Growth Rate
+			1000.0,// Population Size
+			10.0,// Doubling Time
+			1000.0,// Population Size
+			0.5,// Growth Rate
+			50.0,// Logistic Shape (Half-life)
+			1000.0,// Population Size
+			10.0,// Doubling Time
+			50.0,// Logistic Shape (Half-life)
+			1000.0,// Population Size
+			0.1,// Ancestral Proportion
+			0.5,// Growth Rate
+			1000.0,// Population Size
+			0.1,// Ancestral Proportion
+			10.0,// Doubling Time
+			1000.0,// Population Size
+			1.0,// Group Sizes
+			1000.0,// Population Size
+			1.0,// Group Sizes
+			1000.0 // Population Size
+	};
+
+	//TODO
+	public DemographicFunction createDemographicFunction() {
+
+		DemographicFunction demographicFunction = null;
+
+		if (this.demographicModelIndex == 0) { // No model
+
+			demographicFunction = new ConstantPopulation(Units.Type.YEARS);
+			((ConstantPopulation)demographicFunction).setN0(demographicParameterValues[0]);
+			
+		} else if (this.demographicModelIndex == 1) {// Constant Population
+
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 2) { // Exponential Growth (Growth Rate)
+
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 3) {// Exponential Growth (Doubling Time)
+			
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 4) {// Logistic Growth (Growth Rate)
+			
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 5) {// Logistic Growth (Doubling Time)
+			
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 6) {// Expansion (Growth Rate)
+			
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 7) {// Expansion (Doubling Time)
+			
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 8) {// Piecewise Constant (Skyline)
+			
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 9) {// Piecewise Linear (Skyline)
+			
+			demographicFunction = null;
+			
+		} else if (this.demographicModelIndex == 10) {// Piecewise Linear (GMRF Skyride)
+
+			demographicFunction = null;
+			
+		} else {
+
+			System.out.println("Not yet implemented");
+			
+		}
+
+		return demographicFunction;
+	}// END: createDemographicFunction
+	 
 	
 	// //////////////////
 	// ---TREE MODEL---//
@@ -210,7 +367,7 @@ public class PartitionData implements Serializable {
 
 			branchModel = new HomogeneousBranchModel(yangCodonModel);
 
-		} else if (this.substitutionModelIndex == 4) {
+		} else {
 
 			System.out.println("Not yet implemented");
 
@@ -277,7 +434,7 @@ public class PartitionData implements Serializable {
 
 		} else if (this.clockModelIndex == 1) {// Lognormal relaxed clock
 
-			double numberOfBranches = Math.pow(2, createTreeModel().getTaxonCount());
+			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
 			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
 			
 			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
@@ -289,7 +446,7 @@ public class PartitionData implements Serializable {
 
 		} else if(this.clockModelIndex == 2) { // Exponential relaxed clock
 		
-			double numberOfBranches = Math.pow(2, createTreeModel().getTaxonCount());
+			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
 			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
 			
 			Parameter mean = new Parameter.Default(DistributionModelParser.MEAN, 1, clockParameterValues[4]);
@@ -300,7 +457,7 @@ public class PartitionData implements Serializable {
 			
 		} else if(this.clockModelIndex == 3) { // Inverse Gaussian
 
-			double numberOfBranches = Math.pow(2, createTreeModel().getTaxonCount());
+			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
 			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
 			
 			Parameter mean = new Parameter.Default(InverseGaussianDistributionModelParser.MEAN, 1, clockParameterValues[6]);
@@ -529,7 +686,7 @@ public class PartitionData implements Serializable {
 
 			frequencyModel = new FrequencyModel(Codons.UNIVERSAL, freqs);
 
-		} else if (this.frequencyModelIndex == 2) {
+		} else {
 
 			System.out.println("Not yet implemented");
 
@@ -542,8 +699,6 @@ public class PartitionData implements Serializable {
 	// ---SITE RATE MODELS---//
 	// ////////////////////////
 
-	//TODO: invariant site rate model
-	
 	public int siteRateModelIndex = 0;
 
 	public String siteRateModelIdref = SiteModel.SITE_MODEL;
@@ -586,7 +741,7 @@ public class PartitionData implements Serializable {
 					siteRateModelParameterValues[1],
 					(int) siteRateModelParameterValues[0], siteRateModelParameterValues[2]);
 
-		} else if (this.siteRateModelIndex == 2) {
+		} else {
 
 			System.out.println("Not yet implemented");
 

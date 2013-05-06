@@ -77,11 +77,6 @@ public class BeagleSeqSimTest {
 
 			System.out.println(treeModel.toString());
 
-			
-			
-			
-			
-			
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
 					0.25, 0.25 });
 			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,

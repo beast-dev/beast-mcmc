@@ -63,16 +63,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		setTitle(title);
 		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
-		
-//		getOpenAction().setEnabled(false);
-//		getSaveAction().setEnabled(false);
-//		getSaveAsAction().setEnabled(false);
-//		// getCutAction().setEnabled(true);
-//		// getCopyAction().setEnabled(false);
-//		// getPasteAction().setEnabled(false);
-//		getDeleteAction().setEnabled(false);
-//		getSelectAllAction().setEnabled(false);
-//		getFindAction().setEnabled(false);
 
 	}// END: Constructor
 
@@ -196,9 +186,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 								// create partition
 								Partition partition = new Partition(
-										
 										data.createTreeModel(), //
-										
 										data.createBranchModel(), //
 										data.createSiteRateModel(), //
 										data.createClockRateModel(), //

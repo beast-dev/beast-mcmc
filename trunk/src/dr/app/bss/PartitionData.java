@@ -11,6 +11,7 @@ import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.TN93;
+import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.Expansion;
@@ -18,6 +19,8 @@ import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.coalescent.LogisticGrowth;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
@@ -66,10 +69,10 @@ public class PartitionData implements Serializable {
     	"Constant Population",
         "Exponential Growth (Growth Rate)",
         "Exponential Growth (Doubling Time)",
-        "Logistic Growth (Growth Rate)",
-        "Logistic Growth (Doubling Time)",
-        "Expansion (Growth Rate)",
-        "Expansion (Doubling Time)",
+//        "Logistic Growth (Growth Rate)",
+//        "Logistic Growth (Doubling Time)",
+//        "Expansion (Growth Rate)",
+//        "Expansion (Doubling Time)",
         };
 	
 	public static String[] demographicParameterNames = new String[] {
@@ -78,18 +81,18 @@ public class PartitionData implements Serializable {
 			"Growth Rate", // Exponential Growth (Growth Rate)
 			"Population Size", // Exponential Growth (Doubling Time)
 			"Doubling Time", // Exponential Growth (Doubling Time)
-			"Population Size", // Logistic Growth (Growth Rate)
-			"Growth Rate", // Logistic Growth (Growth Rate)
-			"Logistic Shape (Half-life)", // Logistic Growth (Growth Rate)
-			"Population Size", // Logistic Growth (Doubling Time)
-			"Doubling Time", // Logistic Growth (Doubling Time)
-			"Logistic Shape (Half-life)", // Logistic Growth (Doubling Time)
-			"Population Size", // Expansion (Growth Rate)
-			"Ancestral Proportion", // Expansion (Growth Rate)
-			"Growth Rate", // Expansion (Growth Rate)
-			"Population Size", // Expansion (Doubling Time)
-			"Ancestral Proportion", // Expansion (Doubling Time)
-			"Doubling Time", // Expansion (Doubling Time)
+//			"Population Size", // Logistic Growth (Growth Rate)
+//			"Growth Rate", // Logistic Growth (Growth Rate)
+//			"Logistic Shape (Half-life)", // Logistic Growth (Growth Rate)
+//			"Population Size", // Logistic Growth (Doubling Time)
+//			"Doubling Time", // Logistic Growth (Doubling Time)
+//			"Logistic Shape (Half-life)", // Logistic Growth (Doubling Time)
+//			"Population Size", // Expansion (Growth Rate)
+//			"Ancestral Proportion", // Expansion (Growth Rate)
+//			"Growth Rate", // Expansion (Growth Rate)
+//			"Population Size", // Expansion (Doubling Time)
+//			"Ancestral Proportion", // Expansion (Doubling Time)
+//			"Doubling Time", // Expansion (Doubling Time)
 	};	
 	
 	public static int[][] demographicParameterIndices = {
@@ -97,10 +100,10 @@ public class PartitionData implements Serializable {
 			{ 0 }, // Constant Population
 			{ 1, 2 }, // Exponential Growth (Growth Rate)
 			{ 3, 4 },// Exponential Growth (Doubling Time)
-			{ 5, 6, 7 }, // Logistic Growth (Growth Rate)
-			{ 8, 9, 10 }, // Logistic Growth (Doubling Time)
-			{ 11, 12, 13 }, // Expansion (Growth Rate)
-			{ 14, 15, 16 } // Expansion (Doubling Time)
+//			{ 5, 6, 7 }, // Logistic Growth (Growth Rate)
+//			{ 8, 9, 10 }, // Logistic Growth (Doubling Time)
+//			{ 11, 12, 13 }, // Expansion (Growth Rate)
+//			{ 14, 15, 16 } // Expansion (Doubling Time)
 	};
 	
 	
@@ -110,18 +113,18 @@ public class PartitionData implements Serializable {
 			0.5, // Growth Rate
 			1000.0, // Population Size
 			10.0, // Doubling Time
-			1000.0, // Population Size
-			0.5, // Growth Rate
-			50.0, // Logistic Shape (Half-life)
-			1000.0, // Population Size
-			10.0, // Doubling Time
-			50.0, // Logistic Shape (Half-life)
-			1000.0, // Population Size
-			0.1, // Ancestral Proportion
-			0.5, // Growth Rate
-			1000.0, // Population Size
-			0.1, // Ancestral Proportion
-			10.0 // Doubling Time
+//			1000.0, // Population Size
+//			0.5, // Growth Rate
+//			50.0, // Logistic Shape (Half-life)
+//			1000.0, // Population Size
+//			10.0, // Doubling Time
+//			50.0, // Logistic Shape (Half-life)
+//			1000.0, // Population Size
+//			0.1, // Ancestral Proportion
+//			0.5, // Growth Rate
+//			1000.0, // Population Size
+//			0.1, // Ancestral Proportion
+//			10.0 // Doubling Time
 	};
 
 	public DemographicFunction createDemographicFunction() {
@@ -137,7 +140,7 @@ public class PartitionData implements Serializable {
 			demographicFunction = new ConstantPopulation(Units.Type.YEARS);
 			((ConstantPopulation)demographicFunction).setN0(demographicParameterValues[0]);
 			
-		} else if (this.demographicModelIndex == 2) { // Exponential Growth (Growth Rate)
+		} else if (this.demographicModelIndex == 2) {// Exponential Growth (Growth Rate)
 
 			demographicFunction = new ExponentialGrowth(Units.Type.YEARS);
             ((ExponentialGrowth) demographicFunction).setN0(demographicParameterValues[1]);
@@ -149,33 +152,33 @@ public class PartitionData implements Serializable {
             ((ExponentialGrowth) demographicFunction).setN0(demographicParameterValues[3]);
             ((ExponentialGrowth) demographicFunction).setDoublingTime(demographicParameterValues[4]);
 			
-		} else if (this.demographicModelIndex == 4) {// Logistic Growth (Growth Rate)
-			
-			demographicFunction = new LogisticGrowth(Units.Type.YEARS);
-            ((LogisticGrowth) demographicFunction).setN0(demographicParameterValues[5]);
-            ((LogisticGrowth) demographicFunction).setGrowthRate(demographicParameterValues[6]);
-            ((LogisticGrowth) demographicFunction).setTime50(demographicParameterValues[7]);
-			
-		} else if (this.demographicModelIndex == 5) {// Logistic Growth (Doubling Time)
-			
-			demographicFunction = new LogisticGrowth(Units.Type.YEARS);
-            ((LogisticGrowth) demographicFunction).setN0(demographicParameterValues[8]);
-            ((LogisticGrowth) demographicFunction).setDoublingTime(demographicParameterValues[9]);
-            ((LogisticGrowth) demographicFunction).setTime50(demographicParameterValues[10]);
-			
-		} else if (this.demographicModelIndex == 6) {// Expansion (Growth Rate)
-			
-			demographicFunction = new Expansion(Units.Type.YEARS);
-            ((Expansion) demographicFunction).setN0(demographicParameterValues[11]);
-            ((Expansion) demographicFunction).setProportion(demographicParameterValues[12]);
-            ((Expansion) demographicFunction).setGrowthRate(demographicParameterValues[13]);
-			
-		} else if (this.demographicModelIndex == 7) {// Expansion (Doubling Time)
-			
-			demographicFunction = new Expansion(Units.Type.YEARS);
-            ((Expansion) demographicFunction).setN0(demographicParameterValues[14]);
-            ((Expansion) demographicFunction).setProportion(demographicParameterValues[15]);
-            ((Expansion) demographicFunction).setDoublingTime(demographicParameterValues[16]);
+//		} else if (this.demographicModelIndex == 4) {// Logistic Growth (Growth Rate)
+//			
+//			demographicFunction = new LogisticGrowth(Units.Type.YEARS);
+//            ((LogisticGrowth) demographicFunction).setN0(demographicParameterValues[5]);
+//            ((LogisticGrowth) demographicFunction).setGrowthRate(demographicParameterValues[6]);
+//            ((LogisticGrowth) demographicFunction).setTime50(demographicParameterValues[7]);
+//			
+//		} else if (this.demographicModelIndex == 5) {// Logistic Growth (Doubling Time)
+//			
+//			demographicFunction = new LogisticGrowth(Units.Type.YEARS);
+//            ((LogisticGrowth) demographicFunction).setN0(demographicParameterValues[8]);
+//            ((LogisticGrowth) demographicFunction).setDoublingTime(demographicParameterValues[9]);
+//            ((LogisticGrowth) demographicFunction).setTime50(demographicParameterValues[10]);
+//			
+//		} else if (this.demographicModelIndex == 6) {// Expansion (Growth Rate)
+//			
+//			demographicFunction = new Expansion(Units.Type.YEARS);
+//            ((Expansion) demographicFunction).setN0(demographicParameterValues[11]);
+//            ((Expansion) demographicFunction).setProportion(demographicParameterValues[12]);
+//            ((Expansion) demographicFunction).setGrowthRate(demographicParameterValues[13]);
+//			
+//		} else if (this.demographicModelIndex == 7) {// Expansion (Doubling Time)
+//			
+//			demographicFunction = new Expansion(Units.Type.YEARS);
+//            ((Expansion) demographicFunction).setN0(demographicParameterValues[14]);
+//            ((Expansion) demographicFunction).setProportion(demographicParameterValues[15]);
+//            ((Expansion) demographicFunction).setDoublingTime(demographicParameterValues[16]);
 			
 		} else {
 
@@ -198,9 +201,31 @@ public class PartitionData implements Serializable {
 	}
 	
 	public TreeModel createTreeModel() {
-		TreeModel treeModel = Utils.importTreeFromFile(treeFile);
+		
+		TreeModel treeModel = null;
+		if (this.demographicModelIndex == 0) { // No model
+
+			Tree tree = Utils.importTreeFromFile(treeFile);
+			treeModel = new TreeModel(tree);
+		
+		} else if (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) {
+
+			//TODO: dates? Set in loadTreeFile but read them how?
+            Tree tree = Utils.importTreeFromFile(treeFile);
+            Taxa taxa = new Taxa();
+            taxa.addTaxa(tree);
+            
+			CoalescentSimulator topologySimulator = new CoalescentSimulator();
+			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
+			
+		} else {
+			
+			System.out.println("Not yet implemented");
+			
+		}
+		
 		return treeModel;
-	}
+	}//END: createTreeModel
 
 	// /////////////////
 	// ---DATA TYPE---//
@@ -290,8 +315,7 @@ public class PartitionData implements Serializable {
 
 		if (this.substitutionModelIndex == 0) { // HKY
 
-			Parameter kappa = new Parameter.Default(1,
-					substitutionParameterValues[0]);
+			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[0]);
 
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 

@@ -75,7 +75,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String EXCHANGEABLE_TIPS = "exchangeableTips";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
-                                               TreeModel treeModel,
+                                               MultivariateTraitTree treeModel,
                                                MultivariateDiffusionModel diffusionModel,
                                                CompoundParameter traitParameter,
                                                List<Integer> missingIndices,
@@ -91,7 +91,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     public AbstractMultivariateTraitLikelihood(String traitName,
-                                               TreeModel treeModel,
+                                               MultivariateTraitTree treeModel,
                                                MultivariateDiffusionModel diffusionModel,
                                                CompoundParameter traitParameter,
                                                Parameter deltaParameter,
@@ -570,7 +570,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
 
             boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
             boolean integrate = xo.getAttribute(INTEGRATE, false);
@@ -724,7 +724,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         new ElementRule(Taxon.class)
                 }, true),
                 new ElementRule(MultivariateDiffusionModel.class),
-                new ElementRule(TreeModel.class),
+                new ElementRule(MultivariateTraitTree.class),
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleArrayRule("cut", true),
                 AttributeRule.newBooleanRule(REPORT_MULTIVARIATE, true),

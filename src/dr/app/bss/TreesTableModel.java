@@ -9,8 +9,8 @@ import javax.swing.JFileChooser;
 import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
-import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
 public class TreesTableModel extends AbstractTableModel {
@@ -212,7 +212,7 @@ public class TreesTableModel extends AbstractTableModel {
 
 				try {
 
-					TreeModel tree = Utils.importTreeFromFile(file);
+					Tree tree = Utils.importTreeFromFile(file);
 					int taxaCount = 0;
 					for (Taxon taxon : tree.asList()) {
 
@@ -225,6 +225,10 @@ public class TreesTableModel extends AbstractTableModel {
 							taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
 									absoluteHeight);
 
+							//TODO: for demographic models
+							// taxon.setAttribute("date", new Date(absoluteHeight,
+							// Units.Type.YEARS, true));
+							
 							taxon.setAttribute(Utils.TREE_FILENAME,
 									file.getName());
 

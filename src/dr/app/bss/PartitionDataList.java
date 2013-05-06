@@ -13,7 +13,7 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 
 	public MutableTaxonList taxonList = new Taxa();
 	public int simulationsCount = 1;
-	public File treesFilename = null;
+//	public File treesFilename = null;
 	
 	public  LinkedList<File> treeFileList = new  LinkedList<File>();
 	public  LinkedList<Integer> taxaCounts = new  LinkedList<Integer>();

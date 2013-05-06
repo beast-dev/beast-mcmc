@@ -32,7 +32,7 @@ public class Utils {
 	// ---CONSTANTS---//
 	// /////////////////
 
-	public static final boolean VERBOSE = false;
+	public static final boolean VERBOSE = true;
 
 	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
@@ -625,7 +625,8 @@ public class Utils {
 
 		// System.out.println("\tData type: "+
 		// PartitionData.dataTypes[data.dataTypeIndex]);
-		System.out.println("\tTree model: " + data.treeFile);
+//		System.out.println("\tTree model: " + data.treeFile);
+		System.out.println("\tTree model: " + data.createTreeModel().toString());
 		System.out.println("\tFrom: " + data.from);
 		System.out.println("\tTo: " + data.to);
 		System.out.println("\tEvery: " + data.every);
@@ -677,17 +678,14 @@ public class Utils {
 		}// END: taxon loop
 	}// END: printTaxonList
 
-	public static TreeModel importTreeFromFile(File file) {
+	public static Tree importTreeFromFile(File file) {
 
-		TreeModel treeModel = null;
-
+		Tree tree = null;
+		
 		try {
 
 			BufferedReader reader = new BufferedReader(new FileReader(file));
-
 			String line = reader.readLine();
-
-			Tree tree = null;
 
 			if (line.toUpperCase().startsWith("#NEXUS")) {
 
@@ -702,14 +700,12 @@ public class Utils {
 			}
 
 			reader.close();
-			treeModel = new TreeModel(tree);
 
 		} catch (Exception e) {
 			Utils.handleException(e);
 		}// END: try-catch block
 
-		return treeModel;
-
+		return tree;
 	}// END: importTreeFromFile
 
 }// END: class

@@ -25,11 +25,11 @@
 
 package dr.evomodel.operators;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.BinaryLatentLiabilityLikelihood;
 import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
@@ -54,7 +54,7 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
 //    public static final String NODE_LABEL = "taxon";
 //    public static final String ROOT_PRIOR = "rootPrior";
 
-    private final TreeModel treeModel;
+    private final MultivariateTraitTree treeModel;
     private final MatrixParameter precisionMatrixParameter;
     private final IntegratedMultivariateTraitLikelihood traitModel;
     private final BinaryLatentLiabilityLikelihood liabilityLikelihood;

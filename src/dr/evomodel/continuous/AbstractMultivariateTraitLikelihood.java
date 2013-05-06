@@ -1,7 +1,7 @@
 /*
  * AbstractMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
@@ -124,7 +121,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
 
 
-
         if (rateModel != null) {
             hasRateModel = true;
             addModel(rateModel);
@@ -158,7 +154,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (dim % dimTrait != 0)
             throw new RuntimeException("dim is not divisible by dimTrait");
 
-        recalculateTreeLength();                           
+        recalculateTreeLength();
         printInformtion();
 
     }
@@ -184,7 +180,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
 
         sb.append("\n\tDiffusion dimension   : ").append(dimTrait).append("\n");
-        sb.append(  "\tNumber of observations: ").append(numData).append("\n");
+        sb.append("\tNumber of observations: ").append(numData).append("\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
@@ -284,7 +280,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 if (event.isTreeChanged()) {
                     recalculateTreeLength();
                     updateAllNodes();
-                } else  if (event.isHeightChanged()) {
+                } else if (event.isHeightChanged()) {
                     recalculateTreeLength();
                     if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
                         updateAllNodes();
@@ -419,7 +415,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected void acceptState() {
     } // nothing to do
 
-    public TreeModel getTreeModel() {
+    public MultivariateTraitTree getTreeModel() {
         return treeModel;
     }
 
@@ -499,7 +495,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (treeTraits == null) {
             final double[] trait = getRootNodeTrait();
             if (trait.length == 1 || reportAsMultivariate) {
-                treeTraits = new TreeTrait[] {
+                treeTraits = new TreeTrait[]{
                         new TreeTrait.DA() {
                             public String getTraitName() {
                                 return traitName;
@@ -685,7 +681,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 Taxon taxon = (Taxon) cxo.getChild(Taxon.class);
                 if (!integrate) {
                     throw new XMLParseException("Ascertainment correction is currently only implemented" +
-                        " for integrated multivariate trait likelihood models");
+                            " for integrated multivariate trait likelihood models");
                 }
                 like.setAscertainedTaxon(taxon);
             }
@@ -724,7 +720,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                 new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 }, true),
 //                        true),
-                new ElementRule(ASCERTAINMENT, new XMLSyntaxRule[] {
+                new ElementRule(ASCERTAINMENT, new XMLSyntaxRule[]{
                         new ElementRule(Taxon.class)
                 }, true),
                 new ElementRule(MultivariateDiffusionModel.class),
@@ -753,7 +749,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
     };
 
-    TreeModel treeModel = null;
+    MultivariateTraitTree treeModel = null;
     MultivariateDiffusionModel diffusionModel = null;
     String traitName = null;
     CompoundParameter traitParameter;

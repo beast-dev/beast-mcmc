@@ -538,7 +538,7 @@ public class XMLGenerator {
 
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 
-			numberOfBranches = Math.pow(2, data.createTreeModel().getTaxonCount());
+			numberOfBranches = 2 * (data.createTreeModel().getTaxonCount() - 1);
 			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES,
 					"branchRates.categories" + suffix, (int) numberOfBranches, null, writer);
 
@@ -575,7 +575,7 @@ public class XMLGenerator {
 
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 
-			numberOfBranches = Math.pow(2, data.createTreeModel().getTaxonCount());
+			numberOfBranches = 2 * (data.createTreeModel().getTaxonCount() - 1);
 			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES,
 					"branchRates.categories" + suffix, (int) numberOfBranches, null, writer);
 
@@ -612,7 +612,7 @@ public class XMLGenerator {
 			
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISTRIBUTION);
 
-			numberOfBranches = Math.pow(2, data.createTreeModel().getTaxonCount());
+			numberOfBranches = 2 * (data.createTreeModel().getTaxonCount() - 1);
 			writeParameter(DiscretizedBranchRatesParser.RATE_CATEGORIES,
 					"branchRates.categories" + suffix, (int) numberOfBranches, null, writer);
 

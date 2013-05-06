@@ -46,7 +46,7 @@ public class TreesPanel extends JPanel implements Exportable {
 				treesTableModel.deleteRow(treesCount - 1);
 				frame.fireTaxaChanged();
 				setTrees();
-				
+
 			}
 		}// END: actionPerformed
 	};
@@ -77,14 +77,9 @@ public class TreesPanel extends JPanel implements Exportable {
 
 		add(scrollPane, BorderLayout.CENTER);
 
-//		column = treesTable.getColumnModel().getColumn(
-//				TreesTableModel.TREE_FILE_INDEX);
-//		// pass dataList for labels on buttons
-//		column.setCellRenderer(new JTableButtonCellRenderer(this.dataList));
-//		column.setCellEditor(new JTableButtonCellEditor());
-
+		setTopologyColumn();
 		setTreesColumn(this.dataList);
-		
+
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TAXA_INDEX);
 		column.setCellRenderer(new TableRenderer(SwingConstants.LEFT,
@@ -100,15 +95,24 @@ public class TreesPanel extends JPanel implements Exportable {
 	}// END: Constructor
 
 	private void setTreesColumn(PartitionDataList dataList) {
-		
+
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TREE_FILE_INDEX);
 		// pass dataList for labels on buttons
 		column.setCellRenderer(new JTableButtonCellRenderer(dataList));
 		column.setCellEditor(new JTableButtonCellEditor());
-		
-	}
-	
+
+	}// END: setTreesColumn
+
+	private void setTopologyColumn() {
+
+		column = treesTable.getColumnModel().getColumn(
+				TreesTableModel.DEMOGRAPHIC_MODEL_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
+
+	}// END: setTopologyColumn
+
 	private void setTrees() {
 
 		treesCount = dataList.treeFileList.size();
@@ -130,11 +134,11 @@ public class TreesPanel extends JPanel implements Exportable {
 		setTrees();
 		treesTableModel.fireTableDataChanged();
 	}// END: updateTreesTable
-	
+
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}
-	
+
 	@Override
 	public JComponent getExportableComponent() {
 		return this;

@@ -1,7 +1,7 @@
 /*
- * PrecisionMatrixGibbsOperator.java
+ * TraitGibbsOperator.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,13 +25,13 @@
 
 package dr.evomodel.operators;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
-import dr.evomodel.tree.TreeModel;
-import dr.geo.GeoSpatialDistribution;
 import dr.geo.GeoSpatialCollectionModel;
+import dr.geo.GeoSpatialDistribution;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.GibbsOperator;
@@ -39,9 +39,9 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
 
 import java.util.HashMap;
@@ -60,7 +60,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
     public static final String NODE_LABEL = "taxon";
     public static final String ROOT_PRIOR = "rootPrior";
 
-    private final TreeModel treeModel;
+    private final MultivariateTraitTree treeModel;
     private final MatrixParameter precisionMatrixParameter;
     private final SampledMultivariateTraitLikelihood traitModel;
     private final int dim;
@@ -102,13 +102,13 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             if (nodeGeoSpatialPrior == null) {
                 nodeGeoSpatialPrior = new HashMap<Taxon, GeoSpatialDistribution>();
             }
-            nodeGeoSpatialPrior.put(taxon, (GeoSpatialDistribution)distribution);
+            nodeGeoSpatialPrior.put(taxon, (GeoSpatialDistribution) distribution);
 
         } else if (distribution instanceof MultivariateNormalDistribution) {
             if (nodeMVNPrior == null) {
                 nodeMVNPrior = new HashMap<Taxon, MultivariateNormalDistribution>();
             }
-            nodeMVNPrior.put(taxon, (MultivariateNormalDistribution)distribution);
+            nodeMVNPrior.put(taxon, (MultivariateNormalDistribution) distribution);
         } else {
             throw new RuntimeException("Only flat/truncated geospatial and multivariate normal distributions allowed");
         }
@@ -143,8 +143,8 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                 node = treeModel.getNode(MathUtils.nextInt(
                         treeModel.getNodeCount()));
                 if (onlyTipsWithPriors &&
-                    (treeModel.getChildCount(node) == 0) && // Is a tip
-                    !nodeGeoSpatialPriorExists(node)) { // Does not have a prior
+                        (treeModel.getChildCount(node) == 0) && // Is a tip
+                        !nodeGeoSpatialPriorExists(node)) { // Does not have a prior
                     node = null;
                 }
             }
@@ -152,7 +152,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                 node = null;
         } // select any internal (or internal/external) node
 
-        final double[] initialValue = treeModel.getMultivariateNodeTrait(node,traitName);
+        final double[] initialValue = treeModel.getMultivariateNodeTrait(node, traitName);
 
         MeanPrecision mp;
 
@@ -176,13 +176,13 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         int count = 0;
 
         final boolean parameterPriorExists = parameterPrior != null;
-       
+
         double[] draw;
 
         do {
             do {
-                if (count > maxTries)  {
-                    treeModel.setMultivariateTrait(node,traitName,initialValue);
+                if (count > maxTries) {
+                    treeModel.setMultivariateTrait(node, traitName, initialValue);  // TODO Add to MTT interface
                     throw new OperatorFailedException("Truncated Gibbs is stuck!");
                 }
 
@@ -238,8 +238,8 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         if (nodeMVNPriorExists(node)) {
             throw new RuntimeException("Still trying to implement multivariate normal taxon priors");
         }
-        
-        return new MeanPrecision(mean,precision);
+
+        return new MeanPrecision(mean, precision);
     }
 
     class MeanPrecision {
@@ -260,36 +260,36 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         double[] weightedAverage = new double[dim];
 
         double[][] precision = precisionMatrixParameter.getParameterAsMatrix();
-        
+
         for (int k = 0; k < treeModel.getChildCount(node); k++) {
             NodeRef child = treeModel.getChild(node, k);
             trait = treeModel.getMultivariateNodeTrait(child, traitName);
             final double weight = 1.0 / traitModel.getRescaledBranchLength(child);
 
             for (int i = 0; i < dim; i++) {
-                for (int j=0; j<dim; j++)
+                for (int j = 0; j < dim; j++)
                     weightedAverage[i] += precision[i][j] * weight * trait[j];
             }
 
             weightTotal += weight;
         }
 
-        for (int i=0; i<dim; i++) {
-            for (int j=0; j<dim; j++) {
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
                 weightedAverage[i] += rootPriorPrecision[i][j] * rootPriorMean[j];
-                precision[i][j]  = precision[i][j] * weightTotal + rootPriorPrecision[i][j];
+                precision[i][j] = precision[i][j] * weightTotal + rootPriorPrecision[i][j];
             }
         }
 
         double[][] variance = new SymmetricMatrix(precision).inverse().toComponents();
 
         trait = new double[dim];
-        for (int i=0; i<dim; i++) {
-            for (int j=0; j<dim; j++)
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++)
                 trait[i] += variance[i][j] * weightedAverage[j];
         }
 
-        return new MeanPrecision(trait,precision);
+        return new MeanPrecision(trait, precision);
     }
 
     public String getPerformanceSuggestion() {
@@ -306,12 +306,14 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             return GIBBS_OPERATOR;
         }
 
-        private final String[] names = { GIBBS_OPERATOR, "internalTraitGibbsOperator" };
+        private final String[] names = {GIBBS_OPERATOR, "internalTraitGibbsOperator"};
 
-        public String[] getParserNames() { return names; }
+        public String[] getParserNames() {
+            return names;
+        }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    
+
             double weight = xo.getDoubleAttribute(WEIGHT);
             boolean onlyInternalNodes = xo.getAttribute(INTERNAL_ONLY, true);
             boolean onlyTipsWithPriors = xo.getAttribute(TIP_WITH_PRIORS_ONLY, true);
@@ -326,15 +328,15 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
             if (cxo != null) {
 
                 MultivariateDistributionLikelihood rootPrior = (MultivariateDistributionLikelihood) cxo.getChild(MultivariateDistributionLikelihood.class);
-                if( !(rootPrior.getDistribution() instanceof MultivariateDistribution))
+                if (!(rootPrior.getDistribution() instanceof MultivariateDistribution))
                     throw new XMLParseException("Only multivariate normal priors allowed for Gibbs sampling the root trait");
-               operator.setRootPrior((MultivariateNormalDistribution)rootPrior.getDistribution());
+                operator.setRootPrior((MultivariateNormalDistribution) rootPrior.getDistribution());
             }
 
 
             // Get node priors
             for (int i = 0; i < xo.getChildCount(); i++) {
-                 if (xo.getChild(i) instanceof MultivariateDistributionLikelihood) {
+                if (xo.getChild(i) instanceof MultivariateDistributionLikelihood) {
                     MultivariateDistribution dist = ((MultivariateDistributionLikelihood) xo.getChild(i)).getDistribution();
                     if (dist instanceof GeoSpatialDistribution) {
                         GeoSpatialDistribution prior = (GeoSpatialDistribution) dist;
@@ -343,20 +345,20 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                         operator.setTaxonPrior(taxon, prior);
                         System.err.println("Adding truncated prior for taxon '" + taxon + "'");
                     }
-                } 
+                }
             }
 
             GeoSpatialCollectionModel collectionModel = (GeoSpatialCollectionModel) xo.getChild(GeoSpatialCollectionModel.class);
             if (collectionModel != null) {
                 operator.setParameterPrior(collectionModel);
-                System.err.println("Adding truncated prior '"+collectionModel.getId()+
-                        "' for parameter '"+collectionModel.getParameter().getId()+"'");
+                System.err.println("Adding truncated prior '" + collectionModel.getId() +
+                        "' for parameter '" + collectionModel.getParameter().getId() + "'");
             }
 
             return operator;
         }
 
-        private Taxon getTaxon(TreeModel treeModel, String taxonLabel) throws XMLParseException {
+        private Taxon getTaxon(MultivariateTraitTree treeModel, String taxonLabel) throws XMLParseException {
             // Get taxon node from tree
             int index = treeModel.getTaxonIndex(taxonLabel);
             if (index == -1) {

@@ -1,9 +1,37 @@
+/*
+ * DiscretizedLocationOperator.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.operators;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.operators.*;
+import dr.inference.operators.AbstractCoercableOperator;
+import dr.inference.operators.CoercionMode;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -77,16 +105,16 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
 
         treeModel.setMultivariateTrait(node, traitName, trait);
 
-        for(int i=0; i<treeModel.getChildCount(node); i++) {
-            NodeRef child = treeModel.getChild(node,i);
+        for (int i = 0; i < treeModel.getChildCount(node); i++) {
+            NodeRef child = treeModel.getChild(node, i);
             if (child != fromNode && treeModel.getBranchLength(child) == 0) {
 //                System.err.println("recursing down");
-                recursivelySetTrait(child,trait,node);
+                recursivelySetTrait(child, trait, node);
             }
         }
         if (!treeModel.isRoot(node) && treeModel.getBranchLength(node) == 0) {
 //            System.err.println("recursing up");
-            recursivelySetTrait(treeModel.getParent(node),trait,node);
+            recursivelySetTrait(treeModel.getParent(node), trait, node);
         }
     }
 
@@ -106,11 +134,11 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
             trait[0] = newPt.getX();
             trait[1] = newPt.getY();
 
-            recursivelySetTrait(node,trait,null);
+            recursivelySetTrait(node, trait, null);
 
 //            treeModel.setMultivariateTrait(node, traitName, trait);            
         }
-           System.err.println("Done with randomization");
+        System.err.println("Done with randomization");
 //        System.exit(-1);
     }
 
@@ -158,7 +186,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
         List<WeightedPoint2D> neighbors = nearestNeighborMap.get(currentPt);
 
         if (neighbors == null)
-            throw new RuntimeException("Node location outside allowable values: "+currentPt);
+            throw new RuntimeException("Node location outside allowable values: " + currentPt);
 
 //        Point2D newPt = neighbors.get(MathUtils.nextInt(disk));
         Point2D newPt = neighbors.get(MathUtils.nextInt(convertFromAutoOptimizeValue(autoOptimize)));
@@ -167,14 +195,14 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
         trait[1] = newPt.getY();
 
 //        treeModel.setMultivariateTrait(node, traitName, trait);
-        recursivelySetTrait(node, trait,null);
+        recursivelySetTrait(node, trait, null);
 
         return 0;
 
     }
 
     private int convertFromAutoOptimizeValue(double value) {
-        return 1 + (int)Math.exp(autoOptimize);
+        return 1 + (int) Math.exp(autoOptimize);
     }
 
     private double convertToAutoOptimizeValue(int value) {
@@ -321,7 +349,7 @@ public class DiscretizedLocationOperator extends AbstractCoercableOperator {
 
     private Map<Point2D, List<WeightedPoint2D>> nearestNeighborMap;
     private Set<Point2D> allLocations;
-    private TreeModel treeModel;
+    private final MultivariateTraitTree treeModel;
     private String traitName;
     private double autoOptimize;
     private boolean onlyInternalNodes = true;

@@ -33,7 +33,6 @@ import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
-import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -66,6 +65,10 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
 
     public double getNodeHeight(NodeRef node) {
         return treeTransform.transform(this, node, treeModel.getNodeHeight(node));
+    }
+
+    public double getOriginalNodeHeight(NodeRef node) {
+        return treeModel.getNodeHeight(node);
     }
 
     // TODO 1. Reparameterize via parentNodeHeight
@@ -198,9 +201,9 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
         treeModel.setMultivariateTrait(n, name, value);
     }
 
-    public Parameter getRootHeightParameter() {
-        return treeModel.getRootHeightParameter();
-    }
+//    public Parameter getRootHeightParameter() {
+//        return treeModel.getRootHeightParameter();
+//    }
 
     public boolean beginTreeEdit() {
         return treeModel.beginTreeEdit();

@@ -75,7 +75,7 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
             return originalHeight;
         }
         if (tree.isRoot(node)) {
-            return tree.getRootHeightParameter().getParameterValue(0);
+            return tree.getOriginalNodeHeight(tree.getRoot());
         }
 
         // Do recursive work

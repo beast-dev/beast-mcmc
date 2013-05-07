@@ -1,3 +1,5 @@
+package dr.app.phylogeography.tools;
+
 /*
  * RateIndicatorBF.java
  *
@@ -23,26 +25,26 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.phylogeography.tools;
-
 import dr.app.tools.TimeSlicer;
 import dr.app.util.Arguments;
 import dr.util.HeapSort;
+import org.jdom.Element;
+import org.jdom.output.Format;
+import org.jdom.output.XMLOutputter;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
-
-import org.jdom.Element;
-import org.jdom.output.XMLOutputter;
-import org.jdom.output.Format;
 
 /**
  * @author Philippe Lemey
  * @author Andrew Rambaut
  * @author Marc A. Suchard
+ * @author Matthew Hall
  */
+
 public class RateIndicatorBF {
 
     public static final String LOCATIONSFILE = "locationsfile";
@@ -54,9 +56,12 @@ public class RateIndicatorBF {
     public static final String ISTRING = "istring";
     public static final String RSTRING = "rstring";
     public static final String PSTRING = "pstring";
-    public static final String GSTRING = "gstring";
+    public static final String FSTRING = "fstring";
+    public static final String CSTRING = "cstring";
+    public static final String USTRING = "ustring";
     public static final String LOWCOLOR = "lowcolor";
     public static final String UPCOLOR = "upcolor";
+    public static final String CALCULATERATES = "calculaterates";
     public static final String WIDTH = "width";
     public static final String KMLFILE = "kmlfile";
     public static final String BFCUTOFF = "bfcutoff";
@@ -66,9 +71,40 @@ public class RateIndicatorBF {
     public static final String BWM = "bwm";
     public static final String ALTITUDE = "altitude";
 
+    private double[] expectedRateIndicators;
+    private boolean nonreversible = false;
+    protected String[][] locations; // contains locations and their coordinates
+    protected String[][] locationNames; // contains start and end locations for transitions
+    protected double[][] longitudes;  // contains start and end longitudes for transitions
+    protected double[][] latitudes;  // contains start and end latitudes for transitions
+    protected String[][] supportedLocations; // contains start and end locations for transitions
+    protected double[][] supportedLongitudes;  // contains start and end longitudes for transitions
+    protected double[][] supportedLatitudes;  // contains start and end latitudes for transitions
+    protected double[] supportedBFs;
+    protected double[] supportedRateIndicators;
+    protected double[] supportedActualRates;
+    private double[] meanQMatrix;
+    private boolean bayesFactor;
+    private String inputFileName;
+    private int burnin;
+    private double cutoff;
+    private double meanPoissonPrior;
+    private int offsetPoissonPrior;
+    private String rateIndicatorString;
+    private String actualRateString;
+    private String relativeRateString;
+    private String clockRateString;
+    private String frequencyString;
+    private String unitString;
+    private int generationCount;
+    protected int stateCount;
+    private int rateCount;
+    protected boolean calculateRates;
+    private int[][] columnNumberLookup;
+
     public static final String[] falseTrue = new String[] {"false","true"};
 
-    private static PrintStream progressStream = System.out;
+    protected static PrintStream progressStream = System.out;
     private static final String commandName = "rateIndicatorBF";
     public static void printUsage(Arguments arguments) {
 
@@ -78,7 +114,11 @@ public class RateIndicatorBF {
         progressStream.println();
     }
 
-    public RateIndicatorBF (String inputFileName, int burnin, String rateIndicatorString, int numberOfStates, String[][] locations, boolean bayesFactor, double cutoff, double meanPoissonPrior, int offsetPoissonPrior, String actualRateString, String relativeRateString, String geoSiteModelString) {
+    public RateIndicatorBF(String inputFileName, int burnin, String rateIndicatorString, int numberOfStates,
+                               String[][] locations, boolean bayesFactor, double cutoff, double meanPoissonPrior,
+                               int offsetPoissonPrior, String actualRateString, String relativeRateString,
+                               String frequencyString, String clockRateString, String unitString,
+                               boolean calculateRates) {
 
         //count the number of states in the RateIndicatorLog file
         generationCount = getGenerationCount(inputFileName);
@@ -88,131 +128,266 @@ public class RateIndicatorBF {
         //progressStream.println("first rateIndicator is at column "+firstRateIndicator);
 
         //count the rateIndicators in the RateIndicatorLog file
-        int numberOfRateIndicators = getNumberOfEntries(inputFileName, firstRateIndicator, rateIndicatorString);
+        rateCount = getNumberOfEntries(inputFileName, firstRateIndicator, rateIndicatorString);
 
         if (numberOfStates > 0) {
-            statesCounter = numberOfStates;
-            progressStream.println("number of states provided = "+statesCounter);
+            stateCount = numberOfStates;
+            progressStream.println("number of states provided = "+stateCount);
         } else {
-            statesCounter = locations.length;
-            progressStream.println("number of states in coordinates file = "+statesCounter);
+            stateCount = locations.length;
+            progressStream.println("number of states in coordinates file = "+stateCount);
         }
 
+        this.inputFileName = inputFileName;
+        this.burnin = burnin;
         this.bayesFactor = bayesFactor;
         this.cutoff = cutoff;
         this.meanPoissonPrior = meanPoissonPrior;
         this.offsetPoissonPrior = offsetPoissonPrior;
+        this.rateIndicatorString = rateIndicatorString;
         this.actualRateString = actualRateString;
         this.relativeRateString = relativeRateString;
-        this.geoSiteModelString = geoSiteModelString;
+        this.clockRateString = clockRateString;
+        this.frequencyString = frequencyString;
+        this.unitString = unitString;
+        this.calculateRates = calculateRates;
 
-
-        if (numberOfRateIndicators != ((statesCounter*(statesCounter-1.0))/2.0)) {
-            if (numberOfRateIndicators == (statesCounter*(statesCounter-1.0))) {
-                progressStream.println("K*(K-1) rateIndicators, with K = "+ statesCounter+". So, nonreversible matrix!");
+        if (rateCount != ((stateCount*(stateCount-1.0))/2.0)) {
+            if (rateCount == (stateCount*(stateCount-1.0))) {
+                progressStream.println("K*(K-1) rateIndicators, with K = "+ stateCount+". " +
+                        "So, nonreversible matrix!");
                 nonreversible = true;
             } else {
-                System.err.println("the number of rateIndicators ("+numberOfRateIndicators+") does not match (K*(K-1)/2) states ("+((statesCounter*(statesCounter-1.0))/2.0)+"; with K = "+statesCounter+").");
+                System.err.println("the number of rateIndicators ("+rateCount+") does not match " +
+                        "(K*(K-1)/2) states ("+((stateCount*(stateCount-1.0))/2.0)+"; with K " +
+                        "= "+stateCount+").");
+            }
+        }
+
+        //The following just makes life easier...
+
+        columnNumberLookup = new int[stateCount][stateCount];
+        int columnCount=0;
+        for(int row=0; row<stateCount; row++){
+            for(int column=0; column<stateCount; column++){
+                if(row==column){
+                    columnNumberLookup[row][column]=-1;
+                } else if(row<column){
+                    columnNumberLookup[row][column]=columnCount;
+                    columnCount++;
+                }
+            }
+        }
+        for(int column=0; column<stateCount; column++){
+            for(int row=0; row<stateCount; row++){
+                if(row>column){
+                    columnNumberLookup[row][column]=columnCount;
+                    columnCount++;
+                }
             }
         }
 
         // so now we know the dimension of the rateIndicator array
         if ((generationCount - burnin)< 10) {
-            System.err.println("With burn-in = "+burnin+", there are only "+(generationCount - burnin)+" state(s) in indicator log file??");
+            System.err.println("With burn-in = "+burnin+", there are only "+(generationCount - burnin)+" state(s) in " +
+                    "indicator log file??");
         }
-        double[][] rateIndicators = new double[((generationCount - 1)-burnin)][numberOfRateIndicators];
-        fillRateIndicatorArray(inputFileName,rateIndicators,burnin,firstRateIndicator,numberOfRateIndicators);
-        //print2DArray(rateIndicators, "test.txt");
+        double[][] rateIndicators = new double[((generationCount - 1)-burnin)][rateCount];
+        fill2DArray(inputFileName, rateIndicators, burnin, firstRateIndicator, rateCount);
         expectedRateIndicators = meanCol(rateIndicators);
 
+        int ratesOfInterest = !nonreversible && calculateRates ? rateCount*2 : rateCount;
+
         //compile locations
-        locationNames = new String [numberOfRateIndicators][2];
-        longitudes = new double [numberOfRateIndicators][2];
-        latitudes = new double [numberOfRateIndicators][2];
+        locationNames = new String [ratesOfInterest][2];
+        longitudes = new double [ratesOfInterest][2];
+        latitudes = new double [ratesOfInterest][2];
 
         this.locations = locations;
         compileLocations(locations,locationNames,latitudes,longitudes);
-        supportedRateIndicators = getSupportedRateIndicators();
 
-        //below is for rateSummary
-
-        int numberOfActualRates = numberOfRateIndicators;
-
-        //boolean to see it the rateLog contains productStatitistics, if not, we make 'em ourselves
-        boolean containsActualRates = hasEntryOf(inputFileName, actualRateString);
-        if (!containsActualRates){
-            // if there are no productStatistics, we will look for the relativ rates instead
-            actualRateString = relativeRateString;
+        if(calculateRates){
+            double[][] QMatrices = getQMatrices();
+            meanQMatrix = meanCol(QMatrices);
         }
 
-        int firstActualRate = getFirstEntryOf(inputFileName, actualRateString);
+        supportedRateIndicators = getSupportedRateIndicators();
+    }
 
-//        int geoSiteModelMuPosition = getFirstEntryOf(inputFileName, geoSiteModelString);
-        //System.out.println("geoSiteModelMu is at column "+geoSiteModelMuPosition);
+    //Diagonal entries in the Q matrices are omitted for obvious reasons. Note that if the frequencies are not equal
+    //then the Q matrix is not symmetric even if the rates are.
 
+    private double[][] getQMatrices(){
 
+        int firstRateIndicator = getFirstEntryOf(inputFileName, rateIndicatorString);
+        double[][] rateIndicators = new double[((generationCount - 1)-burnin)][rateCount];
+        fill2DArray(inputFileName, rateIndicators, burnin, firstRateIndicator, rateCount);
 
+        boolean containsClockRate = hasEntryOf(inputFileName, clockRateString);
+        double[] clockRates = new double[(generationCount-1)-burnin];
+        int clockColumn = getFirstEntryOf(inputFileName, clockRateString);
+
+        if(!containsClockRate){
+            progressStream.println("WARNING: No overall clock rate entry found. Rates will be given assuming one " +
+                    "transition (of any sort) per unit time; variation in clock rates will not be accounted for!");
+            Arrays.fill(clockRates,1);
+        } else {
+            fill1DArray(inputFileName, clockRates, burnin, clockColumn);
+        }
+
+        //boolean to see it the rateLog contains productStatistics, if not, we make 'em ourselves
+        boolean containsActualRates = hasEntryOf(inputFileName, actualRateString);
+        double[][] actualRates = new double[((generationCount - 1)-burnin)][rateCount];
+        if (!containsActualRates){
+            // if there are no actualRate entries, we will look for the relative rates instead
+            int firstRelativeRate = getFirstEntryOf(inputFileName, relativeRateString);
+            fill2DArray(inputFileName, actualRates, burnin, firstRelativeRate, rateCount);
+            for (int i=0;i<actualRates.length;i++){
+                for (int j=0;j<actualRates[i].length;j++){
+                    actualRates[i][j] = actualRates[i][j]*rateIndicators[i][j];
+                }
+            }
+        } else {
+            int firstActualRate = getFirstEntryOf(inputFileName, actualRateString);
+            fill2DArray(inputFileName, actualRates, burnin, firstActualRate, rateCount);
+        }
+
+        //Double up the actual rate matrix for a nonreversible model - separate entries are needed for both directions
+
+        if(!nonreversible) {
+            double[][] tempActualRates = new double[((generationCount - 1)-burnin)][actualRates[0].length*2];
+            for(int gen=0; gen<(generationCount - 1) - burnin; gen++){
+                for(int col = 0; col<actualRates[0].length; col++){
+                    tempActualRates[gen][col] = actualRates[gen][col];
+                    tempActualRates[gen][actualRates[0].length + col] = actualRates[gen][col];
+                }
+            }
+            actualRates = tempActualRates;
+        }
+
+        boolean containsFrequencies = hasEntryOf(inputFileName, frequencyString);
+        double[][] frequencies = new double[((generationCount - 1)-burnin)][stateCount];
+        if (!containsFrequencies){
+            progressStream.println("No state frequencies recorded; assuming all equal.");
+            for (int i=0; i<((generationCount - 1)-burnin); i++){
+                Arrays.fill(frequencies[i],(1/(double)stateCount));
+            }
+        } else {
+            int firstFrequency = getFirstEntryOf(inputFileName, frequencyString);
+            fill2DArray(inputFileName, frequencies, burnin, firstFrequency, stateCount);
+        }
+
+        double[][] QMatrixEntries = new double[((generationCount - 1)-burnin)][nonreversible ? rateCount : rateCount*2];
+
+        for(int generation = 0; generation<(generationCount - 1) - burnin; generation++){
+            double normalisationConstant = 0;
+            for(int row = 0; row<stateCount; row++){
+                for(int column = 0; column<stateCount; column++){
+                    int dataColumn = columnNumberLookup[row][column];
+                    if(dataColumn!=-1){
+                        double unnormalisedMatrixEntry = actualRates[generation][dataColumn]
+                                *frequencies[generation][column];
+                        QMatrixEntries[generation][dataColumn]=unnormalisedMatrixEntry;
+                        normalisationConstant += unnormalisedMatrixEntry;
+                    }
+                }
+            }
+            //normalise to one transition per unit time and multiply by the clock rate
+            for(int row = 0; row<stateCount; row++){
+                for(int column =0; column<stateCount; column++){
+                    int dataColumn = columnNumberLookup[row][column];
+                    if(dataColumn!=-1){
+                        QMatrixEntries[generation][dataColumn] = QMatrixEntries[generation][dataColumn]
+                                *clockRates[generation]/normalisationConstant;
+                    }
+                }
+            }
+        }
+        return QMatrixEntries;
     }
 
     private double[] getSupportedRateIndicators(){
 
         int indicatorCounter = 0;
-        for (int p = 0; p < expectedRateIndicators.length; p++){
 
-            double indicator = expectedRateIndicators[p];
+        // If the indicators are symmetric but the frequencies aren't equal, you still need to retrieve rates in
+        // both directions (if you're interested in the rates at all). So the array of rates needs to be doubled up.
+
+        double[] expectedIndicatorsTemp;
+        if(!nonreversible && calculateRates){
+            expectedIndicatorsTemp = new double[expectedRateIndicators.length*2];
+            for(int i=0; i< expectedRateIndicators.length; i++){
+                expectedIndicatorsTemp[i] = expectedRateIndicators[i];
+                expectedIndicatorsTemp[expectedRateIndicators.length+i] = expectedRateIndicators[i];
+            }
+        } else {
+            expectedIndicatorsTemp = expectedRateIndicators;
+        }
+
+        for (double indicator : expectedIndicatorsTemp) {
             if (!bayesFactor) {
                 if (indicator > cutoff) {
-                    indicatorCounter ++;
+                    indicatorCounter++;
                 }
-            }  else {
-                if (indicator > getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, statesCounter, nonreversible)) {
-                    indicatorCounter ++;
+            } else {
+                if (indicator > getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, stateCount,
+                        nonreversible)) {
+                    indicatorCounter++;
                 }
             }
         }
+
 
         double[] supportedIndicators = new double[indicatorCounter];
         supportedBFs = new double[indicatorCounter];
         supportedLocations = new String[indicatorCounter][2];
         supportedLatitudes = new double[indicatorCounter][2];
         supportedLongitudes = new double[indicatorCounter][2];
-        int[] indices = new int[expectedRateIndicators.length];
-        HeapSort.sort(expectedRateIndicators, indices);
+        supportedActualRates = new double[indicatorCounter];
+        int[] indices = new int[expectedIndicatorsTemp.length];
+        HeapSort.sort(expectedIndicatorsTemp, indices);
         int fillCount = 0;
 
-        for (int o = 0; o < expectedRateIndicators.length; o++){
+        for (int o = 0; o < expectedIndicatorsTemp.length; o++){
             //we order rate indicators in decreasing order
-            double indicator = expectedRateIndicators[indices[expectedRateIndicators.length - o - 1]];
-            double BF = getBayesFactor(indicator, meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, 0);
+            double indicator = expectedIndicatorsTemp[indices[expectedIndicatorsTemp.length - o - 1]];
+            double BF = getBayesFactor(indicator, meanPoissonPrior, stateCount, offsetPoissonPrior, nonreversible,
+                    0);
             if (BF == Double.POSITIVE_INFINITY) {
-                BF = getBayesFactor(indicator, meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, generationCount);
+                BF = getBayesFactor(indicator, meanPoissonPrior, stateCount, offsetPoissonPrior, nonreversible,
+                        generationCount);
             }
 
-            double threshold = (bayesFactor ? getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, statesCounter, nonreversible) : cutoff);
+            double threshold = (bayesFactor ? getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior,
+                    stateCount, nonreversible) : cutoff);
             if (indicator > threshold) {
                 supportedIndicators[fillCount] = indicator;
                 supportedBFs[fillCount] = BF;
-                supportedLocations[fillCount][0] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][0];
-                supportedLocations[fillCount][1] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][1];
-                supportedLatitudes[fillCount][0] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
-                supportedLatitudes[fillCount][1] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
-                supportedLongitudes[fillCount][0] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
-                supportedLongitudes[fillCount][1] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
+                supportedLocations[fillCount][0] =  locationNames[indices[(expectedIndicatorsTemp.length - o - 1)]][0];
+                supportedLocations[fillCount][1] =  locationNames[indices[(expectedIndicatorsTemp.length - o - 1)]][1];
+                supportedLatitudes[fillCount][0] =  latitudes[indices[(expectedIndicatorsTemp.length - o - 1)]][0];
+                supportedLatitudes[fillCount][1] =  latitudes[indices[(expectedIndicatorsTemp.length - o - 1)]][1];
+                supportedLongitudes[fillCount][0] =  longitudes[indices[(expectedIndicatorsTemp.length - o - 1)]][0];
+                supportedLongitudes[fillCount][1] =  longitudes[indices[(expectedIndicatorsTemp.length - o - 1)]][1];
+                if(calculateRates){
+                    supportedActualRates[fillCount] = meanQMatrix[indices[(expectedIndicatorsTemp.length - o - 1)]];
+                }
                 fillCount ++;
             }
         }
         return supportedIndicators;
     }
 
-    private void compileLocations(String[][] locations, String[][] locationNames, double[][] latitudes, double[][] longitudes){
+    private void compileLocations(String[][] locations, String[][] locationNames, double[][] latitudes,
+                                  double[][] longitudes){
         //begin of new code
         int elementCounter = 0;
         int secondCounter = 0;
-        for (int i = 0; i < (statesCounter - 1); i++) {
+        for (int i = 0; i < (stateCount - 1); i++) {
 
             secondCounter ++;
 
-            for (int j = secondCounter; j < statesCounter; j++) {
+            for (int j = secondCounter; j < stateCount; j++) {
 
                 if (locations != null) {
                     locationNames[elementCounter][0] = locations[i][0];
@@ -234,7 +409,7 @@ public class RateIndicatorBF {
             }
         }
         // for nonreversible models, we keep on filling the arrays
-        if (nonreversible) {
+        if (nonreversible||calculateRates) {
             for (int k = 0; k < elementCounter; k++) {
 
                 locationNames[elementCounter + k][0] = locationNames[k][1];
@@ -248,7 +423,8 @@ public class RateIndicatorBF {
 
     }
 
-    public void outputKML(String KMLoutputFile,String lowerLinkColor,String upperLinkColor, double branchWidthConstant, double branchWidthMultiplier, double altitudeFactor){
+    public void outputKML(String KMLoutputFile, String lowerLinkColor, String upperLinkColor,
+                          double branchWidthConstant, double branchWidthMultiplier, double altitudeFactor){
 
         double divider = 100;
 
@@ -296,6 +472,11 @@ public class RateIndicatorBF {
         ratesSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Indicator")
                 .setAttribute("type", "double"));
+        if(calculateRates){
+            ratesSchema.addContent(new Element("SimpleField")
+                    .setAttribute("name", "meanRate")
+                    .setAttribute("type", "double"));
+        }
         schema.add(ratesSchema);
 
         documentElement.addContent(schema);
@@ -324,7 +505,16 @@ public class RateIndicatorBF {
 //        }
 
         for (int p = 0; p < supportedRateIndicators.length; p++){
-            addRateWithData(supportedRateIndicators[p], supportedBFs[p], supportedLocations[p][0], supportedLocations[p][1], supportedLongitudes[p][0], supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, folderElement);
+            if(calculateRates){
+                addRateWithData(supportedRateIndicators[p], supportedBFs[p], supportedActualRates[p],
+                        supportedLocations[p][0], supportedLocations[p][1], supportedLongitudes[p][0],
+                        supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1,
+                        folderElement);
+            } else {
+                addRateWithData(supportedRateIndicators[p], supportedBFs[p], supportedLocations[p][0],
+                        supportedLocations[p][1], supportedLongitudes[p][0], supportedLatitudes[p][0],
+                        supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, folderElement);
+            }
         }
 
         //add locations
@@ -351,21 +541,21 @@ public class RateIndicatorBF {
     private void addLocations(Element folderElement){
 
 
-        for (int i = 0; i < locations.length ; i++) {
-            Element placemarkElement  = new Element("Placemark");
+        for (String[] location : locations) {
+            Element placemarkElement = new Element("Placemark");
             Element placemarkNameElement = new Element("name");
-            placemarkNameElement.addContent(locations[i][0]);
+            placemarkNameElement.addContent(location[0]);
             placemarkElement.addContent(placemarkNameElement);
 
             int inCount = 0;
             int outCount = 0;
 
             for (int j = 0; j < supportedRateIndicators.length; j++) {
-                if (supportedLocations[j][0].equals(locations[i][0])) {
-                    inCount ++;
+                if (supportedLocations[j][0].equals(location[0])) {
+                    inCount++;
                 }
-                if (supportedLocations[j][1].equals(locations[i][0])) {
-                    outCount ++;
+                if (supportedLocations[j][1].equals(location[0])) {
+                    outCount++;
                 }
             }
             int totalCount = inCount + outCount;
@@ -373,19 +563,19 @@ public class RateIndicatorBF {
             Element data = new Element("ExtendedData");
             Element schemaData = new Element("SchemaData");
             schemaData.setAttribute("schemaUrl", "#Location_Schema");
-            schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(locations[i][0]));
+            schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(location[0]));
             schemaData.addContent(new Element("SimpleData").setAttribute("name", "In").addContent(Integer.toString(inCount)));
             schemaData.addContent(new Element("SimpleData").setAttribute("name", "Out").addContent(Integer.toString(outCount)));
             schemaData.addContent(new Element("SimpleData").setAttribute("name", "Total").addContent(Integer.toString(totalCount)));
             data.addContent(schemaData);
             placemarkElement.addContent(data);
 
-            Element pointElement  = new Element("Point");
-            Element altitude  = new Element("altitudeMode");
+            Element pointElement = new Element("Point");
+            Element altitude = new Element("altitudeMode");
             altitude.addContent("relativeToGround");
             pointElement.addContent(altitude);
-            Element coordinates  = new Element("coordinates");
-            coordinates.addContent(locations[i][2]+","+locations[i][1]+",0");
+            Element coordinates = new Element("coordinates");
+            coordinates.addContent(location[2] + "," + location[1] + ",0");
             pointElement.addContent(coordinates);
             placemarkElement.addContent(pointElement);
 
@@ -393,11 +583,17 @@ public class RateIndicatorBF {
         }
     }
 
-    private void  addRateAndStyle(double rateIndicator, double startLongitude, double startLatitude, double endLongitude, double endLatitude, int number, double branchWidthConstant, double branchWidthMultiplier, double[] minAndMaxRateIndicator, double altitudeFactor, double divider, String lowerLinkColor, String upperLinkColor, Element folderElement, Element documentElement) {
+    private void addRateAndStyle(double rateIndicator, double startLongitude, double startLatitude,
+                                 double endLongitude, double endLatitude, int number, double branchWidthConstant,
+                                 double branchWidthMultiplier, double[] minAndMaxRateIndicator, double altitudeFactor,
+                                 double divider, String lowerLinkColor, String upperLinkColor, Element folderElement,
+                                 Element documentElement) {
 
         String opacity = "FF";
 
-        double distance = (3958*Math.PI*Math.sqrt((endLatitude-startLatitude)*(endLatitude-startLatitude)+Math.cos(endLatitude/57.29578)*Math.cos(startLatitude/57.29578)*(endLongitude-startLongitude)*(endLongitude-startLongitude))/180);
+        double distance = (3958*Math.PI*Math.sqrt((endLatitude-startLatitude)*(endLatitude-startLatitude)
+                +Math.cos(endLatitude/57.29578)*Math.cos(startLatitude/57.29578)
+                *(endLongitude-startLongitude)*(endLongitude-startLongitude))/180);
 
         double maxAltitude = distance*altitudeFactor;
         double latitudeDifference = endLatitude - startLatitude;
@@ -495,7 +691,8 @@ public class RateIndicatorBF {
                 coordinatesStartBuffer.append((startLongitude+a*(longitudeDifference/divider))+",");
             }
 
-            coordinatesStartBuffer.append((startLatitude+a*(latitudeDifference/divider))+","+(maxAltitude*Math.sin(Math.acos(1 - a*(1.0/(divider/2.0))))));
+            coordinatesStartBuffer.append((startLatitude+a*(latitudeDifference/divider))+","
+                    +(maxAltitude*Math.sin(Math.acos(1 - a*(1.0/(divider/2.0))))));
 
             if (longitudeBreak) {
 
@@ -521,7 +718,8 @@ public class RateIndicatorBF {
                 coordinatesEndBuffer.append((startLongitude+(a+1)*(longitudeDifference/divider))+",");
             }
 
-            coordinatesEndBuffer.append((startLatitude+(a+1)*(latitudeDifference/divider))+","+(maxAltitude*Math.sin(Math.acos(1 - (a+1)*(1.0/(divider/2.0))))));
+            coordinatesEndBuffer.append((startLatitude+(a+1)*(latitudeDifference/divider))+","
+                    +(maxAltitude*Math.sin(Math.acos(1 - (a+1)*(1.0/(divider/2.0))))));
 
             coordinatesElement.addContent(coordinatesStartBuffer.toString());
             coordinatesElement.addContent(" ");
@@ -532,9 +730,9 @@ public class RateIndicatorBF {
         }
     }
 
-    private void  addRateWithData(double rateIndicator, double BF, String fromLocation, String toLocation, double startLongitude, double startLatitude, double endLongitude, double endLatitude, int number, Element folderElement) {
-
-
+    private Element addRateWithData(double rateIndicator, double BF, String fromLocation, String toLocation,
+                                    double startLongitude, double startLatitude, double endLongitude, double endLatitude,
+                                    int number, Element folderElement) {
 
         Element placemarkElement  = new Element("Placemark");
 
@@ -566,6 +764,23 @@ public class RateIndicatorBF {
         lineStringElement.addContent(coordinatesElement);
         placemarkElement.addContent(lineStringElement);
         folderElement.addContent(placemarkElement);
+        return placemarkElement;
+    }
+
+    // the actual rate version of this method
+
+    private Element addRateWithData(double rateIndicator, double BF, double actualRate, String fromLocation,
+                                    String toLocation, double startLongitude, double startLatitude, double endLongitude,
+                                    double endLatitude, int number, Element folderElement) {
+
+        Element placemarkElement = addRateWithData(rateIndicator, BF, fromLocation, toLocation, startLongitude,
+                startLatitude, endLongitude, endLatitude, number, folderElement);
+
+        Element data = placemarkElement.getChild("ExtendedData");
+        Element schemaData = data.getChild("SchemaData");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "meanRate").addContent(Double.toString(actualRate)));
+
+        return placemarkElement;
     }
 
     public void outputTextFile(String outFileName) {
@@ -583,7 +798,8 @@ public class RateIndicatorBF {
             }
             //sort expected rateIndicator
             if (bayesFactor) {
-                outFile.println("Indicator cutoff (for BF = "+cutoff+") = "+getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, statesCounter, nonreversible));
+                outFile.println("Indicator cutoff (for BF = "+cutoff+") = "+getBayesFactorCutOff(cutoff,
+                        meanPoissonPrior, offsetPoissonPrior, stateCount, nonreversible));
             } else {
                 outFile.println("Indicator cutoff = "+cutoff);
             }
@@ -595,9 +811,11 @@ public class RateIndicatorBF {
                 outFile.print(
                         "I="+supportedRateIndicators[o]+"\tBF");
 
-                double BF = getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, 0);
+                double BF = getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, stateCount,
+                        offsetPoissonPrior, nonreversible, 0);
                 if (BF == Double.POSITIVE_INFINITY) {
-                    outFile.print(">"+getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, generationCount));
+                    outFile.print(">"+getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, stateCount,
+                            offsetPoissonPrior, nonreversible, generationCount));
                 }  else {
                     outFile.print("="+BF);
                 }
@@ -621,6 +839,12 @@ public class RateIndicatorBF {
                             .append(supportedLatitudes[o][1])
                             .append(")");
                 }
+                if(calculateRates){
+                    sb.append(" with mean rate of transition ")
+                            .append(supportedActualRates[o])
+                            .append(" per ")
+                            .append(unitString);
+                }
                 outFile.print(sb.toString());
                 outFile.println();
             }
@@ -631,28 +855,8 @@ public class RateIndicatorBF {
 
     }
 
-    private double[] expectedRateIndicators;
-    private boolean nonreversible = false;
-    private String[][] locations; // contains start and end locations for transitions
-    private String[][] locationNames; // contains start and end locations for transitions
-    private double[][] longitudes;  // contains start and end longitudes for transitions
-    private double[][] latitudes;  // contains start and end latitudes for transitions
-    private String[][] supportedLocations; // contains start and end locations for transitions
-    private double[][] supportedLongitudes;  // contains start and end longitudes for transitions
-    private double[][] supportedLatitudes;  // contains start and end latitudes for transitions
-    private int statesCounter;
-    private double[] supportedBFs;
-    private double[] supportedRateIndicators;
-    private boolean bayesFactor;
-    private double cutoff;
-    private double meanPoissonPrior;
-    private int offsetPoissonPrior;
-    private String actualRateString;
-    private String relativeRateString;
-    private String geoSiteModelString;
-    private int generationCount;
-
-    private static double getBayesFactor(double meanIndicator, double meanPoissonPrior, int numberOfLocations, int offset, boolean nonreversible, double generations) {
+    private static double getBayesFactor(double meanIndicator, double meanPoissonPrior, int numberOfLocations,
+                                         int offset, boolean nonreversible, double generations) {
 
         double bayesFactor = 0;
         double priorProbabilityDenominator = 0;
@@ -676,7 +880,8 @@ public class RateIndicatorBF {
 
     }
 
-    private static double getBayesFactorCutOff(double bayesFactor, double meanPoissonPrior, int offset, int numberOfLocations, boolean nonreversible) {
+    private static double getBayesFactorCutOff(double bayesFactor, double meanPoissonPrior, int offset,
+                                               int numberOfLocations, boolean nonreversible) {
 
         double bayesFactorCutoff = 0;
         double posteriorOdds = 0;
@@ -713,64 +918,115 @@ public class RateIndicatorBF {
         return returnArray;
     }
 
-    private static void fillRateIndicatorArray(String RateIndicatorLog, double[][] rateIndicators, int burnin, int firstRateIndicator, int numberOfRateIndicators){
-
+    private static void fill1DArray(String logFileName, double[] array, int burnin, int element){
         try {
-            BufferedReader indicatorReader = new BufferedReader(new FileReader(RateIndicatorLog));
-            String rateIndicatorCurrent = indicatorReader.readLine();
-            while (rateIndicatorCurrent.startsWith("#")) {
-                rateIndicatorCurrent = indicatorReader.readLine();
+            BufferedReader arrayReader = new BufferedReader(new FileReader(logFileName));
+            String currentLine = arrayReader.readLine();
+            while (currentLine.startsWith("#")) {
+                currentLine = arrayReader.readLine();
             }
 
             // skip the headers in the rateIndicator file
-            while (rateIndicatorCurrent.startsWith("state")) {
-                rateIndicatorCurrent = indicatorReader.readLine();
+            while (currentLine.startsWith("state")) {
+                currentLine = arrayReader.readLine();
             }
 
-            double rateIndicator;
+            double currentElement;
             int linesRead = 0;
             //skip burnin
             while (linesRead < burnin){
-                rateIndicatorCurrent = indicatorReader.readLine();
+                currentLine = arrayReader.readLine();
                 linesRead ++;
             }
 
             int rowCounter = 0;
 
-            while (rateIndicatorCurrent!= null && !indicatorReader.equals("")) {
+            while (currentLine!= null && !arrayReader.equals("")) {
+
+
+                int startCounter = 1;
+
+                StringTokenizer tokens = new StringTokenizer(currentLine);
+                currentElement = Double.parseDouble(tokens.nextToken());
+
+                //skip until we encounter rateIndicators
+                while (startCounter < element) {
+                    currentElement = Double.parseDouble(tokens.nextToken());
+                    startCounter ++;
+                }
+
+                // read the value
+                array[rowCounter] = currentElement;
+
+                rowCounter ++;
+                currentLine = arrayReader.readLine();
+
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading " + logFileName);
+            System.exit(1);
+        }
+    }
+
+
+    private static void fill2DArray(String logFileName, double[][] array, int burnin, int firstElement,
+                                    int numberOfItems){
+
+        try {
+            BufferedReader arrayReader = new BufferedReader(new FileReader(logFileName));
+            String currentLine = arrayReader.readLine();
+            while (currentLine.startsWith("#")) {
+                currentLine = arrayReader.readLine();
+            }
+
+            // skip the headers in the rateIndicator file
+            while (currentLine.startsWith("state")) {
+                currentLine = arrayReader.readLine();
+            }
+
+            double currentElement;
+            int linesRead = 0;
+            //skip burnin
+            while (linesRead < burnin){
+                currentLine = arrayReader.readLine();
+                linesRead ++;
+            }
+
+            int rowCounter = 0;
+
+            while (currentLine!= null && !arrayReader.equals("")) {
 
                 int columnCounter = 0;
 
                 int startCounter = 1;
-                int rateIndicatorCounter = 0;
+                int columnOfInterestCounter = 0;
 
-                StringTokenizer tokens = new StringTokenizer(rateIndicatorCurrent);
-                rateIndicator = Double.parseDouble(tokens.nextToken());
+                StringTokenizer tokens = new StringTokenizer(currentLine);
+                currentElement = Double.parseDouble(tokens.nextToken());
 
                 //skip until we encounter rateIndicators
-                while (startCounter < firstRateIndicator) {
-                    rateIndicator = Double.parseDouble(tokens.nextToken());
+                while (startCounter < firstElement) {
+                    currentElement = Double.parseDouble(tokens.nextToken());
                     startCounter ++;
-
                 }
 
                 // read all rateIndicators
-                while (rateIndicatorCounter < numberOfRateIndicators) {
-                    rateIndicators[rowCounter][columnCounter] = rateIndicator;
+                while (columnOfInterestCounter < numberOfItems) {
+                    array[rowCounter][columnCounter] = currentElement;
                     columnCounter ++;
-                    rateIndicatorCounter ++;
-                    if (rateIndicatorCounter < numberOfRateIndicators) {
-                        rateIndicator = Double.parseDouble(tokens.nextToken());
+                    columnOfInterestCounter ++;
+                    if (columnOfInterestCounter < numberOfItems) {
+                        currentElement = Double.parseDouble(tokens.nextToken());
                     }
 
                 }
 
                 rowCounter ++;
-                rateIndicatorCurrent = indicatorReader.readLine();
+                currentLine = arrayReader.readLine();
 
             }
         } catch (IOException e) {
-            System.err.println("Error reading " + RateIndicatorLog);
+            System.err.println("Error reading " + logFileName);
             System.exit(1);
         }
 
@@ -899,7 +1155,7 @@ public class RateIndicatorBF {
 
     }
 
-    private static int[] countLinesAndTokens(String coordinatesFileString){
+    protected static int[] countLinesAndTokens(String coordinatesFileString){
         int lineCounter = 0;
         int tokenCounter = 0;
         int[] container = new int[2];
@@ -927,7 +1183,7 @@ public class RateIndicatorBF {
         return container;
     }
 
-    private static void readLocationsCoordinates(String coordinatesFileString, String[][] locationsAndCoordinates){
+    protected static void readLocationsCoordinates(String coordinatesFileString, String[][] locationsAndCoordinates){
         try {
             BufferedReader reader2 = new BufferedReader(new FileReader(coordinatesFileString));
             String current2 = reader2.readLine();
@@ -948,6 +1204,14 @@ public class RateIndicatorBF {
         }
     }
 
+    //Matrix concatenation
+
+    public static <T> T[] concat(T[] first, T[] second) {
+        T[] result = Arrays.copyOf(first, first.length + second.length);
+        System.arraycopy(second, 0, result, first.length, second.length);
+        return result;
+    }
+
     public static void main(String[] args) throws IOException {
 
         String inputFileName = null;
@@ -956,6 +1220,7 @@ public class RateIndicatorBF {
         String locationsFileName = null;
         String[][] locations = null;
         boolean kml = false;
+        boolean calculateRates = false;
         String lowerLinkColor = "FFFFFF"; //red: 0000FF green: 00FF00 magenta: FF00FF white: FFFFFF yellow: 00FFFF cyan: FFFF00
         String upperLinkColor = "FF00FF";
         String KMLoutputFile = "KMLrates.kml";
@@ -974,33 +1239,56 @@ public class RateIndicatorBF {
 
         boolean rateSummary = false;
         String rateIndicatorString	= "indicators";
-        String actualRateString = "productStatistic";
+        String actualRateString = "actualRates";
         String relativeRateString = "rates";
+        String frequencyString = "frequencies";
         //this is for rate (dist/time) summaries
-        String geoSiteModelString = "geoSiteModel";
+        String clockRateString = "clock.rate";
+        String unitString = "year";
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
-                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' [default = 0]"),
-                        new Arguments.StringOption(LOCATIONSFILE,"coordinates file","a file with latitudes and longitudes for each location (required for a kml output)"),
+                        new Arguments.IntegerOption(BURNIN, "the number of states to be considered as 'burn-in' " +
+                                "[default = 0]"),
+                        new Arguments.StringOption(LOCATIONSFILE,"coordinates file","a file with latitudes and " +
+                                "longitudes for each location (required for a kml output)"),
                         //boolean for KML
                         new Arguments.StringOption(KML, falseTrue, false,
                                 "generate a KML file including well-supported rates [default = false]"),
-                        new Arguments.IntegerOption(LOCATIONSTATES,"the number of locations states used in the analyses [requires a coordinates file if not provided]"),
-                        new Arguments.IntegerOption(POFFSET,"the offset of the (truncated) Poisson prior [default=locations-1]"),
-                        new Arguments.RealOption(PMEAN,"the mean of the (truncated) Poisson prior  [default=0.693 (log2)]"),
-                        new Arguments.RealOption(BFCUTOFF,"the Bayes Factor values above which we consider rates to be well supported  [default=3.0]"),
-                        new Arguments.RealOption(ICUTOFF,"the indicator values above which we consider rates to be well supported  [default uses a Bayes factor cut off of 3.0]"),
-                        new Arguments.StringOption(ISTRING, "indicator_string", "prefix string used for outputting the rate indicators in the log file [default = indicators]"),
-                        new Arguments.StringOption(RSTRING, "relativeRate_string", "prefix string used for outputting the relative rates in the log file [default = rates]"),
-                        new Arguments.StringOption(PSTRING, "rate*indicator_string", "prefix string used for outputting the product statistic for rates*indicators [default = productStatistic]"),
-                        new Arguments.StringOption(GSTRING, "geoSiteModel.mu_string", "string used for outputting geoSiteModel.mu in the log file [default = geoSiteModel]"),
-                        new Arguments.StringOption(KMLFILE,"KML output file","KML output file name [default=KMLrates.kml]"),
-                        new Arguments.StringOption(LOWCOLOR, "lower link strength color", "specifies an lower link color for the links [default=FF00FF]"),
-                        new Arguments.StringOption(UPCOLOR, "upper link strength color", "specifies an upper link color for the links [default=FFFF00]"),
+                        new Arguments.StringOption(CALCULATERATES, falseTrue, false,
+                                "calculate the actual rates for well-supported transitions"),
+                        new Arguments.IntegerOption(LOCATIONSTATES,"the number of locations states used in the " +
+                                "analyses [requires a coordinates file if not provided]"),
+                        new Arguments.IntegerOption(POFFSET,"the offset of the (truncated) Poisson prior " +
+                                "[default=locations-1]"),
+                        new Arguments.RealOption(PMEAN,"the mean of the (truncated) Poisson prior  " +
+                                "[default=0.693 (log2)]"),
+                        new Arguments.RealOption(BFCUTOFF,"the Bayes Factor values above which we consider rates to " +
+                                "be well supported  [default=3.0]"),
+                        new Arguments.RealOption(ICUTOFF,"the indicator values above which we consider rates to be " +
+                                "well supported  [default uses a Bayes factor cut off of 3.0]"),
+                        new Arguments.StringOption(ISTRING, "indicator_string", "prefix string used for outputting " +
+                                "the rate indicators in the log file [default = indicators]"),
+                        new Arguments.StringOption(RSTRING, "relativeRate_string", "prefix string used for " +
+                                "outputting the relative rates in the log file [default = rates]"),
+                        new Arguments.StringOption(FSTRING, "frequencies_string", "prefix string used for outputting " +
+                                "the state frequencies in the log file [default = frequencies]"),
+                        new Arguments.StringOption(PSTRING, "rate*indicator_string", "prefix string used for " +
+                                "outputting the product statistic for rates*indicators [default = actualRates]"),
+                        new Arguments.StringOption(CSTRING, "clock_rate_string", "string used for outputting " +
+                                "the overall clock rate in the log file [default = clock.rate]"),
+                        new Arguments.StringOption(USTRING, "units_string", "string describing the time unit" +
+                                "[default = year]"),
+                        new Arguments.StringOption(KMLFILE,"KML output file","KML output file name " +
+                                "[default=KMLrates.kml]"),
+                        new Arguments.StringOption(LOWCOLOR, "lower link strength color", "specifies an lower link " +
+                                "color for the links [default=FF00FF]"),
+                        new Arguments.StringOption(UPCOLOR, "upper link strength color", "specifies an upper link " +
+                                "color for the links [default=FFFF00]"),
                         new Arguments.RealOption(BWC,"specifies the connection (rate) width constant [default=2.5]"),
                         new Arguments.RealOption(BWM,"specifies the connection (rate)  width multiplier [default=7.0]"),
-                        new Arguments.RealOption(ALTITUDE,"specifies the altitudefactor for the connections (rate) [default=500]"),
+                        new Arguments.RealOption(ALTITUDE,"specifies the altitude factor for the connections (rate) " +
+                                "[default=500]"),
                         //new Arguments.RealOption(WIDTH,"width for KML rates [default=3.0]"),
                 });
 
@@ -1059,6 +1347,11 @@ public class RateIndicatorBF {
             }
         }
 
+        String ratesBooleanString = arguments.getStringOption(CALCULATERATES);
+        if (ratesBooleanString != null && ratesBooleanString.compareToIgnoreCase("true") == 0) {
+            calculateRates = true;
+        }
+
         String kmlFileName = arguments.getStringOption(KMLFILE);
         if (kmlFileName != null) {
             KMLoutputFile = kmlFileName;
@@ -1115,14 +1408,19 @@ public class RateIndicatorBF {
             actualRateString = rateString;
         }
 
+        String freqString = arguments.getStringOption(FSTRING);
+        if (freqString != null) {
+            frequencyString = freqString;
+        }
+
         String relRateString = arguments.getStringOption(RSTRING);
         if (relRateString != null) {
             relativeRateString = relRateString;
         }
 
-        String geoString = arguments.getStringOption(GSTRING);
-        if (geoString != null) {
-            geoSiteModelString = geoString;
+        String clockString = arguments.getStringOption(CSTRING);
+        if (clockString != null) {
+            clockRateString = clockString;
         }
 
         String color1String = arguments.getStringOption(LOWCOLOR);
@@ -1162,13 +1460,14 @@ public class RateIndicatorBF {
             }
         }
 
-        RateIndicatorBF rateIndicatorBF = new RateIndicatorBF(inputFileName,burnin,rateIndicatorString,numberOfStates,locations,bayesFactor,cutoff,meanPoissonPrior,offsetPoissonPrior,actualRateString,relativeRateString,geoSiteModelString);
+        RateIndicatorBF rateIndicatorBF = new RateIndicatorBF(inputFileName, burnin, rateIndicatorString,
+                numberOfStates, locations, bayesFactor, cutoff, meanPoissonPrior, offsetPoissonPrior, actualRateString,
+                relativeRateString, frequencyString, clockRateString, unitString, calculateRates);
         rateIndicatorBF.outputTextFile(outputFileName);
         if (kml) {
-            rateIndicatorBF.outputKML(KMLoutputFile,lowerLinkColor,upperLinkColor, branchWidthConstant, branchWidthMultiplier, altitudeFactor);
+            rateIndicatorBF.outputKML(KMLoutputFile,lowerLinkColor,upperLinkColor, branchWidthConstant,
+                    branchWidthMultiplier, altitudeFactor);
         }
         System.exit(0);
-
-
     }
 }

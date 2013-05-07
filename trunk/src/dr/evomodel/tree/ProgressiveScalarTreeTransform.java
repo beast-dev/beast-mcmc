@@ -69,13 +69,13 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
         java.util.logging.Logger.getLogger("dr.evomodel.tree").info(sb.toString());
     }
 
-    public double transform(TransformedTreeModel tree, NodeRef node, double originalHeight) {
+    public double transform(TreeModel tree, NodeRef node, double originalHeight) {
         // Early exit
         if (tree.isExternal(node)) {
             return originalHeight;
         }
         if (tree.isRoot(node)) {
-            return tree.getOriginalNodeHeight(tree.getRoot());
+            return tree.getRootHeightParameter().getParameterValue(0);
         }
 
         // Do recursive work

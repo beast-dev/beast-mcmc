@@ -64,12 +64,20 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
     }
 
     public double getNodeHeight(NodeRef node) {
-        return treeTransform.transform(this, node, treeModel.getNodeHeight(node));
+        return treeTransform.transform(treeModel, node, treeModel.getNodeHeight(node));
     }
 
-    public double getOriginalNodeHeight(NodeRef node) {
-        return treeModel.getNodeHeight(node);
+    public double getBranchLength(NodeRef node) {
+        NodeRef parent = treeModel.getParent(node);
+        if (parent == null) {
+            return 0.0;
+        }
+        return this.getNodeHeight(parent) - this.getNodeHeight(node);
     }
+
+//    public double getOriginalNodeHeight(NodeRef node) {
+//        return treeModel.getNodeHeight(node);
+//    }
 
     // TODO 1. Reparameterize via parentNodeHeight
     // TODO 2. Deal with branchRateModel issues and no values from external nodes
@@ -128,10 +136,6 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
 
     public boolean hasBranchLengths() {
         return treeModel.hasBranchLengths();
-    }
-
-    public double getBranchLength(NodeRef node) {
-        return treeModel.getBranchLength(node);
     }
 
     public double getNodeRate(NodeRef node) {

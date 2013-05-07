@@ -1,7 +1,7 @@
 /*
  * TreeTransform.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -73,7 +73,7 @@ public abstract class TreeTransform extends AbstractModel implements TreeTraitPr
         treeTraits.addTrait(baseTrait);
     }
 
-    public abstract double transform(TransformedTreeModel tree, NodeRef node, double originalHeight);
+    public abstract double transform(TreeModel tree, NodeRef node, double originalHeight);
 
     protected abstract double getScaleForNode(Tree tree, NodeRef node);
 

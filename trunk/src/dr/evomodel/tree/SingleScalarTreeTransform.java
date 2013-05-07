@@ -1,7 +1,7 @@
 /*
  * SingleScalarTreeTransform.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,7 +46,7 @@ public class SingleScalarTreeTransform extends TreeTransform {
         if (tree.isExternal(node)) {
             return originalHeight;
         }
-        final double rootHeight = tree.getRootHeightParameter().getParameterValue(0);
+        final double rootHeight = tree.getOriginalNodeHeight(tree.getRoot());
         return rootHeight - getScaleForNode(tree, node) * (rootHeight - originalHeight);
     }
 

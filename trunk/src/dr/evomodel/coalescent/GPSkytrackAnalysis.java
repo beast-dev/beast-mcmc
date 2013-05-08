@@ -6,25 +6,30 @@ import dr.inference.model.Parameter;
 //import dr.evolution.io.NexusImporter;
 //import dr.evolution.io.TreeImporter;
 //import dr.evolution.tree.Tree;
-import dr.inference.operators.CoercionMode;
+//import dr.inference.operators.CoercionMode;
+//import dr.inference.trace.AbstractTraceList;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
+//import dr.inference.trace.TraceFactory;
 import dr.stats.DiscreteStatistics;
 //import dr.util.FileHelpers;
 //import dr.util.HeapSort;
 import dr.util.TabularData;
+//import no.uib.cipr.matrix.SymmTridiagEVD;
 //import no.uib.cipr.matrix.*;
 
 
 import java.io.*;
 //import java.io.PrintWriter;
 import java.util.Arrays;
+import java.util.StringTokenizer;
 
 /**
  * @author Joseph Heled
  */
 public class GPSkytrackAnalysis extends TabularData {
+//    TabularData
 
     private final double[] xPoints;
     private final double[] means;
@@ -51,26 +56,28 @@ public class GPSkytrackAnalysis extends TabularData {
 //    return new GaussianProcessSkytrackBlockUpdateOperator(gpLikelihood, weight, mode, scaleFactor,
 //                                                          maxIterations, stopValue);
 
-//    TODO: Change it to repeat the xvalues and GPvalues for the times when the operator is not called
+//    TODO: Error in loadTraces() because a String {..} is being converted to "real/double"
+//    To make my life more miserable I will not use logFileTraces class and do it by hand
+
+
     public GPSkytrackAnalysis(File log,  double burnIn, Parameter numGridPoints) throws IOException, Importer.ImportException, TraceException {
         GaussianProcessSkytrackBlockUpdateOperator GPOperator=new GaussianProcessSkytrackBlockUpdateOperator();
         this.numGridPoints=numGridPoints;
         LogFileTraces ltraces = new LogFileTraces(log.getCanonicalPath(), log);
+
+//        ltraces.changeTraceType(1, TraceFactory.TraceType.STRING);
+
         ltraces.loadTraces();
+//        System.exit(-1);
 
         ltraces.setBurnIn(0);
         final int runLengthIncludingBurnin = ltraces.getStateCount();
 
         int intBurnIn = (int) Math.floor(burnIn < 1 ? runLengthIncludingBurnin * burnIn : burnIn);
-//        TODO: Need to change burnin, xml file set to 0
         final int nStates = runLengthIncludingBurnin - intBurnIn;
-//        System.err.println("runl"+runLengthIncludingBurnin+"burnin");
-        //intBurnIn *= ltraces.getStepSize();
         ltraces.setBurnIn(intBurnIn * ltraces.getStepSize());
         assert ltraces.getStateCount() == nStates;
 
-//        this.quantiles = quantiles;
-//        HPDLevels = new double[]{0.95};
 
         xPoints = new double[(int) numGridPoints.getParameterValue(0)+1];
         means = new double[(int) numGridPoints.getParameterValue(0)+1];
@@ -79,6 +86,8 @@ public class GPSkytrackAnalysis extends TabularData {
         hpdLower = new double[(int) numGridPoints.getParameterValue(0)+1];
 
         int numbPointsColumn = -1;
+        int gvaluesColumn=-1;
+        int xvaluesColumn=-1;
         int lambdaColumn = -1;
         int precColumn = -1;
         int tmrcaColumn=-1;
@@ -87,6 +96,7 @@ public class GPSkytrackAnalysis extends TabularData {
 
         for (int n = 0; n < ltraces.getTraceCount(); ++n) {
             final String traceName = ltraces.getTraceName(n);
+            System.err.println(traceName);
             if (traceName.equals("skyride.points")) {
                numbPointsColumn = n;
             } else if (traceName.equals("skyride.lambda_bound")) {
@@ -95,12 +105,17 @@ public class GPSkytrackAnalysis extends TabularData {
                 precColumn = n;
             } else if (traceName.equals("skyride.tmrca")) {
                 tmrcaColumn = n;
+            } else if (traceName.equals("changePoints")){
+                xvaluesColumn=n;
+            } else if (traceName.equals("Gvalues")){
+                gvaluesColumn=n;
             }
 
-        }
 
-        if (numbPointsColumn < 0 || lambdaColumn < 0 || precColumn<0 || tmrcaColumn<0) {
-            throw new TraceException("incorrect trace column names: unable to find lambda_bound, points, tmrca or precision");
+        }
+//        System.err.println("columns"+tmrcaColumn+" tmrca"+xvaluesColumn+" and"+gvaluesColumn);
+        if (numbPointsColumn < 0 || lambdaColumn < 0 || precColumn<0 || tmrcaColumn<0 || xvaluesColumn<0 || gvaluesColumn<0) {
+            throw new TraceException("incorrect trace column names: unable to find correct columns for summary");
         }
 
 //        TODO: Check if it is ok to define the grid from 0 to max(TMRCA) always
@@ -108,18 +123,20 @@ public class GPSkytrackAnalysis extends TabularData {
 //            double hSum = -0;
 
 //                           System.err.println("states"+nStates);
-            int [] numPoints = new int[nStates-1];
-            double[] lambda = new double[nStates-1];
-            double[] kappa= new double[nStates-1];
+            int [] numPoints = new int[nStates];
+            double[] lambda = new double[nStates];
+            double[] kappa= new double[nStates];
             double tmrca=0;
 //            double binSize=0;
             double tempTmrca=0.0;
             int maxpts=0;
-            for (int ns = 0; ns < nStates-1; ++ns) {
-                lambda[ns]= (Double) ltraces.getTrace(lambdaColumn).getValue(ns+1);
-                numPoints[ns]=(int)Math.round((Double) ltraces.getTrace(numbPointsColumn).getValue(ns+1));
-                kappa[ns]=(Double) ltraces.getTrace(precColumn).getValue(ns+1);
-                tempTmrca=(Double) ltraces.getTrace(tmrcaColumn).getValue(ns+1);
+            for (int ns = 0; ns < nStates; ++ns) {
+                lambda[ns]= (Double) ltraces.getTrace(lambdaColumn).getValue(ns);
+                numPoints[ns]=(int)Math.round((Double) ltraces.getTrace(numbPointsColumn).getValue(ns));
+                kappa[ns]=(Double) ltraces.getTrace(precColumn).getValue(ns);
+                tempTmrca=(Double) ltraces.getTrace(tmrcaColumn).getValue(ns);
+//                System.err.println(tempTmrca);
+                System.exit(-1);
                 if (tempTmrca>tmrca){tmrca=tempTmrca;}
                 if (numPoints[ns]>maxpts) {maxpts=numPoints[ns];}
             }
@@ -130,9 +147,9 @@ public class GPSkytrackAnalysis extends TabularData {
              xPoints[np]=xPoints[np-1]+binSize;
             }
 
-            gValues=new double[nStates-1][];
-            tValues=new double[nStates-1][];
-            newGvalues=new double[nStates-1][];
+            gValues=new double[nStates][];
+            tValues=new double[nStates][];
+            newGvalues=new double[nStates][];
             popValues=new double[(int) numGridPoints.getParameterValue(0)+1][];
             readChain(gValues,"gvalues.txt");
             readChain(tValues,"locations.txt");
@@ -301,5 +318,6 @@ public class GPSkytrackAnalysis extends TabularData {
         }
         return "";
     }
+
 
 }

@@ -124,7 +124,6 @@ public class SimpleOutbreak extends AbstractOutbreak {
 
         //for the outbreak
 
-        public static final String INCUBATION_PERIOD_DISTRIBUTION = "latentPeriodDistribution";
         public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
         public static final String SQRT_INFECTIOUS_SCALE = "sqrtInfectiousScale";
 
@@ -137,8 +136,6 @@ public class SimpleOutbreak extends AbstractOutbreak {
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final ParametricDistributionModel incubationPeriodDistribution =
-                    (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
             SimpleOutbreak cases = new SimpleOutbreak(d, riemannSampleSize);
@@ -168,7 +165,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
 
         @Override
         public String getParserDescription(){
-            return "Parses a set of Morelli 2012 farm cases and the information that they all share";
+            return "Parses a set of 'simple' farm cases and the information that they all share";
         }
 
         @Override

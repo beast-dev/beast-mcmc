@@ -42,11 +42,11 @@ public class SingleScalarTreeTransform extends TreeTransform {
         addVariable(scale);
     }
 
-    public double transform(TreeModel tree, NodeRef node, double originalHeight) {
+    public double transform(Tree tree, NodeRef node, double originalHeight) {
         if (tree.isExternal(node)) {
             return originalHeight;
         }
-        final double rootHeight = tree.getRootHeightParameter().getParameterValue(0);
+        final double rootHeight = tree.getNodeHeight(tree.getRoot());
         return rootHeight - getScaleForNode(tree, node) * (rootHeight - originalHeight);
     }
 

@@ -143,6 +143,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         //map cases to tips (needed for both versions)
 
         branchMap = new AbstractCase[virusTree.getNodeCount()];
+        storedBranchMap = new AbstractCase[virusTree.getNodeCount()];
         prepareExternalNodeMap(branchMap);
 
         tipMap = new HashMap<AbstractCase, Integer>();
@@ -162,7 +163,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         if(!sampleTTs){
             rootLikelihoods = new double[virusTree.getExternalNodeCount()];
+            storedRootLikelihoods = new double[virusTree.getExternalNodeCount()];
             subLikelihoods = new double[virusTree.getInternalNodeCount()
+                    *virusTree.getExternalNodeCount()*virusTree.getExternalNodeCount()];
+            storedSubLikelihoods = new double[virusTree.getInternalNodeCount()
                     *virusTree.getExternalNodeCount()*virusTree.getExternalNodeCount()];
             currentReconstructionExists = false;
         } else {
@@ -488,7 +492,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
         if(sampleTTs){
-            Arrays.fill(nodeRecalculationNeeded, true);
+//            Arrays.fill(nodeRecalculationNeeded, true);
         } else {
             currentReconstructionExists = false;
         }
@@ -506,7 +510,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if(sampleTTs){
-            Arrays.fill(nodeRecalculationNeeded, true);
+//            Arrays.fill(nodeRecalculationNeeded, true);
         } else {
             currentReconstructionExists = false;
         }
@@ -523,12 +527,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     protected final void storeState() {
         if(sampleTTs){
-            storedBranchMap = Arrays.copyOf(branchMap, branchMap.length);
-            storedNodeLogLikelihoods = Arrays.copyOf(nodeLogLikelihoods, nodeLogLikelihoods.length);
-            storedRecalculationArray = Arrays.copyOf(nodeRecalculationNeeded, nodeRecalculationNeeded.length);
+            System.arraycopy(branchMap, 0, storedBranchMap, 0, branchMap.length);
+//            storedNodeLogLikelihoods = Arrays.copyOf(nodeLogLikelihoods, nodeLogLikelihoods.length);
+//            storedRecalculationArray = Arrays.copyOf(nodeRecalculationNeeded, nodeRecalculationNeeded.length);
         } else {
-            storedSubLikelihoods = Arrays.copyOf(subLikelihoods, subLikelihoods.length);
-            storedRootLikelihoods = Arrays.copyOf(rootLikelihoods, rootLikelihoods.length);
+            System.arraycopy(subLikelihoods, 0, storedSubLikelihoods, 0, subLikelihoods.length);
+            System.arraycopy(rootLikelihoods, 0, storedRootLikelihoods, 0, rootLikelihoods.length);
         }
         storedNodePaintingPossibilities = new HashMap<Integer, HashSet<AbstractCase>>(nodePaintingPossibilities);
         storedLogLikelihood = logLikelihood;
@@ -541,8 +545,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     protected final void restoreState() {
         if(sampleTTs){
             branchMap = storedBranchMap;
-            nodeLogLikelihoods = storedNodeLogLikelihoods;
-            nodeRecalculationNeeded = storedRecalculationArray;
+//            nodeLogLikelihoods = storedNodeLogLikelihoods;
+//            nodeRecalculationNeeded = storedRecalculationArray;
         } else {
             subLikelihoods = storedSubLikelihoods;
             rootLikelihoods = storedRootLikelihoods;
@@ -588,7 +592,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public final void makeDirty() {
         if(sampleTTs){
-            Arrays.fill(nodeRecalculationNeeded, true);
+//            Arrays.fill(nodeRecalculationNeeded, true);
         } else {
             currentReconstructionExists = false;
         }
@@ -665,8 +669,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 double[] out = new double[noTips];
                 Arrays.fill(out, Double.NEGATIVE_INFINITY);
                 for(int i=0; i<2; i++){
-                    subtreeLikelihoods[i] = Arrays.copyOf(prune(virusTree.getChild(node,i), recordForReconstruction),
-                            noTips);
+                    System.arraycopy(prune(virusTree.getChild(node,i), recordForReconstruction), 0,
+                            subtreeLikelihoods[i], 0, noTips);
                 }
                 HashSet<AbstractCase> possibleNodePaintings = nodePaintingPossibilities.get(node.getNumber());
                 if(parent!=null){
@@ -735,8 +739,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 double[] out = new double[noTips];
                 Arrays.fill(out, Double.NEGATIVE_INFINITY);
                 for(int i=0; i<2; i++){
-                    subtreeLikelihoods[i] = Arrays.copyOf(prune(virusTree.getChild(node,i), recordForReconstruction),
-                            noTips);
+                    System.arraycopy(prune(virusTree.getChild(node,i), recordForReconstruction), 0,
+                            subtreeLikelihoods[i], 0, noTips);
                 }
                 HashSet<AbstractCase> nodeDescendantTips = nodePaintingPossibilities.get(node.getNumber());
                 if(parent!=null){
@@ -1087,7 +1091,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         while(!gotOne){
             System.out.print(tries + "...");
             map = prepareExternalNodeMap(new AbstractCase[virusTree.getNodeCount()]);
-            branchMap = Arrays.copyOf(map, map.length);
+            System.arraycopy(map, 0, branchMap, 0, map.length);
             //Warning - if the BadPaintingException in randomlyPaintNode might be caused by a bug rather than both
             //likelihoods rounding to zero, you want to stop catching this to investigate.
             paintRandomNetwork(map,true);
@@ -1248,8 +1252,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             testTreesOut.exportTree(treeCopy);
         } catch (IOException ignored) {System.out.println("IOException");}
         if(!sampleTTs){
-            Arrays.fill(subLikelihoods,0);
-            Arrays.fill(rootLikelihoods,0);
+            Arrays.fill(subLikelihoods, Double.NEGATIVE_INFINITY);
+            Arrays.fill(rootLikelihoods, Double.NEGATIVE_INFINITY);
             totalTreeLogLikelihood(true);
         } else {
             totalTreeLogLikelihood(false);

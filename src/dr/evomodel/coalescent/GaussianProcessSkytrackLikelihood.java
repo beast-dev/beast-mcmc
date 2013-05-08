@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 //import com.lowagie.text.Paragraph;
 
+//import com.sun.servicetag.SystemEnvironment;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -36,7 +37,10 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
+//import dr.util.ComparableDouble;
+//import dr.util.HeapSort;
 import no.uib.cipr.matrix.*;
+//import sun.font.TrueTypeFont;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -209,6 +213,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 //        popValue.setDimension(gridpoint);
 
+//        System.err.println("sets dimension");
         changePoints.setDimension(numcoalpoints);
         coalfactor.setDimension(numcoalpoints);
 //        storedcoalfactor= new double[numcoalpoints];
@@ -219,8 +224,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 initializationReport();
                 setupSufficientStatistics();
                 setupGPvalues();
-                System.err.println("initial GP likelihood +priors"+getLogLikelihood());
-                System.err.println("like"+intervalsKnown);
+//                System.err.println("initial GP likelihood +priors"+getLogLikelihood());
+//                System.err.println("like"+intervalsKnown);
 //
 
 
@@ -248,9 +253,16 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
             if (object instanceof TreeModel.TreeChangedEvent) {
                 TreeModel.TreeChangedEvent tce = (TreeModel.TreeChangedEvent) object;
                 // tce tells much about what type of event happened.  In general, one does not care.
+//                System.err.println("Change in tree detected, flag true");
                 flagForJulia = true; // flag set, so lazy work can occur elsewhere.
             } else {
+                if (object instanceof Parameter){
+//                    System.err.println("changing heights");
+                    flagForJulia=true;
+                }
+                else {
                 throw new IllegalArgumentException("Not sure what type of model changed event occurred: " + object.getClass().toString());
+                }
             }
         }
     }
@@ -258,7 +270,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     public LogColumn[] getColumns() {
         // Add more LogColumn to the array if there are more things to log
         return new LogColumn[]{
-                new VariableLengthColumn(getId(), GPcounts)
+                new VariableLengthColumn("changePoints", changePoints), new VariableLengthColumn("Gvalues",popSizeParameter)
         };
     }
 
@@ -306,54 +318,28 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         }
     }
 
-    protected void dobackupIntervals() {
-       for (int j=0; j<numintervals;j++){
-           backupIntervals[j]=getInterval(j);
-       }
 
-    }
-
-//    public final void makeDirty() {
-//        likelihoodKnown = false;
-//        intervalsKnown = false;
-//        System.err.println("setting intervalsknown false in makeDirty");
-//    }
 
     protected void wrapSetupIntervals() {
-
         setupIntervals();
         intervalsKnown = true;
     }
-//
-//    protected int getCorrectFieldLength() {
-//            return tree.getExternalNodeCount() - 1;
-//    }
 
-
-//
-//
 
 
     //This is actually the Augmented loglikelihood for fixed genealogy. For sequence data directly
 //    this becomes the coalescent point process prior on an augmented "tree"
     public double calculateLogLikelihood(Parameter Gfunction, Parameter latentCounts, Parameter eventType, Parameter upper_Bound, double [] Gfactor) {
-
-        if (!intervalsKnown) {
-//            System.err.println(intervalsKnown+"It recomputes");
-//            recomputeValues();
-            intervalsKnown = true;
-        }
-
         double upperBound = upper_Bound.getParameterValue(0);
-//        System.err.println("Likelihood with "+getPopSizeParameter().getSize()+"and G-function"+eventType.getSize());
-          System.err.println("GP calculations used");
         logGPLikelihood=-upperBound*getConstlik();
 
         for (int i=0; i<latentCounts.getSize(); i++){
             if (Gfactor[i]>0) {
+                if (latentCounts.getParameterValue(i)<0){System.err.println("WARNING");}
           logGPLikelihood+=latentCounts.getParameterValue(i)*Math.log(upperBound*Gfactor[i]);
             }
         }
+
         double[] currentGfunction = Gfunction.getParameterValues();
         for (int i=0; i<Gfunction.getSize();i++){
         logGPLikelihood+= -Math.log(1+Math.exp(-eventType.getParameterValue(i)*currentGfunction[i]));
@@ -361,29 +347,6 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         return logGPLikelihood;
     }
 
-//    protected double calculateLogCoalescentLikelihood() {
-//
-//		if (!intervalsKnown) {
-//			// intervalsKnown -> false when handleModelChanged event occurs in super.
-//			wrapSetupIntervals();
-//			setupGMRFWeights();
-//            intervalsKnown = true;
-//		}
-//
-//		// Matrix operations taken from block update sampler to calculate data likelihood and field prior
-//
-//		double currentLike = 0;
-//        double[] currentGamma = popSizeParameter.getParameterValues();
-//
-//		for (int i = 0; i < fieldLength; i++) {
-//			currentLike += -currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
-//		}
-//
-//		return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
-//	return 0.0;
-//    }
-
-//
 
     public double getConstlik(){
         return constlik;
@@ -392,41 +355,55 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 //For fixed genealogy this contains the Augmented likelihood, the GP prior and prior on a the upper bound
 	public double getLogLikelihood() {
-            System.err.println("get GPlikelihood used");
 		if (!likelihoodKnown) {
-			logLikelihood =
+            if(flagForJulia) {
+                System.err.println("recalculating intervals and counts");
+                wrapSetupIntervals();
+                recomputeValues();
+                flagForJulia=false;
+            }
+           logLikelihood =
               calculateLogLikelihood(popSizeParameter,GPcounts,GPtype,lambda_boundParameter,GPcoalfactor)+calculateLogGP()
                         +getLogPriorLambda(lambdaParameter.getParameterValue(0),0.01,lambda_boundParameter.getParameterValue(0));
 			likelihoodKnown = true;
 		}
 		return logLikelihood;
-//        return 0.0;
 	}
 
-//Calculates prior on g function
+    protected SymmTridiagMatrix getQmatrix(double precision, double[] x ) {
+        SymmTridiagMatrix res;
+        double trick=0.00000000001;
+        double[] offdiag = new double[x.length - 1];
+        double[] diag = new double[x.length];
+
+
+
+        for (int i = 0; i < x.length - 1; i++) {
+            offdiag[i] = precision*(-1.0 / (x[i+1]-x[i]));
+
+            if (i< x.length-2){
+                diag[i+1]= -offdiag[i]+precision*(1.0/(x[i+2]-x[i+1])+trick);
+            }
+        }
+//              Diffuse prior correction - intrinsic
+        //Take care of the endpoints
+        diag[0] = -offdiag[0]+precision*trick;
+
+        diag[x.length - 1] = -offdiag[x.length - 2]+precision*(trick);
+        res = new SymmTridiagMatrix(diag, offdiag);
+        return res;
+    }
+
+
+    //Calculates prior on g function
     protected double calculateLogGP() {
-
-//           if (!intervalsKnown) {
-////               System.err.println("intervalsknown");
-////               intervalsKnown -> false when handleModelChanged event occurs in super.
-//               wrapSetupIntervals();
-////               setupQmatrix(precisionParameter.getParameterValue(0));
-//               intervalsKnown = true;
-//           }
-
-
-           setupQmatrix(precisionParameter.getParameterValue(0));
-
+           SymmTridiagMatrix currentQ = getQmatrix(precisionParameter.getParameterValue(0), changePoints.getParameterValues());
            double currentLike;
            DenseVector diagonal1 = new DenseVector(popSizeParameter.getSize());
            DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
-
-           SymmTridiagMatrix currentQ = weightMatrix;
-//        System.err.println("Q.matrix sizes"+currentQ.numRows()+"and"+currentQ.numColumns());
            currentQ.mult(currentGamma, diagonal1);
-
            currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (popSizeParameter.getSize() - 1) * LOG_TWO_TIMES_PI;
-
+//          System.err.println("the GP prior on f"+currentLike+" determinant"+logGeneralizedDeterminant(currentQ)+" size"+changePoints.getSize());
         return currentLike;
        }
 
@@ -469,48 +446,36 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
 protected void restoreState() {
 		super.restoreState();
-		System.arraycopy(storedGPcoalfactor, 0, GPcoalfactor, 0, storedGPcoalfactor.length);
+  		System.arraycopy(storedGPcoalfactor, 0, GPcoalfactor, 0, storedGPcoalfactor.length);
         System.arraycopy(storedCoalTime,0,CoalTime,0,storedCoalTime.length);
         System.arraycopy(storedGPCoalInterval,0,GPCoalInterval,0,storedGPCoalInterval.length);
         System.arraycopy(storedCoalPosIndicator,0,CoalPosIndicator,0,storedCoalPosIndicator.length);
         constlik=storedconstlik;
-//		weightMatrix = storedWeightMatrix;
-//        logGPLikelihood = storedLogGPLikelihood;
     }
-//
-//
-//
-protected void storeState() {
+
+    protected void storeState() {
 		super.storeState();
 	 	System.arraycopy(GPcoalfactor, 0, storedGPcoalfactor, 0, GPcoalfactor.length);
         System.arraycopy(CoalTime,0,storedCoalTime,0,CoalTime.length);
 		System.arraycopy(GPCoalInterval, 0, storedGPCoalInterval, 0, GPCoalInterval.length);
         System.arraycopy(CoalPosIndicator, 0, storedCoalPosIndicator,0,CoalPosIndicator.length);
         storedconstlik=constlik;
-//		storedWeightMatrix = weightMatrix.copy();
-//        storedLogGPLikelihood = logGPLikelihood;
 	}
-//                I don't understand this
+
        public String toString() {
         return getId() + "(" + Double.toString(getLogLikelihood()) + ")";
     }
-////    private final Parameter latentPoints;
-//
-//    private final Parameter lambda_bound;
-//
-//
-//
+
     public void initializationReport() {
 
 		System.out.println("Creating a GP based estimation of effective population trajectories:");
-//		System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Palacios, Suchard (XXXX), AAA");
 
 	}
 
     public static void checkTree(TreeModel treeModel) {
 
-            // todo Should only be run if there exists a zero-length interval
+            // todo Should only be run if there exists a zero-length interval - I don't actually understand why this is here
 
 //        TreeModel treeModel = (TreeModel) tree;
             for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
@@ -530,71 +495,66 @@ protected void storeState() {
 
         }
 
-
-     //Sufficient Statistics for GP - coal+sampling
-
-
     protected void recomputeValues() {
-        System.err.println("There is a change in tree, then re-order and re-compute values");
-        dobackupIntervals();
-        wrapSetupIntervals();
-        if (GPcounts.getSize()!=getIntervalCount()){System.err.println("Error when recomputing Values in GP Likelihood");}
-
-//There should be a better way but for now, I will go over each possible change...
-
-//        Need to delete the node and add the new one
-        System.exit(-1);
         double length = 0.0;
-        double length2=0.0;
         double prevLength=0.0;
+        double count=0.0;
         int countcoal = 0;
+        int pointer=0;
+        int pointer2=0;
         constlik= 0;
-        int j=0;
         for (int i = 0; i < getIntervalCount(); i++) {
-            int sum=0;
             length += getInterval(i);
-            while (changePoints.getParameterValue(j)<=length) {
-                sum++;
-                j++;
-               }
-//                if (GPcounts.getSize()<=i){
-//                  GPcounts.addDimension(i,0.0);
-//              }  else {
-            GPcounts.setParameterValue(i,sum);
+            count=0.0;
+            for (int j=pointer;j<changePoints.getSize();j++){
 
-//              }
+                if (changePoints.getParameterValue(j)<=length){
+
+                     pointer++;
+                     count++;
+
+                }
+            }
+            GPcounts.setParameterValue(i,count);
             GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1.0) / 2.0;
             constlik+=GPcoalfactor[i]*getInterval(i);
 
-//            System.err.println("i: "+i+"val: "+length+" type: "+getIntervalType(i)+" lineages: "+getLineageCount(i));
             if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
-                GPcounts.setParameterValue(i,1.0);
-                GPtype.setParameterValue(countcoal,1.0);
-
                 CoalPosIndicator[countcoal]=i;
-                changePoints.setParameterValue(countcoal,length);
-                CoalCounts.setParameterValue(countcoal,0.0);
+                count=0;
+                for (int s=pointer2;s<changePoints.getSize();s++){
+                if (changePoints.getParameterValue(s)<=length){
+                    pointer2++;
+                    count++;
+                } else
+                    s=changePoints.getSize();
+                }
+                CoalCounts.setParameterValue(countcoal,count-1);
                 CoalTime[countcoal]=length;
-                System.err.println(countcoal+"coal is:"+length+"with branches:"+getLineageCount(i));
-
                 GPCoalInterval[countcoal]=length-prevLength;
-
                 coalfactor.setParameterValue(countcoal,getLineageCount(i)*(getLineageCount(i)-1)/2.0);
-
                 countcoal++;
                 prevLength=length;
             }
+        }
 
+//        TODO:This code should not be run in production, it is just for testing
+        int sumcoal=0;
+        int sumlat=0;
 
+        for (int j=0;j<changePoints.getSize();j++){
+            if( GPtype.getParameterValue(j)==1) {sumcoal++;}
 
         }
+        for (int j=0;j<CoalCounts.getSize();j++){
+            sumlat+=CoalCounts.getParameterValue(j);
+        }
+        if (sumcoal!=CoalCounts.getSize()){ System.err.println("WARNING CONSISTENCY 1"); }
+        if (sumlat!=(changePoints.getSize()-CoalCounts.getSize())){ System.err.println("WARNING CONSISTENCY 2:"+sumlat+"and changePts size"+changePoints.getSize());}
         Tmrca.setParameterValue(0,CoalTime[countcoal-1]);
-
     }
 
     protected void setupSufficientStatistics() {
-        System.err.println("setting up sufficient statistics");
-
 		double length = 0.0;
         double prevLength=0.0;
         int countcoal = 0;
@@ -602,37 +562,21 @@ protected void storeState() {
 		for (int i = 0; i < getIntervalCount(); i++) {
 
 			  length += getInterval(i);
-
-//              if (GPcounts.getSize()<=i){
-//                  GPcounts.addDimension(i,0.0);
-//              }  else {
               GPcounts.setParameterValue(i,0.0);
-
-//              }
               GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1.0) / 2.0;
               constlik+=GPcoalfactor[i]*getInterval(i);
-
-//            System.err.println("i: "+i+"val: "+length+" type: "+getIntervalType(i)+" lineages: "+getLineageCount(i));
               if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                     GPcounts.setParameterValue(i,1.0);
                     GPtype.setParameterValue(countcoal,1.0);
-
                     CoalPosIndicator[countcoal]=i;
                     changePoints.setParameterValue(countcoal,length);
                     CoalCounts.setParameterValue(countcoal,0.0);
                     CoalTime[countcoal]=length;
-                  System.err.println(countcoal+"coal is:"+length+"with branches:"+getLineageCount(i));
-
                     GPCoalInterval[countcoal]=length-prevLength;
-
                     coalfactor.setParameterValue(countcoal,getLineageCount(i)*(getLineageCount(i)-1)/2.0);
-
                     countcoal++;
                     prevLength=length;
 			        }
-
-
-
         }
         Tmrca.setParameterValue(0,CoalTime[countcoal-1]);
 
@@ -644,14 +588,9 @@ protected void storeState() {
     }
 
     protected void setupQmatrix(double precision) {
-//                   System.err.println("changepoints size"+changePoints.getSize());
-
-            //Set up the weight Matrix
             double trick=0.000001;
             double[] offdiag = new double[changePoints.getSize() - 1];
             double[] diag = new double[changePoints.getSize()];
-
-
              for (int i = 0; i < changePoints.getSize() - 1; i++) {
                     offdiag[i] = precision*(-1.0 / (changePoints.getParameterValue(i+1)-changePoints.getParameterValue(i)));
                  if (i<getCorrectFieldLength()-2){
@@ -670,27 +609,21 @@ protected void storeState() {
 
 
     protected void setupGPvalues() {
-        System.err.println("It is setting up the GPvalues");
-
         setupQmatrix(precisionParameter.getParameterValue(0));
         int length = getCorrectFieldLength();
         DenseVector StandNorm = new DenseVector(length);
         DenseVector MultiNorm = new DenseVector(length);
         for (int i=0; i<length;i++){
             StandNorm.set(i,MathUtils.nextGaussian());
-//            StandNorm.set(i,0.1);
-                      }
+        }
         UpperSPDBandMatrix Qcurrent = new UpperSPDBandMatrix(weightMatrix, 1);
         BandCholesky U = new BandCholesky(length,1,true);
         U.factor(Qcurrent);
         UpperTriangBandMatrix CholeskyUpper = U.getU();
-
         CholeskyUpper.solve(StandNorm,MultiNorm);
         for (int i=0; i<length;i++){
-//            popSizeParameter.setParameterValue(i,MultiNorm.get(i));
             popSizeParameter.setParameterValue(i,1.0);
-//              popSizeParameter.setParameterValue(i,MathUtils.nextGaussian());
-            }
+        }
     }
 
         public Parameter getPrecisionParameter() {

@@ -9,10 +9,11 @@ import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackBlockUpdateOpe
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
+//import dr.math.matrixAlgebra.SymmetricMatrix;
 import no.uib.cipr.matrix.*;
 
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
+//import java.io.FileNotFoundException;
 import java.io.FileWriter;
 
 /* A Metropolis-Hastings/Gibbs operator to update the log population sizes and precision parameter jointly under a GP  prior
@@ -27,11 +28,11 @@ import java.io.FileWriter;
 
 public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperator implements GibbsOperator{
     private double scaleFactor;
-    private double lambdaScaleFactor;
+//    private double lambdaScaleFactor;
 //    private int fieldLength;
 
-    private int maxIterations;
-    private double stopValue;
+//    private int maxIterations;
+//    private double stopValue;
     public static final double TWO_TIMES_PI =6.283185;
     private Parameter popSizeParameter;
     private Parameter precisionParameter;
@@ -40,7 +41,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
     private Parameter changePoints;
     private Parameter GPcounts;
     private Parameter GPtype;
-    private Parameter popValue;   //This will actually have the Effective Pop. Size for the grid
+//    private Parameter popValue;   //This will actually have the Effective Pop. Size for the grid
     private Parameter CoalCounts;
     private Parameter numPoints;
 //    private double [] intervals;
@@ -50,9 +51,9 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
     private double betaprior;
     private SymmTridiagMatrix currentQ;
     private int numberPoints;  //Number of coalescent  points
-    private double [] addPoints;
+//    private double [] addPoints;
 //    private int [] add;
-    private int fixedNumberPoints; //Number of coalescent or sampling points
+//    private int fixedNumberPoints; //Number of coalescent or sampling points
     private int [] CoalPosIndicator;
     private double [] CoalTime;
 
@@ -61,7 +62,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
     GaussianProcessSkytrackLikelihood GPvalue;
 //    GMRFSkyrideLikelihood gmrfField;
 
-    private double[] zeros;
+//    private double[] zeros;
 
     public GaussianProcessSkytrackBlockUpdateOperator(GaussianProcessSkytrackLikelihood GPLikelihood,
                                                       double weight, CoercionMode mode, double scaleFactor,
@@ -85,7 +86,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 
         CoalPosIndicator=GPLikelihood.getCoalPosIndicator();
         CoalTime=GPLikelihood.getCoalTime();
-        fixedNumberPoints=GPcounts.getSize();
+//        fixedNumberPoints=GPcounts.getSize();
         CoalCounts=GPLikelihood.getCoalCounts();
         numberPoints=CoalCounts.getSize();
         numPoints=GPLikelihood.getNumPoints();
@@ -93,15 +94,15 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 //        double [] addPoints = new double[fixedNumberPoints];
 
         this.scaleFactor = scaleFactor;
-        lambdaScaleFactor = 0.0;
+//        lambdaScaleFactor = 0.0;
 //        fieldLength = popSizeParameter.getDimension();
 
-        this.maxIterations = maxIterations;
+//        this.maxIterations = maxIterations;
 
-        this.stopValue = stopValue;
+//        this.stopValue = stopValue;
         setWeight(weight);
 
-        zeros = new double[numberPoints];
+//        zeros = new double[numberPoints];
 
 
 
@@ -416,7 +417,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
      return new PairIndex(newArray,oldArray2);
     }
 
-    public class PairGP{
+    private class PairGP{
         private double[] array1;
         private int[] array2;
 
@@ -428,6 +429,8 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         public double[] getData() {return array1;}
         public int[] getOrder() {return array2;}
     }
+
+
 
       public class Pair1GP{
         private double array1;
@@ -457,7 +460,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         public int[] getNewOrder() {return array3;}
     }
 
-      public class Trip1GP{
+      private class Trip1GP{
         private double array1;
         private int[] array2;
         private int array3;
@@ -756,84 +759,173 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         return new Trip1GP(res,tempQuad.getOrder(),tempQuad.getPositionNew());
         }
 
+    public double[] getGPvalue(double [] currentChangePoints, DenseVector currentGPvalues, double newChangePoints, double precision){
+
+        int currentLength=currentChangePoints.length;
+        int addLength=1;
+//        int newLength = currentLength+addLength;
+        Quaduple1GP tempQuad= sortUpdate(currentChangePoints, newChangePoints);
+        int [] NeighborsIndex =Neighbors(tempQuad.getPositionNew());
+        DenseVector tempData = new DenseVector(SubsetData(tempQuad.getData(),NeighborsIndex));
+
+
+        SymmTridiagMatrix Q = getQmatrix(precision, tempData);
+
+        double part=0.0;
+        double varf=1.0;
+        if (NeighborsIndex.length==3){
+            varf = Q.get(1,1);
+
+            part = -currentGPvalues.get(NeighborsIndex[0])*Q.get(1,0)-currentGPvalues.get(NeighborsIndex[1])*Q.get(1,2);
+
+        }
+        if (NeighborsIndex.length==2){
+            varf = Q.get(0,0);
+            part = -currentGPvalues.get(NeighborsIndex[0])*Q.get(0,1);
+        }
+        double res =(part/varf)+(MathUtils.nextGaussian()/Math.sqrt(varf));
+        double logpr=0.5*Math.log(varf)-0.5*varf*Math.pow(res-(part/varf),2);
+        double [] end=new double[3];
+        end[0]=res;
+        end[1]=logpr;
+        end[2]=tempQuad.getPositionNew();
+//        System.err.println("here"+end[2]);
+        return end;
+    }
+
+    public double[] getGPvalueroot(double [] currentChangePoints, DenseVector currentGPvalues, double newChangePoints, double precision){
+//Here, we know that the newChangePoint is larger than all the currentChangePoints, so we only need one currentChangePoint
+//       and one currentGPvalues (the last one)
+
+//        int currentLength=currentChangePoints.length;
+//        int addLength=1;
+//        int newLength = currentLength+addLength;
+//        Quaduple1GP tempQuad= sortUpdate(currentChangePoints, newChangePoints);
+//        int [] NeighborsIndex =Neighbors(tempQuad.getPositionNew());
+//        DenseVector tempData = new DenseVector(SubsetData(tempQuad.getData(),NeighborsIndex));
+        double [] tempD=new double[2];
+        double part=0.0;
+        double varf=1.0;
+        if (currentChangePoints[currentChangePoints.length-1]<newChangePoints){
+        tempD[0]=currentChangePoints[currentChangePoints.length-1];
+        tempD[1]=newChangePoints;
+            DenseVector tempData=new DenseVector(tempD);
+//        System.err.println(tempData);
+            SymmTridiagMatrix Q = getQmatrix(precision, tempData);
+
+
+            varf = Q.get(1,1);
+            part = -currentGPvalues.get(currentGPvalues.size()-1)*Q.get(0,1);
+        }
+        else {
+            tempD[1]=currentChangePoints[currentChangePoints.length-1];
+            tempD[0]=newChangePoints;
+            DenseVector tempData=new DenseVector(tempD);
+//        System.err.println(tempData);
+            SymmTridiagMatrix Q = getQmatrix(precision, tempData);
+
+
+            varf = Q.get(0,0);
+            part = -currentGPvalues.get(currentGPvalues.size()-1)*Q.get(0,1);
+
+
+        }
+
+        double res =(part/varf)+(MathUtils.nextGaussian()/Math.sqrt(varf));
+        double logpr=0.5*Math.log(varf)-0.5*varf*Math.pow(res-(part/varf),2);
+        double [] end=new double[2];
+        end[0]=res;
+        end[1]=logpr;
+        return end;
+    }
+
+    public double getDensity(double [] currentChangePoints, DenseVector currentGPvalues, double newChangePoints, double precision,int who){
+        double [] temp;
+        SymmTridiagMatrix Q;
+        double part=0.0;
+        double varf=1.0;
+//                           System.err.println("who"+who);
+
+        if (who==0){
+            temp=new double[2];
+            temp[0]=newChangePoints;
+            temp[1]=currentChangePoints[1];
+            DenseVector tempData = new DenseVector(temp);
+
+
+            Q = getQmatrix(precision, tempData);
+            varf = Q.get(0,0);
+            part = -currentGPvalues.get(1)*Q.get(0,1);
+            }
+
+        if (who==currentChangePoints.length-1){
+            temp=new double[2];
+            temp[0]=currentChangePoints[who-1];
+            temp[1]=newChangePoints;
+            DenseVector tempData = new DenseVector(temp);
+            Q = getQmatrix(precision, tempData);
+            varf = Q.get(1,1);
+            part = -currentGPvalues.get(0)*Q.get(0,1);
+        }
+        if (who>0 & who<currentChangePoints.length-1){
+//            System.err.println("whooo");
+            temp=new double[3];
+            temp[0]=currentChangePoints[who-1];
+            temp[1]=newChangePoints;
+            temp[2]=currentChangePoints[who+1];
+            DenseVector tempData = new DenseVector(temp);
+            Q = getQmatrix(precision, tempData);
+            varf = Q.get(1,1);
+             part = -currentGPvalues.get(who-1)*Q.get(1,0)-currentGPvalues.get(who+1)*Q.get(1,2);
+
+
+        }
+//        Quaduple1GP tempQuad= sortUpdate(currentChangePoints, newChangePoints);
+//        int [] NeighborsIndex =Neighbors(tempQuad.getPositionNew());
+        double res =currentGPvalues.get(who);
+        double logpr=0.5*Math.log(varf)-0.5*varf*Math.pow(res-(part/varf),2);
+        return logpr;
+    }
+
     public double sigmoidal (double x){
        return 1/(1+Math.exp(-x));
    }
 
 //
     public void addOnePoint(double gpval, double location, int positions, int where){
-//        System.err.println("adding 1 to GPcounts in position"+where);
        GPcounts.setParameterValue(where,GPcounts.getParameterValue(where)+1.0);
-
-       popSizeParameter.addDimension(positions,gpval);
-//        System.err.println("adding gval"+gpval+"at position"+positions);
+        popSizeParameter.addDimension(positions,gpval);
        changePoints.addDimension(positions, location);
-//        System.err.println("adding t"+location+"at position"+positions);
        GPtype.addDimension(positions,-1.0);
-
        coalfactor.addDimension(positions,GPcoalfactor[where]);
-//       int [] GPtype2= new int[popSizeParameter.getSize()];
-//       double [] coalfactor2 = new double[popSizeParameter.getSize()];
-
-//        System.arraycopy(GPtype,0,GPtype2,0,positions);
-//        GPtype2[positions]=-1;
-//        System.arraycopy(GPtype,positions,GPtype2,positions+1,GPtype.length-positions);
-//        GPtype = (int []) GPtype2;
-
-//
-//        System.arraycopy(coalfactor,0,coalfactor2,0,positions);
-//        coalfactor2[positions]=GPcoalfactor[where];
-//        System.arraycopy(coalfactor,positions,coalfactor2,positions+1,coalfactor.length-positions);
-//        coalfactor= (double []) coalfactor2;
-
-
     }
 
      public void delOnePoint(int positions, int locIntervals){
-//
-//         double temp = GPcounts.getParameterValue(positions);
-//         System.err.println("deleting"+positions+"and for counting"+where+"with pts:"+temp);
-//       GPcounts.setParameterValue(where,temp-1.0);
-
        popSizeParameter.removeDimension(positions);
-
        changePoints.removeDimension(positions);
-
        GPtype.removeDimension(positions);
-
        coalfactor.removeDimension(positions);
-
        GPcounts.setParameterValue(locIntervals,GPcounts.getParameterValue(locIntervals)-1.0);
-
-
-//       int [] GPtype2= new int[popSizeParameter.getSize()];
-//       double [] coalfactor2 = new double [popSizeParameter.getSize()];
-
-//       System.arraycopy(GPtype,0,GPtype2,0,positions);
-//       System.arraycopy(GPtype,positions+1,GPtype2,positions,GPtype2.length-positions);
-//       GPtype = (int []) GPtype2;
-//
-//       System.arraycopy(coalfactor,0,coalfactor2,0,positions);
-//       System.arraycopy(coalfactor,positions+1,coalfactor2,positions,coalfactor2.length-positions);
-//       coalfactor= (double []) coalfactor2;
     }
 
     public int wherePoint(double point, int x, double lower) {
         int z=0;
         int found=0;
-        if (x>0){
-            z=CoalPosIndicator[x];
-//            System.err.println("z is"+z);
+        if (x==-1){
+            z=0;
+        }
+        if (x>=0){
+            z=CoalPosIndicator[x]+1;
+        }
             while (found==0){
-                if (point<lower+GPvalue.getInterval(z)){
-//                    System.err.println(lower+GPvalue.getInterval(z));
+                if (point<=lower+GPvalue.getInterval(z)){
                     found=1;
                 }  else {
                     lower+=GPvalue.getInterval(z);
                     z++;
                 }
             }
-        }
+
         return z;
     }
 
@@ -898,71 +990,51 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
            if (MathUtils.nextDouble()<0.5) {
                indicator[j]=1;
                addPoints[k]=MathUtils.uniform(lowL,uppL);
-//               System.err.println("addPoint"+addPoints[k]+"low"+lowL+"jis"+j);
                indAPoint[k]=wherePoint(addPoints[k],j-1,lowL);
-//               System.err.println("indA:"+indAPoint[k]);
-
-//               System.err.println("where:"+GPcoalfactor[indAPoint[k]]);
-//               System.err.println(GPcoalfactor.length);
-//               System.exit(-1);
-// System.err.println(j+" add:"+addPoints[k]+"with coal factor"+GPcoalfactor[indAPoint[k]]+" and low end:"+lowL+" and pos:"+indAPoint[k]);
                k++;
            }
             lowL=uppL;
        }
 
            double [] addPoints2 = new double[k];
-//           System.err.println("proposes to add "+k+" points");
-//           double [] addPoints2=new double[2];
 
            System.arraycopy(addPoints,0,addPoints2,0,k);
-//           System.arraycopy(addPoints,0,addPoints2,0,2);
-
-
            tempG = getGPvalues(currentChangePoints, currentPopSize, addPoints2,currentPrecision);
-
-
            for (int i=0; i<numberPoints;i++){
                if (indicator[i]==1){
-
                    accept=lambdaBoundParameter.getParameterValue(0)*GPvalue.getGPCoalInterval(i)*GPcoalfactor[indAPoint[k1]]*sigmoidal(-tempG.getData()[k1])/(CoalCounts.getParameterValue(i)+1);
-
                if (MathUtils.nextDouble()<accept) {
-//                   System.err.println("adding point"+addPoints[k1]+"in interval:"+indAPoint[k1]);
                    addOnePoint(tempG.getData()[k1], addPoints2[k1], tempG.getNewOrder()[k1] + fix, indAPoint[k1]);
                    CoalCounts.setParameterValue(i,CoalCounts.getParameterValue(i)+1);
-
                }  else {
                    fix--;}
                    k1++;
 
                }   else {
-                   if (CoalCounts.getParameterValue(i)>1){
+                   double temp=CoalCounts.getParameterValue(i);
+                   if (temp>1){
 //                         it's 0 inclusive, no need to -1
-
-                       int rdm = MathUtils.nextInt((int) CoalCounts.getParameterValue(i)-1);
+                       int rdm = MathUtils.nextInt((int) temp-1);
                        who=where+rdm;
-                       accept=CoalCounts.getParameterValue(i)/(lambdaBoundParameter.getParameterValue(0)*GPvalue.getGPCoalInterval(i)*sigmoidal(-popSizeParameter.getParameterValue(who))*coalfactor.getParameterValue(who));
+                       accept=temp/(lambdaBoundParameter.getParameterValue(0)*GPvalue.getGPCoalInterval(i)*sigmoidal(-popSizeParameter.getParameterValue(who))*coalfactor.getParameterValue(who));
                             if (MathUtils.nextDouble()<accept){
                                 if (i>0) {ltime=CoalTime[i-1];} else {ltime=0.0;}
-                                int locationIntervals=wherePoint(changePoints.getParameterValue(who), Math.max(i-1,0), ltime);
-
+                                int locationIntervals=wherePoint(changePoints.getParameterValue(who),i-1, ltime);
                                 delOnePoint(who+1,locationIntervals);
-
                                 CoalCounts.setParameterValue(i,CoalCounts.getParameterValue(i)-1);
                                 fix--;
 
                 }
                }
-                 if (CoalCounts.getParameterValue(i)==1){
+                 if (temp==1){
                      if (i>0) {ltime=CoalTime[i-1];} else {ltime=0.0;}
-                     int locationIntervals=wherePoint(changePoints.getParameterValue(who), Math.max(i - 1, 0), ltime);
+                     int locationIntervals=wherePoint(changePoints.getParameterValue(where), i - 1,  ltime);
                      delOnePoint(where+1,locationIntervals);
                      CoalCounts.setParameterValue(i,0);
                      fix--;
                  }
                }
-               where+=CoalCounts.getParameterValue(i);
+               where+=CoalCounts.getParameterValue(i)+1;
            }
 
        }
@@ -994,35 +1066,21 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         double accept;
         if (Tlen>0){
         where= MathUtils.uniform(0,Tlen);
-//        System.err.println("where"+where);
-//        for (int i=0;i<currentChangePoints.length;i++){
-//            System.err.println("i:"+i+" point is"+currentChangePoints[i]);
-//        }
-
-        while (got==false) {
+        while (!got) {
             cum+=GPvalue.getGPCoalInterval(j);
             if (CoalCounts.getParameterValue(j)>0){
                  uppL+=GPvalue.getGPCoalInterval(j);
-//                System.err.println(j+":upp:"+uppL+" and low:"+lowL+" and cum:"+cum);
                  if (where>lowL & where<=uppL){
                      got=true;
                  }
+
                 lowL=uppL;
             }
-        position+=CoalCounts.getParameterValue(j);
+        position+=CoalCounts.getParameterValue(j)+1;
             j++;
         }
         j--;
-        position-=CoalCounts.getParameterValue(j);
-//        position-=CoalCounts.getParameterValue(j)+1;
-//        System.err.println("j:"+j);
-//        System.err.println("cum:"+cum);
-//        System.err.println("cum-last:"+(cum-GPvalue.getGPCoalInterval(j)));
-//        System.err.println("position:"+position);
-//        System.err.println("current point:"+changePoints.getParameterValue(position));
-//        System.err.println("check gpfact:"+coalfactor.getParameterValue(position)+"len:"+coalfactor.getSize());
-
-//Propose new points and get GPvalue
+        position-=CoalCounts.getParameterValue(j)+1;
         Trip1GP tempG;
         int m=(int) CoalCounts.getParameterValue(j);
         toAdd=new double[m];
@@ -1033,10 +1091,12 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
 
         for (int i=0; i<m; i++){
             toAdd[i]=MathUtils.uniform(cum-GPvalue.getGPCoalInterval(j),cum);
-            ind[i]=wherePoint(toAdd[i],j,cum-GPvalue.getGPCoalInterval(j));
+//            System.err.println("add"+toAdd[i]+"from:"+(cum-GPvalue.getGPCoalInterval(j))+"check"+CoalTime[j]);
+            ind[i]=wherePoint(toAdd[i],j-1,cum-GPvalue.getGPCoalInterval(j));
             toDel[i]=currentChangePoints[position+i];
             toDelG[i]=currentPopSize.get(position+i);
-            ind2[i]=wherePoint(changePoints.getParameterValue(position+i),j,cum-GPvalue.getGPCoalInterval(j));
+//            System.err.println("verify:"+toDel[i]+"be replaced by"+toAdd[i]+"in?"+ind[i]+"interval:"+(cum-GPvalue.getGPCoalInterval(j))+"and"+cum);
+            ind2[i]=wherePoint(changePoints.getParameterValue(position+i),j-1,cum-GPvalue.getGPCoalInterval(j));
 //            System.err.println(i+": to add:"+toAdd[i]+"and pos"+position);
         }
 
@@ -1056,12 +1116,14 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
             accept=(GPcoalfactor[ind[i]]*sigmoidal(-tempG.getData()))/(GPcoalfactor[ind2[i]]*(sigmoidal(-toDelG[i])));
 
             if (MathUtils.nextDouble()<accept){
-
+//                      System.err.println("here2");
                 addOnePoint(tempG.getData(),toAdd[i],tempG.getNewOrder(),ind[i]);
                 currentChangePoints=(double []) changePoints.getParameterValues();
                 currentPopSize=new DenseVector(popSizeParameter.getParameterValues());
 
                 oldPos=searchPos(currentChangePoints,toDel[i],toAdd[i],tempG.getNewOrder());
+//
+//                System.err.println("removes in location"+toDel[i]+"pos"+oldPos+"value?"+changePoints.getParameterValue(oldPos)+"from"+ind2[i]);
                 delOnePoint(oldPos+1,ind2[i]);
                 currentChangePoints = (double []) changePoints.getParameterValues();
                 currentPopSize=new DenseVector(popSizeParameter.getParameterValues());
@@ -1262,8 +1324,10 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         double currentLambda = this.lambdaBoundParameter.getParameterValue(0);
         getNewUpperBound(currentLambda);
         currentLambda=this.lambdaBoundParameter.getParameterValue(0);
-
+//        System.err.println("before thinned:"+changePoints.getParameterValue(75));
+//
         numberThinned(currentChangePoints, currentPopSize, currentPrecision);
+//        System.err.println("after thinned:"+changePoints.getParameterValue(75));
 //
         DenseVector currentPopSize1 = new DenseVector(popSizeParameter.getParameterValues());
         double [] currentChangePoints1 = this.changePoints.getParameterValues();
@@ -1283,9 +1347,32 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends SimpleMCMCOperat
         numPoints.setParameterValue(0,popSizeParameter.getSize());
 
         double [] currentPopSize3 = this.popSizeParameter.getParameterValues();
+
+        int sumcoal=0;
+        int sumlat=0;
+
+        for (int j=0;j<changePoints.getSize();j++){
+            if( GPtype.getParameterValue(j)==1) {sumcoal++;}
+
+        }
+        for (int j=0;j<CoalCounts.getSize();j++){
+           sumlat+=CoalCounts.getParameterValue(j);
+        }
+        if (sumcoal!=CoalCounts.getSize()){ System.err.println("WARNING CONSISTENCY 1");   }
+        if (sumlat!=(changePoints.getSize()-CoalCounts.getSize())){ System.err.println("WARNING CONSISTENCY 2"+sumlat+"and changePts size"+changePoints.getSize()); }
+
+//        System.err.println("check values 72:"+changePoints.getParameterValue(72)+"type"+GPtype.getParameterValue(72));
+//        System.err.println("check values 73:"+changePoints.getParameterValue(73)+"type"+GPtype.getParameterValue(73));
+
+//        System.err.println("check values 74:"+changePoints.getParameterValue(74)+"type"+GPtype.getParameterValue(74)+"counts"+GPcounts.getParameterValue(114));
+//        System.err.println("check values 75:"+changePoints.getParameterValue(75)+"type"+GPtype.getParameterValue(75)+"counts"+GPcounts.getParameterValue(115));
+//        System.err.println("check values 76:"+changePoints.getParameterValue(76)+"type"+GPtype.getParameterValue(76)+"counts"+GPcounts.getParameterValue(116));
+//        System.err.println("check values 3:"+changePoints.getParameterValue(3)+"type"+GPtype.getParameterValue(3)+"counts"+GPcounts.getParameterValue(16));
+//        System.err.println("check values 4:"+changePoints.getParameterValue(4)+"type"+GPtype.getParameterValue(4)+"counts"+GPcounts.getParameterValue(18));
+//        System.err.println("check values 5:"+changePoints.getParameterValue(5)+"type"+GPtype.getParameterValue(5)+"counts"+GPcounts.getParameterValue(19));
 //
-        writeChain(currentChangePoints2,"locations.txt");
-        writeChain(currentPopSize3,"gvalues.txt");
+//        writeChain(currentChangePoints2,"locations.txt");
+//        writeChain(currentPopSize3,"gvalues.txt");
 
 
 

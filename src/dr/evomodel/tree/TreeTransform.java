@@ -73,7 +73,8 @@ public abstract class TreeTransform extends AbstractModel implements TreeTraitPr
         treeTraits.addTrait(baseTrait);
     }
 
-    public abstract double transform(TreeModel tree, NodeRef node, double originalHeight);
+    // TODO originalHeight is not necessary to pass anymore; remove
+    public abstract double transform(Tree tree, NodeRef node, double originalHeight);
 
     protected abstract double getScaleForNode(Tree tree, NodeRef node);
 

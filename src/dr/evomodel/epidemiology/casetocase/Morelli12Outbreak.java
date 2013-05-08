@@ -204,8 +204,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
-                        "distribution of incubation periods (constructed in the XML so farm elements can inherit" +
-                        "it).", false),
+                        "distribution of incubation periods.", false),
                 new ElementRule(Morelli12Case.MORELLI_12_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(SQRT_INFECTIOUS_SCALE, Parameter.class, "The square root of the scale parameter of " +
                         "all infectiousness periods (variances are proportional to the square of this, see Morelli" +

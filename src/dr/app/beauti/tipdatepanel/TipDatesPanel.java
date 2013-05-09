@@ -40,6 +40,7 @@ import dr.app.gui.table.TableSorter;
 import dr.evolution.util.*;
 import dr.evoxml.util.DateUnitsType;
 import jam.framework.Exportable;
+import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -48,9 +49,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.EnumSet;
 
 /**
@@ -74,12 +73,20 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     GuessDatesAction guessDatesAction = new GuessDatesAction();
 
     JCheckBox usingTipDates = new JCheckBox("Use tip dates");
+    JCheckBox specifyOriginDate = new JCheckBox("Specify origin date:");
+    JTextField originDateText = new JTextField(20);
+    JLabel originDateLabel = new JLabel("");
 
     JComboBox unitsCombo = new JComboBox(EnumSet.range(DateUnitsType.YEARS, DateUnitsType.DAYS).toArray());
     JComboBox directionCombo = new JComboBox(EnumSet.range(DateUnitsType.FORWARDS, DateUnitsType.BACKWARDS).toArray());
 
-//    JComboBox tipDateSamplingCombo = new JComboBox( TipDateSamplingType.values() );
-    JComboBox tipDateSamplingCombo = new JComboBox(new TipDateSamplingType[] { TipDateSamplingType.NO_SAMPLING, TipDateSamplingType.SAMPLE_INDIVIDUALLY });
+    //    JComboBox tipDateSamplingCombo = new JComboBox( TipDateSamplingType.values() );
+    JComboBox tipDateSamplingCombo = new JComboBox(new TipDateSamplingType[] {
+            TipDateSamplingType.NO_SAMPLING,
+            TipDateSamplingType.SAMPLE_INDIVIDUALLY,
+//            TipDateSamplingType.SAMPLE_JOINT,
+            TipDateSamplingType.SAMPLE_PRECISION
+    });
     JComboBox tipDateTaxonSetCombo = new JComboBox();
 
     BeautiFrame frame = null;
@@ -105,6 +112,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 //        dataTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
+        dataTable.getTableHeader().setReorderingAllowed(false);
+        dataTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+
         dataTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
@@ -118,6 +129,12 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         dataTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         dataTable.getColumnModel().getColumn(2).setPreferredWidth(80);
+        dataTable.getColumnModel().getColumn(2).setCellEditor(
+                new DateCellEditor());
+
+        dataTable.getColumnModel().getColumn(3).setCellRenderer(
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getColumnModel().getColumn(3).setPreferredWidth(80);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
@@ -158,9 +175,25 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         toolBar1.add(unitsCombo);
         toolBar1.add(directionCombo);
 
+        JToolBar toolBar3 = new JToolBar();
+        toolBar3.setFloatable(false);
+        toolBar3.setOpaque(false);
+
+        toolBar3.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+
+        toolBar3.add(specifyOriginDate);
+        toolBar3.add(originDateText);
+        toolBar3.add(originDateLabel);
+        JPanel panel2 = new JPanel();
+        panel2.setLayout(new BoxLayout(panel2, BoxLayout.PAGE_AXIS));
+        panel2.setOpaque(false);
+        panel2.add(toolBar1);
+        panel2.add(toolBar3);
+
+
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
-        panel1.add(toolBar1, "North");
+        panel1.add(panel2, "North");
         panel1.add(scrollPane, "Center");
 
         JToolBar toolBar2 = new JToolBar();
@@ -184,7 +217,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         toolBar2.add(tipDateTaxonSetLabel);
         toolBar2.add(tipDateTaxonSetCombo);
 
-
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
@@ -203,8 +235,29 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 }
         );
 
+        specifyOriginDate.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        boolean enabled = usingTipDates.isSelected();
+                        originDateText.setEnabled(enabled && specifyOriginDate.isSelected());
+                        originDateLabel.setEnabled(enabled && specifyOriginDate.isSelected());
+                        timeScaleChanged();
+                    }
+                }
+        );
+
+        originDateText.addFocusListener(
+                new FocusAdapter() {
+                    @Override
+                    public void focusLost(FocusEvent focusEvent) {
+                        timeScaleChanged();
+                    }
+                }
+        );
+
         clearDatesAction.setEnabled(false);
         guessDatesAction.setEnabled(false);
+        setDatesAction.setEnabled(false);
         directionCombo.setEnabled(false);
         unitsLabel.setEnabled(false);
         unitsCombo.setEnabled(false);
@@ -214,12 +267,16 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         tipDateSamplingCombo.setEnabled(false);
         tipDateTaxonSetLabel.setEnabled(false);
         tipDateTaxonSetCombo.setEnabled(false);
+        specifyOriginDate.setEnabled(false);
+        originDateText.setEnabled(false);
+        originDateLabel.setEnabled(false);
 
         usingTipDates.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 boolean enabled = usingTipDates.isSelected();
                 clearDatesAction.setEnabled(enabled);
                 guessDatesAction.setEnabled(enabled);
+                setDatesAction.setEnabled(enabled);
                 unitsLabel.setEnabled(enabled);
                 unitsCombo.setEnabled(enabled);
                 directionCombo.setEnabled(enabled);
@@ -227,6 +284,9 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 dataTable.setEnabled(enabled);
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
+                specifyOriginDate.setEnabled(enabled);
+                originDateText.setEnabled(enabled && specifyOriginDate.isSelected());
+                originDateLabel.setEnabled(enabled && specifyOriginDate.isSelected());
 
                 if (options.taxonList != null) timeScaleChanged();
             }
@@ -263,7 +323,28 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
             Date newDate = createDate(d, units, backwards, 0.0);
 
+            newDate.setPrecision(date.getPrecision());
+
             options.taxonList.getTaxon(i).setDate(newDate);
+        }
+
+        if (specifyOriginDate.isSelected()) {
+            String text = originDateText.getText();
+            DateGuesser guesser = options.dateGuesser;
+            guessDatesDialog.setupGuesser(guesser);
+
+            try {
+                options.originDate = guesser.parseDate(text);
+            } catch (GuessDatesException e) {
+                options.originDate = null;
+            }
+        } else {
+            options.originDate = null;
+        }
+        if ( options.originDate != null) {
+            originDateLabel.setText(" date value: " + Double.toString(options.originDate.getTimeValue()));
+        } else {
+            originDateLabel.setText(" unable to parse date");
         }
 
         calculateHeights();
@@ -386,7 +467,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             // adjust the dates to the current timescale...
             timeScaleChanged();
 
-           dataTableModel.fireTableDataChanged();
+            dataTableModel.fireTableDataChanged();
         } while (result < 0);
     }
 
@@ -494,7 +575,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         heights = null;
 
-        dr.evolution.util.Date mostRecent = null;
+        dr.evolution.util.Date mostRecent = options.originDate;
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
             Date date = options.taxonList.getTaxon(i).getDate();
             if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
@@ -546,6 +627,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         public Object getValueAt(int row, int col) {
             Date date = options.taxonList.getTaxon(row).getDate();
+
             switch (col) {
                 case 0:
                     return options.taxonList.getTaxonId(row);
@@ -587,7 +669,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                     double d = (Double) aValue;
                     if (d >= 0.0) {
                         date.setPrecision(d);
-            }
+                    }
                 }
             }
 

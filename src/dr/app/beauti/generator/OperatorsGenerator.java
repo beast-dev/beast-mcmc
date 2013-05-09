@@ -223,7 +223,7 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
-        writeParameter1Ref(writer, operator);
+            writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
         writer.writeCloseTag(name);
     }

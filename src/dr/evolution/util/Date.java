@@ -28,6 +28,9 @@ package dr.evolution.util;
 import dr.util.Attribute;
 import dr.util.NumberFormatter;
 
+import java.util.Calendar;
+import java.util.TimeZone;
+
 /**
  * A data class.
  *
@@ -165,14 +168,33 @@ public class Date extends TimeScale implements Attribute {
 	private void initUsingDate(java.util.Date date) {
 
         // get the number of milliseconds this date is after the 1st January 1970
-		long millisAhead = date.getTime();
-		
+        long millisAhead = date.getTime();
+
+
 		double daysAhead = ((double)millisAhead)/MILLIS_PER_DAY;
 
 		switch (units) {
-			case DAYS: time = daysAhead; break;
-			case MONTHS: time = daysAhead / DAYS_PER_MONTH; break;
-			case YEARS: time = daysAhead / DAYS_PER_YEAR;
+			case DAYS: time = daysAhead;
+                break;
+			case MONTHS: time = daysAhead / DAYS_PER_MONTH;
+                break;
+			case YEARS:
+                //time = daysAhead / DAYS_PER_YEAR;
+                // more precise (so 1st Jan 2013 is 2013.0)
+                Calendar cal = Calendar.getInstance();
+                cal.setTime(date);
+
+                int year = cal.get(Calendar.YEAR);
+                long millis1 = cal.getTimeInMillis();
+
+                cal.set(year, Calendar.JANUARY, 1, 0, 0);
+                long millis2 = cal.getTimeInMillis();
+
+                cal.set(year + 1, Calendar.JANUARY, 1, 0, 0);
+                long millis3 = cal.getTimeInMillis();
+                double fractionalYear = ((double)(millis1 - millis2)) / (millis3 - millis2);
+
+                time = fractionalYear + year - 1970;
                 break;
 			default: throw new IllegalArgumentException();
 		}

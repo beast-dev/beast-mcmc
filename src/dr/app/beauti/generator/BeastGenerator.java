@@ -365,6 +365,14 @@ public class BeastGenerator extends Generator {
         // chance to generate XML at this point in the BEAST file.
         generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_TAXA, writer);
 
+        if (options.originDate != null) {
+            // Create a dummy taxon whose job is to specify the origin date
+            Taxon originTaxon = new Taxon("originTaxon");
+            originTaxon.setDate(options.originDate);
+            writeTaxon(originTaxon, true, false, writer);
+        }
+
+
         //++++++++++++++++ Taxon List ++++++++++++++++++
         try {
             // write complete taxon list
@@ -718,10 +726,6 @@ public class BeastGenerator extends Generator {
 
         boolean hasAttr = options.traits.size() > 0;
 
-        // why was this here?
-//        boolean hasAttr = (options.traits.size() > 0 && !options.useStarBEAST)
-//                || (options.traits.size() > 1 && options.useStarBEAST);
-
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
             Taxon taxon = taxonList.getTaxon(i);
@@ -730,11 +734,6 @@ public class BeastGenerator extends Generator {
             if (options.clockModelOptions.isTipCalibrated()) {
                 hasDate = TaxonList.Utils.hasAttribute(taxonList, i, dr.evolution.util.Date.DATE);
             }
-
-            writer.writeTag(TaxonParser.TAXON, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, taxon.getId())},
-                    !(hasDate || hasAttr)); // false if any of hasDate or hasAttr is true
-
 
             if (hasDate) {
                 dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
@@ -747,36 +746,69 @@ public class BeastGenerator extends Generator {
                         System.err.println("Error: Units in dates do not match.");
                     }
                 }
+            }
 
-                Attribute[] attributes = {
+            writeTaxon(taxon, hasDate, hasAttr, writer);
+
+        }
+
+        writer.writeCloseTag(TaxaParser.TAXA);
+    }
+
+    /**
+     * Generate a taxa block from these beast options
+     *
+     * @param writer    the writer
+     * @param taxon the taxon to write
+     * @throws dr.app.util.Arguments.ArgumentException
+     *          ArgumentException
+     */
+    private void writeTaxon(Taxon taxon, boolean hasDate, boolean hasAttr, XMLWriter writer) throws Arguments.ArgumentException {
+
+        writer.writeTag(TaxonParser.TAXON, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, taxon.getId())},
+                !(hasDate || hasAttr)); // false if any of hasDate or hasAttr is true
+
+
+        if (hasDate) {
+            dr.evolution.util.Date date = (dr.evolution.util.Date) taxon.getAttribute(dr.evolution.util.Date.DATE);
+
+            Attribute[] attributes;
+            if (date.getPrecision() > 0.0) {
+                attributes = new Attribute[] {
+                        new Attribute.Default<Double>(DateParser.VALUE, date.getTimeValue()),
+                        new Attribute.Default<String>(DateParser.DIRECTION, date.isBackwards() ? DateParser.BACKWARDS : DateParser.FORWARDS),
+                        new Attribute.Default<String>(DateParser.UNITS, Units.Utils.getDefaultUnitName(options.units)),
+                        new Attribute.Default<Double>(DateParser.PRECISION, date.getPrecision())
+                };
+            } else {
+                attributes = new Attribute[] {
                         new Attribute.Default<Double>(DateParser.VALUE, date.getTimeValue()),
                         new Attribute.Default<String>(DateParser.DIRECTION, date.isBackwards() ? DateParser.BACKWARDS : DateParser.FORWARDS),
                         new Attribute.Default<String>(DateParser.UNITS, Units.Utils.getDefaultUnitName(options.units))
                         //new Attribute.Default("origin", date.getOrigin()+"")
                 };
-
-                writer.writeTag(dr.evolution.util.Date.DATE, attributes, true);
             }
 
-            for (TraitData trait : options.traits) {
-                // there is no harm in allowing the species trait to be listed in the taxa
-//                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-                writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
-                        new Attribute.Default<String>(Attribute.NAME, trait.getName())});
-
-                // denotes missing data using '?'
-                writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
-                writer.writeCloseTag(AttributeParser.ATTRIBUTE);
-//                }
-            }
-
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
-
-            if (hasDate || hasAttr) writer.writeCloseTag(TaxonParser.TAXON);
-
+            writer.writeTag(dr.evolution.util.Date.DATE, attributes, true);
         }
 
-        writer.writeCloseTag(TaxaParser.TAXA);
+        for (TraitData trait : options.traits) {
+            // there is no harm in allowing the species trait to be listed in the taxa
+//                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+            writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
+                    new Attribute.Default<String>(Attribute.NAME, trait.getName())});
+
+            // denotes missing data using '?'
+            writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
+            writer.writeCloseTag(AttributeParser.ATTRIBUTE);
+//                }
+        }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
+
+        if (hasDate || hasAttr) writer.writeCloseTag(TaxonParser.TAXON);
+
     }
 
     public void writeDifferentTaxa(AbstractPartitionData dataPartition, XMLWriter writer) {

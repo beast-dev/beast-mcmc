@@ -119,6 +119,15 @@ public class DateGuesser implements Serializable {
         }
     }
 
+    public Date parseDate(String value) throws GuessDatesException {
+        double[] values = new double[2];
+        parseDate("", value, values);
+
+        java.util.Date origin = new java.util.Date(0);
+        return Date.createTimeSinceOrigin(values[0], Units.Type.YEARS, origin);
+
+    }
+
     private void guessDateFromOrder(String label, int order, boolean fromLast, double[] values) throws GuessDatesException {
 
         String field;
@@ -260,6 +269,7 @@ public class DateGuesser implements Serializable {
 
         parseDate(label, matcher.group(0), values);
     }
+
 
     private DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
     private DateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM");

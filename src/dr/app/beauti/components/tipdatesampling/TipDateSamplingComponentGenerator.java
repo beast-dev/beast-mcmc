@@ -4,6 +4,8 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
+import dr.evolution.util.Date;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evoxml.TaxonParser;
@@ -44,14 +46,13 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
         TipDateSamplingComponentOptions comp = (TipDateSamplingComponentOptions)options.getComponentOptions(TipDateSamplingComponentOptions.class);
 
         TaxonList taxa = comp.getTaxonSet();
-        if (taxa == null) { // all taxa...
-            taxa = options.taxonList;
-        }
 
         switch (point) {
             case IN_TREE_MODEL: {
                 for (int i = 0; i < taxa.getTaxonCount(); i++) {
                     Taxon taxon = taxa.getTaxon(i);
+                    // if we are sampling within precisions then only include this leaf if precision > 0
+
                     writer.writeOpenTag("leafHeight",
                             new Attribute[]{
                                     new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
@@ -78,14 +79,16 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
                 }
                 break;
             case IN_MCMC_PRIOR:
-                if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
+                if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY ||
+                        comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_PRECISION) {
                     // nothing to do - individual parameter priors are written automatically
                 } else if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
 
                 }
                 break;
             case IN_FILE_LOG_PARAMETERS:
-                if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
+                if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY ||
+                        comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_PRECISION) {
                     for (int i = 0; i < taxa.getTaxonCount(); i++) {
                         Taxon taxon = taxa.getTaxon(i);
                         writer.writeIDref(ParameterParser.PARAMETER, "age(" + taxon.getId() + ")");

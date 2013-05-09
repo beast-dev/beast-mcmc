@@ -50,7 +50,7 @@ public class DateParser extends AbstractXMLObjectParser {
     public static final String MONTHS = DateUnitsType.MONTHS.getAttribute(); //"units";
     public static final String DAYS = DateUnitsType.DAYS.getAttribute(); //"days";
 
-    private static final String PRECISION = "precision";
+    public static final String PRECISION = "precision";
 
     public String getParserName() {
         return Date.DATE;

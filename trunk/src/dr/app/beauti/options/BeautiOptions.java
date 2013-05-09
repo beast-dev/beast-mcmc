@@ -37,10 +37,8 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
+import dr.evolution.util.*;
+import dr.evolution.util.Date;
 import dr.evoxml.util.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
 
@@ -1211,6 +1209,9 @@ public class BeautiOptions extends ModelOptions {
     public DateUnitsType datesDirection = DateUnitsType.FORWARDS;
     public double maximumTipHeight = 0.0;
     public int translation = 0;
+
+    public Date originDate = null;
+
 
     public DateGuesser dateGuesser = new DateGuesser();
 //    public TraitGuesser traitGuesser = new TraitGuesser();

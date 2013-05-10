@@ -231,6 +231,11 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
+    public double[] getShiftForBranchLength(NodeRef node) {
+        return new double[]{0.0, 0.0};
+        // But really should get values from driftModel.getBranchRate(treeModel, node);
+    }
+
     public double getRescaledBranchLength(NodeRef node) {
 
         double length = treeModel.getBranchLength(node);

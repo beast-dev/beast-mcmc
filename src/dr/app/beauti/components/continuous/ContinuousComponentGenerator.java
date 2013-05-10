@@ -326,7 +326,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         ContinuousComponentOptions component = (ContinuousComponentOptions) options
                 .getComponentOptions(ContinuousComponentOptions.class);
 
-        if (component.usePagelsLambda(partitionData.getPartitionSubstitutionModel())) {
+        if (component.useLambda(partitionData.getPartitionSubstitutionModel())) {
             writer.writeOpenTag("transformedTreeModel");
             writer.writeIDref("treeModel", treeModelId);
             writer.writeTag("parameter", new Attribute[] {
@@ -539,7 +539,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 // if we are analysing bivariate traits we can add these special statistics...
                 write2DStatisticsIDrefs(writer, partitionData);
             }
-            if (component.usePagelsLambda(model)) {
+            if (component.useLambda(model)) {
                 writer.writeIDref("parameter", model.getName() + "." + ContinuousComponentOptions.LAMBDA);
             }
         }

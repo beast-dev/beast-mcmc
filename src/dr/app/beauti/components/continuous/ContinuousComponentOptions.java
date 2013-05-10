@@ -1,10 +1,13 @@
 package dr.app.beauti.components.continuous;
 
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.evolution.datatype.ContinuousDataType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -15,6 +18,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 
     public final static String PRECISION_GIBBS_OPERATOR = "precisionGibbsOperator";
     public final static String HALF_DF = "halfDF";
+    public final static String LAMBDA = "lambda";
 
     final private BeautiOptions options;
 
@@ -31,6 +35,13 @@ public class ContinuousComponentOptions implements ComponentOptions {
                         PriorScaleType.NONE, 0.5, 0.001, 1000.0, false);
                 modelOptions.createScaleOperator(prefix + HALF_DF, modelOptions.demoTuning, 1.0);
             }
+
+            if (!modelOptions.parameterExists(prefix + LAMBDA)) {
+                modelOptions.createParameterBetaDistributionPrior(prefix + LAMBDA,
+                        "Pagel's lambda parameter of phylogenetic signal",
+                        0.5, 2.0, 2.0, 0.0);
+                modelOptions.createOperator(prefix + LAMBDA, OperatorType.RANDOM_WALK_ABSORBING, 0.3, 10.0);
+            }
         }
 	}
 
@@ -39,6 +50,9 @@ public class ContinuousComponentOptions implements ComponentOptions {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 ops.add(modelOptions.getOperator(partitionData.getName() + "." + HALF_DF));
             }
+            if (usePagelsLambda(partitionData.getPartitionSubstitutionModel())) {
+                ops.add(modelOptions.getOperator(partitionData.getName() + "." + LAMBDA));
+            }
         }
 	}
 
@@ -46,6 +60,9 @@ public class ContinuousComponentOptions implements ComponentOptions {
         for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 params.add(modelOptions.getParameter(partitionData.getName() + "." + HALF_DF));
+            }
+            if (usePagelsLambda(partitionData.getPartitionSubstitutionModel())) {
+                params.add(modelOptions.getParameter(partitionData.getName() + "." + LAMBDA));
             }
         }
 	}
@@ -58,4 +75,18 @@ public class ContinuousComponentOptions implements ComponentOptions {
 	public BeautiOptions getOptions() {
 		return options;
 	}
+
+    public boolean usePagelsLambda(PartitionSubstitutionModel model) {
+        Boolean useLambda = useLambdaMap.get(model);
+        if (useLambda != null) {
+            return useLambda;
+        }
+        return false;
+    }
+
+    public void setUsePagelsLambda(PartitionSubstitutionModel model, boolean useLambda) {
+        useLambdaMap.put(model, useLambda);
+    }
+
+    final private Map<PartitionSubstitutionModel, Boolean> useLambdaMap = new HashMap<PartitionSubstitutionModel, Boolean>();
 }

@@ -25,6 +25,7 @@
 
 package dr.app.beauti.siteModelsPanel;
 
+import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.components.dollo.DolloComponentOptions;
@@ -101,6 +102,9 @@ public class PartitionModelPanel extends OptionsPanel {
 
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
+
+    private JCheckBox usePagelsLambdaCheck = new JCheckBox(
+            "Estimate phylogenetic signal using Pagel's lambda transform");
 
     private JTextArea citationText;
 
@@ -306,6 +310,15 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
+        PanelUtils.setupComponent(usePagelsLambdaCheck);
+        usePagelsLambdaCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
+                        .getComponentOptions(ContinuousComponentOptions.class);
+                component.setUsePagelsLambda(model, usePagelsLambdaCheck.isSelected());
+            }
+        });
+
         PanelUtils.setupComponent(activateBSSVS);
         activateBSSVS.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -446,6 +459,11 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.CONTINUOUS:
                 continuousTraitSiteModelCombo.setSelectedItem(model
                         .getContinuousSubstModelType());
+
+                ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
+                        .getComponentOptions(ContinuousComponentOptions.class);
+
+                usePagelsLambdaCheck.setSelected(component.usePagelsLambda(model));
                 break;
             case DataType.MICRO_SAT:
                 microsatName.setText(model.getMicrosatellite().getName());
@@ -584,6 +602,7 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.CONTINUOUS:
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
+                addComponent(usePagelsLambdaCheck);
                 break;
 
             case DataType.MICRO_SAT:

@@ -74,6 +74,7 @@ public class GuessDatesDialog {
     private final RealNumberField offset2Text = new RealNumberField();
 
     private final JTextField dateFormatText = new JTextField(16);
+    private String description = "Guess Dates for Taxa";
 
     public GuessDatesDialog(final JFrame frame) {
         this.frame = frame;
@@ -218,7 +219,7 @@ public class GuessDatesDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Guess Dates for Taxa");
+        final JDialog dialog = optionPane.createDialog(frame, description);
         dialog.pack();
 
         dialog.setVisible(true);
@@ -267,6 +268,10 @@ public class GuessDatesDialog {
             }
         }
 
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     private static final String DATE_FORMAT_HELP =
@@ -442,4 +447,5 @@ public class GuessDatesDialog {
             "     interpreted as <a href=\"#text\">text</a>; otherwise,\n" +
             "     it is interpreted as a <a href=\"#number\">number</a>.\n" +
             " </ul>";
+
 }

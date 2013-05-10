@@ -72,7 +72,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writeMultivariateTreeLikelihoodIdRefs(writer, component);
                 break;
             case IN_FILE_LOG_PARAMETERS:
-                writePrecisionMatrixIdRefs(writer, component);
+                writeParameterIdRefs(writer, component);
                 break;
             case IN_FILE_LOG_LIKELIHOODS:
                 writeMultivariateTreeLikelihoodIdRefs(writer, component);
@@ -321,7 +321,24 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 });
 
         writer.writeIDref("multivariateDiffusionModel", diffusionModelId);
-        writer.writeIDref("treeModel", treeModelId);
+
+
+        ContinuousComponentOptions component = (ContinuousComponentOptions) options
+                .getComponentOptions(ContinuousComponentOptions.class);
+
+        if (component.usePagelsLambda(partitionData.getPartitionSubstitutionModel())) {
+            writer.writeOpenTag("transformedTreeModel");
+            writer.writeIDref("treeModel", treeModelId);
+            writer.writeTag("parameter", new Attribute[] {
+                    new Attribute.Default<String>("id", partitionData.getName() + "." + ContinuousComponentOptions.LAMBDA),
+                    new Attribute.Default<String>("value", "0.5"),
+                    new Attribute.Default<String>("lower", "0.0"),
+                    new Attribute.Default<String>("upper", "1.0")
+            }, true);
+            writer.writeCloseTag("transformedTreeModel");
+        } else {
+            writer.writeIDref("treeModel", treeModelId);
+        }
 
         writer.writeOpenTag("traitParameter");
         writer.writeTag("parameter", new Attribute.Default<String>("id", "leaf." + partitionData.getName()), true);
@@ -513,7 +530,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
     }
 
-    private void writePrecisionMatrixIdRefs(final XMLWriter writer, final ContinuousComponentOptions component) {
+    private void writeParameterIdRefs(final XMLWriter writer, final ContinuousComponentOptions component) {
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
             PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
             writer.writeIDref("matrixParameter", model.getName() + ".precision");
@@ -521,6 +538,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             if (model.getContinuousTraitCount() == 2) {
                 // if we are analysing bivariate traits we can add these special statistics...
                 write2DStatisticsIDrefs(writer, partitionData);
+            }
+            if (component.usePagelsLambda(model)) {
+                writer.writeIDref("parameter", model.getName() + "." + ContinuousComponentOptions.LAMBDA);
             }
         }
     }

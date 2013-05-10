@@ -493,6 +493,15 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             guessDatesDialog = new GuessDatesDialog(frame);
         }
 
+        int[] selRows = dataTable.getSelectedRows();
+
+        if (selRows.length > 0) {
+            guessDatesDialog.setDescription("Guess date values for selected taxa");
+        } else {
+            guessDatesDialog.setDescription("Guess date values for all taxa");
+        }
+
+
         int result = guessDatesDialog.showDialog();
 
         if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
@@ -506,7 +515,17 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         String warningMessage = null;
 
-        guesser.guessDates(options.taxonList);
+            if (selRows.length > 0) {
+            Taxa selectedTaxa = new Taxa();
+
+            for (int row : selRows) {
+                Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
+                selectedTaxa.addTaxon(taxon);
+            }
+            guesser.guessDates(selectedTaxa);
+        } else {
+            guesser.guessDates(options.taxonList);
+        }
 
         if (warningMessage != null) {
             JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
@@ -630,7 +649,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
             switch (col) {
                 case 0:
-                    return options.taxonList.getTaxonId(row);
+                    return options.taxonList.getTaxon(row);
                 case 1:
                     if (date != null) {
                         return date.getTimeValue();

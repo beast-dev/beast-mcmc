@@ -103,8 +103,8 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
 
-    private JCheckBox usePagelsLambdaCheck = new JCheckBox(
-            "Estimate phylogenetic signal using Pagel's lambda transform");
+    private JCheckBox useLambdaCheck = new JCheckBox(
+            "Estimate phylogenetic signal using tree transform");
 
     private JTextArea citationText;
 
@@ -310,14 +310,17 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
-        PanelUtils.setupComponent(usePagelsLambdaCheck);
-        usePagelsLambdaCheck.addItemListener(new ItemListener() {
+        PanelUtils.setupComponent(useLambdaCheck);
+        useLambdaCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
                         .getComponentOptions(ContinuousComponentOptions.class);
-                component.setUsePagelsLambda(model, usePagelsLambdaCheck.isSelected());
+                component.setUseLambda(model, useLambdaCheck.isSelected());
             }
         });
+        useLambdaCheck
+                .setToolTipText("<html>Estimate degree of phylogenetic correlation in continuous traits using <br>"
+                        + "a tree transform. Inspired by Pagel (1999), described in Lemey et al (2013) <i>in prep</i></html>");
 
         PanelUtils.setupComponent(activateBSSVS);
         activateBSSVS.addItemListener(new ItemListener() {
@@ -326,7 +329,7 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         activateBSSVS
-                .setToolTipText("<html>Actives Bayesian stochastic search variable selection on the rates as decribed in<br>"
+                .setToolTipText("<html>Actives Bayesian stochastic search variable selection on the rates as described in<br>"
                         + "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
 
         // ============ micro-sat ================
@@ -463,7 +466,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
                         .getComponentOptions(ContinuousComponentOptions.class);
 
-                usePagelsLambdaCheck.setSelected(component.usePagelsLambda(model));
+                useLambdaCheck.setSelected(component.useLambda(model));
                 break;
             case DataType.MICRO_SAT:
                 microsatName.setText(model.getMicrosatellite().getName());
@@ -602,7 +605,7 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.CONTINUOUS:
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
-                addComponent(usePagelsLambdaCheck);
+                addComponent(useLambdaCheck);
                 break;
 
             case DataType.MICRO_SAT:

@@ -38,7 +38,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 
             if (!modelOptions.parameterExists(prefix + LAMBDA)) {
                 modelOptions.createParameterBetaDistributionPrior(prefix + LAMBDA,
-                        "Pagel's lambda parameter of phylogenetic signal",
+                        "phylogenetic signal parameter",
                         0.5, 2.0, 2.0, 0.0);
                 modelOptions.createOperator(prefix + LAMBDA, OperatorType.RANDOM_WALK_ABSORBING, 0.3, 10.0);
             }
@@ -50,7 +50,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 ops.add(modelOptions.getOperator(partitionData.getName() + "." + HALF_DF));
             }
-            if (usePagelsLambda(partitionData.getPartitionSubstitutionModel())) {
+            if (useLambda(partitionData.getPartitionSubstitutionModel())) {
                 ops.add(modelOptions.getOperator(partitionData.getName() + "." + LAMBDA));
             }
         }
@@ -61,7 +61,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 params.add(modelOptions.getParameter(partitionData.getName() + "." + HALF_DF));
             }
-            if (usePagelsLambda(partitionData.getPartitionSubstitutionModel())) {
+            if (useLambda(partitionData.getPartitionSubstitutionModel())) {
                 params.add(modelOptions.getParameter(partitionData.getName() + "." + LAMBDA));
             }
         }
@@ -76,7 +76,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 		return options;
 	}
 
-    public boolean usePagelsLambda(PartitionSubstitutionModel model) {
+    public boolean useLambda(PartitionSubstitutionModel model) {
         Boolean useLambda = useLambdaMap.get(model);
         if (useLambda != null) {
             return useLambda;
@@ -84,7 +84,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
         return false;
     }
 
-    public void setUsePagelsLambda(PartitionSubstitutionModel model, boolean useLambda) {
+    public void setUseLambda(PartitionSubstitutionModel model, boolean useLambda) {
         useLambdaMap.put(model, useLambda);
     }
 

@@ -434,20 +434,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public boolean addTrait() {
         return addTrait("Untitled");
-
-        // The 'species' trait doesn't need to be a reserved keyword since the StarBEAST button was added
-        // http://code.google.com/p/beast-mcmc/issues/detail?id=388
-//        if (options.traitExists(TraitData.TRAIT_SPECIES)) {
-//            JOptionPane.showMessageDialog(frame, "Keyword \"species\" has been reserved for *BEAST !" +
-//                    "\nPlease use a different trait name.", "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
-//            options.removeTrait(TraitData.TRAIT_SPECIES);
-////            options.useStarBEAST = false;
-//            traitsTableModel.fireTableDataChanged();
-//            dataTableModel.fireTableDataChanged();
-//            return false;
-//        }
-//
-//        return isAdd;
     }
 
     public boolean addTrait(String traitName) {
@@ -472,7 +458,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             TraitData newTrait = new TraitData(options, name, "", type);
             currentTrait = newTrait;
 
-// The createTraitDialog will have already checked if the
+            // The createTraitDialog will have already checked if the
             // user is overwriting an existing trait
             addTrait(newTrait);
 
@@ -482,14 +468,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
             fireTraitsChanged();
             updateButtons();
-//            traitsTableModel.fireTableDataChanged();
-//            dataTableModel.fireTableDataChanged();
 
-//            traitSelectionChanged();
-            // AR we don't want to guess traits automatically - the user may
-            // be planning on typing them in. Also this method may have been
-            // called by guessTraits() anyway.
-//            guessTrait();
         } else if (result == CreateTraitDialog.OK_IMPORT) {
             boolean done = frame.doImportTraits();
             if (done) {

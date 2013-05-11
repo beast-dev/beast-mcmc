@@ -392,7 +392,10 @@ public class BEAUTiImporter {
                 if (!isMissingValue(values[j])) {
                     taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
                 } else {
-                    taxon.setAttribute(traitName, "?");
+                    // AR - merge rather than replace existing trait values
+                    if (taxon.getAttribute(traitName) == null) {
+                        taxon.setAttribute(traitName, "?");
+                    }
                 }
                 j++;
             }

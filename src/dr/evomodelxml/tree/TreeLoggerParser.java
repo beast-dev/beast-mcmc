@@ -146,7 +146,7 @@ public class TreeLoggerParser extends LoggerParser {
 
                     TreeTraitProvider ttp = (TreeTraitProvider)xco.getChild(TreeTraitProvider.class);
 
-                    if (xo.hasAttribute(NAME)) {
+                    if (xco.hasAttribute(NAME)) {
                         // a specific named trait is required (optionally with a tag to name it in the tree file)
 
                         String name = xco.getStringAttribute(NAME);

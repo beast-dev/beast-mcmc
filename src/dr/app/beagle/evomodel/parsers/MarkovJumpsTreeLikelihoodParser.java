@@ -170,13 +170,33 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
             Object obj = xo.getChild(i);
             if (obj instanceof Parameter) {
                 Parameter registerParameter = (Parameter) obj;
-                if ((type == MarkovJumpsType.COUNTS &&
-                        registerParameter.getDimension() != stateCount * stateCount) ||
-                        (type == MarkovJumpsType.REWARDS &&
-                                registerParameter.getDimension() != stateCount)
-                        ) {
-                    throw new XMLParseException("Register parameter " + registerParameter.getId() + " is of the wrong dimension");
+                if (type == MarkovJumpsType.COUNTS &&
+                        registerParameter.getDimension() != stateCount * stateCount) {
+                    if (registerParameter. getDimension() == 1) {
+                        // if the dimension hasn't been set then default to counting all jumps
+                        registerParameter.setDimension(stateCount * stateCount);
+                        for (int j = 0; j < stateCount; j++) {
+                            for (int k = 0; k < stateCount; k++) {
+                                registerParameter.setParameterValueQuietly((j * stateCount) + k,  (j == k ? 0.0 : 1.0));
+                            }
+                        }
+                    } else {
+                        throw new XMLParseException("Markov Jumps register parameter " + registerParameter.getId() + " is of the wrong dimension");
+                    }
                 }
+                if (type == MarkovJumpsType.REWARDS &&
+                        registerParameter.getDimension() != stateCount) {
+                    if (registerParameter.getDimension() == 1) {
+                        // if the dimension hasn't been set then default to getting rewards for all states
+                        registerParameter.setDimension(stateCount);
+                        for (int j = 0; j < stateCount; j++) {
+                            registerParameter.setParameterValueQuietly(j, 1.0);
+                        }
+                    } else {
+                        throw new XMLParseException("Markov Rewards register parameter " + registerParameter.getId() + " is of the wrong dimension");
+                    }
+                }
+
                 if (registerParameter.getId() == null) {
                     registerParameter.setId(jumpTag+(registersFound+1));
                 }
@@ -219,7 +239,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             new XMLSyntaxRule[] {
                                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
                             },true),
-                     new ElementRule(FrequencyModel.class, true),
+                    new ElementRule(FrequencyModel.class, true),
             };
 
     public XMLSyntaxRule[] getSyntaxRules() {

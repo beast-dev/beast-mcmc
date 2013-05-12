@@ -506,7 +506,7 @@ public class BEAUTiImporter {
                          List<NexusApplicationImporter.CharSet> charSets, PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
-                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
+                new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
         }
@@ -525,7 +525,7 @@ public class BEAUTiImporter {
                          PartitionSubstitutionModel model, List<TraitData> traits
     ) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
-                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
+                new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
         if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
         }

@@ -79,12 +79,36 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  BranchRateModel rateModel, Model samplingDensity,
                                                  boolean reportAsMultivariate,
                                                  boolean reciprocalRates) {
+        this(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches,
+                scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates, false);
+    }
+
+
+    private final CacheHelper cacheHelper;
+
+    public IntegratedMultivariateTraitLikelihood(String traitName,
+                                                 MultivariateTraitTree treeModel,
+                                                 MultivariateDiffusionModel diffusionModel,
+                                                 CompoundParameter traitParameter,
+                                                 Parameter deltaParameter,
+                                                 List<Integer> missingIndices,
+                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
+                                                 BranchRateModel rateModel, Model samplingDensity,
+                                                 boolean reportAsMultivariate,
+                                                 boolean reciprocalRates, boolean hasDrift) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
                 useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
 
+        // Delegate caches to helper
         meanCache = new double[dim * treeModel.getNodeCount()];
+        if (hasDrift) {
+            cacheHelper = new DriftCacheHelper(dim * treeModel.getNodeCount(), cacheBranches); // new DriftCacheHelper ....
+        } else {
+            cacheHelper = new CacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
+        }
+
         drawnStates = new double[dim * treeModel.getNodeCount()];
         upperPrecisionCache = new double[treeModel.getNodeCount()];
         lowerPrecisionCache = new double[treeModel.getNodeCount()];
@@ -131,7 +155,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         if (traitValue.length < dim) {
             throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
         }
-        System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
+
+        cacheHelper.setTipMeans(meanCache, traitValue, dim, index, node);
+        System.err.println("yo");
+//        System.arraycopy(traitValue, 0, meanCache
+////                cacheHelper.getMeanCache()
+//                , dim * index, dim);
     }
 
     public double[] getTipDataValues(int index) {
@@ -370,15 +399,21 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         // Multiply child0 and child1 densities
 
-        if (totalPrecision == 0) {
-            System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
-        } else {
-            // Delegate in case either child is partially missing
-            missingTraits.computeWeightedAverage(meanCache,
-                    meanOffset0, precision0,
-                    meanOffset1, precision1,
-                    meanThisOffset, dim);
-        }
+        // Delegate this!
+        cacheHelper.computeMeanCaches(meanCache, meanThisOffset, meanOffset0, meanOffset1,
+                totalPrecision, precision0, precision1, missingTraits);
+//        if (totalPrecision == 0) {
+//            System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
+//        } else {
+//            // Delegate in case either child is partially missing
+//            // computeCorrectedWeightedAverage
+//            missingTraits.computeWeightedAverage(meanCache,
+//                    meanOffset0, precision0,
+//                    meanOffset1, precision1,
+//                    meanThisOffset, dim);
+//        }
+        // In this delegation, you can call
+        //getShiftForBranchLength(node);
 
         if (!treeModel.isRoot(node)) {
             // Integrate out trait value at this node
@@ -431,17 +466,23 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
             for (int i = 0; i < dimTrait; i++) {
 
+                // subtract "correction", then mult by precision0
                 final double wChild0i = meanCache[childOffset0 + k * dimTrait + i] * precision0;
+                // final double wChild0i = cacheHelper.getCorrectedMeanCache()[childOffset0 + k*dimTrait + i]*precision0;
+                // subtract "correction", then mult by precision1
                 final double wChild1i = meanCache[childOffset1 + k * dimTrait + i] * precision1;
 
                 for (int j = 0; j < dimTrait; j++) {
 
+                    // subtract "correction"
                     final double child0j = meanCache[childOffset0 + k * dimTrait + j];
+                    // subtract "correction"
                     final double child1j = meanCache[childOffset1 + k * dimTrait + j];
 
                     childSS0 += wChild0i * precisionMatrix[i][j] * child0j;
                     childSS1 += wChild1i * precisionMatrix[i][j] * child1j;
 
+                    // make sure meanCache in following is not "corrected"
                     crossSS += (wChild0i + wChild1i) * precisionMatrix[i][j] * meanCache[thisOffset + k * dimTrait + j];
                 }
             }
@@ -538,6 +579,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         if (cacheBranches) {
             System.arraycopy(meanCache, 0, storedMeanCache, 0, meanCache.length);
+//            cacheHelper.store();
             System.arraycopy(upperPrecisionCache, 0, storedUpperPrecisionCache, 0, upperPrecisionCache.length);
             System.arraycopy(lowerPrecisionCache, 0, storedLowerPrecisionCache, 0, lowerPrecisionCache.length);
             System.arraycopy(logRemainderDensityCache, 0, storedLogRemainderDensityCache, 0, logRemainderDensityCache.length);
@@ -550,6 +592,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         if (cacheBranches) {
             double[] tmp;
 
+//            cacheHelper.restore();
             tmp = storedMeanCache;
             storedMeanCache = meanCache;
             meanCache = tmp;
@@ -707,6 +750,113 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected boolean areStatesRedrawn = false;
 
     protected double[] meanCache;
+
+    class CacheHelper {
+
+        public CacheHelper(int cacheLength, boolean cacheBranches) {
+            // modify code later so we can uncomment the following
+            /*
+            meanCache = new double[cacheLength];
+            this.cacheBranches = cacheBranches;
+            if (cacheBranches) {
+                storedMeanCache = new double[cacheLength];
+            }
+            */
+        }
+
+        public double[] getMeanCache() {
+            return meanCache;
+        }
+
+        public double[] getCorrectedMeanCache() {
+            return meanCache;
+        }
+
+        public void store() {
+            if (cacheBranches) {
+                System.arraycopy(meanCache, 0, storedMeanCache, 0, meanCache.length);
+            }
+        }
+
+        public void restore() {
+            if (cacheBranches) {
+                double[] tmp = meanCache;
+                meanCache = storedMeanCache;
+                storedMeanCache = tmp;
+            }
+        }
+
+        public void doFunkyStuff(NodeRef node) {
+
+        }
+
+        protected boolean cacheBranches;
+        private double[] meanCache;
+        private double[] storedMeanCache;
+
+        public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
+                                      double precision0, double precision1, MissingTraits missingTraits) {
+            //To change body of created methods use File | Settings | File Templates.
+        }
+
+        public void computeMeanCaches(double[] meanCache, int meanThisOffset, int meanOffset0, int meanOffset1,
+                                      double totalPrecision, double precision0, double precision1, MissingTraits missingTraits) {
+            if (totalPrecision == 0) {
+                System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
+            } else {
+                // Delegate in case either child is partially missing
+                // computeCorrectedWeightedAverage
+                missingTraits.computeWeightedAverage(meanCache,
+                        meanOffset0, precision0,
+                        meanOffset1, precision1,
+                        meanThisOffset, dim);
+            }
+        }
+
+        public void setTipMeans(double[] meanCache, double[] traitValue, int dim, int index, NodeRef node) {
+            System.arraycopy(traitValue, 0, meanCache
+//                cacheHelper.getMeanCache()
+                    , dim * index, dim);
+
+//            double[] shift = getShiftForBranchLength(node);
+//         for (int i = 0; i < dim; ++i) {
+//             meanCache[dim * index + i] = traitValue[i] - treeModel.getBranchLength(node) * shift[i];
+//         }
+        }
+    }
+
+    ;
+
+
+    class DriftCacheHelper extends CacheHelper {
+
+        public DriftCacheHelper(int cacheLength, boolean cacheBranches) {
+            super(cacheLength, cacheBranches);
+            correctedMeanCache = new double[cacheLength];
+        }
+
+        public void setTipMeans(double[] meanCache, double[] traitValue, int dim, int index, NodeRef node) {
+            double[] shift = getShiftForBranchLength(node);
+            for (int i = 0; i < dim; ++i) {
+                meanCache[dim * index + i] = traitValue[i] - treeModel.getBranchLength(node) * shift[i];
+            }
+            System.err.println("here");
+        }
+
+        public double[] getCorrectedMeanCache() {
+            return correctedMeanCache;
+        }
+
+        public void doFunkyStuff(NodeRef node) {
+            getShiftForBranchLength(node);
+        }
+
+        private double[] correctedMeanCache;
+    }
+
+
+    // protected boolean hasDrift;
+
     protected double[] upperPrecisionCache;
     protected double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;

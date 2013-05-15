@@ -1,19 +1,16 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.evolution.alignment.PatternList;
-import dr.evolution.tree.NodeRef;
 import dr.inference.model.AbstractModel;
-import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 
 /**
- * Created with IntelliJ IDEA.
+ * Abstract class for outbreaks
+ *
  * User: Matthew Hall
- * Date: 22/05/2012
- * Time: 14:40
- * To change this template use File | Settings | File Templates.
+ * Date: 14/04/13
  */
+
 public abstract class AbstractOutbreak extends AbstractModel {
 
     public AbstractOutbreak(String name){

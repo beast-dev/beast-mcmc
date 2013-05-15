@@ -5,11 +5,10 @@ import dr.evolution.util.Taxa;
 import dr.inference.model.AbstractModel;
 
 /**
- * Created with IntelliJ IDEA.
+ * Abstract class for cases; best implemented as an inner class in implementations of AbstractOutbreak
+ *
  * User: Matthew Hall
- * Date: 11/05/2012
- * Time: 14:28
- * To change this template use File | Settings | File Templates.
+ * Date: 15/04/13
  */
 
 

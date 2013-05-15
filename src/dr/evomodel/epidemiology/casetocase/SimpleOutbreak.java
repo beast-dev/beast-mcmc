@@ -313,8 +313,11 @@ public class SimpleOutbreak extends AbstractOutbreak {
                 return 0;
             } else {
                 double endPoint = end<endOfInfectiousDate.getTimeValue() ? end : endOfInfectiousDate.getTimeValue();
-                return infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-endPoint)
-                        - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-start);
+                double tempEndCDF = infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-endPoint);
+                double tempStartCDF = infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-start);
+
+                return infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-start)
+                        - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-endPoint);
             }
 
         }

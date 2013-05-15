@@ -6,6 +6,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.AbstractModelLikelihood;
@@ -25,8 +26,7 @@ import java.util.*;
 /**
  * A likelihood function for transmission between identified epidemiological cases
  *
- * Currently works only for fixed trees and estimates the network and epidemiological parameters. Timescale
- * must be in days. Python scripts to write XML for it and analyse the posterior set of networks exist; contact MH.
+ * Timescale must be in days. Python scripts to write XML for it and analyse the posterior set of networks exist; contact MH.
  *
  * @author Matthew Hall
  * @author Andrew Rambaut
@@ -189,7 +189,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         treeTraits.addTrait(PAINTINGS_KEY, new TreeTrait.S() {
             public String getTraitName() {
-                return "host_case";
+                return PAINTINGS_KEY;
             }
 
             public Intent getIntent() {
@@ -596,7 +596,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         } else {
             currentReconstructionExists = false;
         }
-        if(extended){
+        if(extended & sampleTTs){
             recalculateLocks();
         }
         likelihoodKnown = false;
@@ -619,9 +619,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      */
     private double calculateLogLikelihood() {
         if(!sampleTTs){
-            Arrays.fill(rootLikelihoods, Double.NEGATIVE_INFINITY);
-            Arrays.fill(subLikelihoods, Double.NEGATIVE_INFINITY);
-            return totalTreeLogLikelihood(true);
+            return totalTreeLogLikelihood(false);
         } else {
             if(!checkPaintingIntegrity(branchMap, true)){
                 throw new RuntimeException("Not a painting");
@@ -722,6 +720,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 }
             }
         } else {
+            // extended version
             if(virusTree.isExternal(node)){
                 AbstractCase tipPainting = branchMap[node.getNumber()];
                 NodeRef parent = virusTree.getParent(node);
@@ -1177,6 +1176,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     private AbstractCase[] sampleTransmissionTree(){
 
+        Arrays.fill(rootLikelihoods, Double.NEGATIVE_INFINITY);
+        Arrays.fill(subLikelihoods, Double.NEGATIVE_INFINITY);
+
+        totalTreeLogLikelihood(true);
+
         AbstractCase[] samplePainting = new AbstractCase[virusTree.getNodeCount()];
         samplePainting = prepareExternalNodeMap(samplePainting);
         NodeRef root = virusTree.getRoot();
@@ -1417,6 +1421,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             super(s);
         }
     }
+
 }
 
 

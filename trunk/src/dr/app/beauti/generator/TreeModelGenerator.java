@@ -168,7 +168,7 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
 //        }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, writer);
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, model, writer);
 
         writer.writeCloseTag(TreeModel.TREE_MODEL);
 

@@ -368,6 +368,7 @@ public class BeastGenerator extends Generator {
         if (options.originDate != null) {
             // Create a dummy taxon whose job is to specify the origin date
             Taxon originTaxon = new Taxon("originTaxon");
+            options.originDate.setUnits(options.units);
             originTaxon.setDate(options.originDate);
             writeTaxon(originTaxon, true, false, writer);
         }

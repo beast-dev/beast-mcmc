@@ -1,5 +1,6 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Variable;

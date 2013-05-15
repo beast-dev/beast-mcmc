@@ -1,5 +1,6 @@
 package dr.app.beauti.components.tipdatesampling;
 
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.generator.BaseComponentGenerator;
@@ -49,19 +50,33 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
 
         switch (point) {
             case IN_TREE_MODEL: {
-                for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                    Taxon taxon = taxa.getTaxon(i);
-                    // if we are sampling within precisions then only include this leaf if precision > 0
-
-                    writer.writeOpenTag("leafHeight",
-                            new Attribute[]{
-                                    new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
-                            }
-                    );
-                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
-                    writer.writeCloseTag("leafHeight");
+                PartitionTreeModel treeModel = (PartitionTreeModel)item;
+                TaxonList treeTaxa = null;
+                for (Taxa t : options.taxonSetsTreeModel.keySet()) {
+                    if (options.taxonSetsTreeModel.get(treeTaxa).equals(treeModel)) {
+                        treeTaxa = t;
+                    }
                 }
 
+                if (treeTaxa != null) {
+                    // only include this taxon as a leaf height if it found in this partition.
+
+                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                        Taxon taxon = taxa.getTaxon(i);
+
+                        if (treeTaxa.getTaxonIndex(taxon) != -1) {
+                            // if we are sampling within precisions then only include this leaf if precision > 0
+
+                            writer.writeOpenTag("leafHeight",
+                                    new Attribute[]{
+                                            new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
+                                    }
+                            );
+                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
+                            writer.writeCloseTag("leafHeight");
+                        }
+                    }
+                }
             } break;
             case AFTER_TREE_MODEL:
                 if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {

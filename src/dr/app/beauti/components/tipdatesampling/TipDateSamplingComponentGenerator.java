@@ -1,5 +1,6 @@
 package dr.app.beauti.components.tipdatesampling;
 
+import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.types.TipDateSamplingType;
@@ -13,6 +14,9 @@ import dr.evoxml.TaxonParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -51,30 +55,29 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
         switch (point) {
             case IN_TREE_MODEL: {
                 PartitionTreeModel treeModel = (PartitionTreeModel)item;
-                TaxonList treeTaxa = null;
-                for (Taxa t : options.taxonSetsTreeModel.keySet()) {
-                    if (options.taxonSetsTreeModel.get(treeTaxa).equals(treeModel)) {
-                        treeTaxa = t;
+
+                Set<Taxon> taxonSet = new HashSet<Taxon>();
+                for (AbstractPartitionData data : options.getDataPartitions(treeModel)) {
+                    for (Taxon taxon : data.getTaxonList()) {
+                        taxonSet.add(taxon);
                     }
                 }
 
-                if (treeTaxa != null) {
-                    // only include this taxon as a leaf height if it found in this partition.
+                // only include this taxon as a leaf height if it found in this partition.
 
-                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                        Taxon taxon = taxa.getTaxon(i);
+                for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                    Taxon taxon = taxa.getTaxon(i);
 
-                        if (treeTaxa.getTaxonIndex(taxon) != -1) {
-                            // if we are sampling within precisions then only include this leaf if precision > 0
+                    if (taxonSet.contains(taxon)) {
+                        // if we are sampling within precisions then only include this leaf if precision > 0
 
-                            writer.writeOpenTag("leafHeight",
-                                    new Attribute[]{
-                                            new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
-                                    }
-                            );
-                            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
-                            writer.writeCloseTag("leafHeight");
-                        }
+                        writer.writeOpenTag("leafHeight",
+                                new Attribute[]{
+                                        new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
+                                }
+                        );
+                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
+                        writer.writeCloseTag("leafHeight");
                     }
                 }
             } break;

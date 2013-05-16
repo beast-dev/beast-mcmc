@@ -759,10 +759,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                             // 2) no creep in either case, paintingForcedByParent = true and both nodes have same
                             // painting
                             // 2) parent creep but no node creep
-                            // 3) parent creep, node creep, parent and child have same painting
+                            // 3) node creep, parent and child have same painting
                             boolean treeCompatibilityCheck = (!nodeCreep && !parentCreep && (!paintingForcedByParent
-                                    || parentPainting == nodePainting)) || (parentCreep && (!nodeCreep ||
-                                    parentPainting == nodePainting));
+                                    || parentPainting == nodePainting)) || (parentCreep && !nodeCreep) ||
+                                    (nodeCreep && (parentPainting == nodePainting));
                             if(treeCompatibilityCheck){
                                 double term = 0;
                                 int childIndex = cases.getCases().indexOf(nodePainting);

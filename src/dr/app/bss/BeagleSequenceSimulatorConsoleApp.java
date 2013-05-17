@@ -24,6 +24,15 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private static final String HELP = "help";
 	private static final String TREE_MODEL = "treeModel";
 
+	private static final String DEMOGRAPHIC_MODEL = "demographicModel";
+	private static final String NO_DEMOGRAPHIC_MODEL = "noModel";
+	private static final String CONSTANT_POPULATION = "constantPopulation";
+	private static final String CONSTANT_POPULATION_PARAMETER_VALUES = "constantPopulationParameterValues";
+	private static final String EXPONENTIAL_GROWTH_RATE = "exponentialGrowthRate";
+	private static final String EXPONENTIAL_GROWTH_RATE_PARAMETER_VALUES = "exponentialGrowthRateParameterValues";
+	private static final String EXPONENTIAL_DOUBLING_TIME = "exponentialDoublingTime";
+	private static final String EXPONENTIAL_GROWTH_DOUBLING_TIME_PARAMETER_VALUES = "exponentialDoublingTimeParameterValues";
+	
 	private static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
 	private static final String HKY = PartitionData.substitutionModels[0];
 	private static final String HKY_SUBSTITUTION_PARAMETER_VALUES = "HKYsubstitutionParameterValues";
@@ -35,7 +44,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private static final String GY94_SUBSTITUTION_PARAMETER_VALUES = "GY94substitutionParameterValues";
 	
 	private static final String SITE_RATE_MODEL = "siteRateModel";
-	private static final String NO_MODEL = "NoModel";
+	private static final String NO_SITE_RATE_MODEL = "noModel";
 	private static final String GAMMA_SITE_RATE_MODEL = "gammaSiteRateModel";
 	private static final String GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES = "gammaSiteRateModelParameterValues";
 	
@@ -77,6 +86,17 @@ public class BeagleSequenceSimulatorConsoleApp {
 						new Arguments.StringOption(TREE_MODEL, "tree model",
 								"specify tree topology"),
 
+						new Arguments.StringOption(DEMOGRAPHIC_MODEL,
+								new String[] { NO_DEMOGRAPHIC_MODEL, //
+										CONSTANT_POPULATION, //							
+										EXPONENTIAL_GROWTH_RATE, //
+										EXPONENTIAL_DOUBLING_TIME //
+										}, false, "specify demographic model"),		
+										
+						new Arguments.RealArrayOption( CONSTANT_POPULATION_PARAMETER_VALUES, 1, "specify constant population model parameter values"),					
+						new Arguments.RealArrayOption( EXPONENTIAL_GROWTH_RATE_PARAMETER_VALUES, 2, "specify exponential growth (growth rate) population model parameter values"),					
+						new Arguments.RealArrayOption( EXPONENTIAL_GROWTH_DOUBLING_TIME_PARAMETER_VALUES, 2, "specify exponential growth (doubling time) population model parameter values"),													
+								
 						new Arguments.StringOption(BRANCH_SUBSTITUTION_MODEL,
 								new String[] { HKY, //
 										GTR, //
@@ -84,43 +104,44 @@ public class BeagleSequenceSimulatorConsoleApp {
 										GY94_CODON_MODEL //
 								}, false, "specify substitution model"),
 
-								new Arguments.RealArrayOption(HKY_SUBSTITUTION_PARAMETER_VALUES, 1, "specify HKY substitution model parameter values"),
-								new Arguments.RealArrayOption(GTR_SUBSTITUTION_PARAMETER_VALUES, 6, "specify GTR substitution model parameter values"),
-								new Arguments.RealArrayOption(TN93_SUBSTITUTION_PARAMETER_VALUES, 2, "specify TN93 substitution model parameter values"),
-								new Arguments.RealArrayOption(GY94_SUBSTITUTION_PARAMETER_VALUES, 2, "specify GY94 substitution model parameter values"),
-								
+						new Arguments.RealArrayOption( HKY_SUBSTITUTION_PARAMETER_VALUES, 1, "specify HKY substitution model parameter values"),
+						new Arguments.RealArrayOption( GTR_SUBSTITUTION_PARAMETER_VALUES, 6, "specify GTR substitution model parameter values"),
+						new Arguments.RealArrayOption( TN93_SUBSTITUTION_PARAMETER_VALUES, 2, "specify TN93 substitution model parameter values"),
+						new Arguments.RealArrayOption( GY94_SUBSTITUTION_PARAMETER_VALUES, 2, "specify GY94 substitution model parameter values"),
+
 						new Arguments.StringOption(SITE_RATE_MODEL,
-								new String[] { NO_MODEL, //
+								new String[] { NO_SITE_RATE_MODEL, //
 										GAMMA_SITE_RATE_MODEL, //
 								}, false, "specify site rate model"),
 
-								new Arguments.RealArrayOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES, 3, "specify Gamma Site Rate Model parameter values"),
-								
+						new Arguments.RealArrayOption(
+								GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES, 3, "specify Gamma Site Rate Model parameter values"),
+
 						new Arguments.StringOption(CLOCK_RATE_MODEL,
 								new String[] { STRICT_CLOCK, //
 										LOGNORMAL_RELAXED_CLOCK, //
 										EXPONENTIAL_RELAXED_CLOCK, //
-										INVERSE_GAUSSIAN_RELAXED_CLOCK
-								}, false, "specify clock rate model"),
+										INVERSE_GAUSSIAN_RELAXED_CLOCK },
+								false, "specify clock rate model"),
 
-								new Arguments.RealArrayOption(STRICT_CLOCK_PARAMETER_VALUES, 1, "specify Strict Clock parameter values"),
-								new Arguments.RealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Lognormal Relaxed Clock parameter values"),
-								new Arguments.RealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Exponential Relaxed Clock parameter values"),
-								new Arguments.RealArrayOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussia Relaxed Clock parameter values"),
-								
+						new Arguments.RealArrayOption( STRICT_CLOCK_PARAMETER_VALUES, 1, "specify Strict Clock parameter values"),
+						new Arguments.RealArrayOption( LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Lognormal Relaxed Clock parameter values"),
+						new Arguments.RealArrayOption( EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Exponential Relaxed Clock parameter values"),
+						new Arguments.RealArrayOption( INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussia Relaxed Clock parameter values"),
+
 						new Arguments.StringOption(FREQUENCY_MODEL,
 								new String[] { NUCLEOTIDE_FREQUENCIES, //
 										CODON_FREQUENCIES, //
 								}, false, "specify frequency model"),
 
-								new Arguments.RealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES, 4, "specify Strict Clock parameter values"),
-								new Arguments.RealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES, 61, "specify Strict Clock parameter values"),
-								
-				new Arguments.IntegerOption(FROM, "specify 'from' attribute"),
-				new Arguments.IntegerOption(TO, "specify 'to' attribute"),
-				new Arguments.IntegerOption(EVERY, "specify 'every' attribute")
+						new Arguments.RealArrayOption( NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES, 4, "specify nucleotide frequency parameter values"),
+						new Arguments.RealArrayOption( CODON_FREQUENCY_PARAMETER_VALUES, 61, "specify codon frequency parameter values"),
 
-		});
+						new Arguments.IntegerOption(FROM, "specify 'from' attribute"),
+						new Arguments.IntegerOption(TO, "specify 'to' attribute"),
+						new Arguments.IntegerOption(EVERY, "specify 'every' attribute")
+
+				});
 
 	}// END: constructor
 	
@@ -194,6 +215,65 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 				}// END: TREE_MODEL option check
 
+				// Demographic Model
+				if (arguments.hasOption(DEMOGRAPHIC_MODEL)) {
+
+					option = arguments.getStringOption(DEMOGRAPHIC_MODEL);
+
+					if (option.equalsIgnoreCase(NO_DEMOGRAPHIC_MODEL)) {
+
+						int index = 0;
+						data.demographicModelIndex = index;
+
+					} else if (option.equalsIgnoreCase(CONSTANT_POPULATION)) {
+
+						int index = 1;
+						data.demographicModelIndex = index;
+
+						if (arguments
+								.hasOption(CONSTANT_POPULATION_PARAMETER_VALUES)) {
+
+							values = arguments
+									.getRealArrayOption(CONSTANT_POPULATION_PARAMETER_VALUES);
+							parseDemographicValues(index, values);
+
+						}
+
+					} else if (option.equalsIgnoreCase(EXPONENTIAL_GROWTH_RATE)) {
+
+						int index = 2;
+						data.demographicModelIndex = index;
+
+						if (arguments
+								.hasOption(EXPONENTIAL_GROWTH_RATE_PARAMETER_VALUES)) {
+
+							values = arguments
+									.getRealArrayOption(EXPONENTIAL_GROWTH_RATE_PARAMETER_VALUES);
+							parseDemographicValues(index, values);
+
+						}
+
+					} else if (option
+							.equalsIgnoreCase(EXPONENTIAL_DOUBLING_TIME)) {
+
+						int index = 3;
+						data.demographicModelIndex = index;
+
+						if (arguments
+								.hasOption(EXPONENTIAL_GROWTH_DOUBLING_TIME_PARAMETER_VALUES)) {
+
+							values = arguments
+									.getRealArrayOption(EXPONENTIAL_GROWTH_DOUBLING_TIME_PARAMETER_VALUES);
+							parseDemographicValues(index, values);
+
+						}
+
+					} else {
+						gracefullyExit("Unrecognized option.");
+					}
+
+				}// END: DEMOGRAPHIC_MODEL option check
+				
 				// Branch Substitution Model
 				if (arguments.hasOption(BRANCH_SUBSTITUTION_MODEL)) {
 
@@ -259,7 +339,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 					option = arguments.getStringOption(SITE_RATE_MODEL);
 
-					if (option.equalsIgnoreCase(NO_MODEL)) {
+					if (option.equalsIgnoreCase(NO_SITE_RATE_MODEL)) {
 
 						int index = 0;
 						data.siteRateModelIndex = index;
@@ -458,6 +538,16 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 	}// END: simulate
 
+	private void parseDemographicValues(int demographicModelIndex,
+			double[] values) {
+		for (int i = 0; i < PartitionData.demographicParameterIndices[demographicModelIndex].length; i++) {
+
+			int k = PartitionData.demographicParameterIndices[demographicModelIndex][i];
+			data.demographicParameterValues[k] = values[i];
+
+		}
+	}// END: parseDemographicValues
+	
 	private void parseSubstitutionValues(int substitutionModelIndex,
 			double[] values) {
 		for (int i = 0; i < PartitionData.substitutionParameterIndices[substitutionModelIndex].length; i++) {

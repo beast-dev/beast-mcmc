@@ -2,6 +2,10 @@ package dr.app.bss;
 
 import jam.framework.DefaultMenuBarFactory;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class MenuBarFactory extends DefaultMenuBarFactory {
 
 	public MenuBarFactory() {

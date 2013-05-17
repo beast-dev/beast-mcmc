@@ -26,6 +26,10 @@ import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class Utils {
 
 	// /////////////////
@@ -39,13 +43,17 @@ public class Utils {
 	public static final int SITE_RATE_MODEL_ELEMENT = 2;
 	public static final int BRANCH_RATE_MODEL_ELEMENT = 3;
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
+	public static final int DEMOGRAPHIC_MODEL_ELEMENT = 5;
+	
+	public static final String STARTING_TREE = "startingTree";
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
 	public static final String TREE_FILENAME = "treeFilename";
 	public static final String SUBSTITUTION_MODEL = "substitutionModel";
+	public static final String DEMOGRAPHIC_MODEL = "demographicModel";
 	public static final String FREQUENCY_MODEL = "frequencyModel";
 	public static final String CODON_UNIVERSAL = "codon-universal";
 	public static final String CHOOSE_FILE = "Choose file...";
-
+	
 	public static final String BSS_ICON = "icons/bss.png";
 	public static final String CHECK_ICON = "icons/check.png";
 	public static final String ERROR_ICON = "icons/error.png";
@@ -183,6 +191,18 @@ public class Utils {
 
 		switch (elementIndex) {
 
+		case DEMOGRAPHIC_MODEL_ELEMENT:
+
+			for (PartitionData data2 : partitionList) {
+				if (demographicModelToString(data).equalsIgnoreCase(
+						demographicModelToString(data2))) {
+					exists = true;
+					break;
+				}
+			}
+
+			break;
+		
 		case BRANCH_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
@@ -247,6 +267,18 @@ public class Utils {
 
 		switch (elementIndex) {
 
+		case DEMOGRAPHIC_MODEL_ELEMENT:
+
+			for (PartitionData data2 : partitionList) {
+				if (demographicModelToString(data).equalsIgnoreCase(
+						demographicModelToString(data2))) {
+					index = partitionList.indexOf(data2);
+					break;
+				}
+			}
+
+			break;
+		
 		case BRANCH_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
@@ -308,6 +340,20 @@ public class Utils {
 	// ---TO STRING METHODS---//
 	// /////////////////////////
 
+	public static String demographicModelToString(PartitionData data) {
+
+		String string = PartitionData.demographicModels[data.demographicModelIndex];
+
+		string += (" ( ");
+		for (int i = 0; i < PartitionData.demographicParameterIndices[data.demographicModelIndex].length; i++) {
+			string += data.demographicParameterValues[PartitionData.demographicParameterIndices[data.demographicModelIndex][i]];
+			string += " ";
+		}// END: indices loop
+		string += ")";
+
+		return string;
+	}
+	
 	public static String clockRateModelToString(PartitionData data) {
 
 		String string = PartitionData.clockModels[data.clockModelIndex];

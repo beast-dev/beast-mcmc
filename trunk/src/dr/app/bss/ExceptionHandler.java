@@ -5,6 +5,10 @@ import java.lang.Thread.UncaughtExceptionHandler;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class ExceptionHandler implements UncaughtExceptionHandler {
 
 	public void uncaughtException(final Thread t, final Throwable e) {

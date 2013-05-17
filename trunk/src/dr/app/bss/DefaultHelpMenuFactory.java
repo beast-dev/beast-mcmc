@@ -13,6 +13,10 @@ import java.net.URISyntaxException;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class DefaultHelpMenuFactory implements MenuFactory {
 
 	public DefaultHelpMenuFactory() {

@@ -7,6 +7,10 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class ColumnResizer {
 
 	public static void adjustColumnPreferredWidths(JTable table) {

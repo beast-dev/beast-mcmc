@@ -21,6 +21,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
+import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.substmodel.GTRParser;
@@ -31,6 +33,7 @@ import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
+import dr.evoxml.util.XMLUnits;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.DistributionModelParser;
@@ -45,8 +48,6 @@ import dr.xml.XMLParser;
  * @version $Id$
  */
 public class XMLGenerator {
-
-	public static final String STARTING_TREE = "startingTree";
 
 	private PartitionDataList dataList;
 
@@ -89,9 +90,52 @@ public class XMLGenerator {
 
 		}// END: try-catch block
 
-		// /////////////////////////////
-		// ---starting tree element---//
-		// /////////////////////////////
+		//TODO: merge demographic model & newick into starting tree element
+		
+		// /////////////////////////////////
+		// ---demographic model element---//
+		// /////////////////////////////////
+		
+		try {	
+			
+			int suffix = 1;
+			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
+			for (PartitionData data : dataList) {
+
+				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT)) {
+
+					data.demographicModelIdref += suffix;
+//					data.treeModelIdref += suffix;
+					
+					writeDemographicModel(data, writer, String.valueOf(suffix));
+					writer.writeBlankLine();
+					partitionList.add(data);
+
+					// System.out.println("NOT IN LIST");
+
+				} else {
+
+					int index = Utils.isIdenticalWith(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT) + 1;
+					data.demographicModelIdref += index;
+//					data.treeModelIdref += suffix;
+					// System.out.println("IDENTICAL WITH " + index);
+
+				}
+
+				suffix++;
+
+			}// END: partition loop
+			
+		} catch (Exception e) {
+
+			throw new RuntimeException("Demographic model generation has failed:\n"
+					+ e.getMessage());
+
+		}// END: try-catch block
+		
+		// //////////////////////
+		// ---newick element---//
+		// //////////////////////
 
 		try {
 
@@ -101,34 +145,39 @@ public class XMLGenerator {
 
 				if (data.treeFile == null) {
 
-					throw new RuntimeException(
-							"Set Tree Model in Partitions tab for " + suffix
-									+ " partition.");
+					throw new RuntimeException("Set Tree Model in Partitions tab for " + suffix + " partition.");
 
 				} else {
 
-					TreeModel treeModel = data.createTreeModel();
+					if (data.demographicModelIndex == 0) {
 
-					if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
+						TreeModel treeModel = data.createTreeModel();
 
-						data.treeModelIdref += suffix;
+						if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
 
-						writeStartingTree(treeModel, writer, String.valueOf(suffix));
-						writer.writeBlankLine();
+							data.treeModelIdref += suffix;
 
-						treeModelList.add(treeModel);
+							writeNewick(treeModel, writer, String.valueOf(suffix));
+							writer.writeBlankLine();
 
-						// System.out.println("NOT IN LIST");
+							treeModelList.add(treeModel);
+
+							// System.out.println("NOT IN LIST");
+
+						} else {
+
+							int index = Utils.treeModelIsIdenticalWith(treeModel, treeModelList) + 1;
+							data.treeModelIdref += index;
+
+							// System.out.println("IDENTICAL WITH " + index);
+
+						}
 
 					} else {
 
-						int index = Utils.treeModelIsIdenticalWith(treeModel,
-								treeModelList) + 1;
-						data.treeModelIdref += index;
+						// do nothing
 
-						// System.out.println("IDENTICAL WITH " + index);
-
-					}
+					}// END: NoModel check
 
 				}// END: exception
 
@@ -155,14 +204,12 @@ public class XMLGenerator {
 
 				TreeModel treeModel = data.createTreeModel();
 
-				if (treeModelList.size() == 0
-						| !Utils.isTreeModelInList(treeModel, treeModelList)) {
+				if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
 
 					writeTreeModel(treeModel, writer, String.valueOf(suffix));
 					writer.writeBlankLine();
 
 					treeModelList.add(treeModel);
-
 					
 				}
 
@@ -479,6 +526,139 @@ public class XMLGenerator {
 
 	}// END: writeBeagleSequenceSimulator
 
+	//TODO: merge writeNewick & writeDemographicModel
+	
+	private void writeNewick(TreeModel tree, XMLWriter writer,
+			String suffix) {
+
+		writer.writeOpenTag(NewickParser.NEWICK,
+				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
+						Utils.STARTING_TREE + suffix) });
+
+		writer.writeText(Tree.Utils.newick(tree));
+
+		writer.writeCloseTag(NewickParser.NEWICK);
+
+	}// END: writeNewick
+	
+	private void writeDemographicModel(PartitionData data, XMLWriter writer,
+			String suffix) {
+
+		int demographicModel = data.demographicModelIndex;
+
+		switch (demographicModel) {
+
+		case 0: // NoModel
+
+			// do nothing
+
+			break;
+
+		case 1: // Constant Population
+
+			writer.writeOpenTag(
+					ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.demographicModelIdref),
+							new Attribute.Default<String>(XMLUnits.UNITS,
+									XMLUnits.YEARS) });
+			
+			writeParameter(ConstantPopulationModelParser.POPULATION_SIZE,
+					"constant.popSize" + suffix, 1,
+					String.valueOf(data.demographicParameterValues[0]), writer);
+			
+			writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
+			
+			writer.writeBlankLine();
+			
+			writer.writeOpenTag(
+					CoalescentSimulatorParser.COALESCENT_SIMULATOR,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									Utils.STARTING_TREE + suffix) });
+		
+			writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
+			writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, data.demographicModelIdref);
+			
+			writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
+			
+			break;
+
+		case 2: // Exponential Growth (Growth Rate)
+
+			writer.writeOpenTag(
+					ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.demographicModelIdref),
+							new Attribute.Default<String>(XMLUnits.UNITS,
+									XMLUnits.YEARS) });
+			
+			writeParameter(ExponentialGrowthModelParser.POPULATION_SIZE,
+					"exponential.popSize" + suffix, 1,
+					String.valueOf(data.demographicParameterValues[1]), writer);
+
+			writeParameter(ExponentialGrowthModelParser.GROWTH_RATE,
+					"exponential.growthRate" + suffix, 1,
+					String.valueOf(data.demographicParameterValues[2]), writer);
+			
+			writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
+			
+			writer.writeBlankLine();
+			
+			writer.writeOpenTag(
+					CoalescentSimulatorParser.COALESCENT_SIMULATOR,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									Utils.STARTING_TREE + suffix) });
+		
+			writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
+			writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, data.demographicModelIdref);
+			
+			writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
+			
+			break;
+
+		case 3: // Exponential Growth (Doubling Time)
+
+			writer.writeOpenTag(
+					ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.demographicModelIdref),
+							new Attribute.Default<String>(XMLUnits.UNITS,
+									XMLUnits.YEARS) });
+			
+			writeParameter(ExponentialGrowthModelParser.POPULATION_SIZE,
+					"exponential.popSize" + suffix, 1,
+					String.valueOf(data.demographicParameterValues[3]), writer);
+
+			writeParameter(ExponentialGrowthModelParser.DOUBLING_TIME,
+					"exponential.doublingTime" + suffix, 1,
+					String.valueOf(data.demographicParameterValues[4]), writer);
+			
+			writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
+			
+			writer.writeBlankLine();
+			
+			writer.writeOpenTag(
+					CoalescentSimulatorParser.COALESCENT_SIMULATOR,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									Utils.STARTING_TREE + suffix) });
+		
+			writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
+			writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, data.demographicModelIdref);
+			
+			writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
+			
+			break;
+
+		}// END: switch
+
+	}// END: writeDemographicModel
+	
 	private void writeBranchRatesModel(PartitionData data, XMLWriter writer,
 			String suffix) {
 
@@ -653,7 +833,7 @@ public class XMLGenerator {
 		writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(
 				XMLParser.ID, treeModelName), false);
 
-		writer.writeIDref("tree", STARTING_TREE + suffix);
+		writer.writeIDref("tree", Utils.STARTING_TREE + suffix);
 
 		writeParameter(TreeModelParser.ROOT_HEIGHT, treeModelName + "."
 				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, writer);
@@ -682,19 +862,6 @@ public class XMLGenerator {
 		writer.writeCloseTag(TreeModel.TREE_MODEL);
 
 	}// END: writeTreeModel
-
-	private void writeStartingTree(TreeModel tree, XMLWriter writer,
-			String suffix) {
-
-		writer.writeOpenTag(NewickParser.NEWICK,
-				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
-						STARTING_TREE + suffix) });
-
-		writer.writeText(Tree.Utils.newick(tree));
-
-		writer.writeCloseTag(NewickParser.NEWICK);
-
-	}// END: writeStartingTree
 
 	private void writeReport(XMLWriter writer) {
 

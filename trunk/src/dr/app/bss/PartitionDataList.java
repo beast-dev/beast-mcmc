@@ -8,12 +8,15 @@ import java.util.LinkedList;
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 @SuppressWarnings("serial")
 public class PartitionDataList extends ArrayList<PartitionData> implements Serializable {
 
 	public MutableTaxonList taxonList = new Taxa();
 	public int simulationsCount = 1;
-//	public File treesFilename = null;
 	
 	public  LinkedList<File> treeFileList = new  LinkedList<File>();
 	public  LinkedList<Integer> taxaCounts = new  LinkedList<Integer>();
@@ -24,9 +27,7 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 	
 	public PartitionDataList() {
 		super();
-		
 		startingSeed = System.currentTimeMillis();
-		
 	}// END: Constructor
 
 }// END:class

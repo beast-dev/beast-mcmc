@@ -9,6 +9,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 @SuppressWarnings("serial")
 public class JTableButtonCellEditor extends DefaultCellEditor {
 

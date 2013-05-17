@@ -7,6 +7,10 @@ import javax.swing.JTable;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class TableColumnHider {
 
 	private JTable table;

@@ -34,6 +34,10 @@ import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.InverseGaussianDistributionModelParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 @SuppressWarnings("serial")
 public class PartitionData implements Serializable {
 
@@ -54,6 +58,7 @@ public class PartitionData implements Serializable {
 		resetSiteRateModelIdref();
 		resetSubstitutionModelIdref();
 		resetTreeModelIdref();
+		resetDemographicModelIdref();
 	}
 
 	// /////////////////////////
@@ -61,6 +66,12 @@ public class PartitionData implements Serializable {
 	// /////////////////////////
 
 	public int demographicModelIndex = 0;
+	
+	public String demographicModelIdref = Utils.DEMOGRAPHIC_MODEL;
+
+	public void resetDemographicModelIdref() {
+		this.substitutionModelIdref = Utils.DEMOGRAPHIC_MODEL;
+	}
 	
     public static String[] demographicModels = {
     	"No Model (user-specified tree)",
@@ -106,11 +117,18 @@ public class PartitionData implements Serializable {
 	
 	
 	public double[] demographicParameterValues = new double[] {
+			
+			/*Constant Population*/
 			1000.0, // Population Size
+			
+			/*Exponential Growth (Growth Rate)*/
 			1000.0, // Population Size
 			0.5, // Growth Rate
+			
+			/*Exponential Growth (Doubling Time)*/
 			1000.0, // Population Size
 			10.0 // Doubling Time
+			
 //			1000.0, // Population Size
 //			0.5, // Growth Rate
 //			50.0, // Logistic Shape (Half-life)

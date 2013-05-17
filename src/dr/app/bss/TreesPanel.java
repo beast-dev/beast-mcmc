@@ -77,7 +77,6 @@ public class TreesPanel extends JPanel implements Exportable {
 
 		add(scrollPane, BorderLayout.CENTER);
 
-		setTopologyColumn();
 		setTreesColumn(this.dataList);
 
 		column = treesTable.getColumnModel().getColumn(
@@ -103,15 +102,6 @@ public class TreesPanel extends JPanel implements Exportable {
 		column.setCellEditor(new JTableButtonCellEditor());
 
 	}// END: setTreesColumn
-
-	private void setTopologyColumn() {
-
-		column = treesTable.getColumnModel().getColumn(
-				TreesTableModel.DEMOGRAPHIC_MODEL_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor());
-
-	}// END: setTopologyColumn
 
 	private void setTrees() {
 

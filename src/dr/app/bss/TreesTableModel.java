@@ -19,18 +19,14 @@ public class TreesTableModel extends AbstractTableModel {
 	private MainFrame frame;
 
 	public final static int TREE_FILE_INDEX = 0;
-	public final static int DEMOGRAPHIC_MODEL_INDEX = 1;
-	public final static int TAXA_INDEX = 2;
+	public final static int TAXA_INDEX = 1;
 	
-	public static String[] COLUMN_NAMES = { "Tree File", "Demographic model", "Taxa" };
+	public static String[] COLUMN_NAMES = { "Tree File",  "Taxa" };
 	
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JButton.class, // Tree File
-			JButton.class, // Topology
 			Integer.class // Taxa
 	};
-
-	private DemographicModelEditor demographicModelEditor;
 
 	public TreesTableModel(PartitionDataList dataList, MainFrame frame) {
 		this.dataList = dataList;
@@ -90,8 +86,6 @@ public class TreesTableModel extends AbstractTableModel {
 		switch (column) {
 		case TREE_FILE_INDEX:
 			return false;
-		case DEMOGRAPHIC_MODEL_INDEX:
-			return false;
 		case TAXA_INDEX:
 			return false;
 		default:
@@ -116,13 +110,6 @@ public class TreesTableModel extends AbstractTableModel {
 			JButton treeFileButton = new JButton(Utils.CHOOSE_FILE);
 			treeFileButton.addActionListener(new ListenLoadTreeFile(row));
 			return treeFileButton;
-
-		case DEMOGRAPHIC_MODEL_INDEX:
-
-			final JButton topologyButton = new JButton(COLUMN_NAMES[column]);
-			topologyButton
-					.addActionListener(new ListenOpenDemographicModelEditor(row));
-			return topologyButton;
 
 		case TAXA_INDEX:
 			return dataList.taxaCounts.get(row);
@@ -275,22 +262,6 @@ public class TreesTableModel extends AbstractTableModel {
 		}
 
 	}// END: removeTaxaWithAttributeValue
-
-	private class ListenOpenDemographicModelEditor implements ActionListener {
-
-		private int row;
-
-		public ListenOpenDemographicModelEditor(int row) {
-			this.row = row;
-		}// END: Constructor
-
-		public void actionPerformed(ActionEvent ev) {
-
-			demographicModelEditor = new DemographicModelEditor(dataList, row);
-			demographicModelEditor.launch();
-
-		}// END: actionPerformed
-	}// END: ListenOpenDemographicModelEditor
 
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;

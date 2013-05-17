@@ -20,6 +20,9 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
+* XML/CLI for coalescent
+* terminal tab for outputs
+* display tree filename w-out canonical path in partitions panel combobox
 * nucleotide/codon frequencies with compatible substitution models
 * parallel tree traversal:
   # start asynch task

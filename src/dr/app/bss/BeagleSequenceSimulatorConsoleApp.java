@@ -12,6 +12,10 @@ import dr.app.beagle.tools.Partition;
 import dr.app.util.Arguments;
 import dr.math.MathUtils;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class BeagleSequenceSimulatorConsoleApp {
 
 	private Arguments arguments;

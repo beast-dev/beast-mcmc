@@ -12,6 +12,10 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.KeyStroke;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class DefaultFileMenuFactory implements MenuFactory {
 
 	public DefaultFileMenuFactory() {

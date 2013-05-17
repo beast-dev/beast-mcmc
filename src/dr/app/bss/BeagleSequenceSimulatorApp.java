@@ -12,12 +12,16 @@ import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class BeagleSequenceSimulatorApp {
 
 	// Share those if neccessary
 	public static final String NAME = "BSS";
 	public static final String LONG_NAME = "Beagle Sequence Simulator";
-	public static final String VERSION = "0.7.0beta";
+	public static final String VERSION = "0.7.5beta";
 	public static final String DATE = "2013";
 
 	// Icons

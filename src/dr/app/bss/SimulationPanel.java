@@ -17,6 +17,10 @@ import javax.swing.SwingConstants;
 
 import dr.app.gui.components.WholeNumberField;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 @SuppressWarnings("serial")
 public class SimulationPanel extends JPanel implements Exportable {
 

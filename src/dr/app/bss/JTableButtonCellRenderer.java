@@ -9,6 +9,10 @@ import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellRenderer;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 @SuppressWarnings("serial")
 public class JTableButtonCellRenderer extends JButton implements
 		TableCellRenderer {

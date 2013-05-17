@@ -17,6 +17,10 @@ import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.TableColumn;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 @SuppressWarnings("serial")
 public class TreesPanel extends JPanel implements Exportable {
 

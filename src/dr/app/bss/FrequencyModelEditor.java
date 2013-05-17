@@ -21,6 +21,10 @@ import javax.swing.SwingConstants;
 
 import dr.app.gui.components.RealNumberField;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class FrequencyModelEditor {
 
 	// Data

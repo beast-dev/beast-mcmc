@@ -6,6 +6,10 @@ import java.awt.event.MouseEvent;
 import javax.swing.JButton;
 import javax.swing.JTable;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class JTableButtonMouseListener extends MouseAdapter {
 
 	private final JTable table;

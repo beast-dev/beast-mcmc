@@ -11,6 +11,10 @@ import jam.framework.AbstractFrame;
 import jam.framework.MenuBarFactory;
 import jam.framework.MenuFactory;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class DefaultEditMenuFactory implements MenuFactory  {
 
 	public DefaultEditMenuFactory() {

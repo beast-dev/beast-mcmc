@@ -24,6 +24,10 @@ import javax.swing.text.BadLocationException;
 
 import dr.app.gui.components.RealNumberField;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class SiteRateModelEditor {
 
 	// Data

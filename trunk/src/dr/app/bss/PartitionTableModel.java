@@ -19,24 +19,37 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int FROM_INDEX = 1;
 	public final static int TO_INDEX = 2;
 	public final static int EVERY_INDEX = 3;
-	public final static int BRANCH_SUBSTITUTION_MODEL_INDEX = 4;
-	public final static int SITE_RATE_MODEL_INDEX = 5;
-	public final static int CLOCK_RATE_MODEL_INDEX = 6;
-	public final static int FREQUENCY_MODEL_INDEX = 7;
+	public final static int DEMOGRAPHIC_MODEL_INDEX = 4;	
+	public final static int BRANCH_SUBSTITUTION_MODEL_INDEX = 5;
+	public final static int SITE_RATE_MODEL_INDEX = 6;
+	public final static int CLOCK_RATE_MODEL_INDEX = 7;
+	public final static int FREQUENCY_MODEL_INDEX = 8;
 	
-	public static String[] COLUMN_NAMES = { "Tree Model", 
-//		"Data Type", 
-		"From",
-			"To", "Every", "Branch Substitution Model", "Site Rate Model",
-			"Clock Rate Model", "Frequency Model" };
+	public static String[] COLUMN_NAMES = { "Tree Model", //
+			// "Data Type",
+			"From", //
+			"To", //
+			"Every", //
+			"Demographic model", //
+			"Branch Substitution Model", //
+			"Site Rate Model", //
+			"Clock Rate Model", //
+			"Frequency Model" //
+	};
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
-			JComboBox.class, 
-//			JComboBox.class, 
-			Integer.class, Integer.class,
-			Integer.class, JButton.class, JButton.class, JButton.class,
-			JButton.class };
+			JComboBox.class, //
+			// JComboBox.class, //
+			Integer.class, //
+			Integer.class, Integer.class, //
+			JButton.class, //
+			JButton.class, //
+			JButton.class, //
+			JButton.class, //
+			JButton.class //
+	};
 
+	private DemographicModelEditor demographicModelEditor;
 	private BranchSubstitutionModelEditor branchSubstitutionModelEditor;
 	private SiteRateModelEditor siteRateModelEditor;
 	private ClockRateModelEditor clockRateModelEditor;
@@ -48,7 +61,6 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public void addRow(PartitionData row) {
 		dataList.add(row);
-//		fireTableDataChanged();
 		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
 	}
 
@@ -57,14 +69,6 @@ public class PartitionTableModel extends AbstractTableModel {
 		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
 	}
 
-//	public void copyPreviousRow() {
-//		// not working, this should call new constructor with all the elements
-//		int size = dataList.size();
-//		if (size > 0) {
-//			dataList.add(dataList.get(dataList.size() - 1));
-//			fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
-//		}
-//	}
 
 	public void deleteRow(int row) {
 		dataList.remove(row);
@@ -90,6 +94,8 @@ public class PartitionTableModel extends AbstractTableModel {
 		switch (column) {
 		case TREE_MODEL_INDEX:
 			return true;
+		case DEMOGRAPHIC_MODEL_INDEX:
+			return false;
 //		case DATA_TYPE_INDEX:
 //			return true;
 		case FROM_INDEX:
@@ -118,17 +124,30 @@ public class PartitionTableModel extends AbstractTableModel {
 	@Override
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
+
 		case TREE_MODEL_INDEX:
 			return dataList.get(row).treeFile == null ? new File("") : dataList
 					.get(row).treeFile;
+			
+		case DEMOGRAPHIC_MODEL_INDEX:
+
+			final JButton topologyButton = new JButton(COLUMN_NAMES[column]);
+			topologyButton
+					.addActionListener(new ListenOpenDemographicModelEditor(row));
+			return topologyButton;
+			
 //		case DATA_TYPE_INDEX:
 //			return PartitionData.dataTypes[dataList.get(row).dataTypeIndex];
+		
 		case FROM_INDEX:
 			return dataList.get(row).from;
+		
 		case TO_INDEX:
 			return dataList.get(row).to;
+		
 		case EVERY_INDEX:
 			return dataList.get(row).every;
+		
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
 
 			final JButton branchSubstModelButton = new JButton(
@@ -218,6 +237,22 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	}// END: setValueAt
 
+	private class ListenOpenDemographicModelEditor implements ActionListener {
+
+		private int row;
+
+		public ListenOpenDemographicModelEditor(int row) {
+			this.row = row;
+		}// END: Constructor
+
+		public void actionPerformed(ActionEvent ev) {
+
+			demographicModelEditor = new DemographicModelEditor(dataList, row);
+			demographicModelEditor.launch();
+
+		}// END: actionPerformed
+	}// END: ListenOpenDemographicModelEditor
+	
 	private class ListenOpenBranchSubstitutionModelEditor implements
 			ActionListener {
 

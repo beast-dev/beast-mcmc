@@ -236,7 +236,6 @@ public class BeagleSequenceSimulator {
 		long preferenceFlags = 0;
 		long requirementFlags = 0;
 
-        // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
 		BufferIndexHelper  scaleBufferHelper = new BufferIndexHelper(internalNodeCount + 1, 0);
 		
 		Beagle beagle = BeagleFactory.loadBeagleInstance(
@@ -248,7 +247,7 @@ public class BeagleSequenceSimulator {
                 substitutionModelDelegate.getEigenBufferCount(),
                 substitutionModelDelegate.getMatrixBufferCount(),
                 categoryCount,
-                scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
+                scaleBufferHelper.getBufferCount(),
                 resourceList,
                 preferenceFlags,
                 requirementFlags
@@ -350,7 +349,7 @@ public class BeagleSequenceSimulator {
 		
 		int nodeNum = node.getNumber();
 		matrixBufferHelper.flipOffset(nodeNum);
-		int branchIndex = nodeNum;//matrixBufferHelper.getOffsetIndex(nodeNum);
+		int branchIndex = nodeNum;
 		
 		double branchRate = branchRateModel.getBranchRate(treeModel, node);
 		double branchTime = treeModel.getBranchLength(node) * branchRate;

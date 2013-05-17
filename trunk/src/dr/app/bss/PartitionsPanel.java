@@ -119,6 +119,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 						0, 2)));
 		column.setPreferredWidth(80);
 		
+		setDemographicModelColumn();
+		
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
@@ -148,6 +150,15 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	}// END: Constructor
 
+	private void setDemographicModelColumn() {
+
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.DEMOGRAPHIC_MODEL_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
+
+	}// END: setDemographicModelColumn
+	
 	private void setPartitions() {
 
 		partitionsCount = dataList.size();

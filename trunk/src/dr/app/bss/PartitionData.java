@@ -14,9 +14,7 @@ import dr.app.beagle.evomodel.substmodel.TN93;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.Expansion;
 import dr.evolution.coalescent.ExponentialGrowth;
-import dr.evolution.coalescent.LogisticGrowth;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
@@ -68,7 +66,7 @@ public class PartitionData implements Serializable {
     	"No Model (user-specified tree)",
     	"Constant Population",
         "Exponential Growth (Growth Rate)",
-        "Exponential Growth (Doubling Time)",
+        "Exponential Growth (Doubling Time)"
 //        "Logistic Growth (Growth Rate)",
 //        "Logistic Growth (Doubling Time)",
 //        "Expansion (Growth Rate)",
@@ -80,7 +78,7 @@ public class PartitionData implements Serializable {
 			"Population Size", // Exponential Growth (Growth Rate)
 			"Growth Rate", // Exponential Growth (Growth Rate)
 			"Population Size", // Exponential Growth (Doubling Time)
-			"Doubling Time", // Exponential Growth (Doubling Time)
+			"Doubling Time" // Exponential Growth (Doubling Time)
 //			"Population Size", // Logistic Growth (Growth Rate)
 //			"Growth Rate", // Logistic Growth (Growth Rate)
 //			"Logistic Shape (Half-life)", // Logistic Growth (Growth Rate)
@@ -99,7 +97,7 @@ public class PartitionData implements Serializable {
 		    {  }, // No model
 			{ 0 }, // Constant Population
 			{ 1, 2 }, // Exponential Growth (Growth Rate)
-			{ 3, 4 },// Exponential Growth (Doubling Time)
+			{ 3, 4 }// Exponential Growth (Doubling Time)
 //			{ 5, 6, 7 }, // Logistic Growth (Growth Rate)
 //			{ 8, 9, 10 }, // Logistic Growth (Doubling Time)
 //			{ 11, 12, 13 }, // Expansion (Growth Rate)
@@ -112,7 +110,7 @@ public class PartitionData implements Serializable {
 			1000.0, // Population Size
 			0.5, // Growth Rate
 			1000.0, // Population Size
-			10.0, // Doubling Time
+			10.0 // Doubling Time
 //			1000.0, // Population Size
 //			0.5, // Growth Rate
 //			50.0, // Logistic Shape (Half-life)

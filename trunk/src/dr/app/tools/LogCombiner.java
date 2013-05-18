@@ -210,7 +210,7 @@ public class LogCombiner {
                 //lineCount++;
 
                 while (line != null) {
-                    String[] parts = line.split("\\s");
+                    String[] parts = line.split("\t");
 
                     long state = -1;
 

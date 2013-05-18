@@ -231,8 +231,13 @@ public class LogCombiner {
                         if (state >= burnin && parts.length == columnCount) {
                             for (int j = 1; j < parts.length; j++) {
                                 try {
-                                    // attempt to convert the column value...
-                                    double value = Double.valueOf(parts[j]);
+                                    if (!parts[j].startsWith("{")) {
+                                        // complex log values start with a curly bracket - otherwise attempt to parse
+                                        // it as a number. If it fails, skip the line as a possible corruption.
+
+                                        // attempt to convert the column value...
+                                        double value = Double.valueOf(parts[j]);
+                                    }
                                 } catch (NumberFormatException nfe) {
                                     skip = true;
                                     break;

@@ -25,6 +25,7 @@ import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.InverseGaussianDistributionModel;
 import dr.inference.distribution.LogNormalDistributionModel;
@@ -59,6 +60,7 @@ public class PartitionData implements Serializable {
 		resetSubstitutionModelIdref();
 		resetTreeModelIdref();
 		resetDemographicModelIdref();
+		resetTaxaIdref();
 	}
 
 	// /////////////////////////
@@ -204,6 +206,16 @@ public class PartitionData implements Serializable {
 
 		return demographicFunction;
 	}// END: createDemographicFunction
+	
+	// ////////////
+	// ---TAXA---//
+	// ////////////
+
+	public String taxaIdref = TaxaParser.TAXA;
+	
+	public void resetTaxaIdref() {
+		this.taxaIdref = TaxaParser.TAXA;
+	}
 	
 	// //////////////////
 	// ---TREE MODEL---//

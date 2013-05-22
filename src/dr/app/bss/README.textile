@@ -20,7 +20,7 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* XML/CLI for coalescent
+* merge newick and demographic element generation in XML
 * terminal tab for outputs
 * display tree filename w-out canonical path in partitions panel combobox
 * nucleotide/codon frequencies with compatible substitution models
@@ -34,6 +34,5 @@ h1. TODO
 * frequency labels for codon triplets
 * ancestral sequence in XML Generator and GUI
 * command line interface
-  - should accept data saved from UI
   - complex argument for partitions 
 * simulating indels  

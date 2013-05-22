@@ -13,6 +13,7 @@ import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.sitemodel.SiteModel;
@@ -80,17 +81,62 @@ public class XMLGenerator {
 
 		try {
 
-			writeTaxa(dataList.taxonList, writer);
-			writer.writeBlankLine();
+			int suffix = 1;
+			ArrayList<TreeModel> taxonList = new ArrayList<TreeModel>();
+			for (PartitionData data : dataList) {
+
+				if (data.treeFile == null) {
+
+					throw new RuntimeException("Set Tree Model in Partitions tab for " + suffix + " partition.");
+
+				} else {
+
+						TreeModel treeModel = new TreeModel(Utils.importTreeFromFile(data.treeFile));
+
+						if (taxonList.size() == 0 | !Utils.isTreeModelInList(treeModel, taxonList)) {
+
+							data.treeModelIdref += suffix;
+
+							writeTaxa(treeModel, writer, String.valueOf(suffix));
+							writer.writeBlankLine();
+
+							taxonList.add(treeModel);
+
+//							 System.out.println("NOT IN LIST");
+
+						} else {
+
+							int index = Utils.treeModelIsIdenticalWith(treeModel, taxonList) + 1;
+							data.treeModelIdref += index;
+
+//							 System.out.println("IDENTICAL WITH " + index);
+
+						}
+
+				}// END: exception
+
+				suffix++;
+
+			}// END: partition loop
 
 		} catch (Exception e) {
 
-			throw new RuntimeException("Taxon list generation has failed:\n"
+			throw new RuntimeException("Taxa generation has failed:\n"
 					+ e.getMessage());
 
 		}// END: try-catch block
 
-		//TODO: merge demographic model & newick into starting tree element
+		//TODO: merge demographic model & newick into one topology element
+		// ////////////////////////
+		// ---topology element---//
+		// ////////////////////////
+
+		
+		
+		
+		
+		
+		
 		
 		// /////////////////////////////////
 		// ---demographic model element---//
@@ -132,6 +178,8 @@ public class XMLGenerator {
 					+ e.getMessage());
 
 		}// END: try-catch block
+		
+		
 		
 		// //////////////////////
 		// ---newick element---//
@@ -192,6 +240,7 @@ public class XMLGenerator {
 
 		}// END: try-catch block
 
+		
 		// //////////////////////////
 		// ---tree model element---//
 		// //////////////////////////
@@ -578,7 +627,7 @@ public class XMLGenerator {
 							new Attribute.Default<String>(XMLParser.ID,
 									Utils.STARTING_TREE + suffix) });
 		
-			writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
+			writer.writeIDref(TaxaParser.TAXA, data.taxaIdref);
 			writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, data.demographicModelIdref);
 			
 			writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
@@ -798,17 +847,15 @@ public class XMLGenerator {
 
 			writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 			
-			
-			
 		}// END: switch
 
 	}// END: writeBranchRatesModel
 
-	private void writeTaxa(TaxonList taxonList, XMLWriter writer) {
+	private void writeTaxa(TaxonList taxonList, XMLWriter writer, String suffix) {
 
 		writer.writeOpenTag(TaxaParser.TAXA, // tagname
 				new Attribute[] { // attributes[]
-				new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA) });
+				new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA + suffix) });
 
 		for (int i = 0; i < taxonList.getTaxonCount(); i++) {
 

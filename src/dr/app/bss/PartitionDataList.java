@@ -18,8 +18,8 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 	public MutableTaxonList taxonList = new Taxa();
 	public int simulationsCount = 1;
 	
-	public  LinkedList<File> treeFileList = new  LinkedList<File>();
-	public  LinkedList<Integer> taxaCounts = new  LinkedList<Integer>();
+	public LinkedList<File> treeFileList = new  LinkedList<File>();
+	public LinkedList<Integer> taxaCounts = new  LinkedList<Integer>();
 
 	// do not serialize this two
 	public transient boolean setSeed = false;

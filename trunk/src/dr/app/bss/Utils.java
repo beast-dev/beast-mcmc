@@ -36,7 +36,7 @@ public class Utils {
 	// ---CONSTANTS---//
 	// /////////////////
 
-	public static final boolean VERBOSE = true;
+	public static final boolean VERBOSE = false;
 
 	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
@@ -45,6 +45,7 @@ public class Utils {
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
 	public static final int DEMOGRAPHIC_MODEL_ELEMENT = 5;
 	
+//	public static final String TAXA = "taxa";
 	public static final String STARTING_TREE = "startingTree";
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
 	public static final String TREE_FILENAME = "treeFilename";

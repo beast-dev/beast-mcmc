@@ -13,7 +13,6 @@ import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.sitemodel.SiteModel;
@@ -95,7 +94,7 @@ public class XMLGenerator {
 
 						if (taxonList.size() == 0 | !Utils.isTreeModelInList(treeModel, taxonList)) {
 
-							data.treeModelIdref += suffix;
+							data.taxaIdref += suffix;
 
 							writeTaxa(treeModel, writer, String.valueOf(suffix));
 							writer.writeBlankLine();
@@ -107,7 +106,7 @@ public class XMLGenerator {
 						} else {
 
 							int index = Utils.treeModelIsIdenticalWith(treeModel, taxonList) + 1;
-							data.treeModelIdref += index;
+							data.taxaIdref += index;
 
 //							 System.out.println("IDENTICAL WITH " + index);
 
@@ -126,119 +125,149 @@ public class XMLGenerator {
 
 		}// END: try-catch block
 
-		//TODO: merge demographic model & newick into one topology element
 		// ////////////////////////
 		// ---topology element---//
 		// ////////////////////////
+		try {	
+			
+			int suffix = 1;
+			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+			for (PartitionData data : dataList) {
+		
+				if (data.demographicModelIndex == 0) {
+				
+					
+					TreeModel treeModel = data.createTreeModel();
 
-		
-		
-		
-		
-		
-		
+					if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
+
+						data.treeModelIdref += suffix;
+
+						writeNewick(treeModel, writer, String.valueOf(suffix));
+						writer.writeBlankLine();
+
+						treeModelList.add(treeModel);
+
+
+					} else {
+
+						int index = Utils.treeModelIsIdenticalWith(treeModel, treeModelList) + 1;
+						data.treeModelIdref += index;
+
+					}// END: list check
+				
+				} else {
+					
+						data.demographicModelIdref += suffix;
+						data.treeModelIdref += suffix;
+						
+						writeDemographicModel(data, writer, String.valueOf(suffix));
+						writer.writeBlankLine();
+					
+				} //END: demo model check
+			
+				suffix++;
+			}// END: partition loop
+			
+		} catch (Exception e) {
+
+			throw new RuntimeException("Topology generation has failed:\n"
+					+ e.getMessage());
+
+		}// END: try-catch block	
 		
 		// /////////////////////////////////
 		// ---demographic model element---//
 		// /////////////////////////////////
 		
-		try {	
-			
-			int suffix = 1;
-			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
-			for (PartitionData data : dataList) {
-
-				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT)) {
-
-					data.demographicModelIdref += suffix;
-//					data.treeModelIdref += suffix;
-					
-					writeDemographicModel(data, writer, String.valueOf(suffix));
-					writer.writeBlankLine();
-					partitionList.add(data);
-
-					// System.out.println("NOT IN LIST");
-
-				} else {
-
-					int index = Utils.isIdenticalWith(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT) + 1;
-					data.demographicModelIdref += index;
-//					data.treeModelIdref += suffix;
-					// System.out.println("IDENTICAL WITH " + index);
-
-				}
-
-				suffix++;
-
-			}// END: partition loop
-			
-		} catch (Exception e) {
-
-			throw new RuntimeException("Demographic model generation has failed:\n"
-					+ e.getMessage());
-
-		}// END: try-catch block
-		
-		
+//		try {	
+//			
+//			int suffix = 1;
+//			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
+//			for (PartitionData data : dataList) {
+//
+//				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT)) {
+//
+//					data.demographicModelIdref += suffix;
+////					data.treeModelIdref += suffix;
+//					
+//					writeDemographicModel(data, writer, String.valueOf(suffix));
+//					writer.writeBlankLine();
+//					partitionList.add(data);
+//
+//					// System.out.println("NOT IN LIST");
+//
+//				} else {
+//
+//					int index = Utils.isIdenticalWith(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT) + 1;
+//					data.demographicModelIdref += index;
+////					data.treeModelIdref += suffix;
+//					// System.out.println("IDENTICAL WITH " + index);
+//
+//				}
+//
+//				suffix++;
+//
+//			}// END: partition loop
+//			
+//		} catch (Exception e) {
+//
+//			throw new RuntimeException("Demographic model generation has failed:\n"
+//					+ e.getMessage());
+//
+//		}// END: try-catch block
 		
 		// //////////////////////
 		// ---newick element---//
 		// //////////////////////
 
-		try {
-
-			int suffix = 1;
-			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
-			for (PartitionData data : dataList) {
-
-				if (data.treeFile == null) {
-
-					throw new RuntimeException("Set Tree Model in Partitions tab for " + suffix + " partition.");
-
-				} else {
-
-					if (data.demographicModelIndex == 0) {
-
-						TreeModel treeModel = data.createTreeModel();
-
-						if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
-
-							data.treeModelIdref += suffix;
-
-							writeNewick(treeModel, writer, String.valueOf(suffix));
-							writer.writeBlankLine();
-
-							treeModelList.add(treeModel);
-
-							// System.out.println("NOT IN LIST");
-
-						} else {
-
-							int index = Utils.treeModelIsIdenticalWith(treeModel, treeModelList) + 1;
-							data.treeModelIdref += index;
-
-							// System.out.println("IDENTICAL WITH " + index);
-
-						}
-
-					} else {
-
-						// do nothing
-
-					}// END: NoModel check
-
-				}// END: exception
-
-				suffix++;
-
-			}// END: partition loop
-
-		} catch (Exception e) {
-
-			throw new RuntimeException("Starting tree generation has failed:\n"
-					+ e.getMessage());
-
-		}// END: try-catch block
+//		try {
+//
+//			int suffix = 1;
+//			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+//			for (PartitionData data : dataList) {
+//
+//					if (data.demographicModelIndex == 0) {
+//
+//						TreeModel treeModel = data.createTreeModel();
+//
+//						if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
+//
+//							data.treeModelIdref += suffix;
+//
+//							writeNewick(treeModel, writer, String.valueOf(suffix));
+//							writer.writeBlankLine();
+//
+//							treeModelList.add(treeModel);
+//
+//							// System.out.println("NOT IN LIST");
+//
+//						} else {
+//
+//							int index = Utils.treeModelIsIdenticalWith(treeModel, treeModelList) + 1;
+//							data.treeModelIdref += index;
+//
+//							// System.out.println("IDENTICAL WITH " + index);
+//
+//						}
+//
+//					} else {
+//
+//						// do nothing
+//
+//					}// END: NoModel check
+//
+//
+//				suffix++;
+//
+//			}// END: partition loop
+//
+//		} catch (Exception e) {
+//
+//			throw new RuntimeException("Starting tree generation has failed:\n"
+//					+ e.getMessage());
+//
+//		}// END: try-catch block
 
 		
 		// //////////////////////////
@@ -575,14 +604,12 @@ public class XMLGenerator {
 
 	}// END: writeBeagleSequenceSimulator
 
-	//TODO: merge writeNewick & writeDemographicModel
-	
 	private void writeNewick(TreeModel tree, XMLWriter writer,
 			String suffix) {
 
 		writer.writeOpenTag(NewickParser.NEWICK,
 				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
-						Utils.STARTING_TREE + suffix) });
+						Utils.TOPOLOGY + suffix) });
 
 		writer.writeText(Tree.Utils.newick(tree));
 
@@ -609,7 +636,9 @@ public class XMLGenerator {
 					ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
 					new Attribute[] {
 							new Attribute.Default<String>(XMLParser.ID,
-									data.demographicModelIdref),
+									Utils.DEMOGRAPHIC_MODEL + suffix
+//									data.demographicModelIdref
+									),
 							new Attribute.Default<String>(XMLUnits.UNITS,
 									XMLUnits.YEARS) });
 			
@@ -625,7 +654,7 @@ public class XMLGenerator {
 					CoalescentSimulatorParser.COALESCENT_SIMULATOR,
 					new Attribute[] {
 							new Attribute.Default<String>(XMLParser.ID,
-									Utils.STARTING_TREE + suffix) });
+									Utils.TOPOLOGY + suffix) });
 		
 			writer.writeIDref(TaxaParser.TAXA, data.taxaIdref);
 			writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, data.demographicModelIdref);
@@ -660,7 +689,7 @@ public class XMLGenerator {
 					CoalescentSimulatorParser.COALESCENT_SIMULATOR,
 					new Attribute[] {
 							new Attribute.Default<String>(XMLParser.ID,
-									Utils.STARTING_TREE + suffix) });
+									Utils.TOPOLOGY + suffix) });
 		
 			writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
 			writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, data.demographicModelIdref);
@@ -695,7 +724,7 @@ public class XMLGenerator {
 					CoalescentSimulatorParser.COALESCENT_SIMULATOR,
 					new Attribute[] {
 							new Attribute.Default<String>(XMLParser.ID,
-									Utils.STARTING_TREE + suffix) });
+									Utils.TOPOLOGY + suffix) });
 		
 			writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
 			writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, data.demographicModelIdref);
@@ -880,7 +909,7 @@ public class XMLGenerator {
 		writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(
 				XMLParser.ID, treeModelName), false);
 
-		writer.writeIDref("tree", Utils.STARTING_TREE + suffix);
+		writer.writeIDref("tree", Utils.TOPOLOGY + suffix);
 
 		writeParameter(TreeModelParser.ROOT_HEIGHT, treeModelName + "."
 				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, writer);

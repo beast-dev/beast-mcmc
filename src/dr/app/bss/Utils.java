@@ -46,7 +46,7 @@ public class Utils {
 	public static final int DEMOGRAPHIC_MODEL_ELEMENT = 5;
 	
 //	public static final String TAXA = "taxa";
-	public static final String STARTING_TREE = "startingTree";
+	public static final String TOPOLOGY = "topology";
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
 	public static final String TREE_FILENAME = "treeFilename";
 	public static final String SUBSTITUTION_MODEL = "substitutionModel";

@@ -80,7 +80,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  boolean reportAsMultivariate,
                                                  boolean reciprocalRates) {
         this(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches,
-                scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates, false);
+                scaleByTime, useTreeLength, rateModel, null, samplingDensity, reportAsMultivariate, reciprocalRates);
     }
 
 
@@ -93,17 +93,19 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  Parameter deltaParameter,
                                                  List<Integer> missingIndices,
                                                  boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
-                                                 BranchRateModel rateModel, Model samplingDensity,
+                                                 BranchRateModel rateModel,
+                                                 List<BranchRateModel> driftModels,
+                                                 Model samplingDensity,
                                                  boolean reportAsMultivariate,
-                                                 boolean reciprocalRates, boolean hasDrift) {
+                                                 boolean reciprocalRates) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, driftModels, samplingDensity, reportAsMultivariate, reciprocalRates);
 
 
         // Delegate caches to helper
         meanCache = new double[dim * treeModel.getNodeCount()];
-        if (hasDrift) {
+        if (driftModels != null) {
             cacheHelper = new DriftCacheHelper(dim * treeModel.getNodeCount(), cacheBranches); // new DriftCacheHelper ....
         } else {
             cacheHelper = new CacheHelper(dim * treeModel.getNodeCount(), cacheBranches);

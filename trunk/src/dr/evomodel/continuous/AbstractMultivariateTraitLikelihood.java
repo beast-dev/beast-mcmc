@@ -73,6 +73,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String IGNORE_PHYLOGENY = "ignorePhylogeny";
     public static final String ASCERTAINMENT = "ascertainedTaxon";
     public static final String EXCHANGEABLE_TIPS = "exchangeableTips";
+    public static final String DRIFT_MODELS = "driftModels";
+    public static final String DRIFT_ONE = "driftOne";
+    public static final String DRIFT_TWO = "driftTwo";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                                MultivariateTraitTree treeModel,
@@ -87,7 +90,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                                boolean reportAsMultivariate,
                                                boolean reciprocalRates) {
         this(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches,
-                scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
+                scaleByTime, useTreeLength, rateModel, null, samplingDensity, reportAsMultivariate, reciprocalRates);
     }
 
     public AbstractMultivariateTraitLikelihood(String traitName,
@@ -100,6 +103,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                                boolean scaleByTime,
                                                boolean useTreeLength,
                                                BranchRateModel rateModel,
+                                               List<BranchRateModel> driftModels,
                                                Model samplingDensity,
                                                boolean reportAsMultivariate,
                                                boolean reciprocalRates) {
@@ -109,6 +113,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         this.traitName = traitName;
         this.treeModel = treeModel;
         this.rateModel = rateModel;
+        this.driftModels = driftModels;
         this.diffusionModel = diffusionModel;
         this.traitParameter = traitParameter;
         this.missingIndices = missingIndices;
@@ -124,6 +129,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (rateModel != null) {
             hasRateModel = true;
             addModel(rateModel);
+        }
+
+        if (driftModels != null) {
+            for (BranchRateModel drift : driftModels) {
+                addModel(drift);
+            }
         }
 
         if (samplingDensity != null) {
@@ -232,7 +243,18 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     public double[] getShiftForBranchLength(NodeRef node) {
-        return new double[]{0.0, 0.0};
+        if (driftModels != null) {
+            final int dim = driftModels.size();
+            System.out.println("drifModels.size(): " + dim);
+            double[] drift = new double[dim];
+            for (int i = 0; i < dim; ++i) {
+                drift[i] = driftModels.get(i).getBranchRate(treeModel, node);
+                //          drift[i] = 0.0;
+            }
+            return drift;
+        } else {
+            throw new RuntimeException("getShiftForBranchLength should not be called.");
+        }
         // But really should get values from driftModel.getBranchRate(treeModel, node);
     }
 
@@ -586,6 +608,36 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
+
+            if (xo.getChild(DRIFT_ONE) != null) {
+                System.out.println("driftOne is not null");
+            } else {
+                System.out.println("driftOne is null");
+            }
+
+
+            BranchRateModel driftOne = null;
+            if (xo.getChild(DRIFT_ONE) != null) {
+                XMLObject cxo = xo.getChild(DRIFT_ONE);
+                driftOne = (BranchRateModel) cxo.getChild(BranchRateModel.class);
+            }
+            BranchRateModel driftTwo = null;
+            if (xo.getChild(DRIFT_TWO) != null) {
+                XMLObject cxo = xo.getChild(DRIFT_TWO);
+                driftOne = (BranchRateModel) cxo.getChild(BranchRateModel.class);
+            }
+
+
+            List<BranchRateModel> driftModels;
+            if (driftOne != null) {
+                driftModels = new ArrayList<BranchRateModel>();
+                driftModels.add(driftOne);
+                driftModels.add(driftTwo);
+            } else {
+                driftModels = null;
+            }
+            //  List<BranchRateModel> driftModels = (List<BranchRateModel>) xo.getChild(DRIFT_MODELS);
+
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
             String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
@@ -653,10 +705,18 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
                                 mean, pseudoObservations, reciprocalRates, exchangeableTips);
                     } else {
-                        like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
-                                traitParameter, deltaParameter, missingIndices, cacheBranches,
-                                scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                                mean, pseudoObservations, reciprocalRates);
+                        if (driftModels == null) {
+                            System.out.println("driftmodels is null");
+                            like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                                    traitParameter, deltaParameter, missingIndices, cacheBranches,
+                                    scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+                                    mean, pseudoObservations, reciprocalRates);
+                        } else {
+                            like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                                    traitParameter, deltaParameter, missingIndices, cacheBranches,
+                                    scaleByTime, useTreeLength, rateModel, driftModels, samplingDensity, reportAsMultivariate,
+                                    mean, pseudoObservations, reciprocalRates);
+                        }
                     }
                 }
             } else {
@@ -766,6 +826,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
     private BranchRateModel rateModel = null;
+    private List<BranchRateModel> driftModels = null;
+    private BranchRateModel driftOne = null;
+    private BranchRateModel driftTwo = null;
     private boolean hasRateModel = false;
 
     private double treeLength;

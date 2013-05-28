@@ -29,6 +29,8 @@
 package dr.evomodel.tree;
 
 import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
+import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeTrace;
 import dr.evolution.tree.Clade;
 import dr.evolution.tree.NodeRef;
@@ -38,6 +40,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.prior.Prior;
 import dr.math.MathUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.*;
@@ -175,13 +178,29 @@ public class ConditionalCladeFrequency extends
      *
      * @throws IOException if general I/O error occurs
      */
-    public void report(Tree tree) throws IOException {
+    public void report(Reader r) throws IOException, Importer.ImportException {
 
-        System.err.println("making report");
+        System.err.println("making report"); 
+        
+        ArrayList<Tree> referenceTrees = new ArrayList<Tree>();
+        
+        BufferedReader reader = new BufferedReader(r);
+        String line = reader.readLine();
+      	  
+        if (line.toUpperCase().startsWith("#NEXUS")) {
+        	NexusImporter importer = new NexusImporter(reader);
+        	Tree[] trees = importer.importTrees(null);
 
-        SimpleTree sTree = new SimpleTree(tree);
-        System.out.println("Estimated marginal posterior by condiational clade frequencies:");
-        System.out.println(getTreeProbability(sTree));
+        	for (Tree tree : trees) {
+        		referenceTrees.add(tree);
+
+        		SimpleTree sTree = new SimpleTree(tree);
+        		System.out.println("Estimated marginal posterior by condiational clade frequencies:");
+        		System.out.println(getTreeProbability(sTree) + "\t\t" + sTree);
+        	}
+        } else {
+      	    throw new RuntimeException("Could not read reference tree. Only Nexus format is supported.");
+        }
 
         System.out.flush();
     }
@@ -193,6 +212,7 @@ public class ConditionalCladeFrequency extends
      * @return estimated posterior probability in log
      */
     public double getTreeProbability(Tree tree) {
+
         double prob = 0.0;
 
         List<Clade> clades = new ArrayList<Clade>();
@@ -201,8 +221,7 @@ public class ConditionalCladeFrequency extends
         getNonComplementaryClades(tree, tree.getRoot(), parentClades, clades);
 
         int size = clades.size();
-        // for every clade multiply its conditional clade probability to the
-        // tree probability
+        // for every clade multiply its conditional clade probability to the tree probability
         for (int i = 0; i < size; i++) {
             Clade c = clades.get(i);
 
@@ -214,9 +233,7 @@ public class ConditionalCladeFrequency extends
             double parentOccurrences = 0.0;
             BitSet parentBits = parent.getBits();
             if (cladeProbabilities.containsKey(parentBits)) {
-                // if we observed this clade in the trace, add the
-                // occurrences
-                // to epsilon
+                // if we observed this clade in the trace, add the occurrences to epsilon
                 parentOccurrences += cladeProbabilities.get(parentBits)
                         .getSampleCount();
             }
@@ -228,9 +245,7 @@ public class ConditionalCladeFrequency extends
 
                 BitSet bits = c.getBits();
                 if (conditionalProbs.containsKey(bits)) {
-                    // if we observed this conditional clade in the trace,
-                    // add
-                    // the occurrences to epsilon
+                    // if we observed this conditional clade in the trace, add the occurrences to epsilon
                     tmp += conditionalProbs.get(bits).getSampleCount();
                 }
             }

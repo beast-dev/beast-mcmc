@@ -60,11 +60,11 @@ public class ConditionalCladeFrequencyParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
+    	
         try {
             Reader reader;
 
-            // the tree file with the trace of trees. Usually an output of an previous BEAST run like *.trees
+            // the tree file with the trace of trees. Usually an output of a previous BEAST run like *.trees
             String fileName = xo.getStringAttribute(FILE_NAME);
             String name;
             try {
@@ -95,15 +95,9 @@ public class ConditionalCladeFrequencyParser extends AbstractXMLObjectParser {
                 e = xo.getDoubleAttribute(EPSILON);
             }
 
-            // not used yet
-            double minCladeProbability = 0.5;
-            if (xo.hasAttribute(MIN_CLADE_PROBABILITY)) {
-                minCladeProbability = xo.getDoubleAttribute(MIN_CLADE_PROBABILITY);
-            }
 
             // read the reference tree from a newick file
-            Tree referenceTree = null;
-            Reader refReader;
+            Reader refReader = null;
             if (xo.hasAttribute(REFERENCE_TREE)) {
                 String referenceName = xo.getStringAttribute(REFERENCE_TREE);
 
@@ -119,28 +113,19 @@ public class ConditionalCladeFrequencyParser extends AbstractXMLObjectParser {
                 } catch (FileNotFoundException fnfe) {
                     throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
                 }
-
-                try {
-                    NewickImporter importTree = new NewickImporter(refReader);
-                    if (importTree.hasTree()) {
-                        referenceTree = importTree.importNextTree();
-                    }
-                } catch (Importer.ImportException iee) {
-                    throw new XMLParseException("Reference file '" + referenceName + "' is empty.");
-                }
             }
 
             // creates a new analyzer object
             ConditionalCladeFrequency analysis = ConditionalCladeFrequency.analyzeLogFile(new Reader[]{reader}, e, burnin, true);
 
-            // analyze the reference tree and prints its estimated posterior
-            analysis.report(referenceTree);
+            // analyze the reference tree and print its estimated posterior
+            analysis.report(refReader);
 
             System.out.println();
             System.out.flush();
 
             return analysis;
-        } catch (java.io.IOException ioe) {
+        } catch (Exception ioe) {
             throw new XMLParseException(ioe.getMessage());
         }
     }

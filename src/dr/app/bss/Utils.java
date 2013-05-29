@@ -596,9 +596,9 @@ public class Utils {
 		e.printStackTrace();
 	}// END: logException
 
-	// ///////////////////////
-	// ---DEBUGGING UTILS---//
-	// ///////////////////////
+	// ///////////////////
+	// ---PRINT UTILS---//
+	// ///////////////////
 
 	public static void printHashMap(ConcurrentHashMap<?, ?> hashMap) {
 
@@ -725,6 +725,50 @@ public class Utils {
 		}// END: taxon loop
 	}// END: printTaxonList
 
+	// //////////////////////
+	// ---TOSTRING UTILS---//
+	// //////////////////////
+	
+	//TODO
+	public static String partitionDataToString(PartitionData data) {
+
+		String string = "";
+
+		string += ("Tree model: " + data.createTreeModel().toString())+ ("\n");
+		string += ("From: " + data.from)+ ("\n");
+		string += ("To: " + data.to)+ ("\n");
+		string += ("Every: " + data.every)+ ("\n");
+
+		string += ("Branch Substitution model: ") + branchSubstitutionModelToString(data) + ("\n");
+		string += ("Branch Substitution model: ") + siteRateModelToString(data) + ("\n");
+		string += ("Branch Substitution model: ") + clockRateModelToString(data) + ("\n");
+		string += ("Branch Substitution model: ") + frequencyModelToString(data) + ("\n");
+
+		return string;
+	}// END: partitionDataToString
+	
+	public static String partitionDataListToString(PartitionDataList dataList) {
+
+		String string = "";
+
+		string += ("Site count: " + getSiteCount(dataList)) + ("\n");
+		if (dataList.setSeed) {
+			string += ("Starting seed: " + dataList.startingSeed) + ("\n");
+		}
+
+		int row = 1;
+		for (PartitionData data : dataList) {
+
+			string += ("Partition: " + row)+ ("\n");
+			string += partitionDataToString(data);
+			string += ("\n");
+			row++;
+
+		}// END: data list loop
+
+		return string;
+	}// END: partitionDataListToString
+	
 	public static Tree importTreeFromFile(File file) {
 
 		Tree tree = null;

@@ -1,6 +1,6 @@
-h1. BSS 
+h1. BUSS 
 
-*Beagle Sequence Simulator*
+* Beast/Beagle utility for sequence simulation*
 
 h1. LICENSE
 
@@ -16,7 +16,7 @@ h1. LICENSE
    
 h1. PURPOSE
 
-Fast & furious sequence simulator in Beagle.  
+Fast & furious sequence simulator in Beast/Beagle.  
    
 h1. TODO
 

@@ -25,17 +25,43 @@
 
 package dr.inferencexml.distribution;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.Reader;
+
+import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.TreeTrace;
+import dr.evomodel.tree.ConditionalCladeFrequency;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.distribution.ConditionalCladeProbability;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
-import dr.math.distributions.*;
+import dr.math.distributions.BetaDistribution;
+import dr.math.distributions.ExponentialDistribution;
+import dr.math.distributions.GammaDistribution;
+import dr.math.distributions.GammaKDEDistribution;
+import dr.math.distributions.HalfTDistribution;
+import dr.math.distributions.InverseGammaDistribution;
+import dr.math.distributions.LaplaceDistribution;
+import dr.math.distributions.LogNormalDistribution;
+import dr.math.distributions.LogTransformedNormalKDEDistribution;
+import dr.math.distributions.NormalDistribution;
+import dr.math.distributions.NormalKDEDistribution;
+import dr.math.distributions.PoissonDistribution;
+import dr.math.distributions.UniformDistribution;
 import dr.util.FileHelpers;
-import dr.xml.*;
-
-import java.io.File;
-import java.io.FileNotFoundException;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLObjectParser;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
+import dr.xml.XORRule;
 
 /**
  */
@@ -45,6 +71,10 @@ public class PriorParsers {
     public static final String POISSON_PRIOR = "poissonPrior";
     public static final String NORMAL_PRIOR = "normalPrior";
     public static final String NORMAL_REFERENCE_PRIOR = "normalReferencePrior";
+    public static final String CONDITIONAL_CLADE_REFERENCE_PRIOR = "conditionalCladeProbability";
+    public final static String BURNIN = "burnin";
+    public final static String EPSILON = "epsilon";
+    public static final String LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR = "logTransformedNormalReferencePrior";
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
     public static final String GAMMA_REFERENCE_PRIOR = "gammaReferencePrior";
@@ -85,8 +115,17 @@ public class PriorParsers {
                         "because it returns 1/(high-low) = 1/inf");
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper));
+            System.out.println("Uniform prior: " + xo.getChildCount());
             for (int j = 0; j < xo.getChildCount(); j++) {
+            	System.out.println(xo.getChild(j));
                 if (xo.getChild(j) instanceof Statistic) {
+                	//System.out.println((Statistic) xo.getChild(j));
+                	Statistic test = (Statistic) xo.getChild(j);
+                	System.out.println(test.getDimension());
+                	for (int i = 0; i < test.getDimension(); i++) {
+                		System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+                	}
+                	System.out.println(test.getClass());
                     likelihood.addData((Statistic) xo.getChild(j));
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element");
@@ -136,8 +175,17 @@ public class PriorParsers {
             final double offset = xo.hasAttribute(OFFSET) ? xo.getDoubleAttribute(OFFSET) : 0.0;
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / scale), offset);
+            System.out.println("Exponential prior: " + xo.getChildCount());
             for (int j = 0; j < xo.getChildCount(); j++) {
+            	System.out.println(xo.getChild(j));
                 if (xo.getChild(j) instanceof Statistic) {
+                	//System.out.println((Statistic) xo.getChild(j));
+                	Statistic test = (Statistic) xo.getChild(j);
+                	System.out.println(test.getDimension());
+                	for (int i = 0; i < test.getDimension(); i++) {
+                		System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+                	}
+                	System.out.println(test.getClass());
                     likelihood.addData((Statistic) xo.getChild(j));
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element");
@@ -399,6 +447,105 @@ public class PriorParsers {
     /**
      * A special parser that reads a convenient short form of reference priors on parameters.
      */
+    public static XMLObjectParser LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR;
+        }
+        
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        	
+        	String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+        	
+        	try {
+        		
+        		File file = new File(fileName);
+        		String parent = file.getParent();
+        	
+        		if (!file.isAbsolute()) {
+        			parent = System.getProperty("user.dir");
+        		}
+        		file = new File(parent, fileName);
+        		fileName = file.getAbsolutePath();
+        	
+        		String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
+        	
+        		LogFileTraces traces = new LogFileTraces(fileName, file);
+        		traces.loadTraces();
+        		int maxState = traces.getMaxState();
+        		
+        		// leaving the burnin attribute off will result in 10% being used
+                int burnin = xo.getAttribute("burnin", maxState / 10);
+                if (burnin < 0 || burnin >= maxState) {
+                    burnin = maxState / 10;
+                    System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
+                }
+                traces.setBurnIn(burnin);
+                
+                int traceIndexParameter = -1;
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                	String traceName = traces.getTraceName(i);
+                	if (traceName.trim().equals(parameterName)) {
+                		traceIndexParameter = i;
+                	}
+                }
+                
+                if (traceIndexParameter == -1) {
+                    throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
+                }
+                
+                Double[] parameterSamples = new Double[traces.getStateCount()];
+                traces.getValues(traceIndexParameter).toArray(parameterSamples);
+                
+                //perform the log transformation here?
+                //Double[] logParameterSamples = new Double[traces.getStateCount()];
+                //System.arraycopy(parameterSamples, 0, logParameterSamples, 0, traces.getStateCount());
+
+                DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution(parameterSamples));
+        		for (int j = 0; j < xo.getChildCount(); j++) {
+        			if (xo.getChild(j) instanceof Statistic) {
+        				likelihood.addData((Statistic) xo.getChild(j));
+        			} else {
+        				throw new XMLParseException("illegal element in " + xo.getName() + " element");
+        			}
+        		}
+
+        		return likelihood;
+        		
+        	} catch (FileNotFoundException fnfe) {
+        		throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+        	} catch (java.io.IOException ioe) {
+                throw new XMLParseException(ioe.getMessage());
+            } catch (TraceException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+        	
+        }
+        
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule("fileName"),
+                AttributeRule.newStringRule("parameterColumn"),
+                AttributeRule.newIntegerRule("burnin"),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the reference prior probability of some data under log transformed normal distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+        
+    };
+    
+    /**
+     * A special parser that reads a convenient short form of reference priors on parameters.
+     */
     public static XMLObjectParser NORMAL_REFERENCE_PRIOR_PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
@@ -481,6 +628,86 @@ public class PriorParsers {
 
         public String getParserDescription() {
             return "Calculates the reference prior probability of some data under a given normal distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+    
+    /**
+     * A special parser that reads a convenient short form of reference priors on trees.
+     */
+    public static XMLObjectParser CONDITIONAL_CLADE_REFERENCE_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return CONDITIONAL_CLADE_REFERENCE_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        	
+        	TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        	String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+        	
+            try {
+            	
+            	File file = new File(fileName);
+            	String name = file.getName();
+                String parent = file.getParent();
+
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
+                }
+                file = new File(parent, fileName);
+                fileName = file.getAbsolutePath();
+                
+                Reader reader = new FileReader(new File(parent, name));
+                
+                // the burn-in is used as the number of trees discarded
+                int burnin = -1;
+                if (xo.hasAttribute(BURNIN)) {
+                    // leaving the burnin attribute off will result in 10% being used
+                    burnin = xo.getIntegerAttribute(BURNIN);
+                }
+
+                // the epsilon value which represents the number of occurrences for every not observed clade
+                double e = 1.0;
+                if (xo.hasAttribute(EPSILON)) {
+                    // leaving the epsilon attribute off will result in 1.0 being used
+                    e = xo.getDoubleAttribute(EPSILON);
+                }
+                
+                TreeTrace trace = TreeTrace.loadTreeTrace(reader);
+                
+                ConditionalCladeFrequency ccf = new ConditionalCladeFrequency(new TreeTrace[]{trace}, e, burnin, false);
+            	
+                ConditionalCladeProbability ccp = new ConditionalCladeProbability(ccf, treeModel);
+                
+                return ccp;
+            	
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+            } catch (java.io.IOException ioe) {
+                throw new XMLParseException(ioe.getMessage());
+            } catch (ImportException ie) {
+				throw new XMLParseException(ie.getMessage());
+			}
+
+        }
+        
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule("fileName"),
+                AttributeRule.newIntegerRule(BURNIN),
+                AttributeRule.newDoubleRule(EPSILON),
+                new ElementRule(TreeModel.class)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the conditional clade probability of a tree based on a sample of tree space.";
         }
 
         public Class getReturnType() {

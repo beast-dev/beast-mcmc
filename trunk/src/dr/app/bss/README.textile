@@ -20,9 +20,8 @@ Fast & furious sequence simulator in Beagle.
    
 h1. TODO
 
-* merge newick and demographic element generation in XML
 * terminal tab for outputs
-* display tree filename w-out canonical path in partitions panel combobox
+* display tree filename w-out canonical path in partitions panel combobox (also when clicked)
 * nucleotide/codon frequencies with compatible substitution models
 * parallel tree traversal:
   # start asynch task

@@ -131,7 +131,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 						new Arguments.RealArrayOption( STRICT_CLOCK_PARAMETER_VALUES, 1, "specify Strict Clock parameter values"),
 						new Arguments.RealArrayOption( LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Lognormal Relaxed Clock parameter values"),
 						new Arguments.RealArrayOption( EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Exponential Relaxed Clock parameter values"),
-						new Arguments.RealArrayOption( INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussia Relaxed Clock parameter values"),
+						new Arguments.RealArrayOption( INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussian Relaxed Clock parameter values"),
 
 						new Arguments.StringOption(FREQUENCY_MODEL,
 								new String[] { NUCLEOTIDE_FREQUENCIES, //
@@ -608,7 +608,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 						+ SPLIT_PARTITION + " " + "[<output-file-name>] [<seed>]");
 		System.out.println();
 		System.out
-				.println("  Example: java -Djava.library.path=/usr/local/lib -jar bss.jar "
+				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar "
 						+ "-treeModel /home/filip/SimTree.figtree "
 						+ "-branchSubstitutionModel GTR -GTRsubstitutionParameterValues 10 10 10 10 10 10 "
 						+ "-siteRateModel GammaSiteRateModel -gammaSiteRateModelParameterValues 1 1 "

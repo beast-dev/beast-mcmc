@@ -13,8 +13,10 @@ import java.io.File;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -94,9 +96,9 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.TREE_MODEL_INDEX);
-		column.setCellEditor(new JTableComboBoxCellEditor());
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
-
+		column.setCellEditor(new JTableComboBoxCellEditor());
+		
 //		column = partitionTable.getColumnModel().getColumn(
 //				PartitionTableModel.DATA_TYPE_INDEX);
 //		column.setCellEditor(new JTableComboBoxCellEditor());
@@ -205,9 +207,34 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	public class JTableComboBoxCellRenderer extends JComboBox implements
 			TableCellRenderer {
 
+		private DefaultListCellRenderer comboBoxRenderer = new DefaultListCellRenderer() {
+
+			@Override
+			public Component getListCellRendererComponent(JList list,
+					Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
+
+				 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				
+				if (value != null) {
+					
+					File file = (File) value;
+					this.setText(file.getName());
+
+				}
+
+				return this;
+			}
+
+		};
+
 		public JTableComboBoxCellRenderer() {
+
 			super();
 			setOpaque(true);
+			// TODO: why when clicked this displays a full path?
+			this.setRenderer(comboBoxRenderer);
+
 		}// END: Constructor
 
 		public Component getTableCellRendererComponent(JTable table,
@@ -237,7 +264,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			return this;
 		}
 	}// END: JTableComboBoxCellRenderer class
-
+	
 	private class JTableComboBoxCellEditor extends DefaultCellEditor {
 
 		public JTableComboBoxCellEditor() {

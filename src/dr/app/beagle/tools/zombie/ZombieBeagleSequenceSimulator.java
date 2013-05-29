@@ -1,5 +1,5 @@
 /*
- * BeagleSequenceSimulator.java
+ * ZombieBeagleSequenceSimulator.java
  *
  * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
  *
@@ -89,13 +89,6 @@ public class ZombieBeagleSequenceSimulator {
 	public Alignment simulate() {
 
 		try {
-
-			// Executor for threads
-//			int NTHREDS = Runtime.getRuntime().availableProcessors();
-//			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
-//			ThreadLocal<Partition> threadLocalPartition;
-
-//			List<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
 
 			int partitionCount = 0;
 			for (ZombiePartition partition : partitions) {

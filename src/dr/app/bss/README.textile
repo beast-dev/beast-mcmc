@@ -20,7 +20,6 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* terminal tab for outputs
 * display tree filename w-out canonical path in partitions panel combobox (also when clicked)
 * nucleotide/codon frequencies with compatible substitution models
 * parallel tree traversal:
@@ -29,7 +28,6 @@ h1. TODO
   # start asynch task
   tree -> right
   # wait
-* test with large topologies ~ 15000 taxa
 * frequency labels for codon triplets
 * ancestral sequence in XML Generator and GUI
 * command line interface

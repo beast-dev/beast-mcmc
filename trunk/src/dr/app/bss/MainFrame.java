@@ -49,13 +49,15 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	private final String TREES_TAB_NAME = "Trees";
 	private final String PARTITIONS_TAB_NAME = "Partitions";
 	private final String SIMULATION_TAB_NAME = "Simulation";
+	private final String TERMINAL_TAB_NAME = "Terminal";
 	
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
 	private TreesPanel treesPanel;
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
-
+	private TerminalPanel terminalPanel;
+	
 	private JLabel statusLabel;
 	private JProgressBar progressBar;
 	private File workingDirectory = null;
@@ -80,12 +82,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		treesPanel = new TreesPanel(this, dataList);
 		partitionsPanel = new PartitionsPanel(dataList);
 		simulationPanel = new SimulationPanel(this, dataList);
-
+        terminalPanel = new TerminalPanel(this, dataList);
+		
 		tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
 		tabbedPane.addTab(TREES_TAB_NAME, null, treesPanel);
 		tabbedPane.addTab(PARTITIONS_TAB_NAME, null, partitionsPanel);
 		tabbedPane.addTab(SIMULATION_TAB_NAME, null, simulationPanel);
-
+		tabbedPane.addTab(TERMINAL_TAB_NAME, null, terminalPanel);
+		
 		statusLabel = new JLabel("No taxa loaded");
 
 		JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
@@ -231,6 +235,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			// Executed in event dispatch thread
 			public void done() {
 
+				terminalPanel.setText(Utils.partitionDataListToString(dataList));
+				
 				setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
 				setIdle();
 

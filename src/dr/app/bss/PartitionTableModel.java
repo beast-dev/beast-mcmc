@@ -130,6 +130,7 @@ public class PartitionTableModel extends AbstractTableModel {
 		switch (column) {
 
 		case TREE_MODEL_INDEX:
+			
 			return dataList.get(row).treeFile == null ? new File("") : dataList
 					.get(row).treeFile;
 			

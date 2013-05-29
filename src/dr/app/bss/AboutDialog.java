@@ -49,7 +49,8 @@ public class AboutDialog extends JDialog {
 
 		setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
 		getContentPane().setBackground(Color.WHITE);
-
+		setLocationRelativeTo(Utils.getActiveFrame());
+		
 		add(Box.createRigidArea(new Dimension(0, 10)));
 
 		// Setup image
@@ -60,7 +61,7 @@ public class AboutDialog extends JDialog {
 		add(Box.createRigidArea(new Dimension(0, 10)));
 
 		// Setup name
-		label = new JLabel(BeagleSequenceSimulatorApp.NAME);
+		label = new JLabel(BeagleSequenceSimulatorApp.SHORT_NAME);
 		label.setFont(new Font("Serif", Font.BOLD, FONT_SIZE));
 		label.setAlignmentX(0.5f);
 		add(label);
@@ -195,7 +196,7 @@ public class AboutDialog extends JDialog {
 
 		setModalityType(ModalityType.APPLICATION_MODAL);
 
-		setTitle("About " + BeagleSequenceSimulatorApp.NAME);
+		setTitle("About " + BeagleSequenceSimulatorApp.SHORT_NAME);
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setSize(WIDTH, HEIGHT);

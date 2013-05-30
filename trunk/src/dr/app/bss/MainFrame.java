@@ -82,7 +82,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		treesPanel = new TreesPanel(this, dataList);
 		partitionsPanel = new PartitionsPanel(dataList);
 		simulationPanel = new SimulationPanel(this, dataList);
-        terminalPanel = new TerminalPanel(this, dataList);
+		terminalPanel = new TerminalPanel();
 		
 		tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
 		tabbedPane.addTab(TREES_TAB_NAME, null, treesPanel);

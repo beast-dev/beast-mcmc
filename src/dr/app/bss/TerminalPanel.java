@@ -11,16 +11,18 @@ import javax.swing.ScrollPaneConstants;
 @SuppressWarnings("serial")
 public class TerminalPanel extends JPanel {
 
-	private MainFrame frame;
-	private PartitionDataList dataList;
+//	private MainFrame frame;
+//	private PartitionDataList dataList;
 	
 	private JTextArea textArea;
 
-	public TerminalPanel(final MainFrame frame,
-			final PartitionDataList dataList) {
+	public TerminalPanel(
+//			final MainFrame frame,
+//			final PartitionDataList dataList
+			) {
 
-		this.frame = frame;
-		this.dataList = dataList;
+//		this.frame = frame;
+//		this.dataList = dataList;
 		
 		// Setup miscallenous
 		setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));

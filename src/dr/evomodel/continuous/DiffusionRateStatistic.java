@@ -32,6 +32,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
 import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.model.Statistic;
+import dr.stats.DiscreteStatistics;
+import dr.util.HeapSort;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -46,30 +48,44 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
     public static final String DIFFUSION_RATE_STATISTIC = "diffusionRateStatistic";
     public static final String TREE_DISPERSION_STATISTIC = "treeDispersionStatistic";
-    public static final String BOOLEAN_OPTION = "greatCircleDistance";
+    public static final String BOOLEAN_DIS_OPTION = "greatCircleDistance";
+    public static final String MODE = "mode";
+    public static final String MEDIAN = "median";
+    public static final String AVERAGE = "average";  // average over all branches
+    public static final String WEIGHTEDAVERAGE = "weightedAverage"; // weighted average (=total distance/total time)
+//    public static final String DIFFUSIONCOEFFICIENT = "diffusionCoefficient"; // weighted average (=total distance/total time)
+    public static final String BOOLEAN_DC_OPTION = "diffusionCoefficient";
 
     public DiffusionRateStatistic(String name, TreeModel tree, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
-                                  boolean genericOption) {
+                                  boolean genericOption, Mode mode, boolean diffusionCoefficient) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
         this.genericOption = genericOption;
+        summaryMode =  mode;
+        this.diffusionCoefficient = diffusionCoefficient;
     }
 
     public int getDimension() {
         return 1;
     }
 
-    /**
-     * @return whatever Philippe wants
-     */
     public double getStatisticValue(int dim) {
 
         String traitName = traitLikelihoods.get(0).getTraitName();
         double treelength = 0;
         double treeDistance = 0;
 
+        double[] rates =  null;
+        double[] diffusionCoefficients =  null;
+        double waDiffusionCoefficient =  0;
+
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
             MultivariateTraitTree tree = traitLikelihood.getTreeModel();
+
+            rates = new double[(tree.getNodeCount() -1)];
+            diffusionCoefficients = new double[(tree.getNodeCount() -1)];
+
+            int counter = 0;
 
             for (int i = 0; i < tree.getNodeCount(); i++) {
                 NodeRef node = tree.getNode(i);
@@ -78,25 +94,57 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 if (node != tree.getRoot()) {
 
                     double[] parentTrait = traitLikelihood.getTraitForNode(tree, tree.getParent(node), traitName);
-                    treelength += tree.getBranchLength(node);
+                    double time = tree.getBranchLength(node);
+                    treelength += time;
 
                     if (genericOption) { // Great Circle distance
                         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(trait[0], trait[1]);
                         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(parentTrait[0], parentTrait[1]);
-                        treeDistance += coord1.distance(coord2);
+                        double distance = coord1.distance(coord2);
+                        treeDistance += distance;
+                        diffusionCoefficients[counter] = Math.pow(distance,2)/(4*time);
+                        waDiffusionCoefficient +=  diffusionCoefficients[counter]*time;
+                        rates[counter] = distance/time;
                     } else {
-                        treeDistance += getNativeDistance(trait, parentTrait);
+                        double distance = getNativeDistance(trait, parentTrait);
+                        treeDistance += distance;
+                        diffusionCoefficients[counter] = Math.pow(distance,2)/(4*time);
+                        waDiffusionCoefficient += diffusionCoefficients[counter]*time;
+                        rates[counter] = distance/time;
                     }
-
+                    counter ++;
                 }
             }
         }
-        return treeDistance / treelength;
+        if (!diffusionCoefficient){
+            if (summaryMode == Mode.AVERAGE) {
+                return DiscreteStatistics.mean(rates);
+            } else if (summaryMode == Mode.MEDIAN) {
+                return DiscreteStatistics.median(rates);
+            } else {
+                return treeDistance / treelength;
+            }
+        }  else {
+            if (summaryMode == Mode.AVERAGE) {
+                return DiscreteStatistics.mean(diffusionCoefficients);
+            } else if (summaryMode == Mode.MEDIAN) {
+                return DiscreteStatistics.median(diffusionCoefficients);
+            } else {
+                return waDiffusionCoefficient/treelength;
+            }
+        }
     }
 
     private double getNativeDistance(double[] location1, double[] location2) {
         return Math.sqrt(Math.pow((location2[0] - location1[0]), 2.0) + Math.pow((location2[1] - location1[1]), 2.0));
     }
+
+    enum Mode {
+        AVERAGE,
+        WEIGHTED_AVERAGE,
+        MEDIAN
+    }
+
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -114,7 +162,19 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
             String name = xo.getAttribute(NAME, xo.getId());
             TreeModel tree = (TreeModel) xo.getChild(Tree.class);
 
-            boolean option = xo.getAttribute(BOOLEAN_OPTION, false); // Default value is false
+            boolean option = xo.getAttribute(BOOLEAN_DIS_OPTION, false); // Default value is false
+            Mode averageMode;
+            String mode = xo.getAttribute(MODE, WEIGHTEDAVERAGE);
+
+            if (mode.equals(AVERAGE)) {
+                averageMode = Mode.AVERAGE;
+            } else if (mode.equals(MEDIAN)) {
+                averageMode = Mode.MEDIAN;
+            } else {
+                averageMode = Mode.WEIGHTED_AVERAGE;
+            }
+
+            boolean diffCoeff = xo.getAttribute(BOOLEAN_DC_OPTION, false); // Default value is false
 
             List<AbstractMultivariateTraitLikelihood> traitLikelihoods = new ArrayList<AbstractMultivariateTraitLikelihood>();
 
@@ -124,7 +184,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 }
             }
 
-            return new DiffusionRateStatistic(name, tree, traitLikelihoods, option);
+            return new DiffusionRateStatistic(name, tree, traitLikelihoods, option, averageMode, diffCoeff);
         }
 
         //************************************************************************
@@ -145,11 +205,16 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(NAME, true),
-                AttributeRule.newBooleanRule(BOOLEAN_OPTION, true),
+                AttributeRule.newBooleanRule(BOOLEAN_DIS_OPTION, true),
+                AttributeRule.newBooleanRule(BOOLEAN_DC_OPTION, true),
+                AttributeRule.newStringRule(MODE, true),
+                new ElementRule(MultivariateTraitTree.class),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, 1, Integer.MAX_VALUE),
         };
     };
 
     private boolean genericOption;
     private List<AbstractMultivariateTraitLikelihood> traitLikelihoods;
+    private Mode summaryMode;
+    private boolean diffusionCoefficient;
 }

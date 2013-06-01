@@ -159,7 +159,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
 
         cacheHelper.setTipMeans(traitValue, dim, index, node);
-        System.err.println("yo");
+//        System.err.println("yo");
 //        System.arraycopy(traitValue, 0, meanCache
 ////                cacheHelper.getMeanCache()
 //                , dim * index, dim);

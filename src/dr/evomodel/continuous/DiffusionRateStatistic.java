@@ -53,14 +53,15 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
     public static final String MEDIAN = "median";
     public static final String AVERAGE = "average";  // average over all branches
     public static final String WEIGHTEDAVERAGE = "weightedAverage"; // weighted average (=total distance/total time)
+    public static final String COEFFICIENT_OF_VARIATION = "coefficientOfVariation"; // weighted average (=total distance/total time)
 //    public static final String DIFFUSIONCOEFFICIENT = "diffusionCoefficient"; // weighted average (=total distance/total time)
     public static final String BOOLEAN_DC_OPTION = "diffusionCoefficient";
 
     public DiffusionRateStatistic(String name, TreeModel tree, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
-                                  boolean genericOption, Mode mode, boolean diffusionCoefficient) {
+                                  boolean option, Mode mode, boolean diffusionCoefficient) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
-        this.genericOption = genericOption;
+        this.useGreatCircleDistances = option;
         summaryMode =  mode;
         this.diffusionCoefficient = diffusionCoefficient;
     }
@@ -97,7 +98,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                     double time = tree.getBranchLength(node);
                     treelength += time;
 
-                    if (genericOption) { // Great Circle distance
+                    if (useGreatCircleDistances && (trait.length == 2)) { // Great Circle distance
                         SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(trait[0], trait[1]);
                         SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(parentTrait[0], parentTrait[1]);
                         double distance = coord1.distance(coord2);
@@ -121,6 +122,10 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 return DiscreteStatistics.mean(rates);
             } else if (summaryMode == Mode.MEDIAN) {
                 return DiscreteStatistics.median(rates);
+            } else if (summaryMode == Mode.COEFFICIENT_OF_VARIATION) {
+                // don't compute mean twice
+                final double mean = DiscreteStatistics.mean(rates);
+                return Math.sqrt(DiscreteStatistics.variance(rates, mean)) / mean;
             } else {
                 return treeDistance / treelength;
             }
@@ -129,20 +134,34 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 return DiscreteStatistics.mean(diffusionCoefficients);
             } else if (summaryMode == Mode.MEDIAN) {
                 return DiscreteStatistics.median(diffusionCoefficients);
+            } else if (summaryMode == Mode.COEFFICIENT_OF_VARIATION) {
+                // don't compute mean twice
+                final double mean = DiscreteStatistics.mean(diffusionCoefficients);
+                return Math.sqrt(DiscreteStatistics.variance(diffusionCoefficients, mean)) / mean;
             } else {
                 return waDiffusionCoefficient/treelength;
             }
         }
     }
 
+//    private double getNativeDistance(double[] location1, double[] location2) {
+//        return Math.sqrt(Math.pow((location2[0] - location1[0]), 2.0) + Math.pow((location2[1] - location1[1]), 2.0));
+//    }
+
     private double getNativeDistance(double[] location1, double[] location2) {
-        return Math.sqrt(Math.pow((location2[0] - location1[0]), 2.0) + Math.pow((location2[1] - location1[1]), 2.0));
+        int traitDimension = location1.length;
+        double sum = 0;
+        for (int i = 0; i < traitDimension; i++) {
+            sum += Math.pow((location2[i] - location1[i]),2);
+        }
+        return Math.sqrt(sum);
     }
 
     enum Mode {
         AVERAGE,
         WEIGHTED_AVERAGE,
-        MEDIAN
+        MEDIAN,
+        COEFFICIENT_OF_VARIATION
     }
 
 
@@ -170,6 +189,8 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 averageMode = Mode.AVERAGE;
             } else if (mode.equals(MEDIAN)) {
                 averageMode = Mode.MEDIAN;
+            } else if (mode.equals(COEFFICIENT_OF_VARIATION)) {
+                averageMode = Mode.COEFFICIENT_OF_VARIATION;
             } else {
                 averageMode = Mode.WEIGHTED_AVERAGE;
             }
@@ -213,7 +234,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
         };
     };
 
-    private boolean genericOption;
+    private boolean useGreatCircleDistances;
     private List<AbstractMultivariateTraitLikelihood> traitLikelihoods;
     private Mode summaryMode;
     private boolean diffusionCoefficient;

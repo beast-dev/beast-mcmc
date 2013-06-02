@@ -74,8 +74,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String ASCERTAINMENT = "ascertainedTaxon";
     public static final String EXCHANGEABLE_TIPS = "exchangeableTips";
     public static final String DRIFT_MODELS = "driftModels";
-    public static final String DRIFT_ONE = "driftOne";
-    public static final String DRIFT_TWO = "driftTwo";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                                MultivariateTraitTree treeModel,
@@ -245,7 +243,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public double[] getShiftForBranchLength(NodeRef node) {
         if (driftModels != null) {
             final int dim = driftModels.size();
-            System.out.println("drifModels.size(): " + dim);
             double[] drift = new double[dim];
             for (int i = 0; i < dim; ++i) {
                 drift[i] = driftModels.get(i).getBranchRate(treeModel, node);
@@ -608,35 +605,21 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-
-            if (xo.getChild(DRIFT_ONE) != null) {
-                System.out.println("driftOne is not null");
-            } else {
-                System.out.println("driftOne is null");
-            }
-
-
-            BranchRateModel driftOne = null;
-            if (xo.getChild(DRIFT_ONE) != null) {
-                XMLObject cxo = xo.getChild(DRIFT_ONE);
-                driftOne = (BranchRateModel) cxo.getChild(BranchRateModel.class);
-            }
-            BranchRateModel driftTwo = null;
-            if (xo.getChild(DRIFT_TWO) != null) {
-                XMLObject cxo = xo.getChild(DRIFT_TWO);
-                driftOne = (BranchRateModel) cxo.getChild(BranchRateModel.class);
-            }
-
-
-            List<BranchRateModel> driftModels;
-            if (driftOne != null) {
+            List<BranchRateModel> driftModels = null;
+            if (xo.hasChildNamed(DRIFT_MODELS)) {
                 driftModels = new ArrayList<BranchRateModel>();
-                driftModels.add(driftOne);
-                driftModels.add(driftTwo);
-            } else {
-                driftModels = null;
+                XMLObject cxo = xo.getChild(DRIFT_MODELS);
+                final int number = cxo.getChildCount();
+                if (number != diffusionModel.getPrecisionmatrix().length) {
+                    throw new XMLParseException("Wrong number of drift models (" + number + ") for a trait of" +
+                            " dimension " + diffusionModel.getPrecisionmatrix().length + " in " + xo.getId()
+                    );
+                }
+                for (int i = 0; i < number; ++i) {
+                    driftModels.add((BranchRateModel) cxo.getChild(i));
+                }
             }
-            //  List<BranchRateModel> driftModels = (List<BranchRateModel>) xo.getChild(DRIFT_MODELS);
+
 
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
             String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -706,7 +689,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                 mean, pseudoObservations, reciprocalRates, exchangeableTips);
                     } else {
                         if (driftModels == null) {
-                            System.out.println("driftmodels is null");
                             like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                     traitParameter, deltaParameter, missingIndices, cacheBranches,
                                     scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
@@ -805,7 +787,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 TreeTraitParserUtilities.jitterRules(true),
                 new ElementRule(CHECK, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
-                }, true)
+                }, true),
+                new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
+                        new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
+                }, true),
         };
 
 

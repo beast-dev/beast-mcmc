@@ -662,7 +662,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         final double length0 = getRescaledBranchLength(childNode0);
         final double length1 = getRescaledBranchLength(childNode1);
         final double thisLength = getRescaledBranchLength(thisNode);
-        double[] shift = getShiftForBranchLength(thisNode);
+        double[] shift;
+        if (!treeModel.isRoot(thisNode)) {
+            shift = getShiftForBranchLength(thisNode);
+        } else {
+            shift = null;
+        }
         double[] shiftChild0 = getShiftForBranchLength(childNode0);
         double[] shiftChild1 = getShiftForBranchLength(childNode1);
 

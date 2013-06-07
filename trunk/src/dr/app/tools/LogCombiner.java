@@ -61,7 +61,7 @@ public class LogCombiner {
                        boolean convertToDecimal,
                        boolean renumberOutput, boolean useScale, double scale) throws IOException {
 
-        System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName);
+        System.out.println("Creating combined " + (treeFiles ? "tree" : "log") + " file: '" + outputFileName + "'");
 
         System.out.println();
 

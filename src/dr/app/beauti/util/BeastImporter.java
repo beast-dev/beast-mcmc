@@ -109,7 +109,7 @@ public class BeastImporter {
         Taxon taxon = null;
 
         if (id != null) {
-             taxon = new Taxon(id);
+            taxon = new Taxon(id);
 
             List children = e.getChildren();
             for(Object aChildren : children) {
@@ -161,9 +161,13 @@ public class BeastImporter {
         }
         Taxon taxon = taxa.getTaxon(index);
 
-        String seq = e.getTextTrim();
+        String[] seq = e.getTextTrim().split("\\s");
+        StringBuilder sb = new StringBuilder();
+        for (String part : seq) {
+            sb.append(part);
+        }
 
-        return new Sequence(taxon, seq);
+        return new Sequence(taxon, sb.toString());
     }
 
     private Date readDate(Element e) throws Importer.ImportException {

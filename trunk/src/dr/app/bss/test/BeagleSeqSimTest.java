@@ -26,13 +26,18 @@ import dr.math.MathUtils;
 
 public class BeagleSeqSimTest {
 
+	private static final boolean simulateInPar = true;
+	
 	public static void main(String[] args) {
 
-		simulateTopology();
-		// simulateOnePartition();
-		// simulateTwoPartitions();
-		// simulateThreePartitions();
-
+//		simulateTopology();
+//		 simulateOnePartition();
+//		 simulateTwoPartitions();
+		 
+//		for (int i = 0; i < 1000; i++) {
+			simulateThreePartitions();
+//		}
+		
 	} // END: main
 
 	static void simulateTopology() {
@@ -113,8 +118,13 @@ public class BeagleSeqSimTest {
 					partitionsList
 			);
 			
-			System.out.println(simulator.simulate().toString());
-
+			if (simulateInPar) {
+				System.out.println(simulator.simulateInPar().toString());
+			} else {
+				System.out.println(simulator.simulate().toString());
+			}
+			
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -180,8 +190,13 @@ public class BeagleSeqSimTest {
 					partitionsList
 			// , sequenceLength
 			);
-			System.out.println(simulator.simulate().toString());
 
+			if (simulateInPar) {
+				System.out.println(simulator.simulateInPar().toString());
+			} else {
+				System.out.println(simulator.simulate().toString());
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -255,8 +270,13 @@ public class BeagleSeqSimTest {
 			// feed to sequence simulator and generate data
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
-			System.out.println(simulator.simulate().toString());
-
+			
+			if (simulateInPar) {
+				System.out.println(simulator.simulateInPar().toString());
+			} else {
+				System.out.println(simulator.simulate().toString());
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -338,8 +358,13 @@ public class BeagleSeqSimTest {
 			// feed to sequence simulator and generate data
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
-			System.out.println(simulator.simulate().toString());
-
+			
+			if (simulateInPar) {
+				System.out.println(simulator.simulateInPar().toString());
+			} else {
+				System.out.println(simulator.simulate().toString());
+			}
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(-1);

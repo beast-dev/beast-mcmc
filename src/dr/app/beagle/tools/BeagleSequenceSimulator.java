@@ -29,7 +29,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
@@ -78,16 +81,73 @@ public class BeagleSequenceSimulator {
 		int siteCount = 0;
 		int to = 0;
 		for (Partition partition : partitions) {
-			// siteCount += partition.getPartitionSiteCount();
+
 			to = partition.to;
 			if (to > siteCount) {
 				siteCount = to;
 			}
 		}
+		
 		this.siteCount = siteCount + 1;
-
 	}// END: Constructor
 
+	public Alignment simulateInPar() {
+
+		try {
+
+			// Executor for threads
+			int NTHREDS = Runtime.getRuntime().availableProcessors();
+			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
+			ThreadLocal<Partition> threadLocalPartition;
+
+			ArrayList<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
+
+			int partitionCount = 0;
+			for (Partition partition : partitions) {
+
+				threadLocalPartition = new ThreadLocal<Partition>();
+				threadLocalPartition.set(partition);
+
+				if (DEBUG) {
+					System.out.println("Simulating for partition " + partitionCount);
+				}
+
+				simulatePartitionCallers.add(new simulatePartitionCallable(threadLocalPartition.get()));
+				threadLocalPartition.remove();
+				partitionCount++;
+
+			}// END: partitions loop
+
+			executor.invokeAll(simulatePartitionCallers);
+
+			// Wait until all threads are finished
+			executor.shutdown();
+			while (!executor.isTerminated()) {
+			}
+
+			if (DEBUG) {
+				Utils.printHashMap(alignmentMap);
+			}
+
+			// compile the alignment
+			Iterator<Entry<Taxon, int[]>> iterator = alignmentMap.entrySet()
+					.iterator();
+			while (iterator.hasNext()) {
+
+				Entry<Taxon, int[]> pairs = (Entry<Taxon, int[]>) iterator.next();
+				simpleAlignment.addSequence(intArray2Sequence((Taxon) pairs.getKey(), (int[]) pairs.getValue(), gapFlag));
+
+				iterator.remove();
+
+			}// END: while has next
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}// END: try-catch block
+
+		return simpleAlignment;
+	}// END: simulate
+	
 	public Alignment simulate() {
 
 		try {
@@ -128,6 +188,29 @@ public class BeagleSequenceSimulator {
 		return simpleAlignment;
 	}// END: simulate
 
+	private class simulatePartitionCallable implements Callable<Void> {
+
+		private Partition partition;
+
+		private simulatePartitionCallable(Partition partition) {
+			this.partition = partition;
+		}// END: Constructor
+
+		public Void call() {
+
+			try {
+
+				simulatePartition(partition);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			return null;
+		}// END: call
+
+	}// END: simulatePartitionCallable class
+	
 	private void simulatePartition(Partition partition) {
 
 		TreeModel treeModel = partition.treeModel;

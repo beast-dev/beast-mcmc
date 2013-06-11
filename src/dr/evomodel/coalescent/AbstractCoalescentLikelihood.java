@@ -251,6 +251,17 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         }
 
     }
+    
+    public double[] getCoalescentIntervalHeights() {
+    	if (!eventsKnown) {
+            setupIntervals();
+    	}
+    	double[] heights = new double[intervals.getIntervalCount()];
+    	for (int i = 0; i < heights.length; i++) {
+    		heights[i] = intervals.getInterval(i);
+    	}
+    	return heights;
+    }
 
     public String toString() {
         return Double.toString(logLikelihood);

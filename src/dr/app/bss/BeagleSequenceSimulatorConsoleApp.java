@@ -519,7 +519,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 					partitionsList);
 			
 			PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
-			writer.println(beagleSequenceSimulator.simulate().toString());
+			writer.println(beagleSequenceSimulator.simulate(false).toString());
 			writer.close();
 			
 		} catch (Arguments.ArgumentException ae) {

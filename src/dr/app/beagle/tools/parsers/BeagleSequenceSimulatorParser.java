@@ -100,18 +100,18 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 				partition.to = siteCount - 1;
 			}
 			
-			if (partition.ancestralSequence != null) {
+			if (partition.getAncestralSequence() != null) {
 
-				if (partition.ancestralSequence.getLength() != 3 * siteCount && partition.freqModel.getDataType() instanceof Codons) {
+				if (partition.getAncestralSequence().getLength() != 3 * siteCount && partition.getFreqModel().getDataType() instanceof Codons) {
 
 					throw new RuntimeException("Ancestral codon sequence has "
-							+ partition.ancestralSequence.getLength() + " characters "
+							+ partition.getAncestralSequence().getLength() + " characters "
 							+ "expecting " + 3 * siteCount + " characters");
 
-				} else if (partition.ancestralSequence.getLength() != siteCount && partition.freqModel.getDataType() instanceof Nucleotides) {
+				} else if (partition.getAncestralSequence().getLength() != siteCount && partition.getFreqModel().getDataType() instanceof Nucleotides) {
 
 					throw new RuntimeException("Ancestral nuleotide sequence has "
-							+ partition.ancestralSequence.getLength() + " characters "
+							+ partition.getAncestralSequence().getLength() + " characters "
 							+ "expecting " + siteCount + " characters");
 
 				}// END: dataType check
@@ -127,7 +127,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		
 		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
 
-		return s.simulate();
+		return s.simulate(false);
 	}// END: parseXMLObject
 
 }// END: class

@@ -40,7 +40,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id$
  */
-public interface BranchModel extends Model {
+public interface BranchModel extends Model  {
     /**
      * Returns a mapping of substitution models to the given branch. The Mapping
      * contains a list of substitution models in order from tipward to rootward

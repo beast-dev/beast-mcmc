@@ -80,7 +80,17 @@ public class Utils {
 		Iterator<?> it = mp.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<?, ?> pairs = (Entry<?, ?>) it.next();
-			System.out.println(pairs.getKey() + " = " + pairs.getValue());
+			Object obj = pairs.getValue();
+			if (obj instanceof int[]) {
+				int[] seq = (int[]) obj;
+				System.out.print(pairs.getKey() + " =");
+				for (int i = 0; i < seq.length; ++i) {
+					System.out.print(" " + seq[i]);
+				}
+				System.out.println();
+			} else {
+				System.out.println(pairs.getKey() + " = " + pairs.getValue());
+			}
 		}
 	}// END: printMap
 

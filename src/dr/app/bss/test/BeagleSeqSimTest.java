@@ -26,17 +26,18 @@ import dr.math.MathUtils;
 
 public class BeagleSeqSimTest {
 
-	private static final boolean simulateInPar = true;
+	public static final boolean simulateInPar = true;
+	public static final boolean unofficialMT = true;
 	
 	public static void main(String[] args) {
 
 //		simulateTopology();
 //		 simulateOnePartition();
 //		 simulateTwoPartitions();
-		 
-//		for (int i = 0; i < 1000; i++) {
+		 int N = 10000;
+		for (int i = 0; i < N; i++) {
 			simulateThreePartitions();
-//		}
+		}
 		
 	} // END: main
 
@@ -118,12 +119,7 @@ public class BeagleSeqSimTest {
 					partitionsList
 			);
 			
-			if (simulateInPar) {
-				System.out.println(simulator.simulateInPar().toString());
-			} else {
-				System.out.println(simulator.simulate().toString());
-			}
-			
+			System.out.println(simulator.simulate(simulateInPar).toString());
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -191,11 +187,7 @@ public class BeagleSeqSimTest {
 			// , sequenceLength
 			);
 
-			if (simulateInPar) {
-				System.out.println(simulator.simulateInPar().toString());
-			} else {
-				System.out.println(simulator.simulate().toString());
-			}
+			System.out.println(simulator.simulate(simulateInPar).toString());
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -271,11 +263,7 @@ public class BeagleSeqSimTest {
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
 			
-			if (simulateInPar) {
-				System.out.println(simulator.simulateInPar().toString());
-			} else {
-				System.out.println(simulator.simulate().toString());
-			}
+			System.out.println(simulator.simulate(simulateInPar).toString());
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -288,6 +276,9 @@ public class BeagleSeqSimTest {
 
 		try {
 
+			
+			MathUtils.setSeed(666);
+			
 			System.out.println("Test case 3: simulateThreePartitions");
 
 			int sequenceLength = 10;
@@ -359,11 +350,7 @@ public class BeagleSeqSimTest {
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
 			
-			if (simulateInPar) {
-				System.out.println(simulator.simulateInPar().toString());
-			} else {
-				System.out.println(simulator.simulate().toString());
-			}
+			System.out.println(simulator.simulate(simulateInPar).toString());
 			
 		} catch (Exception e) {
 			e.printStackTrace();

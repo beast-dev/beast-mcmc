@@ -219,7 +219,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 								partitionsList
 								);
 
-						writer.println(beagleSequenceSimulator.simulate()
+						writer.println(beagleSequenceSimulator.simulate(false)
 								.toString());
 						writer.close();
 

@@ -49,6 +49,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String BSSVS_TOLERANCE = "bssvsTolerance";
     public static final String BSSVS_SCALAR = "bssvsScalar";
     public static final String CHECK_CONDITIONING = "checkConditioning";
+    public static final String NORMALIZED = "normalized";
 
     public static final int maxRandomizationTries = 100;
 
@@ -57,7 +58,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     public String[] getParserNames() {
-        return new String[] {COMPLEX_SUBSTITUTION_MODEL, SVS_COMPLEX_SUBSTITUTION_MODEL};
+        return new String[]{COMPLEX_SUBSTITUTION_MODEL, SVS_COMPLEX_SUBSTITUTION_MODEL};
     }
 
 
@@ -100,13 +101,13 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
 
         if (!xo.hasChildNamed(INDICATOR)) {
             if (!checkConditioning) {
-                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter) {
+                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter) {
                     protected EigenSystem getDefaultEigenSystem(int stateCount) {
                         return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
                     }
                 };
             } else {
-                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter);
+                return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter);
             }
         }
 
@@ -143,7 +144,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                 }
             };
         } else {
-            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
+            model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter);
         }
         boolean randomize = xo.getAttribute(RANDOMIZE, false);
         if (randomize) {
@@ -153,11 +154,15 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
 
             while (!valid && tries < maxRandomizationTries) {
                 BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
-                    dataType.getStateCount(),false);
+                        dataType.getStateCount(), false);
                 valid = !Double.isInfinite(model.getLogLikelihood());
                 tries++;
             }
             Logger.getLogger("dr.app.beagle.evomodel").info("\tRandomization attempts: " + tries);
+        }
+        if (!xo.getAttribute(NORMALIZED, true)) {
+            model.setNormalization(false);
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tNormalization: false");
         }
         Logger.getLogger("dr.app.beagle.evomodel").info("\t\tPlease cite: Edwards, Suchard et al. (2011)\n");
         return model;
@@ -186,20 +191,21 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(DataType.class),
                     true // Optional
             ),
-            AttributeRule.newBooleanRule(RANDOMIZE,true),
+            AttributeRule.newBooleanRule(RANDOMIZE, true),
             new XORRule(
-                new ElementRule(FREQUENCIES,FrequencyModel.class),
-                new ElementRule(ROOT_FREQUENCIES,FrequencyModel.class)),
+                    new ElementRule(FREQUENCIES, FrequencyModel.class),
+                    new ElementRule(ROOT_FREQUENCIES, FrequencyModel.class)),
             new ElementRule(RATES,
-                new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class, true)}
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class, true)}
             ),
             new ElementRule(INDICATOR,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
-                    },true),
+                    }, true),
             AttributeRule.newDoubleRule(BSSVS_TOLERANCE, true),
             AttributeRule.newDoubleRule(BSSVS_SCALAR, true),
             AttributeRule.newBooleanRule(CHECK_CONDITIONING, true),
+            AttributeRule.newBooleanRule(NORMALIZED, true),
     };
 }

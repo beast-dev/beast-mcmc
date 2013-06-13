@@ -69,7 +69,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         double[] Evec = eigen.getEigenVectors();
         double[] Eval = eigen.getEigenValues();
         double[] EvalImag = new double[stateCount];
-        System.arraycopy(Eval,stateCount,EvalImag,0,stateCount);
+        System.arraycopy(Eval, stateCount, EvalImag, 0, stateCount);
         double[] Ievc = eigen.getInverseEigenVectors();
 
         double[][] iexp = new double[stateCount][stateCount];
@@ -106,10 +106,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
                 double expatsinbt = expat * Math.sin(distance * b);
 
                 for (int j = 0; j < stateCount; j++) {
-                    iexp[i ][j] = expatcosbt * Ievc[i  * stateCount + j] +
-                                  expatsinbt * Ievc[i2 * stateCount + j];
+                    iexp[i][j] = expatcosbt * Ievc[i * stateCount + j] +
+                            expatsinbt * Ievc[i2 * stateCount + j];
                     iexp[i2][j] = expatcosbt * Ievc[i2 * stateCount + j] -
-                                  expatsinbt * Ievc[i  * stateCount + j];
+                            expatsinbt * Ievc[i * stateCount + j];
                 }
                 i++; // processed two conjugate rows
             }
@@ -141,13 +141,17 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
             for (j = i + 1; j < stateCount; j++) {
-                matrix[i][j] = rates[k++] * pi[j];
+                double thisRate = rates[k++];
+                if (thisRate < 0.0) thisRate = 0.0;
+                matrix[i][j] = thisRate * pi[j];
             }
         }
         // Copy lower triangle in column-order form (transposed)
         for (j = 0; j < stateCount; j++) {
             for (i = j + 1; i < stateCount; i++) {
-                matrix[i][j] = rates[k++] * pi[j];
+                double thisRate = rates[k++];
+                if (thisRate < 0.0) thisRate = 0.0;
+                matrix[i][j] = thisRate * pi[j];
             }
         }
     }
@@ -157,19 +161,22 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
-        if (doNormalization)
+        if (doNormalization) {
             return super.getNormalizationValue(matrix, pi);
-        return 1.0;
+        } else {
+            return 1.0;
+        }
     }
 
     public double getLogLikelihood() {
-        if (BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this))
+        if (BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability, this))
             return 0;
         return Double.NEGATIVE_INFINITY;
     }
 
     /**
      * Needs to be evaluated before the corresponding data likelihood.
+     *
      * @return
      */
     public boolean evaluateEarly() {

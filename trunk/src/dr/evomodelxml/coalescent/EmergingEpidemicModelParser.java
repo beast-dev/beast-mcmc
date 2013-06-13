@@ -1,5 +1,6 @@
 package dr.evomodelxml.coalescent;
 
+import dr.evolution.tree.Tree;
 import dr.evolution.util.Units;
 import dr.evomodel.coalescent.EmergingEpidemicModel;
 import dr.evomodel.coalescent.ExponentialGrowthModel;
@@ -21,7 +22,7 @@ public class EmergingEpidemicModelParser extends AbstractXMLObjectParser {
     public static String GENERATION_DISTRIBUTION_SHAPE = "generationShape";
     public static String OFFSPRING_DISPERSION = "offspringDispersion";
 
-    public static String TREE = "tree";
+    public static String TREE = "epidemicTree";
 
 
     public String getParserName() {
@@ -58,16 +59,12 @@ public class EmergingEpidemicModelParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(GROWTH_RATE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(GENERATION_TIME,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(GENERATION_DISTRIBUTION_SHAPE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(OFFSPRING_DISPERSION,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(TREE,
-                    new XMLSyntaxRule[]{new ElementRule(TreeModel.class)}),
+            new ElementRule(GROWTH_RATE, Parameter.class),
+            new ElementRule(GENERATION_TIME, Parameter.class),
+            new ElementRule(GENERATION_DISTRIBUTION_SHAPE, Parameter.class),
+            new ElementRule(OFFSPRING_DISPERSION, Parameter.class),
+            new ElementRule(TREE, Tree.class),
+
             XMLUnits.SYNTAX_RULES[0]
     };
 

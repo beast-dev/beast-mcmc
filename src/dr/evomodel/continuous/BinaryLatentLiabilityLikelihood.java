@@ -30,6 +30,7 @@ import dr.evolution.datatype.TwoStates;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
+import dr.math.distributions.Distribution;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -48,7 +49,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood implements Citable {
+public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable {
 
     public final static String LATENT_LIABILITY_LIKELIHOOD = "latentLiabilityLikelihood";
 
@@ -167,6 +168,19 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
         }
         return valid;
     }
+
+    public double getNormalizationConstant(Distribution working) {
+        return normalizationDelegate.getNormalizationConstant(working); // delegate to abstract Delegate
+    }
+
+    private final LatentTruncation.Delegate normalizationDelegate = new LatentTruncation.Delegate() {
+
+        protected double computeNormalizationConstant(Distribution working) {
+            // TODO
+            double constant = 0.0;
+            return constant;
+        }
+    };
 
     // **************************************************************
     // XMLObjectParser

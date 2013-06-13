@@ -31,6 +31,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.EmergingEpidemicModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 
 /**
  * This class models an exponentially growing (or shrinking) population
@@ -93,26 +94,73 @@ public class EmergingEpidemicModel extends DemographicModel {
         this.treeModel = treeModel;
         addModel(treeModel);
 
+        addStatistic(new N0Statistic("N0"));
+        addStatistic(new RStatistic("R"));
+
         setUnits(units);
     }
 
     // general functions
 
     public DemographicFunction getDemographicFunction() {
+        exponentialGrowth.setN0(getN0());
+        exponentialGrowth.setGrowthRate(growthRateParameter.getParameterValue(0));
+
+        return exponentialGrowth;
+    }
+
+    public double getR() {
+        double r = growthRateParameter.getParameterValue(0);
+        double Tg = generationTimeParameter.getParameterValue(0);
+        double alpha = generationShapeParameter.getParameterValue(0);
+
+        double R = Math.pow(1.0 + ((r * Tg) / alpha), alpha);
+
+        return R;
+    }
+
+    public double getN0() {
+        double R = getR();
+
         double t0 = treeModel.getNodeHeight(treeModel.getRoot());
 
         double r = growthRateParameter.getParameterValue(0);
         double Tg = generationTimeParameter.getParameterValue(0);
-        double alpha = generationShapeParameter.getParameterValue(0);
         double k = offspringDispersionParameter.getParameterValue(0);
 
-        double R = Math.pow(1.0 + ((r * Tg) / alpha), alpha);
         double N0 = (k * Tg * Math.exp(r * t0)) / (R * (k + R));
 
-        exponentialGrowth.setN0(N0);
-        exponentialGrowth.setGrowthRate(r);
+        return N0;
+    }
 
-        return exponentialGrowth;
+    public class N0Statistic extends Statistic.Abstract {
+
+        public N0Statistic(String name) {
+            super(name);
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(final int i) {
+            return getN0();
+        }
+    }
+
+    public class RStatistic extends Statistic.Abstract {
+
+        public RStatistic(String name) {
+            super(name);
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(final int i) {
+            return getR();
+        }
     }
 
     //

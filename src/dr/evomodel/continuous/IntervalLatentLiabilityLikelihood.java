@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.alignment.PatternList;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
+import dr.math.distributions.Distribution;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -46,7 +47,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood implements Citable {
+public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable {
 
     public final static String LATENT_LIABILITY_LIKELIHOOD = "intervalLatentLiabilityLikelihood";
 
@@ -276,11 +277,26 @@ public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood i
         return citations;
     }
 
+    public double getNormalizationConstant(Distribution working) {
+        return normalizationDelegate.getNormalizationConstant(working); // delegate to abstract Delegate
+    }
+
+    private final LatentTruncation.Delegate normalizationDelegate = new Delegate() {
+
+        protected double computeNormalizationConstant(Distribution working) {
+            double constant = 0.0;
+            for (long datum : tipData) {
+                constant += Math.log(working.cdf(datum + 0.5) - working.cdf(datum - 0.5));
+            }
+            return -constant; // Note minus sign
+//            return 16.30411;
+        }
+    };
+
     private TreeModel treeModel;
     private PatternList patternList;
     private CompoundParameter tipTraitParameter;
 
-    //    private int[][] tipData;
     private long[] tipData;
 
     private boolean likelihoodKnown = false;

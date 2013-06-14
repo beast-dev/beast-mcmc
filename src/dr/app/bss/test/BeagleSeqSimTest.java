@@ -27,7 +27,6 @@ import dr.math.MathUtils;
 public class BeagleSeqSimTest {
 
 	public static final boolean simulateInPar = true;
-	public static final boolean unofficialMT = true;
 	
 	public static void main(String[] args) {
 
@@ -282,7 +281,7 @@ public class BeagleSeqSimTest {
 			System.out.println("Test case 3: simulateThreePartitions");
 
 			int sequenceLength = 10;
-			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+			ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
 
 			// create tree
 			NewickImporter importer = new NewickImporter(
@@ -310,7 +309,7 @@ public class BeagleSeqSimTest {
 			BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
 			// create partition
-			Partition partition1 = new Partition(treeModel, //
+			Partition2 partition1 = new Partition2(treeModel, //
 					substitutionModel, //
 					siteRateModel, //
 					branchRateModel, //
@@ -321,7 +320,7 @@ public class BeagleSeqSimTest {
 			);
 
 			// create partition
-			Partition partition2 = new Partition(treeModel, //
+			Partition2 partition2 = new Partition2(treeModel, //
 					substitutionModel,//
 					siteRateModel, //
 					branchRateModel, //
@@ -332,7 +331,7 @@ public class BeagleSeqSimTest {
 			);
 
 			// create partition
-			Partition partition3 = new Partition(treeModel, //
+			Partition2 partition3 = new Partition2(treeModel, //
 					substitutionModel,//
 					siteRateModel, //
 					branchRateModel, //
@@ -347,7 +346,7 @@ public class BeagleSeqSimTest {
 			partitionsList.add(partition3);
 
 			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
+			BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
 					partitionsList);
 			
 			System.out.println(simulator.simulate(simulateInPar).toString());

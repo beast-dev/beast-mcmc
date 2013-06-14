@@ -23,6 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ * 
+ */
 package dr.app.beagle.tools;
 
 import java.util.HashMap;
@@ -32,7 +37,6 @@ import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.bss.Utils;
-import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -135,24 +139,12 @@ public class Partition {
 		this.freqModel = freqModel;
 	}
 
-//	public boolean isHasAncestralSequence() {
-//		return hasAncestralSequence;
-//	}
-//
-//	public void setHasAncestralSequence(boolean hasAncestralSequence) {
-//		this.hasAncestralSequence = hasAncestralSequence;
-//	}
-
 	public Sequence getAncestralSequence() {
 		return ancestralSequence;
 	}
 
 	public Map<Taxon,int[]> getSequenceList() {
 		return sequenceList;
-	}
-
-	public void setSequenceList(Map<Taxon,int[]> sequenceList) {
-		this.sequenceList = sequenceList;
 	}
 
 	public BranchRateModel getBranchRateModel() {

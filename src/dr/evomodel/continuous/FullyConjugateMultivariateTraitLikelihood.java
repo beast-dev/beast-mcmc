@@ -216,6 +216,10 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return rootPriorSampleSize;
     }
 
+    public double[] getPriorMean() {
+        return rootPriorMean;
+    }
+
     @Override
     public boolean getComputeWishartSufficientStatistics() {
         return computeWishartStatistics;

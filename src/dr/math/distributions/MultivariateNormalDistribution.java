@@ -31,7 +31,7 @@ import dr.math.matrixAlgebra.*;
 /**
  * @author Marc Suchard
  */
-public class MultivariateNormalDistribution implements MultivariateDistribution {
+public class MultivariateNormalDistribution implements MultivariateDistribution, RandomGenerator {
 
     public static final String TYPE = "MultivariateNormal";
 
@@ -293,4 +293,14 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
     }
 
     public static final double logNormalize = -0.5 * Math.log(2.0 * Math.PI);
+
+    // RandomGenerator interface
+    public Object nextRandom() {
+        return nextMultivariateNormal();
+    }
+
+    public double logPdf(Object x) {
+        double[] v = (double[]) x;
+        return logPdf(v);
+    }
 }

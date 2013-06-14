@@ -28,6 +28,7 @@ package dr.inference.distribution;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.distributions.RandomGenerator;
 
 /**
  * A class that acts as a model for multivariate normally distributed data.
@@ -36,7 +37,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
  * @author Max Tolkoff
  */
 
-public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel {
+public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel, RandomGenerator {
 
     public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
@@ -65,12 +66,15 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     // *****************************************************************
 
 
-    public double logPdf(double[] x) {
+    private void checkDistribution() {
         if (!distributionKnown) {
             distribution = createNewDistribution();
             distributionKnown = true;
         }
+    }
 
+    public double logPdf(double[] x) {
+        checkDistribution();
         return distribution.logPdf(x);
     }
 
@@ -126,4 +130,15 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
 
     private boolean distributionKnown;
     private boolean storedDistributionKnown;
+
+    // RandomGenerator interface
+    public Object nextRandom() {
+        checkDistribution();
+        return distribution.nextMultivariateNormal();
+    }
+
+    public double logPdf(Object x) {
+        checkDistribution();
+        return distribution.logPdf(x);
+    }
 }

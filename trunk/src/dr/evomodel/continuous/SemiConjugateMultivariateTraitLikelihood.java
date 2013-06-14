@@ -69,7 +69,7 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         return false;  // No need for outer products, as Gibbs sampling of diffusion matrix is not possible
     }
 
-    protected  double calculateAscertainmentCorrection(int taxonIndex) {
+    protected double calculateAscertainmentCorrection(int taxonIndex) {
         throw new RuntimeException("Ascertainment correction not yet implemented for semi-conjugate trait likelihoods");
     }
 
@@ -77,7 +77,7 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         double length = 0;
         final NodeRef root = treeModel.getRoot();
         while (node != root) {
-            length += getRescaledBranchLength(node);
+            length += getRescaledBranchLengthForPrecision(node);
             node = treeModel.getParent(node);
         }
         return length;

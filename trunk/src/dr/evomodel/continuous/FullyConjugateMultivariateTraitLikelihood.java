@@ -112,7 +112,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             length += getRescaledLengthToRoot(parent);
         }
 
-        length += getRescaledBranchLength(nodeRef);
+        length += getRescaledBranchLengthForPrecision(nodeRef);
 
         return length;
     }

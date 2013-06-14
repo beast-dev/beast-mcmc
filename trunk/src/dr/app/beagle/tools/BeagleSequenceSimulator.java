@@ -45,8 +45,6 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.app.beagle.evomodel.treelikelihood.SubstitutionModelDelegate;
-import dr.app.bss.Utils;
-import dr.app.bss.test.BeagleSeqSimTest;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
@@ -98,7 +96,7 @@ public class BeagleSequenceSimulator {
 		this.siteCount = siteCount + 1;
 	}// END: Constructor
 
-	private MersenneTwister getNextMersenneTwister(int paritionNumber) {
+	private MersenneTwister nextMersenneTwister(int paritionNumber) {
 		return new MersenneTwister(MathUtils.nextLong());
 	}
 
@@ -114,7 +112,7 @@ public class BeagleSequenceSimulator {
 			}
 
 			for (int i = 0; i < partitions.size(); ++i) {
-				randomList.add(getNextMersenneTwister(i));
+				randomList.add(nextMersenneTwister(i));
 			}
 
 			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
@@ -334,12 +332,8 @@ public class BeagleSequenceSimulator {
 
 		for (int i = 0; i < partitionSiteCount; i++) {
 
-			if (BeagleSeqSimTest.unofficialMT) {
-				category[i] = randomChoicePDF(categoryProbs,
-						partition.getPartitionNumber());
-			} else {
+				category[i] = randomChoicePDF(categoryProbs, partition.getPartitionNumber());
 				// category[i] = MathUtils.randomChoicePDF(categoryProbs);
-			}
 
 		}
 
@@ -355,13 +349,8 @@ public class BeagleSequenceSimulator {
 			double[] frequencies = freqModel.getFrequencies();
 			for (int i = 0; i < partitionSiteCount; i++) {
 
-				if (BeagleSeqSimTest.unofficialMT) {
-					parentSequence[i] = randomChoicePDF(frequencies,
-							partition.getPartitionNumber());
-				} else {
-					// parentSequence[i] =
-					// MathUtils.randomChoicePDF(frequencies);
-				}
+					parentSequence[i] = randomChoicePDF(frequencies, partition.getPartitionNumber());
+					// parentSequence[i] = MathUtils.randomChoicePDF(frequencies);
 
 			}
 

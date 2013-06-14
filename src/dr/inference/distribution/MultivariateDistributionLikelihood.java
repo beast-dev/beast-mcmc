@@ -93,6 +93,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         this(distribution.getType(), distribution, transforms);
     }
 
+    public String toString() {
+        return getClass().getName() + "(" + getLogLikelihood() + ")";
+    }
+
     public double calculateLogLikelihood() {
         double logL = 0.0;
 

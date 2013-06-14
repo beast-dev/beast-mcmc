@@ -73,7 +73,7 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         throw new RuntimeException("Ascertainment correction not yet implemented for semi-conjugate trait likelihoods");
     }
 
-    protected double getRescaledLengthToRoot(NodeRef node) {
+    public double getRescaledLengthToRoot(NodeRef node) {
         double length = 0;
         final NodeRef root = treeModel.getRoot();
         while (node != root) {

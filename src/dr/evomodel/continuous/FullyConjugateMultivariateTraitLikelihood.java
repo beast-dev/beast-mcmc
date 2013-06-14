@@ -103,16 +103,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
 
-    protected double getRescaledLengthToRoot(NodeRef nodeRef) {
+    public double getRescaledLengthToRoot(NodeRef nodeRef) {
 
         double length = 0;
-        NodeRef parent = treeModel.getParent(nodeRef);
 
-        if (!treeModel.isRoot(parent)) {
-            length += getRescaledLengthToRoot(parent);
+        if (!treeModel.isRoot(nodeRef)) {
+            NodeRef parent = treeModel.getParent(nodeRef);
+            length += getRescaledBranchLengthForPrecision(nodeRef) + getRescaledLengthToRoot(parent);
         }
-
-        length += getRescaledBranchLengthForPrecision(nodeRef);
 
         return length;
     }
@@ -212,6 +210,10 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     public void makeDirty() {
         super.makeDirty();
         priorInformationKnown = false;
+    }
+
+    public double getPriorSampleSize() {
+        return rootPriorSampleSize;
     }
 
     @Override

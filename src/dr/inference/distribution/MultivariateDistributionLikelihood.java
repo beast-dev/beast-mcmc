@@ -25,6 +25,8 @@
 
 package dr.inference.distribution;
 
+import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.evomodel.continuous.TreeTraitNormalDistributionModel;
 import dr.inference.model.*;
 import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.math.distributions.*;
@@ -57,6 +59,8 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String NON_INFORMATIVE = "nonInformative";
     public static final String MULTIVARIATE_LIKELIHOOD = "multivariateDistributionLikelihood";
     public static final String DATA_AS_MATRIX = "dataAsMatrix";
+    public static final String TREE_TRAIT = "treeTraitNormalDistribution";
+    public static final String CONDITION = "conditionOnRoot";
 
     public static final String DATA = "data";
 
@@ -569,6 +573,55 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                                 new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                         new ElementRule(MVN_CV,
                                 new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
+                new ElementRule(DATA,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)})
+        };
+
+        public String getParserDescription() {
+            return "Calculates the likelihood of some data under a given multivariate-gamma distribution.";
+        }
+
+        public Class getReturnType() {
+            return MultivariateDistributionLikelihood.class;
+        }
+    };
+
+    public static XMLObjectParser TREE_TRAIT_DISTRIBUTION = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return TREE_TRAIT;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            boolean conditionOnRoot = xo.getAttribute(CONDITION, false);
+
+            FullyConjugateMultivariateTraitLikelihood traitModel = (FullyConjugateMultivariateTraitLikelihood)
+                    xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
+
+            MultivariateDistributionLikelihood likelihood =
+                    new MultivariateDistributionLikelihood(
+                            new TreeTraitNormalDistributionModel(traitModel, conditionOnRoot)
+                    );
+
+            XMLObject cxo = xo.getChild(DATA);
+            for (int j = 0; j < cxo.getChildCount(); j++) {
+                if (cxo.getChild(j) instanceof Parameter) {
+                    likelihood.addData((Parameter) cxo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
+                }
+            }
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newBooleanRule(CONDITION, true),
+                new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)})
         };

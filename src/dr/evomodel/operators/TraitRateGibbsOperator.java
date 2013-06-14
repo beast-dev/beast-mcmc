@@ -104,7 +104,7 @@ public class TraitRateGibbsOperator extends SimpleMCMCOperator implements GibbsO
         final double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
 
         final double precisionScalar = branchRateModel.getBranchRate(treeModel, child) /
-                traitModel.getRescaledBranchLength(child);
+                traitModel.getRescaledBranchLengthForPrecision(child);
 
         for (int i = 0; i < dim; i++) {
             trait[i] -= parentTrait[i];

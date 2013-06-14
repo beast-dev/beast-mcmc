@@ -29,6 +29,7 @@ import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
@@ -159,7 +160,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
 
         cacheHelper.setTipMeans(traitValue, dim, index, node);
-//        System.err.println("yo");
 //        System.arraycopy(traitValue, 0, meanCache
 ////                cacheHelper.getMeanCache()
 //                , dim * index, dim);
@@ -227,7 +227,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         if (DEBUG) {
             System.err.println("mean: " + new Vector(cacheHelper.getMeanCache()));
-            // System.err.println("mean: " + new Vector(meanCache));
+            System.err.println("correctedMean: " + new Vector(cacheHelper.getCorrectedMeanCache()));
             System.err.println("upre: " + new Vector(upperPrecisionCache));
             System.err.println("lpre: " + new Vector(lowerPrecisionCache));
             System.err.println("cach: " + new Vector(logRemainderDensityCache));
@@ -297,6 +297,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
 
         logLikelihood += sumLogRemainders();
+        if (DEBUG) {
+            System.out.println("logLikelihood is " + logLikelihood);
+        }
 
         if (DEBUG) { // Root trait is univariate!!!
             System.err.println("logLikelihood (final) = " + logLikelihood);
@@ -316,6 +319,21 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                       double[] conditionalRootMean, double conditionalRootPrecision,
                                       double[][] traitPrecision) {
         // Do nothing; for checking PNAS paper
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        //  System.err.println("Model: " + model.getId());
+        if (model.getId().compareTo("driftModels.1") == 0 || model.getId().compareTo("driftModels.2") == 0) {
+            if (object instanceof StrictClockBranchRates) {
+                StrictClockBranchRates rates = (StrictClockBranchRates) object;
+                if (DEBUG) {
+                    System.err.println(rates.getBranchRate(treeModel, treeModel.getExternalNode(0)));
+                    System.err.println("old ll = " + logLikelihood + " " + model.getId());
+                }
+                likelihoodKnown = false;
+            }
+        }
+        super.handleModelChangedEvent(model, object, index);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -380,7 +398,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 upperPrecisionCache[thisNumber] = 0;
                 lowerPrecisionCache[thisNumber] = 0; // Needed in the pre-order traversal
             } else { // not missing tip trait
-                upperPrecisionCache[thisNumber] = 1.0 / getRescaledBranchLength(node);
+                upperPrecisionCache[thisNumber] = 1.0 / getRescaledBranchLengthForPrecision(node);
                 lowerPrecisionCache[thisNumber] = Double.POSITIVE_INFINITY;
             }
             return;
@@ -424,7 +442,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         if (!treeModel.isRoot(node)) {
             // Integrate out trait value at this node
-            double thisPrecision = 1.0 / getRescaledBranchLength(node);
+            double thisPrecision = 1.0 / getRescaledBranchLengthForPrecision(node);
             if (Double.isInfinite(thisPrecision)) {
                 upperPrecisionCache[thisNumber] = totalPrecision;
             } else {
@@ -518,15 +536,15 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
                 // final double wChild0i = meanCache[childOffset0 + k * dimTrait + i] * precision0;
                 // final double wChild1i = meanCache[childOffset1 + k * dimTrait + i] * precision1;
-                final double wChild0i = cacheHelper.getMeanCache()[childOffset0 + k * dimTrait + i] * precision0;
-                final double wChild1i = cacheHelper.getMeanCache()[childOffset1 + k * dimTrait + i] * precision1;
+                final double wChild0i = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + i] * precision0;
+                final double wChild1i = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + i] * precision1;
 
                 for (int j = 0; j < dimTrait; j++) {
 
                     //final double child0j = meanCache[childOffset0 + k * dimTrait + j];
                     //final double child1j = meanCache[childOffset1 + k * dimTrait + j];
-                    final double child0j = cacheHelper.getMeanCache()[childOffset0 + k * dimTrait + j];
-                    final double child1j = cacheHelper.getMeanCache()[childOffset1 + k * dimTrait + j];
+                    final double child0j = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + j];
+                    final double child1j = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + j];
 
                     outerProduct[i][j] += wChild0i * child0j;
                     outerProduct[i][j] += wChild1i * child1j;
@@ -659,9 +677,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                    int length, NodeRef thisNode) {
 
         final double totalInverseWeight = 1.0 / (weight0 + weight1);
-        final double length0 = getRescaledBranchLength(childNode0);
-        final double length1 = getRescaledBranchLength(childNode1);
-        final double thisLength = getRescaledBranchLength(thisNode);
+        // TODO fix
+//        final double length0 = getRescaledBranchLength(childNode0);
+//        final double length1 = getRescaledBranchLength(childNode1);
+//        final double thisLength = getRescaledBranchLength(thisNode);
         double[] shift;
         if (!treeModel.isRoot(thisNode)) {
             shift = getShiftForBranchLength(thisNode);
@@ -671,10 +690,26 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         double[] shiftChild0 = getShiftForBranchLength(childNode0);
         double[] shiftChild1 = getShiftForBranchLength(childNode1);
 
+        if (treeModel.isExternal(childNode0)) {
+            for (int i = 0; i < length; i++) {
+                correctedMeanCache[offset0 + i] = meanCache[offset0 + i] - shiftChild0[i];
+            }
+        }
+
+        if (treeModel.isExternal(childNode1)) {
+            for (int i = 0; i < length; i++) {
+                correctedMeanCache[offset1 + i] = meanCache[offset1 + i] - shiftChild1[i];
+            }
+        }
+
         for (int i = 0; i < length; i++) {
-            meanCache[offset2 + i] = ((meanCache[offset0 + i] - length0 * shiftChild0[i]) * weight0 + (meanCache[offset1 + i] - length1 * shiftChild1[i]) * weight1) * totalInverseWeight;
+
+            // meanCache[offset2 + i] = ((meanCache[offset0 + i] -  shiftChild0[i]) * weight0 + (meanCache[offset1 + i] - shiftChild1[i]) * weight1) * totalInverseWeight;
+            meanCache[offset2 + i] = (correctedMeanCache[offset0 + i] * weight0 + correctedMeanCache[offset1 + i] * weight1) * totalInverseWeight;
             if (!treeModel.isRoot(thisNode)) {
-                correctedMeanCache[offset2 + i] = meanCache[offset2 + i] - thisLength * shift[i];
+                correctedMeanCache[offset2 + i] = meanCache[offset2 + i] - shift[i];
+            } else {
+                correctedMeanCache[offset2 + i] = meanCache[offset2 + i];
             }
         }
     }
@@ -735,7 +770,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 // This code should work for sampling a missing tip trait as well, but needs testing
 
                 // parent trait at drawnStates[parentOffset]
-                double precisionToParent = 1.0 / getRescaledBranchLength(node);
+                double precisionToParent = 1.0 / getRescaledBranchLengthForPrecision(node);
                 double precisionOfNode = lowerPrecisionCache[thisIndex];
                 double totalPrecision = precisionOfNode + precisionToParent;
 
@@ -892,15 +927,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             correctedMeanCache = new double[cacheLength];
         }
 
-        /*
-        public void setTipMeans(double[] meanCache, double[] traitValue, int dim, int index, NodeRef node) {
-            double[] shift = getShiftForBranchLength(node);
-            for (int i = 0; i < dim; ++i) {
-                meanCache[dim * index + i] = traitValue[i] - treeModel.getBranchLength(node) * shift[i];
-            }
-            System.err.println("here");
-        }
-        */
         public double[] getCorrectedMeanCache() {
             return correctedMeanCache;
         }
@@ -911,11 +937,12 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         public void setTipMeans(double[] traitValue, int dim, int index, NodeRef node) {
             System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
-
+            /*
             double[] shift = getShiftForBranchLength(node);
             for (int i = 0; i < dim; i++) {
-                correctedMeanCache[dim * index + i] = traitValue[i] - treeModel.getBranchLength(node) * shift[i];
+                correctedMeanCache[dim * index + i] = traitValue[i] - shift[i];
             }
+            */
         }
 
 
@@ -953,6 +980,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     private double[] drawnStates;
 
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
+    //  protected final boolean integrateRoot = false;
     protected static boolean DEBUG = false;
     protected static boolean DEBUG_PREORDER = false;
     protected static boolean DEBUG_PNAS = false;

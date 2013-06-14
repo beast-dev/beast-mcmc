@@ -79,7 +79,7 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
         return logLikelihood;
     }
 
-    protected  double calculateAscertainmentCorrection(int taxonIndex) {
+    protected double calculateAscertainmentCorrection(int taxonIndex) {
         throw new RuntimeException("Ascertainment correction not yet implemented for sampled trait likelihoods");
     }
 
@@ -95,7 +95,7 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
 
                 double[] tipTrait = treeModel.getMultivariateNodeTrait(tip, traitName);
                 double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
-                double time = getRescaledBranchLength(tip);
+                double time = getRescaledBranchLengthForPrecision(tip);
 
                 logLikelihood += diffusionModel.getLogLikelihood(parentTrait, tipTrait, time);
             }
@@ -115,7 +115,7 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
             if (!validLogLikelihoods[nodeNumber]) { // recompute
 
                 childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
-                double time = getRescaledBranchLength(node);
+                double time = getRescaledBranchLengthForPrecision(node);
                 if (parentTrait == null)
                     parentTrait = treeModel.getMultivariateNodeTrait(treeModel.getParent(node), traitName);
                 logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
@@ -140,7 +140,7 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
 
         if (parentTrait != null) {
 
-            double time = getRescaledBranchLength(node);
+            double time = getRescaledBranchLengthForPrecision(node);
             logL = diffusionModel.getLogLikelihood(parentTrait, childTrait, time);
             if (new Double(logL).isNaN()) {
                 System.err.println("AbstractMultivariateTraitLikelihood: likelihood is undefined");
@@ -175,7 +175,7 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
 
 
     public double[] getTraitForNode(Tree treeModel, NodeRef node, String traitName) {
-        return ((TreeModel)treeModel).getMultivariateNodeTrait(node,traitName);
+        return ((TreeModel) treeModel).getMultivariateNodeTrait(node, traitName);
     }
 
 }

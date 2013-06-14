@@ -210,7 +210,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 
         double[] mean = new double[dim];
 
-        double weight = 1.0 / traitModel.getRescaledBranchLength(node);
+        double weight = 1.0 / traitModel.getRescaledBranchLengthForPrecision(node);
 
         double[] trait = treeModel.getMultivariateNodeTrait(parent, traitName);
 
@@ -221,7 +221,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         for (int j = 0; j < treeModel.getChildCount(node); j++) {
             NodeRef child = treeModel.getChild(node, j);
             trait = treeModel.getMultivariateNodeTrait(child, traitName);
-            weight = 1.0 / traitModel.getRescaledBranchLength(child);
+            weight = 1.0 / traitModel.getRescaledBranchLengthForPrecision(child);
 
             for (int i = 0; i < dim; i++)
                 mean[i] += trait[i] * weight;
@@ -264,7 +264,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
         for (int k = 0; k < treeModel.getChildCount(node); k++) {
             NodeRef child = treeModel.getChild(node, k);
             trait = treeModel.getMultivariateNodeTrait(child, traitName);
-            final double weight = 1.0 / traitModel.getRescaledBranchLength(child);
+            final double weight = 1.0 / traitModel.getRescaledBranchLengthForPrecision(child);
 
             for (int i = 0; i < dim; i++) {
                 for (int j = 0; j < dim; j++)

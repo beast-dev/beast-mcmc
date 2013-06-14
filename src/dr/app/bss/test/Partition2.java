@@ -312,9 +312,11 @@ public class Partition2 {
 			}
 
 		}
+		
 		for (int i = 0; i < pdf.length; i++) {
 			System.out.println(i + "\t" + pdf[i]);
 		}
+		
 		System.out.println(error);
 		System.exit(-1);
 		throw new RuntimeException(

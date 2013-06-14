@@ -28,7 +28,6 @@ package dr.app.bss.test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -62,8 +61,7 @@ public class BeagleSequenceSimulator2 {
 	private final int gapFlag = Integer.MAX_VALUE;
 	private SimpleAlignment alignment;
 
-	// Random number generation
-	private List<MersenneTwister> randomList = new ArrayList<MersenneTwister>();
+//	private List<MersenneTwister> randomList = new ArrayList<1MersenneTwister>();
 
 	public BeagleSequenceSimulator2(ArrayList<Partition2> partitions) {
 
@@ -100,9 +98,9 @@ public class BeagleSequenceSimulator2 {
 						.availableProcessors());
 			}
 
-			for (int i = 0; i < partitions.size(); ++i) {
-				randomList.add(getNextMersenneTwister(i));
-			}
+//			for (int i = 0; i < partitions.size(); i++) {
+//				randomList.add(getNextMersenneTwister(i));
+//			}
 
 			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
 			ArrayList<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();

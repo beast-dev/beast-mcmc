@@ -1,7 +1,7 @@
 /*
  * NormalDistribution.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,7 @@
 package dr.math.distributions;
 
 import dr.math.ErrorFunction;
+import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
 
 /**
@@ -34,7 +35,7 @@ import dr.math.UnivariateFunction;
  * @author Korbinian Strimmer
  * @version $Id: NormalDistribution.java,v 1.7 2005/05/24 20:26:01 rambaut Exp $
  */
-public class NormalDistribution implements Distribution {
+public class NormalDistribution implements Distribution, RandomGenerator {
     //
     // Public stuff
     //
@@ -185,13 +186,13 @@ public class NormalDistribution implements Distribution {
     }
 
 
-
-    /** A more accurate and faster implementation of the cdf (taken from function pnorm in the R statistical language)
+    /**
+     * A more accurate and faster implementation of the cdf (taken from function pnorm in the R statistical language)
      * This implementation has discrepancies depending on the programming language and system architecture
      * In Java, returned values become zero once z reaches -37.5193 exactly on the machine tested
      * In the other implementation, the returned value 0 at about z = -8
      * In C, this 0 value is reached approximately z = -37.51938
-     *
+     * <p/>
      * Will later need to be optimised for BEAST
      *
      * @param x     argument
@@ -202,31 +203,32 @@ public class NormalDistribution implements Distribution {
      */
     public static double cdf(double x, double mu, double sigma, boolean log_p) {
 
-        if(Double.isNaN(x) || Double.isNaN(mu) || Double.isNaN(sigma)) {
+        if (Double.isNaN(x) || Double.isNaN(mu) || Double.isNaN(sigma)) {
             return Double.NaN;
         }
-        if(Double.isInfinite(x) && mu == x) { /* x-mu is NaN */
+        if (Double.isInfinite(x) && mu == x) { /* x-mu is NaN */
             return Double.NaN;
         }
         if (sigma <= 0) {
-            if(sigma < 0) {
+            if (sigma < 0) {
                 return Double.NaN;
             }
             return (x < mu) ? 0.0 : 1.0;
         }
         double p = (x - mu) / sigma;
-        if(Double.isInfinite(p)) {
+        if (Double.isInfinite(p)) {
             return (x < mu) ? 0.0 : 1.0;
         }
         return standardCDF(p, log_p);
     }
 
-    /** A more accurate and faster implementation of the cdf (taken from function pnorm in the R statistical language)
+    /**
+     * A more accurate and faster implementation of the cdf (taken from function pnorm in the R statistical language)
      * This implementation has discrepancies depending on the programming language and system architecture
      * In Java, returned values become zero once z reaches -37.5193 exactly on the machine tested
      * In the other implementation, the returned value 0 at about z = -8
      * In C, this 0 value is reached approximately z = -37.51938
-     *
+     * <p/>
      * Will later need to be optimised for BEAST
      *
      * @param x     argument
@@ -234,8 +236,8 @@ public class NormalDistribution implements Distribution {
      * @return cdf at x
      */
     public static double standardCDF(double x, boolean log_p) {
-        boolean i_tail=false;
-        if(Double.isNaN(x)) {
+        boolean i_tail = false;
+        if (Double.isNaN(x)) {
             return Double.NaN;
         }
 
@@ -257,29 +259,25 @@ public class NormalDistribution implements Distribution {
                     xnum = (xnum + a[i]) * xsq;
                     xden = (xden + b[i]) * xsq;
                 }
-            }
-            else {
+            } else {
                 xnum = xden = 0.0;
             }
             temp = x * (xnum + a[3]) / (xden + b[3]);
-            if(lower) {
+            if (lower) {
                 p = 0.5 + temp;
             }
-            if(upper) {
+            if (upper) {
                 cp = 0.5 - temp;
             }
-            if(log_p) {
-                if(lower) {
+            if (log_p) {
+                if (lower) {
                     p = Math.log(p);
                 }
-                if(upper) {
+                if (upper) {
                     cp = Math.log(cp);
                 }
             }
-        }
-
-
-        else if (y <= M_SQRT_32) {
+        } else if (y <= M_SQRT_32) {
             /* Evaluate pnorm for 0.67448975 = Normal.quantile(3/4, 1, 0) < |x| <= sqrt(32) ~= 5.657 */
 
             xnum = c[8] * y;
@@ -295,20 +293,19 @@ public class NormalDistribution implements Distribution {
             //#define do_del(X)							\
             xsq = ((int) (y * CUTOFF)) * 1.0 / CUTOFF;
             del = (y - xsq) * (y + xsq);
-            if(log_p) {
+            if (log_p) {
                 p = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
-                if((lower && x > 0.0) || (upper && x <= 0.0)) {
-                    cp = Math.log(1.0-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
+                if ((lower && x > 0.0) || (upper && x <= 0.0)) {
+                    cp = Math.log(1.0 - Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
                 }
-            }
-            else {
+            } else {
                 p = Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp;
                 cp = 1.0 - p;
             }
             //#define swap_tail						\
             if (x > 0.0) {
                 temp = p;
-                if(lower) {
+                if (lower) {
                     p = cp;
                 }
                 cp = temp;
@@ -320,8 +317,8 @@ public class NormalDistribution implements Distribution {
          * Cody had (-37.5193 < x  &&  x < 8.2924) ; R originally had y < 50
          * Note that we do want symmetry(0), lower/upper -> hence use y
          */
-        else if(log_p || (lower && -37.5193 < x  &&  x < 8.2924)
-                || (upper && -8.2924  < x  &&  x < 37.5193)) {
+        else if (log_p || (lower && -37.5193 < x && x < 8.2924)
+                || (upper && -8.2924 < x && x < 37.5193)) {
 
             /* Evaluate pnorm for x in (-37.5, -5.657) union (5.657, 37.5) */
             xsq = 1.0 / (x * x);
@@ -337,31 +334,28 @@ public class NormalDistribution implements Distribution {
             //do_del(x);
             xsq = ((int) (x * CUTOFF)) * 1.0 / CUTOFF;
             del = (x - xsq) * (x + xsq);
-            if(log_p) {
+            if (log_p) {
                 p = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
-                if((lower && x > 0.0) || (upper && x <= 0.0)) {
-                    cp = Math.log(1.0-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
+                if ((lower && x > 0.0) || (upper && x <= 0.0)) {
+                    cp = Math.log(1.0 - Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
                 }
-            }
-            else {
+            } else {
                 p = Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp;
                 cp = 1.0 - p;
             }
             //swap_tail;
             if (x > 0.0) {
                 temp = p;
-                if(lower) {
+                if (lower) {
                     p = cp;
                 }
                 cp = temp;
             }
-        }
-        else { /* no log_p , large x such that probs are 0 or 1 */
-            if(x > 0) {
+        } else { /* no log_p , large x such that probs are 0 or 1 */
+            if (x > 0) {
                 p = 1.0;
                 cp = 0.0;
-            }
-            else {
+            } else {
                 p = 0.0;
                 cp = 1.0;
             }
@@ -427,11 +421,10 @@ public class NormalDistribution implements Distribution {
     private static final int CUTOFF = 16; /* Cutoff allowing exact "*" and "/" */
 
     private static final double M_SQRT_32 = 5.656854249492380195206754896838; /* The square root of 32 */
-    private static final double M_1_SQRT_2PI =  0.398942280401432677939946059934;
+    private static final double M_1_SQRT_2PI = 0.398942280401432677939946059934;
     private static final double DBL_EPSILON = 2.2204460492503131e-016;
 
-    public static double standardTail(double x, boolean isUpper)
-    {
+    public static double standardTail(double x, boolean isUpper) {
         if (x < 0.0D) {
             isUpper = !isUpper;
             x = -x;
@@ -441,13 +434,10 @@ public class NormalDistribution implements Distribution {
             double d2 = 0.5D * x * x;
             if (x >= 1.28D) {
                 d1 = 0.398942280385D * Math.exp(-d2) / (x - 3.8052E-08D + 1.00000615302D / (x + 0.000398064794D + 1.98615381364D / (x - 0.151679116635D + 5.29330324926D / (x + 4.8385912808D - 15.150897245099999D / (x + 0.742380924027D + 30.789933034000001D / (x + 3.99019417011D))))));
-            }
-            else
-            {
+            } else {
                 d1 = 0.5D - x * (0.398942280444D - 0.399903438504D * d2 / (d2 + 5.75885480458D - 29.821355780800001D / (d2 + 2.62433121679D + 48.6959930692D / (d2 + 5.92885724438D))));
             }
-        }
-        else {
+        } else {
             d1 = 0.0D;
         }
         if (!isUpper) {
@@ -456,19 +446,16 @@ public class NormalDistribution implements Distribution {
         return d1;
     }
 
-    public static double tailCDF(double x, double mu, double sigma)
-    {
+    public static double tailCDF(double x, double mu, double sigma) {
         return standardTail((x - mu) / sigma, true);
     }
 
-    public static double tailCDF(double x, double mu, double sigma, boolean isUpper)
-    {
+    public static double tailCDF(double x, double mu, double sigma, boolean isUpper) {
         return standardTail((x - mu) / sigma, isUpper);
     }
 
 
-    public double tailCDF(double x)
-    {
+    public double tailCDF(double x) {
         return standardTail((x - this.m) / this.sd, true);
     }
 
@@ -499,5 +486,18 @@ public class NormalDistribution implements Distribution {
         testTail(8.25, 0.0, 1.0);
         System.out.println();
         testTail(10, 0.0, 1.0);
+    }
+
+    // RandomGenerator interface
+    public Object nextRandom() {
+        double eps = MathUtils.nextGaussian();
+        eps *= getSD();
+        eps += getMean();
+        return eps;
+    }
+
+    public double logPdf(Object x) {
+        double v = (Double) x;
+        return logPdf(x);
     }
 }

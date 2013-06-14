@@ -244,9 +244,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (driftModels != null) {
             final int dim = driftModels.size();
             double[] drift = new double[dim];
+            double realTimeBranchLength = treeModel.getBranchLength(node);
             for (int i = 0; i < dim; ++i) {
-                drift[i] = driftModels.get(i).getBranchRate(treeModel, node);
-                //          drift[i] = 0.0;
+                drift[i] = driftModels.get(i).getBranchRate(treeModel, node) * realTimeBranchLength;
             }
             return drift;
         } else {
@@ -255,7 +255,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         // But really should get values from driftModel.getBranchRate(treeModel, node);
     }
 
-    public double getRescaledBranchLength(NodeRef node) {
+    public double getRescaledBranchLengthForPrecision(NodeRef node) {
 
         double length = treeModel.getBranchLength(node);
 

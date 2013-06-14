@@ -230,7 +230,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
             NodeRef parent = treeModel.getParent(node);
             double[] parentTrait = treeModel.getMultivariateNodeTrait(parent, traitName);
             double[] childTrait = treeModel.getMultivariateNodeTrait(node, traitName);
-            double time = traitModel.getRescaledBranchLength(node);
+            double time = traitModel.getRescaledBranchLengthForPrecision(node);
 
             if (time > 0) {
 

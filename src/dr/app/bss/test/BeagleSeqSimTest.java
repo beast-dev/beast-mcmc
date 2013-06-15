@@ -1,19 +1,39 @@
-package dr.app.bss.test;
+/*
+ * BeagleSeqSimTest.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
 
-import java.util.ArrayList;
+package dr.app.bss.test;
 
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.tools.BeagleSequenceSimulator;
-import dr.app.beagle.tools.Partition;
 import dr.app.bss.Utils;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -24,341 +44,342 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
+import java.util.ArrayList;
+
 public class BeagleSeqSimTest {
 
-	public static final boolean simulateInPar = true;
-	
-	public static void main(String[] args) {
+    public static final boolean simulateInPar = true;
+
+    public static void main(String[] args) {
 
 //		simulateTopology();
 //		simulateOnePartition();
 //		simulateTwoPartitions();
-		int N = 10000;
-		for (int i = 0; i < N; i++) {
-			simulateThreePartitions();
-			System.gc();
-		}
+        int N = 10000;
+        for (int i = 0; i < N; i++) {
+            simulateThreePartitions();
+        }
 
-	} // END: main
+    } // END: main
 
-	static void simulateTopology() {
+    static void simulateTopology() {
 
-		try {
+        try {
 
-			System.out.println("Test case 1: simulateTopology");
+            System.out.println("Test case 1: simulateTopology");
 
-			MathUtils.setSeed(666);
-			
-			int sequenceLength = 10;
-			ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
+            MathUtils.setSeed(666);
 
-			// create tree
-			NewickImporter importer = new NewickImporter(
-					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-			Tree tree = importer.importTree(null);
+            int sequenceLength = 10;
+            ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
 
-			// set demographic function
-			ExponentialGrowth exponentialGrowth = new ExponentialGrowth(
-					Units.Type.YEARS);
-			exponentialGrowth.setN0(10);
-			exponentialGrowth.setGrowthRate(0.5);
+            // create tree
+            NewickImporter importer = new NewickImporter(
+                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+            Tree tree = importer.importTree(null);
 
-			Taxa taxa = new Taxa();
-			for (Taxon taxon : tree.asList()) {
+            // set demographic function
+            ExponentialGrowth exponentialGrowth = new ExponentialGrowth(
+                    Units.Type.YEARS);
+            exponentialGrowth.setN0(10);
+            exponentialGrowth.setGrowthRate(0.5);
 
-				double absoluteHeight = Utils.getAbsoluteTaxonHeight(taxon,
-						tree);
+            Taxa taxa = new Taxa();
+            for (Taxon taxon : tree.asList()) {
 
-				taxon.setAttribute(Utils.ABSOLUTE_HEIGHT, absoluteHeight);
+                double absoluteHeight = Utils.getAbsoluteTaxonHeight(taxon,
+                        tree);
 
-				// taxon.setAttribute("date", new Date(absoluteHeight,
-				// Units.Type.YEARS, true));
+                taxon.setAttribute(Utils.ABSOLUTE_HEIGHT, absoluteHeight);
 
-				taxa.addTaxon(taxon);
+                // taxon.setAttribute("date", new Date(absoluteHeight,
+                // Units.Type.YEARS, true));
 
-			}// END: taxon loop
+                taxa.addTaxon(taxon);
 
-			CoalescentSimulator topologySimulator = new CoalescentSimulator();
+            }// END: taxon loop
 
-			TreeModel treeModel = new TreeModel(topologySimulator.simulateTree(
-					taxa, exponentialGrowth));
+            CoalescentSimulator topologySimulator = new CoalescentSimulator();
 
-			System.out.println(treeModel.toString());
+            TreeModel treeModel = new TreeModel(topologySimulator.simulateTree(
+                    taxa, exponentialGrowth));
 
-			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-					0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-					freqs);
+            System.out.println(treeModel.toString());
 
-			// create substitution model
-			Parameter kappa = new Parameter.Default(1, 10);
-			HKY hky = new HKY(kappa, freqModel);
-			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
-					hky);
+            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
+                    0.25, 0.25});
+            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+                    freqs);
 
-			// create site model
-			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-					"siteModel");
+            // create substitution model
+            Parameter kappa = new Parameter.Default(1, 10);
+            HKY hky = new HKY(kappa, freqModel);
+            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
+                    hky);
 
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+            // create site model
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+                    "siteModel");
 
-			// create partition
-			Partition2 partition1 = new Partition2(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					0, // from
-					sequenceLength - 1, // to
-					1 // every
-			);
+            // create branch rate model
+            BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
-			partitionsList.add(partition1);
+            // create partition
+            Partition2 partition1 = new Partition2(treeModel, //
+                    substitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    0, // from
+                    sequenceLength - 1, // to
+                    1 // every
+            );
 
-			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
-					partitionsList
-			);
-			
-			System.out.println(simulator.simulate(simulateInPar).toString());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} // END: try-catch block
+            partitionsList.add(partition1);
 
-	}// END: simulate topology
+            // feed to sequence simulator and generate data
+            BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
+                    partitionsList
+            );
 
-	static void simulateOnePartition() {
+            System.out.println(simulator.simulate(simulateInPar).toString());
 
-		try {
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        } // END: try-catch block
 
-			MathUtils.setSeed(666);
+    }// END: simulate topology
 
-			System.out.println("Test case 2: simulateOnePartition");
+    static void simulateOnePartition() {
 
-			int sequenceLength = 10;
-			ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
+        try {
 
-			// create tree
-			NewickImporter importer = new NewickImporter(
-					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+            MathUtils.setSeed(666);
 
-			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-					0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-					freqs);
+            System.out.println("Test case 2: simulateOnePartition");
 
-			// create substitution model
-			Parameter kappa = new Parameter.Default(1, 10);
-			HKY hky = new HKY(kappa, freqModel);
-			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
-					hky);
+            int sequenceLength = 10;
+            ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
 
-			// create site model
-			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-					"siteModel");
+            // create tree
+            NewickImporter importer = new NewickImporter(
+                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+            Tree tree = importer.importTree(null);
+            TreeModel treeModel = new TreeModel(tree);
 
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+            // create Frequency Model
+            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
+                    0.25, 0.25});
+            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+                    freqs);
 
-			// create partition
-			Partition2 partition1 = new Partition2(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					0, // from
-					sequenceLength - 1, // to
-					1 // every
-			);
+            // create substitution model
+            Parameter kappa = new Parameter.Default(1, 10);
+            HKY hky = new HKY(kappa, freqModel);
+            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
+                    hky);
+
+            // create site model
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+                    "siteModel");
+
+            // create branch rate model
+            BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+            // create partition
+            Partition2 partition1 = new Partition2(treeModel, //
+                    substitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    0, // from
+                    sequenceLength - 1, // to
+                    1 // every
+            );
 
 //			Sequence ancestralSequence = new Sequence();
 //			ancestralSequence.appendSequenceString("TCAAGTGAGG");
 //			partition1.setAncestralSequence(ancestralSequence);
 
-			partitionsList.add(partition1);
+            partitionsList.add(partition1);
 
-			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
-					partitionsList
-			// , sequenceLength
-			);
+            // feed to sequence simulator and generate data
+            BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
+                    partitionsList
+                    // , sequenceLength
+            );
 
-			System.out.println(simulator.simulate(simulateInPar).toString());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} // END: try-catch block
+            System.out.println(simulator.simulate(simulateInPar).toString());
 
-	}// END: simulateOnePartition
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        } // END: try-catch block
 
-	static void simulateTwoPartitions() {
+    }// END: simulateOnePartition
 
-		try {
+    static void simulateTwoPartitions() {
 
-			System.out.println("Test case 3: simulateTwoPartitions");
+        try {
 
-			int sequenceLength = 11;
-			ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
+            System.out.println("Test case 3: simulateTwoPartitions");
 
-			// create tree
-			NewickImporter importer = new NewickImporter(
-					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+            int sequenceLength = 11;
+            ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
 
-			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-					0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-					freqs);
+            // create tree
+            NewickImporter importer = new NewickImporter(
+                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+            Tree tree = importer.importTree(null);
+            TreeModel treeModel = new TreeModel(tree);
 
-			// create substitution model
-			Parameter kappa = new Parameter.Default(1, 10);
-			HKY hky = new HKY(kappa, freqModel);
-			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
-					hky);
+            // create Frequency Model
+            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
+                    0.25, 0.25});
+            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+                    freqs);
 
-			// create site model
-			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-					"siteModel");
+            // create substitution model
+            Parameter kappa = new Parameter.Default(1, 10);
+            HKY hky = new HKY(kappa, freqModel);
+            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
+                    hky);
 
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+            // create site model
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+                    "siteModel");
 
-			// create partition
-			Partition2 partition1 = new Partition2(treeModel, //
-					substitutionModel, //
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					0, // from
-					3, // to
-					1 // every
-			);
+            // create branch rate model
+            BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
-			// create partition
-			Partition2 partition2 = new Partition2(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					4, // from
-					sequenceLength - 1, // to
-					1 // every
-			);
+            // create partition
+            Partition2 partition1 = new Partition2(treeModel, //
+                    substitutionModel, //
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    0, // from
+                    3, // to
+                    1 // every
+            );
 
-			// Sequence ancestralSequence = new Sequence();
-			// ancestralSequence.appendSequenceString("TCAAGTGAGG");
-			// partition2.setAncestralSequence(ancestralSequence);
+            // create partition
+            Partition2 partition2 = new Partition2(treeModel, //
+                    substitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    4, // from
+                    sequenceLength - 1, // to
+                    1 // every
+            );
 
-			partitionsList.add(partition1);
-			partitionsList.add(partition2);
+            // Sequence ancestralSequence = new Sequence();
+            // ancestralSequence.appendSequenceString("TCAAGTGAGG");
+            // partition2.setAncestralSequence(ancestralSequence);
 
-			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
-					partitionsList);
-			
-			System.out.println(simulator.simulate(simulateInPar).toString());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} // END: try-catch block
+            partitionsList.add(partition1);
+            partitionsList.add(partition2);
 
-	}// END: simulateTwoPartitions
+            // feed to sequence simulator and generate data
+            BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
+                    partitionsList);
 
-	static void simulateThreePartitions() {
+            System.out.println(simulator.simulate(simulateInPar).toString());
 
-		try {
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        } // END: try-catch block
 
-			
-			MathUtils.setSeed(666);
-			
-			System.out.println("Test case 4: simulateThreePartitions");
+    }// END: simulateTwoPartitions
 
-			int sequenceLength = 10;
-			ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
+    static void simulateThreePartitions() {
 
-			// create tree
-			NewickImporter importer = new NewickImporter(
-					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+        try {
 
-			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-					0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-					freqs);
 
-			// create substitution model
-			Parameter kappa = new Parameter.Default(1, 10);
-			HKY hky = new HKY(kappa, freqModel);
-			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
-					hky);
+            MathUtils.setSeed(666);
 
-			// create site model
-			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-					"siteModel");
+            System.out.println("Test case 4: simulateThreePartitions");
 
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+            int sequenceLength = 10;
+            ArrayList<Partition2> partitionsList = new ArrayList<Partition2>();
 
-			// create partition
-			Partition2 partition1 = new Partition2(treeModel, //
-					substitutionModel, //
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					0, // from
-					sequenceLength - 1, // to
-					3 // every
-			);
+            // create tree
+            NewickImporter importer = new NewickImporter(
+                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+            Tree tree = importer.importTree(null);
+            TreeModel treeModel = new TreeModel(tree);
 
-			// create partition
-			Partition2 partition2 = new Partition2(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					1, // from
-					sequenceLength - 1, // to
-					3 // every
-			);
+            // create Frequency Model
+            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
+                    0.25, 0.25});
+            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+                    freqs);
 
-			// create partition
-			Partition2 partition3 = new Partition2(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					2, // from
-					sequenceLength - 1, // to
-					3 // every
-			);
+            // create substitution model
+            Parameter kappa = new Parameter.Default(1, 10);
+            HKY hky = new HKY(kappa, freqModel);
+            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
+                    hky);
 
-			partitionsList.add(partition1);
-			partitionsList.add(partition2);
-			partitionsList.add(partition3);
+            // create site model
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+                    "siteModel");
 
-			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
-					partitionsList);
-			
-			System.out.println(simulator.simulate(simulateInPar).toString());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} // END: try-catch block
+            // create branch rate model
+            BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
-	}// END: simulateThreePartitions
-	
+            // create partition
+            Partition2 partition1 = new Partition2(treeModel, //
+                    substitutionModel, //
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    0, // from
+                    sequenceLength - 1, // to
+                    3 // every
+            );
+
+            // create partition
+            Partition2 partition2 = new Partition2(treeModel, //
+                    substitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    1, // from
+                    sequenceLength - 1, // to
+                    3 // every
+            );
+
+            // create partition
+            Partition2 partition3 = new Partition2(treeModel, //
+                    substitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    2, // from
+                    sequenceLength - 1, // to
+                    3 // every
+            );
+
+            partitionsList.add(partition1);
+            partitionsList.add(partition2);
+            partitionsList.add(partition3);
+
+            // feed to sequence simulator and generate data
+            BeagleSequenceSimulator2 simulator = new BeagleSequenceSimulator2(
+                    partitionsList);
+
+            System.out.println(simulator.simulate(simulateInPar).toString());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        } // END: try-catch block
+
+    }// END: simulateThreePartitions
+
 }// END: class

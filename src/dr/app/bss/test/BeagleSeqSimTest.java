@@ -358,4 +358,91 @@ public class BeagleSeqSimTest {
 
 	}// END: simulateThreePartitions
 
+//	static void simulateThreePartitions() {
+//
+//		try {
+//
+//			
+//			MathUtils.setSeed(666);
+//			
+//			System.out.println("Test case 3: simulateThreePartitions");
+//
+//			int sequenceLength = 10;
+//			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+//
+//			// create tree
+//			NewickImporter importer = new NewickImporter(
+//					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+//			Tree tree = importer.importTree(null);
+//			TreeModel treeModel = new TreeModel(tree);
+//
+//			// create Frequency Model
+//			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
+//					0.25, 0.25 });
+//			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+//					freqs);
+//
+//			// create substitution model
+//			Parameter kappa = new Parameter.Default(1, 10);
+//			HKY hky = new HKY(kappa, freqModel);
+//			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
+//					hky);
+//
+//			// create site model
+//			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//					"siteModel");
+//
+//			// create branch rate model
+//			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+//
+//			// create partition
+//			Partition partition1 = new Partition(treeModel, //
+//					substitutionModel, //
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					0, // from
+//					sequenceLength - 1, // to
+//					3 // every
+//			);
+//
+//			// create partition
+//			Partition partition2 = new Partition(treeModel, //
+//					substitutionModel,//
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					1, // from
+//					sequenceLength - 1, // to
+//					3 // every
+//			);
+//
+//			// create partition
+//			Partition partition3 = new Partition(treeModel, //
+//					substitutionModel,//
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					2, // from
+//					sequenceLength - 1, // to
+//					3 // every
+//			);
+//
+//			partitionsList.add(partition1);
+//			partitionsList.add(partition2);
+//			partitionsList.add(partition3);
+//
+//			// feed to sequence simulator and generate data
+//			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
+//					partitionsList);
+//			
+//			System.out.println(simulator.simulate(simulateInPar).toString());
+//			
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		} // END: try-catch block
+//
+//	}// END: simulateThreePartitions
+	
 }// END: class

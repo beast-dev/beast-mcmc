@@ -28,14 +28,13 @@ package dr.app.bss.test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import org.apache.commons.math.random.MersenneTwister;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
@@ -61,8 +60,6 @@ public class BeagleSequenceSimulator2 {
 	private final int gapFlag = Integer.MAX_VALUE;
 	private SimpleAlignment alignment;
 
-//	private List<MersenneTwister> randomList = new ArrayList<1MersenneTwister>();
-
 	public BeagleSequenceSimulator2(ArrayList<Partition2> partitions) {
 
 		this.partitions = partitions;
@@ -83,10 +80,6 @@ public class BeagleSequenceSimulator2 {
 		this.siteCount = siteCount + 1;
 	}// END: Constructor
 
-	private MersenneTwister getNextMersenneTwister(int paritionNumber) {
-		return new MersenneTwister(MathUtils.nextLong());
-	}
-
 	public Alignment simulate(boolean parallel) {
 
 		try {
@@ -98,12 +91,10 @@ public class BeagleSequenceSimulator2 {
 						.availableProcessors());
 			}
 
-//			for (int i = 0; i < partitions.size(); i++) {
-//				randomList.add(getNextMersenneTwister(i));
-//			}
-
+			MathUtils.setSeed(666);
+			
 			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
-			ArrayList<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
+			List<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
 
 			int partitionCount = 0;
 			for (Partition2 partition : partitions) {
@@ -155,6 +146,7 @@ public class BeagleSequenceSimulator2 {
 
 	}// END: simulatePartitionCallable class
 
+	//TODO: simplify
 	private SimpleAlignment compileAlignment() {
 
 		SimpleAlignment simpleAlignment = new SimpleAlignment();

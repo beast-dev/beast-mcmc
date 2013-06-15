@@ -593,6 +593,8 @@ public class BeagleSequenceSimulator {
 		for (int i = 0; i < pdf.length; i++) {
 			System.out.println(i + "\t" + pdf[i]);
 		}
+		
+		System.exit(-1);
 		throw new RuntimeException(
 				"randomChoiceUnnormalized falls through -- negative components in input distribution?");
 	}

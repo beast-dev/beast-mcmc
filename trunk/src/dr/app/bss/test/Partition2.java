@@ -53,9 +53,6 @@ public class Partition2 {
 
 	private static final boolean DEBUG = true;
 
-	// private boolean hasAncestralSequence = false;
-	// private Sequence ancestralSequence = null;
-	
 	// Constructor fields
 	public int from;
 	public int to;
@@ -89,7 +86,11 @@ public class Partition2 {
 	// Sequence fields
 	private Map<Taxon, int[]> sequenceList;
 	private DataType dataType;
-
+	// private boolean hasAncestralSequence = false;
+	// private Sequence ancestralSequence = null;
+	
+	private MersenneTwister random;
+	
 	public Partition2(TreeModel treeModel, //
 			BranchModel branchModel, //
 			GammaSiteRateModel siteModel, //
@@ -118,6 +119,7 @@ public class Partition2 {
 		loadBeagleInstance();
 
 		sequenceList = new HashMap<Taxon, int[]>();
+		random = new MersenneTwister(MathUtils.nextLong());
 		
 	}// END: Constructor
 
@@ -224,16 +226,21 @@ public class Partition2 {
 			int[] partitionSequence = new int[partitionSiteCount];
 			double[] cProb = new double[stateCount];
 
-			double[][] probabilities = getTransitionProbabilities(child,
-					categoryCount, stateCount);
+			double[][] probabilities = getTransitionProbabilities(child, categoryCount, stateCount);
 
+//			synchronized (this) {
+//				Utils.print2DArray(probabilities);
+//			}
+			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
-				System.arraycopy(probabilities[category[i]], parentSequence[i]
-						* stateCount, cProb, 0, stateCount);
+				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
 
-				partitionSequence[i] = randomChoicePDF(cProb, partitionNumber,
-						"seq");
+//				synchronized (this) {
+//					Utils.printArray(cProb);
+//				}
+				
+				partitionSequence[i] = randomChoicePDF(cProb, partitionNumber, "seq");
 
 			}
 
@@ -244,8 +251,7 @@ public class Partition2 {
 
 			} // END: tip node check
 
-			traverse(treeModel.getChild(node, iChild), partitionSequence,
-					category, categoryCount);
+			traverse(treeModel.getChild(node, iChild), partitionSequence, category, categoryCount);
 
 		}// END: child nodes loop
 
@@ -291,6 +297,11 @@ public class Partition2 {
 		return probabilities;
 	}// END: getTransitionProbabilities
 
+//	private MersenneTwister getNextMersenneTwister(int paritionNumber) {
+//	return new MersenneTwister(MathUtils.nextLong());
+//}
+	
+	
 	private double getTotal(double[] array, int start, int end) {
 		double total = 0.0;
 		for (int i = start; i < end; i++) {
@@ -301,7 +312,7 @@ public class Partition2 {
 
 	private int randomChoicePDF(double[] pdf, int partitionNumber, String error) {
 
-		MersenneTwister random = new MersenneTwister(MathUtils.nextLong());
+//		MersenneTwister random = getNextMersenneTwister(partitionNumber);
 
 		double U = random.nextDouble() * getTotal(pdf, 0, pdf.length);
 		for (int i = 0; i < pdf.length; i++) {

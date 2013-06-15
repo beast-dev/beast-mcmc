@@ -297,11 +297,6 @@ public class Partition2 {
 		return probabilities;
 	}// END: getTransitionProbabilities
 
-//	private MersenneTwister getNextMersenneTwister(int paritionNumber) {
-//	return new MersenneTwister(MathUtils.nextLong());
-//}
-	
-	
 	private double getTotal(double[] array, int start, int end) {
 		double total = 0.0;
 		for (int i = start; i < end; i++) {
@@ -311,8 +306,6 @@ public class Partition2 {
 	}// END: getTotal
 
 	private int randomChoicePDF(double[] pdf, int partitionNumber, String error) {
-
-//		MersenneTwister random = getNextMersenneTwister(partitionNumber);
 
 		double U = random.nextDouble() * getTotal(pdf, 0, pdf.length);
 		for (int i = 0; i < pdf.length; i++) {

@@ -34,6 +34,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
@@ -46,6 +47,7 @@ import dr.xml.XMLSyntaxRule;
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
+	public static final String PARALLEL = "parallel";
 	
 	public String getParserName() {
 		return BEAGLE_SEQUENCE_SIMULATOR;
@@ -65,6 +67,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public XMLSyntaxRule[] getSyntaxRules() {
 		
 		return new XMLSyntaxRule[] {
+				AttributeRule.newBooleanRule(PARALLEL, true, "Whether to use multiple Beagle instances for simulation, default is false (sequential execution)."),
 				new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
 				};
 		
@@ -72,10 +75,15 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-		
+
 		String msg = "";
 		int siteCount = 0;
-
+		boolean parallel = false;
+		
+		if (xo.hasAttribute(PARALLEL)) {
+			parallel = xo.getBooleanAttribute(PARALLEL);
+		}
+		
 		for (int i = 0; i < xo.getChildCount(); i++) {
 			Partition partition = (Partition) xo.getChild(i);
 			siteCount += partition.getPartitionSiteCount();
@@ -127,7 +135,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		
 		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
 
-		return s.simulate(false);
+		return s.simulate(parallel);
 	}// END: parseXMLObject
 
 }// END: class

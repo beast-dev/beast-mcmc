@@ -168,6 +168,8 @@ public class Partition2 {
 
     public void simulatePartition() {
 
+        try {
+    	
         NodeRef root = treeModel.getRoot();
 
         // gamma category rates
@@ -211,12 +213,13 @@ public class Partition2 {
 
         }
 
-        try {
             beagle.finalize();
+        } catch (Exception e) {
+            e.printStackTrace();
         } catch (Throwable e) {
             System.err.println("BeagleException: " + e.getMessage());
             System.exit(-1);
-        }
+		}
 
     }// END: simulatePartition
 

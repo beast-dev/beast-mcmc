@@ -122,11 +122,10 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// file chooser
 	public void doExport() {
 
-		//TODO: some action if topology not loaded
-		if (dataList.treeFileList.size() == 0){
+		if (getTreesCount() == 0){
 
 			tabbedPane.setSelectedComponent(treesPanel);
-//			treePanels.doImportTree(row);
+	         Utils.showDialog("Please load a tree file before generating alignment.");
 		
 		} else {
 
@@ -227,6 +226,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 				} catch (Exception e) {
 					Utils.handleException(e);
+					setStatus("Exception occured.");
+					setIdle();
 				}
 
 				return null;
@@ -251,14 +252,14 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	// ---GENERATE XML---//
 	// ////////////////////
 
-	// TODO: some action if topology not loaded
 	public final void doGenerateXML() {
 
-		if (dataList.treeFileList.size() == 0) {
+		if (getTreesCount() == 0) {
 
 			tabbedPane.setSelectedComponent(treesPanel);
-//			treePanel.doImportTree();
-
+            Utils.showDialog("Please load a tree file before generating XML.");
+			
+			
 		} else {
 
 			JFileChooser chooser = new JFileChooser();
@@ -301,6 +302,8 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 				} catch (Exception e) {
 					Utils.handleException(e);
+					setStatus("Exception occured.");
+					setIdle();
 				}
 
 				return null;
@@ -644,6 +647,18 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 	}// END: enableTaxaPanel
 
+	private int getTreesCount() {
+		int treesCount = 0;
+		for (File file : dataList.treeFileList) {
+			if (file.toString() != "") {
+				treesCount++;
+			}
+
+		}
+
+		return treesCount;
+	}// END: getTreesCount
+	
 	@Override
 	public JComponent getExportableComponent() {
 		JComponent exportable = null;

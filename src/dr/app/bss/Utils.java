@@ -757,9 +757,9 @@ public class Utils {
 		string += ("Every: " + data.every)+ ("\n");
 
 		string += ("Branch Substitution model: ") + branchSubstitutionModelToString(data) + ("\n");
-		string += ("Branch Substitution model: ") + siteRateModelToString(data) + ("\n");
-		string += ("Branch Substitution model: ") + clockRateModelToString(data) + ("\n");
-		string += ("Branch Substitution model: ") + frequencyModelToString(data) + ("\n");
+		string += ("Site Rate model: ") + siteRateModelToString(data) + ("\n");
+		string += ("Clock Rate model: ") + clockRateModelToString(data) + ("\n");
+		string += ("Frequency model: ") + frequencyModelToString(data) + ("\n");
 
 		return string;
 	}// END: partitionDataToString

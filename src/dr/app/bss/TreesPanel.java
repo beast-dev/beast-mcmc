@@ -32,7 +32,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
 	private JScrollPane scrollPane;
 	private TableColumn column;
-	private int treesCount;
+	private int rowCount;
 
 	private Action addTreeAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
@@ -45,9 +45,9 @@ public class TreesPanel extends JPanel implements Exportable {
 
 	private Action removeTreeAction = new AbstractAction("-") {
 		public void actionPerformed(ActionEvent ae) {
-			if (treesCount > 1) {
+			if (rowCount > 1) {
 
-				treesTableModel.deleteRow(treesCount - 1);
+				treesTableModel.deleteRow(rowCount - 1);
 				frame.fireTaxaChanged();
 				setTrees();
 
@@ -109,10 +109,10 @@ public class TreesPanel extends JPanel implements Exportable {
 
 	private void setTrees() {
 
-		treesCount = dataList.treeFileList.size();
+		rowCount = dataList.treeFileList.size();
 
 		addTreeAction.setEnabled(true);
-		if (treesCount == 1) {
+		if (rowCount == 1) {
 			removeTreeAction.setEnabled(false);
 		} else {
 			removeTreeAction.setEnabled(true);

@@ -75,7 +75,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	@Override
 	protected void initializeComponents() {
 
-		setSize(new Dimension(1100, 600));
+		setSize(new Dimension(1200, 600));
 		setMinimumSize(new Dimension(260, 100));
 
 		taxaPanel = new TaxaPanel(dataList);
@@ -125,7 +125,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		if (getTreesCount() == 0){
 
 			tabbedPane.setSelectedComponent(treesPanel);
-	         Utils.showDialog("Please load a tree file before generating alignment.");
+	         Utils.showDialog("Please load at least one tree file before generating alignment.");
 		
 		} else {
 
@@ -203,6 +203,10 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 										data.every // every
 								);
 
+								if(data.ancestralSequenceString != "") {
+									partition.setAncestralSequence(data.createAncestralSequence());
+								}
+								
 								partitionsList.add(partition);
 
 							}
@@ -257,7 +261,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		if (getTreesCount() == 0) {
 
 			tabbedPane.setSelectedComponent(treesPanel);
-            Utils.showDialog("Please load a tree file before generating XML.");
+            Utils.showDialog("Please load at least one tree file before generating XML.");
 			
 			
 		} else {

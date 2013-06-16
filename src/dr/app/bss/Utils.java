@@ -62,7 +62,9 @@ public class Utils {
 	public static final String CLOSE_ICON = "icons/close.png";
 	public static final String BIOHAZARD_ICON = "icons/biohazard.png";
 	public static final String BUBBLE_BLUE_ICON = "icons/bubble-blue.png";
-
+	public static final String SAVE_ICON = "icons/save.png";
+	public static final String TEXT_FILE_ICON = "icons/file.png";
+	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////

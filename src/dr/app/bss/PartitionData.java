@@ -17,6 +17,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
+import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
@@ -727,9 +728,9 @@ public class PartitionData implements Serializable {
 		return frequencyModel;
 	}// END: createFrequencyModel
 
-	// ////////////////////////
-	// ---SITE RATE MODELS---//
-	// ////////////////////////
+	// ///////////////////////
+	// ---SITE RATE MODEL---//
+	// ///////////////////////
 
 	public int siteRateModelIndex = 0;
 
@@ -781,6 +782,20 @@ public class PartitionData implements Serializable {
 
 		return siteModel;
 	}// END: createGammaSiteRateModel
-
+	
+	// //////////////////////////
+	// ---ANCESTRAL SEQUENCE---//
+	// //////////////////////////
+	public String ancestralSequenceString = "";
+	
+	public Sequence createAncestralSequence() {
+		
+		Sequence sequence = new Sequence(ancestralSequenceString);
+//		sequence.appendSequenceString(ancestralSequenceString);
+		
+		return sequence;
+	}
+	
+	
 }// END: class
 

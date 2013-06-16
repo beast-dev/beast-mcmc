@@ -126,11 +126,11 @@ public class BeagleSequenceSimulator {
 			while (!executor.isTerminated()) {
 			}
 
+			alignment = compileAlignment();
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}// END: try-catch block
-
-		alignment = compileAlignment();
 
 		return alignment;
 	}// END: simulate
@@ -145,13 +145,13 @@ public class BeagleSequenceSimulator {
 
 		public Void call() {
 
-			try {
+//			try {
 
 				partition.simulatePartition();
 
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+//			} catch (Exception e) {
+//				e.printStackTrace();
+//			}
 
 			return null;
 		}// END: call

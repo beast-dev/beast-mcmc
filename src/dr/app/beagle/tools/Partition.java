@@ -206,7 +206,7 @@ public class Partition {
 
 					throw new RuntimeException("Ancestral sequence length of "
 							+ ancestralSequence.getLength()
-							+ "does not match partition site count of "
+							+ " does not match partition site count of "
 							+ partitionSiteCount + ".");
 
 				}
@@ -436,6 +436,10 @@ public class Partition {
 		return sequenceList;
 	}// END: getSequenceList
 
+	public Sequence getAncestralSequence() {
+		return ancestralSequence;
+	}
+	
 	// ///////////////
 	// --DEBUGGING--//
 	// ///////////////
@@ -444,9 +448,5 @@ public class Partition {
 		System.out.println("partition " + partitionNumber);
 		Utils.printMap(sequenceList);
 	}// END: printSequences
-
-	public Sequence getAncestralSequence() {
-		return ancestralSequence;
-	}
 
 }// END: class

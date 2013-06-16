@@ -135,7 +135,7 @@ public class FrequencyModelEditor {
 			setFrequencyArguments();
 
 		}// END: actionPerformed
-	}// END: ListenClockCombo
+	}// END: ListenFrequencyCombo
 
 	public void collectSettings() {
 

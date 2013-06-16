@@ -28,6 +28,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int SITE_RATE_MODEL_INDEX = 6;
 	public final static int CLOCK_RATE_MODEL_INDEX = 7;
 	public final static int FREQUENCY_MODEL_INDEX = 8;
+	public final static int ANCESTRAL_SEQUENCE_INDEX = 9;
 	
 	public static String[] COLUMN_NAMES = { "Tree Model", //
 			// "Data Type",
@@ -38,7 +39,8 @@ public class PartitionTableModel extends AbstractTableModel {
 			"Branch Substitution Model", //
 			"Site Rate Model", //
 			"Clock Rate Model", //
-			"Frequency Model" //
+			"Frequency Model", //
+			"Ancestral Sequence" //
 	};
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
@@ -46,6 +48,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			// JComboBox.class, //
 			Integer.class, //
 			Integer.class, Integer.class, //
+			JButton.class, //
 			JButton.class, //
 			JButton.class, //
 			JButton.class, //
@@ -58,6 +61,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	private SiteRateModelEditor siteRateModelEditor;
 	private ClockRateModelEditor clockRateModelEditor;
 	private FrequencyModelEditor frequencyModelEditor;
+	private AncestralSequenceEditor ancestralSequenceEditor;
 	
 	public PartitionTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
@@ -72,7 +76,6 @@ public class PartitionTableModel extends AbstractTableModel {
 		dataList.add(new PartitionData());
 		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
 	}
-
 
 	public void deleteRow(int row) {
 		dataList.remove(row);
@@ -115,6 +118,8 @@ public class PartitionTableModel extends AbstractTableModel {
 		case CLOCK_RATE_MODEL_INDEX:
 			return false;
 		case FREQUENCY_MODEL_INDEX:
+			return false;
+		case ANCESTRAL_SEQUENCE_INDEX:
 			return false;
 		default:
 			return false;
@@ -186,7 +191,12 @@ public class PartitionTableModel extends AbstractTableModel {
 			frequencyModelButton
 					.addActionListener(new ListenOpenFrequencyModelEditor(row));
 			return frequencyModelButton;
-
+			
+		case ANCESTRAL_SEQUENCE_INDEX:
+			
+			final JButton ancestralSequenceButton = new JButton(COLUMN_NAMES[column]);
+			ancestralSequenceButton.addActionListener(new ListenOpenAncestralSequenceEditor(row));
+			return ancestralSequenceButton;
 		default:
 			return "Error";
 		}
@@ -327,6 +337,22 @@ public class PartitionTableModel extends AbstractTableModel {
 		}// END: actionPerformed
 	}// END: ListenOpenSiteRateModelEditor
 
+	
+	private class ListenOpenAncestralSequenceEditor implements ActionListener {
+		private int row;
+
+		public ListenOpenAncestralSequenceEditor(int row) {
+			this.row = row;
+		}
+
+		public void actionPerformed(ActionEvent ev) {
+
+			ancestralSequenceEditor = new AncestralSequenceEditor(dataList, row);
+			ancestralSequenceEditor.launch();
+
+		}// END: actionPerformed
+	}// END: ListenOpenAncestralSequenceEditor
+	
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}

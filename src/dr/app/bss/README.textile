@@ -20,16 +20,12 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* display tree filename w-out canonical path in partitions panel combobox (also when clicked)
-* nucleotide/codon frequencies with compatible substitution models
-* parallel tree traversal:
-  # start asynch task
-  tree -> left
-  # start asynch task
-  tree -> right
-  # wait
-* frequency labels for codon triplets
-* ancestral sequence in XML Generator and GUI
+* display tree filename w-out canonical path in partitions panel combobox (also when clicked) - wrapper
+* ancestral sequence in CLI
+* handle wrong ancestral sequence length exception on UI level
 * command line interface
   - complex argument for partitions 
+* nucleotide/codon frequencies with compatible substitution models
+* frequency labels for codon triplets
 * simulating indels  
+

@@ -52,11 +52,11 @@ public class BeagleSeqSimTest {
 
     public static void main(String[] args) {
 
+        int N = 10000;
+        for (int i = 0; i < N; i++) {
 //		simulateTopology();
 //		simulateOnePartition();
 //		simulateTwoPartitions();
-        int N = 10000;
-        for (int i = 0; i < N; i++) {
             simulateThreePartitions();
         }
 

@@ -422,9 +422,21 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
         return order;
     }
+    
+    public TipStatesModel getTipStatesModel() {
+    	return tipStatesModel;
+    }
+    
+    public PatternList getPatternsList() {
+    	return patternList;
+    }
 
     public TreeModel getTreeModel() {
         return treeModel;
+    }
+    
+    public BranchModel getBranchModel() {
+    	return branchModel;
     }
 
     public SiteRateModel getSiteRateModel() {
@@ -433,6 +445,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     public BranchRateModel getBranchRateModel() {
         return branchRateModel;
+    }
+    
+    public PartialsRescalingScheme getRescalingScheme() {
+    	return rescalingScheme;
+    }
+    
+    public Map<Set<String>, Parameter> getPartialsRestrictions() {
+    	return partialsRestrictions;
+    }
+    
+    public boolean useAmbiguities() {
+    	return useAmbiguities;
     }
 
     protected int getScaleBufferCount() {

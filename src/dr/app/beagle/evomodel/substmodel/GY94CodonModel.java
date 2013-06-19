@@ -1,7 +1,7 @@
 /*
  * GY94CodonModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,92 +25,88 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 
 /**
  * Yang model of codon evolution
  *
- * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Marc A. Suchard
+ * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
-public class GY94CodonModel extends BaseSubstitutionModel
-{
-	/** kappa */
-	protected Parameter kappaParameter;
+public class GY94CodonModel extends AbstractCodonModel {
+    /**
+     * kappa
+     */
+    protected Parameter kappaParameter;
 
-	/** omega */
-	protected Parameter omegaParameter;
-
-	protected byte[] rateMap;
-
-    protected Codons codonDataType;
-    protected GeneticCode geneticCode;
-
+    /**
+     * omega
+     */
+    protected Parameter omegaParameter;
 
     public GY94CodonModel(Codons codonDataType, Parameter omegaParameter, Parameter kappaParameter,
                           FrequencyModel freqModel) {
         this(codonDataType, omegaParameter, kappaParameter, freqModel,
                 new DefaultEigenSystem(codonDataType.getStateCount()));
     }
-                    
-	public GY94CodonModel(Codons codonDataType,
-							Parameter omegaParameter,
-							Parameter kappaParameter,
-							FrequencyModel freqModel, EigenSystem eigenSystem)
-	{
-		super("GY94", codonDataType, freqModel, eigenSystem);
 
-        this.codonDataType = codonDataType;
-        this.geneticCode = codonDataType.getGeneticCode();
-        
-		this.omegaParameter = omegaParameter;
-		addVariable(omegaParameter);
-		omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
-				omegaParameter.getDimension()));
+    public GY94CodonModel(Codons codonDataType,
+                          Parameter omegaParameter,
+                          Parameter kappaParameter,
+                          FrequencyModel freqModel, EigenSystem eigenSystem) {
 
-		this.kappaParameter = kappaParameter;
-		addVariable(kappaParameter);
-		kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
-				kappaParameter.getDimension()));
+        super(codonDataType, freqModel, eigenSystem);
 
-		constructRateMap();
+        this.omegaParameter = omegaParameter;
+        addVariable(omegaParameter);
+        omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+                omegaParameter.getDimension()));
+
+        this.kappaParameter = kappaParameter;
+        addVariable(kappaParameter);
+        kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
+                kappaParameter.getDimension()));
 
         addStatistic(synonymousRateStatistic);
-	}
+    }
 
-	/**
-	 * set kappa
+    /**
+     * set kappa
+     *
      * @param kappa kappa
-	 */
-	public void setKappa(double kappa) {
-		kappaParameter.setParameterValue(0, kappa);
-		updateMatrix = true;
-	}
+     */
+    public void setKappa(double kappa) {
+        kappaParameter.setParameterValue(0, kappa);
+        updateMatrix = true;
+    }
 
-	/**
-	 * @return kappa
-	 */
-	public double getKappa() { return kappaParameter.getParameterValue(0); }
+    /**
+     * @return kappa
+     */
+    public double getKappa() {
+        return kappaParameter.getParameterValue(0);
+    }
 
-	/**
-	 * set dN/dS
+    /**
+     * set dN/dS
+     *
      * @param omega omega
-	 */
-	public void setOmega(double omega) {
-		omegaParameter.setParameterValue(0, omega);
-		updateMatrix = true;
-	}
+     */
+    public void setOmega(double omega) {
+        omegaParameter.setParameterValue(0, omega);
+        updateMatrix = true;
+    }
 
-
-	/**
-	 * @return dN/dS
-	 */
-	public double getOmega() { return omegaParameter.getParameterValue(0); }
+    /**
+     * @return dN/dS
+     */
+    public double getOmega() {
+        return omegaParameter.getParameterValue(0);
+    }
 
     public double getSynonymousRate() {
         double k = getKappa();
@@ -122,167 +118,45 @@ public class GY94CodonModel extends BaseSubstitutionModel
         return 0;
     }
 
-    protected void frequenciesChanged() {
-    }
-
-    protected void ratesChanged() {
-    }
-
     protected void setupRelativeRates(double[] rates) {
 
-		double kappa = getKappa();
-		double omega = getOmega();
-		for (int i = 0; i < rateCount; i++) {
-			switch (rateMap[i]) {
-				case 0: rates[i] = 0.0; break;			// codon changes in more than one codon position
-				case 1: rates[i] = kappa; break;		// synonymous transition
-				case 2: rates[i] = 1.0; break;			// synonymous transversion
-				case 3: rates[i] = kappa * omega; break;// non-synonymous transition
-				case 4: rates[i] = omega; break;		// non-synonymous transversion
-			}
-		}
-	}
-
-	/**
-	 * Construct a map of the rate classes in the rate matrix using the current
-	 * genetic code. Classes:
-	 *		0: codon changes in more than one codon position (or stop codons)
-	 *		1: synonymous transition
-	 *		2: synonymous transversion
-	 *		3: non-synonymous transition
-	 *		4: non-synonymous transversion
-	 */
-	protected void constructRateMap()
-	{
-        // Refactored into static function, since CodonProductChains need this functionality
-        rateMap = Codons.constructRateMap(rateCount, stateCount, codonDataType, geneticCode);
-	}
-
-    public void printRateMap()
-    {
-        int u, v, i1, j1, k1, i2, j2, k2;
-        byte rateClass;
-        int[] codon;
-        int cs1, cs2, aa1, aa2;
-
-        System.out.print("\t");
-        for (v = 0; v < stateCount; v++) {
-            codon = codonDataType.getTripletStates(v);
-            i2 = codon[0];
-            j2 = codon[1];
-            k2 = codon[2];
-
-            System.out.print("\t" + Nucleotides.INSTANCE.getChar(i2));
-            System.out.print(Nucleotides.INSTANCE.getChar(j2));
-            System.out.print(Nucleotides.INSTANCE.getChar(k2));
-        }
-        System.out.println();
-
-        System.out.print("\t");
-        for (v = 0; v < stateCount; v++) {
-            codon = codonDataType.getTripletStates(v);
-            i2 = codon[0];
-            j2 = codon[1];
-            k2 = codon[2];
-
-            cs2 = codonDataType.getState(i2, j2, k2);
-            aa2 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs2));
-            System.out.print("\t" + AminoAcids.INSTANCE.getChar(aa2));
-        }
-        System.out.println();
-
-        for (u = 0; u < stateCount; u++) {
-
-            codon = codonDataType.getTripletStates(u);
-            i1 = codon[0];
-            j1 = codon[1];
-            k1 = codon[2];
-
-            System.out.print(Nucleotides.INSTANCE.getChar(i1));
-            System.out.print(Nucleotides.INSTANCE.getChar(j1));
-            System.out.print(Nucleotides.INSTANCE.getChar(k1));
-
-            cs1 = codonDataType.getState(i1, j1, k1);
-            aa1 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs1));
-
-            System.out.print("\t" + AminoAcids.INSTANCE.getChar(aa1));
-
-            for (v = 0; v < stateCount; v++) {
-
-                codon = codonDataType.getTripletStates(v);
-                i2 = codon[0];
-                j2 = codon[1];
-                k2 = codon[2];
-
-                cs2 = codonDataType.getState(i2, j2, k2);
-                aa2 = geneticCode.getAminoAcidState(codonDataType.getCanonicalState(cs2));
-
-                rateClass = -1;
-                if (i1 != i2) {
-                    if ( (i1 == 0 && i2 == 2) || (i1 == 2 && i2 == 0) || // A <-> G
-                         (i1 == 1 && i2 == 3) || (i1 == 3 && i2 == 1) ) { // C <-> T
-                        rateClass = 1; // Transition at position 1
-                    } else {
-                        rateClass = 2; // Transversion at position 1
-                    }
-                }
-                if (j1 != j2) {
-                    if (rateClass == -1) {
-                        if ( (j1 == 0 && j2 == 2) || (j1 == 2 && j2 == 0) || // A <-> G
-                             (j1 == 1 && j2 == 3) || (j1 == 3 && j2 == 1) ) { // C <-> T
-                            rateClass = 1; // Transition
-                        } else {
-                            rateClass = 2; // Transversion
-                        }
-                    } else
-                        rateClass = 0; // Codon changes at more than one position
-                }
-                if (k1 != k2) {
-                    if (rateClass == -1) {
-                        if ( (k1 == 0 && k2 == 2) || (k1 == 2 && k2 == 0) || // A <-> G
-                             (k1 == 1 && k2 == 3) || (k1 == 3 && k2 == 1) ) { // C <-> T
-                            rateClass = 1; // Transition
-                        } else {
-                            rateClass = 2; // Transversion
-                        }
-                    } else
-                        rateClass = 0; // Codon changes at more than one position
-                }
-
-                 if (rateClass != 0) {
-                    if (aa1 != aa2) {
-                        rateClass += 2; // Is a non-synonymous change
-                    }
-                }
-
-                System.out.print("\t" + rateClass);
-
+        double kappa = getKappa();
+        double omega = getOmega();
+        for (int i = 0; i < rateCount; i++) {
+            switch (rateMap[i]) {
+                case 0:
+                    rates[i] = 0.0;
+                    break;            // codon changes in more than one codon position
+                case 1:
+                    rates[i] = kappa;
+                    break;        // synonymous transition
+                case 2:
+                    rates[i] = 1.0;
+                    break;            // synonymous transversion
+                case 3:
+                    rates[i] = kappa * omega;
+                    break;// non-synonymous transition
+                case 4:
+                    rates[i] = omega;
+                    break;        // non-synonymous transversion
             }
-            System.out.println();
-
         }
     }
-
-	// *****************************************************************
-	// Interface ModelComponent
-	// *****************************************************************
-
-
 
     // **************************************************************
     // XHTMLable IMPLEMENTATION
     // **************************************************************
 
-	public String toXHTML() {
-		StringBuffer buffer = new StringBuffer();
+    public String toXHTML() {
+        StringBuffer buffer = new StringBuffer();
 
-		buffer.append("<em>Goldman Yang 94 Codon Model</em> kappa = ");
-		buffer.append(getKappa());
-		buffer.append(", omega = ");
-		buffer.append(getOmega());
+        buffer.append("<em>Goldman Yang 94 Codon Model</em> kappa = ");
+        buffer.append(getKappa());
+        buffer.append(", omega = ");
+        buffer.append(getOmega());
 
-		return buffer.toString();
-	}
+        return buffer.toString();
+    }
 
     public Statistic synonymousRateStatistic = new Statistic.Abstract() {
 
@@ -290,7 +164,9 @@ public class GY94CodonModel extends BaseSubstitutionModel
             return "synonymousRate";
         }
 
-        public int getDimension() { return 1; }
+        public int getDimension() {
+            return 1;
+        }
 
         public double getStatisticValue(int dim) {
             return getSynonymousRate();
@@ -298,7 +174,7 @@ public class GY94CodonModel extends BaseSubstitutionModel
 
     };
 
-   /* private Statistic nonsynonymousRateStatistic = new Statistic.Abstract() {
+    /* private Statistic nonsynonymousRateStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "nonSynonymousRate";

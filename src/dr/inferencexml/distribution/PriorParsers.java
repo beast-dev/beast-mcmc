@@ -30,12 +30,16 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.Reader;
 
+import jebl.math.Binomial;
+
+import dr.evolution.coalescent.Coalescent;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.TreeTrace;
 import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ConditionalCladeProbability;
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
@@ -49,10 +53,13 @@ import dr.math.distributions.InverseGammaDistribution;
 import dr.math.distributions.LaplaceDistribution;
 import dr.math.distributions.LogNormalDistribution;
 import dr.math.distributions.LogTransformedNormalKDEDistribution;
+import dr.math.distributions.MultivariateGammaDistribution;
+import dr.math.distributions.MultivariateKDEDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.NormalKDEDistribution;
 import dr.math.distributions.PoissonDistribution;
 import dr.math.distributions.UniformDistribution;
+import dr.stats.DiscreteStatistics;
 import dr.util.FileHelpers;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
@@ -72,6 +79,7 @@ public class PriorParsers {
     public static final String NORMAL_PRIOR = "normalPrior";
     public static final String NORMAL_REFERENCE_PRIOR = "normalReferencePrior";
     public static final String CONDITIONAL_CLADE_REFERENCE_PRIOR = "conditionalCladeProbability";
+    public static final String COALESCENT_HEIGHTS_REFERENCE_PRIOR = "coalescentHeightsReferencePrior";
     public final static String BURNIN = "burnin";
     public final static String EPSILON = "epsilon";
     public static final String LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR = "logTransformedNormalReferencePrior";
@@ -496,10 +504,6 @@ public class PriorParsers {
                 
                 Double[] parameterSamples = new Double[traces.getStateCount()];
                 traces.getValues(traceIndexParameter).toArray(parameterSamples);
-                
-                //perform the log transformation here?
-                //Double[] logParameterSamples = new Double[traces.getStateCount()];
-                //System.arraycopy(parameterSamples, 0, logParameterSamples, 0, traces.getStateCount());
 
                 DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution(parameterSamples));
         		for (int j = 0; j < xo.getChildCount(); j++) {
@@ -636,6 +640,182 @@ public class PriorParsers {
     };
     
     /**
+     * A special parser that reads coalescent heights and builds reference priors for them.
+     */
+    public static XMLObjectParser COALESCENT_HEIGHTS_REFERENCE_PRIOR_PARSER = new AbstractXMLObjectParser() {
+    	
+    	public String getParserName() {
+            return COALESCENT_HEIGHTS_REFERENCE_PRIOR;
+        }
+    	
+    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    		
+    		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            try {
+
+                File file = new File(fileName);
+                String parent = file.getParent();
+
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
+                }
+                file = new File(parent, fileName);
+                fileName = file.getAbsolutePath();
+
+                String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
+                int dimension = xo.getIntegerAttribute("dimension");
+
+                LogFileTraces traces = new LogFileTraces(fileName, file);
+                traces.loadTraces();
+                int maxState = traces.getMaxState();
+
+                // leaving the burnin attribute off will result in 10% being used
+                int burnin = xo.getAttribute("burnin", maxState / 10);
+                if (burnin < 0 || burnin >= maxState) {
+                    burnin = maxState / 10;
+                    System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
+                }
+                traces.setBurnIn(burnin);
+
+                int[] traceIndexParameter = new int[dimension];
+                for (int i = 0; i < traceIndexParameter.length; i++) {
+					traceIndexParameter[i] = -1;
+				}
+                
+                String[] columnNames = new String[dimension];
+				for (int i = 1; i <= columnNames.length; i++) {
+					columnNames[i-1] = parameterName + i;
+				}
+				System.out.println("Looking for the following columns:");
+				for (int i = 0; i < columnNames.length; i++) {
+					System.out.println("  " + columnNames[i]);
+				}
+				for (int i = 0; i < traces.getTraceCount(); i++) {
+					String traceName = traces.getTraceName(i);
+					for (int j = 0; j < columnNames.length; j++) {
+						if (traceName.trim().equals(columnNames[j])) {
+							traceIndexParameter[j] = i;
+							break;
+						}
+					}
+				}
+				System.out.println("Overview of traceIndexParameter:");
+				for (int i = 0; i < traceIndexParameter.length; i++) {
+					if (traceIndexParameter[i] == -1) {
+						throw new XMLParseException("Not all traces could be linked to the required columns.");
+					}
+					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+				}
+
+				boolean[] flags = new boolean[dimension];
+				for (int i = 0; i < dimension; i++) {
+					flags[i] = true;
+				}
+				
+				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
+				for (int i = 0; i < dimension; i++) {
+					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
+					double initial = parameterSamples[i][0];
+					boolean tempFlag = false;
+					for (int j = 0; j < parameterSamples[i].length; j++) {
+						if (parameterSamples[i][j] != initial) {
+							tempFlag = true;
+							break;
+						}
+					}
+					flags[i] = tempFlag;
+				}
+				
+				double[] shapes = new double[flags.length];
+				double[] scales = new double[flags.length];
+				/*for (int i = 0; i < flags.length; i++) {
+					if (flags[i]) {
+						double mean = 0.0;
+						for (int j = 0; j < parameterSamples[i].length; j++) {
+							mean += parameterSamples[i][j];
+						}
+						mean /= ((double)parameterSamples[i].length);
+						double variance = 0.0;
+						for (int j = 0; j < parameterSamples[i].length; j++) {
+							variance += Math.pow(parameterSamples[i][j] - mean, 2);
+						}
+						variance /= ((double)(parameterSamples[i].length-1));			
+						scales[i] = variance/mean;
+						shapes[i] = mean/scales[i];
+						System.err.println(i + ": " + scales[i] + "   " + shapes[i]);
+					}
+				}*/
+				
+				for (int i = 0; i < flags.length; i++) {
+					if (flags[i]) {
+						shapes[i] = 1.0;
+						scales[i] = 60.9194/(double)(Binomial.choose2(9-i));
+					}
+				}
+				
+				MultivariateGammaDistribution mvgd = new MultivariateGammaDistribution(shapes, scales, flags);
+
+				MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(mvgd);
+				for (int j = 0; j < xo.getChildCount(); j++) {
+                	if (xo.getChild(j) instanceof Statistic) {
+                		likelihood.addData((Statistic) xo.getChild(j));
+                	} else {
+                		throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                	}
+                }
+
+                return likelihood; 
+                
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+            } catch (java.io.IOException ioe) {
+                throw new XMLParseException(ioe.getMessage());
+            } catch (TraceException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+    		
+    	}
+    	
+    	public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+    	
+    	private final XMLSyntaxRule[] rules = {
+    			AttributeRule.newStringRule("fileName"),
+                AttributeRule.newStringRule("parameterColumn"),
+                AttributeRule.newIntegerRule("dimension"),
+                //AttributeRule.newIntegerRule("burnin"),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the coalescent height probabilities based on a sample of coalescent heights.";
+        }
+
+        public Class getReturnType() {
+            return MultivariateDistributionLikelihood.class;
+        }
+    	
+    };
+    
+    /*private boolean isVariable(Double[] samples) {
+    	if (samples.length == 0) {
+    		throw new XMLParseException("Column length is zero.");
+    	}
+    	double initial = samples[0];
+    	int stop = samples.length;
+    	boolean flag = false;
+    	for (int i = 0; i < stop; i++) {
+    		if (samples[i] != initial) {
+    			flag = true;
+    			break;
+    		}
+    	}
+    	return flag;
+    }*/
+    
+    /**
      * A special parser that reads a convenient short form of reference priors on trees.
      */
     public static XMLObjectParser CONDITIONAL_CLADE_REFERENCE_PRIOR_PARSER = new AbstractXMLObjectParser() {
@@ -645,6 +825,8 @@ public class PriorParsers {
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        	
+        	//Coalescent.TREEPRIOR = true;
         	
         	TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         	String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);

@@ -1314,5 +1314,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 	public Double getConvolveTimer() {
 		return Double.valueOf(substitutionModelDelegate.convolveTime);
 	}
+
+	public double[] getSiteLogLikelihoods() {
+		getLogLikelihood();
+		double[] siteLogLikelihoods = new double[patternCount];
+		beagle.getSiteLogLikelihoods(siteLogLikelihoods);
+		return siteLogLikelihoods;
+	}
 	
 }//END: class

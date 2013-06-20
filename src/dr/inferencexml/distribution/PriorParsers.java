@@ -25,14 +25,6 @@
 
 package dr.inferencexml.distribution;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
-
-import jebl.math.Binomial;
-
-import dr.evolution.coalescent.Coalescent;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.TreeTrace;
 import dr.evomodel.tree.ConditionalCladeFrequency;
@@ -40,35 +32,20 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ConditionalCladeProbability;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.model.ConstantLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
-import dr.math.distributions.BetaDistribution;
-import dr.math.distributions.ExponentialDistribution;
-import dr.math.distributions.GammaDistribution;
-import dr.math.distributions.GammaKDEDistribution;
-import dr.math.distributions.HalfTDistribution;
-import dr.math.distributions.InverseGammaDistribution;
-import dr.math.distributions.LaplaceDistribution;
-import dr.math.distributions.LogNormalDistribution;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
-import dr.math.distributions.MultivariateGammaDistribution;
-import dr.math.distributions.MultivariateKDEDistribution;
-import dr.math.distributions.NormalDistribution;
-import dr.math.distributions.NormalKDEDistribution;
-import dr.math.distributions.PoissonDistribution;
-import dr.math.distributions.UniformDistribution;
-import dr.stats.DiscreteStatistics;
+import dr.math.distributions.*;
 import dr.util.FileHelpers;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-import dr.xml.XORRule;
+import dr.xml.*;
+import jebl.math.Binomial;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.Reader;
 
 /**
  */
@@ -125,15 +102,15 @@ public class PriorParsers {
             DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper));
             System.out.println("Uniform prior: " + xo.getChildCount());
             for (int j = 0; j < xo.getChildCount(); j++) {
-            	System.out.println(xo.getChild(j));
+                System.out.println(xo.getChild(j));
                 if (xo.getChild(j) instanceof Statistic) {
-                	//System.out.println((Statistic) xo.getChild(j));
-                	Statistic test = (Statistic) xo.getChild(j);
-                	System.out.println(test.getDimension());
-                	for (int i = 0; i < test.getDimension(); i++) {
-                		System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
-                	}
-                	System.out.println(test.getClass());
+                    //System.out.println((Statistic) xo.getChild(j));
+                    Statistic test = (Statistic) xo.getChild(j);
+                    System.out.println(test.getDimension());
+                    for (int i = 0; i < test.getDimension(); i++) {
+                        System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+                    }
+                    System.out.println(test.getClass());
                     likelihood.addData((Statistic) xo.getChild(j));
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element");
@@ -185,15 +162,15 @@ public class PriorParsers {
             DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / scale), offset);
             System.out.println("Exponential prior: " + xo.getChildCount());
             for (int j = 0; j < xo.getChildCount(); j++) {
-            	System.out.println(xo.getChild(j));
+                System.out.println(xo.getChild(j));
                 if (xo.getChild(j) instanceof Statistic) {
-                	//System.out.println((Statistic) xo.getChild(j));
-                	Statistic test = (Statistic) xo.getChild(j);
-                	System.out.println(test.getDimension());
-                	for (int i = 0; i < test.getDimension(); i++) {
-                		System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
-                	}
-                	System.out.println(test.getClass());
+                    //System.out.println((Statistic) xo.getChild(j));
+                    Statistic test = (Statistic) xo.getChild(j);
+                    System.out.println(test.getDimension());
+                    for (int i = 0; i < test.getDimension(); i++) {
+                        System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+                    }
+                    System.out.println(test.getClass());
                     likelihood.addData((Statistic) xo.getChild(j));
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element");
@@ -460,72 +437,72 @@ public class PriorParsers {
         public String getParserName() {
             return LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR;
         }
-        
+
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        	
-        	String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-        	
-        	try {
-        		
-        		File file = new File(fileName);
-        		String parent = file.getParent();
-        	
-        		if (!file.isAbsolute()) {
-        			parent = System.getProperty("user.dir");
-        		}
-        		file = new File(parent, fileName);
-        		fileName = file.getAbsolutePath();
-        	
-        		String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
-        	
-        		LogFileTraces traces = new LogFileTraces(fileName, file);
-        		traces.loadTraces();
-        		int maxState = traces.getMaxState();
-        		
-        		// leaving the burnin attribute off will result in 10% being used
+
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            try {
+
+                File file = new File(fileName);
+                String parent = file.getParent();
+
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
+                }
+                file = new File(parent, fileName);
+                fileName = file.getAbsolutePath();
+
+                String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
+
+                LogFileTraces traces = new LogFileTraces(fileName, file);
+                traces.loadTraces();
+                int maxState = traces.getMaxState();
+
+                // leaving the burnin attribute off will result in 10% being used
                 int burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
                 }
                 traces.setBurnIn(burnin);
-                
+
                 int traceIndexParameter = -1;
                 for (int i = 0; i < traces.getTraceCount(); i++) {
-                	String traceName = traces.getTraceName(i);
-                	if (traceName.trim().equals(parameterName)) {
-                		traceIndexParameter = i;
-                	}
+                    String traceName = traces.getTraceName(i);
+                    if (traceName.trim().equals(parameterName)) {
+                        traceIndexParameter = i;
+                    }
                 }
-                
+
                 if (traceIndexParameter == -1) {
                     throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
                 }
-                
+
                 Double[] parameterSamples = new Double[traces.getStateCount()];
                 traces.getValues(traceIndexParameter).toArray(parameterSamples);
 
                 DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution(parameterSamples));
-        		for (int j = 0; j < xo.getChildCount(); j++) {
-        			if (xo.getChild(j) instanceof Statistic) {
-        				likelihood.addData((Statistic) xo.getChild(j));
-        			} else {
-        				throw new XMLParseException("illegal element in " + xo.getName() + " element");
-        			}
-        		}
+                for (int j = 0; j < xo.getChildCount(); j++) {
+                    if (xo.getChild(j) instanceof Statistic) {
+                        likelihood.addData((Statistic) xo.getChild(j));
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    }
+                }
 
-        		return likelihood;
-        		
-        	} catch (FileNotFoundException fnfe) {
-        		throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-        	} catch (java.io.IOException ioe) {
+                return likelihood;
+
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+            } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
             } catch (TraceException e) {
                 throw new XMLParseException(e.getMessage());
             }
-        	
+
         }
-        
+
         public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
@@ -544,9 +521,9 @@ public class PriorParsers {
         public Class getReturnType() {
             return Likelihood.class;
         }
-        
+
     };
-    
+
     /**
      * A special parser that reads a convenient short form of reference priors on parameters.
      */
@@ -638,151 +615,170 @@ public class PriorParsers {
             return Likelihood.class;
         }
     };
-    
+
     /**
      * A special parser that reads coalescent heights and builds reference priors for them.
      */
     public static XMLObjectParser COALESCENT_HEIGHTS_REFERENCE_PRIOR_PARSER = new AbstractXMLObjectParser() {
-    	
-    	public String getParserName() {
+
+        public String getParserName() {
             return COALESCENT_HEIGHTS_REFERENCE_PRIOR;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
-            try {
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-                File file = new File(fileName);
-                String parent = file.getParent();
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
-                if (!file.isAbsolute()) {
-                    parent = System.getProperty("user.dir");
+//            try {
+
+//                File file = new File(fileName);
+//                String parent = file.getParent();
+//
+//                if (!file.isAbsolute()) {
+//                    parent = System.getProperty("user.dir");
+//                }
+//                file = new File(parent, fileName);
+//                fileName = file.getAbsolutePath();
+//
+//                String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
+//                int dimension = xo.getIntegerAttribute("dimension");
+//
+//                LogFileTraces traces = new LogFileTraces(fileName, file);
+//                traces.loadTraces();
+//                int maxState = traces.getMaxState();
+//
+//                // leaving the burnin attribute off will result in 10% being used
+//                int burnin = xo.getAttribute("burnin", maxState / 10);
+//                if (burnin < 0 || burnin >= maxState) {
+//                    burnin = maxState / 10;
+//                    System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
+//                }
+//                traces.setBurnIn(burnin);
+//
+//                int[] traceIndexParameter = new int[dimension];
+//                for (int i = 0; i < traceIndexParameter.length; i++) {
+//					traceIndexParameter[i] = -1;
+//				}
+//
+//                String[] columnNames = new String[dimension];
+//				for (int i = 1; i <= columnNames.length; i++) {
+//					columnNames[i-1] = parameterName + i;
+//				}
+//				System.out.println("Looking for the following columns:");
+//				for (int i = 0; i < columnNames.length; i++) {
+//					System.out.println("  " + columnNames[i]);
+//				}
+//				for (int i = 0; i < traces.getTraceCount(); i++) {
+//					String traceName = traces.getTraceName(i);
+//					for (int j = 0; j < columnNames.length; j++) {
+//						if (traceName.trim().equals(columnNames[j])) {
+//							traceIndexParameter[j] = i;
+//							break;
+//						}
+//					}
+//				}
+//				System.out.println("Overview of traceIndexParameter:");
+//				for (int i = 0; i < traceIndexParameter.length; i++) {
+//					if (traceIndexParameter[i] == -1) {
+//						throw new XMLParseException("Not all traces could be linked to the required columns.");
+//					}
+//					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+//				}
+//
+//				boolean[] flags = new boolean[dimension];
+//				for (int i = 0; i < dimension; i++) {
+//					flags[i] = true;
+//				}
+//
+//				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
+//				for (int i = 0; i < dimension; i++) {
+//					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
+//					double initial = parameterSamples[i][0];
+//					boolean tempFlag = false;
+//					for (int j = 0; j < parameterSamples[i].length; j++) {
+//						if (parameterSamples[i][j] != initial) {
+//							tempFlag = true;
+//							break;
+//						}
+//					}
+//					flags[i] = tempFlag;
+//				}
+
+            final int dim = 8;
+
+            boolean[] flags = new boolean[dim];
+            double[] shapes = new double[dim];
+            double[] scales = new double[dim];
+
+            for (int i = 4; i < dim; ++i) flags[i] = true;
+
+
+            /*for (int i = 0; i < flags.length; i++) {
+                       if (flags[i]) {
+                           double mean = 0.0;
+                           for (int j = 0; j < parameterSamples[i].length; j++) {
+                               mean += parameterSamples[i][j];
+                           }
+                           mean /= ((double)parameterSamples[i].length);
+                           double variance = 0.0;
+                           for (int j = 0; j < parameterSamples[i].length; j++) {
+                               variance += Math.pow(parameterSamples[i][j] - mean, 2);
+                           }
+                           variance /= ((double)(parameterSamples[i].length-1));
+                           scales[i] = variance/mean;
+                           shapes[i] = mean/scales[i];
+                           System.err.println(i + ": " + scales[i] + "   " + shapes[i]);
+                       }
+                   }*/
+
+            for (int i = 0; i < flags.length; i++) {
+                if (flags[i]) {
+                    shapes[i] = 1.0;
+                    scales[i] = 60.9194 / (double) (Binomial.choose2(9 - i));
                 }
-                file = new File(parent, fileName);
-                fileName = file.getAbsolutePath();
-
-                String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
-                int dimension = xo.getIntegerAttribute("dimension");
-
-                LogFileTraces traces = new LogFileTraces(fileName, file);
-                traces.loadTraces();
-                int maxState = traces.getMaxState();
-
-                // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
-                if (burnin < 0 || burnin >= maxState) {
-                    burnin = maxState / 10;
-                    System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
-                }
-                traces.setBurnIn(burnin);
-
-                int[] traceIndexParameter = new int[dimension];
-                for (int i = 0; i < traceIndexParameter.length; i++) {
-					traceIndexParameter[i] = -1;
-				}
-                
-                String[] columnNames = new String[dimension];
-				for (int i = 1; i <= columnNames.length; i++) {
-					columnNames[i-1] = parameterName + i;
-				}
-				System.out.println("Looking for the following columns:");
-				for (int i = 0; i < columnNames.length; i++) {
-					System.out.println("  " + columnNames[i]);
-				}
-				for (int i = 0; i < traces.getTraceCount(); i++) {
-					String traceName = traces.getTraceName(i);
-					for (int j = 0; j < columnNames.length; j++) {
-						if (traceName.trim().equals(columnNames[j])) {
-							traceIndexParameter[j] = i;
-							break;
-						}
-					}
-				}
-				System.out.println("Overview of traceIndexParameter:");
-				for (int i = 0; i < traceIndexParameter.length; i++) {
-					if (traceIndexParameter[i] == -1) {
-						throw new XMLParseException("Not all traces could be linked to the required columns.");
-					}
-					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
-				}
-
-				boolean[] flags = new boolean[dimension];
-				for (int i = 0; i < dimension; i++) {
-					flags[i] = true;
-				}
-				
-				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
-				for (int i = 0; i < dimension; i++) {
-					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
-					double initial = parameterSamples[i][0];
-					boolean tempFlag = false;
-					for (int j = 0; j < parameterSamples[i].length; j++) {
-						if (parameterSamples[i][j] != initial) {
-							tempFlag = true;
-							break;
-						}
-					}
-					flags[i] = tempFlag;
-				}
-				
-				double[] shapes = new double[flags.length];
-				double[] scales = new double[flags.length];
-				/*for (int i = 0; i < flags.length; i++) {
-					if (flags[i]) {
-						double mean = 0.0;
-						for (int j = 0; j < parameterSamples[i].length; j++) {
-							mean += parameterSamples[i][j];
-						}
-						mean /= ((double)parameterSamples[i].length);
-						double variance = 0.0;
-						for (int j = 0; j < parameterSamples[i].length; j++) {
-							variance += Math.pow(parameterSamples[i][j] - mean, 2);
-						}
-						variance /= ((double)(parameterSamples[i].length-1));			
-						scales[i] = variance/mean;
-						shapes[i] = mean/scales[i];
-						System.err.println(i + ": " + scales[i] + "   " + shapes[i]);
-					}
-				}*/
-				
-				for (int i = 0; i < flags.length; i++) {
-					if (flags[i]) {
-						shapes[i] = 1.0;
-						scales[i] = 60.9194/(double)(Binomial.choose2(9-i));
-					}
-				}
-				
-				MultivariateGammaDistribution mvgd = new MultivariateGammaDistribution(shapes, scales, flags);
-
-				MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(mvgd);
-				for (int j = 0; j < xo.getChildCount(); j++) {
-                	if (xo.getChild(j) instanceof Statistic) {
-                		likelihood.addData((Statistic) xo.getChild(j));
-                	} else {
-                		throw new XMLParseException("illegal element in " + xo.getName() + " element");
-                	}
-                }
-
-                return likelihood; 
-                
-            } catch (FileNotFoundException fnfe) {
-                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-            } catch (java.io.IOException ioe) {
-                throw new XMLParseException(ioe.getMessage());
-            } catch (TraceException e) {
-                throw new XMLParseException(e.getMessage());
             }
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+//                System.err.println("4 choose 2 = " + Binomial.choose2(4));
+
+            MultivariateGammaDistribution mvgd = new MultivariateGammaDistribution(shapes, scales, flags) {
+                public double logPdf(double[] x) {
+                    double rtn = super.logPdf(x);
+//                        System.err.println("intervals = " + new Vector(x) + " " + rtn);
+//                        System.exit(-1);
+                    return rtn;
+                }
+
+                ;
+
+            };
+
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(mvgd);
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+
+//            } catch (FileNotFoundException fnfe) {
+//                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+//            } catch (java.io.IOException ioe) {
+//                throw new XMLParseException(ioe.getMessage());
+//            } catch (TraceException e) {
+//                throw new XMLParseException(e.getMessage());
+//            }
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
-    	
-    	private final XMLSyntaxRule[] rules = {
-    			AttributeRule.newStringRule("fileName"),
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule("fileName"),
                 AttributeRule.newStringRule("parameterColumn"),
                 AttributeRule.newIntegerRule("dimension"),
                 //AttributeRule.newIntegerRule("burnin"),
@@ -796,25 +792,25 @@ public class PriorParsers {
         public Class getReturnType() {
             return MultivariateDistributionLikelihood.class;
         }
-    	
+
     };
-    
+
     /*private boolean isVariable(Double[] samples) {
-    	if (samples.length == 0) {
-    		throw new XMLParseException("Column length is zero.");
-    	}
-    	double initial = samples[0];
-    	int stop = samples.length;
-    	boolean flag = false;
-    	for (int i = 0; i < stop; i++) {
-    		if (samples[i] != initial) {
-    			flag = true;
-    			break;
-    		}
-    	}
-    	return flag;
+        if (samples.length == 0) {
+            throw new XMLParseException("Column length is zero.");
+        }
+        double initial = samples[0];
+        int stop = samples.length;
+        boolean flag = false;
+        for (int i = 0; i < stop; i++) {
+            if (samples[i] != initial) {
+                flag = true;
+                break;
+            }
+        }
+        return flag;
     }*/
-    
+
     /**
      * A special parser that reads a convenient short form of reference priors on trees.
      */
@@ -825,58 +821,70 @@ public class PriorParsers {
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        	
-        	//Coalescent.TREEPRIOR = true;
-        	
-        	TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        	String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-        	
-            try {
-            	
-            	File file = new File(fileName);
-            	String name = file.getName();
-                String parent = file.getParent();
 
-                if (!file.isAbsolute()) {
-                    parent = System.getProperty("user.dir");
-                }
-                file = new File(parent, fileName);
-                fileName = file.getAbsolutePath();
-                
-                Reader reader = new FileReader(new File(parent, name));
-                
-                // the burn-in is used as the number of trees discarded
-                int burnin = -1;
-                if (xo.hasAttribute(BURNIN)) {
-                    // leaving the burnin attribute off will result in 10% being used
-                    burnin = xo.getIntegerAttribute(BURNIN);
-                }
+            //Coalescent.TREEPRIOR = true;
 
-                // the epsilon value which represents the number of occurrences for every not observed clade
-                double e = 1.0;
-                if (xo.hasAttribute(EPSILON)) {
-                    // leaving the epsilon attribute off will result in 1.0 being used
-                    e = xo.getDoubleAttribute(EPSILON);
-                }
-                
-                TreeTrace trace = TreeTrace.loadTreeTrace(reader);
-                
-                ConditionalCladeFrequency ccf = new ConditionalCladeFrequency(new TreeTrace[]{trace}, e, burnin, false);
-            	
-                ConditionalCladeProbability ccp = new ConditionalCladeProbability(ccf, treeModel);
-                
-                return ccp;
-            	
-            } catch (FileNotFoundException fnfe) {
-                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-            } catch (java.io.IOException ioe) {
-                throw new XMLParseException(ioe.getMessage());
-            } catch (ImportException ie) {
-				throw new XMLParseException(ie.getMessage());
-			}
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            if (false) {
+                String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
+                try {
+
+                    File file = new File(fileName);
+                    String name = file.getName();
+                    String parent = file.getParent();
+
+                    if (!file.isAbsolute()) {
+                        parent = System.getProperty("user.dir");
+                    }
+                    file = new File(parent, fileName);
+                    fileName = file.getAbsolutePath();
+
+                    Reader reader = new FileReader(new File(parent, name));
+
+                    // the burn-in is used as the number of trees discarded
+                    int burnin = -1;
+                    if (xo.hasAttribute(BURNIN)) {
+                        // leaving the burnin attribute off will result in 10% being used
+                        burnin = xo.getIntegerAttribute(BURNIN);
+                    }
+
+                    // the epsilon value which represents the number of occurrences for every not observed clade
+                    double e = 1.0;
+                    if (xo.hasAttribute(EPSILON)) {
+                        // leaving the epsilon attribute off will result in 1.0 being used
+                        e = xo.getDoubleAttribute(EPSILON);
+                    }
+
+                    TreeTrace trace = TreeTrace.loadTreeTrace(reader);
+
+                    ConditionalCladeFrequency ccf = new ConditionalCladeFrequency(new TreeTrace[]{trace}, e, burnin, false);
+
+                    ConditionalCladeProbability ccp = new ConditionalCladeProbability(ccf, treeModel);
+
+                    return ccp;
+
+                } catch (FileNotFoundException fnfe) {
+                    throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+                } catch (java.io.IOException ioe) {
+                    throw new XMLParseException(ioe.getMessage());
+                } catch (ImportException ie) {
+                    throw new XMLParseException(ie.getMessage());
+                }
+            }
+
+            final int nTaxa = treeModel.getExternalNodeCount();
+            double logPDF = 0.0;
+            for (int i = nTaxa; i > 2; --i) {
+                logPDF += Math.log(Binomial.choose2(i));
+            }
+
+//            System.err.println("logPDF = " + logPDF);
+//            System.exit(-1);
+
+            return new ConstantLikelihood(-logPDF);
         }
-        
+
         public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }

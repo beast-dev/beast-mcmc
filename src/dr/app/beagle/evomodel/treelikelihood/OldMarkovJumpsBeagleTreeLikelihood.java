@@ -1,7 +1,7 @@
 /*
  * OldMarkovJumpsBeagleTreeLikelihood.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -59,17 +59,17 @@ import java.util.*;
  */
 @Deprecated
 public class OldMarkovJumpsBeagleTreeLikelihood extends OldAncestralStateBeagleTreeLikelihood
-        implements MarkovJumpsRegisterAcceptor {
+        implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider {
 
     public OldMarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                           BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
+                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel,
                                               TipStatesModel tipStatesModel,
                                               boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
                                               Map<Set<String>, Parameter> partialsRestrictions,
                                               DataType dataType, String stateTag,
-                                           SubstitutionModel substModel,
+                                              SubstitutionModel substModel,
                                               boolean useMAP,
                                               boolean returnMarginalLikelihood,
                                               boolean useUniformization,
@@ -136,7 +136,7 @@ public class OldMarkovJumpsBeagleTreeLikelihood extends OldAncestralStateBeagleT
             }
 
             jumpTag.add(traitName);
-            
+
             expectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
 //        storedExpectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
 
@@ -264,7 +264,7 @@ public class OldMarkovJumpsBeagleTreeLikelihood extends OldAncestralStateBeagleT
             calculateLogLikelihood();
             likelihoodKnown = true;
         }
-        
+
         if (!areStatesRedrawn) {
             redrawAncestralStates();
         }
@@ -336,7 +336,7 @@ public class OldMarkovJumpsBeagleTreeLikelihood extends OldAncestralStateBeagleT
             if (modelNumberFromrRegistry == modelNumberFromTree) {
                 if (useUniformization) {
                     computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
-                            branchRate, childNum, parentStates, childStates, parentTime, childTime,probabilities, scaleByTime[r],
+                            branchRate, childNum, parentStates, childStates, parentTime, childTime, probabilities, scaleByTime[r],
                             expectedJumps.get(r), rateCategory, r == historyRegisterNumber);
                 } else {
                     computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
@@ -570,7 +570,7 @@ public class OldMarkovJumpsBeagleTreeLikelihood extends OldAncestralStateBeagleT
     private List<Parameter> registerParameter;
     private List<String> jumpTag;
     private List<double[][]> expectedJumps;
-//    private List<double[][]> storedExpectedJumps;
+    //    private List<double[][]> storedExpectedJumps;
     private boolean logHistory = false;
     private String[][] histories = null;
     private boolean[] scaleByTime;

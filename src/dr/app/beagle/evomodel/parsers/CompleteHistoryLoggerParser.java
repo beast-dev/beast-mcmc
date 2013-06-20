@@ -1,7 +1,7 @@
 /*
  * CompleteHistoryLoggerParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,7 +25,7 @@
 
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.app.beagle.evomodel.utilities.CompleteHistoryLogger;
 import dr.app.beagle.evomodel.utilities.HistoryFilter;
 import dr.inference.loggers.Logger;
@@ -41,8 +41,8 @@ public class CompleteHistoryLoggerParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        MarkovJumpsBeagleTreeLikelihood treeLikelihood =
-                (MarkovJumpsBeagleTreeLikelihood) xo.getChild(MarkovJumpsBeagleTreeLikelihood.class);
+        MarkovJumpsTraitProvider treeLikelihood =
+                (MarkovJumpsTraitProvider) xo.getChild(MarkovJumpsTraitProvider.class);
 
         HistoryFilter filter = (HistoryFilter) xo.getChild(HistoryFilter.class);
 
@@ -66,7 +66,7 @@ public class CompleteHistoryLoggerParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(MarkovJumpsBeagleTreeLikelihood.class),
+            new ElementRule(MarkovJumpsTraitProvider.class),
             new ElementRule(HistoryFilter.class, true),
     };
 }

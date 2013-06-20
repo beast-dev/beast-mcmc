@@ -33,8 +33,6 @@ import javax.swing.table.TableColumn;
 @SuppressWarnings("serial")
 public class PartitionsPanel extends JPanel implements Exportable {
 
-	private static final boolean ancestralSequence = true;
-	
 	private PartitionDataList dataList = null;
 
 	private JTable partitionTable = null;
@@ -152,12 +150,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
-		if (ancestralSequence) {
-			column = partitionTable.getColumnModel().getColumn(
-					PartitionTableModel.ANCESTRAL_SEQUENCE_INDEX);
-			column.setCellRenderer(new JTableButtonCellRenderer());
-			column.setCellEditor(new JTableButtonCellEditor());
-		}
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.ANCESTRAL_SEQUENCE_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
 
 		ActionPanel actionPanel = new ActionPanel(false);
 		actionPanel.setAddAction(addPartitionAction);

@@ -244,6 +244,8 @@ public class Partition {
 			}
 
 			beagle.finalize();
+//			System.gc();
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		} catch (Throwable e) {

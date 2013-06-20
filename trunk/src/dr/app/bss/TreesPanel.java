@@ -76,12 +76,11 @@ public class TreesPanel extends JPanel implements Exportable {
 		scrollPane.setRowHeaderView(rowNumberTable);
 		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
 				rowNumberTable.getTableHeader());
-
 		scrollPane.getViewport().setOpaque(false);
-
 		add(scrollPane, BorderLayout.CENTER);
 
 		setTreesColumn(this.dataList);
+		setTaxaSetColumn();
 
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TAXA_INDEX);
@@ -97,6 +96,18 @@ public class TreesPanel extends JPanel implements Exportable {
 
 	}// END: Constructor
 
+	private void setTaxaSetColumn() {
+		
+		column = treesTable.getColumnModel().getColumn(
+				TreesTableModel.TAXA_SET_INDEX);
+		// pass dataList for labels on buttons
+		column.setCellRenderer(new JTableButtonCellRenderer(
+//				dataList
+				));
+		column.setCellEditor(new JTableButtonCellEditor());
+		
+	}
+	
 	private void setTreesColumn(PartitionDataList dataList) {
 
 		column = treesTable.getColumnModel().getColumn(

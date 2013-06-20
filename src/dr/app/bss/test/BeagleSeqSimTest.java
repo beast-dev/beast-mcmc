@@ -55,14 +55,22 @@ public class BeagleSeqSimTest {
 
     public static void main(String[] args) {
 
-        int N = 1; //0000;
+    	
+		// start timing
+		long tic = System.currentTimeMillis();
+        int N = 100; //0000;
 		for (int i = 0; i < N; i++) {
-			simulateTopology();
-			simulateOnePartition();
-			simulateTwoPartitions();
-			simulateThreePartitions();
+//			simulateTopology();
+//			simulateOnePartition();
+//			simulateTwoPartitions();
+			simulateThreePartitions(i, N);
 		}
-
+		long toc = System.currentTimeMillis();
+		
+		long time = toc-tic;
+		System.out.println("Time: " + time);
+				
+		
     } // END: main
 
     static void simulateTopology() {
@@ -300,7 +308,7 @@ public class BeagleSeqSimTest {
 
     }// END: simulateTwoPartitions
 
-    static void simulateThreePartitions() {
+    static void simulateThreePartitions(int i, int N) {
 
         try {
 /*
@@ -313,9 +321,9 @@ public class BeagleSeqSimTest {
 */
             MathUtils.setSeed(666);
 
-            System.out.println("Test case 4: simulateThreePartitions");
+//            System.out.println("Test case 4: simulateThreePartitions");
 
-            int sequenceLength = 10;
+            int sequenceLength = 100000;
             ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
             // create tree
@@ -384,8 +392,12 @@ public class BeagleSeqSimTest {
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
                     partitionsList);
 
-            System.out.println(simulator.simulate(simulateInPar).toString());
-
+			if (i == (N - 1)) {
+				System.out.println(simulator.simulate(simulateInPar).toString());
+			} else {
+				simulator.simulate(simulateInPar);
+			}
+            	
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);

@@ -23,15 +23,19 @@ public class TreesTableModel extends AbstractTableModel {
 	private MainFrame frame;
 
 	public final static int TREE_FILE_INDEX = 0;
-	public final static int TAXA_INDEX = 1;
+	public final static int TAXA_SET_INDEX = 1;
+	public final static int TAXA_INDEX = 2;
 	
-	public static String[] COLUMN_NAMES = { "Tree File",  "Taxa" };
+	public static String[] COLUMN_NAMES = { "Tree File", "Taxa Set",  "Taxa" };
 	
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JButton.class, // Tree File
+			JButton.class, // Taxa Set
 			Integer.class // Taxa
 	};
 
+	private TaxaEditor taxaEditor;
+	
 	public TreesTableModel(PartitionDataList dataList, MainFrame frame) {
 		this.dataList = dataList;
 		this.frame = frame;
@@ -92,6 +96,8 @@ public class TreesTableModel extends AbstractTableModel {
 			return false;
 		case TAXA_INDEX:
 			return false;
+		case TAXA_SET_INDEX:
+			return false;
 		default:
 			return false;
 		}
@@ -118,11 +124,38 @@ public class TreesTableModel extends AbstractTableModel {
 		case TAXA_INDEX:
 			return dataList.taxaCounts.get(row);
 
+		case TAXA_SET_INDEX:
+			
+			JButton taxaEditorButton = new JButton(COLUMN_NAMES[column]);
+			taxaEditorButton.addActionListener(new ListenOpenTaxaEditor(row));
+			return taxaEditorButton;
+			
 		default:
 			return "Error";
 		}
 	}// END: getValueAt
 
+	private class ListenOpenTaxaEditor implements ActionListener {
+		private int row;
+
+		public ListenOpenTaxaEditor(int row) {
+			this.row = row;
+		}
+
+		public void actionPerformed(ActionEvent ev) {
+
+			try {
+				
+				taxaEditor = new TaxaEditor(frame, dataList, row);
+				taxaEditor.launch();
+			
+			} catch (Exception e) {
+				Utils.handleException(e);
+			}
+
+		}// END: actionPerformed
+	}// END: ListenOpenSiteRateModelEditor
+	
 	private class ListenLoadTreeFile implements ActionListener {
 
 		private int row;

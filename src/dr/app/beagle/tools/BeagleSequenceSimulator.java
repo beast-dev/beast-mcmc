@@ -103,7 +103,7 @@ public class BeagleSequenceSimulator {
 						.availableProcessors());
 			}
 
-			MathUtils.setSeed(666);
+//			MathUtils.setSeed(666);
 
 			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
 			List<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();

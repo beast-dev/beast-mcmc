@@ -1,7 +1,7 @@
 /*
  * CompleteHistoryLogger.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,7 @@
 package dr.app.beagle.evomodel.utilities;
 
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -66,7 +67,7 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     public static final String TOTAL_COUNT_NAME = "totalChangeCount";
     public static final String COMPLETE_HISTORY_NAME = "completeHistory";
 
-    public CompleteHistoryLogger(MarkovJumpsBeagleTreeLikelihood treeLikelihood, HistoryFilter filter) {
+    public CompleteHistoryLogger(MarkovJumpsTraitProvider treeLikelihood, HistoryFilter filter) {
         this.tree = treeLikelihood.getTreeModel();
         this.patternCount = treeLikelihood.getPatternCount();
 

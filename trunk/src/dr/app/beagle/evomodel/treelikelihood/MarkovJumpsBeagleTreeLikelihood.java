@@ -1,7 +1,7 @@
 /*
  * MarkovJumpsBeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -58,7 +58,7 @@ import java.util.*;
  *         Journal of Mathematical Biology, 56, 391-412.
  */
 public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLikelihood
-        implements MarkovJumpsRegisterAcceptor {
+        implements MarkovJumpsRegisterAcceptor, MarkovJumpsTraitProvider {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                            BranchModel branchModel,
@@ -135,7 +135,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             }
 
             jumpTag.add(traitName);
-            
+
             expectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
 //        storedExpectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
 
@@ -311,7 +311,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             calculateLogLikelihood();
             likelihoodKnown = true;
         }
-        
+
         if (!areStatesRedrawn) {
             redrawAncestralStates();
         }
@@ -387,7 +387,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             if (modelNumberFromrRegistry == mapping.getOrder()[0]) {
                 if (useUniformization) {
                     computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
-                            branchRate, childNum, parentStates, childStates, parentTime, childTime,probabilities, scaleByTime[r],
+                            branchRate, childNum, parentStates, childStates, parentTime, childTime, probabilities, scaleByTime[r],
                             expectedJumps.get(r), rateCategory, r == historyRegisterNumber);
                 } else {
                     computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
@@ -623,7 +623,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     private List<Parameter> registerParameter;
     private List<String> jumpTag;
     private List<double[][]> expectedJumps;
-//    private List<double[][]> storedExpectedJumps;
+    //    private List<double[][]> storedExpectedJumps;
     private boolean logHistory = false;
     private boolean useCompactHistory = false;
     private String[][] histories = null;

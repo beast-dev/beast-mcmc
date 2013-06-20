@@ -1,5 +1,5 @@
 /*
- * MarkovJumpsTraitProvider.java
+ * AncestralStateTraitProvider.java
  *
  * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,13 +25,20 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
+import dr.evolution.tree.TreeTrait;
+import dr.evomodel.tree.TreeModel;
+
 /**
  * @author Marc A. Suchard
  */
-public interface MarkovJumpsTraitProvider extends AncestralStateTraitProvider {
+public interface AncestralStateTraitProvider {
 
-    public int getPatternCount();
+    public String getId();
 
-    public double getLogLikelihood();
+    public TreeModel getTreeModel();
+
+    public TreeTrait getTreeTrait(String key);
+
+    public String formattedState(int[] state);
 
 }

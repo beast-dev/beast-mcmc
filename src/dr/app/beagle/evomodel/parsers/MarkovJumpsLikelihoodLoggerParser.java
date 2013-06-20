@@ -1,7 +1,7 @@
 /*
  * MarkovJumpsLikelihoodLoggerParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,7 +25,7 @@
 
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -41,8 +41,8 @@ public class MarkovJumpsLikelihoodLoggerParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        final MarkovJumpsBeagleTreeLikelihood dataLikelihood =
-                (MarkovJumpsBeagleTreeLikelihood) xo.getChild(MarkovJumpsBeagleTreeLikelihood.class);
+        final MarkovJumpsTraitProvider dataLikelihood =
+                (MarkovJumpsTraitProvider) xo.getChild(MarkovJumpsTraitProvider.class);
 
         return new Loggable() {
             public LogColumn[] getColumns() {
@@ -54,9 +54,9 @@ public class MarkovJumpsLikelihoodLoggerParser extends AbstractXMLObjectParser {
     }
 
     protected class LikelihoodColumn extends NumberColumn {
-        final private MarkovJumpsBeagleTreeLikelihood tree;
+        final private MarkovJumpsTraitProvider tree;
 
-        public LikelihoodColumn(MarkovJumpsBeagleTreeLikelihood tree, String label) {
+        public LikelihoodColumn(MarkovJumpsTraitProvider tree, String label) {
             super(label);
             this.tree = tree;
         }
@@ -72,7 +72,7 @@ public class MarkovJumpsLikelihoodLoggerParser extends AbstractXMLObjectParser {
     }
 
     private static XMLSyntaxRule[] rules = {
-            new ElementRule(MarkovJumpsBeagleTreeLikelihood.class),
+            new ElementRule(MarkovJumpsTraitProvider.class),
     };
 
     @Override

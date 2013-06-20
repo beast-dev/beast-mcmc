@@ -26,7 +26,7 @@ import javax.swing.JLabel;
 @SuppressWarnings("serial")
 public class AboutDialog extends JDialog {
 
-	private static final int WIDTH = 600;
+	private static final int WIDTH = 700;
 	private static final int HEIGHT = 650;
 	private static final int FONT_SIZE = 15;
 
@@ -34,6 +34,7 @@ public class AboutDialog extends JDialog {
 	private static final String ANDREW_RAMBAUT = "Andrew Rambaut";
 	private static final String MARC_SUCHARD = "Marc A. Suchard";
 	private static final String PHILIPPE_LEMEY = "Philippe Lemey";
+	private static final String LUIZ_MAX_CARVAHLO = "Luiz Max Carvahlo";
 	private static final String GUY_BAELE = "Guy Baele";
 
 	public AboutDialog() {
@@ -85,7 +86,7 @@ public class AboutDialog extends JDialog {
 
 		// Setup authors
 		label = new JLabel("by " + FILIP_BIELEJEC + ", " + ANDREW_RAMBAUT
-				+ ", " + MARC_SUCHARD + ", " + GUY_BAELE + " and "
+				+ ", " + MARC_SUCHARD + ", " + GUY_BAELE + ", "  + LUIZ_MAX_CARVAHLO + " and "
 				+ PHILIPPE_LEMEY);
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 2));
 		label.setAlignmentX(0.5f);
@@ -117,7 +118,7 @@ public class AboutDialog extends JDialog {
 		label.setAlignmentX(0.5f);
 		add(label);
 
-		label = new JLabel(FILIP_BIELEJEC + " and " + ANDREW_RAMBAUT);
+		label = new JLabel(FILIP_BIELEJEC + ", " + MARC_SUCHARD + " and " + ANDREW_RAMBAUT);
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
 		label.setAlignmentX(0.5f);
 		add(label);

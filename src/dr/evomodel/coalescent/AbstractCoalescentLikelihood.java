@@ -1,7 +1,7 @@
 /*
- * CoalescentLikelihood.java
+ * AbstractCoalescentLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id: CoalescentLikelihood.java,v 1.43 2006/07/28 11:27:32 rambaut Exp $
  */
-public abstract class AbstractCoalescentLikelihood extends AbstractModelLikelihood implements Units {
+public abstract class AbstractCoalescentLikelihood extends AbstractModelLikelihood implements Units, CoalescentIntervalProvider {
 
     // PUBLIC STUFF
 
@@ -152,7 +152,6 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     public final double getLogLikelihood() {
         if (!eventsKnown) {
             setupIntervals();
-            likelihoodKnown = false;
         }
 
         if (!likelihoodKnown) {
@@ -194,7 +193,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         if (excludedLeafSets.length == 0) return null;
 
         Set<NodeRef> excludeNodesBelow = new HashSet<NodeRef>();
-        for( Set<String> excludedLeafSet : excludedLeafSets ) {
+        for (Set<String> excludedLeafSet : excludedLeafSets) {
             excludeNodesBelow.add(Tree.Utils.getCommonAncestorNode(tree, excludedLeafSet));
         }
         return excludeNodesBelow;
@@ -219,6 +218,7 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         intervals.getIntervalCount();
 
         eventsKnown = true;
+        likelihoodKnown = false;
     }
 
 
@@ -251,16 +251,19 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         }
 
     }
-    
-    public double[] getCoalescentIntervalHeights() {
-    	if (!eventsKnown) {
+
+    public double getCoalescentInterval(int i) {
+        if (!eventsKnown) {
             setupIntervals();
-    	}
-    	double[] heights = new double[intervals.getIntervalCount()];
-    	for (int i = 0; i < heights.length; i++) {
-    		heights[i] = intervals.getInterval(i);
-    	}
-    	return heights;
+        }
+        return intervals.getInterval(i);
+    }
+
+    public int getCoalescentIntervalDimension() {
+        if (!eventsKnown) {
+            setupIntervals();
+        }
+        return intervals.getIntervalCount();
     }
 
     public String toString() {

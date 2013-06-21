@@ -50,7 +50,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineLikelihood.java,v 1.3 2007/03/20 22:40:04 msuchard Exp $
  */
-public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
+public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood implements CoalescentIntervalProvider {
 
     // PUBLIC STUFF
 
@@ -178,13 +178,13 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
         }
     }
 
-    public double[] getCopyOfCoalescentIntervals() {
-        return coalescentIntervals.clone();
-    }
-
-    public double[] getCoalescentIntervals() {
-        return coalescentIntervals;
-    }
+//    public double[] getCopyOfCoalescentIntervals() {
+//        return coalescentIntervals.clone();
+//    }
+//
+//    public double[] getCoalescentIntervals() {
+//        return coalescentIntervals;
+//    }
 
     public void initializationReport() {
         System.out.println("Creating a GMRF smoothed skyride model:");
@@ -339,7 +339,26 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
         return a;
     }
 
+    private void makeIntervalsKnown() {
+        if (!intervalsKnown) {
+            wrapSetupIntervals();
+            setupGMRFWeights();
+            intervalsKnown = true;
+        }
+    }
+
+    public int getCoalescentIntervalDimension() {
+        makeIntervalsKnown();
+        return coalescentIntervals.length;
+    }
+
+    public double getCoalescentInterval(int i) {
+        makeIntervalsKnown();
+        return coalescentIntervals[i];
+    }
+
     public double[] getCoalescentIntervalHeights() {
+        makeIntervalsKnown();
         double[] a = new double[coalescentIntervals.length];
 
         a[0] = coalescentIntervals[0];
@@ -399,13 +418,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
      * @return coalescent part of density
      */
     protected double calculateLogCoalescentLikelihood() {
-
-        if (!intervalsKnown) {
-            // intervalsKnown -> false when handleModelChanged event occurs in super.
-            wrapSetupIntervals();
-            setupGMRFWeights();
-            intervalsKnown = true;
-        }
+        makeIntervalsKnown();
 
         // Matrix operations taken from block update sampler to calculate data likelihood and field prior
 
@@ -420,13 +433,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
     }
 
     protected double calculateLogFieldLikelihood() {
-
-        if (!intervalsKnown) {
-            // intervalsKnown -> false when handleModelChanged event occurs in super.
-            wrapSetupIntervals();
-            setupGMRFWeights();
-            intervalsKnown = true;
-        }
+        makeIntervalsKnown();
 
         double currentLike = 0;
         DenseVector diagonal1 = new DenseVector(fieldLength);

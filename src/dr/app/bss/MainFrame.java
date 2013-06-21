@@ -182,7 +182,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 						for (PartitionData data : dataList) {
 
-							if (data.treeFile == null) {
+							if (data.record == null) {
 
 								throw new RuntimeException(
 										"Set Tree Model in Partitions tab for "
@@ -492,7 +492,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 		if (SwingUtilities.isEventDispatchThread()) {
 
 			taxaPanel.fireTaxaChanged();
-			setStatus(Integer.toString(dataList.taxonList.getTaxonCount())
+			setStatus(Integer.toString(dataList.allTaxa.getTaxonCount())
 					+ " taxa loaded.");
 
 		} else {
@@ -501,7 +501,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 				public void run() {
 
 					taxaPanel.fireTaxaChanged();
-					setStatus(Integer.toString(dataList.taxonList
+					setStatus(Integer.toString(dataList.allTaxa
 							.getTaxonCount()) + " taxa loaded.");
 
 				}
@@ -652,15 +652,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	}// END: enableTaxaPanel
 
 	private int getTreesCount() {
-		int treesCount = 0;
-		for (File file : dataList.treeFileList) {
-			if (file.toString() != "") {
-				treesCount++;
-			}
-
-		}
-
-		return treesCount;
+		return dataList.recordsList.size();
 	}// END: getTreesCount
 	
 	@Override

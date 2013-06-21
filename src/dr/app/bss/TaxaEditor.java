@@ -3,25 +3,14 @@ package dr.app.bss;
 import jam.panels.ActionPanel;
 
 import java.awt.BorderLayout;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
-import java.awt.Point;
-import java.awt.Toolkit;
-import java.awt.dnd.DnDConstants;
-import java.awt.dnd.DragGestureEvent;
-import java.awt.dnd.DragGestureListener;
-import java.awt.dnd.DragGestureRecognizer;
-import java.awt.dnd.DragSource;
-import java.awt.dnd.DragSourceAdapter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -30,8 +19,6 @@ import java.nio.charset.Charset;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.DropMode;
-import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -40,11 +27,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.filechooser.FileSystemView;
 
-import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
@@ -131,8 +115,6 @@ public class TaxaEditor {
 		table.setModel(taxaEditorTableModel);
 		table.setSurrendersFocusOnKeystroke(true);
 		
-		
-
 		JScrollPane scrollPane = new JScrollPane(table,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -216,7 +198,7 @@ public class TaxaEditor {
 
 		try {
 
-			MutableTaxonList taxonList = new Taxa();
+			Taxa taxonList = new Taxa();
 			String[] lines = loadStrings(file.getAbsolutePath());
 
 			Taxon taxon;
@@ -330,7 +312,17 @@ public class TaxaEditor {
 	private class ListenOk implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 
-			System.out.println("TODO");
+			//TODO
+
+			int lastIndex = dataList.recordsList.size()-1;
+			String name = String.valueOf("TaxaSet").concat(String.valueOf(lastIndex+1));
+			Taxa taxa = taxaEditorTableModel.getTaxaSet();
+			TreesTableRecord record = new TreesTableRecord(name, taxa);
+			dataList.recordsList.set(lastIndex, record);
+			
+			dataList.allTaxa.addTaxa(taxa);
+			frame.fireTaxaChanged();
+			
 			window.setVisible(false);
 
 		}// END: actionPerformed
@@ -357,8 +349,8 @@ public class TaxaEditor {
 	// ---END: DRAG & DROP---//
 	// ////////////////////////
 
-	public void updateTable(MutableTaxonList taxonList) {
-		taxaEditorTableModel.setTaxonList(taxonList);
+	public void updateTable(Taxa taxonList) {
+		taxaEditorTableModel.setTaxaSet(taxonList);
 		taxaEditorTableModel.fireTaxonListChanged();
 		setTaxa();
 	}// END: updateTable

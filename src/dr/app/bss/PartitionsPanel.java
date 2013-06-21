@@ -8,7 +8,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
-import java.io.File;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -189,10 +188,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 				if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
-					File value = (File) partitionTableModel.getValueAt(row,
+					TreesTableRecord value = (TreesTableRecord) partitionTableModel.getValueAt(row,
 							column);
 					
-					dataList.get(row).treeFile = value;
+					dataList.get(row).record = (TreesTableRecord) value;
 
 				}// END: column check
 
@@ -217,8 +216,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				
 				if (value != null) {
 					
-					File file = (File) value;
-					this.setText(file.getName());
+					TreesTableRecord record = (TreesTableRecord) value;
+					this.setText(record.getName());
 
 				}
 
@@ -277,8 +276,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			if (column == PartitionTableModel.TREE_MODEL_INDEX) {
 
-				for (File file : dataList.treeFileList) {
-					((JComboBox) editorComponent).addItem(file);
+				for (TreesTableRecord record : dataList.recordsList) {
+					((JComboBox) editorComponent).addItem(record);
 				}// END: fill loop
 				
 //			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {

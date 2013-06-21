@@ -28,7 +28,7 @@ public class TaxaTableModel extends AbstractTableModel {
 	}
 
 	public int getRowCount() {
-		return this.dataList.taxonList.getTaxonCount();
+		return this.dataList.allTaxa.getTaxonCount();
 	}
 
 	public Class<? extends Object> getColumnClass(int c) {
@@ -47,7 +47,7 @@ public class TaxaTableModel extends AbstractTableModel {
 		switch (col) {
 
 		case NAME_INDEX:
-			return this.dataList.taxonList.getTaxonId(row);
+			return this.dataList.allTaxa.getTaxonId(row);
 
 		case HEIGHT_INDEX:
 
@@ -73,10 +73,10 @@ public class TaxaTableModel extends AbstractTableModel {
 
 	private void getHeights() {
 
-		heights = new double[dataList.taxonList.getTaxonCount()];
-		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
+		heights = new double[dataList.allTaxa.getTaxonCount()];
+		for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
 
-			heights[i] = (Double) dataList.taxonList.getTaxon(i).getAttribute(
+			heights[i] = (Double) dataList.allTaxa.getTaxon(i).getAttribute(
 					Utils.ABSOLUTE_HEIGHT);
 
 		}// END: taxon loop
@@ -85,10 +85,10 @@ public class TaxaTableModel extends AbstractTableModel {
 
 	private void getTrees() {
 
-		trees = new String[dataList.taxonList.getTaxonCount()];
-		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
+		trees = new String[dataList.allTaxa.getTaxonCount()];
+		for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
 
-			trees[i] = (String) dataList.taxonList.getTaxon(i).getAttribute(
+			trees[i] = (String) dataList.allTaxa.getTaxon(i).getAttribute(
 					Utils.TREE_FILENAME);
 
 		}// END: taxon loop

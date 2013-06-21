@@ -35,11 +35,11 @@ import java.awt.*;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @version $Id: BeautiApp.java,v 1.18 2006/09/09 16:07:05 rambaut Exp $
+ * @version $Id$
  */
 public class PathogenApp extends MultiDocApplication {
     private final static Version version = new Version() {
-        private static final String VERSION = "1.4pre";
+        private static final String VERSION = "1.4.1";
 
         public String getVersion() {
             return VERSION;
@@ -50,7 +50,7 @@ public class PathogenApp extends MultiDocApplication {
         }
 
         public String getDateString() {
-            return "2010";
+            return "2013";
         }
 
         public String getBuildString() {
@@ -91,7 +91,19 @@ public class PathogenApp extends MultiDocApplication {
 
         try {
 
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            try {
+                javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        try {
+                            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
             java.net.URL url = PathogenApp.class.getResource("images/pathogen.png");
             Icon icon = null;

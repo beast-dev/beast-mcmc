@@ -1,5 +1,6 @@
 package dr.app.tracer.application;
 
+import ch.randelshofer.quaqua.QuaquaManager;
 import dr.app.util.OSType;
 import dr.inference.trace.LogFileTraces;
 import jam.framework.*;
@@ -7,7 +8,9 @@ import jam.framework.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 public class TracerApp extends MultiDocApplication {
 
@@ -18,13 +21,13 @@ public class TracerApp extends MultiDocApplication {
         addPreferencesSection(new GeneralPreferencesSection());
     }
 
+    private static boolean lafLoaded = false;
+
     // Main entry point
     static public void main(String[] args) {
         // There is a major issue with languages that use the comma as a decimal separator.
         // To ensure compatibility between programs in the package, enforce the US locale.
         Locale.setDefault(Locale.US);
-
-        boolean lafLoaded = false;
 
         if (OSType.isMac()) {
             System.setProperty("apple.awt.graphics.UseQuartz", "true");
@@ -35,16 +38,21 @@ public class TracerApp extends MultiDocApplication {
             System.setProperty("apple.awt.draggableWindowBackground","true");
             System.setProperty("apple.awt.showGrowBox","true");
 
-            // set the Quaqua Look and Feel in the UIManager
             try {
-                UIManager.setLookAndFeel(
-                        "ch.randelshofer.quaqua.QuaquaLookAndFeel"
-                );
-                lafLoaded = true;
+                // set the Quaqua Look and Feel in the UIManager
+                javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        try {
+                            UIManager.setLookAndFeel(
+                                    "ch.randelshofer.quaqua.QuaquaLookAndFeel"
+                            );
 
-
+                            lafLoaded = true;
+                        } catch (Exception e) {
+                        }
+                    }
+                });
             } catch (Exception e) {
-                //
             }
 
             UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
@@ -52,10 +60,19 @@ public class TracerApp extends MultiDocApplication {
         }
 
         if (!lafLoaded) {
+
             try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception e1) {
-                e1.printStackTrace();
+                javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+                    public void run() {
+                        try {
+                            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 

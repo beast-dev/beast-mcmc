@@ -1,6 +1,5 @@
 package dr.app.bss;
 
-import java.io.File;
 import java.io.Serializable;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
@@ -18,8 +17,6 @@ import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
@@ -212,6 +209,10 @@ public class PartitionData implements Serializable {
 	// ---TAXA---//
 	// ////////////
 
+	public TreesTableRecord record = null;
+	
+//	public Taxa taxa = null;
+	
 	public String taxaIdref = TaxaParser.TAXA;
 	
 	public void resetTaxaIdref() {
@@ -222,7 +223,7 @@ public class PartitionData implements Serializable {
 	// ---TREE MODEL---//
 	// //////////////////
 
-	public File treeFile = null;
+//	public Tree tree = null;
 	public String treeModelIdref = TreeModel.TREE_MODEL;
 
 	public void resetTreeModelIdref() {
@@ -234,18 +235,18 @@ public class PartitionData implements Serializable {
 		TreeModel treeModel = null;
 		if (this.demographicModelIndex == 0) { // No model
 
-			Tree tree = Utils.importTreeFromFile(treeFile);
-			treeModel = new TreeModel(tree);
+//			Tree tree = Utils.importTreeFromFile(treeFile);
+			treeModel = new TreeModel(record.getTree());
 		
 		} else if (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) {
 
 			//TODO: dates? Set in loadTreeFile but read them how?
-            Tree tree = Utils.importTreeFromFile(treeFile);
-            Taxa taxa = new Taxa();
-            taxa.addTaxa(tree);
+//            Tree tree = Utils.importTreeFromFile(treeFile);
+//            Taxa taxa = new Taxa();
+//            taxa.addTaxa();
             
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
+			treeModel = new TreeModel(topologySimulator.simulateTree(record.getTaxa(), createDemographicFunction()));
 			
 		} else {
 			

@@ -10,6 +10,7 @@ import javax.swing.SwingWorker;
 import javax.swing.table.AbstractTableModel;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
 /**
@@ -24,9 +25,9 @@ public class TreesTableModel extends AbstractTableModel {
 
 	public final static int TREE_FILE_INDEX = 0;
 	public final static int TAXA_SET_INDEX = 1;
-	public final static int TAXA_INDEX = 2;
+	public final static int TAXA_COUNT_INDEX = 2;
 	
-	public static String[] COLUMN_NAMES = { "Tree File", "Taxa Set",  "Taxa" };
+	public static String[] COLUMN_NAMES = { "Tree File", "Taxa Set",  "Taxa count" };
 	
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JButton.class, // Tree File
@@ -45,31 +46,28 @@ public class TreesTableModel extends AbstractTableModel {
 	}// END: Constructor
 
 	public void addDefaultRow() {
-		dataList.treeFileList.add(new File(""));
-		dataList.taxaCounts.add(new Integer(0));
+		dataList.recordsList.add(new TreesTableRecord());
 		fireTableDataChanged();
 	}// END: addDefaultRow
 
 	public void deleteRow(int row) {
-		// remove taxa connected to this row
-		String value = dataList.treeFileList.get(row).getName();
+		
+		// remove taxa connected to this row from Taxa panel
+		String value = dataList.recordsList.get(row).getName();
 		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
-		dataList.treeFileList.remove(row);
-		dataList.taxaCounts.remove(row);
+		
+		dataList.recordsList.remove(row);
 		fireTableDataChanged();
 	}// END: deleteRow
 
-	public void setRow(int row, File file, Integer taxaCount) {
+	public void setRow(int row, TreesTableRecord record) {
 
-		// remove taxa connected to this row
-		String value = dataList.treeFileList.get(row).getName();
+		// remove taxa connected to this row from Taxa panel
+		String value = dataList.recordsList.get(row).getName();
 		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
 
-		dataList.treeFileList.remove(row);
-		dataList.treeFileList.add(row, file);
-
-		dataList.taxaCounts.remove(row);
-		dataList.taxaCounts.add(row, taxaCount);
+		dataList.recordsList.remove(row);
+		dataList.recordsList.add(row, record);
 
 		fireTableDataChanged();
 
@@ -82,7 +80,7 @@ public class TreesTableModel extends AbstractTableModel {
 
 	@Override
 	public int getRowCount() {
-		return dataList.treeFileList.size();
+		return dataList.recordsList.size();
 	}
 
 	@Override
@@ -94,7 +92,7 @@ public class TreesTableModel extends AbstractTableModel {
 		switch (column) {
 		case TREE_FILE_INDEX:
 			return false;
-		case TAXA_INDEX:
+		case TAXA_COUNT_INDEX:
 			return false;
 		case TAXA_SET_INDEX:
 			return false;
@@ -107,11 +105,6 @@ public class TreesTableModel extends AbstractTableModel {
 		return COLUMN_NAMES[column];
 	}// END: getColumnName
 
-	// //TODO: like in taxa panel
-	// private void getTaxaCount() {
-	//
-	// }
-
 	@Override
 	public Object getValueAt(int row, int column) {
 		switch (column) {
@@ -121,8 +114,8 @@ public class TreesTableModel extends AbstractTableModel {
 			treeFileButton.addActionListener(new ListenLoadTreeFile(row));
 			return treeFileButton;
 
-		case TAXA_INDEX:
-			return dataList.taxaCounts.get(row);
+		case TAXA_COUNT_INDEX:
+			return dataList.recordsList.get(row).getTaxaCount();
 
 		case TAXA_SET_INDEX:
 			
@@ -188,14 +181,15 @@ public class TreesTableModel extends AbstractTableModel {
 
 				if (file != null) {
 
+					//TODO
 					// check if file unique, throw exception if not
-					if (!isFileInList(file)) {
+//					if (!isFileInList(file)) {
 
 						loadTreeFile(file, row);
 
-					} else {
-						Utils.showDialog("File with this name already loaded. Choose different file.");
-					}
+//					} else {
+//						Utils.showDialog("File with this name already loaded. Choose different file.");
+//					}
 
 					File tmpDir = chooser.getCurrentDirectory();
 					if (tmpDir != null) {
@@ -211,20 +205,21 @@ public class TreesTableModel extends AbstractTableModel {
 
 	}// END: doLoadTreeFile
 
-	private boolean isFileInList(File file) {
-		boolean exists = false;
-
-		for (File file2 : dataList.treeFileList) {
-
-			if (file.getName().equalsIgnoreCase(file2.getName())) {
-				exists = true;
-				break;
-			}
-
-		}
-
-		return exists;
-	}// END: isFileInList
+	//TODO
+//	private boolean isFileInList(File file) {
+//		boolean exists = false;
+//
+//		for (File file2 : dataList.treesList) {
+//
+//			if (file.getName().equalsIgnoreCase(file2.getName())) {
+//				exists = true;
+//				break;
+//			}
+//
+//		}
+//
+//		return exists;
+//	}// END: isFileInList
 
 	private void loadTreeFile(final File file, final int row) {
 
@@ -237,11 +232,12 @@ public class TreesTableModel extends AbstractTableModel {
 				try {
 
 					Tree tree = Utils.importTreeFromFile(file);
-					int taxaCount = 0;
+					tree.setId(file.getName());
+					Taxa taxa = new Taxa();
 					for (Taxon taxon : tree.asList()) {
 
 						// set attributes to be parsed later in Taxa panel
-						if (!Utils.taxonExists(taxon, dataList.taxonList)) {
+						if (!Utils.taxonExists(taxon, dataList.allTaxa)) {
 
 							double absoluteHeight = Utils
 									.getAbsoluteTaxonHeight(taxon, tree);
@@ -249,21 +245,21 @@ public class TreesTableModel extends AbstractTableModel {
 							taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
 									absoluteHeight);
 
-							//TODO: for demographic models
+							// for demographic models?
 							// taxon.setAttribute("date", new Date(absoluteHeight,
 							// Units.Type.YEARS, true));
 							
 							taxon.setAttribute(Utils.TREE_FILENAME,
-									file.getName());
+									tree.getId());
 
-							dataList.taxonList.addTaxon(taxon);
-
-							taxaCount++;
+							taxa.addTaxon(taxon);
+							dataList.allTaxa.addTaxon(taxon);
+							
 						}// END: taxon exists check
 
 					}// END: taxon loop
 
-					setRow(row, file, taxaCount);
+					setRow(row, new TreesTableRecord(tree.getId(), tree, taxa));
 
 				} catch (Exception e) {
 					Utils.handleException(e);
@@ -286,13 +282,13 @@ public class TreesTableModel extends AbstractTableModel {
 	private void removeTaxaWithAttributeValue(PartitionDataList dataList,
 			String attribute, String value) {
 
-		synchronized (dataList.taxonList) {
-			for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
+		synchronized (dataList.allTaxa) {
+			for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
 
-				Taxon taxon = dataList.taxonList.getTaxon(i);
+				Taxon taxon = dataList.allTaxa.getTaxon(i);
 				if (taxon.getAttribute(attribute).toString()
 						.equalsIgnoreCase(value)) {
-					dataList.taxonList.removeTaxon(taxon);
+					dataList.allTaxa.removeTaxon(taxon);
 					i--;
 				}
 			}

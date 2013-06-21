@@ -722,23 +722,23 @@ public class Utils {
 
 	}// END: printDataList
 
-	public static void printTreeFileList(PartitionDataList dataList) {
-
-		int i = 0;
-		for (File treeFile : dataList.treeFileList) {
-			System.out.println(treeFile + " (" + dataList.taxaCounts.get(i)
-					+ ")");
-			i++;
-		}
-
-	}// END: printForestList
+//	public static void printTreeFileList(PartitionDataList dataList) {
+//
+//		int i = 0;
+//		for (File treeFile : dataList.treesList) {
+//			System.out.println(treeFile + " (" + dataList.taxaCounts.get(i)
+//					+ ")");
+//			i++;
+//		}
+//
+//	}// END: printForestList
 
 	public static void printTaxonList(PartitionDataList dataList) {
-		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
+		for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
 
-			System.out.println(dataList.taxonList.getTaxon(i).getId()
+			System.out.println(dataList.allTaxa.getTaxon(i).getId()
 					+ ": "
-					+ dataList.taxonList.getTaxon(i).getAttribute(
+					+ dataList.allTaxa.getTaxon(i).getAttribute(
 							Utils.ABSOLUTE_HEIGHT));
 
 		}// END: taxon loop

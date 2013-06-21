@@ -210,8 +210,11 @@ public class BeagleSequenceSimulatorConsoleApp {
 				// Tree Model
 				if (arguments.hasOption(TREE_MODEL)) {
 
-					data.treeFile = new File(
-							arguments.getStringOption(TREE_MODEL));
+					//TODO: how to set tree filename to parse (or taxa set file)
+					// should happen only when calling simulate
+					
+//					data.treeFile = new File(
+//							arguments.getStringOption(TREE_MODEL));
 
 				} else {
 

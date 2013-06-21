@@ -2,7 +2,6 @@ package dr.app.bss;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -47,7 +46,8 @@ public class PartitionTableModel extends AbstractTableModel {
 			JComboBox.class, //
 			// JComboBox.class, //
 			Integer.class, //
-			Integer.class, Integer.class, //
+			Integer.class, // 
+			Integer.class, //
 			JButton.class, //
 			JButton.class, //
 			JButton.class, //
@@ -136,8 +136,8 @@ public class PartitionTableModel extends AbstractTableModel {
 
 		case TREE_MODEL_INDEX:
 			
-			return dataList.get(row).treeFile == null ? new File("") : dataList
-					.get(row).treeFile;
+			return dataList.get(row).record == null ? new TreesTableRecord() : dataList
+					.get(row).record;
 			
 		case DEMOGRAPHIC_MODEL_INDEX:
 
@@ -208,7 +208,7 @@ public class PartitionTableModel extends AbstractTableModel {
 		switch (column) {
 
 		case TREE_MODEL_INDEX:
-			dataList.get(row).treeFile = (File) value;
+			dataList.get(row).record = (TreesTableRecord) value;
 			break;
 
 //		case DATA_TYPE_INDEX:

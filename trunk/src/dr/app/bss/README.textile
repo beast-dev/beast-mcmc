@@ -20,7 +20,7 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* display tree filename w-out canonical path in partitions panel combobox (also when clicked) - wrapper
+* clean up new interfaces, do error checking, debug
 * ancestral sequence in CLI
 * handle wrong ancestral sequence length exception on UI level
 * command line interface

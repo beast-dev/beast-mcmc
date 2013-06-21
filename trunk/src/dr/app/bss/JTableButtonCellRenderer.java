@@ -54,13 +54,13 @@ public class JTableButtonCellRenderer extends JButton implements
 		if (dataList != null) {
 
 			String label;
-			if (dataList.treeFileList.get(row).getName().equalsIgnoreCase("")) {
+			if (dataList.recordsList.get(row).getName().equalsIgnoreCase("")) {
 				
 				label = Utils.CHOOSE_FILE;
 				
 			} else {
 				
-				label = dataList.treeFileList.get(row).getName();
+				label = dataList.recordsList.get(row).getName();
 				
 			}
 

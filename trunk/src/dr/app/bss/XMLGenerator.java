@@ -84,13 +84,13 @@ public class XMLGenerator {
 			ArrayList<TreeModel> taxonList = new ArrayList<TreeModel>();
 			for (PartitionData data : dataList) {
 
-				if (data.treeFile == null) {
+				if (data.record == null) {
 
 					throw new RuntimeException("Set Tree Model in Partitions tab for " + suffix + " partition.");
 
 				} else {
 
-						TreeModel treeModel = new TreeModel(Utils.importTreeFromFile(data.treeFile));
+						TreeModel treeModel = new TreeModel(data.record.getTree());
 
 						if (taxonList.size() == 0 | !Utils.isTreeModelInList(treeModel, taxonList)) {
 

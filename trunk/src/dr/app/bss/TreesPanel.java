@@ -83,7 +83,7 @@ public class TreesPanel extends JPanel implements Exportable {
 		setTaxaSetColumn();
 
 		column = treesTable.getColumnModel().getColumn(
-				TreesTableModel.TAXA_INDEX);
+				TreesTableModel.TAXA_COUNT_INDEX);
 		column.setCellRenderer(new TableRenderer(SwingConstants.LEFT,
 				new Insets(0, 2, 0, 2)));
 
@@ -120,7 +120,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
 	private void setTrees() {
 
-		rowCount = dataList.treeFileList.size();
+		rowCount = dataList.recordsList.size();
 
 		addTreeAction.setEnabled(true);
 		if (rowCount == 1) {

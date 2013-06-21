@@ -70,6 +70,8 @@ public class TemporalRooting {
     private int currentRootBranch = 0;
     private int totalRootBranches = 0;
 
+    private boolean forcePositiveRate = false;
+
     public TemporalRooting(TaxonList taxa) {
         this.taxa = taxa;
 
@@ -105,6 +107,10 @@ public class TemporalRooting {
         }
     }
 
+    public void setForcePositiveRate(boolean forcePositiveRate) {
+        this.forcePositiveRate = forcePositiveRate;
+    }
+
     public void setTargetRate(double targetRate) {
         this.targetRate = targetRate;
     }
@@ -120,7 +126,7 @@ public class TemporalRooting {
     public Tree findRoot(Tree tree, RootingFunction rootingFunction) {
 
         double[] dates = getTipDates(tree);
-        return findGlobalRoot(tree, dates, rootingFunction);
+        return findGlobalRoot(tree, dates, rootingFunction, forcePositiveRate);
     }
 
     public Tree findLocalRoot(Tree tree, RootingFunction rootingFunction) {
@@ -128,7 +134,7 @@ public class TemporalRooting {
         double[] dates = getTipDates(tree);
         FlexibleTree bestTree = new FlexibleTree(tree);
 
-        findLocalRoot(bestTree, dates, rootingFunction);
+        findLocalRoot(bestTree, dates, rootingFunction, forcePositiveRate);
 
         return bestTree;
     }
@@ -256,10 +262,10 @@ public class TemporalRooting {
         return labels;
     }
 
-    private Tree findGlobalRoot(final Tree source, final double[] dates, RootingFunction rootingFunction) {
+    private Tree findGlobalRoot(final Tree source, final double[] dates, RootingFunction rootingFunction, boolean forcePositiveRate) {
 
         FlexibleTree bestTree = new FlexibleTree(source);
-        double minF = findLocalRoot(bestTree, dates, rootingFunction);
+        double minF = findLocalRoot(bestTree, dates, rootingFunction, forcePositiveRate);
         double minDiff = Double.MAX_VALUE;
 
         totalRootBranches = source.getNodeCount();
@@ -270,7 +276,7 @@ public class TemporalRooting {
                 double length = tmpTree.getBranchLength(node);
                 tmpTree.changeRoot(node, length * 0.5, length * 0.5);
 
-                double f = findLocalRoot(tmpTree, dates, rootingFunction);
+                double f = findLocalRoot(tmpTree, dates, rootingFunction, forcePositiveRate);
                 if (useTargetRate) {
                     Regression r = getRootToTipRegression(tmpTree);
                     if (Math.abs(r.getGradient() - targetRate) < minDiff) {
@@ -289,7 +295,10 @@ public class TemporalRooting {
         return bestTree;
     }
 
-    private double findLocalRoot(final FlexibleTree tree, final double[] dates, final RootingFunction rootingFunction) {
+    private double findLocalRoot(final FlexibleTree tree,
+                                 final double[] dates,
+                                 final RootingFunction rootingFunction,
+                                 final boolean forcePositiveRate) {
 
         NodeRef node1 = tree.getChild(tree.getRoot(), 0);
         NodeRef node2 = tree.getChild(tree.getRoot(), 1);
@@ -323,6 +332,7 @@ public class TemporalRooting {
 
                 if (!contemporaneous) {
                     Regression r = new Regression(dates, y);
+
                     switch (rootingFunction) {
 
                         case CORRELATION:
@@ -337,6 +347,11 @@ public class TemporalRooting {
                         default:
                             throw new RuntimeException("Unknown enum value");
                     }
+
+                    if (forcePositiveRate) {
+                        score = (r.getGradient() < 0.0 ? -score : score);
+                    }
+
                 } else {
                     score = DiscreteStatistics.variance(y);
                 }

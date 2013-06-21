@@ -64,6 +64,8 @@ public class BeautiApp extends MultiDocApplication {
 //        throw new UnsupportedOperationException("getOpenAction is not supported");
 //    }
 
+    private static boolean lafLoaded = false;
+
     // Main entry point
     static public void main(String[] args) {
 
@@ -90,8 +92,6 @@ public class BeautiApp extends MultiDocApplication {
                 advanced = true;
             }
 
-            boolean lafLoaded = false;
-
             if (OSType.isMac()) {
                 System.setProperty("apple.awt.graphics.UseQuartz", "true");
                 System.setProperty("apple.awt.antialiasing","true");
@@ -102,31 +102,36 @@ public class BeautiApp extends MultiDocApplication {
                 System.setProperty("apple.awt.showGrowBox","true");
 
                 try {
+                    // set the Quaqua Look and Feel in the UIManager
+                    javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+                        public void run() {
+                            try {
+                                try {
+                                    // We need to do this using dynamic class loading to avoid other platforms
+                                    // having to link to this class. If the Quaqua library is not on the classpath
+                                    // it simply won't be used.
+                                    Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
+                                    Method method = qm.getMethod("setExcludedUIs", Set.class);
 
-                    try {
-                        // We need to do this using dynamic class loading to avoid other platforms
-                        // having to link to this class. If the Quaqua library is not on the classpath
-                        // it simply won't be used.
-                        Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
-                        Method method = qm.getMethod("setExcludedUIs", Set.class);
+                                    Set<String> excludes = new HashSet<String>();
+                                    excludes.add("Button");
+                                    excludes.add("ToolBar");
+                                    method.invoke(null, excludes);
 
-                        Set<String> excludes = new HashSet<String>();
-                        excludes.add("Button");
-                        excludes.add("ToolBar");
-                        method.invoke(null, excludes);
+                                }
+                                catch (Throwable e) {
+                                }
 
-                    }
-                    catch (Throwable e) {
-                    }
-
-                    //set the Quaqua Look and Feel in the UIManager
-                    UIManager.setLookAndFeel(
-                            "ch.randelshofer.quaqua.QuaquaLookAndFeel"
-                    );
-                    lafLoaded = true;
-
+                                //set the Quaqua Look and Feel in the UIManager
+                                UIManager.setLookAndFeel(
+                                        "ch.randelshofer.quaqua.QuaquaLookAndFeel"
+                                );
+                                lafLoaded = true;
+                            } catch (Exception e) {
+                            }
+                        }
+                    });
                 } catch (Exception e) {
-
                 }
 
                 UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
@@ -136,7 +141,20 @@ public class BeautiApp extends MultiDocApplication {
             try {
 
                 if (!lafLoaded) {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    try {
+                        // set the System Look and Feel in the UIManager
+                        javax.swing.SwingUtilities.invokeAndWait(new Runnable() {
+                            public void run() {
+                                try {
+                                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 java.net.URL url = BeautiApp.class.getResource("images/beauti.png");

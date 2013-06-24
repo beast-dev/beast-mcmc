@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -355,6 +356,14 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     public double getCoalescentInterval(int i) {
         makeIntervalsKnown();
         return coalescentIntervals[i];
+    }
+
+    public int getCoalescentIntervalLineageCount(int i) {
+        throw new RuntimeException("Not yet implemented");
+    }
+
+    public IntervalType getCoalescentIntervalType(int i) {
+        throw new RuntimeException("Not yet implemented");
     }
 
     public double[] getCoalescentIntervalHeights() {

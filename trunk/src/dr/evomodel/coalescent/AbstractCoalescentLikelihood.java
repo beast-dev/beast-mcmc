@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalList;
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.Intervals;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -264,6 +265,20 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
             setupIntervals();
         }
         return intervals.getIntervalCount();
+    }
+
+    public int getCoalescentIntervalLineageCount(int i) {
+        if (!eventsKnown) {
+            setupIntervals();
+        }
+        return intervals.getLineageCount(i);
+    }
+
+    public IntervalType getCoalescentIntervalType(int i) {
+        if (!eventsKnown) {
+            setupIntervals();
+        }
+        return intervals.getIntervalType(i);
     }
 
     public String toString() {

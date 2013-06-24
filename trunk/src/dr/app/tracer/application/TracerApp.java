@@ -1,6 +1,30 @@
+/*
+ * TracerApp.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.application;
 
-import ch.randelshofer.quaqua.QuaquaManager;
 import dr.app.util.OSType;
 import dr.inference.trace.LogFileTraces;
 import jam.framework.*;
@@ -8,9 +32,7 @@ import jam.framework.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 
 public class TracerApp extends MultiDocApplication {
 
@@ -31,12 +53,12 @@ public class TracerApp extends MultiDocApplication {
 
         if (OSType.isMac()) {
             System.setProperty("apple.awt.graphics.UseQuartz", "true");
-            System.setProperty("apple.awt.antialiasing","true");
-            System.setProperty("apple.awt.rendering","VALUE_RENDER_QUALITY");
+            System.setProperty("apple.awt.antialiasing", "true");
+            System.setProperty("apple.awt.rendering", "VALUE_RENDER_QUALITY");
 
-            System.setProperty("apple.laf.useScreenMenuBar","true");
-            System.setProperty("apple.awt.draggableWindowBackground","true");
-            System.setProperty("apple.awt.showGrowBox","true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.draggableWindowBackground", "true");
+            System.setProperty("apple.awt.showGrowBox", "true");
 
             try {
                 // set the Quaqua Look and Feel in the UIManager
@@ -126,7 +148,7 @@ public class TracerApp extends MultiDocApplication {
                 for (String fileName : args) {
 
                     File file = new File(fileName);
-                    LogFileTraces[] traces = { new LogFileTraces(fileName, file) };
+                    LogFileTraces[] traces = {new LogFileTraces(fileName, file)};
 
                     frame.processTraces(traces);
                 }

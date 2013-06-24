@@ -55,18 +55,21 @@ public class MultivariateTraitUtils {
     public static double[][] computeTreeTraitPrecision(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
         double[][] treePrecision = computeTreePrecision(trait, conditionOnRoot);
         double[][] traitPrecision = trait.getDiffusionModel().getPrecisionmatrix();
-        int dimTrait = traitPrecision.length;
-        if (dimTrait > 1) {
-            treePrecision = KroneckerOperation.product(treePrecision, traitPrecision);
+        return productKronecker(treePrecision, traitPrecision);
+    }
+
+    private static double[][] productKronecker(double[][] A, double[][] B) {
+        if (B.length > 1) {
+            A = KroneckerOperation.product(A, B);
         } else {
-            final double precision = traitPrecision[0][0];
-            for (int i = 0; i < treePrecision.length; i++) {
-                for (int j = 0; j < treePrecision[i].length; j++) {
-                    treePrecision[i][j] *= precision;
+            final double b = B[0][0];
+            for (int i = 0; i < A.length; ++i) {
+                for (int j = 0; j < A[i].length; ++j) {
+                    A[i][j] *= b;
                 }
             }
         }
-        return treePrecision;
+        return A;
     }
 
     public static double[] computeTreeTraitMean(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
@@ -83,8 +86,11 @@ public class MultivariateTraitUtils {
         return mean;
     }
 
-    public static double[][] computeTreeTraitVariance(FullyConjugateMultivariateTraitLikelihood trait) {
-        throw new RuntimeException("Not yet implemented.");
+    public static double[][] computeTreeTraitVariance(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
+        double[][] treeVariance = computeTreeVariance(trait, conditionOnRoot);
+        double[][] traitVariance =
+                new SymmetricMatrix(trait.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
+        return productKronecker(treeVariance, traitVariance);
     }
 
     public static double[][] computeTreeVariance(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {

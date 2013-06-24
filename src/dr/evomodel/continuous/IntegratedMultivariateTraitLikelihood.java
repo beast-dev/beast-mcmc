@@ -29,7 +29,6 @@ import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
@@ -319,21 +318,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                       double[] conditionalRootMean, double conditionalRootPrecision,
                                       double[][] traitPrecision) {
         // Do nothing; for checking PNAS paper
-    }
-
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-        //  System.err.println("Model: " + model.getId());
-        if (model.getId().compareTo("driftModels.1") == 0 || model.getId().compareTo("driftModels.2") == 0) {
-            if (object instanceof StrictClockBranchRates) {
-                StrictClockBranchRates rates = (StrictClockBranchRates) object;
-                if (DEBUG) {
-                    System.err.println(rates.getBranchRate(treeModel, treeModel.getExternalNode(0)));
-                    System.err.println("old ll = " + logLikelihood + " " + model.getId());
-                }
-                likelihoodKnown = false;
-            }
-        }
-        super.handleModelChangedEvent(model, object, index);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

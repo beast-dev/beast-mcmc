@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -637,6 +638,14 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         double[] tmp = numCoalEvents;
         numCoalEvents = storedNumCoalEvents;
         storedNumCoalEvents = tmp;
+    }
+
+    public int getCoalescentIntervalLineageCount(int i) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public IntervalType getCoalescentIntervalType(int i) {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }
 

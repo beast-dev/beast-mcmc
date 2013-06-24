@@ -26,80 +26,36 @@
 package dr.evomodel.coalescent;
 
 import dr.inference.model.Statistic;
+import dr.math.Binomial;
 
 
 public class CoalescentIntervalStatistic extends Statistic.Abstract {
 
-//	private coalescentInterval coalInt;
-
     private final CoalescentIntervalProvider coalescent;
+    private final boolean rescaleToNe;
 
     public CoalescentIntervalStatistic(CoalescentIntervalProvider coalescent) {
-        this.coalescent = coalescent;
+        this(coalescent, false);
     }
 
-//	public CoalescentIntervalStatistic(GMRFSkyrideLikelihood acl) {
-//		this.coalInt = new GMRFStatistic(acl);
-//	}
-//
-//	public CoalescentIntervalStatistic(CoalescentLikelihood coal) {
-//		this.coalInt = new CoalescentStatistic(coal);
-//	}
+    public CoalescentIntervalStatistic(CoalescentIntervalProvider coalescent, boolean rescaleToNe) {
+        this.coalescent = coalescent;
+        this.rescaleToNe = rescaleToNe;
+    }
 
     public int getDimension() {
         return coalescent.getCoalescentIntervalDimension();
     }
 
     public double getStatisticValue(int i) {
-        return coalescent.getCoalescentInterval(i);
+        double interval = coalescent.getCoalescentInterval(i);
+
+        if (rescaleToNe) {
+            int lineages = coalescent.getCoalescentIntervalLineageCount(i);
+            interval *= Binomial.choose2(lineages);
+            // TODO Double-check; maybe need to return 1/interval or divide by choose2(lineages)
+        }
+
+        return interval;
     }
-
-//	private class GMRFStatistic implements coalescentInterval {
-//
-//		private GMRFSkyrideLikelihood acl;
-//		private int dimension;
-//
-//		private GMRFStatistic(GMRFSkyrideLikelihood acl) {
-//			this.acl = acl;
-//			this.dimension = acl.getCoalescentIntervalHeights().length;
-//		}
-//
-//		public int getDimension() {
-//			return dimension;
-//		}
-//
-//		public double getStatisticValue(int dim) {
-//			return acl.getCoalescentIntervalHeights()[dim];
-//		}
-//
-//	}
-//
-//	private class CoalescentStatistic implements coalescentInterval {
-//
-//		private CoalescentLikelihood coal;
-//		private int dimension;
-//
-//		private CoalescentStatistic(CoalescentLikelihood coal) {
-//			this.coal = coal;
-//			this.dimension = coal.getCoalescentIntervalHeights().length;
-//		}
-//
-//		public int getDimension() {
-//			return dimension;
-//		}
-//
-//		public double getStatisticValue(int dim) {
-//			return coal.getCoalescentIntervalHeights()[dim];
-//		}
-//
-//	}
-//
-//	private interface coalescentInterval {
-//
-//		public int getDimension();
-//
-//		public double getStatisticValue(int dim);
-//
-//	}
-
 }

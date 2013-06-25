@@ -3,8 +3,10 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
+import dr.xml.*;
 
 /**
  * Implements branch exchange operations that also exchange entire subtrees of the transmission tree. As this already
@@ -17,6 +19,7 @@ import dr.math.MathUtils;
 public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
 
     private final CaseToCaseTransmissionLikelihood c2cLikelihood;
+    public static final String TRANSMISSION_EXCHANGE_OPERATOR_B = "transmissionExchangeOperatorB";
 
     public TransmissionExchangeOperatorB(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight) {
         this.c2cLikelihood = c2cLikelihood;
@@ -89,6 +92,50 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return null;
+        return "Transmission tree exchange operator type B (" + c2cLikelihood.getTree().getId() +")";
     }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return TRANSMISSION_EXCHANGE_OPERATOR_B;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            final CaseToCaseTransmissionLikelihood c2cL
+                    = (CaseToCaseTransmissionLikelihood) xo.getChild(CaseToCaseTransmissionLikelihood.class);
+            if (c2cL.getTree().getExternalNodeCount() <= 2) {
+                throw new XMLParseException("Tree with fewer than 3 taxa");
+            }
+            final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+
+            return new TransmissionExchangeOperatorB(c2cL, weight);
+        }
+
+        // ************************************************************************
+        // AbstractXMLObjectParser implementation
+        // ************************************************************************
+
+        public String getParserDescription(){
+            return "This element represents a exchange operator, swapping two random subtrees in such a way that " +
+                    "subtrees of the transmission tree are also exchanged.";
+        }
+
+        public Class getReturnType(){
+            return TransmissionExchangeOperatorB.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
+                    new ElementRule(CaseToCaseTransmissionLikelihood.class)
+            };
+        }
+    };
+
+
 }

@@ -811,7 +811,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
     private BranchRateModel rateModel = null;
-    private List<BranchRateModel> driftModels = null;
+    protected List<BranchRateModel> driftModels = null;
     private BranchRateModel driftOne = null;
     private BranchRateModel driftTwo = null;
     private boolean hasRateModel = false;

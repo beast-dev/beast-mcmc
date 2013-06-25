@@ -79,10 +79,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
             return;
         }
 
-        // What's happened to the node numbers?
-
-
-
         c2cLikelihood.makeDirty();
 
         throw new OperatorFailedException("Couldn't find valid wide move on this tree!");

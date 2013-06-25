@@ -52,7 +52,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double[] storedNodeLogLikelihoods;
 
     /* Whether operations have required the recalculation of the log likelihoods of the subtree from the parent branch
-    of the referred-to node downwards.
+    of the referred-to node upwards.
      */
 
     private boolean[] nodeRecalculationNeeded;
@@ -408,10 +408,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     //Return a set of nodes that are not descendants of (or equal to) the current node and have the same painting as it.
     //The node recalculation is going to need reworking once the time comes to test the extended version,
 
-    public HashSet<Integer> samePaintingUpTree(NodeRef node, boolean flagForRecalc){
+    public HashSet<Integer> samePaintingDownTree(NodeRef node, boolean flagForRecalc){
         if(!nodeRecalculationNeeded[node.getNumber()] && flagForRecalc){
-            extendedflagForRecalculation(virusTree, virusTree.getChild(node,0), nodeRecalculationNeeded);
-            extendedflagForRecalculation(virusTree, virusTree.getChild(node,1), nodeRecalculationNeeded);
+            extendedflagForRecalculation(virusTree, node, nodeRecalculationNeeded);
         }
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = branchMap[node.getNumber()];
@@ -422,7 +421,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 if(countChildrenWithSamePainting(ancestorNode)==2){
                     NodeRef otherChild = sibling(virusTree, ancestorNode);
                     out.add(otherChild.getNumber());
-                    out.addAll(samePaintingDownTree(otherChild, flagForRecalc));
+                    out.addAll(samePaintingUpTree(otherChild, flagForRecalc));
                 }
             }
             ancestorNode = virusTree.getParent(ancestorNode);
@@ -432,8 +431,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     //Return a set of nodes that are descendants (and not equal to) the current node and have the same painting as it.
 
-
-    public HashSet<Integer> samePaintingDownTree(NodeRef node, boolean flagForRecalc){
+    public HashSet<Integer> samePaintingUpTree(NodeRef node, boolean flagForRecalc){
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = branchMap[node.getNumber()];
         boolean creepsFurther = false;
@@ -441,12 +439,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(branchMap[virusTree.getChild(node,i).getNumber()]==painting){
                 creepsFurther = true;
                 out.add(virusTree.getChild(node,i).getNumber());
-                out.addAll(samePaintingDownTree(virusTree.getChild(node,i), flagForRecalc));
+                out.addAll(samePaintingUpTree(virusTree.getChild(node,i), flagForRecalc));
             }
         }
         if(flagForRecalc && !creepsFurther){
-            extendedflagForRecalculation(virusTree, virusTree.getChild(node,0), nodeRecalculationNeeded);
-            extendedflagForRecalculation(virusTree, virusTree.getChild(node,1), nodeRecalculationNeeded);
+            extendedflagForRecalculation(virusTree, node, nodeRecalculationNeeded);
         }
         return out;
     }
@@ -461,11 +458,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return out;
     }
 
-    // The flags indicate if a node's painting has changed. Only tree operators can use this shortcut; if parameters of
-    // the epidemiological model have changed then the whole tree's likelihood needs recalculating. Somewhat out of
-    // date at this point.
+    // change flags to indicate that something needs recalculation further up the tree
 
-    public static void extendedflagForRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
+    private static void extendedflagForRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
         flags[node.getNumber()]=true;
         for(int i=0; i<tree.getChildCount(node); i++){
             flags[tree.getChild(node,i).getNumber()]=true;
@@ -475,6 +470,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             currentNode = tree.getParent(currentNode);
             flags[currentNode.getNumber()]=true;
         }
+    }
+
+    public void extendedflagForRecalculation(TreeModel tree, NodeRef node){
+        extendedflagForRecalculation(tree, node, nodeRecalculationNeeded);
     }
 
     public static void flagForRecalculation(NodeRef node, boolean[] flags){
@@ -758,8 +757,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                             // 1) no creep in either case, paintingForcedByParent = false
                             // 2) no creep in either case, paintingForcedByParent = true and both nodes have same
                             // painting
-                            // 2) parent creep but no node creep
-                            // 3) node creep, parent and child have same painting
+                            // 3) parent creep but no node creep
+                            // 4) node creep, parent and child have same painting
                             boolean treeCompatibilityCheck = (!nodeCreep && !parentCreep && (!paintingForcedByParent
                                     || parentPainting == nodePainting)) || (parentCreep && !nodeCreep) ||
                                     (nodeCreep && (parentPainting == nodePainting));

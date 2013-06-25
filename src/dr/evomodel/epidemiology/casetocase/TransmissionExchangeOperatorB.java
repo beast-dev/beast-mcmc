@@ -76,9 +76,6 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
             return;
         }
 
-        // What's happened to the node numbers? If the node has its old number in its new position, you don't need
-        // to even update the branch map!
-
         c2cLikelihood.makeDirty();
 
         throw new OperatorFailedException("Couldn't find valid move on this tree!");

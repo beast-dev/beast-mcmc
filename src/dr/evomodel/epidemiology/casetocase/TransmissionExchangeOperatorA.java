@@ -3,8 +3,10 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
+import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +22,7 @@ import java.util.HashSet;
 public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
     private final CaseToCaseTransmissionLikelihood c2cLikelihood;
+    public static final String TRANSMISSION_EXCHANGE_OPERATOR_A = "transmissionExchangeOperatorA";
 
     public TransmissionExchangeOperatorA(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight) {
         this.c2cLikelihood = c2cLikelihood;
@@ -31,8 +34,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         final int tipCount = tree.getExternalNodeCount();
 
-        assert tree.getExternalNodeCount() == tipCount :
-                "Lost some tips";
+        assert tree.getExternalNodeCount() == tipCount : "Lost some tips";
 
         return 0;
     }
@@ -92,7 +94,49 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return null;
+        return "Transmission tree exchange operator type A (" + c2cLikelihood.getTree().getId() +")";
     }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return TRANSMISSION_EXCHANGE_OPERATOR_A;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            final CaseToCaseTransmissionLikelihood c2cL
+                    = (CaseToCaseTransmissionLikelihood) xo.getChild(CaseToCaseTransmissionLikelihood.class);
+            if (c2cL.getTree().getExternalNodeCount() <= 2) {
+                throw new XMLParseException("Tree with fewer than 3 taxa");
+            }
+            final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+
+            return new TransmissionExchangeOperatorA(c2cL, weight);
+        }
+
+        // ************************************************************************
+        // AbstractXMLObjectParser implementation
+        // ************************************************************************
+
+        public String getParserDescription(){
+            return "This element represents a exchange operator, swapping two random subtrees in such a way that the" +
+                    "transmission tree is unaffected.";
+        }
+
+        public Class getReturnType(){
+            return TransmissionExchangeOperatorA.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules;{
+            rules = new XMLSyntaxRule[]{
+                    AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
+                    new ElementRule(CaseToCaseTransmissionLikelihood.class)
+            };
+        }
+    };
 
 }

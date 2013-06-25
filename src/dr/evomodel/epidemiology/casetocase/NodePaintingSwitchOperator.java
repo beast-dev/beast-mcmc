@@ -46,10 +46,9 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         while(branchMap[node.getNumber()]==branchMap[tree.getParent(node).getNumber()]){
             node = tree.getParent(node);
         }
-        AbstractCase currentCase = c2cLikelihood.getBranchMap()[node.getNumber()];
         adjustTree(tree, node, branchMap, c2cLikelihood.getRecalculationArray(), c2cLikelihood.isExtended());
         c2cLikelihood.makeDirty(false);
-        return 1;
+        return 0;
     }
 
 
@@ -67,6 +66,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     private void moveDown(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
         NodeRef parent = tree.getParent(node);
+        assert map[parent.getNumber()]==map[node.getNumber()] : "Partition problem";
         if(!extended || c2cLikelihood.tipLinked(parent)){
             NodeRef grandparent = tree.getParent(parent);
             if(map[grandparent.getNumber()]==map[parent.getNumber()]){
@@ -83,8 +83,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                 }
             }
             if(map[sibling.getNumber()]==map[parent.getNumber()]){
-                for(Integer descendent: c2cLikelihood.samePaintingUpTree(sibling, true)){
-                    map[descendent]=map[parent.getNumber()];
+                for(Integer descendant: c2cLikelihood.samePaintingUpTree(sibling, true)){
+                    map[descendant]=map[parent.getNumber()];
                 }
                 map[sibling.getNumber()]=map[node.getNumber()];
             }
@@ -94,16 +94,15 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     private void moveUp(TreeModel tree, NodeRef node, AbstractCase[] map){
         NodeRef parent = tree.getParent(node);
+        assert map[parent.getNumber()]==map[node.getNumber()] : "Partition problem";
         // check if either child is not tip-linked (at most one is not, and if so it must have been in the same
         // partition as both the other child and 'node')
         for(int i=0; i<tree.getChildCount(node); i++){
             NodeRef child = tree.getChild(node, i);
             if(!c2cLikelihood.tipLinked(child)){
-                if(debug && map[child.getNumber()]!=map[node.getNumber()]){
-                    throw new RuntimeException("Partition problem");
-                }
-                for(Integer descendent: c2cLikelihood.samePaintingUpTree(child, true)){
-                    map[descendent]=map[parent.getNumber()];
+                assert map[child.getNumber()]==map[node.getNumber()] : "Partition problem";
+                for(Integer descendant: c2cLikelihood.samePaintingUpTree(child, true)){
+                    map[descendant]=map[parent.getNumber()];
                 }
                 map[child.getNumber()]=map[parent.getNumber()];
             }

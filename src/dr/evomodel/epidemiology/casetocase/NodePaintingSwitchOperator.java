@@ -5,10 +5,11 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
+import jebl.math.Random;
 
 /**
- * This operator changes the assigned case of a random node from the assigned case of one of its children to the
- * assigned case of the other, and then goes up the tree replacing all ancestral occurances of one to the other.
+ * This operator finds a branch that corresponds to a transmission event, and moves that event up one branch or down
+ * one branch
  *
  * @author Matthew Hall
  */
@@ -16,6 +17,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     public static final String NODE_PAINTING_SWITCH_OPERATOR = "nodePaintingSwitchOperator";
     private CaseToCaseTransmissionLikelihood c2cLikelihood;
+    boolean debug = false;
 
     public NodePaintingSwitchOperator(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight){
         this.c2cLikelihood = c2cLikelihood;
@@ -31,100 +33,83 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     public double doOperation(){
         TreeModel tree = c2cLikelihood.getTree();
-        int internalNodeCount = tree.getInternalNodeCount();
-        int nodeToSwitch = MathUtils.nextInt(internalNodeCount);
-        while(c2cLikelihood.isExtended() && c2cLikelihood.getSwitchLocks()[nodeToSwitch]){
-            nodeToSwitch = MathUtils.nextInt(internalNodeCount);
+        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
+        int externalNodeCount = tree.getExternalNodeCount();
+        // find a case whose infection event we are going to move about
+        int nodeToSwitch = MathUtils.nextInt(externalNodeCount);
+        // if the infection event is the seed of the epidemic, we need to try again
+        while(branchMap[tree.getRoot().getNumber()]==branchMap[tree.getExternalNode(nodeToSwitch).getNumber()]){
+            nodeToSwitch = MathUtils.nextInt(externalNodeCount);
         }
-        NodeRef node = tree.getInternalNode(nodeToSwitch);
+        // find the child node of the transmission branch
+        NodeRef node = tree.getExternalNode(nodeToSwitch);
+        while(branchMap[node.getNumber()]==branchMap[tree.getParent(node).getNumber()]){
+            node = tree.getParent(node);
+        }
         AbstractCase currentCase = c2cLikelihood.getBranchMap()[node.getNumber()];
-        for(int i=0; i<tree.getChildCount(node); i++){
-            if(c2cLikelihood.getBranchMap()[tree.getChild(node,i).getNumber()]!=currentCase){
-                adjustTree(tree, node, c2cLikelihood.getBranchMap(), c2cLikelihood.getRecalculationArray(),
-                        c2cLikelihood.isExtended());
-            }
-        }
+        adjustTree(tree, node, branchMap, c2cLikelihood.getRecalculationArray(), c2cLikelihood.isExtended());
         c2cLikelihood.makeDirty(false);
         return 1;
     }
 
-    /*Look at the children of the current node, pick the one that is not labelled the same, change the node's
-    * label to that one, then go up the tree and replace any others higher up with the same label*/
 
-    private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] flags, boolean extended){
-        AbstractCase originalCase = map[node.getNumber()];
-        if(tree.isExternal(node)){
-            throw new RuntimeException("Node is external");
+    private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] recalcArray, boolean extended){
+        // are we going up or down? If we're not extended then all move are down.
+        if(!extended || MathUtils.nextBoolean()){
+            moveDown(tree, node, map, extended);
+        } else {
+            moveUp(tree, node, map);
         }
-        AbstractCase[] childCases = new AbstractCase[2];
-        for(int i=0; i<tree.getChildCount(node); i++){
-            childCases[i] = map[tree.getChild(node, i).getNumber()];
-        }
-        if(childCases[0]==childCases[1] && !extended){
-            throw new RuntimeException("Node children are the same");
-        }
-        if(originalCase!=childCases[0] && originalCase!=childCases[1] && !extended){
-            throw new RuntimeException("You've ended up with a node neither of whose children are have the same " +
-                    "label as itself. Help!");
-        }
-        AbstractCase newCase;
-        for(int i=0; i<2; i++){
-            if(childCases[i]!=originalCase){
-                newCase=childCases[i];
-                map[node.getNumber()]=newCase;
-                if(!tree.isRoot(node)){
-                    changeAncestorNodes(tree, node, originalCase, newCase, map, flags, extended);
-                }
-            }
-        }
-        CaseToCaseTransmissionLikelihood.flagForRecalculation(node, flags);
-        for(int i=0; i<tree.getChildCount(node); i++){
-            CaseToCaseTransmissionLikelihood.flagForRecalculation(tree.getChild(node,i), flags);
+        if(debug){
+            c2cLikelihood.checkPaintingIntegrity(map, true);
         }
     }
 
-    /*Go up the tree and change all ancestors of the current node that had the old painting to have the new painting.
-    * Return whether the painted section reaches the root.*/
-
-    private void changeAncestorNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
-                                            AbstractCase[] map, boolean[] flags, boolean extended){
-
+    private void moveDown(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
         NodeRef parent = tree.getParent(node);
-        if(map[parent.getNumber()]==originalCase){
-            map[parent.getNumber()]=newCase;
-            NodeRef otherChild = tree.getChild(parent,0) == node ? tree.getChild(parent,1) : tree.getChild(parent,0);
-            if(extended){
-                if(map[otherChild.getNumber()]==originalCase){
-                    changeDescendantNodes(tree, parent, originalCase, newCase, map, flags);
+        if(!extended || c2cLikelihood.tipLinked(parent)){
+            NodeRef grandparent = tree.getParent(parent);
+            if(map[grandparent.getNumber()]==map[parent.getNumber()]){
+                for(Integer ancestor: c2cLikelihood.samePaintingDownTree(grandparent, true)){
+                    map[ancestor]=map[node.getNumber()];
+                }
+                map[grandparent.getNumber()]=map[node.getNumber()];
+            }
+        } else {
+            NodeRef sibling = node;
+            for(int i=0; i<tree.getChildCount(parent); i++){
+                if(tree.getChild(parent, i)!=node){
+                    sibling = tree.getChild(parent, i);
                 }
             }
-            if(!tree.isRoot(parent)){
-                changeAncestorNodes(tree, parent, originalCase, newCase, map, flags, extended);
+            if(map[sibling.getNumber()]==map[parent.getNumber()]){
+                for(Integer descendent: c2cLikelihood.samePaintingUpTree(sibling, true)){
+                    map[descendent]=map[parent.getNumber()];
+                }
+                map[sibling.getNumber()]=map[node.getNumber()];
             }
-            CaseToCaseTransmissionLikelihood.flagForRecalculation(parent, flags);
-            CaseToCaseTransmissionLikelihood.flagForRecalculation(otherChild, flags);
         }
+        c2cLikelihood.extendedflagForRecalculation(tree, node);
     }
 
-    /*  Extended only. Go down the tree and change all descendants of the current node that have the old painting to
-    have the new painting. This should never change the label of tip-linked nodes under either painting, and if it does
-    something is wrong.*/
-
-    private void changeDescendantNodes(TreeModel tree, NodeRef node, AbstractCase originalCase,
-                                              AbstractCase newCase, AbstractCase[] map, boolean[] flags){
-        if(tree.isExternal(node)){
-            throw new RuntimeException("changeDescendantNodes has reached a tip, which should never happen.");
-        }
+    private void moveUp(TreeModel tree, NodeRef node, AbstractCase[] map){
+        NodeRef parent = tree.getParent(node);
+        // check if either child is not tip-linked (at most one is not, and if so it must have been in the same
+        // partition as both the other child and 'node')
         for(int i=0; i<tree.getChildCount(node); i++){
-            CaseToCaseTransmissionLikelihood.flagForRecalculation(node, flags);
-            NodeRef child = tree.getChild(node,i);
-            if(map[child.getNumber()]==originalCase){
-                map[child.getNumber()]=newCase;
-                changeDescendantNodes(tree, child, originalCase, newCase, map, flags);
+            NodeRef child = tree.getChild(node, i);
+            if(!c2cLikelihood.tipLinked(child)){
+                if(debug && map[child.getNumber()]!=map[node.getNumber()]){
+                    throw new RuntimeException("Partition problem");
+                }
+                for(Integer descendent: c2cLikelihood.samePaintingUpTree(child, true)){
+                    map[descendent]=map[parent.getNumber()];
+                }
+                map[child.getNumber()]=map[parent.getNumber()];
             }
         }
+        map[node.getNumber()]=map[parent.getNumber()];
     }
-
 
     public String getPerformanceSuggestion(){
         return "Not implemented";

@@ -72,6 +72,22 @@ public class MultivariateTraitUtils {
         return A;
     }
 
+    private static double[] getShiftContributionToMean(NodeRef node, FullyConjugateMultivariateTraitLikelihood trait) {
+
+        MultivariateTraitTree treeModel = trait.getTreeModel();
+        double shiftContribution[] = new double[trait.dimTrait];
+
+        if (!treeModel.isRoot(node)) {
+            NodeRef parent = treeModel.getParent(node);
+            double shiftContributionParent[] = getShiftContributionToMean(parent, trait);
+            for (int i = 0; i < shiftContribution.length; ++i) {
+                shiftContribution[i] = trait.getShiftForBranchLength(node)[i] + shiftContributionParent[i];
+            }
+        }
+        return shiftContribution;
+    }
+
+
     public static double[] computeTreeTraitMean(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
         double[] root = trait.getPriorMean();
         if (conditionOnRoot) {
@@ -83,6 +99,17 @@ public class MultivariateTraitUtils {
         for (int i = 0; i < nTaxa; ++i) {
             System.arraycopy(root, 0, mean, i * root.length, root.length);
         }
+
+        if (trait.driftModels != null) {
+            MultivariateTraitTree myTreeModel = trait.getTreeModel();
+            for (int i = 0; i < nTaxa; ++i) {
+                double[] shiftContribution = getShiftContributionToMean(myTreeModel.getExternalNode(i), trait);
+                for (int j = 0; j < trait.dimTrait; ++j) {
+                    mean[i * trait.dimTrait + j] = mean[i * trait.dimTrait + j] + shiftContribution[j];
+                }
+            }
+        }
+
         return mean;
     }
 

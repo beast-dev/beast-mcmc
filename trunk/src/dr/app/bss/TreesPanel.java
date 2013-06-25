@@ -102,7 +102,7 @@ public class TreesPanel extends JPanel implements Exportable {
 				TreesTableModel.TAXA_SET_INDEX);
 		// pass dataList for labels on buttons
 		column.setCellRenderer(new JTableButtonCellRenderer(
-//				dataList
+				dataList,TreesTableModel.TAXA_SET_INDEX
 				));
 		column.setCellEditor(new JTableButtonCellEditor());
 		
@@ -113,7 +113,7 @@ public class TreesPanel extends JPanel implements Exportable {
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TREE_FILE_INDEX);
 		// pass dataList for labels on buttons
-		column.setCellRenderer(new JTableButtonCellRenderer(dataList));
+		column.setCellRenderer(new JTableButtonCellRenderer(dataList, TreesTableModel.TREE_FILE_INDEX));
 		column.setCellEditor(new JTableButtonCellEditor());
 
 	}// END: setTreesColumn
@@ -137,9 +137,13 @@ public class TreesPanel extends JPanel implements Exportable {
 		setDataList(dataList);
 		setTreesColumn(dataList);
 		setTrees();
-		treesTableModel.fireTableDataChanged();
+		fireTableDataChanged();
 	}// END: updateTreesTable
 
+	public void fireTableDataChanged() {
+		treesTableModel.fireTableDataChanged();
+	}
+	
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}

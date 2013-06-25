@@ -54,6 +54,7 @@ public class Utils {
 	public static final String FREQUENCY_MODEL = "frequencyModel";
 	public static final String CODON_UNIVERSAL = "codon-universal";
 	public static final String CHOOSE_FILE = "Choose file...";
+	public static final String EDIT_TAXA_SET = "Edit taxa set...";
 	
 	public static final String BSS_ICON = "icons/bss.png";
 	public static final String CHECK_ICON = "icons/check.png";
@@ -573,7 +574,7 @@ public class Utils {
 				}
 			});
 		}// END: edt check
-	}// END: uncaughtException
+	}// END: handleException
 
 	private static void showExceptionDialog(Thread t, Throwable e) {
 

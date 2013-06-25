@@ -108,21 +108,20 @@ public class TreesTableModel extends AbstractTableModel {
 	@Override
 	public Object getValueAt(int row, int column) {
 		switch (column) {
-		case TREE_FILE_INDEX:
 
+		case TREE_FILE_INDEX:
 			JButton treeFileButton = new JButton(Utils.CHOOSE_FILE);
 			treeFileButton.addActionListener(new ListenLoadTreeFile(row));
 			return treeFileButton;
 
+		case TAXA_SET_INDEX:
+			JButton taxaEditorButton = new JButton(Utils.EDIT_TAXA_SET);
+			taxaEditorButton.addActionListener(new ListenOpenTaxaEditor(row));
+			return taxaEditorButton;	
+			
 		case TAXA_COUNT_INDEX:
 			return dataList.recordsList.get(row).getTaxaCount();
 
-		case TAXA_SET_INDEX:
-			
-			JButton taxaEditorButton = new JButton(COLUMN_NAMES[column]);
-			taxaEditorButton.addActionListener(new ListenOpenTaxaEditor(row));
-			return taxaEditorButton;
-			
 		default:
 			return "Error";
 		}
@@ -259,7 +258,9 @@ public class TreesTableModel extends AbstractTableModel {
 
 					}// END: taxon loop
 
-					setRow(row, new TreesTableRecord(tree.getId(), tree, taxa));
+					setRow(row, new TreesTableRecord(tree.getId(), tree
+//							, taxa
+							));
 
 				} catch (Exception e) {
 					Utils.handleException(e);

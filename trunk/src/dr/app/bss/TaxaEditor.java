@@ -28,6 +28,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -114,7 +116,7 @@ public class TaxaEditor {
 		table = new JTable();
 		table.setModel(taxaEditorTableModel);
 		table.setSurrendersFocusOnKeystroke(true);
-		
+
 		JScrollPane scrollPane = new JScrollPane(table,
 				ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
 				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -143,13 +145,28 @@ public class TaxaEditor {
 
 	public void launch() {
 
+		if (SwingUtilities.isEventDispatchThread()) {
+			showWindow();
+		} else {
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					showWindow();
+				}
+			});
+		}// END: edt check
+
+	}// END: launch
+
+	public void showWindow() {
+
 		// Display Frame
 		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		window.setSize(new Dimension(400, 400));
 		window.setMinimumSize(new Dimension(100, 100));
 		window.setResizable(true);
 		window.setVisible(true);
-	}// END: launch
+
+	}// END: showWindow
 
 	private void setTaxa() {
 
@@ -169,7 +186,7 @@ public class TaxaEditor {
 		public void actionPerformed(ActionEvent ev) {
 
 			JFileChooser chooser = new JFileChooser();
-			chooser.setDialogTitle("Select trees file...");
+			chooser.setDialogTitle("Select taxa file...");
 			chooser.setMultiSelectionEnabled(false);
 			chooser.setCurrentDirectory(frame.getWorkingDirectory());
 
@@ -204,7 +221,8 @@ public class TaxaEditor {
 			Taxon taxon;
 			for (int i = 0; i < lines.length; i++) {
 
-				String[] line = lines[i].split("\t");
+				String[] line = lines[i].split("\\s+");
+
 				taxon = new Taxon(line[TaxaEditorTableModel.NAME_INDEX]);
 				taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
 						Double.valueOf(line[TaxaEditorTableModel.HEIGHT_INDEX]));
@@ -274,7 +292,7 @@ public class TaxaEditor {
 		public void actionPerformed(ActionEvent ev) {
 
 			JFileChooser chooser = new JFileChooser();
-			chooser.setDialogTitle("Simulate...");
+			chooser.setDialogTitle("Save taxa file...");
 			chooser.setMultiSelectionEnabled(false);
 			chooser.setCurrentDirectory(frame.getWorkingDirectory());
 
@@ -312,21 +330,49 @@ public class TaxaEditor {
 	private class ListenOk implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 
-			//TODO
-
-			int lastIndex = dataList.recordsList.size()-1;
-			String name = String.valueOf("TaxaSet").concat(String.valueOf(lastIndex+1));
-			Taxa taxa = taxaEditorTableModel.getTaxaSet();
-			TreesTableRecord record = new TreesTableRecord(name, taxa);
-			dataList.recordsList.set(lastIndex, record);
-			
-			dataList.allTaxa.addTaxa(taxa);
-			frame.fireTaxaChanged();
-			
-			window.setVisible(false);
+			doOk();
 
 		}// END: actionPerformed
 	}// END: ListenOk
+
+	private void doOk() {
+
+		frame.setBusy();
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+			// Executed in background thread
+			public Void doInBackground() {
+
+				try {
+
+					int lastIndex = dataList.recordsList.size() - 1;
+					String name = String.valueOf("TaxaSet").concat(
+							String.valueOf(lastIndex + 1));
+					Taxa taxa = taxaEditorTableModel.getTaxaSet();
+					TreesTableRecord record = new TreesTableRecord(name, taxa);
+					dataList.recordsList.set(lastIndex, record);
+
+					dataList.allTaxa.addTaxa(taxa);
+
+				} catch (Exception e) {
+					Utils.handleException(e);
+				}// END: try-catch block
+
+				return null;
+			}// END: doInBackground()
+
+			// Executed in event dispatch thread
+			public void done() {
+				//TODO: force table repaint
+				frame.setIdle();
+				frame.fireTaxaChanged();
+				window.setVisible(false);
+			}// END: done
+		};
+
+		worker.execute();
+
+	}// END: doOk
 
 	private class ListenCancel implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
@@ -339,11 +385,6 @@ public class TaxaEditor {
 	// ////////////////////////
 	// ---END: DRAG & DROP---//
 	// ////////////////////////
-
-
-		
-		
-		
 
 	// ////////////////////////
 	// ---END: DRAG & DROP---//

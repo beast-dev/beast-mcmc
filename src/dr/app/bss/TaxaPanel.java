@@ -64,7 +64,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		column.setPreferredWidth(80);
 		
 		column = taxaTable.getColumnModel().getColumn(
-				TaxaTableModel.TREE_INDEX);
+				TaxaTableModel.TAXA_SET_INDEX);
 		column.setCellRenderer(
 				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
 						0, 2)));

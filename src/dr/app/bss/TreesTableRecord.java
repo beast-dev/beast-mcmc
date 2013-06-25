@@ -5,55 +5,102 @@ import dr.evolution.util.Taxa;
 
 public class TreesTableRecord {
 
-	String name = "";
-	Taxa taxa = new Taxa();
-	Tree tree = null;
+	private String name = "";
+	private Taxa taxa = null;// new Taxa();
+	private Tree tree = null;
+
+	public boolean treeSet = false;
+	public boolean taxaSet = false;
 
 	public TreesTableRecord() {
-	}
+	}// END: Constructor
 
-	public TreesTableRecord(String name, Tree tree, Taxa taxa) {
+	public TreesTableRecord(String name, Tree tree
+	// , Taxa taxa
+	) {
 		this.name = name;
 		this.tree = tree;
-		this.taxa = taxa;
-	}
+		// this.taxa = null;
+
+		treeSet = true;
+		applyTreeName();
+	}// END: Constructor
 
 	public TreesTableRecord(String name, Taxa taxa) {
 		this.name = name;
 		this.taxa = taxa;
-		this.tree = null;
-	}
+		// this.tree = null;
+
+		taxaSet = true;
+		applyTaxaName();
+	}// END: Constructor
+
+	private void applyTaxaName() {
+
+		if (taxaSet && name != null) {
+
+			for (int i = 0; i < taxa.getTaxonCount(); i++) {
+				taxa.setTaxonAttribute(i, Utils.TREE_FILENAME, name);
+			}
+		}
+	}// END: applyTaxaName
+
+	private void applyTreeName() {
+
+		if (treeSet && name != null) {
+
+			for (int i = 0; i < tree.getTaxonCount(); i++) {
+				tree.getTaxon(i).setAttribute(Utils.TREE_FILENAME, name);
+			}
+		}
+	}// END: applyTreeName
 
 	public int getTaxaCount() {
-		return taxa.getTaxonCount();
-	}
+
+		int taxaCount = 0;
+
+		if (taxaSet) {
+
+			taxaCount = taxa.getTaxonCount();
+
+		} else if (treeSet) {
+
+			taxaCount = tree.getTaxonCount();
+
+		} else {
+			// do nothing
+		}
+
+		return taxaCount;
+	}// END: getTaxaCount
 
 	public String getName() {
 		return name;
 	}
 
-	public void setName(String name) {
-		this.name = name;
-	}
+	// public void setName(String name) {
+	// this.name = name;
+	// applyTaxaName();
+	// }
 
 	public Tree getTree() {
 		return tree;
 	}
 
-	public void setTree(Tree tree) {
-		this.tree = tree;
-	}
+	// public void setTree(Tree tree) {
+	// this.tree = tree;
+	// }
 
 	public Taxa getTaxa() {
 		return taxa;
 	}
 
-	public void setTaxa(Taxa taxa) {
-		this.taxa = taxa;
-	}
+	// public void setTaxa(Taxa taxa) {
+	// this.taxa = taxa;
+	// }
 
 	public String toString() {
 		return getName();
 	}
 
-}
+}// END: class

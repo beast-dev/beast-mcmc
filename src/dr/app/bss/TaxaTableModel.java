@@ -11,13 +11,13 @@ public class TaxaTableModel extends AbstractTableModel {
 
 	private PartitionDataList dataList;
 
-	private String[] COLUMN_NAMES = { "Name", "Height", "Tree" };
+	private String[] COLUMN_NAMES = { "Name", "Height", "Data-set" };
 	private double[] heights = null;
 	private String[] trees = null;
 
 	public final static int NAME_INDEX = 0;
 	public final static int HEIGHT_INDEX = 1;
-	public final static int TREE_INDEX = 2;
+	public final static int TAXA_SET_INDEX = 2;
 
 	public TaxaTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
@@ -57,7 +57,7 @@ public class TaxaTableModel extends AbstractTableModel {
 				return 0.0;
 			}
 
-		case TREE_INDEX:
+		case TAXA_SET_INDEX:
 
 			if (trees != null) {
 				return trees[row];

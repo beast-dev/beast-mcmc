@@ -20,7 +20,9 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* clean up new interfaces, do error checking, debug
+* new interfaces, debug XML generator
+* new interfaces, debug serialization
+* checkbox for parallel implementation (GUI, CLI)
 * ancestral sequence in CLI
 * handle wrong ancestral sequence length exception on UI level
 * command line interface

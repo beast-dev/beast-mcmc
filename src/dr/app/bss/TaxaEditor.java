@@ -346,12 +346,17 @@ public class TaxaEditor {
 				try {
 
 					int lastIndex = dataList.recordsList.size() - 1;
+
+					// delete taxa connected to this row
+					String value = dataList.recordsList.get(lastIndex).getName();
+					Utils.removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
+					
 					String name = String.valueOf("TaxaSet").concat(
 							String.valueOf(lastIndex + 1));
 					Taxa taxa = taxaEditorTableModel.getTaxaSet();
 					TreesTableRecord record = new TreesTableRecord(name, taxa);
+					
 					dataList.recordsList.set(lastIndex, record);
-
 					dataList.allTaxa.addTaxa(taxa);
 
 				} catch (Exception e) {
@@ -363,7 +368,6 @@ public class TaxaEditor {
 
 			// Executed in event dispatch thread
 			public void done() {
-				//TODO: force table repaint
 				frame.setIdle();
 				frame.fireTaxaChanged();
 				window.setVisible(false);

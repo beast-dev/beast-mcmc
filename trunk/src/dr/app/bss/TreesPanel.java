@@ -135,7 +135,7 @@ public class TreesPanel extends JPanel implements Exportable {
 	public void updateTreesTable(PartitionDataList dataList) {
 		treesTableModel.setDataList(dataList);
 		setDataList(dataList);
-		setTreesColumn(dataList);
+//		setTreesColumn(dataList);
 		setTrees();
 		fireTableDataChanged();
 	}// END: updateTreesTable

@@ -70,6 +70,23 @@ public class Utils {
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
+	public static void removeTaxaWithAttributeValue(PartitionDataList dataList,
+			String attribute, String value) {
+
+		synchronized (dataList.allTaxa) {
+			for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
+
+				Taxon taxon = dataList.allTaxa.getTaxon(i);
+				if (taxon.getAttribute(attribute).toString()
+						.equalsIgnoreCase(value)) {
+					dataList.allTaxa.removeTaxon(taxon);
+					i--;
+				}
+			}
+		}
+
+	}// END: removeTaxaWithAttributeValue
+	
 	public static void centreLine(String line, int pageWidth) {
 		int n = pageWidth - line.length();
 		int n1 = n / 2;
@@ -138,7 +155,9 @@ public class Utils {
 		boolean exists = false;
 		for (Taxon taxon2 : taxonList) {
 
-			if (taxon.equals(taxon2)) {
+			if (taxon.equals(taxon2) 
+//					&& taxon.getAttribute(Utils.TREE_FILENAME).toString().equalsIgnoreCase(taxon2.getAttribute(Utils.TREE_FILENAME).toString())
+					) {
 				exists = true;
 				break;
 			}
@@ -148,6 +167,21 @@ public class Utils {
 		return exists;
 	}// END: taxonExists
 
+//	 private boolean isFileInList(File file) {
+//	 boolean exists = false;
+//	
+//	 for (File file2 : dataList.treesList) {
+//	
+//	 if (file.getName().equalsIgnoreCase(file2.getName())) {
+//	 exists = true;
+//	 break;
+//	 }
+//	
+//	 }
+//	
+//	 return exists;
+//	 }// END: isFileInList
+	
 	public static double getAbsoluteTaxonHeight(Taxon taxon, Tree tree) {
 
 		double height = 0.0;

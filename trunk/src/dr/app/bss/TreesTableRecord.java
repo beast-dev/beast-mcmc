@@ -1,9 +1,12 @@
 package dr.app.bss;
 
+import java.io.Serializable;
+
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 
-public class TreesTableRecord {
+@SuppressWarnings("serial")
+public class TreesTableRecord implements Serializable {
 
 	private String name = "";
 	private Taxa taxa = null;// new Taxa();
@@ -15,12 +18,9 @@ public class TreesTableRecord {
 	public TreesTableRecord() {
 	}// END: Constructor
 
-	public TreesTableRecord(String name, Tree tree
-	// , Taxa taxa
-	) {
+	public TreesTableRecord(String name, Tree tree) {
 		this.name = name;
 		this.tree = tree;
-		// this.taxa = null;
 
 		treeSet = true;
 		applyTreeName();
@@ -29,7 +29,6 @@ public class TreesTableRecord {
 	public TreesTableRecord(String name, Taxa taxa) {
 		this.name = name;
 		this.taxa = taxa;
-		// this.tree = null;
 
 		taxaSet = true;
 		applyTaxaName();
@@ -78,26 +77,13 @@ public class TreesTableRecord {
 		return name;
 	}
 
-	// public void setName(String name) {
-	// this.name = name;
-	// applyTaxaName();
-	// }
-
 	public Tree getTree() {
 		return tree;
 	}
 
-	// public void setTree(Tree tree) {
-	// this.tree = tree;
-	// }
-
 	public Taxa getTaxa() {
 		return taxa;
 	}
-
-	// public void setTaxa(Taxa taxa) {
-	// this.taxa = taxa;
-	// }
 
 	public String toString() {
 		return getName();

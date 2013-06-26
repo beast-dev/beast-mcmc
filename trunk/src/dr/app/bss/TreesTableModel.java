@@ -26,9 +26,10 @@ public class TreesTableModel extends AbstractTableModel {
 	public final static int TREE_FILE_INDEX = 0;
 	public final static int TAXA_SET_INDEX = 1;
 	public final static int TAXA_COUNT_INDEX = 2;
-	
-	public static String[] COLUMN_NAMES = { "Tree File", "Taxa Set",  "Taxa count" };
-	
+
+	public static String[] COLUMN_NAMES = { "Tree File", "Taxa Set",
+			"Taxa count" };
+
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			JButton.class, // Tree File
 			JButton.class, // Taxa Set
@@ -36,7 +37,7 @@ public class TreesTableModel extends AbstractTableModel {
 	};
 
 	private TaxaEditor taxaEditor;
-	
+
 	public TreesTableModel(PartitionDataList dataList, MainFrame frame) {
 		this.dataList = dataList;
 		this.frame = frame;
@@ -51,11 +52,11 @@ public class TreesTableModel extends AbstractTableModel {
 	}// END: addDefaultRow
 
 	public void deleteRow(int row) {
-		
+
 		// remove taxa connected to this row from Taxa panel
 		String value = dataList.recordsList.get(row).getName();
-		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
-		
+		Utils.removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
+
 		dataList.recordsList.remove(row);
 		fireTableDataChanged();
 	}// END: deleteRow
@@ -64,14 +65,31 @@ public class TreesTableModel extends AbstractTableModel {
 
 		// remove taxa connected to this row from Taxa panel
 		String value = dataList.recordsList.get(row).getName();
-		removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
+		Utils.removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
 
-		dataList.recordsList.remove(row);
-		dataList.recordsList.add(row, record);
+		// add taxa with attributes
+		applyTaxa(record.getTree());
 
+		dataList.recordsList.set(row, record);
 		fireTableDataChanged();
 
 	}// END: setRow
+
+	public void applyTaxa(Tree tree) {
+
+		// set attributes to be parsed later in Taxa panel
+		Taxa taxa = new Taxa();
+		for (Taxon taxon : tree.asList()) {
+
+			double absoluteHeight = Utils.getAbsoluteTaxonHeight(taxon, tree);
+			taxon.setAttribute(Utils.ABSOLUTE_HEIGHT, absoluteHeight);
+			taxon.setAttribute(Utils.TREE_FILENAME, tree.getId());
+			taxa.addTaxon(taxon);
+			dataList.allTaxa.addTaxon(taxon);
+
+		}// END: taxon loop
+
+	}// END: applyTaxa
 
 	@Override
 	public int getColumnCount() {
@@ -117,8 +135,8 @@ public class TreesTableModel extends AbstractTableModel {
 		case TAXA_SET_INDEX:
 			JButton taxaEditorButton = new JButton(Utils.EDIT_TAXA_SET);
 			taxaEditorButton.addActionListener(new ListenOpenTaxaEditor(row));
-			return taxaEditorButton;	
-			
+			return taxaEditorButton;
+
 		case TAXA_COUNT_INDEX:
 			return dataList.recordsList.get(row).getTaxaCount();
 
@@ -137,17 +155,17 @@ public class TreesTableModel extends AbstractTableModel {
 		public void actionPerformed(ActionEvent ev) {
 
 			try {
-				
+
 				taxaEditor = new TaxaEditor(frame, dataList, row);
 				taxaEditor.launch();
-			
+
 			} catch (Exception e) {
 				Utils.handleException(e);
 			}
 
 		}// END: actionPerformed
 	}// END: ListenOpenSiteRateModelEditor
-	
+
 	private class ListenLoadTreeFile implements ActionListener {
 
 		private int row;
@@ -180,15 +198,7 @@ public class TreesTableModel extends AbstractTableModel {
 
 				if (file != null) {
 
-					//TODO
-					// check if file unique, throw exception if not
-//					if (!isFileInList(file)) {
-
-						loadTreeFile(file, row);
-
-//					} else {
-//						Utils.showDialog("File with this name already loaded. Choose different file.");
-//					}
+					loadTreeFile(file, row);
 
 					File tmpDir = chooser.getCurrentDirectory();
 					if (tmpDir != null) {
@@ -204,21 +214,6 @@ public class TreesTableModel extends AbstractTableModel {
 
 	}// END: doLoadTreeFile
 
-	//TODO
-//	private boolean isFileInList(File file) {
-//		boolean exists = false;
-//
-//		for (File file2 : dataList.treesList) {
-//
-//			if (file.getName().equalsIgnoreCase(file2.getName())) {
-//				exists = true;
-//				break;
-//			}
-//
-//		}
-//
-//		return exists;
-//	}// END: isFileInList
 
 	private void loadTreeFile(final File file, final int row) {
 
@@ -232,35 +227,8 @@ public class TreesTableModel extends AbstractTableModel {
 
 					Tree tree = Utils.importTreeFromFile(file);
 					tree.setId(file.getName());
-					Taxa taxa = new Taxa();
-					for (Taxon taxon : tree.asList()) {
 
-						// set attributes to be parsed later in Taxa panel
-						if (!Utils.taxonExists(taxon, dataList.allTaxa)) {
-
-							double absoluteHeight = Utils
-									.getAbsoluteTaxonHeight(taxon, tree);
-
-							taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
-									absoluteHeight);
-
-							// for demographic models?
-							// taxon.setAttribute("date", new Date(absoluteHeight,
-							// Units.Type.YEARS, true));
-							
-							taxon.setAttribute(Utils.TREE_FILENAME,
-									tree.getId());
-
-							taxa.addTaxon(taxon);
-							dataList.allTaxa.addTaxon(taxon);
-							
-						}// END: taxon exists check
-
-					}// END: taxon loop
-
-					setRow(row, new TreesTableRecord(tree.getId(), tree
-//							, taxa
-							));
+					setRow(row, new TreesTableRecord(tree.getId(), tree));
 
 				} catch (Exception e) {
 					Utils.handleException(e);
@@ -280,22 +248,22 @@ public class TreesTableModel extends AbstractTableModel {
 
 	}// END: loadTreeFile
 
-	private void removeTaxaWithAttributeValue(PartitionDataList dataList,
-			String attribute, String value) {
-
-		synchronized (dataList.allTaxa) {
-			for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
-
-				Taxon taxon = dataList.allTaxa.getTaxon(i);
-				if (taxon.getAttribute(attribute).toString()
-						.equalsIgnoreCase(value)) {
-					dataList.allTaxa.removeTaxon(taxon);
-					i--;
-				}
-			}
-		}
-
-	}// END: removeTaxaWithAttributeValue
+	// private void removeTaxaWithAttributeValue(PartitionDataList dataList,
+	// String attribute, String value) {
+	//
+	// synchronized (dataList.allTaxa) {
+	// for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
+	//
+	// Taxon taxon = dataList.allTaxa.getTaxon(i);
+	// if (taxon.getAttribute(attribute).toString()
+	// .equalsIgnoreCase(value)) {
+	// dataList.allTaxa.removeTaxon(taxon);
+	// i--;
+	// }
+	// }
+	// }
+	//
+	// }// END: removeTaxaWithAttributeValue
 
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;

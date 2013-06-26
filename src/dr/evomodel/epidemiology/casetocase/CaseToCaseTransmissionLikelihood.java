@@ -450,12 +450,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     // Return the node numbers of the entire subtree with the same painting as this node (including itself)
 
-    public HashSet<Integer> samePainting(NodeRef node, boolean flagForRecalc){
+    public Integer[] samePainting(NodeRef node, boolean flagForRecalc){
         HashSet<Integer> out = new HashSet<Integer>();
         out.add(node.getNumber());
         out.addAll(samePaintingDownTree(node, flagForRecalc));
         out.addAll(samePaintingUpTree(node, flagForRecalc));
-        return out;
+        return out.toArray(new Integer[out.size()]);
     }
 
     // change flags to indicate that something needs recalculation further up the tree

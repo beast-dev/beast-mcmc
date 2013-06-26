@@ -47,22 +47,20 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         NodeRef i = root;
         NodeRef iP = tree.getParent(i);
-        HashSet<Integer> possibleSwaps = c2cLikelihood.samePainting(iP,false);
+        Integer[] possibleSwaps = c2cLikelihood.samePainting(iP,false);
         int noPossibleSwaps = 0;
 
         while(root == i || noPossibleSwaps == 1) {
             i = tree.getNode(MathUtils.nextInt(nodeCount));
             iP = tree.getParent(i);
             possibleSwaps = c2cLikelihood.samePainting(iP,false);
-            noPossibleSwaps = possibleSwaps.size();
+            noPossibleSwaps = possibleSwaps.length;
         }
 
         NodeRef jP=iP;
-        ArrayList<Integer> swapsAsList = new ArrayList<Integer>(possibleSwaps);
 
         while(jP==iP){
-            Collections.shuffle(swapsAsList);
-            jP = tree.getNode(swapsAsList.get(0));
+            jP = tree.getNode(possibleSwaps[MathUtils.nextInt(noPossibleSwaps)]);
         }
 
         NodeRef j = tree.getChild(jP, MathUtils.nextInt(1));

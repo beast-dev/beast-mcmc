@@ -56,14 +56,22 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
             i = tree.getNode(MathUtils.nextInt(nodeCount));
         } while (tree.getRoot() == i && !eligibleForMove(i, tree, branchMap));
         final NodeRef iP = tree.getParent(i);
-        Integer[] possibleDestinations = c2cLikelihood.samePainting(iP,false);
+        Integer[] samePaintings = c2cLikelihood.samePainting(iP,false);
+        HashSet<Integer> possibleDestinations = new HashSet<Integer>();
+        // we can insert the node above OR BELOW any node in the same partition
+        for(int count=0; count<samePaintings.length; count++){
+            possibleDestinations.add(samePaintings[count]);
+            possibleDestinations.add(tree.getChild(tree.getNode(count),0).getNumber());
+            possibleDestinations.add(tree.getChild(tree.getNode(count),1).getNumber());
+        }
+        Integer[] pd = possibleDestinations.toArray(new Integer[possibleDestinations.size()]);
 
-        NodeRef k = tree.getNode(possibleDestinations[MathUtils.nextInt(possibleDestinations.length)]);
-        NodeRef j = tree.getChild(k, MathUtils.nextInt(1));
+        NodeRef j = tree.getNode(pd[MathUtils.nextInt(pd.length)]);
+        NodeRef k = tree.getParent(j);
 
-        while ((tree.getNodeHeight(k) <= tree.getNodeHeight(i)) || (i == j)) {
-            k = tree.getNode(possibleDestinations[MathUtils.nextInt(possibleDestinations.length)]);
-            j = tree.getChild(k, MathUtils.nextInt(1));
+        while (k != null && (tree.getNodeHeight(k) <= tree.getNodeHeight(i)) || (i == j)) {
+            j = tree.getNode(pd[MathUtils.nextInt(pd.length)]);
+            k = tree.getParent(j);
         }
 
         if (iP == tree.getRoot()) {
@@ -132,17 +140,17 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
     }
 
     private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
-        // to be eligible for this move, the node's parent and grandparent must be in the same partition (so removing
-        // the parent has no effect on the transmission tree) and there must be at least three nodes in that partition
-        // (because the parent needs a new node to become the child of)
+        // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
+        // same partition (so removing the parent has no effect on the transmission tree)
 
         return branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
-                && c2cLikelihood.samePainting(tree.getParent(node),false).length>2;
+                || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
+                tree.getParent(node), node).getNumber()];
     }
 
     @Override
     public String getOperatorName() {
-        return "Transmission tree exchange operator type A (" + c2cLikelihood.getTree().getId() +")";
+        return TRANSMISSION_WILSON_BALDING_A + " (" + c2cLikelihood.getTree().getId() +")";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

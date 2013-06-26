@@ -124,6 +124,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         if(debug){
             c2cLikelihood.checkPaintingIntegrity(branchMap, true);
         }
+        // @todo need to handle which partition to attach the parent to
         logq = Math.log(q);
 
         // repaint the parent to match its parent
@@ -137,17 +138,19 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
     }
 
     private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
-        // to be eligible for this move, the node's parent and grandparent must be in the same partition (so removing
-        // the parent has no effect on the remaining links of the TT), and the node and its parent must be in
+        // to be eligible for this move, the node's parent and grandparent, or parent and other child,
+        // must be in the same partition (so removingthe parent has no effect on the remaining links of the TT), and the node and its parent must be in
         // different partitions (such that the move does not disconnect anything)
 
-        return branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
+        return (branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
+                || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
+                tree.getParent(node), node).getNumber()])
                 && branchMap[tree.getParent(node).getNumber()]!=branchMap[node.getNumber()];
     }
 
     @Override
     public String getOperatorName() {
-        return "Transmission tree exchange operator type A (" + c2cLikelihood.getTree().getId() +")";
+        return TRANSMISSION_WILSON_BALDING_B + " (" + c2cLikelihood.getTree().getId() +")";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

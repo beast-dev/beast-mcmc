@@ -37,6 +37,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	// Check boxes
 	private JCheckBox setSeed;
+	private JCheckBox useParallel;
 	
 	public SimulationPanel(final MainFrame frame,
 			final PartitionDataList dataList) {
@@ -52,7 +53,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 		optionPanel.addComponentWithLabel("Number of simulations:", simulationsNumberField);
 		
 		setSeed = new JCheckBox();
-		setSeed.addItemListener(new CheckBoxListener());
+		setSeed.addItemListener(new SetSeedCheckBoxListener());
 		setSeed.setSelected(dataList.setSeed);
 		optionPanel.addComponentWithLabel("Set seed:", setSeed);
 		
@@ -61,6 +62,12 @@ public class SimulationPanel extends JPanel implements Exportable {
 		startingSeedNumberField.setValue(dataList.startingSeed);
 		startingSeedNumberField.setEnabled(dataList.setSeed);
 		optionPanel.addComponentWithLabel("Starting seed:", startingSeedNumberField);
+		
+		useParallel = new JCheckBox();
+		useParallel.addItemListener(new UseParallelCheckBoxListener());
+		useParallel.setSelected(dataList.useParallel);
+		optionPanel.addComponentWithLabel("Use parallel implementation:", useParallel);
+		
 		
 		// Buttons holder
 		JPanel buttonsHolder = new JPanel();
@@ -93,7 +100,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	}// END: collectSettings
 
-	private class CheckBoxListener implements ItemListener {
+	private class SetSeedCheckBoxListener implements ItemListener {
 		public void itemStateChanged(ItemEvent e) {
 
 			if (setSeed.isSelected()) {
@@ -102,6 +109,18 @@ public class SimulationPanel extends JPanel implements Exportable {
 			} else {
 				startingSeedNumberField.setEnabled(false);
 				dataList.setSeed = false;
+			}
+
+		}
+	}// END: CheckBoxListener
+	
+	private class UseParallelCheckBoxListener implements ItemListener {
+		public void itemStateChanged(ItemEvent e) {
+
+			if (useParallel.isSelected()) {
+				dataList.useParallel = true;
+			} else {
+				dataList.useParallel = false;
 			}
 
 		}

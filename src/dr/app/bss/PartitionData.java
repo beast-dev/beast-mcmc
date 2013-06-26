@@ -230,21 +230,16 @@ public class PartitionData implements Serializable {
 	this.treeModelIdref = TreeModel.TREE_MODEL;
 	}
 	
+	//TODO: taxa / tree set
 	public TreeModel createTreeModel() {
 		
 		TreeModel treeModel = null;
 		if (this.demographicModelIndex == 0) { // No model
 
-//			Tree tree = Utils.importTreeFromFile(treeFile);
 			treeModel = new TreeModel(record.getTree());
 		
 		} else if (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) {
 
-			//TODO: dates? Set in loadTreeFile but read them how?
-//            Tree tree = Utils.importTreeFromFile(treeFile);
-//            Taxa taxa = new Taxa();
-//            taxa.addTaxa();
-            
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
 			treeModel = new TreeModel(topologySimulator.simulateTree(record.getTaxa(), createDemographicFunction()));
 			

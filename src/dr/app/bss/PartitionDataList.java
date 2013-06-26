@@ -14,6 +14,7 @@ import dr.evolution.util.Taxa;
 public class PartitionDataList extends ArrayList<PartitionData> implements Serializable {
 
 	public int simulationsCount = 1;
+	public boolean useParallel = false;
 	
 	//List of all Taxa displayed in Taxa Panel
 	public Taxa allTaxa = new Taxa();

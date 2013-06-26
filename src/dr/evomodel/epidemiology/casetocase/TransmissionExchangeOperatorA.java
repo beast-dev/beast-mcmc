@@ -14,7 +14,7 @@ import java.util.HashSet;
 
 /**
  * Implements branch exchange operations that leave the transmission network unchanged. As this already severely
- * restricts the set of eligible pairs of nodes, this is set up as special case of Wide Exchange. Needs a parser.
+ * restricts the set of eligible pairs of nodes, this is set up as special case of Wide Exchange.
  *
  * @author Matthew Hall
  */

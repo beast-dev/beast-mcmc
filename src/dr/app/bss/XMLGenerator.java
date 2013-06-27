@@ -78,8 +78,6 @@ public class XMLGenerator {
 		// ---taxa element---//
 		// ////////////////////
 
-		//TODO: multiple partitions
-		
 		try {
 
 			int suffix = 1;
@@ -115,34 +113,28 @@ public class XMLGenerator {
 						
 					}// END: demo model check
 					
-					writeTaxa(taxa, writer, String.valueOf(suffix));
-					
-					////////
-					
-//						if (taxaList.size() == 0 
-////								| !Utils.isTaxaInList(taxa, taxaList)
-//								) {
-//
-//							data.taxaIdref += suffix;
-//
-//							writeTaxa(taxa, writer, String.valueOf(suffix));
-//							writer.writeBlankLine();
-//
-//							taxaList.add(taxa);
-//
-////							 System.out.println("NOT IN LIST");
-//
-//						} else {
-//
-////							int index = Utils.taxaIsIdenticalWith(treeModel, taxonList) + 1;
-////							data.taxaIdref += index;
-//
-////							 System.out.println("IDENTICAL WITH " + index);
-//
-//						}
+						if (taxaList.size() == 0 
+								| !Utils.isTaxaInList(taxa, taxaList)
+								) {
 
-					//////////
-					
+							data.taxaIdref += suffix;
+
+							writeTaxa(taxa, writer, String.valueOf(suffix));
+							writer.writeBlankLine();
+
+							taxaList.add(taxa);
+
+//							 System.out.println("NOT IN LIST");
+
+						} else {
+
+							int index = Utils.taxaIsIdenticalWith(taxa, taxaList) + 1;
+							data.taxaIdref += index;
+
+//							 System.out.println("IDENTICAL WITH " + index);
+
+						}
+
 				}// END: treeModel set check
 
 				suffix++;
@@ -168,7 +160,6 @@ public class XMLGenerator {
 		
 				if (data.demographicModelIndex == 0) {
 				
-					
 					TreeModel treeModel = data.createTreeModel();
 
 					if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
@@ -215,68 +206,26 @@ public class XMLGenerator {
 		// ---tree model element---//
 		// //////////////////////////
 
-		//TODO: change to tree, do the tree / taxa logic
-		
 		try {
 
-			
 			int suffix = 1;
-			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+			ArrayList<TreesTableRecord> recordsList = new ArrayList<TreesTableRecord>();
 			for (PartitionData data : dataList) {
 
-				TreeModel treeModel = new TreeModel(data.record.getTree());
+				TreesTableRecord record = data.record;
+				if (recordsList.size() == 0 | !Utils.isRecordInList(record, recordsList)) {
 
-				System.out.println("FUBAR");
-				
-//				if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
-//
-//					writeTreeModel(treeModel, writer, String.valueOf(suffix));
-//					writer.writeBlankLine();
-//
-//					treeModelList.add(treeModel);
-//					
-//				}
+					writeTreeModel(writer, String.valueOf(suffix));
+					writer.writeBlankLine();
+
+					recordsList.add(record);
+					
+				}
 
 				suffix++;
 
 			}// END: partition loop
 			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-//			int suffix = 1;
-//			ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
-//			for (PartitionData data : dataList) {
-//
-//				TreeModel treeModel = data.createTreeModel();
-//
-//				System.out.println("FUBAR");
-//				
-//				if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
-//
-//					writeTreeModel(treeModel, writer, String.valueOf(suffix));
-//					writer.writeBlankLine();
-//
-//					treeModelList.add(treeModel);
-//					
-//				}
-//
-//				suffix++;
-//
-//			}// END: partition loop
-
 		} catch (Exception e) {
 
 			throw new RuntimeException("Tree model generation has failed:\n"
@@ -888,7 +837,9 @@ public class XMLGenerator {
 		writer.writeCloseTag(TaxaParser.TAXA);
 	}// END: writeTaxa
 
-	private void writeTreeModel(TreeModel tree, XMLWriter writer, String suffix) {
+	private void writeTreeModel(
+//			TreeModel tree, 
+			XMLWriter writer, String suffix) {
 
 		final String treeModelName = TreeModel.TREE_MODEL + suffix;
 
@@ -1022,6 +973,9 @@ public class XMLGenerator {
 
 		case 0: // HKY
 
+			//TODO
+			System.out.println("FUBAR");
+			
 			writer.writeOpenTag(NucModelType.HKY.getXMLName(),
 					new Attribute[] { new Attribute.Default<String>(
 							XMLParser.ID, data.substitutionModelIdref) });

@@ -23,6 +23,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.MutableTaxonList;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 
@@ -70,6 +71,36 @@ public class Utils {
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
+	public static Tree importTreeFromFile(File file) {
+
+		Tree tree = null;
+		
+		try {
+
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line = reader.readLine();
+
+			if (line.toUpperCase().startsWith("#NEXUS")) {
+
+				NexusImporter importer = new NexusImporter(reader);
+				tree = importer.importTree(null);
+
+			} else {
+
+				NewickImporter importer = new NewickImporter(reader);
+				tree = importer.importTree(null);
+
+			}
+
+			reader.close();
+
+		} catch (Exception e) {
+			Utils.handleException(e);
+		}// END: try-catch block
+
+		return tree;
+	}// END: importTreeFromFile
+	
 	public static void removeTaxaWithAttributeValue(PartitionDataList dataList,
 			String attribute, String value) {
 
@@ -95,24 +126,6 @@ public class Utils {
 		}
 		System.out.println(line);
 	}
-
-	public static void printMap(Map<?, ?> mp) {
-		Iterator<?> it = mp.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<?, ?> pairs = (Entry<?, ?>) it.next();
-			Object obj = pairs.getValue();
-			if (obj instanceof int[]) {
-				int[] seq = (int[]) obj;
-				System.out.print(pairs.getKey() + " =");
-				for (int i = 0; i < seq.length; ++i) {
-					System.out.print(" " + seq[i]);
-				}
-				System.out.println();
-			} else {
-				System.out.println(pairs.getKey() + " = " + pairs.getValue());
-			}
-		}
-	}// END: printMap
 
 	public static int getSiteCount(PartitionDataList dataList) {
 
@@ -198,6 +211,58 @@ public class Utils {
 		return height;
 	}// END: getAbsoluteTaxonHeight
 
+	public static boolean isRecordInList(TreesTableRecord record,
+			ArrayList<TreesTableRecord> recordsList) {
+
+		boolean exists = false;
+
+		for (TreesTableRecord record2 : recordsList) {
+
+			if (record.getName().equalsIgnoreCase(record2.getName())) {
+				exists = true;
+				break;
+			}
+
+		}
+
+		return exists;
+	}// END: isRecordInList
+	
+	//TODO: check if works
+	public static boolean isTaxaInList(Taxa taxa,
+			ArrayList<Taxa> taxaList) {
+
+		boolean exists = false;
+
+		for (Taxa taxa2 : taxaList) {
+
+			if (taxaToString(taxa).equalsIgnoreCase(taxaToString(taxa2))) {
+				exists = true;
+				break;
+			}
+
+		}
+
+		return exists;
+	}// END: isTaxaInList
+	
+	public static int taxaIsIdenticalWith(Taxa taxa,
+			ArrayList<Taxa> taxaList) {
+
+		int index = -Integer.MAX_VALUE;
+
+		for (Taxa taxa2 : taxaList) {
+
+			if (taxaToString(taxa).equalsIgnoreCase(taxaToString(taxa2))) {
+				index = taxaList.indexOf(taxa2);
+				break;
+			}
+
+		}
+
+		return index;
+	}// END: treeModelIsIdenticalWith
+	
 	public static boolean isTreeModelInList(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -384,79 +449,6 @@ public class Utils {
 		return index;
 	}// END: isIdenticalWith
 
-	// /////////////////////////
-	// ---TO STRING METHODS---//
-	// /////////////////////////
-
-	public static String demographicModelToString(PartitionData data) {
-
-		String string = PartitionData.demographicModels[data.demographicModelIndex];
-
-		string += (" ( ");
-		for (int i = 0; i < PartitionData.demographicParameterIndices[data.demographicModelIndex].length; i++) {
-			string += data.demographicParameterValues[PartitionData.demographicParameterIndices[data.demographicModelIndex][i]];
-			string += " ";
-		}// END: indices loop
-		string += ")";
-
-		return string;
-	}
-	
-	public static String clockRateModelToString(PartitionData data) {
-
-		String string = PartitionData.clockModels[data.clockModelIndex];
-
-		string += (" ( ");
-		for (int i = 0; i < PartitionData.clockParameterIndices[data.clockModelIndex].length; i++) {
-			string += data.clockParameterValues[PartitionData.clockParameterIndices[data.clockModelIndex][i]];
-			string += " ";
-		}// END: indices loop
-		string += ")";
-
-		return string;
-	}
-
-	public static String frequencyModelToString(PartitionData data) {
-
-		String string = PartitionData.frequencyModels[data.frequencyModelIndex];
-
-		string += (" ( ");
-		for (int i = 0; i < data.frequencyParameterIndices[data.frequencyModelIndex].length; i++) {
-			string += data.frequencyParameterValues[data.frequencyParameterIndices[data.frequencyModelIndex][i]];
-			string += " ";
-		}// END: indices loop
-		string += ")";
-
-		return string;
-	}
-
-	public static String branchSubstitutionModelToString(PartitionData data) {
-
-		String string = PartitionData.substitutionModels[data.substitutionModelIndex];
-
-		string += (" ( ");
-		for (int i = 0; i < PartitionData.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
-			string += data.substitutionParameterValues[PartitionData.substitutionParameterIndices[data.substitutionModelIndex][i]];
-			string += " ";
-		}// END: indices loop
-		string += ")";
-
-		return string;
-	}
-
-	public static String siteRateModelToString(PartitionData data) {
-
-		String string = PartitionData.siteRateModels[data.siteRateModelIndex];
-
-		string += (" ( ");
-		for (int i = 0; i < PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex].length; i++) {
-			string += data.siteRateModelParameterValues[PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex][i]];
-			string += " ";
-		}// END: indices loop
-		string += ")";
-
-		return string;
-	}
 
 	// /////////////////
 	// ---GUI UTILS---//
@@ -647,6 +639,24 @@ public class Utils {
 	// ---PRINT UTILS---//
 	// ///////////////////
 
+	public static void printMap(Map<?, ?> mp) {
+		Iterator<?> it = mp.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<?, ?> pairs = (Entry<?, ?>) it.next();
+			Object obj = pairs.getValue();
+			if (obj instanceof int[]) {
+				int[] seq = (int[]) obj;
+				System.out.print(pairs.getKey() + " =");
+				for (int i = 0; i < seq.length; ++i) {
+					System.out.print(" " + seq[i]);
+				}
+				System.out.println();
+			} else {
+				System.out.println(pairs.getKey() + " = " + pairs.getValue());
+			}
+		}
+	}// END: printMap
+	
 	public static void printHashMap(ConcurrentHashMap<?, ?> hashMap) {
 
 		Iterator<?> iterator = hashMap.entrySet().iterator();
@@ -782,12 +792,33 @@ public class Utils {
 	// //////////////////////
 	// ---TOSTRING UTILS---//
 	// //////////////////////
+
+	public static String taxonToString(Taxon taxon) {
+		String string = taxon.getId() + " ("
+				+ taxon.getAttribute(Utils.ABSOLUTE_HEIGHT) + ","
+				+ taxon.getAttribute(Utils.TREE_FILENAME) + ")";
+		return string;
+	}// END: taxonToString
 	
-	//TODO
+	public static String taxaToString(Taxa taxa) {
+
+		String string = "";
+
+		for (int i = 0; i < taxa.getTaxonCount(); i++) {
+			
+			Taxon taxon = taxa.getTaxon(i);
+			string += taxonToString(taxon) + ("\n");
+			
+		}
+		
+		return string;
+	}// END: taxaToString
+	
 	public static String partitionDataToString(PartitionData data) {
 
 		String string = "";
 
+		//TODO: for coalescent this simulates again, so that's bad
 		string += ("Tree model: " + data.createTreeModel().toString())+ ("\n");
 		string += ("From: " + data.from)+ ("\n");
 		string += ("To: " + data.to)+ ("\n");
@@ -823,34 +854,74 @@ public class Utils {
 		return string;
 	}// END: partitionDataListToString
 	
-	public static Tree importTreeFromFile(File file) {
+	public static String demographicModelToString(PartitionData data) {
 
-		Tree tree = null;
-		
-		try {
+		String string = PartitionData.demographicModels[data.demographicModelIndex];
 
-			BufferedReader reader = new BufferedReader(new FileReader(file));
-			String line = reader.readLine();
+		string += (" ( ");
+		for (int i = 0; i < PartitionData.demographicParameterIndices[data.demographicModelIndex].length; i++) {
+			string += data.demographicParameterValues[PartitionData.demographicParameterIndices[data.demographicModelIndex][i]];
+			string += " ";
+		}// END: indices loop
+		string += ")";
 
-			if (line.toUpperCase().startsWith("#NEXUS")) {
+		return string;
+	}
+	
+	public static String clockRateModelToString(PartitionData data) {
 
-				NexusImporter importer = new NexusImporter(reader);
-				tree = importer.importTree(null);
+		String string = PartitionData.clockModels[data.clockModelIndex];
 
-			} else {
+		string += (" ( ");
+		for (int i = 0; i < PartitionData.clockParameterIndices[data.clockModelIndex].length; i++) {
+			string += data.clockParameterValues[PartitionData.clockParameterIndices[data.clockModelIndex][i]];
+			string += " ";
+		}// END: indices loop
+		string += ")";
 
-				NewickImporter importer = new NewickImporter(reader);
-				tree = importer.importTree(null);
+		return string;
+	}
 
-			}
+	public static String frequencyModelToString(PartitionData data) {
 
-			reader.close();
+		String string = PartitionData.frequencyModels[data.frequencyModelIndex];
 
-		} catch (Exception e) {
-			Utils.handleException(e);
-		}// END: try-catch block
+		string += (" ( ");
+		for (int i = 0; i < data.frequencyParameterIndices[data.frequencyModelIndex].length; i++) {
+			string += data.frequencyParameterValues[data.frequencyParameterIndices[data.frequencyModelIndex][i]];
+			string += " ";
+		}// END: indices loop
+		string += ")";
 
-		return tree;
-	}// END: importTreeFromFile
+		return string;
+	}
 
+	public static String branchSubstitutionModelToString(PartitionData data) {
+
+		String string = PartitionData.substitutionModels[data.substitutionModelIndex];
+
+		string += (" ( ");
+		for (int i = 0; i < PartitionData.substitutionParameterIndices[data.substitutionModelIndex].length; i++) {
+			string += data.substitutionParameterValues[PartitionData.substitutionParameterIndices[data.substitutionModelIndex][i]];
+			string += " ";
+		}// END: indices loop
+		string += ")";
+
+		return string;
+	}
+
+	public static String siteRateModelToString(PartitionData data) {
+
+		String string = PartitionData.siteRateModels[data.siteRateModelIndex];
+
+		string += (" ( ");
+		for (int i = 0; i < PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex].length; i++) {
+			string += data.siteRateModelParameterValues[PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex][i]];
+			string += " ";
+		}// END: indices loop
+		string += ")";
+
+		return string;
+	}
+	
 }// END: class

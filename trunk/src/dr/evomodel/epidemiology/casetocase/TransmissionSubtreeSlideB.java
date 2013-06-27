@@ -64,7 +64,6 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
      */
     public double doOperation() throws OperatorFailedException {
 
-
         double logq;
 
         final NodeRef root = tree.getRoot();
@@ -98,11 +97,6 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                     newChild = newParent;
                     newParent = tree.getParent(newParent);
                     if (newParent == null) break;
-                }
-
-                // if the parent has slid out of its partition
-                if(branchMap[newChild.getNumber()]!=branchMap[iP.getNumber()]){
-                    return Double.NEGATIVE_INFINITY;
                 }
 
                 tree.beginTreeEdit();
@@ -150,11 +144,25 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 tree.endTreeEdit();
 
                 // 3.1.3 count the hypothetical sources of this destination.
-                final int possibleSources = intersectingEdges(tree, newChild, oldHeight, branchMap[iP.getNumber()],
-                        null);
-                //System.out.println("possible sources = " + possibleSources);
+                final int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
 
                 logq = -Math.log(possibleSources);
+
+                // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
+                // appropriately
+
+                if(branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
+                    logq += Math.log(0.5);
+                }
+
+                if(branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
+                    if(MathUtils.nextInt(2)==0){
+                        branchMap[iP.getNumber()] = branchMap[newParent.getNumber()];
+                    } else {
+                        branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
+                    }
+                    logq += Math.log(2);
+                }
 
             } else {
                 // just change the node height
@@ -174,8 +182,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
             if (tree.getNodeHeight(CiP) > newHeight) {
 
                 List<NodeRef> newChildren = new ArrayList<NodeRef>();
-                final int possibleDestinations = intersectingEdges(tree, CiP, newHeight, branchMap[iP.getNumber()],
-                        newChildren);
+                final int possibleDestinations = intersectingEdges(tree, CiP, newHeight, newChildren);
 
                 // if no valid destinations then return a failure
                 if (newChildren.size() == 0) {
@@ -231,6 +238,23 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 tree.endTreeEdit();
 
                 logq = Math.log(possibleDestinations);
+
+                // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
+                // appropriately
+
+                if(branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
+                    logq += Math.log(0.5);
+                }
+
+                if(branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
+                    if(MathUtils.nextInt(2)==0){
+                        branchMap[iP.getNumber()] = branchMap[newParent.getNumber()];
+                    } else {
+                        branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
+                    }
+                    logq += Math.log(2);
+                }
+
             } else {
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
@@ -277,23 +301,23 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
     private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
-        // same partition (so removing the parent has no effect on the transmission tree)
-        // if only one of these things is true you can only slide one way - might be able to do better than this
+        // same partition (so removing the parent has no effect on the remaining links of the TT), and the node and its
+        // parent must be in different partitions (so the move does not disconnect anything)
 
-        return branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
+        return (branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
                 || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
-                tree.getParent(node), node).getNumber()];
+                tree.getParent(node), node).getNumber()])
+                && branchMap[tree.getParent(node).getNumber()]!=branchMap[node.getNumber()];
     }
 
-    //intersectingEdges here is modified to count only possible sources for this special case of the operator - i.e.
-    //only branches which have one end in the relevant partition
+    //intersectingEdges is the same as in normal STS, since there's no additional restriction in this case on where
+    // nodes can go, and the move does not modify eligibility for itself
 
-    private int intersectingEdges(Tree tree, NodeRef node, double height, AbstractCase partition,
-                                  List<NodeRef> directChildren) {
+    private int intersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> directChildren) {
 
         final NodeRef parent = tree.getParent(node);
 
-        if (tree.getNodeHeight(parent) < height || branchMap[parent.getNumber()]!=partition) return 0;
+        if (tree.getNodeHeight(parent) < height) return 0;
 
         if (tree.getNodeHeight(node) < height) {
             if (directChildren != null) directChildren.add(node);
@@ -302,7 +326,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
         int count = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
-            count += intersectingEdges(tree, tree.getChild(node, i), height, partition, directChildren);
+            count += intersectingEdges(tree, tree.getChild(node, i), height, directChildren);
         }
         return count;
     }

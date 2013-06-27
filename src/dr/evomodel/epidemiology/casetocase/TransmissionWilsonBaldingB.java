@@ -83,6 +83,17 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         oldRange = tree.getNodeHeight(PiP) - oldMinAge;
         q = newRange / Math.abs(oldRange);
 
+        // need to account for the random repainting of iP
+
+        if(branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
+            q *= 0.5;
+        }
+
+        if(branchMap[k.getNumber()]!=branchMap[j.getNumber()]){
+            q *= 2;
+        }
+
+
         if (j == tree.getRoot()) {
 
             // 1. remove edges <iP, CiP>
@@ -124,12 +135,16 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         if(debug){
             c2cLikelihood.checkPaintingIntegrity(branchMap, true);
         }
-        // @todo need to handle which partition to attach the parent to
+        //
         logq = Math.log(q);
 
-        // repaint the parent to match its parent
+        // repaint the parent to match either its new parent or its new child (50% chance of each).
 
-        branchMap[iP.getNumber()] = branchMap[k.getNumber()];
+        if(MathUtils.nextInt(2)==0){
+            branchMap[iP.getNumber()] = branchMap[k.getNumber()];
+        } else {
+            branchMap[iP.getNumber()] = branchMap[j.getNumber()];
+        }
 
     }
 

@@ -17,6 +17,7 @@ import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
@@ -70,7 +71,7 @@ public class PartitionData implements Serializable {
 	public String demographicModelIdref = Utils.DEMOGRAPHIC_MODEL;
 
 	public void resetDemographicModelIdref() {
-		this.substitutionModelIdref = Utils.DEMOGRAPHIC_MODEL;
+		this.demographicModelIdref = Utils.DEMOGRAPHIC_MODEL;
 	}
 	
     public static String[] demographicModels = {
@@ -234,20 +235,31 @@ public class PartitionData implements Serializable {
 	public TreeModel createTreeModel() {
 		
 		TreeModel treeModel = null;
-		if (this.demographicModelIndex == 0) { // No model
-
-			treeModel = new TreeModel(record.getTree());
-		
-		} else if (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) {
-
+		if (this.demographicModelIndex == 0 && this.record.treeSet) {
+			
+			treeModel = new TreeModel(this.record.getTree());
+			
+			
+		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.treeSet) {
+			
+			Taxa taxa = new Taxa(this.record.getTree().asList()); 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
-			treeModel = new TreeModel(topologySimulator.simulateTree(record.getTaxa(), createDemographicFunction()));
+			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));			
+			
+		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.taxaSet) {
+			
+			Taxa taxa = this.record.getTaxa();
+			CoalescentSimulator topologySimulator = new CoalescentSimulator();
+			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));
+		
+//			} else if (this.demographicModelIndex == 0 && this.record.taxaSet) { 
+//			throw new RuntimeException("Data and demographic model incompatible for partition ");	
 			
 		} else {
 			
-			System.out.println("Not yet implemented");
+			throw new RuntimeException("Data and demographic model incompatible.");
 			
-		}
+		}// END: demo model check
 		
 		return treeModel;
 	}//END: createTreeModel

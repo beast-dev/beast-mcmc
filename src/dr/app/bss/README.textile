@@ -20,10 +20,10 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* new interfaces, debug XML generator
-* new interfaces, debug serialization
-* checkbox for parallel implementation (GUI, CLI)
+* new interfaces, debug Data panel
+* parallel implementation option in CLI
 * ancestral sequence in CLI
+* arg to -gammaSiteRateModelParameterValues in CLI
 * handle wrong ancestral sequence length exception on UI level
 * command line interface
   - complex argument for partitions 

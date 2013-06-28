@@ -2,10 +2,16 @@ package dr.app.bss;
 
 import java.awt.Desktop;
 import java.awt.Frame;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -18,6 +24,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.NodeRef;
@@ -37,7 +44,7 @@ public class Utils {
 	// ---CONSTANTS---//
 	// /////////////////
 
-	public static final boolean VERBOSE = false;
+	public static final boolean VERBOSE = true;
 
 	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
@@ -56,6 +63,7 @@ public class Utils {
 	public static final String CODON_UNIVERSAL = "codon-universal";
 	public static final String CHOOSE_FILE = "Choose file...";
 	public static final String EDIT_TAXA_SET = "Edit taxa set...";
+	public static final String ANCESTRAL_SEQUENCE = "ancestralSequence";
 	
 	public static final String BSS_ICON = "icons/bss.png";
 	public static final String CHECK_ICON = "icons/check.png";
@@ -71,32 +79,97 @@ public class Utils {
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
-	public static Tree importTreeFromFile(File file) {
+	public static String[] loadStrings(String filename) throws IOException {
+
+		int linesCount = countLines(filename);
+		String[] lines = new String[linesCount];
+
+		FileInputStream inputStream;
+		BufferedReader reader;
+		String line;
+
+		inputStream = new FileInputStream(filename);
+		reader = new BufferedReader(new InputStreamReader(inputStream,
+				Charset.forName("UTF-8")));
+		int i = 0;
+		while ((line = reader.readLine()) != null) {
+			lines[i] = line;
+			i++;
+		}
+
+		// Clean up
+		reader.close();
+		reader = null;
+		inputStream = null;
+
+		return lines;
+	}// END: loadStrings
+
+	public static int countLines(String filename) throws IOException {
+
+		InputStream is = new BufferedInputStream(new FileInputStream(filename));
+
+		byte[] c = new byte[1024];
+		int count = 0;
+		int readChars = 0;
+		boolean empty = true;
+		while ((readChars = is.read(c)) != -1) {
+			empty = false;
+			for (int i = 0; i < readChars; ++i) {
+				if (c[i] == '\n') {
+					++count;
+				}
+			}
+		}
+
+		is.close();
+
+		return (count == 0 && !empty) ? 1 : count;
+
+	}// END: countLines
+	
+	public static Taxa importTaxaFromFile(File file) throws IOException {
+
+		Taxa taxa = new Taxa();
+		Taxon taxon;
+		String[] lines = Utils.loadStrings(file.getAbsolutePath());
+
+		for (int i = 0; i < lines.length; i++) {
+
+			String[] line = lines[i].split("\\s+");
+
+			taxon = new Taxon(line[TaxaEditorTableModel.NAME_INDEX]);
+			taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
+					Double.valueOf(line[TaxaEditorTableModel.HEIGHT_INDEX]));
+
+			taxa.addTaxon(taxon);
+
+		}// END: i loop
+
+		return taxa;
+	}// END: importTaxaFromFile
+	
+	public static Tree importTreeFromFile(File file) throws IOException,
+			ImportException {
 
 		Tree tree = null;
-		
-		try {
 
-			BufferedReader reader = new BufferedReader(new FileReader(file));
-			String line = reader.readLine();
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+		String line = reader.readLine();
 
-			if (line.toUpperCase().startsWith("#NEXUS")) {
+		if (line.toUpperCase().startsWith("#NEXUS")) {
 
-				NexusImporter importer = new NexusImporter(reader);
-				tree = importer.importTree(null);
+			NexusImporter importer = new NexusImporter(reader);
+			tree = importer.importTree(null);
 
-			} else {
+		} else {
 
-				NewickImporter importer = new NewickImporter(reader);
-				tree = importer.importTree(null);
+			NewickImporter importer = new NewickImporter(reader);
+			tree = importer.importTree(null);
 
-			}
+		}
 
-			reader.close();
-
-		} catch (Exception e) {
-			Utils.handleException(e);
-		}// END: try-catch block
+		reader.close();
 
 		return tree;
 	}// END: importTreeFromFile
@@ -228,7 +301,6 @@ public class Utils {
 		return exists;
 	}// END: isRecordInList
 	
-	//TODO: check if works
 	public static boolean isTaxaInList(Taxa taxa,
 			ArrayList<Taxa> taxaList) {
 
@@ -236,7 +308,7 @@ public class Utils {
 
 		for (Taxa taxa2 : taxaList) {
 
-			if (taxaToString(taxa).equalsIgnoreCase(taxaToString(taxa2))) {
+			if (taxaToString(taxa,true).equalsIgnoreCase(taxaToString(taxa2,true))) {
 				exists = true;
 				break;
 			}
@@ -253,7 +325,7 @@ public class Utils {
 
 		for (Taxa taxa2 : taxaList) {
 
-			if (taxaToString(taxa).equalsIgnoreCase(taxaToString(taxa2))) {
+			if (taxaToString(taxa, true).equalsIgnoreCase(taxaToString(taxa2, true))) {
 				index = taxaList.indexOf(taxa2);
 				break;
 			}
@@ -458,19 +530,13 @@ public class Utils {
 
 		ImageIcon icon = null;
 
-		try {
+		URL imgURL = BeagleSequenceSimulatorApp.class.getResource(path);
 
-			URL imgURL = BeagleSequenceSimulatorApp.class.getResource(path);
-
-			if (imgURL != null) {
-				icon = new ImageIcon(imgURL);
-			} else {
-				System.err.println("Couldn't find file: " + path + "\n");
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}// END: try-catch block
+		if (imgURL != null) {
+			icon = new ImageIcon(imgURL);
+		} else {
+			System.err.println("Couldn't find file: " + path + "\n");
+		}
 
 		return icon;
 	}// END: CreateImageIcon
@@ -732,12 +798,40 @@ public class Utils {
 		System.out.print("\n");
 	}// END: printFrequencyModel
 
+	public static void printDemographicModel(PartitionData data) {
+		System.out.print("\tDemographic model: ");
+		System.out.print(demographicModelToString(data));
+		System.out.print("\n");
+	}// END: printFrequencyModel
+	
+	public static void printTaxaSet(Taxa taxa) {
+
+		for (int i = 0; i < taxa.getTaxonCount(); i++) {
+			
+			Taxon taxon = taxa.getTaxon(i);
+			System.out.print("\t\t" + taxonToString(taxon, false) + ("\n"));
+			
+		}
+		
+	}// END: printTaxaSet
+	
 	public static void printPartitionData(PartitionData data) {
 
-		// System.out.println("\tData type: "+
-		// PartitionData.dataTypes[data.dataTypeIndex]);
-//		System.out.println("\tTree model: " + data.treeFile);
-		System.out.println("\tTree model: " + data.createTreeModel().toString());
+		if (data.record.isTreeSet()) {
+
+			System.out.println("\tTree: "
+					+ data.record.getTree().toString());
+
+		} else if (data.record.isTaxaSet()) {
+
+			System.out.println("\tTaxa set: ");
+			printTaxaSet(data.record.getTaxa());
+
+		} else {
+			//
+		}
+
+		printDemographicModel(data);
 		System.out.println("\tFrom: " + data.from);
 		System.out.println("\tTo: " + data.to);
 		System.out.println("\tEvery: " + data.every);
@@ -750,7 +844,8 @@ public class Utils {
 
 	public static void printPartitionDataList(PartitionDataList dataList) {
 
-		// printTaxonList(dataList);
+//		printTaxonList(dataList);
+		 
 		System.out.println("\tSite count: " + getSiteCount(dataList));
 		if (dataList.setSeed) {
 			System.out.println("\tStarting seed: " + dataList.startingSeed);
@@ -767,47 +862,39 @@ public class Utils {
 
 	}// END: printDataList
 
-//	public static void printTreeFileList(PartitionDataList dataList) {
-//
-//		int i = 0;
-//		for (File treeFile : dataList.treesList) {
-//			System.out.println(treeFile + " (" + dataList.taxaCounts.get(i)
-//					+ ")");
-//			i++;
-//		}
-//
-//	}// END: printForestList
-
 	public static void printTaxonList(PartitionDataList dataList) {
-		for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
-
-			System.out.println(dataList.allTaxa.getTaxon(i).getId()
-					+ ": "
-					+ dataList.allTaxa.getTaxon(i).getAttribute(
-							Utils.ABSOLUTE_HEIGHT));
-
-		}// END: taxon loop
+		System.out.println(taxaToString(dataList.allTaxa, true));
 	}// END: printTaxonList
 
 	// //////////////////////
 	// ---TOSTRING UTILS---//
 	// //////////////////////
 
-	public static String taxonToString(Taxon taxon) {
-		String string = taxon.getId() + " ("
+	public static String taxonToString(Taxon taxon, boolean printNames) {
+		
+		String string = null;
+		
+		if(printNames) {
+		 string = taxon.getId() + " ("
 				+ taxon.getAttribute(Utils.ABSOLUTE_HEIGHT) + ","
 				+ taxon.getAttribute(Utils.TREE_FILENAME) + ")";
+		
+		} else {
+			 string = taxon.getId() + " ("
+					+ taxon.getAttribute(Utils.ABSOLUTE_HEIGHT)+")";
+		}
+		
 		return string;
 	}// END: taxonToString
 	
-	public static String taxaToString(Taxa taxa) {
+	public static String taxaToString(Taxa taxa, boolean printNames) {
 
 		String string = "";
 
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {
 			
 			Taxon taxon = taxa.getTaxon(i);
-			string += taxonToString(taxon) + ("\n");
+			string += taxonToString(taxon, printNames) + ("\n");
 			
 		}
 		
@@ -818,12 +905,24 @@ public class Utils {
 
 		String string = "";
 
-		//TODO: for coalescent this simulates again, so that's bad
-		string += ("Tree model: " + data.createTreeModel().toString())+ ("\n");
+		
+		if (data.record.isTreeSet()) {
+
+			string += ("Tree: " + data.record.getTree().toString())+ ("\n");
+			
+			
+		} else if (data.record.isTaxaSet()) {
+
+			string += ("Taxa Set: \n" + taxaToString(data.record.getTaxa(), false));//+ ("\n");
+
+		} else {
+			//
+		}
+		
+		string += ("Demographic model: ") + demographicModelToString(data) + ("\n");
 		string += ("From: " + data.from)+ ("\n");
 		string += ("To: " + data.to)+ ("\n");
 		string += ("Every: " + data.every)+ ("\n");
-
 		string += ("Branch Substitution model: ") + branchSubstitutionModelToString(data) + ("\n");
 		string += ("Site Rate model: ") + siteRateModelToString(data) + ("\n");
 		string += ("Clock Rate model: ") + clockRateModelToString(data) + ("\n");
@@ -917,6 +1016,20 @@ public class Utils {
 		string += (" ( ");
 		for (int i = 0; i < PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex].length; i++) {
 			string += data.siteRateModelParameterValues[PartitionData.siteRateModelParameterIndices[data.siteRateModelIndex][i]];
+			string += " ";
+		}// END: indices loop
+		string += ")";
+
+		return string;
+	}
+	
+	public static String demographyModelToString(PartitionData data) {
+
+		String string = PartitionData.demographicModels[data.demographicModelIndex];
+
+		string += (" ( ");
+		for (int i = 0; i < PartitionData.demographicParameterIndices[data.demographicModelIndex].length; i++) {
+			string += data.demographicParameterValues[PartitionData.demographicParameterIndices[data.demographicModelIndex][i]];
 			string += " ";
 		}// END: indices loop
 		string += ")";

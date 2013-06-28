@@ -120,10 +120,10 @@ public class BeagleSequenceSimulatorApp {
 		 Locale.setDefault(Locale.US);
 		
 		if (args.length > 0) {
-
-			BeagleSequenceSimulatorConsoleApp app = new BeagleSequenceSimulatorConsoleApp();
-			app.simulate(args);
 			
+				BeagleSequenceSimulatorConsoleApp app = new BeagleSequenceSimulatorConsoleApp();
+				app.simulate(args);
+				
 		} else {
 
 			try {

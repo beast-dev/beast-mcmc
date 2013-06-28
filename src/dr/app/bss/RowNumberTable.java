@@ -24,7 +24,7 @@ import javax.swing.table.TableColumn;
 @SuppressWarnings("serial")
 public class RowNumberTable extends JTable implements ChangeListener,
 		PropertyChangeListener {
-	
+
 	private JTable main;
 
 	public RowNumberTable(JTable table) {
@@ -147,4 +147,5 @@ public class RowNumberTable extends JTable implements ChangeListener,
 			return this;
 		}
 	}
-}
+
+}// END: class

@@ -7,15 +7,8 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.nio.charset.Charset;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -215,8 +208,8 @@ public class TaxaEditor {
 
 		try {
 
-			Taxa taxonList = new Taxa();
-			String[] lines = loadStrings(file.getAbsolutePath());
+			Taxa taxa = new Taxa();
+			String[] lines = Utils.loadStrings(file.getAbsolutePath());
 
 			Taxon taxon;
 			for (int i = 0; i < lines.length; i++) {
@@ -227,66 +220,17 @@ public class TaxaEditor {
 				taxon.setAttribute(Utils.ABSOLUTE_HEIGHT,
 						Double.valueOf(line[TaxaEditorTableModel.HEIGHT_INDEX]));
 
-				taxonList.addTaxon(taxon);
+				taxa.addTaxon(taxon);
 
 			}// END: i loop
 
-			updateTable(taxonList);
+			updateTable(taxa);
 
 		} catch (Exception e) {
 			Utils.handleException(e);
 		}// END: try-catch block
 
 	}// END: loadTaxaFile
-
-	private String[] loadStrings(String filename) throws IOException {
-
-		int linesCount = countLines(filename);
-		String[] lines = new String[linesCount];
-
-		FileInputStream inputStream;
-		BufferedReader reader;
-		String line;
-
-		inputStream = new FileInputStream(filename);
-		reader = new BufferedReader(new InputStreamReader(inputStream,
-				Charset.forName("UTF-8")));
-		int i = 0;
-		while ((line = reader.readLine()) != null) {
-			lines[i] = line;
-			i++;
-		}
-
-		// Clean up
-		reader.close();
-		reader = null;
-		inputStream = null;
-
-		return lines;
-	}// END: loadStrings
-
-	public int countLines(String filename) throws IOException {
-
-		InputStream is = new BufferedInputStream(new FileInputStream(filename));
-
-		byte[] c = new byte[1024];
-		int count = 0;
-		int readChars = 0;
-		boolean empty = true;
-		while ((readChars = is.read(c)) != -1) {
-			empty = false;
-			for (int i = 0; i < readChars; ++i) {
-				if (c[i] == '\n') {
-					++count;
-				}
-			}
-		}
-
-		is.close();
-
-		return (count == 0 && !empty) ? 1 : count;
-
-	}// END: countLines
 
 	private class ListenSaveTaxaFile implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
@@ -386,16 +330,16 @@ public class TaxaEditor {
 		}// END: actionPerformed
 	}// END: ListenCancel
 
-	// ////////////////////////
-	// ---END: DRAG & DROP---//
-	// ////////////////////////
+	// ///////////////////
+	// ---DRAG & DROP---//
+	// ///////////////////
 
 	// ////////////////////////
 	// ---END: DRAG & DROP---//
 	// ////////////////////////
 
-	public void updateTable(Taxa taxonList) {
-		taxaEditorTableModel.setTaxaSet(taxonList);
+	public void updateTable(Taxa taxa) {
+		taxaEditorTableModel.setTaxaSet(taxa);
 		taxaEditorTableModel.fireTaxonListChanged();
 		setTaxa();
 	}// END: updateTable

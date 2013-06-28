@@ -31,6 +31,7 @@ import dr.evomodelxml.substmodel.TN93Parser;
 import dr.evomodelxml.substmodel.YangCodonModelParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
+import dr.evoxml.SequenceParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.evoxml.util.XMLUnits;
@@ -91,19 +92,19 @@ public class XMLGenerator {
 				} else {
 
 					Taxa taxa = null;
-					if (data.demographicModelIndex == 0 && data.record.treeSet) {
+					if (data.demographicModelIndex == 0 && data.record.isTreeSet()) {
 						
 						 taxa = new Taxa(data.record.getTree().asList()); 
 						
-					} else if (data.demographicModelIndex == 0 && data.record.taxaSet) { 
+					} else if (data.demographicModelIndex == 0 && data.record.isTaxaSet()) { 
 					
 						throw new RuntimeException("Data and demographic model incompatible for partition " + suffix);
 						
-					} else if( (data.demographicModelIndex > 0 && data.demographicModelIndex <= 3) && data.record.treeSet) {
+					} else if( (data.demographicModelIndex > 0 && data.demographicModelIndex <= 3) && data.record.isTreeSet()) {
 						
 						taxa = new Taxa(data.record.getTree().asList()); 
 						
-					} else if((data.demographicModelIndex > 0 && data.demographicModelIndex <= 3) && data.record.taxaSet) {
+					} else if((data.demographicModelIndex > 0 && data.demographicModelIndex <= 3) && data.record.isTaxaSet()) {
 						
 						 taxa = data.record.getTaxa();
 						
@@ -406,7 +407,7 @@ public class XMLGenerator {
 
 			writeBeagleSequenceSimulator(writer);
 			writer.writeBlankLine();
-
+			
 		} catch (Exception e) {
 
 			throw new RuntimeException(
@@ -447,13 +448,13 @@ public class XMLGenerator {
 
 		writer.writeOpenTag(
 				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,
-				new Attribute[] { 
-						new Attribute.Default<String>(XMLParser.ID,
-						"simulator"),
-						new Attribute.Default<String>(BeagleSequenceSimulatorParser.PARALLEL,
-								String.valueOf(dataList.useParallel))
-				});
+				new Attribute[] {
+						new Attribute.Default<String>(XMLParser.ID, "simulator"),
+						new Attribute.Default<String>(
+								BeagleSequenceSimulatorParser.PARALLEL, String
+										.valueOf(dataList.useParallel)) });
 
+		int suffix = 1;
 		for (PartitionData data : dataList) {
 
 			writer.writeOpenTag(
@@ -529,16 +530,38 @@ public class XMLGenerator {
 			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
 					data.frequencyModelIdref);
 
-			// TODO: ancestral sequence
+			if (data.ancestralSequenceString != null) {
+
+				writeAncestralSequence(data, writer, suffix);
+
+			}
 
 			writer.writeCloseTag(PartitionParser.PARTITION);
 
+			suffix++;
 		}// END: partitions loop
 
 		writer.writeCloseTag(BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR);
 
 	}// END: writeBeagleSequenceSimulator
 
+	private void writeAncestralSequence(PartitionData data, XMLWriter writer, int suffix) {
+		
+		writer.writeOpenTag(SequenceParser.SEQUENCE);
+		
+		writer.writeTag(
+				TaxonParser.TAXON, // tagname
+				new Attribute[] { // attributes[]
+				new Attribute.Default<String>(XMLParser.ID, Utils.ANCESTRAL_SEQUENCE + suffix) },
+				true // close
+		);
+		
+		writer.write (data.ancestralSequenceString + "\n");
+		
+		writer.writeCloseTag(SequenceParser.SEQUENCE);
+		
+	}//END: writeAncestralSequence
+	
 	private void writeNewick(TreeModel tree, XMLWriter writer,
 			String suffix) {
 
@@ -973,9 +996,6 @@ public class XMLGenerator {
 
 		case 0: // HKY
 
-			//TODO
-			System.out.println("FUBAR");
-			
 			writer.writeOpenTag(NucModelType.HKY.getXMLName(),
 					new Attribute[] { new Attribute.Default<String>(
 							XMLParser.ID, data.substitutionModelIdref) });

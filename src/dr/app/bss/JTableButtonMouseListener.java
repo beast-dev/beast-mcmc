@@ -36,4 +36,4 @@ public class JTableButtonMouseListener extends MouseAdapter {
 		}// END: placement check
 	}// END: mouseClicked
 
-}// END: JTableButtonMouseListener class
+}// END: class

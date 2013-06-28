@@ -94,9 +94,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		add(scrollPane, BorderLayout.CENTER);
 
 		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.TREE_MODEL_INDEX);
+				PartitionTableModel.DATA_INDEX);
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
 		column.setCellEditor(new JTableComboBoxCellEditor());
+		column.setMinWidth(100);
 		
 //		column = partitionTable.getColumnModel().getColumn(
 //				PartitionTableModel.DATA_TYPE_INDEX);
@@ -186,7 +187,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				int row = ev.getFirstRow();
 				int column = ev.getColumn();
 
-				if (column == PartitionTableModel.TREE_MODEL_INDEX) {
+				if (column == PartitionTableModel.DATA_INDEX) {
 
 					TreesTableRecord value = (TreesTableRecord) partitionTableModel.getValueAt(row,
 							column);
@@ -230,7 +231,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			super();
 			setOpaque(true);
-			// TODO: why when clicked this displays a full path?
 			this.setRenderer(comboBoxRenderer);
 
 		}// END: Constructor
@@ -274,7 +274,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			((JComboBox) editorComponent).removeAllItems();
 
-			if (column == PartitionTableModel.TREE_MODEL_INDEX) {
+			if (column == PartitionTableModel.DATA_INDEX) {
 
 				for (TreesTableRecord record : dataList.recordsList) {
 					((JComboBox) editorComponent).addItem(record);
@@ -301,11 +301,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	}// END: JTableComboBoxCellEditor class
 
 	public void hideTreeColumn() {
-		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.TREE_MODEL_INDEX]);
+		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.DATA_INDEX]);
 	}
 
 	public void showTreeColumn() {
-		hider.show(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.TREE_MODEL_INDEX]);
+		hider.show(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.DATA_INDEX]);
 	}
 
 	public JComponent getExportableComponent() {

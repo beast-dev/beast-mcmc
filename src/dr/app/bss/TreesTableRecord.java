@@ -12,8 +12,8 @@ public class TreesTableRecord implements Serializable {
 	private Taxa taxa = null;// new Taxa();
 	private Tree tree = null;
 
-	public boolean treeSet = false;
-	public boolean taxaSet = false;
+	private boolean treeSet = false;
+	private boolean taxaSet = false;
 
 	public TreesTableRecord() {
 	}// END: Constructor
@@ -89,4 +89,12 @@ public class TreesTableRecord implements Serializable {
 		return getName();
 	}
 
+	public boolean isTreeSet() {
+		return this.treeSet;
+	}
+	
+	public boolean isTaxaSet() {
+		return this.taxaSet;
+	}
+	
 }// END: class

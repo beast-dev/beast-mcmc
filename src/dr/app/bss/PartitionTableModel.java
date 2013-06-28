@@ -17,7 +17,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	private PartitionDataList dataList;
 
-	public final static int TREE_MODEL_INDEX = 0;
+	public final static int DATA_INDEX = 0;
 //	public final static int DATA_TYPE_INDEX = 1;
 	public final static int FROM_INDEX = 1;
 	public final static int TO_INDEX = 2;
@@ -29,7 +29,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public final static int FREQUENCY_MODEL_INDEX = 8;
 	public final static int ANCESTRAL_SEQUENCE_INDEX = 9;
 	
-	public static String[] COLUMN_NAMES = { "Tree Model", //
+	public static String[] COLUMN_NAMES = { "Data", //
 			// "Data Type",
 			"From", //
 			"To", //
@@ -99,7 +99,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public boolean isCellEditable(int row, int column) {
 		switch (column) {
-		case TREE_MODEL_INDEX:
+		case DATA_INDEX:
 			return true;
 		case DEMOGRAPHIC_MODEL_INDEX:
 			return false;
@@ -134,7 +134,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
 
-		case TREE_MODEL_INDEX:
+		case DATA_INDEX:
 			
 			return dataList.get(row).record == null ? new TreesTableRecord() : dataList
 					.get(row).record;
@@ -207,7 +207,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 		switch (column) {
 
-		case TREE_MODEL_INDEX:
+		case DATA_INDEX:
 			dataList.get(row).record = (TreesTableRecord) value;
 			break;
 

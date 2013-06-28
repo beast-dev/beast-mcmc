@@ -15,6 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 /**
  * @author Filip Bielejec
@@ -130,13 +131,27 @@ public class AncestralSequenceEditor {
 		}// END: actionPerformed
 	}// END: ListenCancel
 	
-	public void launch() {
+	public void showWindow() {
 		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		window.setSize(new Dimension(450, 200));
 		window.setMinimumSize(new Dimension(100, 100));
 		window.setResizable(true);
 		window.setModal(true);
 		window.setVisible(true);
-	}//END: launch
+	}// END: showWindow
+
+	public void launch() {
+
+		if (SwingUtilities.isEventDispatchThread()) {
+			showWindow();
+		} else {
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					showWindow();
+				}
+			});
+		}// END: edt check
+
+	}// END: launch
 	
 }//END: class

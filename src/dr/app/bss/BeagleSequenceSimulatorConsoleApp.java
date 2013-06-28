@@ -2,7 +2,6 @@ package dr.app.bss;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,6 +9,8 @@ import java.util.Arrays;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.app.util.Arguments;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 
 /**
@@ -23,11 +24,11 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private PartitionDataList dataList;
 	
 	private static final String SPLIT_PARTITION = ":";
-//	private static final String SEED = "-seed";	
 	
 	private static final String HELP = "help";
-	private static final String TREE_MODEL = "treeModel";
-
+	private static final String TREE_FILE = "treeFile";
+	private static final String TAXA_SET = "taxaSet";
+	
 	private static final String DEMOGRAPHIC_MODEL = "demographicModel";
 	private static final String NO_DEMOGRAPHIC_MODEL = "noModel";
 	private static final String CONSTANT_POPULATION = "constantPopulation";
@@ -87,9 +88,13 @@ public class BeagleSequenceSimulatorConsoleApp {
 						new Arguments.Option(HELP,
 								"print this information and exit"),
 
-						new Arguments.StringOption(TREE_MODEL, "tree model",
+						new Arguments.StringOption(TREE_FILE, "tree file",
 								"specify tree topology"),
 
+								new Arguments.StringOption(TAXA_SET, "taxa set",
+										"specify taxa set"),
+								
+								
 						new Arguments.StringOption(DEMOGRAPHIC_MODEL,
 								new String[] { NO_DEMOGRAPHIC_MODEL, //
 										CONSTANT_POPULATION, //							
@@ -207,20 +212,24 @@ public class BeagleSequenceSimulatorConsoleApp {
 					
 				}// END: HELP option check
 
-				// Tree Model
-				if (arguments.hasOption(TREE_MODEL)) {
+				// Tree / Taxa
+				if (arguments.hasOption(TREE_FILE)) {
 
-					//TODO: how to set tree filename to parse (or taxa set file)
-					// should happen only when calling simulate
+					File treeFile = new File(arguments.getStringOption(TREE_FILE));
+					Tree tree = Utils.importTreeFromFile(treeFile);
+					data.record = new TreesTableRecord(treeFile.getName(), tree);
 					
-//					data.treeFile = new File(
-//							arguments.getStringOption(TREE_MODEL));
-
+				} else if(arguments.hasOption(TAXA_SET)) {
+				
+					File taxaFile = new File(arguments.getStringOption(TAXA_SET));
+					Taxa taxa = Utils.importTaxaFromFile(taxaFile);
+					data.record = new TreesTableRecord(taxaFile.getName(), taxa);
+					
 				} else {
 
-					throw new RuntimeException("TreeModel not specified.");
+					throw new RuntimeException("Tree file / Taxa set not specified.");
 
-				}// END: TREE_MODEL option check
+				}// END: Tree / Taxa option check
 
 				// Demographic Model
 				if (arguments.hasOption(DEMOGRAPHIC_MODEL)) {
@@ -476,10 +485,9 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 				}// END: EVERY option check
 
-				dataList.add(data);
-				
 				// create partition
-				Partition partition = new Partition(data.createTreeModel(), //
+				Partition partition = new Partition(
+						data.createTreeModel(), //
 						data.createBranchModel(), //
 						data.createSiteRateModel(), //
 						data.createClockRateModel(), //
@@ -490,7 +498,8 @@ public class BeagleSequenceSimulatorConsoleApp {
 				);
 
 				partitionsList.add(partition);
-
+				dataList.add(data);
+				
 			}// END: partitionArgs loop
 
 			// ////////////////
@@ -525,20 +534,12 @@ public class BeagleSequenceSimulatorConsoleApp {
 			writer.println(beagleSequenceSimulator.simulate(false).toString());
 			writer.close();
 			
-		} catch (Arguments.ArgumentException ae) {
+		} catch (Exception e) {
 
-			System.out.println();
-			System.out.println(ae.getMessage());
 			System.out.println();
 			printUsage(arguments);
-			System.exit(1);
-
-		} catch (IOException ioe) {
-
 			System.out.println();
-			System.out.println(ioe.getMessage());
-			System.out.println();
-			printUsage(arguments);
+			System.out.println(e.getMessage());
 			System.exit(1);
 
 		}// END: try-catch block
@@ -600,40 +601,43 @@ public class BeagleSequenceSimulatorConsoleApp {
 			System.out.println(message);
 			System.out.println();
 		}
-		printUsage(arguments);
+//		printUsage(arguments);
 		System.exit(0);
 	}// END: gracefullyExit
 
 	private void printUsage(Arguments arguments) {
 
 		arguments.printUsage(
-				"java -Djava.library.path=/usr/local/lib -jar bss.jar", " "
+				"java -Djava.library.path=/usr/local/lib -jar buss.jar", " "
 						+ SPLIT_PARTITION + " " + "[<output-file-name>] [<seed>]");
 		System.out.println();
+		
+//		System.out
+//				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar "
+//						+ "-treeModel /home/filip/SimTree.figtree "
+//						+ "-branchSubstitutionModel GTR -GTRsubstitutionParameterValues 10 10 10 10 10 10 "
+//						+ "-siteRateModel GammaSiteRateModel -gammaSiteRateModelParameterValues 1 1 "
+//						+ "-clockRateModel StrictClock -strictClockParameterValues 0.15 "
+//						+ "-frequencyModel NucleotideFrequencies -nucleotideFrequencyParameterValues 0.24 0.26 0.25 0.25 "
+//						+ "-from 1 "
+//						+ "-to 10 "
+//						+ "-every 1"
+//						+ " "
+//						+ SPLIT_PARTITION + " " + "sequences.fasta 123");
+		
 		System.out
-				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar "
-						+ "-treeModel /home/filip/SimTree.figtree "
-						+ "-branchSubstitutionModel GTR -GTRsubstitutionParameterValues 10 10 10 10 10 10 "
-						+ "-siteRateModel GammaSiteRateModel -gammaSiteRateModelParameterValues 1 1 "
-						+ "-clockRateModel StrictClock -strictClockParameterValues 0.15 "
-						+ "-frequencyModel NucleotideFrequencies -nucleotideFrequencyParameterValues 0.24 0.26 0.25 0.25 "
-						+ "-from 1 "
-						+ "-to 10 "
-						+ "-every 1"
-						+ " "
-						+ SPLIT_PARTITION + " " + "sequences.fasta 123");
-		System.out
-				.println("  Multiple partitions example: java -Djava.library.path=/usr/local/lib -jar bss.jar"
-						+ "-treeModel /home/filip/SimTree.figtree -from 1 -to 5 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
+				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar"
+						+ "-treeModel SimTree.figtree -from 1 -to 500 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
 						+ " "
 						+ SPLIT_PARTITION
 						+ " "
-						+ "-treeModel /home/filip/SimTree.figtree -from 6 -to 8 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 10.0"
-						+ " "
-						+ SPLIT_PARTITION
-						+ " "
-						+ "-treeModel /home/filip/SimTree.figtree -from 9 -to 10 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
+						+ "-treeModel SimTree.figtree -from 501 -to 1000 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 10.0"
+//						+ " "
+//						+ SPLIT_PARTITION
+//						+ " "
+//						+ "-treeModel SimTree.figtree -from 9 -to 10 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
 						+ " " + SPLIT_PARTITION + " " + "sequences.fasta");
+		
 		System.out.println();
 	}// END: printUsage
 

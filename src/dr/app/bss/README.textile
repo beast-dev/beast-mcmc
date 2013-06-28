@@ -20,11 +20,10 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* new interfaces, debug Data panel
+* do coalescent prints
 * parallel implementation option in CLI
 * ancestral sequence in CLI
-* arg to -gammaSiteRateModelParameterValues in CLI
-* handle wrong ancestral sequence length exception on UI level
+* new interfaces, debug Data panel
 * command line interface
   - complex argument for partitions 
 * nucleotide/codon frequencies with compatible substitution models

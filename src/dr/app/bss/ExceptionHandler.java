@@ -38,7 +38,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 	}// END: showExceptionDialog
 
 	private void logException(Thread t, Throwable e) {
-		// TODO: start a thread that logs it, also spying on the user and planting evidence
+		// start a thread that logs it, also spying on the user and planting evidence
 		e.printStackTrace();
 	}//END: logException
 

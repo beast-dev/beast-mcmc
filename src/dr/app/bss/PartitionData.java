@@ -231,22 +231,20 @@ public class PartitionData implements Serializable {
 	this.treeModelIdref = TreeModel.TREE_MODEL;
 	}
 	
-	//TODO: taxa / tree set
 	public TreeModel createTreeModel() {
 		
 		TreeModel treeModel = null;
-		if (this.demographicModelIndex == 0 && this.record.treeSet) {
+		if (this.demographicModelIndex == 0 && this.record.isTreeSet()) {
 			
 			treeModel = new TreeModel(this.record.getTree());
 			
-			
-		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.treeSet) {
+		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.isTreeSet()) {
 			
 			Taxa taxa = new Taxa(this.record.getTree().asList()); 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
 			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));			
 			
-		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.taxaSet) {
+		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.isTaxaSet()) {
 			
 			Taxa taxa = this.record.getTaxa();
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
@@ -794,7 +792,7 @@ public class PartitionData implements Serializable {
 	// //////////////////////////
 	// ---ANCESTRAL SEQUENCE---//
 	// //////////////////////////
-	public String ancestralSequenceString = "";
+	public String ancestralSequenceString = null;
 	
 	public Sequence createAncestralSequence() {
 		

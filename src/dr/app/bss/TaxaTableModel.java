@@ -125,6 +125,6 @@ public class TaxaTableModel extends AbstractTableModel {
 
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
-	}
+	}// END: setDataList
 
 }// END: TaxaTableModel class

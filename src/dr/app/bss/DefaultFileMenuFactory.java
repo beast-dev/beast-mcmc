@@ -54,14 +54,6 @@ public class DefaultFileMenuFactory implements MenuFactory {
 
 		menu.addSeparator();
 
-		// TODO: setup Recent files
-//		if (application.getRecentFileMenu() != null) {
-//			JMenu subMenu = application.getRecentFileMenu();
-//			menu.add(subMenu);
-//
-//			menu.addSeparator();
-//		}
-		
 		// Setup Exit
 		item = new JMenuItem(application.getExitAction());
 		menu.add(item);

@@ -17,6 +17,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import dr.app.gui.components.RealNumberField;
 
@@ -199,13 +200,27 @@ public class ClockRateModelEditor {
 		}// END: actionPerformed
 	}// END: ListenCancel
 	
-	public void launch() {
+	public void showWindow() {
 		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		window.setSize(new Dimension(450, 400));
 		window.setMinimumSize(new Dimension(100, 100));
 		window.setResizable(true);
 		window.setModal(true);
 		window.setVisible(true);
-	}// END: launch
+	}// END: showWindow
 
+	public void launch() {
+
+		if (SwingUtilities.isEventDispatchThread()) {
+			showWindow();
+		} else {
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					showWindow();
+				}
+			});
+		}// END: edt check
+
+	}// END: launch
+	
 }// END: class

@@ -30,7 +30,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private JTable taxaTable = null;
 	private TaxaTableModel taxaTableModel = null;
 	private TableColumn column;
-	
+
 	public TaxaPanel(PartitionDataList dataList) {
 
 		this.dataList = dataList;
@@ -41,7 +41,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 		taxaTable.setModel(taxaTableModel);
 
 		setLayout(new BorderLayout());
-		
+
 		taxaTable.getTableHeader().setReorderingAllowed(false);
 
 		taxaTable.getTableHeader()
@@ -49,27 +49,24 @@ public class TaxaPanel extends JPanel implements Exportable {
 						new HeaderRenderer(SwingConstants.LEFT, new Insets(0,
 								2, 0, 2)));
 
-		column = taxaTable.getColumnModel().getColumn(
-				TaxaTableModel.NAME_INDEX);
-		column.setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
-						0, 2)));
+		column = taxaTable.getColumnModel()
+				.getColumn(TaxaTableModel.NAME_INDEX);
+		column.setCellRenderer(new TableRenderer(SwingConstants.LEFT,
+				new Insets(0, 2, 0, 2)));
 		column.setPreferredWidth(80);
-		
+
 		column = taxaTable.getColumnModel().getColumn(
 				TaxaTableModel.HEIGHT_INDEX);
-		column.setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
-						0, 2)));
+		column.setCellRenderer(new TableRenderer(SwingConstants.LEFT,
+				new Insets(0, 2, 0, 2)));
 		column.setPreferredWidth(80);
-		
+
 		column = taxaTable.getColumnModel().getColumn(
 				TaxaTableModel.TAXA_SET_INDEX);
-		column.setCellRenderer(
-				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
-						0, 2)));
+		column.setCellRenderer(new TableRenderer(SwingConstants.LEFT,
+				new Insets(0, 2, 0, 2)));
 		column.setPreferredWidth(80);
-		
+
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxaTable);
 
 		scrollPane = new JScrollPane(taxaTable,
@@ -108,6 +105,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
-	}
+	}// END: setDataList
 
 }// END: class

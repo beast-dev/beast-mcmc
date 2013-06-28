@@ -63,7 +63,7 @@ public class JTableButtonCellRenderer extends JButton implements
 
 			case TreesTableModel.TREE_FILE_INDEX:
 
-				if (!dataList.recordsList.get(row).treeSet) {
+				if (!dataList.recordsList.get(row).isTreeSet()) {
 					label = Utils.CHOOSE_FILE;
 				} else {
 					label = dataList.recordsList.get(row).getName();
@@ -73,7 +73,7 @@ public class JTableButtonCellRenderer extends JButton implements
 
 			case TreesTableModel.TAXA_SET_INDEX:
 
-				if (!dataList.recordsList.get(row).taxaSet) {
+				if (!dataList.recordsList.get(row).isTaxaSet()) {
 					label = Utils.EDIT_TAXA_SET;
 				} else {
 					label = dataList.recordsList.get(row).getName();
@@ -92,4 +92,4 @@ public class JTableButtonCellRenderer extends JButton implements
 		return button;
 	}// END: getTableCellRendererComponent
 
-}// END: JTableButtonRenderer class
+}// END: class

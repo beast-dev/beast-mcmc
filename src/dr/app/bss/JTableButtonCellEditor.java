@@ -66,4 +66,4 @@ public class JTableButtonCellEditor extends DefaultCellEditor {
 		super.fireEditingStopped();
 	}
 
-}// END: JTableButtonCellEditor
+}// END: class

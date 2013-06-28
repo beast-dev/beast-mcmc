@@ -30,7 +30,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	private WholeNumberField simulationsNumberField;
 	private WholeNumberField startingSeedNumberField;
-	
+
 	// Buttons
 	private JButton simulate;
 	private JButton generateXML;
@@ -38,7 +38,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	// Check boxes
 	private JCheckBox setSeed;
 	private JCheckBox useParallel;
-	
+
 	public SimulationPanel(final MainFrame frame,
 			final PartitionDataList dataList) {
 
@@ -50,25 +50,27 @@ public class SimulationPanel extends JPanel implements Exportable {
 		simulationsNumberField = new WholeNumberField(1, Integer.MAX_VALUE);
 		simulationsNumberField.setColumns(10);
 		simulationsNumberField.setValue(dataList.simulationsCount);
-		optionPanel.addComponentWithLabel("Number of simulations:", simulationsNumberField);
-		
+		optionPanel.addComponentWithLabel("Number of simulations:",
+				simulationsNumberField);
+
 		setSeed = new JCheckBox();
 		setSeed.addItemListener(new SetSeedCheckBoxListener());
 		setSeed.setSelected(dataList.setSeed);
 		optionPanel.addComponentWithLabel("Set seed:", setSeed);
-		
+
 		startingSeedNumberField = new WholeNumberField(1, Long.MAX_VALUE);
 		startingSeedNumberField.setColumns(10);
 		startingSeedNumberField.setValue(dataList.startingSeed);
 		startingSeedNumberField.setEnabled(dataList.setSeed);
-		optionPanel.addComponentWithLabel("Starting seed:", startingSeedNumberField);
-		
+		optionPanel.addComponentWithLabel("Starting seed:",
+				startingSeedNumberField);
+
 		useParallel = new JCheckBox();
 		useParallel.addItemListener(new UseParallelCheckBoxListener());
 		useParallel.setSelected(dataList.useParallel);
-		optionPanel.addComponentWithLabel("Use parallel implementation:", useParallel);
-		
-		
+		optionPanel.addComponentWithLabel("Use parallel implementation:",
+				useParallel);
+
 		// Buttons holder
 		JPanel buttonsHolder = new JPanel();
 		buttonsHolder.setOpaque(false);
@@ -113,7 +115,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		}
 	}// END: CheckBoxListener
-	
+
 	private class UseParallelCheckBoxListener implements ItemListener {
 		public void itemStateChanged(ItemEvent e) {
 
@@ -125,7 +127,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		}
 	}// END: CheckBoxListener
-	
+
 	private class ListenSimulate implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 
@@ -159,6 +161,6 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	public void setDataList(PartitionDataList dataList) {
 		this.dataList = dataList;
-	}
+	}// END: setDataList
 
 }// END: class

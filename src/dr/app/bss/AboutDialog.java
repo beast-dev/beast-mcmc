@@ -242,6 +242,7 @@ public class AboutDialog extends JDialog {
 
 		@Override
 		public void mouseClicked(MouseEvent ev) {
+			
 			try {
 
 				Desktop.getDesktop().browse(new URI(website));

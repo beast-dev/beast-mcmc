@@ -80,7 +80,7 @@ public class TreesPanel extends JPanel implements Exportable {
 		add(scrollPane, BorderLayout.CENTER);
 
 		setTreesColumn(this.dataList);
-		setTaxaSetColumn();
+		setTaxaSetColumn(this.dataList);
 
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TAXA_COUNT_INDEX);
@@ -96,7 +96,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
 	}// END: Constructor
 
-	private void setTaxaSetColumn() {
+	private void setTaxaSetColumn(PartitionDataList dataList) {
 		
 		column = treesTable.getColumnModel().getColumn(
 				TreesTableModel.TAXA_SET_INDEX);
@@ -135,7 +135,8 @@ public class TreesPanel extends JPanel implements Exportable {
 	public void updateTreesTable(PartitionDataList dataList) {
 		treesTableModel.setDataList(dataList);
 		setDataList(dataList);
-//		setTreesColumn(dataList);
+		setTreesColumn(dataList);
+		setTaxaSetColumn(dataList);
 		setTrees();
 		fireTableDataChanged();
 	}// END: updateTreesTable

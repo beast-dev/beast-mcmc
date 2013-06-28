@@ -75,7 +75,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 	@Override
 	protected void initializeComponents() {
 
-		setSize(new Dimension(1200, 600));
+		setSize(new Dimension(1250, 600));
 		setMinimumSize(new Dimension(260, 100));
 
 		taxaPanel = new TaxaPanel(dataList);
@@ -185,7 +185,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 							if (data.record == null) {
 
 								throw new RuntimeException(
-										"Set Tree Model in Partitions tab for "
+										"Set data in Partitions tab for "
 												+ (partitionsList.size() + 1)
 												+ " partition.");
 
@@ -204,7 +204,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 										data.every // every
 								);
 
-								if(data.ancestralSequenceString != "") {
+								if(data.ancestralSequenceString != null) {
 									partition.setAncestralSequence(data.createAncestralSequence());
 								}
 								
@@ -241,6 +241,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			// Executed in event dispatch thread
 			public void done() {
 
+				//TODO: print the coalescent
 				terminalPanel.setText(Utils.partitionDataListToString(dataList));
 				
 				setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");

@@ -49,4 +49,5 @@ public class SimpleFileFilter extends FileFilter {
 	public String getDescription() {
 		return description;
 	}
-}
+
+}// END: class

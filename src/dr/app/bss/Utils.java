@@ -901,24 +901,24 @@ public class Utils {
 		return string;
 	}// END: taxaToString
 	
-	public static String partitionDataToString(PartitionData data) {
+	public static String partitionDataToString(PartitionData data, TreeModel simulatedTreeModel) {
 
 		String string = "";
-
 		
-		if (data.record.isTreeSet()) {
-
-			string += ("Tree: " + data.record.getTree().toString())+ ("\n");
-			
-			
-		} else if (data.record.isTaxaSet()) {
-
-			string += ("Taxa Set: \n" + taxaToString(data.record.getTaxa(), false));//+ ("\n");
-
-		} else {
-			//
-		}
+//		if (data.record.isTreeSet()) {
+//
+//			string += ("Tree: " + data.record.getTree().toString())+ ("\n");
+//			
+//		} else if (data.record.isTaxaSet()) {
+//
+//			string += ("Taxa Set: \n" + taxaToString(data.record.getTaxa(), false));//+ ("\n");
+//
+//		} else {
+//			//
+//		}
 		
+		string += ("Tree model: " + simulatedTreeModel.toString()) + ("\n");
+
 		string += ("Demographic model: ") + demographicModelToString(data) + ("\n");
 		string += ("From: " + data.from)+ ("\n");
 		string += ("To: " + data.to)+ ("\n");
@@ -931,20 +931,25 @@ public class Utils {
 		return string;
 	}// END: partitionDataToString
 	
-	public static String partitionDataListToString(PartitionDataList dataList) {
+	public static String partitionDataListToString(PartitionDataList dataList,
+			ArrayList<TreeModel> simulatedTreeModelList
+			) {
 
 		String string = "";
-
+		TreeModel simulatedTreeModel;
+		
 		string += ("Site count: " + getSiteCount(dataList)) + ("\n");
 		if (dataList.setSeed) {
 			string += ("Starting seed: " + dataList.startingSeed) + ("\n");
 		}
 
-		int row = 1;
+		int row = 0;
 		for (PartitionData data : dataList) {
 
-			string += ("Partition: " + row)+ ("\n");
-			string += partitionDataToString(data);
+			simulatedTreeModel = simulatedTreeModelList.get(row);
+
+			string += ("Partition: " + (row + 1)) + ("\n");
+			string += partitionDataToString(data, simulatedTreeModel);
 			string += ("\n");
 			row++;
 

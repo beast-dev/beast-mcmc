@@ -20,9 +20,7 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* do coalescent prints
-* parallel implementation option in CLI
-* ancestral sequence in CLI
+* debug seed setting in CLI and GUI
 * new interfaces, debug Data panel
 * command line interface
   - complex argument for partitions 

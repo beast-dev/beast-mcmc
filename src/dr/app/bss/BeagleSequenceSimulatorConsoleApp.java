@@ -26,6 +26,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private static final String SPLIT_PARTITION = ":";
 	
 	private static final String HELP = "help";
+	
 	private static final String TREE_FILE = "treeFile";
 	private static final String TAXA_SET = "taxaSet";
 	
@@ -73,6 +74,8 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private static final String TO = "to";
 	private static final String EVERY = "every";
 
+	private static final String ANCESTRAL_SEQUENCE = "ancestralSequence";
+	
 	public BeagleSequenceSimulatorConsoleApp() {
 
 		data = new PartitionData();
@@ -91,10 +94,16 @@ public class BeagleSequenceSimulatorConsoleApp {
 						new Arguments.StringOption(TREE_FILE, "tree file",
 								"specify tree topology"),
 
-								new Arguments.StringOption(TAXA_SET, "taxa set",
-										"specify taxa set"),
-								
-								
+						new Arguments.StringOption(TAXA_SET, "taxa set",
+								"specify taxa set"),
+
+						new Arguments.IntegerOption(FROM,
+								"specify 'from' attribute"),
+						new Arguments.IntegerOption(TO,
+								"specify 'to' attribute"),
+						new Arguments.IntegerOption(EVERY,
+								"specify 'every' attribute"),
+
 						new Arguments.StringOption(DEMOGRAPHIC_MODEL,
 								new String[] { NO_DEMOGRAPHIC_MODEL, //
 										CONSTANT_POPULATION, //							
@@ -146,10 +155,9 @@ public class BeagleSequenceSimulatorConsoleApp {
 						new Arguments.RealArrayOption( NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES, 4, "specify nucleotide frequency parameter values"),
 						new Arguments.RealArrayOption( CODON_FREQUENCY_PARAMETER_VALUES, 61, "specify codon frequency parameter values"),
 
-						new Arguments.IntegerOption(FROM, "specify 'from' attribute"),
-						new Arguments.IntegerOption(TO, "specify 'to' attribute"),
-						new Arguments.IntegerOption(EVERY, "specify 'every' attribute")
-
+						new Arguments.StringOption(ANCESTRAL_SEQUENCE, "ancestral sequence",
+								"specify ancestral sequence"),
+						
 				});
 
 	}// END: constructor
@@ -497,6 +505,13 @@ public class BeagleSequenceSimulatorConsoleApp {
 						data.every // every
 				);
 
+				if (arguments.hasOption(ANCESTRAL_SEQUENCE)) {
+
+					data.ancestralSequenceString = arguments.getStringOption(ANCESTRAL_SEQUENCE);
+                    partition.setAncestralSequence(data.createAncestralSequence());
+					
+				}// END: ANCESTRAL_SEQUENCE option check
+				
 				partitionsList.add(partition);
 				dataList.add(data);
 				
@@ -524,14 +539,21 @@ public class BeagleSequenceSimulatorConsoleApp {
 			}
 			
 			if (dataList.setSeed) {
+				
+//				System.out.println(dataList.startingSeed);
+				
 				MathUtils.setSeed(dataList.startingSeed);
+			}
+			
+			if(leftoverArguments.length > 2){
+			dataList.useParallel = Boolean.parseBoolean(leftoverArguments[2]);
 			}
 			
 			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 					partitionsList);
 			
 			PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
-			writer.println(beagleSequenceSimulator.simulate(false).toString());
+			writer.println(beagleSequenceSimulator.simulate(dataList.useParallel).toString());
 			writer.close();
 			
 		} catch (Exception e) {
@@ -597,11 +619,11 @@ public class BeagleSequenceSimulatorConsoleApp {
 	}// END: parseFrequencyValues
 
 	private void gracefullyExit(String message) {
+		printUsage(arguments);
 		if (message != null) {
 			System.out.println(message);
 			System.out.println();
 		}
-//		printUsage(arguments);
 		System.exit(0);
 	}// END: gracefullyExit
 
@@ -609,33 +631,16 @@ public class BeagleSequenceSimulatorConsoleApp {
 
 		arguments.printUsage(
 				"java -Djava.library.path=/usr/local/lib -jar buss.jar", " "
-						+ SPLIT_PARTITION + " " + "[<output-file-name>] [<seed>]");
+						+ SPLIT_PARTITION + " " + "[<output-file-name>] [<seed>] [<true|false>]");
 		System.out.println();
 		
-//		System.out
-//				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar "
-//						+ "-treeModel /home/filip/SimTree.figtree "
-//						+ "-branchSubstitutionModel GTR -GTRsubstitutionParameterValues 10 10 10 10 10 10 "
-//						+ "-siteRateModel GammaSiteRateModel -gammaSiteRateModelParameterValues 1 1 "
-//						+ "-clockRateModel StrictClock -strictClockParameterValues 0.15 "
-//						+ "-frequencyModel NucleotideFrequencies -nucleotideFrequencyParameterValues 0.24 0.26 0.25 0.25 "
-//						+ "-from 1 "
-//						+ "-to 10 "
-//						+ "-every 1"
-//						+ " "
-//						+ SPLIT_PARTITION + " " + "sequences.fasta 123");
-		
 		System.out
-				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar"
+				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar "
 						+ "-treeModel SimTree.figtree -from 1 -to 500 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
 						+ " "
 						+ SPLIT_PARTITION
 						+ " "
 						+ "-treeModel SimTree.figtree -from 501 -to 1000 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 10.0"
-//						+ " "
-//						+ SPLIT_PARTITION
-//						+ " "
-//						+ "-treeModel SimTree.figtree -from 9 -to 10 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
 						+ " " + SPLIT_PARTITION + " " + "sequences.fasta");
 		
 		System.out.println();

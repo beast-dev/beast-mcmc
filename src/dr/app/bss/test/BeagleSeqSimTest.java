@@ -58,12 +58,12 @@ public class BeagleSeqSimTest {
     	
 		// start timing
 		long tic = System.currentTimeMillis();
-        int N = 100; //0000;
+        int N = 1;
 		for (int i = 0; i < N; i++) {
 //			simulateTopology();
-//			simulateOnePartition();
+			simulateOnePartition();
 //			simulateTwoPartitions();
-			simulateThreePartitions(i, N);
+//			simulateThreePartitions(i, N);
 		}
 		long toc = System.currentTimeMillis();
 		

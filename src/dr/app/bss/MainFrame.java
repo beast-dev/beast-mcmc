@@ -34,6 +34,7 @@ import javax.swing.plaf.BorderUIResource;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
+import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
 
 /**
@@ -160,6 +161,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
+			ArrayList<TreeModel> simulatedTreeModelList = new ArrayList<TreeModel>();
 			// Executed in background thread
 			public Void doInBackground() {
 
@@ -192,9 +194,12 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 							} else {
 
 								//TODO: create TreeModel before simulating, keep string for printing in Terminal
+								TreeModel treeModel = data.createTreeModel();
+								simulatedTreeModelList.add(treeModel);
+										
 								// create partition
 								Partition partition = new Partition(
-										data.createTreeModel(), //
+										treeModel, //
 										data.createBranchModel(), //
 										data.createSiteRateModel(), //
 										data.createClockRateModel(), //
@@ -242,8 +247,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			public void done() {
 
 				//TODO: print the coalescent
-				terminalPanel.setText(Utils.partitionDataListToString(dataList));
-				
+				terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList));
 				setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
 				setIdle();
 

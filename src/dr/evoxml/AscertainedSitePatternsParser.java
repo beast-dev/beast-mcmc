@@ -87,7 +87,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
             xoc = xo.getChild(INCLUDE);
             if (xoc.hasAttribute(FROM) && xoc.hasAttribute(TO)) {
                 startInclude = xoc.getIntegerAttribute(FROM) - 1;
-                stopInclude = xoc.getIntegerAttribute(TO) - 1;
+                stopInclude = xoc.getIntegerAttribute(TO);
             } else {
                 throw new XMLParseException("both from and to attributes are required for includePatterns");
             }
@@ -95,14 +95,14 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
             if (startInclude < 0 || stopInclude < startInclude) {
                 throw new XMLParseException("invalid 'from' and 'to' attributes in includePatterns");
             }
-            Logger.getLogger("dr.evoxml").info("\tAscertainment: Patterns in columns " + (startInclude + 1) + " to " + (stopInclude + 1) + " are only possible. ");
+            Logger.getLogger("dr.evoxml").info("\tAscertainment: Patterns in columns " + (startInclude + 1) + " to " + (stopInclude) + " are only possible. ");
         }
 
         if (xo.hasChildNamed(EXCLUDE)) {
             xoc = xo.getChild(EXCLUDE);
             if (xoc.hasAttribute(FROM) && xoc.hasAttribute(TO)) {
                 startExclude = xoc.getIntegerAttribute(FROM) - 1;
-                stopExclude = xoc.getIntegerAttribute(TO) - 1;
+                stopExclude = xoc.getIntegerAttribute(TO);
             } else {
                 throw new XMLParseException("both from and to attributes are required for excludePatterns");
             }
@@ -110,7 +110,7 @@ public class AscertainedSitePatternsParser extends AbstractXMLObjectParser {
             if (startExclude < 0 || stopExclude < startExclude) {
                 throw new XMLParseException("invalid 'from' and 'to' attributes in includePatterns");
             }
-            Logger.getLogger("dr.evoxml").info("\tAscertainment: Patterns in columns " + (startExclude + 1) + " to " + (stopExclude + 1) + " are not possible. ");
+            Logger.getLogger("dr.evoxml").info("\tAscertainment: Patterns in columns " + (startExclude + 1) + " to " + (stopExclude) + " are not possible. ");
         }
 
         AscertainedSitePatterns patterns = new AscertainedSitePatterns(alignment, taxa,

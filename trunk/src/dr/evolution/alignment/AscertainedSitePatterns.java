@@ -105,9 +105,9 @@ public class AscertainedSitePatterns extends SitePatterns implements Citable {
 
     protected void includePatterns(int includeFrom, int includeTo, int every) {
         if (includePatterns == null) {
-            includePatterns = new int[includeTo - includeFrom + 1];
+            includePatterns = new int[includeTo - includeFrom];
         }
-        for (int i = includeFrom; i <= includeTo; i += every) {
+        for (int i = includeFrom; i < includeTo; i += every) {
             int[] pattern = siteList.getPattern(i);
             int index = addAscertainmentPattern(pattern);
             includePatterns[ascertainmentIncludeCount] = index;
@@ -125,9 +125,9 @@ public class AscertainedSitePatterns extends SitePatterns implements Citable {
 
     protected void excludePatterns(int excludeFrom, int excludeTo, int every) {
         if (excludePatterns == null)
-            excludePatterns = new int[excludeTo - excludeFrom + 1];
+            excludePatterns = new int[excludeTo - excludeFrom];
 
-        for (int i = excludeFrom; i <= excludeTo; i += every) {
+        for (int i = excludeFrom; i < excludeTo; i += every) {
             int[] pattern = siteList.getPattern(i);
             int index = addAscertainmentPattern(pattern);
             weights[index] = 0.0; // Site is excluded, so set weight = 0

@@ -49,7 +49,7 @@
     <ascertainedPatterns id="patterns" from="5">
         <alignment idref="alignment"/>
         <!-- all constant sites (1 through 4) are excluded from the dataset -->
-        <excludePatterns from="1" to="4"/>
+        <excludePatterns from="1" to="1"/>
     </ascertainedPatterns>
 
     <!-- This is a simple constant population size coalescent model              -->

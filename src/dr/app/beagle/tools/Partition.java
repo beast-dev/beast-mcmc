@@ -414,6 +414,10 @@ public class Partition {
 	// --GETTERS--//
 	// /////////////
 
+	public TreeModel getTreeModel() {
+		return treeModel;
+	}
+	
 	public int getPartitionSiteCount() {
 		return ((to - from) / every) + 1;
 	}// END: getPartitionSiteCount

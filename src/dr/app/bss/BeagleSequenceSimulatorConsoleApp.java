@@ -64,7 +64,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 	private static final String INVERSE_GAUSSIAN_RELAXED_CLOCK = "inverseGaussianRelaxedClock";
 	private static final String INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES = "inverseGaussianRelaxedClockParameterValues";
 	
-	private static final String FREQUENCY_MODEL = "frequencyModel";
+	private static final String BASE_FREQUENCIES = "baseFrequencies";
 	private static final String NUCLEOTIDE_FREQUENCIES = "nucleotideFrequencies";
 	private static final String NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES = "nucleotideFrequencyParameterValues";
 	private static final String CODON_FREQUENCIES = "codonFrequencies";
@@ -147,7 +147,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 						new Arguments.RealArrayOption( EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Exponential Relaxed Clock parameter values"),
 						new Arguments.RealArrayOption( INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussian Relaxed Clock parameter values"),
 
-						new Arguments.StringOption(FREQUENCY_MODEL,
+						new Arguments.StringOption(BASE_FREQUENCIES,
 								new String[] { NUCLEOTIDE_FREQUENCIES, //
 										CODON_FREQUENCIES, //
 								}, false, "specify frequency model"),
@@ -443,9 +443,9 @@ public class BeagleSequenceSimulatorConsoleApp {
 				}// END: CLOCK_RATE_MODEL option check
 
 				// Frequency Model
-				if (arguments.hasOption(FREQUENCY_MODEL)) {
+				if (arguments.hasOption(BASE_FREQUENCIES)) {
 
-					option = arguments.getStringOption(FREQUENCY_MODEL);
+					option = arguments.getStringOption(BASE_FREQUENCIES);
 
 					if (option.equalsIgnoreCase(NUCLEOTIDE_FREQUENCIES)) {
 
@@ -636,11 +636,11 @@ public class BeagleSequenceSimulatorConsoleApp {
 		
 		System.out
 				.println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar "
-						+ "-treeModel SimTree.figtree -from 1 -to 500 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
+						+ "-treeFile SimTree.figtree -from 1 -to 500 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
 						+ " "
 						+ SPLIT_PARTITION
 						+ " "
-						+ "-treeModel SimTree.figtree -from 501 -to 1000 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 10.0"
+						+ "-treeFile SimTree.figtree -from 501 -to 1000 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 10.0"
 						+ " " + SPLIT_PARTITION + " " + "sequences.fasta");
 		
 		System.out.println();

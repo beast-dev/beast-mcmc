@@ -20,6 +20,7 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
+* fix discrete phylogeography in XML
 * debug seed setting in CLI and GUI
 * new interfaces, debug Data panel
 * command line interface

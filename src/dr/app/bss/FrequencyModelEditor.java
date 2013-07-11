@@ -52,7 +52,7 @@ public class FrequencyModelEditor {
 		this.row = row;
 
 		frequencyParameterFields = new RealNumberField[PartitionData.frequencyParameterNames.length];
-		window = new JDialog(owner, "Setup frequency model for partition " + (row + 1));
+		window = new JDialog(owner, "Setup base frequencies for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
 		scrollPane = new JScrollPane();
@@ -106,7 +106,7 @@ public class FrequencyModelEditor {
 	private void setFrequencyArguments() {
 
 		optionPanel.removeAll();
-		optionPanel.addComponents(new JLabel("Frequency model:"), frequencyCombo);
+		optionPanel.addComponents(new JLabel("Base frequencies:"), frequencyCombo);
 		
 		optionPanel.addSeparator();
 		optionPanel.addComponentWithLabel("Set parameter values:", new JLabel());

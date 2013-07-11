@@ -36,13 +36,13 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import dr.app.bss.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
-import dr.math.MathUtils;
 
 /**
  * @author Filip Bielejec
@@ -58,7 +58,7 @@ public class BeagleSequenceSimulator {
 	// Alignment fields
 	private final int gapFlag = Integer.MAX_VALUE;
 	private SimpleAlignment alignment;
-	private DataType datatype;
+	private DataType dataType;
 	private boolean fieldsSet = false;
 
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions) {
@@ -77,10 +77,11 @@ public class BeagleSequenceSimulator {
 			}
 
 			if (!fieldsSet) {
-				datatype = partition.getDataType();
+				dataType = partition.getDataType();
+				fieldsSet = true;
 			} else {
 
-				if (datatype.getType() != partition.getDataType().getType()) {
+				if (dataType.getType() != partition.getDataType().getType()) {
 					throw new RuntimeException(
 							"Partitions must have the same data type.");
 				}
@@ -102,8 +103,6 @@ public class BeagleSequenceSimulator {
 				NTHREDS = Math.min(partitions.size(), Runtime.getRuntime()
 						.availableProcessors());
 			}
-
-//			MathUtils.setSeed(666);
 
 			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
 			List<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
@@ -145,25 +144,25 @@ public class BeagleSequenceSimulator {
 
 		public Void call() {
 
-//			try {
+			try {
 
 				partition.simulatePartition();
 
-//			} catch (Exception e) {
-//				e.printStackTrace();
-//			}
+			} catch (Exception e) {
+				Utils.handleException(e);
+			}
 
 			return null;
 		}// END: call
 
 	}// END: simulatePartitionCallable class
 
-	// TODO: simplify
 	private SimpleAlignment compileAlignment() {
 
 		SimpleAlignment simpleAlignment = new SimpleAlignment();
 		simpleAlignment.setReportCountStatistics(false);
-
+		simpleAlignment.setDataType(dataType);
+		
 		Map<Taxon, int[]> alignmentMap = new HashMap<Taxon, int[]>();
 
 		// compile the alignment
@@ -218,9 +217,17 @@ public class BeagleSequenceSimulator {
 		while (iterator.hasNext()) {
 
 			Entry<Taxon, int[]> pairs = (Entry<Taxon, int[]>) iterator.next();
-			simpleAlignment.addSequence(intArray2Sequence(
-					(Taxon) pairs.getKey(), (int[]) pairs.getValue(), gapFlag,
-					datatype));
+			Taxon taxon = (Taxon) pairs.getKey();
+			int[] intSequence = (int[]) pairs.getValue();
+			
+			Sequence sequence = intArray2Sequence(taxon, //
+					intSequence, //
+					gapFlag
+			);
+			
+//			sequence.setDataType(dataType);
+			
+			simpleAlignment.addSequence(sequence);
 
 			iterator.remove();
 
@@ -229,8 +236,9 @@ public class BeagleSequenceSimulator {
 		return simpleAlignment;
 	}// END: compileAlignment
 
-	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag,
-			DataType dataType) {
+	//TODO
+	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag
+			) {
 
 		StringBuilder sSeq = new StringBuilder();
 

@@ -38,7 +38,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			"Branch Substitution Model", //
 			"Site Rate Model", //
 			"Clock Rate Model", //
-			"Frequency Model", //
+			"Base Frequencies", //
 			"Ancestral Sequence" //
 	};
 

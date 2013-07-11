@@ -40,6 +40,7 @@ import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
+import dr.app.bss.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
@@ -123,10 +124,16 @@ public class ZombieBeagleSequenceSimulator {
 			while (iterator.hasNext()) {
 
 				Entry<?, ?> pairs = (Entry<?, ?>) iterator.next();
-//				Taxon taxon = (Taxon) pairs.getKey();
-//				int[] sequence = (int[]) pairs.getValue();
+				Taxon taxon = (Taxon) pairs.getKey();
+				int[] intSequence = (int[]) pairs.getValue();
 				
-				simpleAlignment.addSequence(intArray2Sequence((Taxon) pairs.getKey(), (int[]) pairs.getValue(), gapFlag));
+				Utils.printArray(intSequence);
+				
+				Sequence sequence = intArray2Sequence(taxon, intSequence, gapFlag);
+				
+				System.out.println(sequence.getSequenceString());
+				
+				simpleAlignment.addSequence(sequence);
 				iterator.remove();
 
 			}// END: while has next

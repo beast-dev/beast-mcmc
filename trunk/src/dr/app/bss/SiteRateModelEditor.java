@@ -136,7 +136,7 @@ public class SiteRateModelEditor {
 				
 				Integer initValue = Integer.valueOf(siteParameterFields[k].getText(0, 1)); 
 				Integer	min = 1;
-				Integer max = Integer.MAX_VALUE;
+				Integer max = 10;//Integer.MAX_VALUE;
 				Integer step = 1;
 				
 				SpinnerModel model = new SpinnerNumberModel(initValue, min, max, step);

@@ -266,9 +266,27 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
                         new Author("Bengt", "Oxelman")
                 },
                 "Statistical Inference of Allopolyploid Species Networks in the Presence of Incomplete Lineage Sorting",
+                2013,
                 "Systematic Biology",
-                Citation.Status.IN_SUBMISSION
+                62,
+                467,
+                478,
+                Citation.Status.PUBLISHED
         ));
+
+        citations.add(new Citation(
+                new Author[]{
+                        new Author("Graham", "Jones")
+                },
+                "Bayesian phylogenetic analysis for diploid and allotetraploid species networks",
+                2013,
+                "",
+                -1,
+                -1,
+                -1,
+                Citation.Status.IN_PREPARATION
+        ));
+
         return citations;
     }
 

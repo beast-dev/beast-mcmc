@@ -9,7 +9,7 @@ import dr.evolution.util.Taxa;
 public class TreesTableRecord implements Serializable {
 
 	private String name = "";
-	private Taxa taxa = null;// new Taxa();
+	private Taxa taxa = null;
 	private Tree tree = null;
 
 	private boolean treeSet = false;

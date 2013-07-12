@@ -12,10 +12,10 @@
 
    <target name="help">
       <echo message="Common build targets:" />
-      <echo message="jar - Builds bss.jar" />
+      <echo message="jar - Builds buss.jar" />
       <echo message="build - Same as clean+jar" />
-      <echo message="compile - Compiles bss classes" />
-      <echo message="clean - Remove all *.class and bss.jar" />
+      <echo message="compile - Compiles buss classes" />
+      <echo message="clean - Remove all *.class and buss.jar" />
    </target>
 
 
@@ -30,7 +30,7 @@
    <target name="jar" depends="compile">
       <mkdir dir="${dist}" />
 
-      <jar jarfile="${dist}/bss.jar">
+      <jar jarfile="${dist}/buss.jar">
 
          <manifest>
             <attribute name="Built-By" value="${user.name}" />

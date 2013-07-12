@@ -246,7 +246,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			// Executed in event dispatch thread
 			public void done() {
 
-				//TODO: print the coalescent
 				terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList));
 				setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
 				setIdle();

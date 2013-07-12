@@ -31,7 +31,8 @@ public class TaxaEditor {
 
 	private PartitionDataList dataList;
 	private MainFrame frame;
-
+	private int row;
+	
 	// private MutableTaxonList taxonList;
 	private int taxonCount;
 	private static final int minCount = 0;
@@ -79,6 +80,7 @@ public class TaxaEditor {
 
 		this.frame = frame;
 		this.dataList = dataList;
+		this.row = row;
 		// taxonList = new Taxa();
 		taxaEditorTableModel = new TaxaEditorTableModel();
 
@@ -289,8 +291,11 @@ public class TaxaEditor {
 
 				try {
 
-					int lastIndex = dataList.recordsList.size() - 1;
+					int lastIndex = row;//dataList.recordsList.size() - 1;
 
+//					System.out.println("last index: " + lastIndex);
+//					System.out.println("row: " + row);
+					
 					// delete taxa connected to this row
 					String value = dataList.recordsList.get(lastIndex).getName();
 					Utils.removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);

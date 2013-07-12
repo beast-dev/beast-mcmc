@@ -177,18 +177,23 @@ public class Utils {
 	public static void removeTaxaWithAttributeValue(PartitionDataList dataList,
 			String attribute, String value) {
 
-		synchronized (dataList.allTaxa) {
+		
 			for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
 
 				Taxon taxon = dataList.allTaxa.getTaxon(i);
-				if (taxon.getAttribute(attribute).toString()
-						.equalsIgnoreCase(value)) {
+				if (taxon.getAttribute(attribute).toString().equalsIgnoreCase(value)) {
+					
+					System.out.println(taxon.getId() + " " + taxon.getAttribute(attribute));
+					
 					dataList.allTaxa.removeTaxon(taxon);
 					i--;
+					
 				}
 			}
-		}
 
+			System.out.println();
+			printTaxonList(dataList);
+			
 	}// END: removeTaxaWithAttributeValue
 	
 	public static void centreLine(String line, int pageWidth) {

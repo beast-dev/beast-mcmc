@@ -1,6 +1,8 @@
-package dr.evomodel.epidemiology.casetocase;
+package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.ExchangeOperator;
 import dr.evomodel.operators.SubtreeSlideOperator;
@@ -25,11 +27,11 @@ import java.util.Arrays;
 
 public class TransmissionTreeOperator extends AbstractCoercableOperator {
 
-    private final CaseToCaseTransmissionLikelihood c2cLikelihood;
+    private final CaseToCaseTreeLikelihood c2cLikelihood;
     private final AbstractTreeOperator innerOperator;
     public static final String TRANSMISSION_TREE_OPERATOR = "transmissionTreeOperator";
 
-    public TransmissionTreeOperator(CaseToCaseTransmissionLikelihood c2cLikelihood, AbstractTreeOperator operator,
+    public TransmissionTreeOperator(CaseToCaseTreeLikelihood c2cLikelihood, AbstractTreeOperator operator,
                                     CoercionMode mode) {
         super(mode);
         this.c2cLikelihood = c2cLikelihood;
@@ -40,7 +42,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         }
     }
 
-    public TransmissionTreeOperator(CaseToCaseTransmissionLikelihood c2cLikelihood, AbstractTreeOperator operator) {
+    public TransmissionTreeOperator(CaseToCaseTreeLikelihood c2cLikelihood, AbstractTreeOperator operator) {
         this(c2cLikelihood,operator,CoercionMode.COERCION_OFF);
     }
 
@@ -208,8 +210,8 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            CaseToCaseTransmissionLikelihood c2cL
-                    = (CaseToCaseTransmissionLikelihood)xo.getChild(CaseToCaseTransmissionLikelihood.class);
+            CaseToCaseTreeLikelihood c2cL
+                    = (CaseToCaseTreeLikelihood)xo.getChild(CaseToCaseTreeLikelihood.class);
             AbstractTreeOperator treeOp = (AbstractTreeOperator)xo.getChild(AbstractTreeOperator.class);
 
             CoercionMode mode = CoercionMode.COERCION_OFF;
@@ -239,7 +241,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(CaseToCaseTransmissionLikelihood.class, "The transmission network likelihood element"),
+                new ElementRule(CaseToCaseTreeLikelihood.class, "The transmission network likelihood element"),
                 new ElementRule(AbstractTreeOperator.class, "A phylogenetic tree operator.")
         };
     };

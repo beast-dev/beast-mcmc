@@ -1,16 +1,13 @@
-package dr.evomodel.epidemiology.casetocase;
+package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 
 /**
  * Implements branch exchange operations that leave the transmission network unchanged. As this already severely
@@ -21,10 +18,10 @@ import java.util.HashSet;
 
 public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
-    private final CaseToCaseTransmissionLikelihood c2cLikelihood;
+    private final CaseToCaseTreeLikelihood c2cLikelihood;
     public static final String TRANSMISSION_EXCHANGE_OPERATOR_A = "transmissionExchangeOperatorA";
 
-    public TransmissionExchangeOperatorA(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight) {
+    public TransmissionExchangeOperatorA(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
     }
@@ -47,13 +44,13 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         NodeRef i = root;
         NodeRef iP = tree.getParent(i);
-        Integer[] possibleSwaps = c2cLikelihood.samePainting(iP,false);
+        Integer[] possibleSwaps = c2cLikelihood.samePartition(iP, false);
         int noPossibleSwaps = 0;
 
         while(root == i || noPossibleSwaps == 1) {
             i = tree.getNode(MathUtils.nextInt(nodeCount));
             iP = tree.getParent(i);
-            possibleSwaps = c2cLikelihood.samePainting(iP,false);
+            possibleSwaps = c2cLikelihood.samePartition(iP, false);
             noPossibleSwaps = possibleSwaps.length;
         }
 
@@ -102,8 +99,8 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final CaseToCaseTransmissionLikelihood c2cL
-                    = (CaseToCaseTransmissionLikelihood) xo.getChild(CaseToCaseTransmissionLikelihood.class);
+            final CaseToCaseTreeLikelihood c2cL
+                    = (CaseToCaseTreeLikelihood) xo.getChild(CaseToCaseTreeLikelihood.class);
             if (c2cL.getTree().getExternalNodeCount() <= 2) {
                 throw new XMLParseException("Tree with fewer than 3 taxa");
             }
@@ -132,7 +129,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         private final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                    new ElementRule(CaseToCaseTransmissionLikelihood.class)
+                    new ElementRule(CaseToCaseTreeLikelihood.class)
             };
         }
     };

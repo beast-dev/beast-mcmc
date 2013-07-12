@@ -1,6 +1,8 @@
-package dr.evomodel.epidemiology.casetocase;
+package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
@@ -17,10 +19,10 @@ import dr.xml.*;
 
 public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
 
-    private final CaseToCaseTransmissionLikelihood c2cLikelihood;
+    private final CaseToCaseTreeLikelihood c2cLikelihood;
     public static final String TRANSMISSION_EXCHANGE_OPERATOR_B = "transmissionExchangeOperatorB";
 
-    public TransmissionExchangeOperatorB(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight) {
+    public TransmissionExchangeOperatorB(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
     }
@@ -101,8 +103,8 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final CaseToCaseTransmissionLikelihood c2cL
-                    = (CaseToCaseTransmissionLikelihood) xo.getChild(CaseToCaseTransmissionLikelihood.class);
+            final CaseToCaseTreeLikelihood c2cL
+                    = (CaseToCaseTreeLikelihood) xo.getChild(CaseToCaseTreeLikelihood.class);
             if (c2cL.getTree().getExternalNodeCount() <= 2) {
                 throw new XMLParseException("Tree with fewer than 3 taxa");
             }
@@ -131,7 +133,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         private final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                    new ElementRule(CaseToCaseTransmissionLikelihood.class)
+                    new ElementRule(CaseToCaseTreeLikelihood.class)
             };
         }
     };

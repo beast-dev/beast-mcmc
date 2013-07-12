@@ -15,6 +15,7 @@ import dr.math.RiemannApproximation;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Simple version with no latent period; built for speed and extended paintings
@@ -25,31 +26,31 @@ import java.util.ArrayList;
 
 public class SimpleOutbreak extends AbstractOutbreak {
 
-    public SimpleOutbreak(String name, Parameter d, Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
-        this(name, d, riemannSampleSize);
+    public SimpleOutbreak(String name, Taxa taxa, Parameter d, Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
+        this(name, taxa, d, riemannSampleSize);
         cases = farms;
         for(AbstractCase farm : farms){
             addModel(farm);
         }
     }
 
-    public SimpleOutbreak(Parameter d, ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
-        this(SIMPLE_OUTBREAK, d, riemannSampleSize, farms);
+    public SimpleOutbreak(Taxa taxa,  Parameter d, ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
+        this(SIMPLE_OUTBREAK, taxa, d, riemannSampleSize, farms);
     }
 
     // with the inner class, initialisation has to take places without cases - add them later
 
-    public SimpleOutbreak(String name, Parameter d,
+    public SimpleOutbreak(String name, Taxa taxa, Parameter d,
                           Parameter riemannSampleSize){
-        super(name);
+        super(name, taxa);
         this.d = d;
         numericalIntegrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
         cases = new ArrayList<AbstractCase>();
     }
 
-    public SimpleOutbreak(Parameter d,
+    public SimpleOutbreak(Taxa taxa, Parameter d,
                           Parameter riemannSampleSize){
-        this(SIMPLE_OUTBREAK, d, riemannSampleSize);
+        this(SIMPLE_OUTBREAK, taxa, d, riemannSampleSize);
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Taxa associatedTaxa){
@@ -138,7 +139,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
-            SimpleOutbreak cases = new SimpleOutbreak(d, riemannSampleSize);
+            SimpleOutbreak cases = new SimpleOutbreak(null, d, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(SimpleCase.SIMPLE_CASE)){
@@ -229,6 +230,66 @@ public class SimpleOutbreak extends AbstractOutbreak {
     @Override
     protected void acceptState() {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double getLogLikelihood() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probYInfectiousByTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbYInfectiousByTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probYInfectedAtTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbYInfectedAtTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probYInfectedBetweenTandU(AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbYInfectedBetweenTandU(AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Iterator<Taxon> iterator() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     //Case class.

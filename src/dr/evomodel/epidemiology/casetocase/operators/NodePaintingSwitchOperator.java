@@ -1,11 +1,12 @@
-package dr.evomodel.epidemiology.casetocase;
+package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
-import jebl.math.Random;
 
 /**
  * This operator finds a branch that corresponds to a transmission event, and moves that event up one branch or down
@@ -16,10 +17,10 @@ import jebl.math.Random;
 public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     public static final String NODE_PAINTING_SWITCH_OPERATOR = "nodePaintingSwitchOperator";
-    private CaseToCaseTransmissionLikelihood c2cLikelihood;
+    private CaseToCaseTreeLikelihood c2cLikelihood;
     boolean debug = false;
 
-    public NodePaintingSwitchOperator(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight){
+    public NodePaintingSwitchOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight){
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
     }
@@ -60,7 +61,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             moveUp(tree, node, map);
         }
         if(debug){
-            c2cLikelihood.checkPaintingIntegrity(map, true);
+            c2cLikelihood.checkPartitions();
         }
     }
 
@@ -70,7 +71,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         if(!extended || c2cLikelihood.tipLinked(parent)){
             NodeRef grandparent = tree.getParent(parent);
             if(map[grandparent.getNumber()]==map[parent.getNumber()]){
-                for(Integer ancestor: c2cLikelihood.samePaintingDownTree(grandparent, true)){
+                for(Integer ancestor: c2cLikelihood.samePartitionDownTree(grandparent, true)){
                     map[ancestor]=map[node.getNumber()];
                 }
                 map[grandparent.getNumber()]=map[node.getNumber()];
@@ -83,13 +84,13 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                 }
             }
             if(map[sibling.getNumber()]==map[parent.getNumber()]){
-                for(Integer descendant: c2cLikelihood.samePaintingUpTree(sibling, true)){
+                for(Integer descendant: c2cLikelihood.samePartitionUpTree(sibling, true)){
                     map[descendant]=map[parent.getNumber()];
                 }
                 map[sibling.getNumber()]=map[node.getNumber()];
             }
         }
-        c2cLikelihood.extendedflagForRecalculation(tree, node);
+        c2cLikelihood.flagForDescendantRecalculation(tree, node);
     }
 
     private void moveUp(TreeModel tree, NodeRef node, AbstractCase[] map){
@@ -101,7 +102,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             NodeRef child = tree.getChild(node, i);
             if(!c2cLikelihood.tipLinked(child)){
                 assert map[child.getNumber()]==map[node.getNumber()] : "Partition problem";
-                for(Integer descendant: c2cLikelihood.samePaintingUpTree(child, true)){
+                for(Integer descendant: c2cLikelihood.samePartitionUpTree(child, true)){
                     map[descendant]=map[parent.getNumber()];
                 }
                 map[child.getNumber()]=map[parent.getNumber()];
@@ -124,8 +125,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CaseToCaseTransmissionLikelihood ftLikelihood =
-                    (CaseToCaseTransmissionLikelihood) xo.getChild(CaseToCaseTransmissionLikelihood.class);
+            CaseToCaseTreeLikelihood ftLikelihood =
+                    (CaseToCaseTreeLikelihood) xo.getChild(CaseToCaseTreeLikelihood.class);
             final double weight = xo.getDoubleAttribute("weight");
             return new NodePaintingSwitchOperator(ftLikelihood, weight);
         }
@@ -145,7 +146,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
-                new ElementRule(CaseToCaseTransmissionLikelihood.class),
+                new ElementRule(CaseToCaseTreeLikelihood.class),
         };
     };
 }

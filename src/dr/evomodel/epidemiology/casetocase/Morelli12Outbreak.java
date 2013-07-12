@@ -15,6 +15,7 @@ import dr.math.RiemannApproximation;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Adaptation of the farm incubation and infectious period models from Morelli et al, PLoS Computational Biology, 2012
@@ -28,25 +29,25 @@ import java.util.ArrayList;
 
 public class Morelli12Outbreak extends AbstractOutbreak {
 
-    public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
-                             Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
-        this(name, incubationPeriodDistribution, d, riemannSampleSize);
+    public Morelli12Outbreak(String name, Taxa taxa, ParametricDistributionModel incubationPeriodDistribution,
+                             Parameter d, Parameter riemannSampleSize, ArrayList<AbstractCase> farms){
+        this(name, taxa, incubationPeriodDistribution, d, riemannSampleSize);
         cases = farms;
         for(AbstractCase farm : farms){
             addModel(farm);
         }
     }
 
-    public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+    public Morelli12Outbreak(Taxa taxa, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
                              ArrayList<AbstractCase> farms, Parameter riemannSampleSize){
-        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, riemannSampleSize, farms);
+        this(MORELLI_12_OUTBREAK, taxa, incubationPeriodDistribution, d, riemannSampleSize, farms);
     }
 
     // with the inner class, initialisation has to take places without cases - add them later
 
-    public Morelli12Outbreak(String name, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+    public Morelli12Outbreak(String name, Taxa taxa, ParametricDistributionModel incubationPeriodDistribution, Parameter d,
                              Parameter riemannSampleSize){
-        super(name);
+        super(name, taxa);
         this.latentPeriodDistribution = incubationPeriodDistribution;
         addModel(this.latentPeriodDistribution);
         this.d = d;
@@ -54,9 +55,9 @@ public class Morelli12Outbreak extends AbstractOutbreak {
         cases = new ArrayList<AbstractCase>();
     }
 
-    public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Parameter d,
+    public Morelli12Outbreak(ParametricDistributionModel incubationPeriodDistribution, Taxa taxa, Parameter d,
                              Parameter riemannSampleSize){
-        this(MORELLI_12_OUTBREAK, incubationPeriodDistribution, d, riemannSampleSize);
+        this(MORELLI_12_OUTBREAK, taxa, incubationPeriodDistribution, d, riemannSampleSize);
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Taxa associatedTaxa){
@@ -148,7 +149,7 @@ public class Morelli12Outbreak extends AbstractOutbreak {
                     (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             final Parameter d = (Parameter) xo.getElementFirstChild(SQRT_INFECTIOUS_SCALE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
-            Morelli12Outbreak cases = new Morelli12Outbreak(incubationPeriodDistribution, d, riemannSampleSize);
+            Morelli12Outbreak cases = new Morelli12Outbreak(incubationPeriodDistribution, null, d, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(Morelli12Case.MORELLI_12_CASE)){
@@ -242,6 +243,66 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     @Override
     protected void acceptState() {
         //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double getLogLikelihood() {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probYInfectiousByTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbYInfectiousByTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probYInfectedAtTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbYInfectedAtTimeT(AbstractCase Y, double T) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double probYInfectedBetweenTandU(AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public double logProbYInfectedBetweenTandU(AbstractCase Y, double T, double U) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public Iterator<Taxon> iterator() {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     //Case class.

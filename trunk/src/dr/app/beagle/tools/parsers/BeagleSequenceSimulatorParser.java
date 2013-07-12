@@ -77,16 +77,25 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		String msg = "";
-		int siteCount = 0;
+//		int siteCount = 0;
 		boolean parallel = false;
 		
 		if (xo.hasAttribute(PARALLEL)) {
 			parallel = xo.getBooleanAttribute(PARALLEL);
 		}
 		
+		int siteCount = 0;
+		int to = 0;
 		for (int i = 0; i < xo.getChildCount(); i++) {
 			Partition partition = (Partition) xo.getChild(i);
-			siteCount += partition.getPartitionSiteCount();
+			
+			to = partition.to + 1;
+			if (to > siteCount) {
+				siteCount = to;
+			}
+			
+//			siteCount += partition.getPartitionSiteCount();
+			
 		}
 		
 		ArrayList<Partition> partitionsList = new ArrayList<Partition>();

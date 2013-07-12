@@ -32,7 +32,7 @@ public class TaxaEditor {
 	private PartitionDataList dataList;
 	private MainFrame frame;
 	private int row;
-	
+
 	// private MutableTaxonList taxonList;
 	private int taxonCount;
 	private static final int minCount = 0;
@@ -81,6 +81,7 @@ public class TaxaEditor {
 		this.frame = frame;
 		this.dataList = dataList;
 		this.row = row;
+
 		// taxonList = new Taxa();
 		taxaEditorTableModel = new TaxaEditorTableModel();
 
@@ -291,22 +292,20 @@ public class TaxaEditor {
 
 				try {
 
-					int lastIndex = row;//dataList.recordsList.size() - 1;
-
-//					System.out.println("last index: " + lastIndex);
-//					System.out.println("row: " + row);
-					
 					// delete taxa connected to this row
-					String value = dataList.recordsList.get(lastIndex).getName();
-					Utils.removeTaxaWithAttributeValue(dataList, Utils.TREE_FILENAME, value);
-					
+					String value = dataList.recordsList.get(row).getName();
+					Utils.removeTaxaWithAttributeValue(dataList,
+							Utils.TREE_FILENAME, value);
+
 					String name = String.valueOf("TaxaSet").concat(
-							String.valueOf(lastIndex + 1));
+							String.valueOf(row + 1));
 					Taxa taxa = taxaEditorTableModel.getTaxaSet();
 					TreesTableRecord record = new TreesTableRecord(name, taxa);
-					
-					dataList.recordsList.set(lastIndex, record);
+
+					dataList.recordsList.set(row, record);
 					dataList.allTaxa.addTaxa(taxa);
+
+					// treesTableModel.setRow(row, record);
 
 				} catch (Exception e) {
 					Utils.handleException(e);
@@ -334,14 +333,6 @@ public class TaxaEditor {
 
 		}// END: actionPerformed
 	}// END: ListenCancel
-
-	// ///////////////////
-	// ---DRAG & DROP---//
-	// ///////////////////
-
-	// ////////////////////////
-	// ---END: DRAG & DROP---//
-	// ////////////////////////
 
 	public void updateTable(Taxa taxa) {
 		taxaEditorTableModel.setTaxaSet(taxa);

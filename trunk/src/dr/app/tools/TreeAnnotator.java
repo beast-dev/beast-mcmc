@@ -936,7 +936,7 @@ public class TreeAnnotator {
 //		}
 
         private String formattedLocation(double x) {
-            return String.format("%5.2f", x);
+            return String.format("%5.8f", x);
         }
 
         private void annotate2DHPDAttribute(MutableTree tree, NodeRef node, String preLabel, String postLabel,

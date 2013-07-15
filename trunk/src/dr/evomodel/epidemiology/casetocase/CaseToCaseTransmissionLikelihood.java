@@ -16,11 +16,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
 
     private AbstractOutbreak outbreak;
     private CaseToCaseTreeLikelihood treeLikelihood;
-    private AbstractKernelFunction spatialKernel;
+    private SpatialKernelFunction spatialKernel;
     private Parameter transmissionRate;
 
-    public CaseToCaseTransmissionLikelihood(AbstractOutbreak outbreak, // CaseToCaseTreeLikelihood treeLikelihood,
-                                            AbstractKernelFunction spatialKernal, Parameter transmissionRate,
+    public CaseToCaseTransmissionLikelihood(AbstractOutbreak outbreak, CaseToCaseTreeLikelihood treeLikelihood,
+                                            SpatialKernelFunction spatialKernal, Parameter transmissionRate,
                                             Parameter infectionTimes, String name){
         super(name);
         this.outbreak = outbreak;

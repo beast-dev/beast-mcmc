@@ -38,7 +38,7 @@ public abstract class AbstractCase extends AbstractModel {
         return caseID;
     }
 
-
+    public abstract double[] getCoords();
 
 
 }

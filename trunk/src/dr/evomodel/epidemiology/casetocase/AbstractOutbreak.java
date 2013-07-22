@@ -25,6 +25,8 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     protected GeneralDataType caseDataType;
     protected TaxonList taxa;
+    protected boolean hasLatentPeriods;
+    protected boolean hasGeography;
     private final String CASE_NAME = "caseID";
 
     public AbstractOutbreak(String name, Taxa taxa){
@@ -42,6 +44,30 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return new ArrayList<AbstractCase>(cases);
     }
 
+    public boolean hasLatentPeriods(){
+        return hasLatentPeriods;
+    }
+
+    public boolean hasGeography(){
+        return hasGeography;
+    }
+
+    public double getKernalValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){
+        if(!hasGeography){
+            throw new RuntimeException("Asking for geographical information from a model without it");
+        } else {
+            return kernel.value(a.getCoords(), b.getCoords());
+        }
+    }
+
+    public double getKernalValue(AbstractCase a, AbstractCase b, SpatialKernel kernel, double alpha){
+        if(!hasGeography){
+            throw new RuntimeException("Asking for geographical information from a model without it");
+        } else {
+            return kernel.value(a.getCoords(), b.getCoords(), alpha);
+        }
+    }
+
     public int getCaseIndex(AbstractCase thisCase){
         return cases.indexOf(thisCase);
     }
@@ -49,6 +75,8 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     public int size(){
         return cases.size();
     }
+
+    public abstract double getDistance(AbstractCase a, AbstractCase b);
 
     public AbstractCase getCase(int i){
         return cases.get(i);

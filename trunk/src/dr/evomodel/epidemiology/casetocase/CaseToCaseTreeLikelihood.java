@@ -376,6 +376,22 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return out.toArray(new Integer[out.size()]);
     }
 
+    public Integer[] getParentsArray(){
+        Integer[] out = new Integer[cases.size()];
+        for(AbstractCase thisCase : cases.getCases()){
+            out[cases.getCaseIndex(thisCase)]=cases.getCaseIndex(getInfector(thisCase));
+        }
+        return out;
+    }
+
+    public HashMap<Integer, Double> getInfTimesMap(){
+        HashMap<Integer, Double> out = new HashMap<Integer, Double>();
+        for(AbstractCase thisCase : cases.getCases()){
+            out.put(cases.getCaseIndex(thisCase),getInfectionTime(thisCase));
+        }
+        return out;
+    }
+
     // change flags to indicate that something needs recalculation further up the tree
 
     private static void flagForDescendantRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
@@ -647,11 +663,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return normRootPartials;
     }
 
-
-
-
-
-
     // unnormalised probability of this branchMap and corresponding infTimes
 
     private boolean traverse(Tree tree, NodeRef node, AbstractCase[] branchMap, double[] infTimes,
@@ -671,9 +682,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 AbstractCase nodeCase = branchMap[node.getNumber()];
                 AbstractCase parentCase = branchMap[parent.getNumber()];
                 if(nodeCase!=parentCase){
-                    final double branchLength = tree.getNodeHeight(parent) - tree.getNodeHeight(node);
-                    final double infectionTime = heightToTime(tree.getNodeHeight(node)
-                            - branchLength*infTimes[cases.getCaseIndex(nodeCase)]);
+                    final double infectionTime = getInfectionTime(nodeCase);
                     branchLogProbs[node.getNumber()]
                             = cases.logProbXInfectedByYAtTimeT(nodeCase, parentCase, infectionTime);
                 } else {
@@ -681,9 +690,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 }
             } else {
                 AbstractCase nodeCase = branchMap[node.getNumber()];
-                final double branchLength = earliestFirstInfection - tree.getNodeHeight(node);
-                final double infectionTime = heightToTime(tree.getNodeHeight(node)
-                        - branchLength*infTimes[cases.getCaseIndex(nodeCase)]);
+                final double infectionTime = getRootInfectionTime();
                 branchLogProbs[node.getNumber()]
                         = cases.logProbYInfectedAtTimeT(nodeCase, infectionTime);
             }
@@ -923,6 +930,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return estimatedLastSampleTime-height;
     }
 
+    public double timeToHeight(double time){
+        return estimatedLastSampleTime-time;
+    }
+
     /**
      * Given a node, calculates the log likelihood of its parent branch and then goes down the tree and calculates the
      * log likelihoods of lower branches.
@@ -951,6 +962,60 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     public AbstractCase getInfector(AbstractCase thisCase, AbstractCase[] branchMap){
         NodeRef tip = treeModel.getNode(tipMap.get(thisCase));
         return getInfector(tip, branchMap);
+    }
+
+    public double getInfectionTime(AbstractCase thisCase, AbstractCase[] branchMap){
+        NodeRef child = treeModel.getNode(tipMap.get(thisCase));
+        NodeRef parent = treeModel.getParent(child);
+        boolean transmissionFound = false;
+        while(!transmissionFound){
+            if(branchMap[child.getNumber()]!=branchMap[parent.getNumber()]){
+                transmissionFound = true;
+            } else {
+                child = parent;
+                parent = treeModel.getParent(child);
+                if(parent == null){
+                    transmissionFound = true;
+                }
+            }
+        }
+        if(parent!=null){
+            return getInfectionTime(parent, child, branchMap);
+        } else {
+            return getRootInfectionTime(branchMap);
+        }
+    }
+
+    private double getInfectionTime(NodeRef parent, NodeRef child, AbstractCase[] branchMap){
+        if(branchMap[parent.getNumber()]==branchMap[child.getNumber()]){
+            throw new RuntimeException("Looking for an infection where there is none");
+        } else {
+            final double branchLength = treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(child);
+            return heightToTime(treeModel.getNodeHeight(child)
+                    - branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(branchMap[child.getNumber()])));
+        }
+    }
+
+    private double getInfectionTime(NodeRef parent, NodeRef child){
+        return getInfectionTime(parent, child, branchMap);
+    }
+
+    private double getRootInfectionTime(AbstractCase[] branchMap){
+        NodeRef root = treeModel.getRoot();
+        AbstractCase rootCase = branchMap[root.getNumber()];
+        final double branchLength = timeToHeight(earliestPossibleFirstInfection.getParameterValue(0))
+                - treeModel.getNodeHeight(root);
+        return heightToTime(treeModel.getNodeHeight(root)
+                - branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(branchMap[root.getNumber()])));
+
+    }
+
+    private double getRootInfectionTime(){
+        return getRootInfectionTime(branchMap);
+    }
+
+    public double getInfectionTime(AbstractCase thisCase){
+        return getInfectionTime(thisCase, branchMap);
     }
 
     public AbstractCase getInfector(NodeRef node, AbstractCase[] branchMap){

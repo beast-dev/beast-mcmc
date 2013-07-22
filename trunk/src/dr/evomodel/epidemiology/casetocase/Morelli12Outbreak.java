@@ -246,6 +246,11 @@ public class Morelli12Outbreak extends AbstractOutbreak {
     }
 
     @Override
+    public double getDistance(AbstractCase a, AbstractCase b) {
+        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
     public double getLogLikelihood() {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }
@@ -365,6 +370,11 @@ public class Morelli12Outbreak extends AbstractOutbreak {
 
         public boolean culledYet(int day) {
             return day>endOfInfectiousDate.getTimeValue()+1;
+        }
+
+        @Override
+        public double[] getCoords() {
+            return new double[0];  //To change body of implemented methods use File | Settings | File Templates.
         }
 
         public boolean culledYet(double time) {

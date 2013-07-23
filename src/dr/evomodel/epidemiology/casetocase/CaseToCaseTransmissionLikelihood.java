@@ -1,10 +1,12 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.evolution.tree.Tree;
 import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.Integral;
 import dr.math.RiemannApproximation;
 import dr.math.UnivariateFunction;
+import dr.xml.*;
 
 import java.util.*;
 
@@ -37,8 +39,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     private double logLikelihood;
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
-    public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak, CaseToCaseTreeLikelihood treeLikelihood,
-                                            SpatialKernel spatialKernal, Parameter transmissionRate){
+    public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
+                                            CaseToCaseTreeLikelihood treeLikelihood, SpatialKernel spatialKernal,
+                                            Parameter transmissionRate){
         super(name);
         this.outbreak = outbreak;
         this.treeLikelihood = treeLikelihood;
@@ -63,6 +66,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
             Arrays.sort(parents, new CaseNoInfectionComparator());
         }
         likelihoodKnown = false;
+        fireModelChanged();
     }
 
     @Override
@@ -85,6 +89,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
+        fireModelChanged();
     }
 
     public Model getModel() {
@@ -238,6 +243,47 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
             return integral;
         }
     }
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public static final String TRANSMISSION_RATE = "transmissionRate";
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            CaseToCaseTreeLikelihood c2cTL = (CaseToCaseTreeLikelihood)
+                    xo.getChild(CaseToCaseTreeLikelihood.class);
+            SpatialKernel kernel = (SpatialKernel) xo.getChild(SpatialKernel.class);
+            Parameter transmissionRate = (Parameter) xo.getElementFirstChild(TRANSMISSION_RATE);
+            return new CaseToCaseTransmissionLikelihood(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, c2cTL.getOutbreak(),
+                    c2cTL, kernel, transmissionRate);
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        public String getParserDescription() {
+            return "This element represents a probability distribution for epidemiological parameters of an outbreak" +
+                    "given a phylogenetic tree";
+        }
+
+        public Class getReturnType() {
+            return CaseToCaseTransmissionLikelihood.class;
+        }
+
+        public String getParserName() {
+            return CASE_TO_CASE_TRANSMISSION_LIKELIHOOD;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(CaseToCaseTreeLikelihood.class, "The tree likelihood"),
+                new ElementRule(SpatialKernel.class, "The spatial kernel"),
+                new ElementRule(Parameter.class, "The transmission rate")
+        };
+
+    };
+
+
+
 }
 
 

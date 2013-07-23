@@ -94,7 +94,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     private double normTotalProb;
 
 
-    // where along the relevant branches the infections happen
+    // where along the relevant branches the infections happen. IMPORTANT: if extended=false then this should be
+    // all 0s.
 
     private Parameter infectionTimes;
 
@@ -212,6 +213,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         });
 
+    }
+
+    public AbstractOutbreak getOutbreak(){
+        return cases;
     }
 
     /* Get the date of the last tip */
@@ -599,8 +604,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                     } else if(origin==destination) {
                         normProbs[stateCount*i + j]=1;
                     } else {
-                        normProbs[stateCount*i + j]=cases.probXInfectedByYBetweenTandU(destination, origin,
-                                getNodeTime(parent), getNodeTime(node));
+                        if(!extended){
+                            normProbs[stateCount*i + j]=cases.probXInfectedByYAtTimeT(destination, origin,
+                                    getNodeTime(parent));
+                        } else {
+                            normProbs[stateCount*i + j]=cases.probXInfectedByYBetweenTandU(destination, origin,
+                                    getNodeTime(parent), getNodeTime(node));
+                        }
                     }
                 }
             }
@@ -654,7 +664,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         // now need to deal with the root branch
 
         for(int i=0; i<noTips; i++){
-            normRootPartials[i] *= cases.probYInfectedBetweenTandU
+            normRootPartials[i] *= cases.probXInfectedBetweenTandU
                     (cases.getCase(i),heightToTime(earliestPossibleFirstInfection.getParameterValue(0)),
                             getNodeTime(treeModel.getRoot()));
         }
@@ -685,6 +695,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                     final double infectionTime = getInfectionTime(nodeCase);
                     branchLogProbs[node.getNumber()]
                             = cases.logProbXInfectedByYAtTimeT(nodeCase, parentCase, infectionTime);
+
                 } else {
                     branchLogProbs[node.getNumber()] = 0;
                 }
@@ -692,7 +703,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 AbstractCase nodeCase = branchMap[node.getNumber()];
                 final double infectionTime = getRootInfectionTime();
                 branchLogProbs[node.getNumber()]
-                        = cases.logProbYInfectedAtTimeT(nodeCase, infectionTime);
+                        = cases.logProbXInfectedAtTimeT(nodeCase, infectionTime);
             }
         }
         if (!tree.isExternal(node)) {
@@ -1324,7 +1335,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
 
         public String getParserDescription() {
-            return "This element represents a likelihood function for case to case transmission.";
+            return "This element represents a probability distribution for the infection dates for cases of an outbreak"
+                    +"given a phylogenetic tree";
         }
 
         public Class getReturnType() {

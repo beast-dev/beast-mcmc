@@ -8,14 +8,12 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.inference.model.AbstractModel;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
- * Abstract class for outbreaks. Implements PatternList for ease of compatability with AbstractTreeLikelihood, but
- * there is one and only one pattern.
+ * Abstract class for outbreaks. Any time periods that are sampled should be handled here; if we are simply assuming
+ * an overall rate of, say, becoming infectious then that should be done in CaseToCaseTransmissionLikelihood.
+ * Implements PatternList for ease of compatibility with AbstractTreeLikelihood, but there is one and only one pattern.
  *
  * User: Matthew Hall
  * Date: 14/04/13
@@ -28,6 +26,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     protected boolean hasLatentPeriods;
     protected boolean hasGeography;
     private final String CASE_NAME = "caseID";
+    protected ArrayList<AbstractCase> cases;
 
     public AbstractOutbreak(String name, Taxa taxa){
         super(name);
@@ -37,8 +36,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         }
         caseDataType = new GeneralDataType(caseNames);
     }
-
-    protected ArrayList<AbstractCase> cases;
 
     public ArrayList<AbstractCase> getCases(){
         return new ArrayList<AbstractCase>(cases);
@@ -95,8 +92,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return taxa;
     }
 
-    public abstract double getLogLikelihood();
-
     public abstract double probXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T);
 
     public abstract double logProbXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T);
@@ -105,17 +100,17 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     public abstract double logProbXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U);
 
-    public abstract double probYInfectiousByTimeT(AbstractCase Y, double T);
+    public abstract double probXInfectiousByTimeT(AbstractCase X, double T);
 
-    public abstract double logProbYInfectiousByTimeT(AbstractCase Y, double T);
+    public abstract double logProbXInfectiousByTimeT(AbstractCase X, double T);
 
-    public abstract double probYInfectedAtTimeT(AbstractCase Y, double T);
+    public abstract double probXInfectedAtTimeT(AbstractCase X, double T);
 
-    public abstract double logProbYInfectedAtTimeT(AbstractCase Y, double T);
+    public abstract double logProbXInfectedAtTimeT(AbstractCase X, double T);
 
-    public abstract double probYInfectedBetweenTandU(AbstractCase Y, double T, double U);
+    public abstract double probXInfectedBetweenTandU(AbstractCase X, double T, double U);
 
-    public abstract double logProbYInfectedBetweenTandU(AbstractCase Y, double T, double U);
+    public abstract double logProbXInfectedBetweenTandU(AbstractCase X, double T, double U);
 
 
     //************************************************************************
@@ -201,6 +196,12 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     public Object getTaxonAttribute(int taxonIndex, String name){
         return taxa.getTaxonAttribute(taxonIndex, name);
     }
+
+    public Iterator<Taxon> iterator() {
+        if (taxa == null) throw new RuntimeException("Patterns has no TaxonList");
+        return taxa.iterator();
+    }
+
 
 
 

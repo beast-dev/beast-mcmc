@@ -37,6 +37,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     public static final String SPATIAL_KERNEL_FUNCTION = "spatialKernelFunction";
     public static final String A = "a";
     public static final String KERNEL_TYPE = "kernelType";
+    public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
 
     public enum Type{
         EXPONENTIAL ("exponential", Exponential.class),
@@ -74,7 +75,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index){
-        // nothing to do at present
+        fireModelChanged();
     }
 
     protected void storeState(){
@@ -105,6 +106,9 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         return evaluate(argument, aParam.getParameterValue(0));
     }
 
+    // no need to do this unless there is one...
+
+    public void configureIntegrator(int sampleSize){}
 
     public abstract double evaluate(double argument, double alpha);
 
@@ -154,6 +158,10 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
             this(name, a, 25);
         }
 
+        public void configureIntegrator(int sampleSize){
+            integrator = new RiemannApproximation(sampleSize);
+        }
+
         public Gaussian(String name, Parameter a, int steps){
             super(name, a);
             integrator = new RiemannApproximation(steps);
@@ -191,6 +199,9 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
                 }
                 Parameter a = new Parameter.Default((Double) xo.getAttribute(A));
                 kernelFunction.seta(a);
+                if(xo.hasAttribute(RIEMANN_SAMPLE_SIZE)){
+                    kernelFunction.configureIntegrator((Integer)xo.getAttribute(RIEMANN_SAMPLE_SIZE));
+                }
                 return kernelFunction;
             } catch(InstantiationException e){
                 throw new XMLParseException("Failed to initiate spatial kernel");
@@ -208,7 +219,8 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         public final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(A),
-                    AttributeRule.newStringRule(KERNEL_TYPE)
+                    AttributeRule.newStringRule(KERNEL_TYPE),
+                    AttributeRule.newIntegerRule(RIEMANN_SAMPLE_SIZE, true)
             };
         }
 

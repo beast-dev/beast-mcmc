@@ -21,7 +21,6 @@ public abstract class AbstractCase extends AbstractModel {
     protected String caseID;
     protected Taxa associatedTaxa;
 
-
     public String getName(){
         return caseID;
     }
@@ -32,7 +31,7 @@ public abstract class AbstractCase extends AbstractModel {
         return associatedTaxa;
     }
 
-    public abstract boolean culledYet(int time);
+    public abstract boolean culledYet(double time);
 
     public String toString(){
         return caseID;

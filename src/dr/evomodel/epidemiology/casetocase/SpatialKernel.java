@@ -197,7 +197,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
                 if(kernelFunction==null){
                     throw new XMLParseException("Unknown spatial kernel type");
                 }
-                Parameter a = new Parameter.Default((Double) xo.getAttribute(A));
+                Parameter a = (Parameter)xo.getElementFirstChild(A);
                 kernelFunction.seta(a);
                 if(xo.hasAttribute(RIEMANN_SAMPLE_SIZE)){
                     kernelFunction.configureIntegrator((Integer)xo.getAttribute(RIEMANN_SAMPLE_SIZE));
@@ -218,7 +218,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
         public final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
-                    AttributeRule.newDoubleRule(A),
+                    new ElementRule(A, Parameter.class, "The single parameter of this kernel"),
                     AttributeRule.newStringRule(KERNEL_TYPE),
                     AttributeRule.newIntegerRule(RIEMANN_SAMPLE_SIZE, true)
             };

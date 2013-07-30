@@ -33,8 +33,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: $
  */
-public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable,
-        TreeTraitProvider {
+public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable, TreeTraitProvider {
 
     /* The phylogenetic tree. */
 
@@ -119,7 +118,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
                                     String startingNetworkFileName, Parameter infectionTimes,
-                                    Parameter earliestPossibleFirstInfection, boolean extended)
+                                    Date earliestPossibleFirstInfection, boolean extended)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimes,
                 earliestPossibleFirstInfection, extended);
@@ -128,7 +127,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
-            startingNetworkFileName, Parameter infectionTimes, Parameter earliestPossibleFirstInfection,
+            startingNetworkFileName, Parameter infectionTimes, Date earliestPossibleFirstInfection,
                                     boolean extended) {
         super(name, caseData, virusTree);
         if(stateCount!=nodeCount){
@@ -168,8 +167,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
 
         this.infectionTimes = infectionTimes;
-        this.earliestPossibleFirstInfection = earliestPossibleFirstInfection;
 
+        // @todo check if this works
+        this.earliestPossibleFirstInfection = new Parameter.Default
+                (timeToHeight(earliestPossibleFirstInfection.getTimeValue()));
 
         // @todo is the following still necessary?
 
@@ -1298,6 +1299,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         public static final String STARTING_NETWORK = "startingNetwork";
         public static final String INFECTION_TIMES = "infectionTimes";
         public static final String EARLIEST_POSSIBLE_FIRST_INFECTION = "earliestPossibleFirstInfection";
+        public static final String EXTENDED = "extended";
 
         public String getParserName() {
             return CASE_TO_CASE_TREE_LIKELIHOOD;
@@ -1319,10 +1321,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             CaseToCaseTreeLikelihood likelihood;
 
 
-            final boolean extended = xo.getBooleanAttribute("extended");
+            final boolean extended = xo.getBooleanAttribute(EXTENDED);
 
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
-            Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(EARLIEST_POSSIBLE_FIRST_INFECTION);
+            Date earliestFirstInfection = (Date) xo.getElementFirstChild(EARLIEST_POSSIBLE_FIRST_INFECTION);
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName,
@@ -1348,11 +1350,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule("extended"),
+                AttributeRule.newBooleanRule(EXTENDED),
                 new ElementRule("treeModel", Tree.class, "The tree"),
                 new ElementRule(AbstractOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
-                        true)
+                        true),
+                new ElementRule(EARLIEST_POSSIBLE_FIRST_INFECTION, Date.class, "The earliest possible infection date" +
+                        "of the first case")
         };
     };
 
@@ -1361,13 +1365,12 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // Loggable implementation
     //************************************************************************
 
-    //@todo log the actual infection times, not the values of the infectionTimes parameter (probably in OMD, not here)
 
     public LogColumn[] getColumns(){
-        LogColumn[] columns = new LogColumn[cases.size()];
-        for(int i=0; i< cases.size(); i++){
+        LogColumn[] columns = new LogColumn[2*cases.size()];
+        for(int i=0; i<cases.size(); i++){
             final AbstractCase infected = cases.getCase(i);
-            columns[i] = new LogColumn.Abstract(infected.toString()){
+            columns[i] = new LogColumn.Abstract(infected.toString()+"_infector"){
                 protected String getFormattedValue() {
                     if(getInfector(infected)==null){
                         return "Start";
@@ -1376,6 +1379,15 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                     }
                 }
             };
+        }
+        for(int i=cases.size(); i<2*cases.size(); i++){
+            final AbstractCase infected = cases.getCase(i);
+            columns[i] = new LogColumn.Abstract(infected.toString()+"_infection_date"){
+                protected String getFormattedValue() {
+                    return String.valueOf(getInfectionTime(infected));
+                }
+            };
+
         }
         return columns;
     }

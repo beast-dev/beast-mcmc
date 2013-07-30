@@ -255,6 +255,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
         public static final String EXAMINATION_DAY = "examinationDay";
         public static final String ESTIMATED_INFECTION_DATE = "estimatedInfectionDate";
         public static final String COORDINATES = "coordinates";
+        public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -310,8 +311,10 @@ public class SimpleOutbreak extends AbstractOutbreak {
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
-                new ElementRule(ESTIMATED_INFECTION_DATE, Parameter.class, "The estimated oldest lesion date as determined" +
-                        "by investigating vets"),
+                new ElementRule(ESTIMATED_INFECTION_DATE, Parameter.class, "The estimated oldest lesion date as " +
+                        "determined by investigating vets"),
+                new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
+                        " along which the infection of this case occurs that it actually does occur")
         };
 
         private final XMLSyntaxRule[] rules = {

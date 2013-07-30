@@ -1,5 +1,4 @@
 package dr.evomodel.epidemiology.casetocase;
-import dr.app.tools.NexusExporter;
 import dr.evolution.tree.*;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
@@ -13,7 +12,6 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.LogTricks;
 import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
@@ -98,10 +96,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private Parameter infectionTimes;
 
-    //ugly, ugly hack. Maybe not necessary. For heaven's sake don't estimate it, at any rate. Set it to be the
-    //earliest reasonable time of first infection
+    //because of the way the former works, we need a maximum value of the time from first infection to root node.
 
-    private Parameter earliestPossibleFirstInfection;
+    private Parameter maxFirstInfToRoot;
 
     // for extended version
 
@@ -118,19 +115,19 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
                                     String startingNetworkFileName, Parameter infectionTimes,
-                                    Date earliestPossibleFirstInfection, boolean extended)
+                                    Parameter maxFirstInfToRoot, boolean extended)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimes,
-                earliestPossibleFirstInfection, extended);
+                maxFirstInfToRoot, extended);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
-            startingNetworkFileName, Parameter infectionTimes, Date earliestPossibleFirstInfection,
+            startingNetworkFileName, Parameter infectionTimes, Parameter maxFirstInfToRoot,
                                     boolean extended) {
         super(name, caseData, virusTree);
-        if(stateCount!=nodeCount){
+        if(stateCount!=treeModel.getExternalNodeCount()){
             throw new RuntimeException("There are duplicate tip cases.");
         }
 
@@ -168,9 +165,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         this.infectionTimes = infectionTimes;
 
-        // @todo check if this works
-        this.earliestPossibleFirstInfection = new Parameter.Default
-                (timeToHeight(earliestPossibleFirstInfection.getTimeValue()));
+        this.maxFirstInfToRoot = maxFirstInfToRoot;
 
         // @todo is the following still necessary?
 
@@ -528,12 +523,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         final NodeRef root = treeModel.getRoot();
 
         // unnormalised probability
-        traverse(treeModel, root, branchMap,
-                infectionTimes.getParameterValues(), earliestPossibleFirstInfection.getParameterValue(0));
+        traverse(treeModel, root, branchMap);
+
+
         // normalisation value
         traverse(treeModel, root);
 
-        double logL = (normTotalProb) * patternWeights[0];
+        double logL = totalLogProb -  normTotalProb;
 
         if (logL == Double.NEGATIVE_INFINITY) {
             Logger.getLogger("dr.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial likelihood scaling to avoid precision loss");
@@ -666,8 +662,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         for(int i=0; i<noTips; i++){
             normRootPartials[i] *= cases.probXInfectedBetweenTandU
-                    (cases.getCase(i),heightToTime(earliestPossibleFirstInfection.getParameterValue(0)),
-                            getNodeTime(treeModel.getRoot()));
+                    (cases.getCase(i),heightToTime(getNodeTime(treeModel.getRoot()) -
+                            maxFirstInfToRoot.getParameterValue(0)), getNodeTime(treeModel.getRoot()));
         }
 
 
@@ -676,11 +672,12 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     // unnormalised probability of this branchMap and corresponding infTimes
 
-    private boolean traverse(Tree tree, NodeRef node, AbstractCase[] branchMap, double[] infTimes,
-                             double earliestFirstInfection){
+    private boolean traverse(Tree tree, NodeRef node, AbstractCase[] branchMap){
 
         // @todo probably better with two updateNodes - one for the normalisation procedure and one for this
         // @todo because changes to infTimes will matter in the latter case but not the former
+
+        // @todo do you even want branchMap here at all?
 
         boolean update = false;
 
@@ -706,12 +703,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 branchLogProbs[node.getNumber()]
                         = cases.logProbXInfectedAtTimeT(nodeCase, infectionTime);
             }
+            update = true;
         }
         if (!tree.isExternal(node)) {
             NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1, branchMap, infTimes, earliestFirstInfection);
+            final boolean update1 = traverse(tree, child1, branchMap);
             NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2, branchMap, infTimes, earliestFirstInfection);
+            final boolean update2 = traverse(tree, child2, branchMap);
             if (update1 || update2) {
                 if (parent == null) {
                     totalLogProb = 0;
@@ -719,7 +717,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                         totalLogProb += branchLogProbs[i];
                     }
                     if(totalLogProb == Double.NEGATIVE_INFINITY){
-                        throw new RuntimeException("Total log probability of partition is zero");
+                        throw new RuntimeException("Total probability of partition is zero");
                     }
                 }
                 update = true;
@@ -1015,10 +1013,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     private double getRootInfectionTime(AbstractCase[] branchMap){
         NodeRef root = treeModel.getRoot();
         AbstractCase rootCase = branchMap[root.getNumber()];
-        final double branchLength = timeToHeight(earliestPossibleFirstInfection.getParameterValue(0))
-                - treeModel.getNodeHeight(root);
+        final double branchLength = maxFirstInfToRoot.getParameterValue(0);
         return heightToTime(treeModel.getNodeHeight(root)
-                - branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(branchMap[root.getNumber()])));
+                - branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(rootCase)));
 
     }
 
@@ -1201,9 +1198,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             branchMap = prepareExternalNodeMap(new AbstractCase[treeModel.getNodeCount()]);
             //Warning - if the DisconnectedPartitionException in randomlyAssignNode might be caused by a bug rather than both
             //likelihoods rounding to zero, you want to stop catching this to investigate.
-            try{
-                partitionAccordingToRandomTT(branchMap, false);
-            } catch(DisconnectedPartitionException ignored){}
+
+            partitionAccordingToRandomTT(branchMap, false);
+
             if(calculateLogLikelihood()!=Double.NEGATIVE_INFINITY){
                 gotOne = true;
                 System.out.println("found.");
@@ -1295,10 +1292,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     //************************************************************************
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        public static final String TREE_MODEL = "treeModel";
         public static final String STARTING_NETWORK = "startingNetwork";
         public static final String INFECTION_TIMES = "infectionTimes";
-        public static final String EARLIEST_POSSIBLE_FIRST_INFECTION = "earliestPossibleFirstInfection";
+        public static final String MAX_FIRST_INF_TO_ROOT= "maxFirstInfToRoot";
         public static final String EXTENDED = "extended";
 
         public String getParserName() {
@@ -1307,7 +1303,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel virusTree = (TreeModel) xo.getElementFirstChild(TREE_MODEL);
+            TreeModel virusTree = (TreeModel) xo.getChild(TreeModel.class);
 
             String startingNetworkFileName=null;
 
@@ -1324,7 +1320,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             final boolean extended = xo.getBooleanAttribute(EXTENDED);
 
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
-            Date earliestFirstInfection = (Date) xo.getElementFirstChild(EARLIEST_POSSIBLE_FIRST_INFECTION);
+            Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName,
@@ -1351,12 +1347,12 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(EXTENDED),
-                new ElementRule("treeModel", Tree.class, "The tree"),
+                new ElementRule(TreeModel.class, "The tree"),
                 new ElementRule(AbstractOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
-                new ElementRule(EARLIEST_POSSIBLE_FIRST_INFECTION, Date.class, "The earliest possible infection date" +
-                        "of the first case")
+                new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
+                        "the root node")
         };
     };
 

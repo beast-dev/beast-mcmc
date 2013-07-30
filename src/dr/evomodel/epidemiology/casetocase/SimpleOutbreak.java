@@ -278,7 +278,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
             final Parameter oldestLesionAge = (Parameter) xo.getElementFirstChild(ESTIMATED_INFECTION_DATE);
-            final Parameter coords = (Parameter) xo.getElementFirstChild(COORDINATES);
+            final Parameter coords = xo.hasChildNamed(COORDINATES) ?
+                    (Parameter) xo.getElementFirstChild(COORDINATES) : null;
             Taxa taxa = new Taxa();
             for(int i=0; i<xo.getChildCount(); i++){
                 if(xo.getChild(i) instanceof Taxon){
@@ -314,7 +315,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
                 new ElementRule(ESTIMATED_INFECTION_DATE, Parameter.class, "The estimated oldest lesion date as " +
                         "determined by investigating vets"),
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
-                        " along which the infection of this case occurs that it actually does occur")
+                        " along which the infection of this case occurs that it actually does occur"),
+                new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true)
         };
 
         private final XMLSyntaxRule[] rules = {

@@ -100,11 +100,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         if(!likelihoodKnown){
             int N = outbreak.size();
             double lambda = transmissionRate.getParameterValue(0);
-            double unnormalisedValue = Math.pow(lambda, N-1)*aAlpha()*Math.exp(-lambda*bAlpha())/N;
-            double normalisationValue = probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0));
+
+            // @todo this really might not be quite right
+
+            double logUnnormalisedValue = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha() - Math.log(N);
+            double logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
             double treeLogL = treeLikelihood.getLogLikelihood();
             likelihoodKnown = true;
-            logLikelihood =  Math.log(treeLogL) + Math.log(unnormalisedValue) - Math.log(normalisationValue);
+            logLikelihood =  treeLogL + logUnnormalisedValue - logNormalisationValue;
         }
         return logLikelihood;
     }
@@ -157,10 +160,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
 
     private double aAlpha(){
         double product = 1;
-        ArrayList<AbstractCase> copyOfCases = new ArrayList<AbstractCase>(outbreak.getCases());
-        Collections.sort(copyOfCases, new CaseInfectionComparator());
         for(int i=1; i<outbreak.size(); i++){
-            product *= outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(i=1), spatialKernel);
+            if(treeLikelihood.getInfector(i)!=null){
+                product *= outbreak.getKernalValue(outbreak.getCase(i), treeLikelihood.getInfector(i), spatialKernel);
+            }
         }
         return product;
     }
@@ -170,7 +173,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         ArrayList<AbstractCase> copyOfCases = new ArrayList<AbstractCase>(outbreak.getCases());
         Collections.sort(copyOfCases, new CaseInfectionComparator());
         for(int i=1; i<outbreak.size(); i++){
-            product *= outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(i=1), spatialKernel, alpha);
+            product *= outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(i-1), spatialKernel, alpha);
         }
         return product;
     }

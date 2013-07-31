@@ -1115,6 +1115,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return getInfector(thisCase, branchMap);
     }
 
+    public AbstractCase getInfector(int i){
+        return getInfector(getOutbreak().getCase(i), branchMap);
+    }
+
     /* Return the case which was the infector in the infection event represented by this node */
 
     public AbstractCase getInfector(NodeRef node){

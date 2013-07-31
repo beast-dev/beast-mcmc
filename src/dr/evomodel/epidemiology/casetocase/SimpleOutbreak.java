@@ -29,18 +29,19 @@ public class SimpleOutbreak extends AbstractOutbreak {
     private RiemannApproximation integrator;
     private Parameter estimatedInfectionVariance;
 
-    public SimpleOutbreak(String name, Taxa taxa, Parameter estimatedInfectionVariance, Parameter riemannSampleSize){
+    public SimpleOutbreak(String name, Taxa taxa, Parameter estimatedInfectionVariance, boolean hasGeography,
+                          Parameter riemannSampleSize){
         super(name, taxa);
         integrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
         this.estimatedInfectionVariance = estimatedInfectionVariance;
         cases = new ArrayList<AbstractCase>();
         hasLatentPeriods = false;
-        hasGeography = true;
+        this.hasGeography = hasGeography;
     }
 
-    public SimpleOutbreak(String name, Taxa taxa, Parameter estimatedInfectionVariance, Parameter riemannSampleSize,
-                          ArrayList<AbstractCase> cases){
-        this(name, taxa, estimatedInfectionVariance, riemannSampleSize);
+    public SimpleOutbreak(String name, Taxa taxa, Parameter estimatedInfectionVariance, boolean hasGeography,
+                          Parameter riemannSampleSize, ArrayList<AbstractCase> cases){
+        this(name, taxa, estimatedInfectionVariance, hasGeography, riemannSampleSize);
         this.cases.addAll(cases);
     }
 
@@ -247,6 +248,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
 
         public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
         public static final String ESTIMATED_INFECTION_VARIANCE = "estimatedInfectionVariance";
+        public static final String HAS_GEOGRAPHY = "hasGeography";
 
         //for the cases
 
@@ -261,8 +263,10 @@ public class SimpleOutbreak extends AbstractOutbreak {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final Parameter d = (Parameter) xo.getElementFirstChild(ESTIMATED_INFECTION_VARIANCE);
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
+            final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY)
+                    ? (Boolean) xo.getAttribute(HAS_GEOGRAPHY) : false;
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
-            SimpleOutbreak cases = new SimpleOutbreak(null, taxa, d, riemannSampleSize);
+            SimpleOutbreak cases = new SimpleOutbreak(null, taxa, d, hasGeography, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(SimpleCase.SIMPLE_CASE)){
@@ -327,7 +331,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
                         "2012).", false),
                 new ElementRule(RIEMANN_SAMPLE_SIZE, Parameter.class, "The sample size for the Riemann numerical" +
                         "integration method, used by all child cases.", true),
-                new ElementRule(Taxa.class)
+                new ElementRule(Taxa.class),
+                AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
         };
     };
 

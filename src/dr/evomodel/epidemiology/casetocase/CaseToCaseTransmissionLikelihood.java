@@ -277,7 +277,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(CaseToCaseTreeLikelihood.class, "The tree likelihood"),
                 new ElementRule(SpatialKernel.class, "The spatial kernel"),
-                new ElementRule(Parameter.class, "The transmission rate")
+                new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate")
         };
 
     };

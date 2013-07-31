@@ -30,6 +30,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     public AbstractOutbreak(String name, Taxa taxa){
         super(name);
+        this.taxa = taxa;
         ArrayList<String> caseNames = new ArrayList<String>();
         for(int i=0; i<taxa.getTaxonCount(); i++){
             caseNames.add((String)taxa.getTaxonAttribute(i, CASE_NAME));
@@ -51,7 +52,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     public double getKernalValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){
         if(!hasGeography){
-            throw new RuntimeException("Asking for geographical information from a model without it");
+            return 1;
         } else {
             return kernel.value(a.getCoords(), b.getCoords());
         }
@@ -59,7 +60,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     public double getKernalValue(AbstractCase a, AbstractCase b, SpatialKernel kernel, double alpha){
         if(!hasGeography){
-            throw new RuntimeException("Asking for geographical information from a model without it");
+            return 1;
         } else {
             return kernel.value(a.getCoords(), b.getCoords(), alpha);
         }

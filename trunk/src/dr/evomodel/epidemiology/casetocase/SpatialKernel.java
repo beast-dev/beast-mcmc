@@ -8,6 +8,9 @@ import dr.math.IntegrableUnivariateFunction;
 import dr.math.RiemannApproximation;
 import dr.xml.*;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * An abstract spatial kernel function class (and some examples) with single parameter aParam.
  *
@@ -36,7 +39,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
     public static final String SPATIAL_KERNEL_FUNCTION = "spatialKernelFunction";
     public static final String A = "a";
-    public static final String KERNEL_TYPE = "kernelType";
+    public static final String KERNEL_TYPE = "type";
     public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
 
     public enum Type{
@@ -51,9 +54,10 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
             return xmlName;
         }
 
-        SpatialKernel makeKernelFunction() throws InstantiationException, IllegalAccessException{
-            SpatialKernel out = (SpatialKernel)kernelClass.newInstance();
-            return out;
+        SpatialKernel makeKernelFunction(Parameter a) throws IllegalAccessException, InstantiationException,
+                InvocationTargetException {
+            Constructor[] construct = kernelClass.getConstructors();
+            return (SpatialKernel)construct[1].newInstance(null, xmlName, a);
         }
 
         Type(String xmlName, Class kernelClass){
@@ -112,7 +116,17 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
     public abstract double evaluate(double argument, double alpha);
 
+    public abstract SpatialKernel newInstance(Parameter a);
+
     public class Exponential extends SpatialKernel {
+
+        public SpatialKernel newInstance(Parameter a){
+            return new Exponential(Type.EXPONENTIAL.getXmlName(), a);
+        }
+
+        public Exponential(){
+            this(Type.EXPONENTIAL.getXmlName(), null);
+        }
 
         public Exponential(String name, Parameter a){
             super(name, a);
@@ -130,6 +144,14 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     }
 
     public class PowerLaw extends SpatialKernel {
+
+        public SpatialKernel newInstance(Parameter a){
+            return new PowerLaw(Type.POWER_LAW.getXmlName(), a);
+        }
+
+        public PowerLaw(){
+            this(Type.POWER_LAW.getXmlName(), null);
+        }
 
         public PowerLaw(String name, Parameter a){
             super(name, a);
@@ -153,6 +175,14 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     public class Gaussian extends SpatialKernel {
 
         RiemannApproximation integrator;
+
+        public SpatialKernel newInstance(Parameter a){
+            return new Gaussian(Type.GAUSSIAN.getXmlName(), a);
+        }
+
+        public Gaussian(){
+            this(Type.GAUSSIAN.getXmlName(), null);
+        }
 
         public Gaussian(String name, Parameter a){
             this(name, a, 25);
@@ -188,25 +218,23 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             try{
                 String type = (String)xo.getAttribute("type");
+                Parameter a = (Parameter)xo.getElementFirstChild(A);
                 SpatialKernel kernelFunction = null;
                 for(Type value : Type.values()){
                     if(value.getXmlName().equals(type)){
-                        kernelFunction = value.makeKernelFunction();
+                        kernelFunction = value.makeKernelFunction(a);
                     }
                 }
                 if(kernelFunction==null){
                     throw new XMLParseException("Unknown spatial kernel type");
                 }
-                Parameter a = (Parameter)xo.getElementFirstChild(A);
-                kernelFunction.seta(a);
+
                 if(xo.hasAttribute(RIEMANN_SAMPLE_SIZE)){
                     kernelFunction.configureIntegrator((Integer)xo.getAttribute(RIEMANN_SAMPLE_SIZE));
                 }
                 return kernelFunction;
-            } catch(InstantiationException e){
-                throw new XMLParseException("Failed to initiate spatial kernel");
-            } catch(IllegalAccessException e){
-                throw new XMLParseException("Failed to initiate spatial kernel");
+            } catch(Exception e){
+                throw new XMLParseException("Failed to initiate spatial kernel ("+e.toString()+")");
             }
         }
 

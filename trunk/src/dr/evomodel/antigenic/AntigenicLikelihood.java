@@ -62,7 +62,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Parameter columnParameter,
             Parameter rowParameter,
             DataTable<String[]> dataTable,
-            boolean mergeSerumIsolates,
+            boolean mergeIsolates,
             double intervalWidth) {
 
         super(ANTIGENIC_LIKELIHOOD);
@@ -89,7 +89,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             int columnStrain = -1;
             String columnStrainName;
-            if (mergeSerumIsolates) {
+            if (mergeIsolates) {
                 columnStrainName = values[SERUM_STRAIN];
             } else {
                 columnStrainName = values[SERUM_ISOLATE];
@@ -696,7 +696,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public final static String VIRUS_LOCATIONS = "virusLocations";
         public final static String SERUM_LOCATIONS = "serumLocations";
         public static final String MDS_DIMENSION = "mdsDimension";
-        public static final String MERGE_SERUM_ISOLATES = "mergeSerumIsolates";
+        public static final String MERGE_ISOLATES = "mergeIsolates";
         public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
         public static final String LOCATION_DRIFT = "locationDrift";
@@ -722,7 +722,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
             System.out.println("Loaded HI table file: " + fileName);
 
-            boolean mergeSerumIsolates = xo.getAttribute(MERGE_SERUM_ISOLATES, false);
+            boolean mergeIsolates = xo.getAttribute(MERGE_ISOLATES, false);
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
             double intervalWidth = 0.0;
@@ -789,7 +789,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     columnEffectsParameter,
                     rowEffectsParameter,
                     assayTable,
-                    mergeSerumIsolates,
+                    mergeIsolates,
                     intervalWidth);
 
             Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
@@ -813,7 +813,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
-                AttributeRule.newBooleanRule(MERGE_SERUM_ISOLATES, true, "Should serum isolates that map to the same strain have their locations merged? (defaults to false)"),
+                AttributeRule.newBooleanRule(MERGE_SERUM_ISOLATES, true, "Should serum isolates that map to the same virus strain have their locations merged? (defaults to false)"),
                 AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),

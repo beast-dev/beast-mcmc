@@ -813,7 +813,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
-                AttributeRule.newBooleanRule(MERGE_SERUM_ISOLATES, true, "Should serum isolates that map to the same virus strain have their locations merged? (defaults to false)"),
+                AttributeRule.newBooleanRule(MERGE_ISOLATES, true, "Should serum isolates that map to the same virus strain have their locations merged? (defaults to false)"),
                 AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),

@@ -236,8 +236,7 @@ public class BeagleSequenceSimulator {
 		return simpleAlignment;
 	}// END: compileAlignment
 
-	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag
-			) {
+	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag) {
 
 		StringBuilder sSeq = new StringBuilder();
 

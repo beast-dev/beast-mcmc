@@ -54,27 +54,29 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         final int nodeCount = tree.getNodeCount();
         do {
             i = tree.getNode(MathUtils.nextInt(nodeCount));
-        } while (tree.getRoot() == i && !eligibleForMove(i, tree, branchMap));
+        } while (tree.getRoot() == i || !eligibleForMove(i, tree, branchMap));
         final NodeRef iP = tree.getParent(i);
         Integer[] samePaintings = c2cLikelihood.samePartition(iP, false);
         HashSet<Integer> possibleDestinations = new HashSet<Integer>();
         // we can insert the node above OR BELOW any node in the same partition
-        for(int count=0; count<samePaintings.length; count++){
-            possibleDestinations.add(samePaintings[count]);
-            possibleDestinations.add(tree.getChild(tree.getNode(count),0).getNumber());
-            possibleDestinations.add(tree.getChild(tree.getNode(count),1).getNumber());
+        for (Integer samePainting : samePaintings) {
+            possibleDestinations.add(samePainting);
+            if (!tree.isExternal(tree.getNode(samePainting))) {
+                possibleDestinations.add(tree.getChild(tree.getNode(samePainting), 0).getNumber());
+                possibleDestinations.add(tree.getChild(tree.getNode(samePainting), 1).getNumber());
+            }
         }
         Integer[] pd = possibleDestinations.toArray(new Integer[possibleDestinations.size()]);
 
         NodeRef j = tree.getNode(pd[MathUtils.nextInt(pd.length)]);
         NodeRef k = tree.getParent(j);
 
-        while (k != null && (tree.getNodeHeight(k) <= tree.getNodeHeight(i)) || (i == j)) {
+        while ((k != null && (tree.getNodeHeight(k) <= tree.getNodeHeight(i))) || (i == j)) {
             j = tree.getNode(pd[MathUtils.nextInt(pd.length)]);
             k = tree.getParent(j);
         }
 
-        if (iP == tree.getRoot()) {
+        if (iP == tree.getRoot() || j == tree.getRoot()) {
             throw new OperatorFailedException("Root changes not allowed!");
         }
 
@@ -89,6 +91,8 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         oldMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(CiP));
         oldRange = tree.getNodeHeight(PiP) - oldMinAge;
         q = newRange / Math.abs(oldRange);
+
+        tree.beginTreeEdit();
 
         if (j == tree.getRoot()) {
 
@@ -128,6 +132,10 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
             tree.addChild(PiP, CiP);
         }
 
+        tree.setNodeHeight(iP, newAge);
+
+        tree.endTreeEdit();
+
         if(debug){
             c2cLikelihood.checkPartitions();
         }
@@ -143,7 +151,9 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
 
-        return branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
+        return  (tree.getParent(tree.getParent(node))!=null
+                && branchMap[tree.getParent(node).getNumber()]
+                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
                 || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
                 tree.getParent(node), node).getNumber()];
     }

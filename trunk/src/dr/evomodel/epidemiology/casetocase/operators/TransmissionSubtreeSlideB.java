@@ -75,7 +75,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         // 1. choose a random eligible node avoiding root
         do {
             i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-        } while (root == i && !eligibleForMove(i, tree, branchMap));
+        } while (root == i || !eligibleForMove(i, tree, branchMap));
 
         final NodeRef iP = tree.getParent(i);
         final NodeRef CiP = getOtherChild(tree, iP, i);
@@ -179,7 +179,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 return Double.NEGATIVE_INFINITY;
             }
 
-            // 4.1 will the move change the topology
+            // 4.1 will the move change the topology?
             if (tree.getNodeHeight(CiP) > newHeight) {
 
                 List<NodeRef> newChildren = new ArrayList<NodeRef>();
@@ -301,13 +301,15 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
     }
 
     private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
-        // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
-        // same partition (so removing the parent has no effect on the remaining links of the TT), and the node and its
-        // parent must be in different partitions (so the move does not disconnect anything)
+        // to be eligible for this move, the node's parent and grandparent (if it has one), or parent and other child,
+        // must be in the same partition (so removing the parent has no effect on the remaining links of the TT), and
+        // the node and its parent must be in different partitions (so the move does not disconnect anything)
 
-        return (branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
-                || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
-                tree.getParent(node), node).getNumber()])
+        return ((tree.getParent(tree.getParent(node))!=null
+                && branchMap[tree.getParent(node).getNumber()]
+                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
+                || branchMap[tree.getParent(node).getNumber()]
+                ==branchMap[getOtherChild(tree,tree.getParent(node), node).getNumber()])
                 && branchMap[tree.getParent(node).getNumber()]!=branchMap[node.getNumber()];
     }
 
@@ -362,7 +364,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
     }
 
     public String getOperatorName() {
-        return TRANSMISSION_SUBTREE_SLIDE_B + "(" + tree.getId() + ")";
+        return TRANSMISSION_SUBTREE_SLIDE_B + " (" + tree.getId() + ")";
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

@@ -52,7 +52,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         final int nodeCount = tree.getNodeCount();
         do {
             i = tree.getNode(MathUtils.nextInt(nodeCount));
-        } while (tree.getRoot() == i && !eligibleForMove(i, tree, branchMap));
+        } while (tree.getRoot() == i || !eligibleForMove(i, tree, branchMap));
         final NodeRef iP = tree.getParent(i);
 
         //this one can go anywhere
@@ -65,7 +65,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
             k = tree.getParent(j);
         }
 
-        if (iP == tree.getRoot()) {
+        if (iP == tree.getRoot() || j == tree.getRoot()) {
             throw new OperatorFailedException("Root changes not allowed!");
         }
 
@@ -90,6 +90,8 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         if(branchMap[k.getNumber()]!=branchMap[j.getNumber()]){
             q *= 2;
         }
+
+        tree.beginTreeEdit();
 
 
         if (j == tree.getRoot()) {
@@ -130,9 +132,10 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
             tree.addChild(PiP, CiP);
         }
 
-        if(debug){
-            c2cLikelihood.checkPartitions();
-        }
+        tree.setNodeHeight(iP, newAge);
+
+        tree.endTreeEdit();
+
         //
         logq = Math.log(q);
 
@@ -144,6 +147,10 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
             branchMap[iP.getNumber()] = branchMap[j.getNumber()];
         }
 
+        if(debug){
+            c2cLikelihood.checkPartitions();
+        }
+
     }
 
     public String getPerformanceSuggestion() {
@@ -152,10 +159,12 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
 
     private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and other child,
-        // must be in the same partition (so removingthe parent has no effect on the remaining links of the TT), and the node and its parent must be in
-        // different partitions (such that the move does not disconnect anything)
+        // must be in the same partition (so removing the parent has no effect on the remaining links of the TT),
+        // and the node and its parent must be in different partitions (such that the move does not disconnect anything)
 
-        return (branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
+        return ((tree.getParent(tree.getParent(node))!=null
+                && branchMap[tree.getParent(node).getNumber()]
+                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
                 || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
                 tree.getParent(node), node).getNumber()])
                 && branchMap[tree.getParent(node).getNumber()]!=branchMap[node.getNumber()];

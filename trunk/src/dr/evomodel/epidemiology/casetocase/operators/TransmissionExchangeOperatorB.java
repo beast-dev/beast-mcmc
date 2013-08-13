@@ -10,6 +10,8 @@ import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.ArrayList;
+
 /**
  * Implements branch exchange operations that also exchange entire subtrees of the transmission tree. As this already
  * severely restricts the set of eligible pairs of nodes, this is set up as special case of Wide Exchange.
@@ -30,15 +32,16 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
     public double doOperation() throws OperatorFailedException {
         TreeModel tree = c2cLikelihood.getTree();
 
+        double hr = exchange();
+
         final int tipCount = tree.getExternalNodeCount();
 
-        assert tree.getExternalNodeCount() == tipCount :
-                "Lost some tips";
+        assert tree.getExternalNodeCount() == tipCount : "Lost some tips";
 
-        return 0;
+        return hr;
     }
 
-    public void exchange() throws OperatorFailedException{
+    public double exchange() throws OperatorFailedException{
         TreeModel tree = c2cLikelihood.getTree();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
 
@@ -47,43 +50,79 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
 
         NodeRef i = root;
         NodeRef iP = tree.getParent(i);
-        boolean paintingsDoNotMatch = false;
+        boolean partitionsMatch = true;
 
-        while(root == i || !paintingsDoNotMatch) {
+        // find a node - its parent must be in a different partition (this will not be different following the move)
+
+        while(root == i || partitionsMatch){
             i = tree.getNode(MathUtils.nextInt(nodeCount));
             iP = tree.getParent(i);
-            if(root!=i){
-                paintingsDoNotMatch = branchMap[i.getNumber()]!=branchMap[iP.getNumber()];
-            }
+            partitionsMatch = i==root ? true : branchMap[i.getNumber()]==branchMap[iP.getNumber()];
         }
 
-        NodeRef j = root;
+        ArrayList<NodeRef> candidates = getPossibleExchanges(tree, i);
+
+        int candidateCount = candidates.size();
+
+        if(candidateCount==0){
+            c2cLikelihood.makeDirty();
+            throw new OperatorFailedException("No valid exchanges for this node");
+        }
+
+        NodeRef j = candidates.get(MathUtils.nextInt(candidates.size()));
+
+        int jFirstCandidateCount = getPossibleExchanges(tree, j).size();
+
+        double HRDenom = (1/candidateCount) + (1/jFirstCandidateCount);
+
         NodeRef jP = tree.getParent(j);
-        paintingsDoNotMatch = false;
-
-        while(root == j || i==j || iP==jP || !paintingsDoNotMatch) {
-            j = tree.getNode(MathUtils.nextInt(nodeCount));
-            jP = tree.getParent(j);
-            if(root!=j){
-                paintingsDoNotMatch = branchMap[j.getNumber()]!=branchMap[jP.getNumber()];
-            }
-        }
 
 /*
         Intuitively it would seem this is a lot more likely to succeed than operator A.
 */
 
-        if((i != jP) && (j != iP)
-                && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-                && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
-            exchangeNodes(tree, i, j, iP, jP);
-            return;
+        exchangeNodes(tree, i, j, iP, jP);
+
+        ArrayList<NodeRef> reverseCandidatesIfirst = getPossibleExchanges(tree, i);
+        ArrayList<NodeRef> reverseCandidatesJfirst = getPossibleExchanges(tree, j);
+
+        double HRNum = (1/reverseCandidatesIfirst.size()) + (1/reverseCandidatesJfirst.size());
+
+        return Math.log(HRNum/HRDenom);
+
+    }
+
+    // get a set of candidates for an exchange of a given node. Does not include the node itself or its sibling, so
+    // the check for a failed move will be if this set is of size 0
+
+    public ArrayList<NodeRef> getPossibleExchanges(TreeModel tree, NodeRef node){
+        AbstractCase[] map = c2cLikelihood.getBranchMap();
+        ArrayList<NodeRef> out = new ArrayList<NodeRef>();
+        NodeRef parent = tree.getParent(node);
+        if(parent==null){
+            throw new RuntimeException("Can't exchange the root node");
         }
+        if(map[parent.getNumber()]==map[node.getNumber()]){
+            throw new RuntimeException("This node is not exchangeable by this operator");
+        }
+        for(NodeRef candidate: tree.getNodes()){
+            NodeRef newParent = tree.getParent(candidate);
+            if(newParent!=parent && newParent!=null){
+                if(candidate != parent
+                        && node != newParent
+                        && tree.getNodeHeight(candidate) < tree.getNodeHeight(parent)
+                        && tree.getNodeHeight(node) < tree.getNodeHeight(newParent)
+                        && map[newParent.getNumber()]!=map[candidate.getNumber()]){
+                    if(out.contains(candidate) || candidate==node){
+                        throw new RuntimeException("Adding a candidate that already exists in the list or" +
+                                " the node itself");
+                    }
+                    out.add(candidate);
+                }
 
-        c2cLikelihood.makeDirty();
-
-        throw new OperatorFailedException("Couldn't find valid move on this tree!");
-
+            }
+        }
+        return out;
     }
 
 

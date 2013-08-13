@@ -9,9 +9,13 @@ import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+
 /**
  * Implements branch exchange operations that leave the transmission network unchanged. As this already severely
  * restricts the set of eligible pairs of nodes, this is set up as special case of Wide Exchange.
+
  *
  * @author Matthew Hall
  */
@@ -29,38 +33,46 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
     public double doOperation() throws OperatorFailedException {
         TreeModel tree = c2cLikelihood.getTree();
 
+        double hr = exchange();
+
         final int tipCount = tree.getExternalNodeCount();
 
         assert tree.getExternalNodeCount() == tipCount : "Lost some tips";
 
-        return 0;
+        return hr;
     }
 
-    public void exchange() throws OperatorFailedException{
+    public double exchange() throws OperatorFailedException{
         TreeModel tree = c2cLikelihood.getTree();
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
 
         NodeRef i = root;
-        NodeRef iP = tree.getParent(i);
-        Integer[] possibleSwaps = c2cLikelihood.samePartition(iP, false);
-        int noPossibleSwaps = 0;
 
-        while(root == i || noPossibleSwaps == 1) {
+        // find a node
+
+        while(root == i){
             i = tree.getNode(MathUtils.nextInt(nodeCount));
-            iP = tree.getParent(i);
-            possibleSwaps = c2cLikelihood.samePartition(iP, false);
-            noPossibleSwaps = possibleSwaps.length;
         }
 
-        NodeRef jP=iP;
+        ArrayList<NodeRef> candidates = getPossibleExchanges(tree, i);
 
-        while(jP==iP){
-            jP = tree.getNode(possibleSwaps[MathUtils.nextInt(noPossibleSwaps)]);
+        int candidateCount = candidates.size();
+
+        if(candidateCount==0){
+            c2cLikelihood.makeDirty();
+            throw new OperatorFailedException("No valid exchanges for this node");
         }
 
-        NodeRef j = tree.getChild(jP, MathUtils.nextInt(1));
+        NodeRef j = candidates.get(MathUtils.nextInt(candidates.size()));
+
+        int jFirstCandidateCount = getPossibleExchanges(tree, j).size();
+
+        double HRDenom = (1/candidateCount) + (1/jFirstCandidateCount);
+
+        NodeRef iP = tree.getParent(i);
+        NodeRef jP = tree.getParent(j);
 
 /*
         I tend to think that this may fail quite a lot of the time due to lack of candidates... a version that does
@@ -69,17 +81,45 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         have to investigate which problem is more serious.
 */
 
-        if( (i != jP) && (j != iP)
-                && (tree.getNodeHeight(j) < tree.getNodeHeight(iP))
-                && (tree.getNodeHeight(i) < tree.getNodeHeight(jP)) ) {
-            exchangeNodes(tree, i, j, iP, jP);
-            return;
+        exchangeNodes(tree, i, j, iP, jP);
+
+        ArrayList<NodeRef> reverseCandidatesIfirst = getPossibleExchanges(tree, i);
+        ArrayList<NodeRef> reverseCandidatesJfirst = getPossibleExchanges(tree, j);
+
+        double HRNum = (1/reverseCandidatesIfirst.size()) + (1/reverseCandidatesJfirst.size());
+
+        return Math.log(HRNum/HRDenom);
+    }
+
+    // get a set of candidates for an exchange of a given node. Does not include the node itself or its sibling, so
+    // the check for a failed move will be if this set is of size 0
+
+    public ArrayList<NodeRef> getPossibleExchanges(TreeModel tree, NodeRef node){
+        ArrayList<NodeRef> out = new ArrayList<NodeRef>();
+        NodeRef parent = tree.getParent(node);
+        if(parent==null){
+            throw new RuntimeException("Can't exchange the root node");
         }
-
-        c2cLikelihood.makeDirty();
-
-        throw new OperatorFailedException("Couldn't find valid wide move on this tree!");
-
+        Integer[] possibleParentSwaps = c2cLikelihood.samePartition(parent, false);
+        for(Integer index: possibleParentSwaps){
+            NodeRef newParent = tree.getNode(index);
+            if(!tree.isExternal(newParent) && newParent!=parent){
+                for(int i=0; i<2; i++){
+                    NodeRef candidate = tree.getChild(newParent, i);
+                    if(candidate != parent
+                            && node != newParent
+                            && tree.getNodeHeight(candidate) < tree.getNodeHeight(parent)
+                            && tree.getNodeHeight(node) < tree.getNodeHeight(newParent)){
+                        if(out.contains(candidate) || candidate==node){
+                            throw new RuntimeException("Adding a candidate that already exists in the list or" +
+                                    " the node itself");
+                        }
+                        out.add(candidate);
+                    }
+                }
+            }
+        }
+        return out;
     }
 
 

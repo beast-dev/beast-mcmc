@@ -61,12 +61,11 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     }
 
     /**
-     * Do a probablistic subtree slide move.
+     * Do a probabilistic subtree slide move.
      *
      * @return the log-transformed hastings ratio
      */
     public double doOperation() throws OperatorFailedException {
-
 
         double logq;
 
@@ -78,7 +77,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         // 1. choose a random eligible node avoiding root
         do {
             i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-        } while (root == i && !eligibleForMove(i, tree, branchMap));
+        } while (root == i || !eligibleForMove(i, tree, branchMap));
 
         final NodeRef iP = tree.getParent(i);
         final NodeRef CiP = getOtherChild(tree, iP, i);
@@ -281,9 +280,10 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
-        // if only one of these things is true you can only slide one way - might be able to do better than this
 
-        return branchMap[tree.getParent(node).getNumber()]==branchMap[tree.getParent(tree.getParent(node)).getNumber()]
+        return  (tree.getParent(tree.getParent(node))!=null
+                && branchMap[tree.getParent(node).getNumber()]
+                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
                 || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
                 tree.getParent(node), node).getNumber()];
     }
@@ -340,7 +340,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     }
 
     public String getOperatorName() {
-        return TRANSMISSION_SUBTREE_SLIDE_A + "(" + tree.getId() + ")";
+        return TRANSMISSION_SUBTREE_SLIDE_A + " (" + tree.getId() + ")";
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

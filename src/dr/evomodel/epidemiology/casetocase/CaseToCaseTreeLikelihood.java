@@ -362,7 +362,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
      */
 
     public boolean tipLinked(NodeRef node){
-        NodeRef tip = treeModel.getNode(tipMap.get(branchMap[node.getNumber()]));
+        return tipLinked(node, branchMap);
+    }
+
+    private boolean tipLinked(NodeRef node, AbstractCase[] map){
+        NodeRef tip = treeModel.getNode(tipMap.get(map[node.getNumber()]));
         if(tip==node){
             return true;
         }
@@ -388,19 +392,25 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     //Counts the children of the current node which have the same painting as itself under the current map.
     //This will always be 1 if extended==false.
 
-    public int countChildrenInSamePartition(NodeRef node){
+
+
+    public int countChildrenInSamePartition(NodeRef node, AbstractCase[] map){
         if(treeModel.isExternal(node)){
             return -1;
         } else {
             int count = 0;
-            AbstractCase parentCase = branchMap[node.getNumber()];
+            AbstractCase parentCase = map[node.getNumber()];
             for(int i=0; i< treeModel.getChildCount(node); i++){
-                if(branchMap[treeModel.getChild(node,i).getNumber()]==parentCase){
+                if(map[treeModel.getChild(node,i).getNumber()]==parentCase){
                     count++;
                 }
             }
             return count;
         }
+    }
+
+    public int countChildrenInSamePartition(NodeRef node){
+        return countChildrenInSamePartition(node, branchMap);
     }
 
 
@@ -445,22 +455,28 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // to true
 
     public HashSet<Integer> samePartitionDownTree(NodeRef node, boolean flagForRecalc){
+        return samePartitionDownTree(node, branchMap, flagForRecalc);
+    }
+
+    private HashSet<Integer> samePartitionDownTree(NodeRef node, AbstractCase[] map, boolean flagForRecalc){
         if(!nodeRecalculationNeeded[node.getNumber()] && flagForRecalc){
             flagForDescendantRecalculation(treeModel, node, nodeRecalculationNeeded);
         }
         HashSet<Integer> out = new HashSet<Integer>();
-        AbstractCase painting = branchMap[node.getNumber()];
-        NodeRef ancestorNode = treeModel.getParent(node);
-        while(branchMap[ancestorNode.getNumber()]==painting){
-            out.add(ancestorNode.getNumber());
+        AbstractCase painting = map[node.getNumber()];
+        NodeRef currentNode = node;
+        NodeRef parentNode = treeModel.getParent(node);
+        while(parentNode!=null && map[parentNode.getNumber()]==painting){
+            out.add(parentNode.getNumber());
             if(extended){
-                if(countChildrenInSamePartition(ancestorNode)==2){
-                    NodeRef otherChild = sibling(treeModel, ancestorNode);
+                if(countChildrenInSamePartition(parentNode)==2){
+                    NodeRef otherChild = sibling(treeModel, currentNode);
                     out.add(otherChild.getNumber());
-                    out.addAll(samePartitionUpTree(otherChild, flagForRecalc));
+                    out.addAll(samePartitionUpTree(otherChild, map, flagForRecalc));
                 }
             }
-            ancestorNode = treeModel.getParent(ancestorNode);
+            currentNode = parentNode;
+            parentNode = treeModel.getParent(currentNode);
         }
         return out;
     }
@@ -468,14 +484,18 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     //Return a set of nodes that are descendants (and not equal to) the current node and are in the same parition as it.
 
     public HashSet<Integer> samePartitionUpTree(NodeRef node, boolean flagForRecalc){
+        return samePartitionUpTree(node, branchMap, flagForRecalc);
+    }
+
+    private HashSet<Integer> samePartitionUpTree(NodeRef node, AbstractCase[] map, boolean flagForRecalc){
         HashSet<Integer> out = new HashSet<Integer>();
-        AbstractCase painting = branchMap[node.getNumber()];
+        AbstractCase painting = map[node.getNumber()];
         boolean creepsFurther = false;
         for(int i=0; i< treeModel.getChildCount(node); i++){
-            if(branchMap[treeModel.getChild(node,i).getNumber()]==painting){
+            if(map[treeModel.getChild(node,i).getNumber()]==painting){
                 creepsFurther = true;
                 out.add(treeModel.getChild(node,i).getNumber());
-                out.addAll(samePartitionUpTree(treeModel.getChild(node, i), flagForRecalc));
+                out.addAll(samePartitionUpTree(treeModel.getChild(node, i), map, flagForRecalc));
             }
         }
         if(flagForRecalc && !creepsFurther){
@@ -487,10 +507,14 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // Return the node numbers of the entire subtree in the same partition as this node (including itself)
 
     public Integer[] samePartition(NodeRef node, boolean flagForRecalc){
+        return samePartition(node, branchMap, flagForRecalc);
+    }
+
+    private Integer[] samePartition(NodeRef node, AbstractCase[] map, boolean flagForRecalc){
         HashSet<Integer> out = new HashSet<Integer>();
         out.add(node.getNumber());
-        out.addAll(samePartitionDownTree(node, flagForRecalc));
-        out.addAll(samePartitionUpTree(node, flagForRecalc));
+        out.addAll(samePartitionDownTree(node, map, flagForRecalc));
+        out.addAll(samePartitionUpTree(node, map, flagForRecalc));
         return out.toArray(new Integer[out.size()]);
     }
 
@@ -1201,30 +1225,26 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return checkPartitions(branchMap, true);
     }
 
-    private boolean checkPartitions(AbstractCase[] map, boolean verbose){
-        boolean out=true;
-        for(int i=0; i< treeModel.getInternalNodeCount(); i++){
-            NodeRef node = treeModel.getInternalNode(i);
-            NodeRef firstChild = treeModel.getChild(node,0);
-            NodeRef secondChild = treeModel.getChild(node,1);
-            NodeRef parent = treeModel.getParent(node);
-            if(map[node.getNumber()]!=map[firstChild.getNumber()] &&
-                    map[node.getNumber()]!=map[secondChild.getNumber()] &&
-                    (!extended || map[node.getNumber()]!=map[parent.getNumber()])){
-                out = false;
-                if(!verbose){
-                    break;
-                } else {
-                    System.out.println("Node "+node.getNumber()+" failed partition connectedness check:");
-                    System.out.println("Node partition: "+map[node.getNumber()].getName());
-                    System.out.println("Parent partition: "+map[parent.getNumber()].getName());
-                    System.out.println("Child 1 partition: "+map[firstChild.getNumber()].getName());
-                    System.out.println("Child 2 partition: "+map[secondChild.getNumber()].getName());
-                    System.out.println();
+    // @todo this shouldn't generally be public
+
+    public boolean checkPartitions(AbstractCase[] map, boolean verbose){
+        boolean foundProblem = false;
+        for(int i=0; i<treeModel.getInternalNodeCount(); i++){
+            boolean foundTip = false;
+            for(Integer nodeNumber : samePartition(treeModel.getInternalNode(i), map, false)){
+                if(treeModel.isExternal(treeModel.getNode(nodeNumber))){
+                    foundTip = true;
                 }
             }
+            if(!foundProblem && !foundTip){
+                foundProblem = true;
+                if(verbose){
+                    System.out.println("Node "+i+ " is not connected to a tip");
+                }
+            }
+
         }
-        return out;
+        return !foundProblem;
     }
 
 

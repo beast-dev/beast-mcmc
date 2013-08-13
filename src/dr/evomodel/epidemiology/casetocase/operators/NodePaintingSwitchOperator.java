@@ -8,6 +8,8 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.HashSet;
+
 /**
  * This operator finds a branch that corresponds to a transmission event, and moves that event up one branch or down
  * one branch
@@ -47,31 +49,33 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         while(branchMap[node.getNumber()]==branchMap[tree.getParent(node).getNumber()]){
             node = tree.getParent(node);
         }
-        adjustTree(tree, node, branchMap, c2cLikelihood.getRecalculationArray(), c2cLikelihood.isExtended());
+        double hr = adjustTree(tree, node, branchMap, c2cLikelihood.getRecalculationArray(), c2cLikelihood.isExtended());
         c2cLikelihood.makeDirty(false);
-        return 0;
+        return hr;
     }
 
 
-    private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] recalcArray, boolean extended){
-        // are we going up or down? If we're not extended then all move are down.
-        if(!extended || MathUtils.nextBoolean()){
-            moveDown(tree, node, map, extended);
+    private double adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] recalcArray, boolean extended){
+        // are we going up or down? If we're not extended then all moves are down. External nodes have to move down.
+        double out;
+        if(!extended || tree.isExternal(node) || MathUtils.nextBoolean()){
+            out = moveDown(tree, node, map, extended);
         } else {
-            moveUp(tree, node, map);
+            out = moveUp(tree, node, map);
         }
         if(debug){
             c2cLikelihood.checkPartitions();
         }
+        return out;
     }
 
-    private void moveDown(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
+    private double moveDown(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
         NodeRef parent = tree.getParent(node);
         assert map[parent.getNumber()]==map[node.getNumber()] : "Partition problem";
         if(!extended || c2cLikelihood.tipLinked(parent)){
             NodeRef grandparent = tree.getParent(parent);
-            if(map[grandparent.getNumber()]==map[parent.getNumber()]){
-                for(Integer ancestor: c2cLikelihood.samePartitionDownTree(grandparent, true)){
+            if(grandparent!=null && map[grandparent.getNumber()]==map[parent.getNumber()]){
+                for(Integer ancestor: c2cLikelihood.samePartitionDownTree(parent, true)){
                     map[ancestor]=map[node.getNumber()];
                 }
                 map[grandparent.getNumber()]=map[node.getNumber()];
@@ -90,10 +94,13 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                 map[sibling.getNumber()]=map[node.getNumber()];
             }
         }
+        map[parent.getNumber()]=map[node.getNumber()];
         c2cLikelihood.flagForDescendantRecalculation(tree, node);
+        return tree.isExternal(node) ? Math.log(0.5) : 0;
     }
 
-    private void moveUp(TreeModel tree, NodeRef node, AbstractCase[] map){
+    private double moveUp(TreeModel tree, NodeRef node, AbstractCase[] map){
+        double out = 0;
         NodeRef parent = tree.getParent(node);
         assert map[parent.getNumber()]==map[node.getNumber()] : "Partition problem";
         // check if either child is not tip-linked (at most one is not, and if so it must have been in the same
@@ -106,9 +113,13 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                     map[descendant]=map[parent.getNumber()];
                 }
                 map[child.getNumber()]=map[parent.getNumber()];
+            } else if(tree.isExternal(child) && map[child.getNumber()]==map[node.getNumber()]){
+                // we're moving a transmission event onto a terminal branch and need to adjust the HR accordingly
+                out += Math.log(2);
             }
         }
         map[node.getNumber()]=map[parent.getNumber()];
+        return out;
     }
 
     public String getPerformanceSuggestion(){

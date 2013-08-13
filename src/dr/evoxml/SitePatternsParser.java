@@ -106,7 +106,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
             if (every > 1) {
                 logger.info("  only using every " + every + " site");
             }
-            logger.info("  pattern count = " + patterns.getPatternCount());
+            logger.info("  " + (unique ? "unique ": "") + "pattern count = " + patterns.getPatternCount());
         }
 
         return patterns;

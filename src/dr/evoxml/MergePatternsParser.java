@@ -28,6 +28,8 @@ package dr.evoxml;
 import dr.evolution.alignment.*;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -50,6 +52,12 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
 	    for (int i = 1; i < xo.getChildCount(); i++) {
 		    patterns.addPatterns((PatternList)xo.getChild(i));
 	    }
+
+        if (xo.hasAttribute(XMLParser.ID)) {
+            final Logger logger = Logger.getLogger("dr.evoxml");
+            logger.info("Site patterns '" + xo.getId() + "' created by merging " + xo.getChildCount() + " pattern lists");
+            logger.info("  pattern count = " + patterns.getPatternCount());
+        }
 
         return patterns;
     }

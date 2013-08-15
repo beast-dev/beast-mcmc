@@ -89,7 +89,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             }
             if(map[sibling.getNumber()]==map[parent.getNumber()]){
                 for(Integer descendant: c2cLikelihood.samePartitionUpTree(sibling, true)){
-                    map[descendant]=map[parent.getNumber()];
+                    map[descendant]=map[node.getNumber()];
                 }
                 map[sibling.getNumber()]=map[node.getNumber()];
             }

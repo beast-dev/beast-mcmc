@@ -156,13 +156,15 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                     logq += Math.log(0.5);
                 }
 
-                if(branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
+                if(newParent != null && branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
                     if(MathUtils.nextInt(2)==0){
                         branchMap[iP.getNumber()] = branchMap[newParent.getNumber()];
                     } else {
                         branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
                     }
                     logq += Math.log(2);
+                } else {
+                    branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
                 }
 
             } else {
@@ -243,17 +245,19 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
                 // appropriately
 
-                if(branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
+                if(PiP!=null && branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
                     logq += Math.log(0.5);
                 }
 
-                if(branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
+                if(newParent!=null && branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
                     if(MathUtils.nextInt(2)==0){
                         branchMap[iP.getNumber()] = branchMap[newParent.getNumber()];
                     } else {
                         branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
                     }
                     logq += Math.log(2);
+                } else {
+                    branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
                 }
 
             } else {

@@ -1239,7 +1239,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             if(!foundProblem && !foundTip){
                 foundProblem = true;
                 if(verbose){
-                    System.out.println("Node "+i+ " is not connected to a tip");
+                    System.out.println("Node "+(i+treeModel.getExternalNodeCount()) + " is not connected to a tip");
                 }
             }
 

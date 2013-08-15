@@ -233,6 +233,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 tree.endTreeEdit();
 
                 logq = Math.log(possibleDestinations);
+
             } else {
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;

@@ -276,6 +276,8 @@ public class BeastMain {
                         new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
+                        new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
+                        new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
@@ -342,6 +344,8 @@ public class BeastMain {
                 arguments.hasOption("beagle_CPU") ||
                 arguments.hasOption("beagle_GPU") ||
                 arguments.hasOption("beagle_SSE") ||
+                arguments.hasOption("beagle_cuda") ||
+                arguments.hasOption("beagle_opencl") ||
                 arguments.hasOption("beagle_double") ||
                 arguments.hasOption("beagle_single") ||
                 arguments.hasOption("beagle_order") ||
@@ -356,6 +360,12 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_GPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+        }
+        if (arguments.hasOption("beagle_cuda")) {
+            beagleFlags |= BeagleFlag.FRAMEWORK_CUDA.getMask();
+        }
+        if (arguments.hasOption("beagle_opencl")) {
+            beagleFlags |= BeagleFlag.FRAMEWORK_OPENCL.getMask();
         }
         if (arguments.hasOption("beagle_SSE")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();

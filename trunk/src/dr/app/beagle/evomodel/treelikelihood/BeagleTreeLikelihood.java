@@ -248,6 +248,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
+            if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
+                // if single precision not explicitly set then prefer double
+                preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+            }
+
             if (substitutionModelDelegate.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }

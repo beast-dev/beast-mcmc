@@ -27,12 +27,11 @@ import java.util.logging.Logger;
 /**
  * Handles manipulation of the tree partition, and likelihood of the infection times.
  *
- * This is not an actual implementation of AbstractTreeLikelihood since it doesn't
- *
  * @author Matthew Hall
  * @author Andrew Rambaut
  * @version $Id: $
  */
+
 public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable, TreeTraitProvider {
 
     final boolean debug = true;
@@ -1608,8 +1607,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             super(cases.size());
         }
 
-
-
         public void calculateLogLikelihoods(double[] partials, double outLogLikelihood){
 
             // this isn't a CTMC and doesn't have frequencies, and has only one pattern
@@ -1620,7 +1617,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
             calculateLogLikelihoods(partials, dummyFreqArray, outLLArray);
         }
-
 
     }
 }

@@ -8,6 +8,7 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.Arrays;
 import java.util.HashSet;
 
 /**
@@ -70,15 +71,16 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     }
 
     private double moveDown(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
+        AbstractCase[] newMap = Arrays.copyOf(map, map.length);
         NodeRef parent = tree.getParent(node);
         assert map[parent.getNumber()]==map[node.getNumber()] : "Partition problem";
         if(!extended || c2cLikelihood.tipLinked(parent)){
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map[grandparent.getNumber()]==map[parent.getNumber()]){
                 for(Integer ancestor: c2cLikelihood.samePartitionDownTree(parent, true)){
-                    map[ancestor]=map[node.getNumber()];
+                    newMap[ancestor]=map[node.getNumber()];
                 }
-                map[grandparent.getNumber()]=map[node.getNumber()];
+                newMap[grandparent.getNumber()]=map[node.getNumber()];
             }
         } else {
             NodeRef sibling = node;
@@ -89,17 +91,19 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             }
             if(map[sibling.getNumber()]==map[parent.getNumber()]){
                 for(Integer descendant: c2cLikelihood.samePartitionUpTree(sibling, true)){
-                    map[descendant]=map[node.getNumber()];
+                    newMap[descendant]=map[node.getNumber()];
                 }
-                map[sibling.getNumber()]=map[node.getNumber()];
+                newMap[sibling.getNumber()]=map[node.getNumber()];
             }
         }
-        map[parent.getNumber()]=map[node.getNumber()];
+        newMap[parent.getNumber()]=map[node.getNumber()];
+        c2cLikelihood.setBranchMap(newMap);
         c2cLikelihood.flagForDescendantRecalculation(tree, node);
         return tree.isExternal(node) ? Math.log(0.5) : 0;
     }
 
     private double moveUp(TreeModel tree, NodeRef node, AbstractCase[] map){
+        AbstractCase[] newMap = Arrays.copyOf(map, map.length);
         double out = 0;
         NodeRef parent = tree.getParent(node);
         assert map[parent.getNumber()]==map[node.getNumber()] : "Partition problem";
@@ -110,15 +114,16 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             if(!c2cLikelihood.tipLinked(child)){
                 assert map[child.getNumber()]==map[node.getNumber()] : "Partition problem";
                 for(Integer descendant: c2cLikelihood.samePartitionUpTree(child, true)){
-                    map[descendant]=map[parent.getNumber()];
+                    newMap[descendant]=map[parent.getNumber()];
                 }
-                map[child.getNumber()]=map[parent.getNumber()];
+                newMap[child.getNumber()]=map[parent.getNumber()];
             } else if(tree.isExternal(child) && map[child.getNumber()]==map[node.getNumber()]){
                 // we're moving a transmission event onto a terminal branch and need to adjust the HR accordingly
                 out += Math.log(2);
             }
         }
-        map[node.getNumber()]=map[parent.getNumber()];
+        newMap[node.getNumber()]=map[parent.getNumber()];
+        c2cLikelihood.setBranchMap(newMap);
         return out;
     }
 

@@ -77,7 +77,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
      */
     private AbstractOutbreak cases;
     private HashSet<AbstractCase> caseSet;
-    private boolean likelihoodKnown = false;
     private double logLikelihood;
     private double storedLogLikelihood;
     private CaseToCaseLikelihoodCore core;
@@ -97,7 +96,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     private double[] normRootPartials;
     private double[] normProbs;
     private double normTotalProb;
-
 
     // where along the relevant branches the infections happen. IMPORTANT: if extended=false then this should be
     // all 0s.
@@ -240,10 +238,23 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             public String getTrait(Tree tree, NodeRef node) {
                 return getNodePartition(tree, node);
             }
-
-
         });
 
+        if(debug){
+            treeTraits.addTrait("NodeNumber", new TreeTrait.S() {
+                public String getTraitName() {
+                    return "NodeNumber";
+                }
+
+                public Intent getIntent() {
+                    return Intent.NODE;
+                }
+
+                public String getTrait(Tree tree, NodeRef node) {
+                    return Integer.toString(node.getNumber());
+                }
+            });
+        }
     }
 
     public AbstractOutbreak getOutbreak(){
@@ -517,6 +528,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return out.toArray(new Integer[out.size()]);
     }
 
+    public void changeMap(int node, AbstractCase parition){
+        branchMap[node]=parition;
+        fireModelChanged();
+    }
+
     public Integer[] getParentsArray(){
         Integer[] out = new Integer[cases.size()];
         for(AbstractCase thisCase : cases.getCases()){
@@ -528,7 +544,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     public HashMap<Integer, Double> getInfTimesMap(){
         HashMap<Integer, Double> out = new HashMap<Integer, Double>();
         for(AbstractCase thisCase : cases.getCases()){
-            out.put(cases.getCaseIndex(thisCase),getInfectionTime(thisCase));
+            out.put(cases.getCaseIndex(thisCase), getInfectionTime(thisCase));
         }
         return out;
     }
@@ -584,6 +600,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         }
 
+        fireModelChanged();
+
         likelihoodKnown = false;
     }
 
@@ -600,6 +618,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         if(variable==infectionTimes){
             updateAllNodes(false);
         }
+
+        fireModelChanged();
+
         likelihoodKnown = false;
     }
 
@@ -612,7 +633,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
      */
 
     protected final void storeState() {
-        System.arraycopy(branchMap, 0, storedBranchMap, 0, branchMap.length);
+        storedBranchMap = Arrays.copyOf(branchMap, branchMap.length);
         storedNodeLogLikelihoods = Arrays.copyOf(nodeLogLikelihoods, nodeLogLikelihoods.length);
         storedRecalculationArray = Arrays.copyOf(nodeRecalculationNeeded, nodeRecalculationNeeded.length);
         storedDescendantTipPartitions = new HashMap<Integer, HashSet<AbstractCase>>(descendantTipPartitions);
@@ -648,6 +669,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public final void setBranchMap(AbstractCase[] map){
         branchMap = map;
+        fireModelChanged();
     }
 
     public final TreeModel getTree(){
@@ -657,7 +679,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     public final void makeDirty() {
         //@todo I don't think you need to force recalculation of the whole tree here, but check
 //            Arrays.fill(nodeRecalculationNeeded, true);
-
         likelihoodKnown = false;
         if(!extended){
             recalculateDescTipPartitions();
@@ -892,6 +913,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                         totalLogProb += branchLogProbs[i];
                     }
                     if(totalLogProb == Double.NEGATIVE_INFINITY){
+                        debugOutputTree();
                         throw new RuntimeException("Total probability of partition is zero");
                     }
                 }
@@ -1194,6 +1216,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         NodeRef root = treeModel.getRoot();
         AbstractCase rootCase = branchMap[root.getNumber()];
         final double branchLength = maxFirstInfToRoot.getParameterValue(0);
+
         return heightToTime(treeModel.getNodeHeight(root)
                 + branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(rootCase)));
 
@@ -1224,7 +1247,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return checkPartitions(branchMap, true);
     }
 
-    // @todo this shouldn't generally be public
+    // @todo switch back to private when debugged
 
     public boolean checkPartitions(AbstractCase[] map, boolean verbose){
         boolean foundProblem = false;
@@ -1242,6 +1265,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 }
             }
 
+        }
+        if(foundProblem){
+            debugOutputTree(map);
         }
         return !foundProblem;
     }
@@ -1449,19 +1475,26 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
     }
 
-    private void debugOutputTree(){
+    public void debugOutputTree(){
+        debugOutputTree(branchMap);
+    }
+
+
+    public void debugOutputTree(AbstractCase[] map){
         try{
             FlexibleTree treeCopy = new FlexibleTree(treeModel);
             for(int j=0; j<treeCopy.getNodeCount(); j++){
                 FlexibleNode node = (FlexibleNode)treeCopy.getNode(j);
                 node.setAttribute("Number", node.getNumber());
                 node.setAttribute("Time", heightToTime(node.getHeight()));
-                node.setAttribute("Partition", branchMap[node.getNumber()]);
+                node.setAttribute("Partition", map[node.getNumber()]);
             }
             NexusExporter testTreesOut = new NexusExporter(new PrintStream("testTrees.nex"));
             testTreesOut.exportTree(treeCopy);
         } catch (IOException ignored) {System.out.println("IOException");}
     }
+
+
 
 
     //************************************************************************
@@ -1529,7 +1562,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
-                        "the root node")
+                        "the root node"),
+                new ElementRule(INFECTION_TIMES, Parameter.class)
         };
     };
 

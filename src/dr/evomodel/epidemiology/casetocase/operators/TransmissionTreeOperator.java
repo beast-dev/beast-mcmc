@@ -141,9 +141,6 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         return hr;
     }
 
-
-
-
     private void paintUp(TreeModel tree, AbstractCase oldCase, AbstractCase newCase, AbstractCase[] oldbranchMap,
                          AbstractCase[] newBranchMap, int nodeNo, int[] parents){
         if(parents[nodeNo]==-1){

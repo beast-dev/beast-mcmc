@@ -10,7 +10,6 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 
 /**
  * Implements branch exchange operations that leave the transmission network unchanged. As this already severely

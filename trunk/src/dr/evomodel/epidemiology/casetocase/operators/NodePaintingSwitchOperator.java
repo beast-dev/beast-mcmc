@@ -31,8 +31,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         return NODE_PAINTING_SWITCH_OPERATOR;
     }
 
-    /*  Switch the painting of a randomly selected internal node from the painting of one of its children to the
-    * painting of the other, and adjust the rest of the tree to ensure the result is still a painting.*/
+    /*  Switch the partition of a randomly selected internal node from the painting of one of its children to the
+    * painting of the other, and adjust the rest of the tree to ensure the result still obeys partition rules.*/
 
     public double doOperation(){
         TreeModel tree = c2cLikelihood.getTree();

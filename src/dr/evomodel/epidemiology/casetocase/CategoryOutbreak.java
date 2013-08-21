@@ -4,7 +4,6 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -245,6 +244,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
         public static final String HAS_GEOGRAPHY = "hasGeography";
+        public static final String INFECTIOUS_PERIOD_DISTRIBUTIONS = "infectiousPeriodDistributions";
 
         //for the cases
 
@@ -325,8 +325,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(RIEMANN_SAMPLE_SIZE, Parameter.class, "The sample size for the Riemann numerical" +
                         "integration method, used by all child cases.", true),
                 new ElementRule(Taxa.class),
-                new ElementRule(ParametricDistributionModel.class, "One or more probability distributions for " +
-                        "the infectious periods of cases in the oubreak", 1, Integer.MAX_VALUE),
+                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTIONS, ParametricDistributionModel.class,
+                        "One or more probability distributions for the infectious periods of cases in the oubreak", 1,
+                        Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
         };
     };

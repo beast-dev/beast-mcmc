@@ -1,6 +1,5 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.evolution.tree.Tree;
 import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.Integral;

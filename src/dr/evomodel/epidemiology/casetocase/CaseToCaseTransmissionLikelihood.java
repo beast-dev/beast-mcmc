@@ -29,7 +29,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     private Parameter kernelAlpha;
     private Parameter transmissionRate;
     private boolean hasLatentPeriods;
-    private Integer[] parents;
     private Integer[] storedParents;
     private HashMap<Integer, Double> infectionTimes;
     private HashMap<Integer, Double> storedInfectionTimes;
@@ -50,45 +49,32 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         hasLatentPeriods = outbreak.hasLatentPeriods();
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
-        parents = treeLikelihood.getParentsArray();
         infectionTimes = treeLikelihood.getInfTimesMap();
         probFunct = new InnerIntegral();
         likelihoodKnown = false;
     }
 
-
-    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if(model instanceof CaseToCaseTreeLikelihood){
-            parents = treeLikelihood.getParentsArray();
             infectionTimes = treeLikelihood.getInfTimesMap();
-            Arrays.sort(parents, new CaseNoInfectionComparator());
         }
         likelihoodKnown = false;
-        fireModelChanged();
     }
 
-    @Override
     protected void storeState() {
-        storedParents = Arrays.copyOf(parents, parents.length);
         storedInfectionTimes = new HashMap<Integer, Double>(infectionTimes);
     }
 
-    @Override
     protected void restoreState() {
-        parents = storedParents;
         infectionTimes = storedInfectionTimes;
     }
 
-    @Override
     protected void acceptState() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        // nothing to do
     }
 
-    @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
-        fireModelChanged();
     }
 
     public Model getModel() {
@@ -105,8 +91,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
             double logUnnormalisedValue = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha() - Math.log(N);
             double logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
             double treeLogL = treeLikelihood.getLogLikelihood();
-            likelihoodKnown = true;
             logLikelihood =  treeLogL + logUnnormalisedValue - logNormalisationValue;
+            likelihoodKnown = true;
         }
         return logLikelihood;
     }
@@ -114,6 +100,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
 
     public void makeDirty() {
         likelihoodKnown = false;
+        treeLikelihood.makeDirty();
     }
 
     private class CaseInfectionComparator implements Comparator<AbstractCase> {
@@ -157,6 +144,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         return total;
     }
 
+    // aAlpha for the current value of alpha
+
     private double aAlpha(){
         double product = 1;
         for(int i=1; i<outbreak.size(); i++){
@@ -166,6 +155,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         }
         return product;
     }
+
+    // aAlpha for a given value of alpha
 
     private double aAlpha(double alpha){
         double product = 1;
@@ -189,8 +180,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
             infiniteIntegrator = new InfiniteUpperLimitRiemannApproximation(1, 0.001);
         }
 
-
-        @Override
         public double evaluateIntegral(double a, double b) {
             if(b!=Double.POSITIVE_INFINITY){
                 return finiteIntegrator.integrate(this, a, b);
@@ -199,17 +188,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        @Override
         public double evaluate(double argument) {
             return aAlpha(argument)/Math.pow(bAlpha(argument), outbreak.size());
         }
 
-        @Override
         public double getLowerBound() {
             return 0;
         }
 
-        @Override
         public double getUpperBound() {
             return Double.POSITIVE_INFINITY;
         }

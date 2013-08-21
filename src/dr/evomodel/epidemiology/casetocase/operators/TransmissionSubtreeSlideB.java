@@ -23,7 +23,6 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
     private CaseToCaseTreeLikelihood c2cLikelihood;
     private TreeModel tree;
-    private AbstractCase[] branchMap;
     private double size = 1.0;
     private boolean gaussian = false;
     private final boolean swapInRandomRate;
@@ -39,7 +38,6 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                                      boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode) {
         this.c2cLikelihood = c2cLikelihood;
         tree = c2cLikelihood.getTree();
-        branchMap = c2cLikelihood.getBranchMap();
         setWeight(weight);
 
         if (size == 0.0) {
@@ -64,6 +62,8 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
      * @return the log-transformed hastings ratio
      */
     public double doOperation() throws OperatorFailedException {
+
+        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
 
         double logq;
 
@@ -158,13 +158,13 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
                 if(newParent != null && branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
                     if(MathUtils.nextInt(2)==0){
-                        branchMap[iP.getNumber()] = branchMap[newParent.getNumber()];
+                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newParent.getNumber()]);
                     } else {
-                        branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
+                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
                     }
                     logq += Math.log(2);
                 } else {
-                    branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
+                    c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
                 }
 
             } else {
@@ -251,13 +251,13 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
                 if(newParent!=null && branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
                     if(MathUtils.nextInt(2)==0){
-                        branchMap[iP.getNumber()] = branchMap[newParent.getNumber()];
+                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newParent.getNumber()]);
                     } else {
-                        branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
+                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
                     }
                     logq += Math.log(2);
                 } else {
-                    branchMap[iP.getNumber()] = branchMap[newChild.getNumber()];
+                    c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
                 }
 
             } else {

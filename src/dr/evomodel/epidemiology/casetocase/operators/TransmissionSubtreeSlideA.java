@@ -23,7 +23,6 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
     private CaseToCaseTreeLikelihood c2cLikelihood;
     private TreeModel tree;
-    private AbstractCase[] branchMap;
     private double size = 1.0;
     private boolean gaussian = false;
     private final boolean swapInRandomRate;
@@ -40,7 +39,6 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                                      boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode) {
         this.c2cLikelihood = c2cLikelihood;
         tree = c2cLikelihood.getTree();
-        branchMap = c2cLikelihood.getBranchMap();
         setWeight(weight);
 
         if (size == 0.0) {
@@ -65,6 +63,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
      * @return the log-transformed hastings ratio
      */
     public double doOperation() throws OperatorFailedException {
+
+        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
 
         double logq;
 
@@ -151,8 +151,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 tree.endTreeEdit();
 
                 // 3.1.3 count the hypothetical sources of this destination.
-                final int possibleSources = intersectingEdges(tree, newChild, oldHeight, branchMap[iP.getNumber()],
-                        null);
+                final int possibleSources = intersectingEdges(tree, newChild, oldHeight, branchMap,
+                        branchMap[iP.getNumber()], null);
                 //System.out.println("possible sources = " + possibleSources);
 
                 logq = -Math.log(possibleSources);
@@ -175,8 +175,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             if (tree.getNodeHeight(CiP) > newHeight) {
 
                 List<NodeRef> newChildren = new ArrayList<NodeRef>();
-                final int possibleDestinations = intersectingEdges(tree, CiP, newHeight, branchMap[iP.getNumber()],
-                        newChildren);
+                final int possibleDestinations = intersectingEdges(tree, CiP, newHeight, branchMap,
+                        branchMap[iP.getNumber()], newChildren);
 
                 // if no valid destinations then return a failure
                 if (newChildren.size() == 0) {
@@ -291,8 +291,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     //intersectingEdges here is modified to count only possible sources for this special case of the operator - i.e.
     //only branches which have one end in the relevant partition
 
-    private int intersectingEdges(Tree tree, NodeRef node, double height, AbstractCase partition,
-                                  List<NodeRef> directChildren) {
+    private int intersectingEdges(Tree tree, NodeRef node, double height, AbstractCase[] branchMap,
+                                  AbstractCase partition, List<NodeRef> directChildren) {
 
         final NodeRef parent = tree.getParent(node);
 
@@ -305,7 +305,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
         int count = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
-            count += intersectingEdges(tree, tree.getChild(node, i), height, partition, directChildren);
+            count += intersectingEdges(tree, tree.getChild(node, i), height, branchMap, partition, directChildren);
         }
         return count;
     }

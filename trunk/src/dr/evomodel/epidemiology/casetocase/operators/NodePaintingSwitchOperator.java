@@ -50,13 +50,13 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         while(branchMap[node.getNumber()]==branchMap[tree.getParent(node).getNumber()]){
             node = tree.getParent(node);
         }
-        double hr = adjustTree(tree, node, branchMap, c2cLikelihood.getRecalculationArray(), c2cLikelihood.isExtended());
+        double hr = adjustTree(tree, node, branchMap, c2cLikelihood.isExtended());
         c2cLikelihood.makeDirty(false);
         return hr;
     }
 
 
-    private double adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] recalcArray, boolean extended){
+    private double adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
         // are we going up or down? If we're not extended then all moves are down. External nodes have to move down.
         double out;
         if(!extended || tree.isExternal(node) || MathUtils.nextBoolean()){
@@ -98,7 +98,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         }
         newMap[parent.getNumber()]=map[node.getNumber()];
         c2cLikelihood.setBranchMap(newMap);
-        c2cLikelihood.flagForDescendantRecalculation(tree, node);
+        c2cLikelihood.flagForDescendantRecalculation(tree, node, true);
         return tree.isExternal(node) ? Math.log(0.5) : 0;
     }
 

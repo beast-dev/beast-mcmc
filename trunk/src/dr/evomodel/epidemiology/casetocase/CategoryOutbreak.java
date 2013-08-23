@@ -65,27 +65,45 @@ public class CategoryOutbreak extends AbstractOutbreak {
         return SpatialKernel.EuclideanDistance(a.getCoords(), b.getCoords());
     }
 
-    // in all of the following infectiousness of the parent is assumed because there is no latent period, so Y is not
-    // used
+    // in all of the following infectiousness of the parent is assumed because there is no latent period, so Y is only
+    // used to determine whether it was culled
 
     @Override
     public double probXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
-        return probXInfectedAtTimeT(X, T);
+        if(Y.culledYet(T)){
+            return 0;
+        } else {
+            return probXInfectedAtTimeT(X, T);
+        }
     }
 
     @Override
     public double logProbXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
-        return logProbXInfectedAtTimeT(X, T);
+        if(Y.culledYet(T)){
+            return Double.NEGATIVE_INFINITY;
+        } else {
+            return logProbXInfectedAtTimeT(X, T);
+        }
     }
 
     @Override
     public double probXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
-        return probXInfectedBetweenTandU(X, T, U);
+        if(Y.culledYet(T)){
+            return 0;
+        } else {
+            double latestInfectionDate = Math.min(U, Y.getCullDate().getTimeValue());
+            return probXInfectedBetweenTandU(X, T, latestInfectionDate);
+        }
     }
 
     @Override
     public double logProbXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
-        return logProbXInfectedBetweenTandU(X, T, U);
+        if(Y.culledYet(T)){
+            return Double.NEGATIVE_INFINITY;
+        } else {
+            double latestInfectionDate = Math.min(U, Y.getCullDate().getTimeValue());
+            return logProbXInfectedBetweenTandU(X, T, latestInfectionDate);
+        }
     }
 
     @Override
@@ -141,12 +159,8 @@ public class CategoryOutbreak extends AbstractOutbreak {
     private class CategoryCase extends AbstractCase{
 
         public static final String CATEGORY_CASE = "categoryCase";
-        private final Date examDate;
-        private final Date endOfInfectiousDate;
         private final Parameter coords;
         private ParametricDistributionModel infectiousPeriodDistribution;
-        private ParametricDistributionModel storedInfectiousPeriodDistribution;
-
 
         private CategoryCase(String name, String caseID, Date examDate, Date cullDate,
                              ParametricDistributionModel infectiousDist, Parameter coords, Taxa associatedTaxa){
@@ -171,7 +185,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         public double infectedAt(double infected){
-            if(examinedYet(infected)){
+            if(culledYet(infected)){
                 return 0;
             } else {
                 return infectiousPeriodDistribution.pdf(endOfInfectiousDate.getTimeValue()-infected);
@@ -179,7 +193,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         public double infectedBetween(double start, double end){
-            if(examinedYet(start)){
+            if(culledYet(start)){
                 return 0;
             } else {
                 double endPoint = end<endOfInfectiousDate.getTimeValue() ? end : endOfInfectiousDate.getTimeValue();
@@ -190,7 +204,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         public double infectedBy(double time){
-            if(examinedYet(time)){
+            if(culledYet(time)){
                 return 1;
             } else {
                 return 1 - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-time);
@@ -231,6 +245,10 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         protected void acceptState() {
             //nothing to do
+        }
+
+        public Date getExamDate() {
+            return examDate;
         }
 
         public ParametricDistributionModel getInfectiousPeriodDistribution(){

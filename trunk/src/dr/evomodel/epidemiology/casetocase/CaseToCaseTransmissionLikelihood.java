@@ -34,7 +34,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     private HashMap<Integer, Double> storedInfectionTimes;
     private InnerIntegral probFunct;
     private boolean likelihoodKnown;
+    private boolean storedLikelihoodKnown;
     private double logLikelihood;
+    private double storedLogLikelihood;
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
     public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
@@ -48,6 +50,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         this.transmissionRate = transmissionRate;
         hasLatentPeriods = outbreak.hasLatentPeriods();
         this.addModel(treeLikelihood);
+        this.addModel(spatialKernal);
         this.addVariable(transmissionRate);
         infectionTimes = treeLikelihood.getInfTimesMap();
         probFunct = new InnerIntegral();
@@ -62,10 +65,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     }
 
     protected void storeState() {
+        storedLogLikelihood = logLikelihood;
+        storedLikelihoodKnown = likelihoodKnown;
         storedInfectionTimes = new HashMap<Integer, Double>(infectionTimes);
     }
 
     protected void restoreState() {
+        logLikelihood = storedLogLikelihood;
+        likelihoodKnown = storedLikelihoodKnown;
         infectionTimes = storedInfectionTimes;
     }
 

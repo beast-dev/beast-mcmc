@@ -132,8 +132,6 @@ public class SimpleOutbreak extends AbstractOutbreak {
     private class SimpleCase extends AbstractCase{
 
         public static final String SIMPLE_CASE = "simpleCase";
-        private final Date examDate;
-        private final Date endOfInfectiousDate;
         // this is in units of time SINCE THE EXAM DATE
         private final Parameter estInfectionToExam;
         private final Parameter coords;
@@ -292,8 +290,6 @@ public class SimpleOutbreak extends AbstractOutbreak {
             }
             outbreak.addCase(farmID, examDate, cullDate, oldestLesionAge, coords, taxa);
         }
-
-
 
         public String getParserDescription(){
             return "Parses a set of 'simple' farm cases and the information that they all share";

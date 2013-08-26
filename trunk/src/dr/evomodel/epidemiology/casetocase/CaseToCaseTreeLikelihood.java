@@ -674,9 +674,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
      */
     protected double calculateLogLikelihood() {
         //@todo a consistent system of checking painting integrity
-        if(!checkPartitions(branchMap, true)){
+        if(DEBUG && !checkPartitions(branchMap, true)){
             throw new RuntimeException("Partition rules are violated");
         }
+
+        debugOutputTree("minirunTree.nex");
 
         final NodeRef root = treeModel.getRoot();
 
@@ -1003,6 +1005,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private double getInfectionTime(double min, double max, AbstractCase infected){
         final double branchLength = max-min;
+
         return max - branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(infected));
     }
 

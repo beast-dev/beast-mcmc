@@ -30,9 +30,10 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         tipCount = c2cLikelihood.getTree().getExternalNodeCount();
     }
 
-    @Override
     public double doOperation() throws OperatorFailedException {
+
         proposeTree();
+
         if (c2cLikelihood.getTree().getExternalNodeCount() != tipCount) {
             int newCount = c2cLikelihood.getTree().getExternalNodeCount();
             throw new RuntimeException("Lost some tips in modified SPR! (" +

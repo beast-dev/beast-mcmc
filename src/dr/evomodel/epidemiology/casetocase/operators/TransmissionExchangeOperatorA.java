@@ -60,7 +60,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         int candidateCount = candidates.size();
 
         if(candidateCount==0){
-            c2cLikelihood.makeDirty();
             throw new OperatorFailedException("No valid exchanges for this node");
         }
 

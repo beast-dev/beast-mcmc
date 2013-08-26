@@ -103,7 +103,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
                 // if the parent has slid out of its partition
                 if(branchMap[newChild.getNumber()]!=branchMap[iP.getNumber()]){
-                    return Double.NEGATIVE_INFINITY;
+                    throw new OperatorFailedException("invalid slide");
                 }
 
                 tree.beginTreeEdit();

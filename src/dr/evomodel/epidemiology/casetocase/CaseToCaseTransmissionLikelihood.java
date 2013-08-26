@@ -6,6 +6,7 @@ import dr.math.Integral;
 import dr.math.RiemannApproximation;
 import dr.math.UnivariateFunction;
 import dr.xml.*;
+import org.apache.commons.math.util.MathUtils;
 
 import java.util.*;
 
@@ -37,6 +38,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     private boolean storedLikelihoodKnown;
     private double logLikelihood;
     private double storedLogLikelihood;
+    private boolean hasGeography;
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
     public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
@@ -55,6 +57,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         infectionTimes = treeLikelihood.getInfTimesMap();
         probFunct = new InnerIntegral();
         likelihoodKnown = false;
+        hasGeography = outbreak.hasGeography;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -92,11 +95,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         if(!likelihoodKnown){
             int N = outbreak.size();
             double lambda = transmissionRate.getParameterValue(0);
-
-            // @todo this really might not be quite right
-
             double logUnnormalisedValue = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha() - Math.log(N);
-            double logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+            double logNormalisationValue;
+            if(hasGeography){
+                // @todo don't calculate this if neither alpha nor the infection times have changed?
+                logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+            } else {
+                logNormalisationValue = Math.log(aAlpha()/Math.pow(bAlpha(), N));
+            }
+            logNormalisationValue += Math.log(MathUtils.factorial(N-1)) - Math.log(N);
             double treeLogL = treeLikelihood.getLogLikelihood();
             logLikelihood =  treeLogL + logUnnormalisedValue - logNormalisationValue;
             likelihoodKnown = true;

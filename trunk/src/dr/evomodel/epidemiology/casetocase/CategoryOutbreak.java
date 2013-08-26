@@ -197,6 +197,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 return 0;
             } else {
                 double endPoint = end<endOfInfectiousDate.getTimeValue() ? end : endOfInfectiousDate.getTimeValue();
+
                 return infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-start)
                         - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-endPoint);
             }
@@ -228,6 +229,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         protected void handleModelChangedEvent(Model model, Object object, int index) {
+            // @todo to have all the cases listening seems excessive and I'm not sure it's necessary - maybe only the outbreak need listen
             fireModelChanged();
         }
 

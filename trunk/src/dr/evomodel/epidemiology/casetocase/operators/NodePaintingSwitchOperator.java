@@ -36,6 +36,9 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     * painting of the other, and adjust the rest of the tree to ensure the result still obeys partition rules.*/
 
     public double doOperation(){
+
+        c2cLikelihood.debugOutputTree("opBeforeNPS.nex");
+
         TreeModel tree = c2cLikelihood.getTree();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
         int externalNodeCount = tree.getExternalNodeCount();
@@ -51,8 +54,12 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             node = tree.getParent(node);
         }
         double hr = adjustTree(tree, node, branchMap, c2cLikelihood.isExtended());
-        c2cLikelihood.makeDirty(false);
+
+        c2cLikelihood.debugOutputTree("opAfterNPS.nex");
+
         return hr;
+
+
     }
 
 

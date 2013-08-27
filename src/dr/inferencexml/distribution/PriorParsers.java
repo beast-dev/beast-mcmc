@@ -50,6 +50,8 @@ import java.io.Reader;
 /**
  */
 public class PriorParsers {
+    public final static boolean DEBUG = false;
+
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";
@@ -100,23 +102,24 @@ public class PriorParsers {
                         "because it returns 1/(high-low) = 1/inf");
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper));
-            System.out.println("Uniform prior: " + xo.getChildCount());
-            for (int j = 0; j < xo.getChildCount(); j++) {
-                System.out.println(xo.getChild(j));
-                if (xo.getChild(j) instanceof Statistic) {
-                    //System.out.println((Statistic) xo.getChild(j));
-                    Statistic test = (Statistic) xo.getChild(j);
-                    System.out.println(test.getDimension());
-                    for (int i = 0; i < test.getDimension(); i++) {
-                        System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+            if (DEBUG) {
+                System.out.println("Uniform prior: " + xo.getChildCount());
+                for (int j = 0; j < xo.getChildCount(); j++) {
+                    System.out.println(xo.getChild(j));
+                    if (xo.getChild(j) instanceof Statistic) {
+                        //System.out.println((Statistic) xo.getChild(j));
+                        Statistic test = (Statistic) xo.getChild(j);
+                        System.out.println(test.getDimension());
+                        for (int i = 0; i < test.getDimension(); i++) {
+                            System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+                        }
+                        System.out.println(test.getClass());
+                        likelihood.addData((Statistic) xo.getChild(j));
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
                     }
-                    System.out.println(test.getClass());
-                    likelihood.addData((Statistic) xo.getChild(j));
-                } else {
-                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
                 }
             }
-
             return likelihood;
         }
 
@@ -160,20 +163,22 @@ public class PriorParsers {
             final double offset = xo.hasAttribute(OFFSET) ? xo.getDoubleAttribute(OFFSET) : 0.0;
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / scale), offset);
-            System.out.println("Exponential prior: " + xo.getChildCount());
-            for (int j = 0; j < xo.getChildCount(); j++) {
-                System.out.println(xo.getChild(j));
-                if (xo.getChild(j) instanceof Statistic) {
-                    //System.out.println((Statistic) xo.getChild(j));
-                    Statistic test = (Statistic) xo.getChild(j);
-                    System.out.println(test.getDimension());
-                    for (int i = 0; i < test.getDimension(); i++) {
-                        System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+            if (DEBUG) {
+                System.out.println("Exponential prior: " + xo.getChildCount());
+                for (int j = 0; j < xo.getChildCount(); j++) {
+                    System.out.println(xo.getChild(j));
+                    if (xo.getChild(j) instanceof Statistic) {
+                        //System.out.println((Statistic) xo.getChild(j));
+                        Statistic test = (Statistic) xo.getChild(j);
+                        System.out.println(test.getDimension());
+                        for (int i = 0; i < test.getDimension(); i++) {
+                            System.out.println("  " + test.getDimensionName(i) + " - " + test.getStatisticValue(i));
+                        }
+                        System.out.println(test.getClass());
+                        likelihood.addData((Statistic) xo.getChild(j));
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
                     }
-                    System.out.println(test.getClass());
-                    likelihood.addData((Statistic) xo.getChild(j));
-                } else {
-                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
                 }
             }
 

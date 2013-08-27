@@ -28,7 +28,7 @@ public class BackboneNodeFilter extends AbstractModel implements TreeNodeFilter 
         backboneSet = new HashSet<NodeRef>();
 
         try {
-            tipSet = Tree.Utils.getTipsForTaxa(this.tree, taxonList);
+            tipSet = Tree.Utils.getTipsBitSetForTaxa(this.tree, taxonList);
         } catch (Tree.MissingTaxonException e) {
             e.printStackTrace();
         }

@@ -92,6 +92,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private boolean extended;
 
+    // no need to normalise if the tree is fixed
+
+    private boolean normalise;
+
     // PUBLIC STUFF
 
     // Name
@@ -103,17 +107,17 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
                                     String startingNetworkFileName, Parameter infectionTimes,
-                                    Parameter maxFirstInfToRoot, boolean extended)
+                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimes,
-                maxFirstInfToRoot, extended);
+                maxFirstInfToRoot, extended, normalise);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
             startingNetworkFileName, Parameter infectionTimes, Parameter maxFirstInfToRoot,
-                                    boolean extended) {
+                                    boolean extended, boolean normalise) {
         super(name, caseData, virusTree);
 
         updateNodeForSingleTraverse = new boolean[nodeCount];
@@ -701,7 +705,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 //        }
 
         // normalisation value
-        traverse(treeModel, root);
+        if(normalise){
+            traverse(treeModel, root);
+        } else {
+            normTotalProb = 0;
+        }
 
 //        if(normTotalProb==Double.NEGATIVE_INFINITY){
 //            traverse(treeModel, root);
@@ -1300,6 +1308,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         public static final String INFECTION_TIMES = "infectionTimes";
         public static final String MAX_FIRST_INF_TO_ROOT= "maxFirstInfToRoot";
         public static final String EXTENDED = "extended";
+        public static final String NORMALISE = "normalise";
 
         public String getParserName() {
             return CASE_TO_CASE_TREE_LIKELIHOOD;
@@ -1323,12 +1332,14 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
             final boolean extended = xo.getBooleanAttribute(EXTENDED);
 
+            final boolean normalise = xo.getBooleanAttribute(NORMALISE);
+
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName,
-                        infectionTimes, earliestFirstInfection, extended);
+                        infectionTimes, earliestFirstInfection, extended, normalise);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -1351,6 +1362,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(EXTENDED),
+                AttributeRule.newBooleanRule(NORMALISE),
                 new ElementRule(TreeModel.class, "The tree"),
                 new ElementRule(AbstractOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",

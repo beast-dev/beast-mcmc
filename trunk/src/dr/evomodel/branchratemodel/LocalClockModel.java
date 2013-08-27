@@ -90,9 +90,13 @@ public class LocalClockModel extends AbstractBranchRateModel {
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         updateNodeClocks = true;
+        fireModelChanged();
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (trunkClock != null && variable == trunkClock.indexParameter) {
+            updateNodeClocks = true;
+        }
         fireModelChanged();
     }
 

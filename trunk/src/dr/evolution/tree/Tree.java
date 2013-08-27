@@ -448,9 +448,25 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
          * @throws dr.evolution.tree.Tree.MissingTaxonException
          *          if a taxon in taxa is not contained in the tree
          */
-        public static BitSet getTipsForTaxa(Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+        public static BitSet getTipsBitSetForTaxa(Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
 
             BitSet tips = new BitSet();
+            for (int n: getTipsForTaxa(tree, taxa)) {
+                tips.set(n);
+            }
+            return tips;
+        }
+
+        /**
+         * @param tree the tree
+         * @param taxa the taxa
+         * @return A HashSet of node numbers.
+         * @throws dr.evolution.tree.Tree.MissingTaxonException
+         *          if a taxon in taxa is not contained in the tree
+         */
+        public static Set<Integer> getTipsForTaxa(Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+
+            Set<Integer> tips = new LinkedHashSet<Integer>();
 
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
 
@@ -460,7 +476,7 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
 
                     NodeRef node = tree.getExternalNode(j);
                     if (tree.getNodeTaxon(node).getId().equals(taxon.getId())) {
-                        tips.set(node.getNumber());
+                        tips.add(node.getNumber());
                         found = true;
                         break;
                     }

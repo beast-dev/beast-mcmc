@@ -87,7 +87,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
             addModel(substitutionModel);
         }
 
-        BitSet tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
+        BitSet tips = Tree.Utils.getTipsBitSetForTaxa(treeModel, taxonList);
         Clade clade = new Clade(index, tips, stemWeight);
         clades.put(tips, clade);
 

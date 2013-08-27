@@ -20,7 +20,9 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
     public static final String INCLUDE_STEM = "includeStem";
     public static final String EXCLUDE_CLADE = "excludeClade";
     public static final String EXTERNAL_BRANCHES = "externalBranches";
-    public static final String BACKBONE = "backbone";
+    public static final String TRUNK = "trunk";
+    public static final String INDEX = "index";
+
 
     public String getParserName() {
         return LOCAL_CLOCK_MODEL;
@@ -79,16 +81,17 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                     } catch (Tree.MissingTaxonException mte) {
                         throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
                     }
-                } else if (xoc.getName().equals(BACKBONE)) {
+                } else if (xoc.getName().equals(TRUNK)) {
 
                     boolean relative = xoc.getAttribute(RELATIVE, false);
 
+                    Parameter indexParameter = (Parameter) xoc.getElementFirstChild(INDEX);
                     Parameter rateParameter = (Parameter) xoc.getChild(Parameter.class);
                     TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
 
 
                     try {
-                        localClockModel.addBackboneClock(taxonList, rateParameter, relative);
+                        localClockModel.addTrunkClock(taxonList, rateParameter, indexParameter, relative);
 
                     } catch (Tree.MissingTaxonException mte) {
                         throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
@@ -137,12 +140,13 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
                             new ElementRule(Parameter.class, "The rate parameter")
                     }, 0, Integer.MAX_VALUE),
-            new ElementRule(BACKBONE,
+            new ElementRule(TRUNK,
                     new XMLSyntaxRule[]{
                             AttributeRule.newBooleanRule(RELATIVE, true),
                             new ElementRule(Taxa.class, "A local clock that will be applied only to " +
-                                    "the 'backbone' branches defined by these taxa"),
+                                    "the 'trunk' branches defined by these taxa"),
                             new ElementRule(Parameter.class, "The rate parameter"),
+                            new ElementRule(INDEX, Parameter.class, "The trunk taxon index", true),
                     }, 0, Integer.MAX_VALUE),
     };
 }

@@ -20,11 +20,14 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* debug seed setting in CLI and GUI
-* debug XMLs
+* amino acid subst models
+* data type chooser (nucleotide/codon frequencies with compatible substitution models)
+  - with ancestral sequence field
+* tooltip for ancestral sequence field  
+* nexus output format
+* mixing data types across partitions 
+* extra labels to separate gamma site model / Invariant sites prop
 * command line interface
   - complex argument for partitions 
-* nucleotide/codon frequencies with compatible substitution models
-* frequency labels for codon triplets
 * simulating indels  
 

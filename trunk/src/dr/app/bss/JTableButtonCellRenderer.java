@@ -19,7 +19,9 @@ public class JTableButtonCellRenderer extends JButton implements
 
 	private PartitionDataList dataList = null;
 	private int columnIndex;
-
+//    private JButton button;
+	private String toolTipText = null;
+    
 	public JTableButtonCellRenderer() {
 		super();
 		setOpaque(true);
@@ -39,7 +41,7 @@ public class JTableButtonCellRenderer extends JButton implements
 			boolean isSelected, boolean hasFocus, int row, int column) {
 
 		JButton button = (JButton) value;
-
+		
 		if (isSelected) {
 			button.setForeground(table.getSelectionForeground());
 			button.setBackground(table.getSelectionBackground());
@@ -89,7 +91,16 @@ public class JTableButtonCellRenderer extends JButton implements
 			button.setText(label);
 		}// END: null check
 
+		// tooltips
+		if (toolTipText != null) {
+			button.setToolTipText(toolTipText);
+		}
+		
 		return button;
 	}// END: getTableCellRendererComponent
 
+	public void setColumnToolTipText(String toolTipText) {
+		this.toolTipText = toolTipText;
+	}// END: setColumnToolTipText
+	
 }// END: class

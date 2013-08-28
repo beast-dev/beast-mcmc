@@ -18,42 +18,46 @@ public class PartitionTableModel extends AbstractTableModel {
 	private PartitionDataList dataList;
 
 	public final static int DATA_INDEX = 0;
-//	public final static int DATA_TYPE_INDEX = 1;
 	public final static int FROM_INDEX = 1;
 	public final static int TO_INDEX = 2;
 	public final static int EVERY_INDEX = 3;
-	public final static int DEMOGRAPHIC_MODEL_INDEX = 4;	
-	public final static int BRANCH_SUBSTITUTION_MODEL_INDEX = 5;
-	public final static int SITE_RATE_MODEL_INDEX = 6;
-	public final static int CLOCK_RATE_MODEL_INDEX = 7;
-	public final static int FREQUENCY_MODEL_INDEX = 8;
-	public final static int ANCESTRAL_SEQUENCE_INDEX = 9;
 	
-	public static String[] COLUMN_NAMES = { "Data", //
-			// "Data Type",
+	//TODO: data type
+	public final static int DATA_TYPE_INDEX = 4;
+	
+	public final static int DEMOGRAPHIC_MODEL_INDEX = 5;	
+	public final static int BRANCH_SUBSTITUTION_MODEL_INDEX = 6;
+	public final static int FREQUENCY_MODEL_INDEX = 7;
+	
+	public final static int SITE_RATE_MODEL_INDEX = 8;
+	public final static int CLOCK_RATE_MODEL_INDEX = 9;
+	public final static int ANCESTRAL_SEQUENCE_INDEX = 10;
+	
+	public static String[] COLUMN_NAMES = { "Input", //
 			"From", //
 			"To", //
 			"Every", //
+			"Data Type", //
 			"Demographic model", //
-			"Branch Substitution Model", //
+			"Substitution Model", //
+			"Frequencies", //
 			"Site Rate Model", //
 			"Clock Rate Model", //
-			"Base Frequencies", //
 			"Ancestral Sequence" //
 	};
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
-			JComboBox.class, //
-			// JComboBox.class, //
-			Integer.class, //
-			Integer.class, // 
-			Integer.class, //
-			JButton.class, //
-			JButton.class, //
-			JButton.class, //
-			JButton.class, //
-			JButton.class, //
-			JButton.class //
+			JComboBox.class, // Input
+			Integer.class, // From
+			Integer.class, // To
+			Integer.class, // Every
+			JComboBox.class, // Data type
+			JButton.class, // Demographic model
+			JButton.class, // Substitution Model
+			JButton.class, // Frequencies
+			JButton.class, // Site Rate Model
+			JButton.class, // Clock Rate Model
+			JButton.class // Ancestral Sequence
 	};
 
 	private DemographicModelEditor demographicModelEditor;
@@ -103,8 +107,11 @@ public class PartitionTableModel extends AbstractTableModel {
 			return true;
 		case DEMOGRAPHIC_MODEL_INDEX:
 			return false;
-//		case DATA_TYPE_INDEX:
-//			return true;
+			
+			//TODO: data type
+		case DATA_TYPE_INDEX:
+			return true;
+			
 		case FROM_INDEX:
 			return true;
 		case TO_INDEX:
@@ -197,6 +204,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			final JButton ancestralSequenceButton = new JButton(COLUMN_NAMES[column]);
 			ancestralSequenceButton.addActionListener(new ListenOpenAncestralSequenceEditor(row));
 			return ancestralSequenceButton;
+			
 		default:
 			return "Error";
 		}

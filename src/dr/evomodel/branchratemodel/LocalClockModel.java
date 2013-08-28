@@ -27,6 +27,8 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.LocalClockModelParser;
@@ -60,6 +62,10 @@ public class LocalClockModel extends AbstractBranchRateModel {
 
         this.globalRateParameter = globalRateParameter;
         addVariable(globalRateParameter);
+
+        // add the super class' tree traits (just the rate)
+        helper.addTrait(this);
+
     }
 
     public void addExternalBranchClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate) throws Tree.MissingTaxonException {
@@ -80,12 +86,37 @@ public class LocalClockModel extends AbstractBranchRateModel {
     }
 
     public void addTrunkClock(TaxonList taxonList, Parameter rateParameter, Parameter indexParameter, boolean isRelativeRate) throws Tree.MissingTaxonException {
+        if (trunkClock != null) {
+            throw new RuntimeException("Trunk already defined for this LocalClockModel");
+        }
+
         List<Integer> tipList = new ArrayList<Integer>(Tree.Utils.getTipsForTaxa(treeModel, taxonList));
         trunkClock = new LocalClock(rateParameter, indexParameter, isRelativeRate, tipList, ClockType.TRUNK);
         addVariable(rateParameter);
         if (indexParameter != null) {
             addVariable(indexParameter);
         }
+
+        helper.addTrait("trunk", new TreeTrait.S() {
+            @Override
+            public String getTraitName() {
+                return "trunk";
+            }
+
+            @Override
+            public Intent getIntent() {
+                return Intent.BRANCH;
+            }
+
+            @Override
+            public String getTrait(Tree tree, NodeRef node) {
+                setupNodeClocks(tree);
+                if (nodeClockMap.get(node) == trunkClock) {
+                    return "T";
+                }
+                return "B";
+            }
+        });
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -110,6 +141,15 @@ public class LocalClockModel extends AbstractBranchRateModel {
     protected void acceptState() {
     }
 
+    // TreeTraitProvider overrides
+
+    public TreeTrait[] getTreeTraits() {
+        return helper.getTreeTraits();
+    }
+
+    public TreeTrait getTreeTrait(String key) {
+        return helper.getTreeTrait(key);
+    }
 
     // BranchRateModel implementation
 
@@ -119,17 +159,7 @@ public class LocalClockModel extends AbstractBranchRateModel {
             throw new IllegalArgumentException("root node doesn't have a rate!");
         }
 
-        if (updateNodeClocks) {
-            nodeClockMap.clear();
-            setupRateParameters(tree, tree.getRoot(), new BitSet());
-
-            if (trunkClock != null) {
-                // backbone will overwrite other local clocks
-                setupTrunkRates(tree, tree.getRoot());
-            }
-
-            updateNodeClocks = false;
-        }
+        setupNodeClocks(tree);
 
         double rate = globalRateParameter.getParameterValue(0);
 
@@ -143,6 +173,21 @@ public class LocalClockModel extends AbstractBranchRateModel {
         }
 
         return rate;
+    }
+
+    private void setupNodeClocks(final Tree tree) {
+        if (updateNodeClocks) {
+            nodeClockMap.clear();
+            setupRateParameters(tree, tree.getRoot(), new BitSet());
+
+            if (trunkClock != null) {
+                // backbone will overwrite other local clocks
+                setupTrunkRates(tree, tree.getRoot());
+            }
+
+            updateNodeClocks = false;
+        }
+
     }
 
     private void setupRateParameters(Tree tree, NodeRef node, BitSet tips) {
@@ -281,4 +326,5 @@ public class LocalClockModel extends AbstractBranchRateModel {
         private final boolean excludeClade;
     }
 
+    private final Helper helper = new Helper();
 }

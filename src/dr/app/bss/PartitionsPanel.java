@@ -99,11 +99,6 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellEditor(new JTableComboBoxCellEditor());
 		column.setMinWidth(100);
 		
-//		column = partitionTable.getColumnModel().getColumn(
-//				PartitionTableModel.DATA_TYPE_INDEX);
-//		column.setCellEditor(new JTableComboBoxCellEditor());
-//		column.setCellRenderer(new JTableComboBoxCellRenderer());
-
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.FROM_INDEX);
 		column.setCellRenderer(
@@ -124,6 +119,14 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
 						0, 2)));
 		column.setPreferredWidth(80);
+
+		
+		//TODO: data type
+		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.DATA_TYPE_INDEX);
+//		column.setCellEditor(new JTableComboBoxCellEditor());
+//		column.setCellRenderer(new JTableComboBoxCellRenderer());
+		
 		
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.DEMOGRAPHIC_MODEL_INDEX);
@@ -136,6 +139,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.FREQUENCY_MODEL_INDEX);
+		column.setCellRenderer(new JTableButtonCellRenderer());
+		column.setCellEditor(new JTableButtonCellEditor());
+		
+		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.SITE_RATE_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
@@ -145,16 +153,14 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
-		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.FREQUENCY_MODEL_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor());
-
+		String toolTipText = "Leave this field empty to start from a random ancestral sequence.";
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.ANCESTRAL_SEQUENCE_INDEX);
-		column.setCellRenderer(new JTableButtonCellRenderer());
+		JTableButtonCellRenderer jTableButtonCellRenderer = new JTableButtonCellRenderer();
+		jTableButtonCellRenderer.setColumnToolTipText(toolTipText);
+		column.setCellRenderer(jTableButtonCellRenderer);
 		column.setCellEditor(new JTableButtonCellEditor());
-
+		
 		ActionPanel actionPanel = new ActionPanel(false);
 		actionPanel.setAddAction(addPartitionAction);
 		actionPanel.setRemoveAction(removePartitionAction);

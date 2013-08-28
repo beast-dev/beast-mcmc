@@ -33,12 +33,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     private Integer[] storedParents;
     private HashMap<Integer, Double> infectionTimes;
     private HashMap<Integer, Double> storedInfectionTimes;
-    private InnerIntegral probFunct;
+    private IntegrableUnivariateFunction probFunct;
     private boolean likelihoodKnown;
     private boolean storedLikelihoodKnown;
     private double logLikelihood;
     private double storedLogLikelihood;
     private boolean hasGeography;
+    private boolean integrateToInfinity;
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
     public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
@@ -57,7 +58,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
         infectionTimes = treeLikelihood.getInfTimesMap();
-        probFunct = new InnerIntegral();
+        integrateToInfinity =  kernelAlpha.getBounds().getUpperLimit(0)==Double.POSITIVE_INFINITY;
+        if(spatialKernal!=null && integrateToInfinity){
+            probFunct = new InnerIntegralTransformed(new InnerIntegral());
+        } else {
+            probFunct = new InnerIntegral();
+        }
         likelihoodKnown = false;
         hasGeography = spatialKernal!=null;
     }
@@ -101,7 +107,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
             double logNormalisationValue;
             if(hasGeography){
                 // @todo don't calculate this if neither alpha nor the infection times have changed?
-                logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+                if(integrateToInfinity){
+                    logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, 1));
+                } else {
+                    logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+                }
             } else {
                 logNormalisationValue = Math.log(aAlpha()/Math.pow(bAlpha(), N));
             }
@@ -188,20 +198,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
 
     private class InnerIntegral implements IntegrableUnivariateFunction {
 
-        RiemannApproximation finiteIntegrator;
-        InfiniteUpperLimitRiemannApproximation infiniteIntegrator;
+        RiemannApproximation integrator;
 
         private InnerIntegral(){
-            finiteIntegrator = new RiemannApproximation(50);
-            infiniteIntegrator = new InfiniteUpperLimitRiemannApproximation(1, 0.001);
+            integrator = new RiemannApproximation(50);
         }
 
         public double evaluateIntegral(double a, double b) {
-            if(b!=Double.POSITIVE_INFINITY){
-                return finiteIntegrator.integrate(this, a, b);
-            } else {
-                return infiniteIntegrator.integrate(this, a, b);
-            }
+            return integrator.integrate(this, a, b);
         }
 
         public double evaluate(double argument) {
@@ -217,35 +221,35 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         }
     }
 
-    //rudimentary numerical integrator for infinite limit. Presumes the limit of the function is 0.
+    // integral of the former from 0 to +Infinity
 
-    private class InfiniteUpperLimitRiemannApproximation implements Integral {
+    private class InnerIntegralTransformed implements IntegrableUnivariateFunction {
 
-        final double step;
-        final double tolerance;
+        RiemannApproximation integrator;
+        InnerIntegral originalFunction;
 
-        private InfiniteUpperLimitRiemannApproximation(double step, double tolerance){
-            this.step = step;
-            this.tolerance = tolerance;
+        private InnerIntegralTransformed(InnerIntegral inner){
+            this.originalFunction = inner;
+            integrator = new RiemannApproximation(50);
         }
 
-        public double integrate(UnivariateFunction f, double min, double max) {
-            if(max!=Double.POSITIVE_INFINITY){
-                throw new RuntimeException("Shouldn't be using this integrator for this integral");
-            }
-            double integral = 0;
-            double gridpoint = min;
-            boolean farEnough = false;
-            while(!farEnough){
-                double increase = f.evaluate(gridpoint);
-                integral += increase*step;
-                gridpoint += step;
-                if(Math.abs(increase)<tolerance){
-                    farEnough = true;
-                }
-            }
-            return integral;
+        public double evaluateIntegral(double a, double b) {
+            return integrator.integrate(this, a, b);
         }
+
+        public double evaluate(double argument) {
+            return originalFunction.evaluate(argument/(1-Math.pow(argument,2)))/Math.pow(1-argument,2);
+        }
+
+        public double getLowerBound() {
+            return 0;
+        }
+
+        public double getUpperBound() {
+            return 1;
+        }
+
+
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

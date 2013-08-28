@@ -56,14 +56,20 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
         boolean negativeMask = xo.getBooleanAttribute(NEGATIVE);
         String maskString = (String)xo.getElementFirstChild(MASK);
 
-        String[] maskArray = maskString.split("\\s+");
-        if (maskArray.length != siteList.getSiteCount()) {
-            throw new XMLParseException("The mask needs to be the same length as the alignment");
+        boolean[] mask = new boolean[siteList.getSiteCount()];
+        int k = 0;
+        for (char c : maskString.toCharArray()) {
+            if (Character.isDigit(c)) {
+                if (k >= mask.length) {
+                    break;
+                }
+                mask[k] = (c == '0' ? negativeMask : !negativeMask);
+                k++;
+            }
         }
 
-        boolean[] mask = new boolean[maskArray.length];
-        for (int i = 0; i < maskArray.length; i++) {
-            mask[i] = (Boolean.parseBoolean(maskArray[i]) != negativeMask);
+        if (k != mask.length) {
+            throw new XMLParseException("The mask needs to be the same length as the alignment (spaces are ignored)");
         }
 
         SitePatterns patterns = new SitePatterns(siteList, mask, false, false);
@@ -84,9 +90,9 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-        AttributeRule.newBooleanRule(NEGATIVE, true),
-        new ElementRule(SiteList.class),
-        new ElementRule(MASK, String.class, "A parameter of 1s and 0s that represent included and excluded sites")
+            AttributeRule.newBooleanRule(NEGATIVE, true),
+            new ElementRule(SiteList.class),
+            new ElementRule(MASK, String.class, "A parameter of 1s and 0s that represent included and excluded sites")
     };
 
     public String getParserDescription() {

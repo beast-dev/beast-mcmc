@@ -118,7 +118,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 //    public SitePatterns(Alignment alignment, int from, int to, int every, boolean unique) {
 //        this(alignment, null, from, to, every, unique);
 //    }
-    
+
     /**
      * Constructor
      */
@@ -145,7 +145,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         }
         this.strip = strip;
         this.unique = unique;
-        
+
         setPatterns(alignment, from, to, every);
     }
 
@@ -153,14 +153,53 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * Constructor
      */
     public SitePatterns(SiteList siteList) {
-        this(siteList, -1, -1, 1);
+        this(siteList, -1, -1, 1, true, true);
     }
 
     /**
      * Constructor
      */
     public SitePatterns(SiteList siteList, int from, int to, int every) {
+        this(siteList, from, to, every, true, true);
+    }
+
+    /**
+     * Constructor
+     */
+    public SitePatterns(SiteList siteList, int from, int to, int every, boolean strip) {
+        this(siteList, from, to, every, strip, true);
+    }
+
+    /**
+     * Constructor
+     */
+    public SitePatterns(SiteList siteList, int from, int to, int every, boolean strip, boolean unique) {
+        this.strip = strip;
+        this.unique = unique;
         setPatterns(siteList, from, to, every);
+    }
+
+    /**
+     * Constructor
+     */
+    public SitePatterns(SiteList siteList, boolean[] mask) {
+        this(siteList, mask, true, true);
+    }
+
+    /**
+     * Constructor
+     */
+    public SitePatterns(SiteList siteList, boolean[] mask, boolean strip) {
+        this(siteList, mask, strip, true);
+    }
+
+    /**
+     * Constructor
+     */
+    public SitePatterns(SiteList siteList, boolean[] mask, boolean strip, boolean unique) {
+        this.strip = strip;
+        this.unique = unique;
+        setPatterns(siteList, mask);
     }
 
     public SiteList getSiteList() {
@@ -177,18 +216,6 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
 
     public int getEvery() {
         return every;
-    }
-
-    public void setFrom(int from) {
-        setPatterns(getSiteList(), from, getTo(), getEvery());
-    }
-
-    public void setTo(int to) {
-        setPatterns(getSiteList(), getFrom(), to, getEvery());
-    }
-
-    public void setEvery(int every) {
-        setPatterns(getSiteList(), getFrom(), getTo(), every);
     }
 
     /**
@@ -239,11 +266,60 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
                 sitePatternIndices[site] = addPattern(pattern);
 
             }  else {
-              sitePatternIndices[site] = -1;
+                sitePatternIndices[site] = -1;
             }
             site++;
         }
     }
+
+    /**
+     * sets up pattern list using an alignment
+     */
+    public void setPatterns(SiteList siteList, boolean[] mask) {
+
+        this.siteList = siteList;
+        if (siteList == null) {
+            return;
+        }
+
+        from = 0;
+        to = siteList.getSiteCount() - 1;
+        every = 1;
+
+        siteCount = siteList.getSiteCount();
+
+        patternCount = 0;
+
+        patterns = new int[siteCount][];
+
+        sitePatternIndices = new int[siteCount];
+        weights = new double[siteCount];
+
+        invariantCount = 0;
+        int[] pattern;
+
+        int site = 0;
+
+        for (int i = from; i <= to; i += every) {
+            pattern = siteList.getSitePattern(i);
+
+            if (mask[i]) {
+                if (!strip || !isInvariant(pattern) ||
+                        (!isGapped(pattern) &&
+                                !isAmbiguous(pattern) &&
+                                !isUnknown(pattern))
+                        ) {
+
+                    sitePatternIndices[site] = addPattern(pattern);
+
+                }  else {
+                    sitePatternIndices[site] = -1;
+                }
+                site++;
+            }
+        }
+    }
+
 
     /**
      * adds a pattern to the pattern list

@@ -26,13 +26,11 @@ import java.util.ArrayList;
 public class SimpleOutbreak extends AbstractOutbreak {
 
     public static final String SIMPLE_OUTBREAK = "simpleOutbreak";
-    private RiemannApproximation integrator;
     private Parameter estimatedInfectionVariance;
 
     public SimpleOutbreak(String name, Taxa taxa, Parameter estimatedInfectionVariance, boolean hasGeography,
                           Parameter riemannSampleSize){
         super(name, taxa);
-        integrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
         this.estimatedInfectionVariance = estimatedInfectionVariance;
         cases = new ArrayList<AbstractCase>();
         hasLatentPeriods = false;

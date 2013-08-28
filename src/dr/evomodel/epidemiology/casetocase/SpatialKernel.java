@@ -20,12 +20,10 @@ import java.lang.reflect.InvocationTargetException;
 public abstract class SpatialKernel extends AbstractModel implements IntegrableUnivariateFunction {
 
     private Parameter aParam;
-    private Parameter storeda;
 
     public SpatialKernel(String name, Parameter a){
         super(name);
         this.aParam = a;
-        storeda = new Parameter.Default(a.getParameterValue(0));
         this.addVariable(a);
     }
 
@@ -83,11 +81,9 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     }
 
     protected void storeState(){
-        storeda = new Parameter.Default(aParam.getParameterValue(0));
     }
 
     protected void restoreState(){
-        aParam = storeda;
     }
 
     public double value(double[] point1, double[] point2){
@@ -99,7 +95,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
-        // nothing to do?
+        fireModelChanged();
     }
 
     protected void acceptState(){

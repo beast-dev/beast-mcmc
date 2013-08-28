@@ -37,8 +37,6 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     public double doOperation(){
 
-        c2cLikelihood.debugOutputTree("opBeforeNPS.nex");
-
         TreeModel tree = c2cLikelihood.getTree();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
         int externalNodeCount = tree.getExternalNodeCount();
@@ -55,11 +53,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         }
         double hr = adjustTree(tree, node, branchMap, c2cLikelihood.isExtended());
 
-        c2cLikelihood.debugOutputTree("opAfterNPS.nex");
-
         return hr;
-
-
     }
 
 

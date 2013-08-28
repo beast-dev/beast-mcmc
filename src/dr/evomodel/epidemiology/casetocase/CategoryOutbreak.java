@@ -29,11 +29,9 @@ import java.util.ArrayList;
 public class CategoryOutbreak extends AbstractOutbreak {
 
     public static final String CATEGORY_OUTBREAK = "categoryOutbreak";
-    private RiemannApproximation integrator;
 
     public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, Parameter riemannSampleSize){
         super(name, taxa);
-        integrator = new RiemannApproximation((int)riemannSampleSize.getParameterValue(0));
         cases = new ArrayList<AbstractCase>();
         hasLatentPeriods = false;
         this.hasGeography = hasGeography;

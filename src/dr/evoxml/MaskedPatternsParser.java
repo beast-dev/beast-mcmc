@@ -28,6 +28,7 @@ package dr.evoxml;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SiteList;
+import dr.evolution.alignment.SitePatterns;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -50,27 +51,22 @@ public class MaskedPatternsParser extends AbstractXMLObjectParser {
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Patterns patterns = null;
-
         SiteList siteList = (SiteList)xo.getChild(SiteList.class);
 
         boolean negativeMask = xo.getBooleanAttribute(NEGATIVE);
-        String mask = (String)xo.getElementFirstChild(MASK);
+        String maskString = (String)xo.getElementFirstChild(MASK);
 
-        String[] maskArray = mask.split("\\s+");
+        String[] maskArray = maskString.split("\\s+");
         if (maskArray.length != siteList.getSiteCount()) {
             throw new XMLParseException("The mask needs to be the same length as the alignment");
         }
 
+        boolean[] mask = new boolean[maskArray.length];
         for (int i = 0; i < maskArray.length; i++) {
-            if (Boolean.parseBoolean(maskArray[i]) != negativeMask) {
-                if (patterns == null) {
-                    patterns = new Patterns(siteList, i, i, 1);
-                } else {
-                    patterns.addPatterns(siteList, i, i, 1);
-                }
-            }
+            mask[i] = (Boolean.parseBoolean(maskArray[i]) != negativeMask);
         }
+
+        SitePatterns patterns = new SitePatterns(siteList, mask, false, false);
 
         if (patterns == null) {
             throw new XMLParseException("The mask needs include at least one pattern");

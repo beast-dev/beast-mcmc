@@ -271,15 +271,14 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String CASE_ID = "caseID";
         public static final String CULL_DAY = "cullDay";
         public static final String EXAMINATION_DAY = "examinationDay";
-        public static final String COORDINATES = "coordinates";
+        public static final String COORDINATES = "spatialCoordinates";
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
         public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodDistribution";
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
-            final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY)
-                    ? (Boolean) xo.getAttribute(HAS_GEOGRAPHY) : false;
+            final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
             CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography, riemannSampleSize);
             for(int i=0; i<xo.getChildCount(); i++){

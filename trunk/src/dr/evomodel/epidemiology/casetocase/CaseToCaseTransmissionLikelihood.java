@@ -48,16 +48,18 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         this.outbreak = outbreak;
         this.treeLikelihood = treeLikelihood;
         this.spatialKernel = spatialKernal;
-        kernelAlpha = spatialKernal.geta();
+        if(spatialKernal!=null){
+            kernelAlpha = spatialKernal.geta();
+            this.addModel(spatialKernal);
+        }
         this.transmissionRate = transmissionRate;
         hasLatentPeriods = outbreak.hasLatentPeriods();
         this.addModel(treeLikelihood);
-        this.addModel(spatialKernal);
         this.addVariable(transmissionRate);
         infectionTimes = treeLikelihood.getInfTimesMap();
         probFunct = new InnerIntegral();
         likelihoodKnown = false;
-        hasGeography = outbreak.hasGeography;
+        hasGeography = spatialKernal!=null;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -278,7 +280,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(CaseToCaseTreeLikelihood.class, "The tree likelihood"),
-                new ElementRule(SpatialKernel.class, "The spatial kernel"),
+                new ElementRule(SpatialKernel.class, "The spatial kernel", 0, 1),
                 new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate")
         };
 

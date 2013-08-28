@@ -682,8 +682,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             throw new RuntimeException("Partition rules are violated");
         }
 
-        debugOutputTree("minirunTree.nex");
-
         final NodeRef root = treeModel.getRoot();
 
         // unnormalised probability

@@ -162,7 +162,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         }
 
         public double evaluate(double argument, double alpha){
-            return Math.pow(argument, alpha);
+            return Math.pow(argument, -alpha);
         }
 
         public double evaluateIntegral(double a, double b){

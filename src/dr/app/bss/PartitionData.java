@@ -319,8 +319,8 @@ public class PartitionData implements Serializable {
 			"CG", // GTR
 			"CT", // GTR
 			"GT", // GTR
-			"Kappa 1", // TN93
-			"Kappa 2", // TN93
+			"Kappa 1 (A-G)", // TN93
+			"Kappa 2 (C-T)", // TN93
 			"Omega value", // Yang Codon Model
 			"Kappa value" // Yang Codon Model
 	};
@@ -536,67 +536,68 @@ public class PartitionData implements Serializable {
 			"C frequency", // Nucleotide frequencies
 			"G frequency", // Nucleotide frequencies
 			"T frequency", // Nucleotide frequencies
-			"Codon frequencies 1", //
-			"Codon frequencies 2", //
-			"Codon frequencies 3", //
-			"Codon frequencies 4", //
-			"Codon frequencies 5", //
-			"Codon frequencies 6", //
-			"Codon frequencies 7", //
-			"Codon frequencies 8", //
-			"Codon frequencies 9", //
-			"Codon frequencies 10", //
-			"Codon frequencies 11", //
-			"Codon frequencies 12", //
-			"Codon frequencies 13", //
-			"Codon frequencies 14", //
-			"Codon frequencies 15", //
-			"Codon frequencies 16", //
-			"Codon frequencies 17", //
-			"Codon frequencies 18", //
-			"Codon frequencies 19", //
-			"Codon frequencies 20", //
-			"Codon frequencies 21", //
-			"Codon frequencies 22", //
-			"Codon frequencies 23", //
-			"Codon frequencies 24", //
-			"Codon frequencies 25", //
-			"Codon frequencies 26", //
-			"Codon frequencies 27", //
-			"Codon frequencies 28", //
-			"Codon frequencies 29", //
-			"Codon frequencies 30", //
-			"Codon frequencies 31", //
-			"Codon frequencies 32", //
-			"Codon frequencies 33", //
-			"Codon frequencies 34", //
-			"Codon frequencies 35", //
-			"Codon frequencies 36", //
-			"Codon frequencies 37", //
-			"Codon frequencies 38", //
-			"Codon frequencies 39", //
-			"Codon frequencies 40", //
-			"Codon frequencies 41", //
-			"Codon frequencies 42", //
-			"Codon frequencies 43", //
-			"Codon frequencies 44", //
-			"Codon frequencies 45", //
-			"Codon frequencies 46", //
-			"Codon frequencies 47", //
-			"Codon frequencies 48", //
-			"Codon frequencies 49", //
-			"Codon frequencies 50", //
-			"Codon frequencies 51", //
-			"Codon frequencies 52", //
-			"Codon frequencies 53", //
-			"Codon frequencies 54", //
-			"Codon frequencies 55", //
-			"Codon frequencies 56", //
-			"Codon frequencies 57", //
-			"Codon frequencies 58", //
-			"Codon frequencies 59", //
-			"Codon frequencies 60", //
-			"Codon frequencies 61", //
+            "AAA frequency", //
+            "AAC frequency", //
+            "AAG frequency", //
+            "AAT frequency", //
+            "ACA frequency", //
+            "ACC frequency", //
+            "ACG frequency", //
+            "ACT frequency", //
+            "AGA frequency", //
+            "AGC frequency", //
+            "AGG frequency", //
+            "AGT frequency", //
+            "ATA frequency", //
+            "ATC frequency", //
+            "ATG frequency", //
+            "ATT frequency", //
+            "CAA frequency", //
+            "CAC frequency", //
+            "CAG frequency", //
+            "CAT frequency", //
+            "CCA frequency", //
+            "CCC frequency", //
+            "CCG frequency", //
+            "CCT frequency", //
+            "CGA frequency", //
+            "CGC frequency", //
+            "CGG frequency", //
+            "CGT frequency", //
+            "CTA frequency", //
+            "CTC frequency", //
+            "CTG frequency", //
+            "CTT frequency", //
+            "GAA frequency", //
+            "GAC frequency", //
+            "GAG frequency", //
+            "GAT frequency", //
+            "GCA frequency", //
+            "GCC frequency", //
+            "GCG frequency", //
+            "GCT frequency", //
+            "GGA frequency", //
+            "GGC frequency", //
+            "GGG frequency", //
+            "GGT frequency", //
+            "GTA frequency", //
+            "GTC frequency", //
+            "GTG frequency", //
+            "GTT frequency", //
+            "TAC frequency", //
+            "TAT frequency", //
+            "TCA frequency", //
+            "TCC frequency", //
+            "TCG frequency", //
+            "TCT frequency", //
+            "TGC frequency", //
+            "TGG frequency", //
+            "TGT frequency", //
+            "TTA frequency", //
+            "TTC frequency", //
+            "TTG frequency", //
+            "TTT frequency"
+			
 	};
 
 	public int[][] frequencyParameterIndices = { { 0, 1, 2, 3 }, // Nucleotidefrequencies
@@ -747,7 +748,7 @@ public class PartitionData implements Serializable {
 	}
 	
 	public static String[] siteRateModels = { "No Model", //
-			"Gamma Site Rate Model" //
+			"Site Rate Model" //
 	};
 
 	public static String[] siteRateModelParameterNames = new String[] {

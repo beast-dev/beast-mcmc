@@ -21,7 +21,9 @@ public class JTableButtonCellEditor extends DefaultCellEditor {
 	private boolean isPushed;
 
 	public JTableButtonCellEditor() {
+		
 		super(new JCheckBox());
+		
 		button = new JButton();
 		button.setOpaque(true);
 		button.addActionListener(new ActionListener() {
@@ -29,7 +31,8 @@ public class JTableButtonCellEditor extends DefaultCellEditor {
 				fireEditingStopped();
 			}
 		});
-	}
+
+	}// END: Constructor
 
 	public Component getTableCellEditorComponent(JTable table,
 			Object value, boolean isSelected, int row, int column) {

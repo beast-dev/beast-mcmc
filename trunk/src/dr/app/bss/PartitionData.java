@@ -26,7 +26,13 @@ import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.Blosum62;
+import dr.evomodel.substmodel.CPREV;
+import dr.evomodel.substmodel.Dayhoff;
 import dr.evomodel.substmodel.EmpiricalRateMatrix;
+import dr.evomodel.substmodel.JTT;
+import dr.evomodel.substmodel.LG;
+import dr.evomodel.substmodel.MTREV;
+import dr.evomodel.substmodel.WAG;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
@@ -315,7 +321,14 @@ public class PartitionData implements Serializable {
 			"GTR", //
 			"TN93", //
 			"GY94CodonModel", //
-            "Blosum62"	
+            "Blosum62", //	
+			"CPREV", //
+			"Dayhoff", //
+			"FLU", //
+			"JTT", //
+			"LG", //
+			"MTREV", //
+			"WAG" //
 	};
 
 	public static String[] substitutionParameterNames = new String[] {
@@ -336,8 +349,14 @@ public class PartitionData implements Serializable {
 			{ 1, 2, 3, 4, 5, 6 }, // GTR
 			{ 7, 8 }, // TN93
 			{ 9, 10 }, // Yang Codon Model
-			{} // Blosum62
-
+			{}, // Blosum62
+			{}, // CPREV
+			{}, // Dayhoff
+			{}, // FLU
+			{}, // JTT
+			{}, // LG
+			{}, // MTREV
+			{} // WAG
 	};
 
 	public double[] substitutionParameterValues = new double[] { 1.0, // Kappa-value
@@ -426,6 +445,78 @@ public class PartitionData implements Serializable {
 
 			branchModel = new HomogeneousBranchModel(
 					empiricalAminoAcidModel);
+			
+        } else if (this.substitutionModelIndex == 5) { // CPREV
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			EmpiricalRateMatrix rateMatrix = CPREV.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);
+			
+        } else if (this.substitutionModelIndex == 6) { // Dayhoff
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			EmpiricalRateMatrix rateMatrix = Dayhoff.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);
+		
+        } else if (this.substitutionModelIndex == 7) { // JTT
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			EmpiricalRateMatrix rateMatrix = JTT.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);
+		
+        } else if (this.substitutionModelIndex == 8) { // LG
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			EmpiricalRateMatrix rateMatrix = LG.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);
+			
+        } else if (this.substitutionModelIndex == 9) { // MTREV
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			EmpiricalRateMatrix rateMatrix = MTREV.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);	
+			
+        } else if (this.substitutionModelIndex == 10) { // WAG
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			EmpiricalRateMatrix rateMatrix = WAG.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);	
 			
 		} else {
 

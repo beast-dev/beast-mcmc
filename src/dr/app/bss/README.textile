@@ -23,9 +23,8 @@ h1. TODO
 * amino acid subst models
 * data type chooser (nucleotide/codon frequencies with compatible substitution models)
   - with ancestral sequence field
-* tooltip for ancestral sequence field  
-* nexus output format
 * mixing data types across partitions 
+* nexus output format
 * extra labels to separate gamma site model / Invariant sites prop
 * command line interface
   - complex argument for partitions 

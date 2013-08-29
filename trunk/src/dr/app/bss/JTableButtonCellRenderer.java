@@ -19,7 +19,6 @@ public class JTableButtonCellRenderer extends JButton implements
 
 	private PartitionDataList dataList = null;
 	private int columnIndex;
-//    private JButton button;
 	private String toolTipText = null;
     
 	public JTableButtonCellRenderer() {

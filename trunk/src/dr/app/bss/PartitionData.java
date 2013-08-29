@@ -23,6 +23,8 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.Blosum62;
+import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
@@ -297,6 +299,8 @@ public class PartitionData implements Serializable {
 	// ---SUBSTITUTION MODELS---//
 	// ///////////////////////////
 
+	//TODO: amino acid models
+	
 	public int substitutionModelIndex = 0;
 
 	public String substitutionModelIdref = Utils.SUBSTITUTION_MODEL;
@@ -328,7 +332,8 @@ public class PartitionData implements Serializable {
 	public static int[][] substitutionParameterIndices = { { 0 }, // HKY
 			{ 1, 2, 3, 4, 5, 6 }, // GTR
 			{ 7, 8 }, // TN93
-			{ 9, 10 }, // Yang Codon Model
+			{ 9, 10 } // Yang Codon Model
+
 	};
 
 	public double[] substitutionParameterValues = new double[] { 1.0, // Kappa-value

@@ -5,6 +5,7 @@ import java.io.Serializable;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
@@ -14,6 +15,7 @@ import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
@@ -312,7 +314,8 @@ public class PartitionData implements Serializable {
 	public static String[] substitutionModels = { "HKY", //
 			"GTR", //
 			"TN93", //
-			"GY94CodonModel" //
+			"GY94CodonModel", //
+            "Blosum62"	
 	};
 
 	public static String[] substitutionParameterNames = new String[] {
@@ -332,7 +335,8 @@ public class PartitionData implements Serializable {
 	public static int[][] substitutionParameterIndices = { { 0 }, // HKY
 			{ 1, 2, 3, 4, 5, 6 }, // GTR
 			{ 7, 8 }, // TN93
-			{ 9, 10 } // Yang Codon Model
+			{ 9, 10 }, // Yang Codon Model
+			{} // Blosum62
 
 	};
 
@@ -411,6 +415,18 @@ public class PartitionData implements Serializable {
 
 			branchModel = new HomogeneousBranchModel(yangCodonModel);
 
+		} else if (this.substitutionModelIndex == 4) { // Blosum62
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			EmpiricalRateMatrix rateMatrix = Blosum62.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);
+			
 		} else {
 
 			System.out.println("Not yet implemented");
@@ -534,14 +550,16 @@ public class PartitionData implements Serializable {
 	public int frequencyModelIndex = 0;
 
 	public static String[] frequencyModels = { "Nucleotide frequencies", //
-			"Codon frequencies" };
+			"Codon frequencies", //
+			"Amino acid frequencies" 
+			};
 
 	public static String[] frequencyParameterNames = new String[] {
 			"A frequency", // Nucleotide frequencies
 			"C frequency", // Nucleotide frequencies
 			"G frequency", // Nucleotide frequencies
 			"T frequency", // Nucleotide frequencies
-            "AAA frequency", //
+            "AAA frequency", // Codon frequencies
             "AAC frequency", //
             "AAG frequency", //
             "AAT frequency", //
@@ -601,25 +619,50 @@ public class PartitionData implements Serializable {
             "TTA frequency", //
             "TTC frequency", //
             "TTG frequency", //
-            "TTT frequency"
+            "TTT frequency", // Codon frequencies
+            "amino acid frequency 1", //
+            "amino acid frequency 2", //
+            "amino acid frequency 3", //
+            "amino acid frequency 4", //
+            "amino acid frequency 5", //
+            "amino acid frequency 6", //
+            "amino acid frequency 7", //
+            "amino acid frequency 8", //
+            "amino acid frequency 9", //
+            "amino acid frequency 10", //
+            "amino acid frequency 11", //
+            "amino acid frequency 12", //
+            "amino acid frequency 13", //
+            "amino acid frequency 14", //
+            "amino acid frequency 15", //
+            "amino acid frequency 16", //
+            "amino acid frequency 17", //
+            "amino acid frequency 18", //
+            "amino acid frequency 19", //
+            "amino acid frequency 20" //
 			
 	};
 
-	public int[][] frequencyParameterIndices = { { 0, 1, 2, 3 }, // Nucleotidefrequencies
+	public int[][] frequencyParameterIndices = { { 0, 1, 2, 3 }, // NucleotideFrequencies
 			{ 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, //
 					14, 15, 16, 17, 18, 19, 20, 21, 22, 23, //
 					24, 25, 26, 27, 28, 29, 30, 31, 32, 33, //
 					34, 35, 36, 37, 38, 39, 40, 41, 42, 43, //
 					44, 45, 46, 47, 48, 49, 50, 51, 52, 53, //
 					54, 55, 56, 57, 58, 59, 60, 61, 62, 63, //
-					64 } // Codonfrequencies
+					64 }, // CodonFrequencies
+			{ 65, 66, 67, 68, 69, //
+					70, 71, 72, 73, 74, //
+					75, 76, 77, 78, 79, //
+					80, 81, 82, 83, 84 //
+			} // AminoAcidFrequencies
 	};
 
 	public double[] frequencyParameterValues = new double[] { 0.25, // A frequency
 			0.25, // C frequency
 			0.25, // G frequency
 			0.25, // T frequency
-			0.0163936, // codonfrequencies1
+			0.0163936, // AAA frequency
 			0.01639344, //
 			0.01639344, //
 			0.01639344, //
@@ -679,7 +722,27 @@ public class PartitionData implements Serializable {
 			0.01639344, //
 			0.01639344, //
 			0.01639344, //
-			0.01639344 // codonfrequencies61
+			0.01639344, // TTT frequency
+			0.05, // aminoacidfrequency1
+			0.05, // aminoacidfrequency2
+			0.05, // aminoacidfrequency3
+			0.05, // aminoacidfrequency4
+			0.05, // aminoacidfrequency5
+			0.05, // aminoacidfrequency6
+			0.05, // aminoacidfrequency7
+			0.05, // aminoacidfrequency8
+			0.05, // aminoacidfrequency9
+			0.05, // aminoacidfrequency10
+			0.05, // aminoacidfrequency11
+			0.05, // aminoacidfrequency12
+			0.05, // aminoacidfrequency13
+			0.05, // aminoacidfrequency14
+			0.05, // aminoacidfrequency15
+			0.05, // aminoacidfrequency16
+			0.05, // aminoacidfrequency17
+			0.05, // aminoacidfrequency18
+			0.05, // aminoacidfrequency19
+			0.05 // aminoacidfrequency20
 	};
 
 	public FrequencyModel createFrequencyModel() {
@@ -730,6 +793,18 @@ public class PartitionData implements Serializable {
 					frequencyParameterValues[64] });
 
 			frequencyModel = new FrequencyModel(Codons.UNIVERSAL, freqs);
+
+		} else if (this.frequencyModelIndex == 2) {
+
+			Parameter freqs = new Parameter.Default(new double[] {
+					frequencyParameterValues[65], frequencyParameterValues[66], frequencyParameterValues[67], frequencyParameterValues[68],
+					frequencyParameterValues[69], frequencyParameterValues[70], frequencyParameterValues[71], frequencyParameterValues[72],
+					frequencyParameterValues[73], frequencyParameterValues[74], frequencyParameterValues[75], frequencyParameterValues[76],
+					frequencyParameterValues[77], frequencyParameterValues[78], frequencyParameterValues[79], frequencyParameterValues[80],
+					frequencyParameterValues[81], frequencyParameterValues[82], frequencyParameterValues[83], frequencyParameterValues[84]
+							});
+
+			frequencyModel = new FrequencyModel(AminoAcids.INSTANCE, freqs);
 
 		} else {
 

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implements the subtree slide move where the slide does not affect the transmission tree.
+ * Implements the subtree slide move where the slide moves an entire subtree of the transmission tree.
  *
  * @author Matthew Hall
  *

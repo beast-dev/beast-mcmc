@@ -11,9 +11,8 @@ import dr.inference.model.AbstractModel;
 import java.util.*;
 
 /**
- * Abstract class for outbreaks. Any time periods that are sampled should be handled here; if we are simply assuming
- * an overall rate of, say, becoming infectious then that should be done in CaseToCaseTransmissionLikelihood.
- * Implements PatternList for ease of compatibility with AbstractTreeLikelihood, but there is one and only one pattern.
+ * Abstract class for outbreaks. Implements PatternList for ease of compatibility with AbstractTreeLikelihood, but there
+ * is one and only one pattern.
  *
  * User: Matthew Hall
  * Date: 14/04/13

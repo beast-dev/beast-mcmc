@@ -27,6 +27,7 @@ package dr.app.bss.test;
 
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
@@ -34,6 +35,7 @@ import dr.app.beagle.tools.Partition;
 import dr.app.bss.Utils;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
@@ -43,6 +45,8 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.substmodel.Blosum62;
+import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -61,9 +65,11 @@ public class BeagleSeqSimTest {
         int N = 1;
 		for (int i = 0; i < N; i++) {
 //			simulateTopology();
-			simulateOnePartition();
+//			simulateOnePartition();
 //			simulateTwoPartitions();
 //			simulateThreePartitions(i, N);
+			simulateAminoAcid();
+		
 		}
 		long toc = System.currentTimeMillis();
 		
@@ -405,4 +411,75 @@ public class BeagleSeqSimTest {
 
     }// END: simulateThreePartitions
 
+	static void simulateAminoAcid() {
+
+		try {
+
+			System.out.println("Test case 1: simulateAminoAcid");
+
+			MathUtils.setSeed(666);
+
+			int sequenceLength = 10;
+			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+
+			// create tree
+			NewickImporter importer = new NewickImporter(
+					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+			Tree tree = importer.importTree(null);
+			TreeModel treeModel = new TreeModel(tree);
+
+			// create site model
+			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+					"siteModel");
+
+			// create branch rate model
+			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+			// create Frequency Model
+			Parameter freqs = new Parameter.Default(new double[] { 
+					0.05, 0.05, 0.05, 0.05, 0.05,
+					0.05, 0.05, 0.05, 0.05, 0.05,
+					0.05, 0.05, 0.05, 0.05, 0.05,
+					0.05, 0.05, 0.05, 0.05, 0.05
+			});
+			FrequencyModel freqModel = new FrequencyModel(AminoAcids.INSTANCE,
+					freqs);
+
+			// create substitution model
+			EmpiricalRateMatrix rateMatrix = Blosum62.INSTANCE;
+
+			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+					rateMatrix, freqModel);
+
+			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
+					empiricalAminoAcidModel);
+
+			// create partition
+			Partition partition1 = new Partition(treeModel, //
+					substitutionModel,//
+					siteRateModel, //
+					branchRateModel, //
+					freqModel, //
+					0, // from
+					sequenceLength - 1, // to
+					1 // every
+			);
+
+			partitionsList.add(partition1);
+
+			// feed to sequence simulator and generate data
+			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
+					partitionsList);
+
+			System.out.println(simulator.simulate(simulateInPar).toString());
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+			System.exit(-1);
+
+		} // END: try-catch
+
+	}// END: simulateAminoAcid
+    
 }// END: class

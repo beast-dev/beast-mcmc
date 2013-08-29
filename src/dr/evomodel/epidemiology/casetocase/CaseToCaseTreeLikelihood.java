@@ -1200,14 +1200,19 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 "branches and repeating up to 100 times until a start with nonzero likelihood is found)");
         System.out.print("Attempt: ");
         while(!gotOne){
+            boolean failed = false;
             System.out.print(tries + "...");
             branchMap = prepareExternalNodeMap(new AbstractCase[treeModel.getNodeCount()]);
             //Warning - if the BadPartitionException in randomlyAssignNode might be caused by a bug rather than both
             //likelihoods rounding to zero, you want to stop catching this to investigate.
 
-            partitionAccordingToRandomTT(branchMap);
+            try{
+                partitionAccordingToRandomTT(branchMap);
+            } catch(BadPartitionException e){
+                failed = true;
+            }
 
-            if(calculateLogLikelihood()!=Double.NEGATIVE_INFINITY){
+            if(!failed && calculateLogLikelihood()!=Double.NEGATIVE_INFINITY){
                 gotOne = true;
                 System.out.println("found.");
             }

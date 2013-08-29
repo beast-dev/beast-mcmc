@@ -52,13 +52,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         if(spatialKernal!=null){
             kernelAlpha = spatialKernal.geta();
             this.addModel(spatialKernal);
+            integrateToInfinity =  kernelAlpha.getBounds().getUpperLimit(0)==Double.POSITIVE_INFINITY;
         }
         this.transmissionRate = transmissionRate;
         hasLatentPeriods = outbreak.hasLatentPeriods();
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
         infectionTimes = treeLikelihood.getInfTimesMap();
-        integrateToInfinity =  kernelAlpha.getBounds().getUpperLimit(0)==Double.POSITIVE_INFINITY;
         if(spatialKernal!=null && integrateToInfinity){
             probFunct = new InnerIntegralTransformed(new InnerIntegral());
         } else {

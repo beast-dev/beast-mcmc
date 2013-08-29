@@ -12,7 +12,7 @@ import dr.xml.*;
 import java.util.ArrayList;
 
 /**
- * Implements branch exchange operations that leave the transmission network unchanged. As this already severely
+ * Implements branch exchange operations that leave the transmission tree unchanged. As this already severely
  * restricts the set of eligible pairs of nodes, this is set up as special case of Wide Exchange.
 
  *

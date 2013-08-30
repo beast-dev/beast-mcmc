@@ -5,25 +5,20 @@ import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.DefaultCellEditor;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+
 
 /**
  * @author Filip Bielejec
@@ -40,6 +35,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	private TableColumnHider hider;
 	private JScrollPane scrollPane;
 	private TableColumn column;
+	private int columnIndex;
 	private int partitionsCount;
 
 	private Action addPartitionAction = new AbstractAction("+") {
@@ -93,10 +89,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		add(scrollPane, BorderLayout.CENTER);
 
+		columnIndex = PartitionTableModel.DATA_INDEX;
 		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.DATA_INDEX);
-		column.setCellRenderer(new JTableComboBoxCellRenderer());
-		column.setCellEditor(new JTableComboBoxCellEditor());
+				columnIndex);
+		column.setCellRenderer(new JTableComboBoxCellRenderer(columnIndex));
+		column.setCellEditor(new JTableComboBoxCellEditor(this.dataList));
 		column.setMinWidth(100);
 		
 		column = partitionTable.getColumnModel().getColumn(
@@ -122,10 +119,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		
 		//TODO: data type
+		columnIndex = PartitionTableModel.DATA_TYPE_INDEX;
 		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.DATA_TYPE_INDEX);
-//		column.setCellEditor(new JTableComboBoxCellEditor());
-//		column.setCellRenderer(new JTableComboBoxCellRenderer());
+				columnIndex);
+		column.setCellEditor(new JTableComboBoxCellEditor(this.dataList));
+		column.setCellRenderer(new JTableComboBoxCellRenderer(columnIndex));
 		
 		
 		column = partitionTable.getColumnModel().getColumn(
@@ -209,102 +207,102 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}// END: tableChanged
 	}// END: InteractiveTableModelListener
 
-	public class JTableComboBoxCellRenderer extends JComboBox implements
-			TableCellRenderer {
-
-		private DefaultListCellRenderer comboBoxRenderer = new DefaultListCellRenderer() {
-
-			@Override
-			public Component getListCellRendererComponent(JList list,
-					Object value, int index, boolean isSelected,
-					boolean cellHasFocus) {
-
-				 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-				
-				if (value != null) {
-					
-					TreesTableRecord record = (TreesTableRecord) value;
-					this.setText(record.getName());
-
-				}
-
-				return this;
-			}
-
-		};
-
-		public JTableComboBoxCellRenderer() {
-
-			super();
-			setOpaque(true);
-			this.setRenderer(comboBoxRenderer);
-
-		}// END: Constructor
-
-		public Component getTableCellRendererComponent(JTable table,
-				Object value, boolean isSelected, boolean hasFocus, int row,
-				int column) {
-
-			if (isSelected) {
-
-				this.setForeground(table.getSelectionForeground());
-				this.setBackground(table.getSelectionBackground());
-
-			} else {
-
-				this.setForeground(table.getForeground());
-				this.setBackground(table.getBackground());
-
-			}
-
-			// Select the current value
-			setSelectedItem(value);
-
-			if (value != null) {
-				removeAllItems();
-				addItem(value);
-			}
-
-			return this;
-		}
-	}// END: JTableComboBoxCellRenderer class
-	
-	private class JTableComboBoxCellEditor extends DefaultCellEditor {
-
-		public JTableComboBoxCellEditor() {
-			super(new JComboBox());
-		}
-
-		public Component getTableCellEditorComponent(JTable table,
-				Object value, boolean isSelected, int row, int column) {
-
-			((JComboBox) editorComponent).removeAllItems();
-
-			if (column == PartitionTableModel.DATA_INDEX) {
-
-				for (TreesTableRecord record : dataList.recordsList) {
-					((JComboBox) editorComponent).addItem(record);
-				}// END: fill loop
-				
-//			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
+//	public class JTableComboBoxCellRenderer extends JComboBox implements
+//			TableCellRenderer {
 //
-//				for (String dataType : PartitionData.dataTypes) {
-//					((JComboBox) editorComponent).addItem(dataType);
+//		private DefaultListCellRenderer comboBoxRenderer = new DefaultListCellRenderer() {
+//
+//			@Override
+//			public Component getListCellRendererComponent(JList list,
+//					Object value, int index, boolean isSelected,
+//					boolean cellHasFocus) {
+//
+//				 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+//				
+//				if (value != null) {
+//					
+//					TreesTableRecord record = (TreesTableRecord) value;
+//					this.setText(record.getName());
+//
+//				}
+//
+//				return this;
+//			}
+//
+//		};
+//
+//		public JTableComboBoxCellRenderer() {
+//
+//			super();
+//			setOpaque(true);
+//			this.setRenderer(comboBoxRenderer);
+//
+//		}// END: Constructor
+//
+//		public Component getTableCellRendererComponent(JTable table,
+//				Object value, boolean isSelected, boolean hasFocus, int row,
+//				int column) {
+//
+//			if (isSelected) {
+//
+//				this.setForeground(table.getSelectionForeground());
+//				this.setBackground(table.getSelectionBackground());
+//
+//			} else {
+//
+//				this.setForeground(table.getForeground());
+//				this.setBackground(table.getBackground());
+//
+//			}
+//
+//			// Select the current value
+//			setSelectedItem(value);
+//
+//			if (value != null) {
+//				removeAllItems();
+//				addItem(value);
+//			}
+//
+//			return this;
+//		}
+//	}// END: JTableComboBoxCellRenderer class
+//	
+//	private class JTableComboBoxCellEditor extends DefaultCellEditor {
+//
+//		public JTableComboBoxCellEditor(PartitionDataList dataList) {
+//			super(new JComboBox());
+//		}
+//
+//		public Component getTableCellEditorComponent(JTable table,
+//				Object value, boolean isSelected, int row, int column) {
+//
+//			((JComboBox) editorComponent).removeAllItems();
+//
+//			if (column == PartitionTableModel.DATA_INDEX) {
+//
+//				for (TreesTableRecord record : dataList.recordsList) {
+//					((JComboBox) editorComponent).addItem(record);
 //				}// END: fill loop
-
-			} else {
-
-				// do nothing
-
-			}// END: column check
-
-			((JComboBox) editorComponent).setSelectedItem(value);
-			delegate.setValue(value);
-
-			return editorComponent;
-		}// END: getTableCellEditorComponent
-
-	}// END: JTableComboBoxCellEditor class
+//				
+////			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
+////
+////				for (String dataType : PartitionData.dataTypes) {
+////					((JComboBox) editorComponent).addItem(dataType);
+////				}// END: fill loop
+//
+//			} else {
+//
+//				// do nothing
+//
+//			}// END: column check
+//
+//			((JComboBox) editorComponent).setSelectedItem(value);
+//			delegate.setValue(value);
+//
+//			return editorComponent;
+//		}// END: getTableCellEditorComponent
+//
+//	}// END: JTableComboBoxCellEditor class
 
 	public void hideTreeColumn() {
 		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.DATA_INDEX]);

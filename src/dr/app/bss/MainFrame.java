@@ -193,7 +193,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 							} else {
 
-								//TODO: create TreeModel before simulating, keep string for printing in Terminal
 								TreeModel treeModel = data.createTreeModel();
 								simulatedTreeModelList.add(treeModel);
 										

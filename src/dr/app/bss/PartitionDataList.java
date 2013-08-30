@@ -18,7 +18,7 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 	
 	//List of all Taxa displayed in Taxa Panel
 	public Taxa allTaxa = new Taxa();
-	LinkedList<TreesTableRecord> recordsList = new LinkedList<TreesTableRecord>();
+	public LinkedList<TreesTableRecord> recordsList = new LinkedList<TreesTableRecord>();
 	
 	// do not serialize this two
 	public transient boolean setSeed = false;

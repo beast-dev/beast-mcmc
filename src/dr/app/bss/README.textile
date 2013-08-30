@@ -20,7 +20,6 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* amino acid subst models
 * data type chooser (nucleotide/codon frequencies with compatible substitution models)
   - with ancestral sequence field
 * mixing data types across partitions 

@@ -152,9 +152,10 @@ public class PartitionTableModel extends AbstractTableModel {
 			topologyButton
 					.addActionListener(new ListenOpenDemographicModelEditor(row));
 			return topologyButton;
-			
-//		case DATA_TYPE_INDEX:
-//			return PartitionData.dataTypes[dataList.get(row).dataTypeIndex];
+		
+			//TODO: data type
+		case DATA_TYPE_INDEX:
+			return PartitionData.dataTypes[dataList.get(row).dataTypeIndex];
 		
 		case FROM_INDEX:
 			return dataList.get(row).from;
@@ -219,10 +220,11 @@ public class PartitionTableModel extends AbstractTableModel {
 			dataList.get(row).record = (TreesTableRecord) value;
 			break;
 
-//		case DATA_TYPE_INDEX:
-//			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(
-//					PartitionData.dataTypes, (String) value);
-//			break;
+			//TODO: data type
+		case DATA_TYPE_INDEX:
+			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(
+					PartitionData.dataTypes, (String) value);
+			break;
 
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;

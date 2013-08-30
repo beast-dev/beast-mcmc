@@ -20,6 +20,7 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
+* debug data type choosers
 * mixing data types across partitions 
 * nexus output format
 * command line interface

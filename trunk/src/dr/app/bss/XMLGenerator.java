@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.app.beagle.tools.parsers.PartitionParser;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
@@ -16,6 +17,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -24,6 +26,7 @@ import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
+import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
 import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.substmodel.GTRParser;
 import dr.evomodelxml.substmodel.HKYParser;
@@ -497,6 +500,54 @@ public class XMLGenerator {
 						data.substitutionModelIdref);
 				break;
 
+			case 4: // Blosum62
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;	
+				
+			case 5: // CPREV
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;
+
+			case 6: // Dayhoff
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;
+				
+			case 7: // FLU
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;
+				
+			case 8: // JTT
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;
+				
+			case 9: // LG
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;
+				
+			case 10: // MTREV
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;
+				
+			case 11: // WAG
+
+				writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+						data.substitutionModelIdref);
+				break;
+				
 			}// END: switch
 
 			writer.writeIDref(SiteModel.SITE_MODEL, data.siteRateModelIdref);
@@ -947,6 +998,54 @@ public class XMLGenerator {
 					data.substitutionModelIdref);
 			break;
 
+		case 4: // Blosum62
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;	
+			
+		case 5: // CPREV
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+
+		case 6: // Dayhoff
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
+		case 7: // FLU
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
+		case 8: // JTT
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
+		case 9: // LG
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
+		case 10: // MTREV
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
+		case 11: // WAG
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
 		}// END: switch
 
 		writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
@@ -1089,6 +1188,190 @@ public class XMLGenerator {
 
 			break;
 
+		case 4: // Blosum62
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.BLOSUM_62.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);
+			
+			break;
+
+		case 5: // CPREV
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.CP_REV_45.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);
+			
+			break;
+
+		case 6: // Dayhoff
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.DAYHOFF.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);
+			
+			break;
+
+		case 7: // FLU
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.FLU.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);
+			
+			break;
+
+		case 8: // JTT
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.JTT.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);
+			
+			break;
+
+		case 9: // LG
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.LG.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);
+			
+			break;
+
+		case 10: // MTREV
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.MT_REV_24.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);	
+			
+			break;
+			
+		case 11: // WAG
+
+			writer.writeOpenTag(
+					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.substitutionModelIdref), //
+							new Attribute.Default<String>(
+									EmpiricalAminoAcidModelParser.TYPE,
+									AminoAcidModelType.WAG.getXMLName()) 
+									});
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+			
+			writer.writeCloseTag(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL);
+			
+			break;
+			
 		}// END: switch
 
 	}// END: writeBranchModel
@@ -1152,8 +1435,37 @@ public class XMLGenerator {
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
 
-		}// END: switch
+			break;
 
+		case 2: // Amino acid
+			
+//			dataType = data.createDataType();
+			dataType = AminoAcids.INSTANCE;
+			
+			frequencies = data.frequencyParameterValues[65] + "";
+			for (int i = 66; i < 85; i++) {
+				frequencies += " " + data.frequencyParameterValues[i];
+			}
+			
+			writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, // tagname
+					new Attribute[] { // attributes[]
+							new Attribute.Default<String>(XMLParser.ID,
+									data.frequencyModelIdref), // id
+							new Attribute.Default<String>(DataType.DATA_TYPE,
+//									dataType.getDescription()
+									AminoAcids.DESCRIPTION
+									) // dataType
+					});
+			
+			writeParameter(FrequencyModelParser.FREQUENCIES, null,
+					dataType.getStateCount(), frequencies, writer);
+
+			writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
+			
+			break;
+			
+		}// END: switch
+		
 	}// END: writeFrequencyModel
 
 	@SuppressWarnings("rawtypes")

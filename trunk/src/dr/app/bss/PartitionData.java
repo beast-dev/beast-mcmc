@@ -339,7 +339,7 @@ public class PartitionData implements Serializable {
 			0, // GTR
 			0, // TN93
 			1, // GY94CodonModel
-			2, // 
+			2, // Blosum62
 			2, // CPREV
 			2, // Dayhoff
 			2, // FLU

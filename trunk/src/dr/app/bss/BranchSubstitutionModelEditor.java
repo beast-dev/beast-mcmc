@@ -50,7 +50,7 @@ public class BranchSubstitutionModelEditor {
 		this.row = row;
 		
 		substitutionParameterFields = new RealNumberField[PartitionData.substitutionParameterNames.length];
-		window = new JDialog(owner, "Setup branch substitution model for partition " + (row + 1));
+		window = new JDialog(owner, "Setup substitution model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
 		substitutionCombo = new JComboBox();
@@ -98,7 +98,7 @@ public class BranchSubstitutionModelEditor {
 	private void setSubstitutionArguments() {
 
 		optionPanel.removeAll();
-		optionPanel.addComponents(new JLabel("Branch substitution model:"), substitutionCombo);
+		optionPanel.addComponents(new JLabel("Substitution model:"), substitutionCombo);
 		optionPanel.addSeparator();
 		optionPanel.addLabel("Set parameter values:");
 

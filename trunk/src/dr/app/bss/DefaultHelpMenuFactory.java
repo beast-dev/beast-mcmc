@@ -68,7 +68,7 @@ public class DefaultHelpMenuFactory implements MenuFactory {
 			try {
 				Desktop.getDesktop()
 						.browse(new URI(
-								"http://www.kuleuven.ac.be/aidslab/phylogeography/home.html"));
+								"http://rega.kuleuven.be/cev/ecv/software/buss"));
 			} catch (IOException e) {
 				Utils.handleException(
 						e,

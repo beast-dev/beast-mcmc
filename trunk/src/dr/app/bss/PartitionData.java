@@ -17,6 +17,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxa;
@@ -276,39 +277,42 @@ public class PartitionData implements Serializable {
 	// ---DATA TYPE---//
 	// /////////////////
 
-//	public int dataTypeIndex = 0;
-//
-//	public static String[] dataTypes = { "Nucleotide", //
-//			"Codon" //
-//	};
-//
-//	public DataType createDataType() {
-//
-//		DataType dataType = null;
-//
-//		if (this.dataTypeIndex == 0) { // Nucleotide
-//
-//			dataType = Nucleotides.INSTANCE;
-//
-//		} else if (this.dataTypeIndex == 1) { // Codon
-//
-//			dataType = Codons.UNIVERSAL;
-//
-//		} else {
-//
-//			System.out.println("Not yet implemented");
-//
-//		}
-//
-//		return dataType;
-//	}// END: createDataType
+	public int dataTypeIndex = 0;
+
+	public static String[] dataTypes = { "Nucleotide", //
+			"Codon", //
+			"Amino acid" //
+	};
+
+	public DataType createDataType() {
+
+		DataType dataType = null;
+
+		if (this.dataTypeIndex == 0) { // Nucleotide
+
+			dataType = Nucleotides.INSTANCE;
+
+		} else if (this.dataTypeIndex == 1) { // Codon
+
+			dataType = Codons.UNIVERSAL;
+
+		} else if (this.dataTypeIndex == 2) { // AminoAcid
+
+			dataType = AminoAcids.INSTANCE;
+			
+		} else {
+
+			System.out.println("Not yet implemented");
+
+		}
+
+		return dataType;
+	}// END: createDataType
 
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//
 	// ///////////////////////////
 
-	//TODO: amino acid models
-	
 	public int substitutionModelIndex = 0;
 
 	public String substitutionModelIdref = Utils.SUBSTITUTION_MODEL;

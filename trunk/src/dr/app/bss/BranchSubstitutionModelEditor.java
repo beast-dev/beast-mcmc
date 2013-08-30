@@ -56,8 +56,16 @@ public class BranchSubstitutionModelEditor {
 		substitutionCombo = new JComboBox();
 		substitutionCombo.setOpaque(false);
 
+		int indexOf = 0;
 		for (String substitutionModel : PartitionData.substitutionModels) {
-			substitutionCombo.addItem(substitutionModel);
+
+			if (PartitionData.substitutionCompatibleDataTypes[indexOf] == dataList.get(row).dataTypeIndex) {
+
+				substitutionCombo.addItem(substitutionModel);
+
+			}// END: compatible check
+
+			indexOf++;
 		}// END: fill loop
 
 		substitutionCombo.addItemListener(new ListenSubstitutionCombo());

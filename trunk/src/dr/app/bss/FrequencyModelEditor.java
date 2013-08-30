@@ -63,11 +63,19 @@ public class FrequencyModelEditor {
         scrollPane.getViewport().setOpaque(false);
 
 		frequencyCombo = new JComboBox();
-
+		
+		int indexOf = 0;
 		for (String frequencyModel : PartitionData.frequencyModels) {
-			frequencyCombo.addItem(frequencyModel);
-		}// END: fill loop
 
+			if (PartitionData.frequencyCompatibleDataTypes[indexOf] == dataList.get(row).dataTypeIndex) {
+
+				frequencyCombo.addItem(frequencyModel);
+
+			}// END: compatible check
+
+			indexOf++;
+		}// END: fill loop
+		
 		frequencyCombo.addItemListener(new ListenFrequencyCombo());
 
 		for (int i = 0; i < PartitionData.frequencyParameterNames.length; i++) {

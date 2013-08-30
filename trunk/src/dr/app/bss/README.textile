@@ -20,11 +20,8 @@ Fast & furious sequence simulator in Beast/Beagle.
    
 h1. TODO
 
-* data type chooser (nucleotide/codon frequencies with compatible substitution models)
-  - with ancestral sequence field
 * mixing data types across partitions 
 * nexus output format
-* extra labels to separate gamma site model / Invariant sites prop
 * command line interface
   - complex argument for partitions 
 * simulating indels  

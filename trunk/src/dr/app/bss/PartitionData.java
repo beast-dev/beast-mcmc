@@ -335,6 +335,20 @@ public class PartitionData implements Serializable {
 			"WAG" //
 	};
 
+	public static int[] substitutionCompatibleDataTypes = { 0, // HKY
+			0, // GTR
+			0, // TN93
+			1, // GY94CodonModel
+			2, // 
+			2, // CPREV
+			2, // Dayhoff
+			2, // FLU
+			2, // JTT
+			2, // LG
+			2, // MTREV
+			2 // WAG
+	};
+	
 	public static String[] substitutionParameterNames = new String[] {
 			"Kappa value", // HKY
 			"AC", // GTR
@@ -531,107 +545,6 @@ public class PartitionData implements Serializable {
 		return branchModel;
 	}// END: createBranchSubstitutionModel
 
-	// ////////////////////
-	// ---CLOCK MODELS---//
-	// ////////////////////
-	
-	public int clockModelIndex = 0;
-
-	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
-
-	public void resetClockModelIdref() {
-		this.clockModelIdref = BranchRateModel.BRANCH_RATES;
-	}
-	
-	public static String[] clockModels = { "Strict Clock", //
-			"Lognormal relaxed clock (Uncorrelated)", //
-			"Exponential relaxed clock (Uncorrelated)", //
-			"Inverse Gaussian relaxed clock" //
-	};
-
-	public static String[] clockParameterNames = new String[] { "clock.rate", // StrictClock
-			"ucld.mean", // Lognormal relaxed clock
-			"ucld.stdev", // Lognormal relaxed clock
-			"ucld.offset", // Lognormal relaxed clock
-			"uced.mean", // Exponential relaxed clock
-			"uced.offset", // Exponential relaxed clock
-			"ig.mean", // Inverse Gaussian
-			"ig.stdev", // Inverse Gaussian
-			"ig.offset" // Inverse Gaussian
-	};
-
-	public static int[][] clockParameterIndices = { { 0 }, // StrictClock
-			{ 1, 2, 3 }, // Lognormal relaxed clock
-			{ 4, 5 }, // Exponential relaxed clock
-			{ 6, 7, 8 } // Inverse Gaussian
-	};
-
-	public double[] clockParameterValues = new double[] { 1.2E-2, // clockrate
-			1.0, // ucld.mean
-			2.0, // ucld.stdev
-			0.0, // ucld.offset
-			1.0, // uced.mean
-            0.0, // uced.offset
-			0.0, // ig.mean
-			1.0, // ig.stdev
-			0.0 // ig.offset
-	};
-
-	public BranchRateModel createClockRateModel() {
-
-		BranchRateModel branchRateModel = null;
-
-		if (this.clockModelIndex == 0) { // Strict Clock
-
-			Parameter rateParameter = new Parameter.Default(1, clockParameterValues[0]);
-			
-			branchRateModel = new StrictClockBranchRates(rateParameter);
-
-		} else if (this.clockModelIndex == 1) {// Lognormal relaxed clock
-
-			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
-			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
-			
-			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
-			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
-	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], true, true);
-	        
-	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-	                distributionModel, 1, false, Double.NaN);
-
-		} else if(this.clockModelIndex == 2) { // Exponential relaxed clock
-		
-			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
-			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
-			
-			Parameter mean = new Parameter.Default(DistributionModelParser.MEAN, 1, clockParameterValues[4]);
-	        ParametricDistributionModel distributionModel = new ExponentialDistributionModel(mean, clockParameterValues[5]);
-			
-	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-	                distributionModel, 1, false, Double.NaN);
-			
-		} else if(this.clockModelIndex == 3) { // Inverse Gaussian
-
-			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
-			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
-			
-			Parameter mean = new Parameter.Default(InverseGaussianDistributionModelParser.MEAN, 1, clockParameterValues[6]);
-			Parameter stdev = new Parameter.Default(InverseGaussianDistributionModelParser.STDEV, 1, clockParameterValues[7]);
-	        ParametricDistributionModel distributionModel = new InverseGaussianDistributionModel(
-					mean, stdev, clockParameterValues[8], false);
-     
-	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-	                distributionModel, 1, false, Double.NaN);
-	        
-		} else {
-
-			System.out.println("Not yet implemented");
-
-		}
-
-		return branchRateModel;
-	}// END: createBranchRateModel
-
 	// ////////////////////////
 	// ---FREQUENCY MODELS---//
 	// ////////////////////////
@@ -648,6 +561,11 @@ public class PartitionData implements Serializable {
 			"Codon frequencies", //
 			"Amino acid frequencies" 
 			};
+
+	public static int[] frequencyCompatibleDataTypes = { 0, // Nucleotide
+			1, // Codon
+			2 // Amino acid
+	};
 
 	public static String[] frequencyParameterNames = new String[] {
 			"A frequency", // Nucleotide frequencies
@@ -909,6 +827,108 @@ public class PartitionData implements Serializable {
 
 		return frequencyModel;
 	}// END: createFrequencyModel
+	
+	// ////////////////////
+	// ---CLOCK MODELS---//
+	// ////////////////////
+	
+	public int clockModelIndex = 0;
+
+	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
+
+	public void resetClockModelIdref() {
+		this.clockModelIdref = BranchRateModel.BRANCH_RATES;
+	}
+	
+	public static String[] clockModels = { "Strict Clock", //
+			"Lognormal relaxed clock (Uncorrelated)", //
+			"Exponential relaxed clock (Uncorrelated)", //
+			"Inverse Gaussian relaxed clock" //
+	};
+
+	public static String[] clockParameterNames = new String[] { "clock.rate", // StrictClock
+			"ucld.mean", // Lognormal relaxed clock
+			"ucld.stdev", // Lognormal relaxed clock
+			"ucld.offset", // Lognormal relaxed clock
+			"uced.mean", // Exponential relaxed clock
+			"uced.offset", // Exponential relaxed clock
+			"ig.mean", // Inverse Gaussian
+			"ig.stdev", // Inverse Gaussian
+			"ig.offset" // Inverse Gaussian
+	};
+
+	public static int[][] clockParameterIndices = { { 0 }, // StrictClock
+			{ 1, 2, 3 }, // Lognormal relaxed clock
+			{ 4, 5 }, // Exponential relaxed clock
+			{ 6, 7, 8 } // Inverse Gaussian
+	};
+
+	public double[] clockParameterValues = new double[] { 1.2E-2, // clockrate
+			1.0, // ucld.mean
+			2.0, // ucld.stdev
+			0.0, // ucld.offset
+			1.0, // uced.mean
+            0.0, // uced.offset
+			0.0, // ig.mean
+			1.0, // ig.stdev
+			0.0 // ig.offset
+	};
+
+	public BranchRateModel createClockRateModel() {
+
+		BranchRateModel branchRateModel = null;
+
+		if (this.clockModelIndex == 0) { // Strict Clock
+
+			Parameter rateParameter = new Parameter.Default(1, clockParameterValues[0]);
+			
+			branchRateModel = new StrictClockBranchRates(rateParameter);
+
+		} else if (this.clockModelIndex == 1) {// Lognormal relaxed clock
+
+			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
+			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
+			
+			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
+			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
+	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], true, true);
+	        
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
+	                distributionModel, 1, false, Double.NaN);
+
+		} else if(this.clockModelIndex == 2) { // Exponential relaxed clock
+		
+			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
+			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
+			
+			Parameter mean = new Parameter.Default(DistributionModelParser.MEAN, 1, clockParameterValues[4]);
+	        ParametricDistributionModel distributionModel = new ExponentialDistributionModel(mean, clockParameterValues[5]);
+			
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
+	                distributionModel, 1, false, Double.NaN);
+			
+		} else if(this.clockModelIndex == 3) { // Inverse Gaussian
+
+			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
+			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
+			
+			Parameter mean = new Parameter.Default(InverseGaussianDistributionModelParser.MEAN, 1, clockParameterValues[6]);
+			Parameter stdev = new Parameter.Default(InverseGaussianDistributionModelParser.STDEV, 1, clockParameterValues[7]);
+	        ParametricDistributionModel distributionModel = new InverseGaussianDistributionModel(
+					mean, stdev, clockParameterValues[8], false);
+     
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
+	                distributionModel, 1, false, Double.NaN);
+	        
+		} else {
+
+			System.out.println("Not yet implemented");
+
+		}
+
+		return branchRateModel;
+	}// END: createBranchRateModel
+
 
 	// ///////////////////////
 	// ---SITE RATE MODEL---//

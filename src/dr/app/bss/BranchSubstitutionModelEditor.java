@@ -11,7 +11,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -33,7 +32,7 @@ public class BranchSubstitutionModelEditor {
 	
 	// Settings
 	private OptionsPanel optionPanel;
-	private JComboBox substitutionCombo;
+	private DisabledItemsComboBox substitutionCombo;
 	private RealNumberField[] substitutionParameterFields;
 
 	//Buttons
@@ -53,7 +52,7 @@ public class BranchSubstitutionModelEditor {
 		window = new JDialog(owner, "Setup substitution model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
-		substitutionCombo = new JComboBox();
+		substitutionCombo = new DisabledItemsComboBox();
 		substitutionCombo.setOpaque(false);
 
 		int indexOf = 0;
@@ -61,9 +60,13 @@ public class BranchSubstitutionModelEditor {
 
 			if (PartitionData.substitutionCompatibleDataTypes[indexOf] == dataList.get(row).dataTypeIndex) {
 
-				substitutionCombo.addItem(substitutionModel);
+				substitutionCombo.addItem(substitutionModel, false);
 
-			}// END: compatible check
+			} else {
+
+				substitutionCombo.addItem(substitutionModel, true);
+
+			}
 
 			indexOf++;
 		}// END: fill loop
@@ -71,9 +74,11 @@ public class BranchSubstitutionModelEditor {
 		substitutionCombo.addItemListener(new ListenSubstitutionCombo());
 		
 		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
+			
 			substitutionParameterFields[i] = new RealNumberField(0.0, Double.MAX_VALUE);
 			substitutionParameterFields[i].setColumns(8);
 			substitutionParameterFields[i].setValue(this.dataList.get(row).substitutionParameterValues[i]);
+			
 		}// END: fill loop
 
 		setSubstitutionArguments();

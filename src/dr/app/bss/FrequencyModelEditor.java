@@ -11,7 +11,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -35,7 +34,7 @@ public class FrequencyModelEditor {
 	// Settings
 	private OptionsPanel optionPanel;
 	private JScrollPane scrollPane;
-	private JComboBox frequencyCombo;
+	private DisabledItemsComboBox frequencyCombo;
 	private RealNumberField[] frequencyParameterFields;
 	
 	//Buttons
@@ -62,15 +61,19 @@ public class FrequencyModelEditor {
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getViewport().setOpaque(false);
 
-		frequencyCombo = new JComboBox();
+		frequencyCombo = new DisabledItemsComboBox();
 		
 		int indexOf = 0;
 		for (String frequencyModel : PartitionData.frequencyModels) {
 
 			if (PartitionData.frequencyCompatibleDataTypes[indexOf] == dataList.get(row).dataTypeIndex) {
 
-				frequencyCombo.addItem(frequencyModel);
+				frequencyCombo.addItem(frequencyModel, false);
 
+			} else {
+				
+				frequencyCombo.addItem(frequencyModel, true);
+				
 			}// END: compatible check
 
 			indexOf++;
@@ -110,7 +113,7 @@ public class FrequencyModelEditor {
 		frequencyCombo.setSelectedIndex(dataList.get(row).frequencyModelIndex);
 		
 	}//END: Constructor
-
+	
 	private void setFrequencyArguments() {
 
 		optionPanel.removeAll();

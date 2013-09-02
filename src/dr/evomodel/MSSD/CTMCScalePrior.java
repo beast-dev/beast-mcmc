@@ -36,9 +36,9 @@ import dr.math.GammaFunction;
 /**
  * @author Alexander V. Alekseyenko (alexander.alekseyenko@gmail.com)
  * @author Marc A. Suchard
- * 
- * Date: Aug 22, 2008
- * Time: 3:26:57 PM
+ *         <p/>
+ *         Date: Aug 22, 2008
+ *         Time: 3:26:57 PM
  */
 public class CTMCScalePrior extends AbstractModelLikelihood {
     final private Parameter ctmcScale;
@@ -84,7 +84,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        double ab = ctmcScale.getParameterValue(0);
+
 //        if (!treeLengthKnown) {
 //            updateTreeLength();
 //            treeLengthKnown = true;
@@ -92,7 +92,12 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
 //        double totalTreeTime = treeLength;
         double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
         double logNormalization = 0.5 * Math.log(totalTreeTime) - logGammaOneHalf;
-        return logNormalization - 0.5 * Math.log(ab) - ab * totalTreeTime; // TODO Change to treeLength and confirm results
+        double logLike = 0;
+        for (int i = 0; i < ctmcScale.getDimension(); ++i) {
+            double ab = ctmcScale.getParameterValue(i);
+            logLike += logNormalization - 0.5 * Math.log(ab) - ab * totalTreeTime; // TODO Change to treeLength and confirm results
+        }
+        return logLike;
     }
 
     public void makeDirty() {

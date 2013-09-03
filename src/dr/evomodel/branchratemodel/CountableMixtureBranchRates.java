@@ -27,6 +27,7 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.CountableMixtureBranchRatesParser;
@@ -38,6 +39,10 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Marc Suchard
  * @author Philippe Lemey
@@ -46,6 +51,7 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     private final Parameter ratesParameter;
     private final Parameter rateCategoryParameter;
+    private final TreeModel treeModel;
 
     private final int categoryCount;
 
@@ -53,22 +59,22 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
+        this.treeModel = treeModel;
         this.rateCategoryParameter = rateCategoryParameter;
         rateCategories = new TreeParameterModel(treeModel, rateCategoryParameter, false);
-
         categoryCount = ratesParameter.getDimension();
+
+        for (int i = 0; i < rateCategoryParameter.getDimension(); ++i) {
+            rateCategoryParameter.setParameterValue(i, 0.0);
+        }
 
 
         //Force the boundaries of rateCategoryParameter to match the category count
         Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, rateCategoryParameter.getDimension());
         rateCategoryParameter.addBounds(bound);
 
-        for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-            int index = MathUtils.nextInt(categoryCount);
-            rateCategoryParameter.setParameterValue(i, index);
-        }
-
         addModel(rateCategories);
+        addModel(treeModel);
 
 //        updateRateCategories = true;
 //
@@ -94,7 +100,64 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         return columns;
     }
 
-    class OccupancyColumn extends NumberColumn {
+    public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade) throws Tree.MissingTaxonException {
+        if (!excludeClade) {
+            throw new IllegalArgumentException("Excluding clades not yet implemented in countable branch rate mixture models.");
+        }
+
+        if (!includeStem) {
+            throw new IllegalArgumentException("Excluding stems not yet implemented in countable branch rate mixture models.");
+        }
+
+//        Set<Integer> tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
+//        BitSet tipBitSet = Tree.Utils.getTipsBitSetForTaxa(treeModel, taxonList);
+        Set<String> leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
+        if (leafSetList == null) {
+            leafSetList = new ArrayList<CladeContainer>();
+        }
+        leafSetList.add(new CladeContainer(leafSet, rateCategory));
+        cladesChanged = true;
+    }
+
+    private class CladeContainer {
+        private Set<String> leafSet;
+        private int rateCategory;
+
+        public CladeContainer(Set<String> leafSet, int rateCategory) {
+            this.leafSet = leafSet;
+            this.rateCategory = rateCategory;
+        }
+
+        public Set<String> getLeafSet() {
+            return leafSet;
+        }
+
+        public int getRateCategory() {
+            return rateCategory;
+        }
+    }
+
+    private void updateCladeRateCategories() {
+//        System.err.println("A");
+        if (leafSetList != null) {
+            for (CladeContainer clade : leafSetList) {
+//                System.err.println("B");
+                NodeRef node = Tree.Utils.getCommonAncestorNode(treeModel, clade.getLeafSet());
+                rateCategoryParameter.setParameterValue(node.getNumber(), clade.getRateCategory());
+//                System.err.println("Setting entry #" + clade.getRateCategory());
+            }
+        }
+//        System.exit(-1);
+    }
+
+    public void randomize() {
+        for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
+            int index = MathUtils.nextInt(categoryCount);
+            rateCategoryParameter.setParameterValue(i, index);
+        }
+    }
+
+    private class OccupancyColumn extends NumberColumn {
         private final int index;
 
         public OccupancyColumn(int index) {
@@ -114,6 +177,12 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == treeModel) {
+            throw new IllegalArgumentException("CountableMixtureBranchRates is not yet implemented for random trees");
+            // TODO for random trees:
+            // 1. Keep a List<TaxonList>
+            // 2. Reset allocation parameter when treeModel is hit.
+        }
         fireModelChanged(null, index);
     }
 
@@ -142,6 +211,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 //            setupRates();
 //        }
 
+        if (cladesChanged) {
+            updateCladeRateCategories();
+            cladesChanged = false;
+        }
+
         int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
 
         //System.out.println(rates[rateCategory] + "\t"  + rateCategory);
@@ -153,4 +227,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     }
 
     private final TreeParameterModel rateCategories;
+    private boolean cladesChanged = false;
+    private List<CladeContainer> leafSetList = null;
 }

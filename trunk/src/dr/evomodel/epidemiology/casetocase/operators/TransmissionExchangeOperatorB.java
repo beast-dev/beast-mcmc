@@ -58,7 +58,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         while(root == i || partitionsMatch){
             i = tree.getNode(MathUtils.nextInt(nodeCount));
             iP = tree.getParent(i);
-            partitionsMatch = i==root ? true : branchMap[i.getNumber()]==branchMap[iP.getNumber()];
+            partitionsMatch = i == root || branchMap[i.getNumber()] == branchMap[iP.getNumber()];
         }
 
         ArrayList<NodeRef> candidates = getPossibleExchanges(tree, i);

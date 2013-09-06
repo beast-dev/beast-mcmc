@@ -2,9 +2,7 @@ package dr.evomodel.epidemiology.casetocase;
 
 import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
-import dr.math.Integral;
 import dr.math.RiemannApproximation;
-import dr.math.UnivariateFunction;
 import dr.xml.*;
 import org.apache.commons.math.util.MathUtils;
 
@@ -30,14 +28,25 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     private Parameter kernelAlpha;
     private Parameter transmissionRate;
     private boolean hasLatentPeriods;
-    private Integer[] storedParents;
     private HashMap<Integer, Double> infectionTimes;
     private HashMap<Integer, Double> storedInfectionTimes;
     private IntegrableUnivariateFunction probFunct;
     private boolean likelihoodKnown;
     private boolean storedLikelihoodKnown;
+    private boolean transProbKnown;
+    private boolean storedTransProbKnown;
+    private boolean normalisationKnown;
+    private boolean storedNormalisationKnown;
+    private boolean treeProbKnown;
+    private boolean storedTreeProbKnown;
     private double logLikelihood;
     private double storedLogLikelihood;
+    private double transLogProb;
+    private double storedTransLogProb;
+    private double normalisation;
+    private double storedNormalisation;
+    private double treeLogProb;
+    private double storedTreeLogProb;
     private boolean hasGeography;
     private boolean integrateToInfinity;
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
@@ -70,7 +79,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if(model instanceof CaseToCaseTreeLikelihood){
-            infectionTimes = treeLikelihood.getInfTimesMap();
+            // @todo if you're going for maximum efficiency, some tree moves may not change the infection times, and most tree moves don't change MANY infection times
+            treeProbKnown = false;
+            transProbKnown = false;
+            normalisationKnown = false;
+        } else if(model instanceof SpatialKernel){
+            transProbKnown = false;
         }
         likelihoodKnown = false;
     }
@@ -78,12 +92,24 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     protected void storeState() {
         storedLogLikelihood = logLikelihood;
         storedLikelihoodKnown = likelihoodKnown;
+        storedNormalisation = normalisation;
+        storedNormalisationKnown = normalisationKnown;
+        storedTransLogProb = transLogProb;
+        storedTransProbKnown = transProbKnown;
+        storedTreeLogProb = treeLogProb;
+        storedTreeProbKnown = treeProbKnown;
         storedInfectionTimes = new HashMap<Integer, Double>(infectionTimes);
     }
 
     protected void restoreState() {
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = storedLikelihoodKnown;
+        transLogProb = storedTransLogProb;
+        transProbKnown = storedTransProbKnown;
+        treeLogProb = storedTreeLogProb;
+        treeProbKnown = storedTreeProbKnown;
+        normalisation = storedNormalisation;
+        normalisationKnown = storedNormalisationKnown;
         infectionTimes = storedInfectionTimes;
     }
 
@@ -92,6 +118,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if(variable==transmissionRate){
+            transProbKnown = false;
+        }
         likelihoodKnown = false;
     }
 
@@ -103,21 +132,29 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         if(!likelihoodKnown){
             int N = outbreak.size();
             double lambda = transmissionRate.getParameterValue(0);
-            double logUnnormalisedValue = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha() - Math.log(N);
-            double logNormalisationValue;
-            if(hasGeography){
-                // @todo don't calculate this if neither alpha nor the infection times have changed?
-                if(integrateToInfinity){
-                    logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, 1));
-                } else {
-                    logNormalisationValue = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
-                }
-            } else {
-                logNormalisationValue = Math.log(aAlpha()/Math.pow(bAlpha(), N));
+            if(!treeProbKnown){
+                infectionTimes = treeLikelihood.getInfTimesMap();
             }
-            logNormalisationValue += Math.log(MathUtils.factorial(N-1)) - Math.log(N);
-            double treeLogL = treeLikelihood.getLogLikelihood();
-            logLikelihood =  treeLogL + logUnnormalisedValue - logNormalisationValue;
+            if(!transProbKnown){
+                transLogProb = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha() - Math.log(N);
+            }
+            if(!normalisationKnown){
+                if(hasGeography){
+                    if(integrateToInfinity){
+                        normalisation = Math.log(probFunct.evaluateIntegral(0, 1));
+                    } else {
+                        normalisation = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+                    }
+                } else {
+                    normalisation = Math.log(aAlpha()/Math.pow(bAlpha(), N));
+                }
+                normalisation += Math.log(MathUtils.factorial(N-1)) - Math.log(N);
+
+            }
+            if(!treeProbKnown){
+                treeLogProb = treeLikelihood.getLogLikelihood();
+            }
+            logLikelihood =  treeLogProb + transLogProb - normalisation;
             likelihoodKnown = true;
         }
         return logLikelihood;

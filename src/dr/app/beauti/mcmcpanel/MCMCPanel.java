@@ -31,6 +31,8 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.STARBEASTOptions;
+import dr.app.beauti.tipdatepanel.GuessDatesDialog;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.Microsatellite;
@@ -58,6 +60,8 @@ public class MCMCPanel extends BeautiPanel {
     WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
+    JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
+    JButton buttonMLE = new JButton("Settings");
 
     public static final String DEFAULT_FILE_NAME_STEM = "untitled";
     JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
@@ -80,6 +84,8 @@ public class MCMCPanel extends BeautiPanel {
     BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
     private BeautiOptions options;
+    
+    private MLEDialog mleDialog = null;
 
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
@@ -251,6 +257,44 @@ public class MCMCPanel extends BeautiPanel {
                 frame.setDirty();
             }
         });
+        
+        optionsPanel.addSeparator();
+        
+        JTextArea mleInfo = new JTextArea("Select the option below to perform marginal likelihoood " +
+        		"estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS) " + 
+		"which performs an additional analysis after the standard MCMC chain has finished.");
+        mleInfo.setColumns(50);
+        PanelUtils.setupComponent(mleInfo);
+        optionsPanel.addComponent(mleInfo);
+        
+        optionsPanel.addComponent(performMLE);
+        //will be false by default
+        //options.performMLE = false;
+        optionsPanel.addComponent(buttonMLE);
+        buttonMLE.setEnabled(false);
+        performMLE.addActionListener(new java.awt.event.ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		if (performMLE.isSelected()) {
+        			options.performMLE = true;
+        			buttonMLE.setEnabled(true);
+        		} else {
+        			options.performMLE = false;
+        			buttonMLE.setEnabled(false);
+        		}
+        	}
+        });
+        buttonMLE.addActionListener(new java.awt.event.ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		if (mleDialog == null) {
+                    mleDialog = new MLEDialog(frame, options);
+                    int result = mleDialog.showDialog();
+                    
+                    if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                        return;
+                    }
+                }
+        	}
+        });
 
 //        logFileNameField.addKeyListener(listener);
 //        treeFileNameField.addKeyListener(listener);
@@ -315,6 +359,10 @@ public class MCMCPanel extends BeautiPanel {
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
+        
+        if (mleDialog != null) {
+        	mleDialog.setOptions(options);
+        }
 
         chainLengthField.setValue(options.chainLength);
         echoEveryField.setValue(options.echoEvery);
@@ -414,6 +462,11 @@ public class MCMCPanel extends BeautiPanel {
         options.operatorAnalysisFileName = operatorAnalaysisFileNameField.getText();
 
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
+        
+        if (mleDialog != null) {
+        	mleDialog.getOptions(options);
+        }
+        
     }
 
     public JComponent getExportableComponent() {

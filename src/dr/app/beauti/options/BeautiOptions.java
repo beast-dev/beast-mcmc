@@ -25,6 +25,14 @@
 
 package dr.app.beauti.options;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
@@ -37,12 +45,13 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.*;
 import dr.evolution.util.Date;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.evoxml.util.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
-
-import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -101,7 +110,11 @@ public class BeautiOptions extends ModelOptions {
 
         // Operator schedule options
         coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
-
+        
+        //MLE options
+        mleChainLength = 10000000;
+        
+        
         // MCMC options
         chainLength = 10000000;
         logEvery = 1000;
@@ -1237,7 +1250,7 @@ public class BeautiOptions extends ModelOptions {
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
-
+    
     // MCMC options
     public int chainLength = 10000000;
     public int logEvery = 1000;
@@ -1248,6 +1261,15 @@ public class BeautiOptions extends ModelOptions {
     public boolean performTraceAnalysis = false;
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
+    
+    //MLE options
+    public boolean performMLE = false;
+    public int pathSteps = 100;
+    public int mleChainLength = 10000000;
+    public int mleLogEvery = 1000;
+    public String mleFileName = "MLE.log";
+    public String pathScheme = "betaquantile";
+    public double schemeParameter = 0.30;
 
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;

@@ -28,6 +28,7 @@ package dr.evomodelxml.branchratemodel;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.branchratemodel.CountableMixtureBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -44,6 +45,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
     public static final String ALLOCATION = "rateCategories";
     public static final String CATEGORY = "category";
     public static final String RANDOMIZE = "randomize";
+    public static final String RANDOM_EFFECTS = "randomEffects";
 
     public String getParserName() {
         return COUNTABLE_CLOCK_BRANCH_RATES;
@@ -54,10 +56,15 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
         Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
         Parameter allocationParameter = (Parameter) xo.getElementFirstChild(ALLOCATION);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        AbstractBranchRateModel randomEffects = null;
+        if (xo.hasChildNamed(RANDOM_EFFECTS)) {
+            randomEffects = (AbstractBranchRateModel) xo.getElementFirstChild(RANDOM_EFFECTS);
+        }
 
         Logger.getLogger("dr.evomodel").info("Using a countable mixture molecular clock model.");
 
-        CountableMixtureBranchRates model = new CountableMixtureBranchRates(treeModel, ratesParameter, allocationParameter);
+        CountableMixtureBranchRates model = new CountableMixtureBranchRates(treeModel, ratesParameter,
+                allocationParameter, randomEffects);
 
         if (!xo.getAttribute(RANDOMIZE, true)) {
             for (int i = 0; i < xo.getChildCount(); ++i) {
@@ -106,6 +113,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new ElementRule(RATES, Parameter.class, "The molecular evolutionary rate parameter", false),
             new ElementRule(ALLOCATION, Parameter.class, "Allocation parameter", false),
+            new ElementRule(RANDOM_EFFECTS, AbstractBranchRateModel.class, "Possible random effects", true),
             AttributeRule.newBooleanRule(RANDOMIZE, true),
             new ElementRule(LocalClockModelParser.CLADE,
                     new XMLSyntaxRule[]{

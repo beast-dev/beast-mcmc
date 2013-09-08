@@ -44,8 +44,14 @@ public class TwoStateMarkovRewardsTest extends MathTestCase {
     public void testTwoStateRewards() {
         DataType dataType = TwoStates.INSTANCE;
         FrequencyModel freqModel = new FrequencyModel(TwoStates.INSTANCE, new double[]{0.5, 0.5});
-        Parameter rates = new Parameter.Default(new double[]{0.1, 1.0});
-        ComplexSubstitutionModel twoStateModel = new ComplexSubstitutionModel("two", dataType, freqModel, rates);
+        Parameter rates = new Parameter.Default(new double[]{4.0, 6.0});
+        ComplexSubstitutionModel twoStateModel = new ComplexSubstitutionModel("two", dataType, freqModel, rates) {
+//    protected EigenSystem getDefaultEigenSystem(int stateCount) {
+//        return new DefaultEigenSystem(stateCount);
+//    }
+
+        };
+        twoStateModel.setNormalization(false);
 
         MarkovJumpsSubstitutionModel markovRewards = new MarkovJumpsSubstitutionModel(twoStateModel,
                 MarkovJumpsType.REWARDS);
@@ -74,6 +80,38 @@ public class TwoStateMarkovRewardsTest extends MathTestCase {
         for (time = 0.0; time < endTime; time += (endTime / steps)) {
             markovRewards.computeCondStatMarkovJumps(time, c);
             System.out.println(time + "," + c[0]);   // start = 0, end = 0
+        }
+    }
+
+//    0 -> \alpha -> 1;   1 -> \beta -> 0
+//    \eigenvectors =
+//      \left[
+//          1, -\alpha \\
+//          1, \beta \\
+//    \right]
+//    \inveigenvectors =
+//        \frac{1}{\alpha + \beta}
+//     \left[
+//            \beta,  \alpha, \\
+//               -1, 1  \\
+//        \right]
+
+    private static double analyticProb(int from, int to, double alpha, double beta, double t) {
+
+        double total = alpha + beta;
+        int entry = from * 2 + to;
+
+        switch (entry) {
+            case 0: // 0 -> 0
+                return (beta + alpha * Math.exp(-total * t)) / total;
+            case 1: // 0 -> 1
+                return (alpha - alpha * Math.exp(-total * t)) / total;
+            case 2: // 1 -> 0
+                return (beta - beta * Math.exp(-total * t)) / total;
+            case 3: // 1 -> 1
+                return (alpha + beta * Math.exp(-total * t)) / total;
+            default:
+                throw new RuntimeException();
         }
     }
 }

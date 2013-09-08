@@ -52,10 +52,16 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     private final Parameter ratesParameter;
     private final Parameter rateCategoryParameter;
     private final TreeModel treeModel;
+    private final AbstractBranchRateModel randomEffectsModel;
 
     private final int categoryCount;
 
     public CountableMixtureBranchRates(TreeModel treeModel, Parameter ratesParameter, Parameter rateCategoryParameter) {
+        this(treeModel, ratesParameter, rateCategoryParameter, null);
+    }
+
+    public CountableMixtureBranchRates(TreeModel treeModel, Parameter ratesParameter, Parameter rateCategoryParameter,
+                                       AbstractBranchRateModel randomEffectsModel) {
 
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
@@ -68,27 +74,27 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             rateCategoryParameter.setParameterValue(i, 0.0);
         }
 
-
         //Force the boundaries of rateCategoryParameter to match the category count
         Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, rateCategoryParameter.getDimension());
         rateCategoryParameter.addBounds(bound);
 
         addModel(rateCategories);
         addModel(treeModel);
-
-//        updateRateCategories = true;
-//
-//        // Each parameter take any value in [1, \ldots, categoryCount]
-//        // NB But this depends on the transition kernel employed.  Using swap-only results in a different constant
-//        logDensityNormalizationConstant = -rateCategoryParameter.getDimension() * Math.log(categoryCount);
-//
-//        treeParameter = new TreeParameterModel(treeModel, allocationParameter, false);
-
         this.ratesParameter = ratesParameter;
-//        this.allocationParameter = allocationParameter;
-
         addVariable(ratesParameter);
-//        addVariable(allocationParameter);
+
+        // Handle random effects
+        this.randomEffectsModel = randomEffectsModel;
+        if (randomEffectsModel != null) {
+            addModel(randomEffectsModel);
+        }
+        // TODO Check that randomEffectsModel mean is zero
+
+        modelInLogSpace = false;
+    }
+
+    public double getLogLikelihood() {
+        return (randomEffectsModel != null) ? randomEffectsModel.getLogLikelihood() : 0.0;
     }
 
     public LogColumn[] getColumns() {
@@ -217,16 +223,18 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         }
 
         int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
-
-        //System.out.println(rates[rateCategory] + "\t"  + rateCategory);
-//        return rates[currentRateArrayIndex][rateCategory] * scaleFactor;
-
-//        final int i = node.getNumber();
-//        final int k = (int) allocationParameter.getParameterValue(i);
-        return ratesParameter.getParameterValue(rateCategory);
+        double effect = ratesParameter.getParameterValue(rateCategory);
+        if (randomEffectsModel != null) {
+            effect += randomEffectsModel.getBranchRate(tree, node);
+        }
+        if (modelInLogSpace) {
+            effect = Math.exp(effect);
+        }
+        return effect;
     }
 
     private final TreeParameterModel rateCategories;
     private boolean cladesChanged = false;
     private List<CladeContainer> leafSetList = null;
+    private final boolean modelInLogSpace;
 }

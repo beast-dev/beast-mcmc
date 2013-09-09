@@ -33,7 +33,7 @@ import java.util.*;
 
 public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable, TreeTraitProvider {
 
-    private final boolean DEBUG = false;
+    private final static boolean DEBUG = false;
 
     /* The phylogenetic tree. */
 
@@ -72,12 +72,15 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private double[] branchLogProbs;
     private double totalLogProb;
+    private double storedTotalLogProb;
 
     // for normalisation
 
     private double[] normRootPartials;
     private double[] normProbs;
     private double normTotalProb;
+    private double storedNormTotalProb;
+    private boolean renormalisationNeeded;
 
     // where along the relevant branches the infections happen. IMPORTANT: if extended=false then this should be
     // all 0s.
@@ -193,6 +196,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         branchLogProbs = new double[nodeCount];
         totalLogProb = 0;
+        storedTotalLogProb = 0;
+
+        normTotalProb = 0;
+        storedTotalLogProb = 0;
+        renormalisationNeeded = true;
 
         normRootPartials = new double[stateCount];
         normProbs = new double[stateCount*stateCount];
@@ -566,6 +574,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         if(model == cases){
             Arrays.fill(updateNode, true);
             Arrays.fill(updateNodeForSingleTraverse, true);
+            renormalisationNeeded = true;
         }
 
         if (model == treeModel) {
@@ -589,7 +598,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                     //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
             }
-
+            renormalisationNeeded = true;
         }
 
         fireModelChanged();
@@ -607,6 +616,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         updateAllNodes(variable!=infectionTimes);
 
+        renormalisationNeeded = variable!=infectionTimes;
+
         fireModelChanged();
 
         likelihoodKnown = false;
@@ -622,6 +633,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     protected final void storeState() {
         super.storeState();
+        core.storeState();
+        storedNormTotalProb = normTotalProb;
+        storedTotalLogProb = totalLogProb;
         storedBranchMap = Arrays.copyOf(branchMap, branchMap.length);
         storedDescendantTipPartitions = new HashMap<Integer, HashSet<AbstractCase>>(descendantTipPartitions);
     }
@@ -632,6 +646,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     protected final void restoreState() {
         super.restoreState();
+        core.restoreState();
+        normTotalProb = storedNormTotalProb;
+        totalLogProb = storedTotalLogProb;
         branchMap = storedBranchMap;
         descendantTipPartitions = storedDescendantTipPartitions;
     }
@@ -667,6 +684,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         likelihoodKnown = false;
         Arrays.fill(updateNode, true);
         Arrays.fill(updateNodeForSingleTraverse, true);
+        renormalisationNeeded = true;
         if(!extended){
             recalculateDescTipPartitions();
         }
@@ -689,7 +707,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         // normalisation value
         if(normalise){
-            traverseForNormalisation(treeModel, root);
+            if(renormalisationNeeded){
+                traverseForNormalisation(treeModel, root);
+            }
         } else {
             normTotalProb = 0;
         }
@@ -699,7 +719,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         // If logL is zero because the partition is actually impossible, you most certainly don't want to turn scaling
         // on, hence the okToRescale
 
-        if (normTotalProb == Double.NEGATIVE_INFINITY) {
+        if (renormalisationNeeded && normTotalProb == Double.NEGATIVE_INFINITY) {
 //            Logger.getLogger("dr.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial " +
 //                    "likelihood scaling to avoid precision loss");
 
@@ -720,6 +740,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             updateNode[i] = false;
             updateNodeForSingleTraverse[i] = false;
         }
+
+        renormalisationNeeded = false;
 
         // @todo If the normalisation value rounds to zero it is an almighty pain, and may prevent acceptance of promising states, but perhaps it can't be helped
 

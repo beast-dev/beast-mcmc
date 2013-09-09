@@ -62,7 +62,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     public CountableMixtureBranchRates(TreeModel treeModel, Parameter ratesParameter, Parameter rateCategoryParameter,
                                        AbstractBranchRateModel randomEffectsModel) {
+        this(treeModel, ratesParameter, rateCategoryParameter, randomEffectsModel, false);
+    }
 
+    public CountableMixtureBranchRates(TreeModel treeModel, Parameter ratesParameter, Parameter rateCategoryParameter,
+                                       AbstractBranchRateModel randomEffects, boolean inLogSpace) {
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
         this.treeModel = treeModel;
@@ -84,13 +88,13 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         addVariable(ratesParameter);
 
         // Handle random effects
-        this.randomEffectsModel = randomEffectsModel;
+        this.randomEffectsModel = randomEffects;
         if (randomEffectsModel != null) {
             addModel(randomEffectsModel);
         }
         // TODO Check that randomEffectsModel mean is zero
 
-        modelInLogSpace = false;
+        modelInLogSpace = inLogSpace;
     }
 
     public double getLogLikelihood() {

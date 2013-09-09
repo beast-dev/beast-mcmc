@@ -19,6 +19,8 @@ import dr.math.MathUtils;
  */
 public class BeagleSequenceSimulatorConsoleApp {
 
+	private boolean VERBOSE = true;
+	
 	private Arguments arguments;
 	private PartitionData data;
 	private PartitionDataList dataList;
@@ -521,7 +523,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 			// ---SIMULATE---//
 			// ////////////////
 			
-			if (Utils.VERBOSE) {
+			if (this.VERBOSE ) {
 				Utils.printPartitionDataList(dataList);
 				System.out.println();
 			}

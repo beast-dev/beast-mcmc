@@ -44,7 +44,7 @@ public class Utils {
 	// ---CONSTANTS---//
 	// /////////////////
 
-	public static final boolean VERBOSE = true;
+//	public static final boolean VERBOSE = true;
 
 	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
@@ -802,6 +802,12 @@ public class Utils {
 		System.out.print(demographicModelToString(data));
 		System.out.print("\n");
 	}// END: printFrequencyModel
+
+	private static void printDataType(PartitionData data) {
+		System.out.print("\tData type: ");
+		System.out.print(dataTypeToString(data));
+		System.out.print("\n");
+	}// END: printDataType
 	
 	public static void printTaxaSet(Taxa taxa) {
 
@@ -830,6 +836,7 @@ public class Utils {
 			//
 		}
 
+		printDataType(data);
 		printDemographicModel(data);
 		System.out.println("\tFrom: " + data.from);
 		System.out.println("\tTo: " + data.to);
@@ -917,7 +924,7 @@ public class Utils {
 //		}
 		
 		string += ("Tree model: " + simulatedTreeModel.toString()) + ("\n");
-
+		string += ("Data type: ") + dataTypeToString(data) + ("\n");
 		string += ("Demographic model: ") + demographicModelToString(data) + ("\n");
 		string += ("From: " + data.from)+ ("\n");
 		string += ("To: " + data.to)+ ("\n");
@@ -956,6 +963,11 @@ public class Utils {
 
 		return string;
 	}// END: partitionDataListToString
+	
+	private static String dataTypeToString(PartitionData data) {
+		String string = PartitionData.dataTypes[data.dataTypeIndex];
+		return string;
+	}
 	
 	public static String demographicModelToString(PartitionData data) {
 

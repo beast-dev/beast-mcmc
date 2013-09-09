@@ -99,7 +99,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         }
         newMap[parent.getNumber()]=map[node.getNumber()];
         c2cLikelihood.setBranchMap(newMap);
-        c2cLikelihood.flagForDescendantRecalculation(tree, node, true);
+        // @todo sort this out
+        // c2cLikelihood.flagForDescendantRecalculation(tree, node, false);
         return tree.isExternal(node) ? Math.log(0.5) : 0;
     }
 

@@ -17,11 +17,24 @@ h1. LICENSE
 h1. PURPOSE
 
 Fast & furious sequence simulator in Beast/Beagle.  
+
+h1. CITING
+
+  To cite BUSS in publications, please use:
+         
+          AAA
+         
+        A BibTeX entry for LaTeX users:
+         
+          article{,
+            author = {},
+            title = {},
+          }
    
 h1. TODO
 
-* mixing data types across partitions 
 * nexus output format
+* output tree with inner nodes annoted with trait values
 * command line interface
   - complex argument for partitions 
 * simulating indels  

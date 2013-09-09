@@ -26,6 +26,18 @@ import javax.swing.JLabel;
 @SuppressWarnings("serial")
 public class AboutDialog extends JDialog {
 
+// TODO: add citation
+/*	To cite BUSS in publications, please use:
+		 
+          AAA
+		 
+		A BibTeX entry for LaTeX users:
+		 
+		  article{,
+		    author = {},
+		    title = {},
+		  }
+*/	
 	private static final int WIDTH = 700;
 	private static final int HEIGHT = 580;
 	private static final int FONT_SIZE = 15;
@@ -77,7 +89,9 @@ public class AboutDialog extends JDialog {
 
 		// Setup version
 		label = new JLabel("Version v" + BeagleSequenceSimulatorApp.VERSION
-				+ " Prerelease" + ", " + BeagleSequenceSimulatorApp.DATE);
+				+ 
+//				" Prerelease" + 
+				", " + BeagleSequenceSimulatorApp.DATE);
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 2));
 		label.setAlignmentX(0.5f);
 		add(label);

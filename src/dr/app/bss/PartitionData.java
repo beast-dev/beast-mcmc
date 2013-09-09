@@ -768,7 +768,9 @@ public class PartitionData implements Serializable {
 					frequencyParameterValues[0], frequencyParameterValues[1],
 					frequencyParameterValues[2], frequencyParameterValues[3] });
 
-			frequencyModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+			DataType dataType = this.createDataType();
+			
+			frequencyModel = new FrequencyModel(dataType, freqs);
 
 		} else if (this.frequencyModelIndex == 1) {
 
@@ -805,7 +807,9 @@ public class PartitionData implements Serializable {
 					frequencyParameterValues[62], frequencyParameterValues[63],
 					frequencyParameterValues[64] });
 
-			frequencyModel = new FrequencyModel(Codons.UNIVERSAL, freqs);
+			DataType dataType = this.createDataType();
+			
+			frequencyModel = new FrequencyModel(dataType, freqs);
 
 		} else if (this.frequencyModelIndex == 2) {
 
@@ -817,7 +821,9 @@ public class PartitionData implements Serializable {
 					frequencyParameterValues[81], frequencyParameterValues[82], frequencyParameterValues[83], frequencyParameterValues[84]
 							});
 
-			frequencyModel = new FrequencyModel(AminoAcids.INSTANCE, freqs);
+			DataType dataType = this.createDataType();
+			
+			frequencyModel = new FrequencyModel(dataType, freqs);
 
 		} else {
 
@@ -929,7 +935,6 @@ public class PartitionData implements Serializable {
 		return branchRateModel;
 	}// END: createBranchRateModel
 
-
 	// ///////////////////////
 	// ---SITE RATE MODEL---//
 	// ///////////////////////
@@ -984,20 +989,19 @@ public class PartitionData implements Serializable {
 
 		return siteModel;
 	}// END: createGammaSiteRateModel
-	
+
 	// //////////////////////////
 	// ---ANCESTRAL SEQUENCE---//
 	// //////////////////////////
 	public String ancestralSequenceString = null;
-	
+
 	public Sequence createAncestralSequence() {
-		
+
 		Sequence sequence = new Sequence(ancestralSequenceString);
-//		sequence.appendSequenceString(ancestralSequenceString);
-		
+		// sequence.appendSequenceString(ancestralSequenceString);
+
 		return sequence;
 	}
-	
-	
+
 }// END: class
 

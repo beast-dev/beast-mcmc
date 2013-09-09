@@ -18,10 +18,12 @@ import javax.swing.UnsupportedLookAndFeelException;
  */
 public class BeagleSequenceSimulatorApp {
 
+	public static final boolean VERBOSE = true;
+	
 	// Share those if neccessary
 	public static final String SHORT_NAME = "BUSS";
 	public static final String LONG_NAME = "BEAST/BEAGLE Utility for Sequence Simulation";
-	public static final String VERSION = "0.8.1rc";
+	public static final String VERSION = "1.2.0rc";
 	public static final String DATE = "2013";
 
 	// Icons

@@ -229,7 +229,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
         double effect = ratesParameter.getParameterValue(rateCategory);
         if (randomEffectsModel != null) {
-            effect += randomEffectsModel.getBranchRate(tree, node);
+            if (modelInLogSpace) {
+                effect += randomEffectsModel.getBranchRate(tree, node);
+            } else {
+                effect *= randomEffectsModel.getBranchRate(tree, node);
+            }
         }
         if (modelInLogSpace) {
             effect = Math.exp(effect);

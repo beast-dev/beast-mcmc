@@ -165,15 +165,18 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			// Executed in background thread
 			public Void doInBackground() {
 
+				//TODO: check if moving i does not mess with things
+				int i = 0;
+				
 				try {
 
-					if (Utils.VERBOSE) {
+					if (BeagleSequenceSimulatorApp.VERBOSE) {
 						Utils.printPartitionDataList(dataList);
 						System.out.println();
 					}
 					
 					long startingSeed = dataList.startingSeed;
-					for (int i = 0; i < dataList.simulationsCount; i++) {
+					for (i = 0; i < dataList.simulationsCount; i++) {
 
 						String fullPath = Utils.getMultipleWritePath(outFile,
 								"fasta", i);
@@ -235,7 +238,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
 				} catch (Exception e) {
 					Utils.handleException(e);
-					setStatus("Exception occured.");
+					setStatus("Exception occured in row " + i + ".");
 					setIdle();
 				}
 
@@ -434,7 +437,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			in.close();
 			fileIn.close();
 
-			if (Utils.VERBOSE) {
+			if (BeagleSequenceSimulatorApp.VERBOSE) {
 				Utils.printPartitionDataList(dataList);
 				System.out.println();
 			}

@@ -46,6 +46,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
     public static final String CATEGORY = "category";
     public static final String RANDOMIZE = "randomize";
     public static final String RANDOM_EFFECTS = "randomEffects";
+    public static final String IN_LOG_SPACE = "inLogSpace";
 
     public String getParserName() {
         return COUNTABLE_CLOCK_BRANCH_RATES;
@@ -61,10 +62,12 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             randomEffects = (AbstractBranchRateModel) xo.getElementFirstChild(RANDOM_EFFECTS);
         }
 
+        boolean inLogSpace = xo.getAttribute(IN_LOG_SPACE, false);
+
         Logger.getLogger("dr.evomodel").info("Using a countable mixture molecular clock model.");
 
         CountableMixtureBranchRates model = new CountableMixtureBranchRates(treeModel, ratesParameter,
-                allocationParameter, randomEffects);
+                allocationParameter, randomEffects, inLogSpace);
 
         if (!xo.getAttribute(RANDOMIZE, true)) {
             for (int i = 0; i < xo.getChildCount(); ++i) {
@@ -114,6 +117,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             new ElementRule(RATES, Parameter.class, "The molecular evolutionary rate parameter", false),
             new ElementRule(ALLOCATION, Parameter.class, "Allocation parameter", false),
             new ElementRule(RANDOM_EFFECTS, AbstractBranchRateModel.class, "Possible random effects", true),
+            AttributeRule.newBooleanRule(IN_LOG_SPACE, true),
             AttributeRule.newBooleanRule(RANDOMIZE, true),
             new ElementRule(LocalClockModelParser.CLADE,
                     new XMLSyntaxRule[]{

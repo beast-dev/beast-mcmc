@@ -1,7 +1,7 @@
 /*
  * MarkovModulatedSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,7 +29,6 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -47,19 +46,29 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     private List<SubstitutionModel> baseModels;
     private final int numBaseModel;
     private final int baseStateCount;
-//    private final int stateCount;
+    //    private final int stateCount;
     private final Parameter switchingRates;
 
     private static final boolean IGNORE_RATES = false;
     private static final boolean DEBUG = false;
 
     private final double[] baseMatrix;
+    private Parameter rateScalar;
 
     public MarkovModulatedSubstitutionModel(String name,
-                                         List<SubstitutionModel> baseModels,
-                                         Parameter switchingRates,
-                                         DataType dataType,
-                                         EigenSystem eigenSystem) {
+                                            List<SubstitutionModel> baseModels,
+                                            Parameter switchingRates,
+                                            DataType dataType,
+                                            EigenSystem eigenSystem) {
+        this(name, baseModels, switchingRates, dataType, eigenSystem, null);
+    }
+
+    public MarkovModulatedSubstitutionModel(String name,
+                                            List<SubstitutionModel> baseModels,
+                                            Parameter switchingRates,
+                                            DataType dataType,
+                                            EigenSystem eigenSystem,
+                                            Parameter rateScalar) {
 //        super(name, dataType, null, eigenSystem);
         super(name, dataType, null, null);
 
@@ -88,7 +97,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         }
 
         // This constructor also checks that all models have the same base stateCount
-        freqModel = new MarkovModulatedFrequencyModel("mm",freqModels, switchingRates);
+        freqModel = new MarkovModulatedFrequencyModel("mm", freqModels, switchingRates);
 
         if (stateCount != stateSizes) {
             throw new RuntimeException("Incompatible state counts in " + getModelName() + ". Models add up to " + stateSizes + ".");
@@ -101,10 +110,20 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             }
         }
 
+        if (rateScalar != null) addVariable(rateScalar);
+        this.rateScalar = rateScalar;
+
+        setDoNormalization(false);
+
         updateMatrix = true;
 
         Logger.getLogger("dr.app.beagle").info("\tConstructing a Markov-modulated Markov chain substitution model with " + stateCount + " states;  please cite:\n"
                 + Citable.Utils.getCitationString(this));
+    }
+
+    private double getModelRateScalar(int model) {
+        return rateScalar != null ? rateScalar.getParameterValue(0) : 1.0;
+        //return 1E-2;
     }
 
     protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
@@ -115,12 +134,13 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         }
         // Set the instantaneous rate matrix
         for (int m = 0; m < numBaseModel; ++m) {
-            final int offset = m * baseStateCount;            
+            final int offset = m * baseStateCount;
             baseModels.get(m).getInfinitesimalMatrix(baseMatrix);
+            final double rateScalar = getModelRateScalar(m);
             int k = 0;
             for (int i = 0; i < baseStateCount; i++) {
                 for (int j = 0; j < baseStateCount; j++) {
-                    matrix[offset + i][offset + j] = baseMatrix[k];
+                    matrix[offset + i][offset + j] = rateScalar * baseMatrix[k];
                     k++;
                 }
             }
@@ -142,9 +162,9 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             }
         }
 
-        if (DEBUG) {
-            System.err.println(new Matrix(matrix));
-        }
+//        if (DEBUG) {
+//            System.err.println(new Matrix(matrix));
+//        }
     }
 
 //    protected double setupMatrix() {
@@ -192,7 +212,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == switchingRates) {
+        if (variable == switchingRates || variable == rateScalar) {
             // Update rates
             updateMatrix = true;
         }

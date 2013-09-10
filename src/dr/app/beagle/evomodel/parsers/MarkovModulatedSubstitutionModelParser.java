@@ -1,7 +1,7 @@
 /*
  * MarkovModulatedSubstitutionModelParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -42,9 +42,10 @@ import java.util.List;
 public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String MARKOV_MODULATED_MODEL = "markovModulatedSubstitutionModel";
-//    public static final String HIDDEN_COUNT = "hiddenCount";
+    //    public static final String HIDDEN_COUNT = "hiddenCount";
     public static final String SWITCHING_RATES = "switchingRates";
-//    public static final String DIAGONALIZATION = "diagonalization";
+    //    public static final String DIAGONALIZATION = "diagonalization";
+    public static final String RATE_SCALAR = "rateScalar";
 
     public String getParserName() {
         return MARKOV_MODULATED_MODEL;
@@ -53,7 +54,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         DataType dataType = DataTypeUtils.getDataType(xo);
-         System.err.println("dataType = " + dataType);
+        System.err.println("dataType = " + dataType);
         NewHiddenNucleotides nucleotides;
         if (dataType instanceof NewHiddenNucleotides) {
             nucleotides = (NewHiddenNucleotides) dataType;
@@ -80,11 +81,14 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object cxo = xo.getChild(i);
             if (cxo instanceof SubstitutionModel) {
-                substModels.add((SubstitutionModel)cxo);
+                substModels.add((SubstitutionModel) cxo);
             }
         }
 
-        return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null);
+        Parameter rateScalar = xo.hasChildNamed(RATE_SCALAR) ?
+                (Parameter) xo.getChild(RATE_SCALAR).getChild(Parameter.class) : null;
+
+        return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null, rateScalar);
     }
 
     public String getParserDescription() {
@@ -112,5 +116,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 //            new ElementRule(FrequencyModel.class),
 //            AttributeRule.newStringRule(DIAGONALIZATION),
             new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE),
+            new ElementRule(RATE_SCALAR,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
     };
 }

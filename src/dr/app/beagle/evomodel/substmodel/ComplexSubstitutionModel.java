@@ -161,11 +161,17 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        double norm = 1.0;
         if (doNormalization) {
-            return super.getNormalizationValue(matrix, pi);
-        } else {
-            return 1.0;
+            norm = super.getNormalizationValue(matrix, pi);
         }
+//            return super.getNormalizationValue(matrix, pi);
+//        } else {
+//            return 1.0;
+//        }
+//        System.err.println("norm = " + doNormalization + " " + norm);
+//        System.err.println(new Matrix(matrix));
+        return norm;
     }
 
     public double getLogLikelihood() {
@@ -236,6 +242,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         public double getDoubleValue() {
             return getLogLikelihood();
         }
+    }
+
+    void setDoNormalization(boolean normalize) {
+        this.doNormalization = normalize;
     }
 
     private boolean doNormalization = true;

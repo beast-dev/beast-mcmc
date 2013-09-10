@@ -50,7 +50,6 @@ import java.util.Set;
 public class CountableMixtureBranchRates extends AbstractBranchRateModel implements Loggable {
 
     private final Parameter ratesParameter;
-    private final Parameter rateCategoryParameter;
     private final TreeModel treeModel;
     private final AbstractBranchRateModel randomEffectsModel;
 
@@ -70,7 +69,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
         this.treeModel = treeModel;
-        this.rateCategoryParameter = rateCategoryParameter;
         rateCategories = new TreeParameterModel(treeModel, rateCategoryParameter, false);
         categoryCount = ratesParameter.getDimension();
 
@@ -119,8 +117,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             throw new IllegalArgumentException("Excluding stems not yet implemented in countable branch rate mixture models.");
         }
 
-//        Set<Integer> tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
-//        BitSet tipBitSet = Tree.Utils.getTipsBitSetForTaxa(treeModel, taxonList);
         Set<String> leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
         if (leafSetList == null) {
             leafSetList = new ArrayList<CladeContainer>();
@@ -148,22 +144,27 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     }
 
     private void updateCladeRateCategories() {
-//        System.err.println("A");
         if (leafSetList != null) {
+            for (NodeRef node : treeModel.getNodes()) {
+                if (node != treeModel.getRoot()) {
+                    rateCategories.setNodeValue(treeModel, node, 0.0);
+                }
+            }
             for (CladeContainer clade : leafSetList) {
-//                System.err.println("B");
                 NodeRef node = Tree.Utils.getCommonAncestorNode(treeModel, clade.getLeafSet());
-                rateCategoryParameter.setParameterValue(node.getNumber(), clade.getRateCategory());
-//                System.err.println("Setting entry #" + clade.getRateCategory());
+                if (node != treeModel.getRoot()) {
+                    rateCategories.setNodeValue(treeModel, node, clade.getRateCategory());
+                }
             }
         }
-//        System.exit(-1);
     }
 
     public void randomize() {
-        for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-            int index = MathUtils.nextInt(categoryCount);
-            rateCategoryParameter.setParameterValue(i, index);
+        for (NodeRef node : treeModel.getNodes()) {
+            if (node != treeModel.getRoot()) {
+                int index = MathUtils.nextInt(categoryCount);
+                rateCategories.setNodeValue(treeModel, node, index);
+            }
         }
     }
 
@@ -177,9 +178,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
         public double getDoubleValue() {
             int occupancy = 0;
-            for (int j = 0; j < rateCategoryParameter.getDimension(); ++j) {
-                if (Math.round(rateCategoryParameter.getParameterValue(j)) == index) {
-                    occupancy++;
+            for (NodeRef node : treeModel.getNodes()) {
+                if (node != treeModel.getRoot()) {
+                    if (Math.round(rateCategories.getNodeValue(treeModel, node)) == index) {
+                        occupancy++;
+                    }
                 }
             }
             return occupancy;
@@ -187,13 +190,22 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel) {
-            throw new IllegalArgumentException("CountableMixtureBranchRates is not yet implemented for random trees");
-            // TODO for random trees:
-            // 1. Keep a List<TaxonList>
-            // 2. Reset allocation parameter when treeModel is hit.
+        if (model == rateCategories) {
+//            fireModelChanged();
+        } else if (model == treeModel) {
+            cladesChanged = true;
+            fireModelChanged();
+        } else if (model == randomEffectsModel) {
+            if (object == randomEffectsModel) {
+                fireModelChanged();
+            } else if (object == null) {
+                fireModelChanged(null, index);
+            } else {
+                throw new IllegalArgumentException("Unknown object component!");
+            }
+        } else {
+            throw new IllegalArgumentException("Unknown model component!");
         }
-        fireModelChanged(null, index);
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -217,13 +229,11 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
-//        if (updateRateCategories) {
-//            setupRates();
-//        }
-
-        if (cladesChanged) {
-            updateCladeRateCategories();
-            cladesChanged = false;
+        synchronized (this) {
+            if (cladesChanged) {
+                updateCladeRateCategories();
+                cladesChanged = false;
+            }
         }
 
         int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));

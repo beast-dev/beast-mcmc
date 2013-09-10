@@ -55,7 +55,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private final Parameter parameter;
     private final Transform[] transformations;
     private final int dim;
-    //    private final double constantFactor;
+    // private final double constantFactor;
     private double[] oldMeans, newMeans;
 
     final double[][] matrix;
@@ -77,7 +77,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         this.iterations = 0;
         setWeight(weight);
         dim = parameter.getDimension();
-//        constantFactor = Math.pow(2.38, 2) / ((double) dim); // not necessary because scaleFactor is auto-tuned
+        // constantFactor = Math.pow(2.38, 2) / ((double) dim); // not necessary because scaleFactor is auto-tuned
         this.initial = initial;
         this.empirical = new double[dim][dim];
         this.oldMeans = new double[dim];
@@ -139,7 +139,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     private double calculateCovariance(int number, double currentMatrixEntry, double[] values, int firstIndex, int secondIndex) {
 
-        //number will always be > 1 here
+        // number will always be > 1 here
         double result = currentMatrixEntry * (number - 1);
         result += (values[firstIndex] * values[secondIndex]);
         result += ((number - 1) * oldMeans[firstIndex] * oldMeans[secondIndex] - number * newMeans[firstIndex] * newMeans[secondIndex]);
@@ -168,10 +168,6 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         //store MH-ratio in logq
         double logJacobian = 0.0;
-
-        // never used
-//        double[] oldX = new double[x.length];
-//        System.arraycopy(x, 0, oldX, 0, x.length);
 
         if (iterations > 1) {
 
@@ -210,22 +206,16 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 }
             }
         }
+        
+        for (int i = 0; i < dim; i++) {
+            epsilon[i] = scaleFactor * MathUtils.nextGaussian();
+        }
 
         if (iterations > initial) {
 
             // TODO: For speed, it may not be necessary to update decomposition each and every iteration
 
-            //System.err.println("Using empirical covariance matrix");
-            //System.err.println("Exiting ...");
-            //System.exit(0);
-
-//            double[] epsilon = new double[dim];
-
-            for (int i = 0; i < dim; i++) {
-                epsilon[i] = scaleFactor * MathUtils.nextGaussian();
-            }
-
-//            double[][] proposal = new double[dim][dim];
+            // double[][] proposal = new double[dim][dim];
             for (int i = 0; i < dim; i++) {
                 for (int j = i; j < dim; j++) { // symmetric matrix
                     proposal[j][i] = proposal[i][j] = (1 - beta) * // constantFactor *  /* auto-tuning using scaleFactor */
@@ -233,70 +223,37 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 }
             }
 
-            //not necessary for first test phase, but will need to be performed when covariance matrix is being updated
+            // not necessary for first test phase, but will need to be performed when covariance matrix is being updated
             try {
                 cholesky = (new CholeskyDecomposition(proposal)).getL();
             } catch (IllegalDimension illegalDimension) {
                 throw new RuntimeException("Unable to decompose matrix in AdaptableVarianceMultivariateNormalOperator");
             }
 
-            for (int i = 0; i < dim; i++) {
-                for (int j = i; j < dim; j++) {
-                    transformedX[i] += cholesky[j][i] * epsilon[j];
-                    // caution: decomposition returns lower triangular
-                }
-                if (MULTI) {
-                    parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
-                } else {
-                    parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-                }
-
-
-                logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
-                        - transformations[i].getLogJacobian(x[i]);
+        }
+        
+        for (int i = 0; i < dim; i++) {
+            for (int j = i; j < dim; j++) {
+                transformedX[i] += cholesky[j][i] * epsilon[j];
+                // caution: decomposition returns lower triangular
             }
             if (MULTI) {
-                parameter.fireParameterChangedEvent(); // Signal once.
+                parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+            } else {
+                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
             }
 
-            /*for (int i = 0; i < dim; i++) {
-                System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-            }*/
 
-        } else {
-
-            //System.err.println("Using initial covariance matrix");
-
-            // TODO Get rid of the code duplication with immediately above.
-
-//            double[] epsilon = new double[dim];
-
-            for (int i = 0; i < dim; i++) {
-                epsilon[i] = scaleFactor * MathUtils.nextGaussian();
-            }
-
-            for (int i = 0; i < dim; i++) {
-                for (int j = i; j < dim; j++) {
-                    transformedX[i] += cholesky[j][i] * epsilon[j];
-                    // caution: decomposition returns lower triangular
-                }
-                if (MULTI) {
-                    parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
-                } else {
-                    parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-                }
-
-
-                logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
-                        - transformations[i].getLogJacobian(x[i]);
-            }
-            if (MULTI) {
-                parameter.fireParameterChangedEvent(); // Signal once.
-            }
-            /*for (int i = 0; i < dim; i++) {
-                System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-            }*/
-
+            logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
+                    - transformations[i].getLogJacobian(x[i]);
+        }
+        
+        /*for (int i = 0; i < dim; i++) {
+        	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
+    	}*/
+        
+        if (MULTI) {
+            parameter.fireParameterChangedEvent(); // Signal once.
         }
 
         //copy new means to old means for next update iteration
@@ -401,6 +358,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             //varMatrix needs to be initialized
             int dim = parameter.getDimension();
+            System.err.println("Dimension: " + dim);
 
             if (initial <= 2 * dim) {
                 initial = 2 * dim;
@@ -433,9 +391,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 if (child instanceof Transform.ParsedTransform) {
                     Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
 
+                    System.err.println("Transformations:");
                     for (int j = thisObject.start; j < thisObject.end; ++j) {
                         transformations[j] = thisObject.transform;
+                        System.err.print(transformations[j].getTransformName() + " ");
                     }
+                    System.err.println();
                 }
             }
 

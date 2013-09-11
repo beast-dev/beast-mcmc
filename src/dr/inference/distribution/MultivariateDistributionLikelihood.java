@@ -59,7 +59,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String NON_INFORMATIVE = "nonInformative";
     public static final String MULTIVARIATE_LIKELIHOOD = "multivariateDistributionLikelihood";
     public static final String DATA_AS_MATRIX = "dataAsMatrix";
-    public static final String TREE_TRAIT = "treeTraitNormalDistribution";
+    // public static final String TREE_TRAIT = "treeTraitNormalDistribution";
+    public static final String TREE_TRAIT = "treeTraitNormalDistributionLikelihood";
+    public static final String TREE_TRAIT_NORMAL = "treeTraitNormalDistribution";
+    public static final String ROOT_VALUE = "rootValue";
     public static final String CONDITION = "conditionOnRoot";
 
     public static final String DATA = "data";
@@ -586,10 +589,10 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         }
     };
 
-    public static XMLObjectParser TREE_TRAIT_DISTRIBUTION = new AbstractXMLObjectParser() {
+    public static XMLObjectParser TREE_TRAIT_MODEL = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return TREE_TRAIT;
+            return TREE_TRAIT_NORMAL;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -599,9 +602,58 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             FullyConjugateMultivariateTraitLikelihood traitModel = (FullyConjugateMultivariateTraitLikelihood)
                     xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
 
+            TreeTraitNormalDistributionModel treeTraitModel;
+
+            if (xo.getChild(ROOT_VALUE) != null) {
+                XMLObject cxo = xo.getChild(ROOT_VALUE);
+                Parameter rootValue = (Parameter) cxo.getChild(Parameter.class);
+                treeTraitModel = new TreeTraitNormalDistributionModel(traitModel, rootValue, conditionOnRoot);
+            } else {
+                treeTraitModel = new TreeTraitNormalDistributionModel(traitModel, conditionOnRoot);
+            }
+            return treeTraitModel;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newBooleanRule(CONDITION, true),
+                new ElementRule(FullyConjugateMultivariateTraitLikelihood.class)
+        };
+
+        public String getParserDescription() {
+            return "Parses TreeTraitNormalDistributionModel";
+        }
+
+        public Class getReturnType() {
+            return TreeTraitNormalDistributionModel.class;
+        }
+    };
+
+
+    public static XMLObjectParser TREE_TRAIT_DISTRIBUTION = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return TREE_TRAIT;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+            /*
+            boolean conditionOnRoot = xo.getAttribute(CONDITION, false);
+
+            FullyConjugateMultivariateTraitLikelihood traitModel = (FullyConjugateMultivariateTraitLikelihood)
+                    xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
+            */
+
+            TreeTraitNormalDistributionModel treeTraitModel = (TreeTraitNormalDistributionModel)
+                    xo.getChild(TreeTraitNormalDistributionModel.class);
+
             MultivariateDistributionLikelihood likelihood =
                     new MultivariateDistributionLikelihood(
-                            new TreeTraitNormalDistributionModel(traitModel, conditionOnRoot)
+                            //  new TreeTraitNormalDistributionModel(traitModel, conditionOnRoot)
+                            treeTraitModel
                     );
 
             XMLObject cxo = xo.getChild(DATA);
@@ -620,8 +672,9 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(CONDITION, true),
-                new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+                //  AttributeRule.newBooleanRule(CONDITION, true),
+                //   new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+                new ElementRule(TreeTraitNormalDistributionModel.class),
                 new ElementRule(DATA,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)})
         };

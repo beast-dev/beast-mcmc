@@ -88,11 +88,12 @@ public class MultivariateTraitUtils {
     }
 
 
-    public static double[] computeTreeTraitMean(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
+    public static double[] computeTreeTraitMean(FullyConjugateMultivariateTraitLikelihood trait, double[] rootValue, boolean conditionOnRoot) {
         double[] root = trait.getPriorMean();
         if (conditionOnRoot) {
             System.err.println("WARNING: Not yet fully implemented (conditioning on root in simulator)");
-            root = new double[root.length];
+            //root = new double[root.length];
+            root = rootValue;
         }
         final int nTaxa = trait.getTreeModel().getExternalNodeCount();
         double[] mean = new double[root.length * nTaxa];

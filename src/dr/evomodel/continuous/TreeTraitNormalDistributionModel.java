@@ -43,15 +43,22 @@ import dr.math.distributions.RandomGenerator;
 
 public class TreeTraitNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel, RandomGenerator {
 
-    public TreeTraitNormalDistributionModel(FullyConjugateMultivariateTraitLikelihood traitModel, boolean conditionOnRoot) {
+    public TreeTraitNormalDistributionModel(FullyConjugateMultivariateTraitLikelihood traitModel, Parameter rootValue, boolean conditionOnRoot) {
 
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
 
         this.traitModel = traitModel;
+        if (rootValue != null) {
+            this.rootValue = rootValue.getParameterValues();
+        }
         this.conditionOnRoot = conditionOnRoot;
         dim = traitModel.getTreeModel().getExternalNodeCount() * traitModel.getDimTrait();
         addModel(traitModel);
         distributionKnown = false;
+    }
+
+    public TreeTraitNormalDistributionModel(FullyConjugateMultivariateTraitLikelihood traitModel, boolean conditionOnRoot) {
+        this(traitModel, null, conditionOnRoot);
     }
 
     // *****************************************************************
@@ -75,6 +82,10 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
 
     public String getType() {
         return "TreeTraitMVN";
+    }
+
+    public int getDimTrait() {
+        return traitModel.dimTrait;
     }
 
     // *****************************************************************
@@ -120,7 +131,7 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
     }
 
     private double[] computeMean() {
-        return MultivariateTraitUtils.computeTreeTraitMean(traitModel, conditionOnRoot);
+        return MultivariateTraitUtils.computeTreeTraitMean(traitModel, rootValue, conditionOnRoot);
     }
 
     private double[][] computePrecision() {
@@ -151,6 +162,55 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
 
     private final boolean conditionOnRoot;
     private double[][] precisionMatrix = null;
+    private double[] rootValue;
     private final int dim;
+
+    /*
+ public static final String TREE_TRAIT_NORMAL = "treeTraitNormalDistribution";
+ public static final String CONDITION = "conditionOnRoot";
+
+
+
+
+
+
+  public static XMLObjectParser TREE_TRAIT_MODEL = new AbstractXMLObjectParser() {
+
+      public String getParserName() {
+          return TREE_TRAIT_NORMAL;
+      }
+
+      public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+              System.err.println("I AM IN THE RIGHT PARSER");
+          boolean conditionOnRoot = xo.getAttribute(CONDITION, false);
+
+          FullyConjugateMultivariateTraitLikelihood traitModel = (FullyConjugateMultivariateTraitLikelihood)
+                  xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
+
+          TreeTraitNormalDistributionModel treeTraitModel = new TreeTraitNormalDistributionModel(traitModel, conditionOnRoot);
+
+          return treeTraitModel;
+      }
+
+      public XMLSyntaxRule[] getSyntaxRules() {
+          return rules;
+      }
+
+      private final XMLSyntaxRule[] rules = {
+              AttributeRule.newBooleanRule(CONDITION, true),
+              new ElementRule(FullyConjugateMultivariateTraitLikelihood.class)
+      };
+
+      public String getParserDescription() {
+          return "Parses TreeTraitNormalDistributionModel";
+      }
+
+      public Class getReturnType() {
+          return TreeTraitNormalDistributionModel.class;
+      }
+  };
+
+    */
+
 
 }

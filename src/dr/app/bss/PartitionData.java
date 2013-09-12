@@ -869,7 +869,7 @@ public class PartitionData implements Serializable {
 			{ 6, 7, 8 } // Inverse Gaussian
 	};
 
-	public double[] clockParameterValues = new double[] { 1.2E-2, // clockrate
+	public double[] clockParameterValues = new double[] { 1.0, // clockrate
 			1.0, // ucld.mean
 			2.0, // ucld.stdev
 			0.0, // ucld.offset

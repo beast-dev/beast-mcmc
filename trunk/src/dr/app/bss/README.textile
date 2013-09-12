@@ -26,7 +26,7 @@ h1. CITING
          
         A BibTeX entry for LaTeX users:
          
-          article{,
+          article{
             author = {},
             title = {},
           }
@@ -34,7 +34,8 @@ h1. CITING
 h1. TODO
 
 * nexus output format
-* output tree with inner nodes annoted with trait values
+* output tree with inner nodes annoted with trait values (annotate with rate as well)
+* simulation / inference in one XML
 * command line interface
   - complex argument for partitions 
 * simulating indels  

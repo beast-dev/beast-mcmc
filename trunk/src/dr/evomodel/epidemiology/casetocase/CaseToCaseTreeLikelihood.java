@@ -743,7 +743,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         renormalisationNeeded = false;
 
-        // @todo If the normalisation value rounds to zero it is an almighty pain, and may prevent acceptance of promising states, but perhaps it can't be helped
+        // If the normalisation value rounds to zero it is an almighty pain, but perhaps it can't be helped
 
         if(logL==Double.POSITIVE_INFINITY){
             return Double.NEGATIVE_INFINITY;

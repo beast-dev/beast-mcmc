@@ -33,6 +33,8 @@ import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.app.bss.Utils;
+import dr.app.tools.NexusExporter;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.AminoAcids;
@@ -51,6 +53,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
+import java.io.File;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 public class BeagleSeqSimTest {
@@ -65,10 +69,10 @@ public class BeagleSeqSimTest {
         int N = 1;
 		for (int i = 0; i < N; i++) {
 //			simulateTopology();
-//			simulateOnePartition();
+			simulateOnePartition();
 //			simulateTwoPartitions();
 //			simulateThreePartitions(i, N);
-			simulateAminoAcid();
+//			simulateAminoAcid();
 		
 		}
 		long toc = System.currentTimeMillis();
@@ -227,8 +231,21 @@ public class BeagleSeqSimTest {
                     // , sequenceLength
             );
 
-            System.out.println(simulator.simulate(simulateInPar).toString());
+            Alignment alignment = simulator.simulate(simulateInPar);
 
+            System.out.println(alignment.toString());
+
+            //TODO
+            
+            File file = new File("/home/filip/sequences.nex");
+            PrintStream ps = new PrintStream(file);
+            NexusExporter nexusExporter = new NexusExporter(ps);
+            
+//            nexusExporter;
+            
+            
+            ps.close();
+            
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);

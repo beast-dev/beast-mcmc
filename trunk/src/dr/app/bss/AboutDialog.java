@@ -39,7 +39,7 @@ public class AboutDialog extends JDialog {
 		  }
 */	
 	private static final int WIDTH = 700;
-	private static final int HEIGHT = 580;
+	private static final int HEIGHT = 650;
 	private static final int FONT_SIZE = 15;
 
 	private static final String FILIP_BIELEJEC = "Filip Bielejec";

@@ -148,7 +148,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
                 } else {
                     normalisation = Math.log(aAlpha()/Math.pow(bAlpha(), N));
                 }
-                normalisation += Math.log(MathUtils.factorial(N-1)) - Math.log(N);
+                normalisation += Math.log(MathUtils.factorial(N-1));
 
             }
             if(!treeProbKnown){
@@ -199,7 +199,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         Collections.sort(copyOfCases, new CaseInfectionComparator());
         for(int i=1; i<outbreak.size(); i++){
             for(int j=0; j<i; j++){
-                total += (infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(i))) -
+                double endOfWindow = Math.min(infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(i))),
+                        copyOfCases.get(j).getCullTime());
+
+                total += (endOfWindow -
                         infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(j))))
                         * outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(j), spatialKernel, alpha);
             }

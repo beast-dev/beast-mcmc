@@ -38,7 +38,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			"To", //
 			"Every", //
 			"Data Type", //
-			"Demographic model", //
+			"Tree model", //
 			"Substitution Model", //
 			"Frequencies", //
 			"Site Rate Model", //

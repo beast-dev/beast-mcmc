@@ -35,8 +35,16 @@ public abstract class AbstractCase extends AbstractModel {
         return examDate;
     }
 
+    public double getExamTime() {
+        return examDate.getTimeValue();
+    }
+
     public Date getCullDate(){
         return endOfInfectiousDate;
+    }
+
+    public double getCullTime(){
+        return endOfInfectiousDate.getTimeValue();
     }
 
     public abstract boolean culledYet(double time);

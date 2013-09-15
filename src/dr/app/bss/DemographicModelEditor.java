@@ -50,7 +50,7 @@ public class DemographicModelEditor {
 		this.row = row;
 		
 		demographicParameterFields = new RealNumberField[PartitionData.demographicParameterNames.length];
-		window = new JDialog(owner, "Setup demographic model for partition " + (row + 1));
+		window = new JDialog(owner, "Setup tree model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
 		demographicCombo = new JComboBox();
@@ -98,7 +98,7 @@ public class DemographicModelEditor {
 	private void setDemographicArguments() {
 
 		optionPanel.removeAll();
-		optionPanel.addComponents(new JLabel("Demographic model:"), demographicCombo);
+		optionPanel.addComponents(new JLabel("Tree model:"), demographicCombo);
 		optionPanel.addSeparator();
 		optionPanel.addLabel("Set parameter values:");
 

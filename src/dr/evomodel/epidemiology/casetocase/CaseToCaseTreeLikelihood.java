@@ -1112,8 +1112,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return map;
     }
 
-/*  The CSV file should have a header line, and then a line for each node with its id in the first column and the id
-    of its parent in the second. The node with no parent has "Start" in the second column.*/
+/*  The CSV file should have a header, and then lines matching each case to its infector*/
 
     private void partitionAccordingToSpecificTT(String networkFileName){
         System.out.println("Using specified starting transmission tree.");
@@ -1140,16 +1139,67 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
     }
 
-
-    /* Takes a HashMap referring each case to its parent, and tries to paint the tree with it.
-    This only works on the non-extended version right now, and @todo isn't properly setting infection times*/
-
     private void partitionAccordingToSpecificTT(HashMap<AbstractCase, AbstractCase> map){
-        Arrays.fill(updateNode, true);
-        Arrays.fill(updateNodeForSingleTraverse, true);
         branchMap = prepareExternalNodeMap(new AbstractCase[treeModel.getNodeCount()]);
-        TreeModel.Node root = (TreeModel.Node) treeModel.getRoot();
-        specificallyAssignNode(root, branchMap, map);
+
+        AbstractCase firstCase=null;
+        for(AbstractCase aCase : cases.getCases()){
+            if(map.get(aCase)==null){
+                firstCase = aCase;
+            }
+        }
+        if(firstCase==null){
+            throw new RuntimeException("Given starting network is not compatible with the starting tree");
+        }
+        NodeRef root = treeModel.getRoot();
+        specificallyPartitionUpwards(root, firstCase, map);
+        if(!checkPartitions()){
+            throw new RuntimeException("Given starting network is not compatible with the starting tree");
+        }
+
+    }
+
+    private void specificallyPartitionUpwards(NodeRef node, AbstractCase thisCase,
+                                              HashMap<AbstractCase, AbstractCase> map){
+        if(treeModel.isExternal(node)){
+            return;
+        }
+        branchMap[node.getNumber()]=thisCase;
+        if(tipLinked(node)){
+            for(int i=0; i<treeModel.getChildCount(node); i++){
+                specificallyPartitionUpwards(treeModel.getChild(node, i), thisCase, map);
+            }
+        } else {
+            branchMap[node.getNumber()]=null;
+            HashSet<AbstractCase> children = new HashSet<AbstractCase>();
+            for(AbstractCase aCase : cases.getCases()){
+                if(map.get(aCase)==thisCase){
+                    children.add(aCase);
+                }
+            }
+            HashSet<AbstractCase> relevantChildren = new HashSet<AbstractCase>(children);
+            for(AbstractCase child: children){
+                int tipNo = tipMap.get(child);
+                NodeRef currentNode = treeModel.getExternalNode(tipNo);
+                while(currentNode!=node && currentNode!=null){
+                    currentNode = treeModel.getParent(currentNode);
+                }
+                if(currentNode==null){
+                    relevantChildren.remove(child);
+                }
+            }
+            if(relevantChildren.size()==1){
+                //no creep
+                AbstractCase child = relevantChildren.iterator().next();
+                branchMap[node.getNumber()]=child;
+            } else {
+                branchMap[node.getNumber()]=thisCase;
+            }
+            for(int i=0; i<treeModel.getChildCount(node); i++){
+                specificallyPartitionUpwards(treeModel.getChild(node, i), branchMap[node.getNumber()], map);
+            }
+        }
+
     }
 
 

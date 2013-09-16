@@ -185,7 +185,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         Collections.sort(copyOfCases, new CaseInfectionComparator());
         for(int i=1; i<outbreak.size(); i++){
             for(int j=0; j<i; j++){
-                total += (infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(i))) -
+                double endOfWindow = Math.min(infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(i))),
+                        copyOfCases.get(j).getCullTime());
+
+                total += (endOfWindow -
                         infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(j))))
                         * outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(j), spatialKernel);
             }

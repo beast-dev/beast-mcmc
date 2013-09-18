@@ -95,7 +95,7 @@ public class BeagleSequenceSimulator {
 		this.siteCount = siteCount + 1;
 	}// END: Constructor
 
-	public Alignment simulate(boolean parallel) {
+	public SimpleAlignment simulate(boolean parallel) {
 
 		try {
 

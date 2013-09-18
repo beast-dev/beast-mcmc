@@ -39,6 +39,7 @@ import dr.app.beagle.tools.Partition;
 import dr.app.bss.Utils;
 import dr.app.tools.NexusExporter;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.AminoAcids;
@@ -231,15 +232,16 @@ public class BeagleSeqSimTest {
                     // , sequenceLength
             );
 
-            Alignment alignment = simulator.simulate(simulateInPar);
-
+			SimpleAlignment alignment = (SimpleAlignment) simulator.simulate(simulateInPar);
+			alignment.setNexusOutput();
+      
             System.out.println(alignment.toString());
 
-            File file = new File("/home/filip/sequences.nxs");
-            PrintStream ps = new PrintStream(file);
+//            File file = new File("/home/filip/sequences.nxs");
+//            PrintStream ps = new PrintStream(file);
             
-            NexusExporter nexusExporter = new NexusExporter(ps);
-            System.out.println(nexusExporter.exportAlignment(alignment));
+//            NexusExporter nexusExporter = new NexusExporter();
+//            System.out.println(nexusExporter.exportAlignment(alignment));
             
         } catch (Exception e) {
             e.printStackTrace();

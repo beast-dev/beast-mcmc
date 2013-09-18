@@ -34,7 +34,6 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
-import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -103,10 +102,8 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 			if (to > siteCount) {
 				siteCount = to;
 			}
-			
-//			siteCount += partition.getPartitionSiteCount();
-			
-		}
+
+		}// END: partitions loop
 		
 		ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 		for (int i = 0; i < xo.getChildCount(); i++) {
@@ -156,7 +153,6 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
         SimpleAlignment alignment = s.simulate(parallel);
 
 		if (output.equalsIgnoreCase(NEXUS)) {
-//			System.out.println("FUBAR");
 			alignment.setNexusOutput();
 		}
 

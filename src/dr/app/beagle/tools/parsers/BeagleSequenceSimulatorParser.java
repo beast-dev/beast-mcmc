@@ -31,11 +31,14 @@ import java.util.logging.Logger;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
+import dr.xml.StringAttributeRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
@@ -48,6 +51,9 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
 	public static final String PARALLEL = "parallel";
+	public static final String OUTPUT = "output";
+	public static final String FASTA = "fasta";
+	public static final String NEXUS = "nexus";
 	
 	public String getParserName() {
 		return BEAGLE_SEQUENCE_SIMULATOR;
@@ -68,20 +74,24 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		
 		return new XMLSyntaxRule[] {
 				AttributeRule.newBooleanRule(PARALLEL, true, "Whether to use multiple Beagle instances for simulation, default is false (sequential execution)."),
+				new StringAttributeRule(OUTPUT, "Possible output formats", new String[]{ FASTA, NEXUS }, false),
 				new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
 				};
-		
-	}//END: getSyntaxRules
+	}// END: getSyntaxRules
 
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		String msg = "";
-//		int siteCount = 0;
 		boolean parallel = false;
 		
 		if (xo.hasAttribute(PARALLEL)) {
 			parallel = xo.getBooleanAttribute(PARALLEL);
+		}
+		
+		String output = FASTA;
+		if (xo.hasAttribute(OUTPUT)) {
+			output = xo.getStringAttribute(OUTPUT);
 		}
 		
 		int siteCount = 0;
@@ -143,8 +153,14 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		 }
 		
 		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
+        SimpleAlignment alignment = s.simulate(parallel);
 
-		return s.simulate(parallel);
+		if (output.equalsIgnoreCase(NEXUS)) {
+//			System.out.println("FUBAR");
+			alignment.setNexusOutput();
+		}
+
+		return alignment;
 	}// END: parseXMLObject
 
 }// END: class

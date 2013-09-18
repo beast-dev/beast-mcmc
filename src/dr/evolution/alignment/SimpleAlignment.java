@@ -25,7 +25,9 @@
 
 package dr.evolution.alignment;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,6 +39,7 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.sequence.Sequences;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.util.NumberFormatter;
 
 /**
  * A simple alignment class that implements gaps by characters in the sequences.
@@ -51,13 +54,16 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     // **************************************************************
     // INSTANCE VARIABLES
     // **************************************************************
-	
-    private boolean toNexus = false;
-	
+
+    private outputTypes outputType = outputTypes.FASTA;
     private DataType dataType = null;
     private int siteCount = 0;
     private boolean siteCountKnown = false;
     private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
+
+	private enum outputTypes {
+		FASTA, NEXUS
+	}
     
     // **************************************************************
     // SimpleAlignment METHODS
@@ -68,7 +74,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
      */
     public SimpleAlignment() {
     }
-
 
     /**
      * Constructs a sub alignment based on the provided taxa.
@@ -86,6 +91,14 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         }
     }
 
+    public void setNexusOutput() {
+    	outputType = outputTypes.NEXUS;
+    }
+
+    public void setFastaOutput() {
+    	outputType = outputTypes.FASTA;
+    }
+    
     public List<Sequence> getSequences() {
         return Collections.unmodifiableList(sequences);
     }
@@ -453,9 +466,9 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     	countStatistics = report;
     }
     
-    public String toFasta() {
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
-
+    private String toFasta() {
+        
+    	NumberFormatter formatter = new NumberFormatter(6);
         StringBuffer buffer = new StringBuffer();
 
 //        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
@@ -467,6 +480,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             buffer.append("Parsimony informative sites = ").append(getInformativeCount()).append("\n");
             buffer.append("Unique site patterns = ").append(getUniquePatternCount()).append("\n\n");
         }
+        
         for (int i = 0; i < getSequenceCount(); i++) {
             String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
             buffer.append(">" + name + "\n");
@@ -476,16 +490,19 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 		return buffer.toString();
 	}
     
-	public String toNexus() {
+	private String toNexus() {
 
 		StringBuffer buffer = new StringBuffer();
 		// PrintStream ps = new PrintStream();
 
 		try {
 
-			NexusExporter nexusExporter = new NexusExporter();
-			nexusExporter.exportAlignment(this);
-
+			File tmp = File.createTempFile("tempfile", ".tmp"); 
+			PrintStream ps = new PrintStream(tmp);
+			
+			NexusExporter nexusExporter = new NexusExporter(ps);
+			buffer.append(nexusExporter.exportAlignment(this));
+			
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -494,14 +511,16 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
 		return buffer.toString();
 	}// END: toNexus
-    
+
 	public String toString() {
 
 		String string = null;
-		if (toNexus) {
-			toNexus();
-		} else {
+		if (outputType == outputTypes.NEXUS) {
+			string = toNexus();
+		} else if (outputType == outputTypes.FASTA) {
 			string = toFasta();
+		} else {
+			// do nothing
 		}
 
 		return string;

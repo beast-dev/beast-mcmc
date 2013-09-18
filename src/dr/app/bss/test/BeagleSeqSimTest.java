@@ -25,6 +25,14 @@
 
 package dr.app.bss.test;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collection;
+
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
@@ -38,6 +46,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.AminoAcids;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
@@ -52,10 +61,6 @@ import dr.evomodel.substmodel.EmpiricalRateMatrix;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-
-import java.io.File;
-import java.io.PrintStream;
-import java.util.ArrayList;
 
 public class BeagleSeqSimTest {
 
@@ -237,14 +242,12 @@ public class BeagleSeqSimTest {
 
             //TODO
             
-            File file = new File("/home/filip/sequences.nex");
+            File file = new File("/home/filip/sequences.nxs");
             PrintStream ps = new PrintStream(file);
+            
             NexusExporter nexusExporter = new NexusExporter(ps);
+            nexusExporter.exportAlignment(alignment);
             
-//            nexusExporter;
-            
-            
-            ps.close();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -253,6 +256,8 @@ public class BeagleSeqSimTest {
 
     }// END: simulateOnePartition
 
+    //TODO
+    
     static void simulateTwoPartitions() {
 
         try {

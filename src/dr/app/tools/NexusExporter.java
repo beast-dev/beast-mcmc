@@ -63,6 +63,13 @@ public class NexusExporter implements TreeExporter {
         BRANCH_ATTRIBUTES
     }
 
+    /*
+     * this constructor will result in npe if calling methods other than exportAlignment()
+     * */
+    public NexusExporter() {
+        this.out = null;
+    }
+    
     public NexusExporter(PrintStream out) {
         this.out = out;
         this.writeAttributesAs = AttributeType.NODE_ATTRIBUTES;
@@ -298,8 +305,10 @@ public class NexusExporter implements TreeExporter {
         }
     }
 
-	public void exportAlignment(Alignment alignment) throws IOException, IllegalArgumentException {
+	public String exportAlignment(Alignment alignment) throws IOException, IllegalArgumentException {
 
+		StringBuffer buffer = new StringBuffer();
+		
 		DataType dataType = null;
 		int seqLength = 0;
 		
@@ -320,13 +329,13 @@ public class NexusExporter implements TreeExporter {
 
 		}// END: sequences loop
 
-		out.println("#NEXUS");
-		out.println("begin data;");
-		out.println("\tdimensions" + " " + "ntax=" + alignment.getTaxonCount() + " " + "nchar=" + seqLength + ";");
-		out.println("\tformat datatype=" + dataType.getDescription()
+		buffer.append("#NEXUS\n");
+		buffer.append("begin data;\n");
+		buffer.append("\tdimensions" + " " + "ntax=" + alignment.getTaxonCount() + " " + "nchar=" + seqLength + ";\n");
+		buffer.append("\tformat datatype=" + dataType.getDescription()
 				+ " missing=" + DataType.UNKNOWN_CHARACTER + " gap="
-				+ DataType.GAP_CHARACTER + ";");
-		out.println("\tmatrix");
+				+ DataType.GAP_CHARACTER + ";\n");
+		buffer.append("\tmatrix\n");
 		
 		int maxRowLength = seqLength;
 		for (int n = 0; n < Math.ceil((double) seqLength / maxRowLength); n++) {
@@ -354,11 +363,12 @@ public class NexusExporter implements TreeExporter {
 					}
 				}
 				
-				out.println(builder);
+				buffer.append(builder + "\n");
 			}// END: sequences loop
-			out.println();
 		}
-		out.println(";\nend;");
+		buffer.append(";\nend;");
+		
+		return buffer.toString();
 	}// END: exportAlignment
 
     /**

@@ -25,6 +25,11 @@
 
 package dr.evolution.alignment;
 
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+
+import dr.app.tools.NexusExporter;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
@@ -33,9 +38,6 @@ import dr.evolution.sequence.Sequences;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * A simple alignment class that implements gaps by characters in the sequences.
  *
@@ -43,13 +45,25 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: SimpleAlignment.java,v 1.46 2005/06/21 16:25:15 beth Exp $
  */
+@SuppressWarnings("serial")
 public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHTMLable {
 
+    // **************************************************************
+    // INSTANCE VARIABLES
+    // **************************************************************
+	
+    private boolean toNexus = false;
+	
+    private DataType dataType = null;
+    private int siteCount = 0;
+    private boolean siteCountKnown = false;
+    private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
+    
     // **************************************************************
     // SimpleAlignment METHODS
     // **************************************************************
 
-    /**
+	/**
      * parameterless constructor.
      */
     public SimpleAlignment() {
@@ -439,7 +453,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     	countStatistics = report;
     }
     
-    public String toString() {
+    public String toFasta() {
         dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
 
         StringBuffer buffer = new StringBuffer();
@@ -459,8 +473,39 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             buffer.append(getAlignedSequenceString(i) + "\n");
         }
 
-        return buffer.toString();
-    }
+		return buffer.toString();
+	}
+    
+	public String toNexus() {
+
+		StringBuffer buffer = new StringBuffer();
+		// PrintStream ps = new PrintStream();
+
+		try {
+
+			NexusExporter nexusExporter = new NexusExporter();
+			nexusExporter.exportAlignment(this);
+
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return buffer.toString();
+	}// END: toNexus
+    
+	public String toString() {
+
+		String string = null;
+		if (toNexus) {
+			toNexus();
+		} else {
+			string = toFasta();
+		}
+
+		return string;
+	}// END: toString
 
     public String toXHTML() {
         String xhtml = "<p><em>Alignment</em> data type = ";
@@ -491,12 +536,4 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return xhtml;
     }
 
-    // **************************************************************
-    // INSTANCE VARIABLES
-    // **************************************************************
-
-    private DataType dataType = null;
-    private int siteCount = 0;
-    private boolean siteCountKnown = false;
-    private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
-}
+}// END: class

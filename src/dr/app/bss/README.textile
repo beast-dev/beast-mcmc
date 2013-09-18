@@ -34,6 +34,7 @@ h1. CITING
 h1. TODO
 
 * nexus output format
+* do the icon: http://www.designend.net/blog-webmastera,usuwanie-tla-z-obrazka-w-gimpie
 * output tree with inner nodes annoted with trait values (annotate with rate as well)
 * simulation / inference in one XML
 * command line interface

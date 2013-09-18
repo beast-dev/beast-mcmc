@@ -11,10 +11,12 @@ import java.awt.event.ItemListener;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
+import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.app.gui.components.WholeNumberField;
 
 /**
@@ -39,6 +41,9 @@ public class SimulationPanel extends JPanel implements Exportable {
 	private JCheckBox setSeed;
 	private JCheckBox useParallel;
 
+	//Combo boxes
+	private JComboBox outputFormat;
+	
 	public SimulationPanel(final MainFrame frame,
 			final PartitionDataList dataList) {
 
@@ -65,6 +70,10 @@ public class SimulationPanel extends JPanel implements Exportable {
 		optionPanel.addComponentWithLabel("Starting seed:",
 				startingSeedNumberField);
 
+		outputFormat = new JComboBox(new String[]{BeagleSequenceSimulatorParser.FASTA,BeagleSequenceSimulatorParser.NEXUS});
+		optionPanel.addComponentWithLabel("Output format:",
+				outputFormat);
+		
 		useParallel = new JCheckBox();
 		useParallel.addItemListener(new UseParallelCheckBoxListener());
 		useParallel.setSelected(dataList.useParallel);
@@ -100,6 +109,8 @@ public class SimulationPanel extends JPanel implements Exportable {
 			dataList.startingSeed = startingSeedNumberField.getValue();
 		}
 
+		dataList.outputFormat = (outputFormat.getSelectedItem().toString());
+		
 	}// END: collectSettings
 
 	private class SetSeedCheckBoxListener implements ItemListener {

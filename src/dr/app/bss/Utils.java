@@ -584,7 +584,8 @@ public class Utils {
 	}
 
 	public static String getMultipleWritePath(File outFile,
-			String defaultExtension, int i) {
+			String defaultExtension, 
+			int i) {
 
 		String path = outFile.getParent();
 		String[] nameArray = outFile.getName().split("\\.", 2);

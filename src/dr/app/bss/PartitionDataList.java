@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.evolution.util.Taxa;
 
 /**
@@ -15,6 +16,7 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 
 	public int simulationsCount = 1;
 	public boolean useParallel = false;
+	public String outputFormat = BeagleSequenceSimulatorParser.FASTA;
 	
 	//List of all Taxa displayed in Taxa Panel
 	public Taxa allTaxa = new Taxa();

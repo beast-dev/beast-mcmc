@@ -34,6 +34,8 @@ import javax.swing.plaf.BorderUIResource;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
+import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
 
@@ -165,9 +167,6 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 			// Executed in background thread
 			public Void doInBackground() {
 
-				//TODO: check if moving i does not mess with things
-				int i = 0;
-				
 				try {
 
 					if (BeagleSequenceSimulatorApp.VERBOSE) {
@@ -176,7 +175,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 					}
 					
 					long startingSeed = dataList.startingSeed;
-					for (i = 0; i < dataList.simulationsCount; i++) {
+					for (int i = 0; i < dataList.simulationsCount; i++) {
 
 						String fullPath = Utils.getMultipleWritePath(outFile,
 								"fasta", i);
@@ -230,15 +229,21 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 								partitionsList
 								);
 
-						writer.println(beagleSequenceSimulator.simulate(dataList.useParallel)
-								.toString());
+						SimpleAlignment alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
+						
+						if (dataList.outputFormat
+								.equalsIgnoreCase(BeagleSequenceSimulatorParser.NEXUS)) {
+							alignment.setNexusOutput();
+						}
+						
+						writer.println(alignment.toString());
 						writer.close();
 
 					}// END: simulationsCount loop
 
 				} catch (Exception e) {
 					Utils.handleException(e);
-					setStatus("Exception occured in row " + i + ".");
+					setStatus("Exception occured.");
 					setIdle();
 				}
 

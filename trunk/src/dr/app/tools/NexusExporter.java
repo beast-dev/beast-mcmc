@@ -25,13 +25,23 @@
 
 package dr.app.tools;
 
-import dr.evolution.io.TreeExporter;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-
+import java.io.IOException;
 import java.io.PrintStream;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import dr.evolution.alignment.Alignment;
+import dr.evolution.datatype.DataType;
+import dr.evolution.io.TreeExporter;
+import dr.evolution.sequence.Sequence;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 
 /**
  * @author Andrew Rambaut
@@ -40,14 +50,18 @@ import java.util.*;
  */
 public class NexusExporter implements TreeExporter {
 
+    private final PrintStream out;
+    private NumberFormat formatter = null;
+    private String treePrefix = DEFAULT_TREE_PREFIX;
+    private boolean sorted = false;
+    private AttributeType writeAttributesAs = AttributeType.NODE_ATTRIBUTES;
+    public static final String DEFAULT_TREE_PREFIX = "TREE";
+    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
+    
     public enum AttributeType {
         NODE_ATTRIBUTES,
         BRANCH_ATTRIBUTES
     }
-
-    public static final String DEFAULT_TREE_PREFIX = "TREE";
-
-    public static final String SPECIAL_CHARACTERS_REGEX = ".*[\\s\\.;,\"\'].*";
 
     public NexusExporter(PrintStream out) {
         this.out = out;
@@ -233,7 +247,7 @@ public class NexusExporter implements TreeExporter {
         }
 
         if (attributes) {
-            Iterator iter = tree.getNodeAttributeNames(node);
+            Iterator<?> iter = tree.getNodeAttributeNames(node);
             if (iter != null) {
                 boolean first = true;
                 while (iter.hasNext()) {
@@ -284,9 +298,85 @@ public class NexusExporter implements TreeExporter {
         }
     }
 
-    private final PrintStream out;
-    private NumberFormat formatter = null;
-    private String treePrefix = DEFAULT_TREE_PREFIX;
-    private boolean sorted = false;
-    private AttributeType writeAttributesAs = AttributeType.NODE_ATTRIBUTES;
-}
+	public void exportAlignment(Alignment alignment) throws IOException, IllegalArgumentException {
+
+		DataType dataType = null;
+		int seqLength = 0;
+		
+		for (int i = 0; i < alignment.getSequenceCount(); i++) {
+
+			Sequence sequence = alignment.getSequence(i);
+
+			if (sequence.getLength() > seqLength) {
+				seqLength = sequence.getLength();
+			}
+
+			if (dataType == null) {
+				dataType = sequence.getDataType();
+			} else if (dataType != sequence.getDataType()) {
+				throw new RuntimeException(
+						"Sequences must have the same data type.");
+			}// END: dataType check
+
+		}// END: sequences loop
+
+		out.println("#NEXUS");
+		out.println("begin data;");
+		out.println("\tdimensions" + " " + "ntax=" + alignment.getTaxonCount() + " " + "nchar=" + seqLength + ";");
+		out.println("\tformat datatype=" + dataType.getDescription()
+				+ " missing=" + DataType.UNKNOWN_CHARACTER + " gap="
+				+ DataType.GAP_CHARACTER + ";");
+		out.println("\tmatrix");
+		
+		int maxRowLength = seqLength;
+		for (int n = 0; n < Math.ceil((double) seqLength / maxRowLength); n++) {
+			for (int i = 0; i < alignment.getSequenceCount(); i++) {
+
+				Sequence sequence = alignment.getSequence(i);
+
+				StringBuilder builder = new StringBuilder("\t");
+
+				appendTaxonName(sequence.getTaxon(), builder);
+
+				String sequenceString = sequence.getSequenceString();
+
+				builder.append("\t").append(
+						sequenceString.subSequence(
+								n * maxRowLength,
+								Math.min((n + 1) * maxRowLength,
+										sequenceString.length())));
+				int shortBy = Math.min(Math.min(n * maxRowLength, seqLength)
+						- sequence.getLength(), maxRowLength);
+				
+				if (shortBy > 0) {
+					for (int j = 0; j < shortBy; j++) {
+						builder.append(DataType.GAP_CHARACTER);
+					}
+				}
+				
+				out.println(builder);
+			}// END: sequences loop
+			out.println();
+		}
+		out.println(";\nend;");
+	}// END: exportAlignment
+
+    /**
+     * name suitable for printing - quotes if necessary
+     * @param taxon
+     * @param builder
+     * @return
+     */
+    private StringBuilder appendTaxonName(Taxon taxon, StringBuilder builder) {
+        
+    	String name = taxon.getId();
+        if (!name.matches(SPECIAL_CHARACTERS_REGEX)) {
+            // JEBL way of quoting the quote character
+            name = name.replace("\'", "\'\'");
+            builder.append("\'").append(name).append("\'");
+            return builder;
+        }
+        return builder.append(name);
+    }
+	
+}// END: class

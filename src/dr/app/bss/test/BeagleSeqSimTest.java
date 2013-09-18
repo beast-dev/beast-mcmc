@@ -25,8 +25,6 @@
 
 package dr.app.bss.test;
 
-import java.io.File;
-import java.io.PrintStream;
 import java.util.ArrayList;
 
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
@@ -37,8 +35,6 @@ import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.app.bss.Utils;
-import dr.app.tools.NexusExporter;
-import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ExponentialGrowth;
@@ -232,17 +228,11 @@ public class BeagleSeqSimTest {
                     // , sequenceLength
             );
 
-			SimpleAlignment alignment = (SimpleAlignment) simulator.simulate(simulateInPar);
+			SimpleAlignment alignment = simulator.simulate(simulateInPar);
 			alignment.setNexusOutput();
       
             System.out.println(alignment.toString());
 
-//            File file = new File("/home/filip/sequences.nxs");
-//            PrintStream ps = new PrintStream(file);
-            
-//            NexusExporter nexusExporter = new NexusExporter();
-//            System.out.println(nexusExporter.exportAlignment(alignment));
-            
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);

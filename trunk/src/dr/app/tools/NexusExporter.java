@@ -63,12 +63,12 @@ public class NexusExporter implements TreeExporter {
         BRANCH_ATTRIBUTES
     }
 
-    /*
-     * this constructor will result in npe if calling methods other than exportAlignment()
-     * */
-    public NexusExporter() {
-        this.out = null;
-    }
+//    /*
+//     * this constructor will result in npe if calling methods other than exportAlignment()
+//     * */
+//    public NexusExporter() {
+//        this.out = null;
+//    }
     
     public NexusExporter(PrintStream out) {
         this.out = out;

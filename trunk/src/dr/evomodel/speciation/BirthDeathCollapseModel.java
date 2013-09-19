@@ -13,12 +13,17 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 
 
-
-public class BirthDeathCollapseModel extends SpeciationModel {
+public class BirthDeathCollapseModel extends SpeciationModel implements Citable {
     private Parameter birthDiffRate; // lambda - mu
     private Parameter relativeDeathRate; // mu/lambda
     private Parameter originHeight;
@@ -43,6 +48,9 @@ public class BirthDeathCollapseModel extends SpeciationModel {
         originHeight.setParameterValue(0, 1.05 * tree.getNodeHeight(tree.getRoot()));
         addVariable(originHeight);
         originHeight.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        Logger.getLogger("dr.evomodel.speciation").info("\tConstructing a birth-death-collapse model, please cite:\n"
+                + Citable.Utils.getCitationString(this));
     }
 
 
@@ -110,5 +118,25 @@ public class BirthDeathCollapseModel extends SpeciationModel {
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         // not implemented.
         return Double.NEGATIVE_INFINITY;
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+
+        citations.add(new Citation(
+                new Author[]{
+                        new Author("Graham", "Jones")
+                },
+                "Multilocus species delimitation in BEAST",
+                2013,
+                "",
+                -1,
+                -1,
+                -1,
+                Citation.Status.IN_PREPARATION
+        ));
+
+        return citations;
     }
 }

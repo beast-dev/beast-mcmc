@@ -14,7 +14,7 @@ import java.util.Arrays;
 /**
  * Compute coalecent log-liklihood of a set of gene trees embedded inside one species tree.
  *
- * @author Joseph Heled
+ * @author Joseph Heled, Graham Jones
  *         Date: 26/05/2008
  */
 public class MultiSpeciesCoalescent extends Likelihood.Abstract implements Units {

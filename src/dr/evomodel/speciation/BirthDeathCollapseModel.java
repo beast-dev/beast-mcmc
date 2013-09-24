@@ -1,13 +1,13 @@
 package dr.evomodel.speciation;
 
-/**
- * Created with IntelliJ IDEA.
- * User: Graham
- * Date: 01/09/13
- * Time: 14:27
- * To change this template use File | Settings | File Templates.
- */
 
+/**
+ *
+ * Model for prior for species delimitation in multispecies coalescent model.
+ *
+ * @author Graham Jones
+ *         Date: 01/09/2013
+ */
 
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;

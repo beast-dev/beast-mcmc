@@ -2,18 +2,20 @@ package dr.evomodelxml.speciation;
 
 import dr.evomodel.speciation.PopsIOSpeciesBindings;
 import dr.evomodel.speciation.PopsIOSpeciesTreeModel;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * User: Graham
- * Date: 10/05/12
+ * @author Graham Jones
+ * Date: 20/09/2013
  */
 
 
 public class PopsIOSpeciesTreeModelParser extends AbstractXMLObjectParser {
     public static final String PIO_SPECIES_TREE = "pioSpeciesTree";
-    public static final String PIO_POPULATIONS_PRIOR = "pioPopulationsPrior";
-    public static final String PIO_PRIOR_COMPONENT = "pioPriorComponent";
+    public static final String PIO_POP_PRIOR_SCALE = "pioPopPriorScale";
+    public static final String PIO_POP_PRIOR_INVGAMMAS = "pioPopPriorInvGammas";
+    public static final String PIO_POP_PRIOR_COMPONENT = "pioPopPriorComponent";
     public static final String WEIGHT = "weight";
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
@@ -23,13 +25,14 @@ public class PopsIOSpeciesTreeModelParser extends AbstractXMLObjectParser {
         System.out.println("PopsIOSpeciesTreeModelParser");
         PopsIOSpeciesBindings piosb = (PopsIOSpeciesBindings) xo.getChild(PopsIOSpeciesBindings.class);
 
-        final XMLObject pioppxo = xo.getChild(PIO_POPULATIONS_PRIOR);
+        final Parameter popPriorScale = (Parameter) xo.getElementFirstChild(PIO_POP_PRIOR_SCALE);
+        final XMLObject pioppxo = xo.getChild(PIO_POP_PRIOR_INVGAMMAS);
         final int nComponents = pioppxo.getChildCount();
         PopsIOSpeciesTreeModel.PriorComponent [] components = new PopsIOSpeciesTreeModel.PriorComponent[nComponents];
 
         for (int nc = 0; nc < nComponents; ++nc) {
             Object child = pioppxo.getChild(nc);
-            assert ((XMLObject) child).getName().equals(PIO_PRIOR_COMPONENT);
+            assert ((XMLObject) child).getName().equals(PIO_POP_PRIOR_COMPONENT);
             double weight = ((XMLObject) child).getDoubleAttribute(WEIGHT);
             double alpha = ((XMLObject) child).getDoubleAttribute(ALPHA);
             double beta = ((XMLObject) child).getDoubleAttribute(BETA);
@@ -37,7 +40,7 @@ public class PopsIOSpeciesTreeModelParser extends AbstractXMLObjectParser {
         }
 
 
-        PopsIOSpeciesTreeModel piostm = new PopsIOSpeciesTreeModel(piosb, components);
+        PopsIOSpeciesTreeModel piostm = new PopsIOSpeciesTreeModel(piosb, popPriorScale, components);
         return piostm;
     }
 
@@ -52,7 +55,7 @@ public class PopsIOSpeciesTreeModelParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] popPriorSyntax() {
         return new XMLSyntaxRule[]{
-             new ElementRule(PIO_PRIOR_COMPONENT, priorComponentSyntax(), 1, Integer.MAX_VALUE)
+             new ElementRule(PIO_POP_PRIOR_COMPONENT, priorComponentSyntax(), 1, Integer.MAX_VALUE)
         };
     }
 
@@ -60,7 +63,8 @@ public class PopsIOSpeciesTreeModelParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
               new ElementRule(PopsIOSpeciesBindings.class),
-              new ElementRule(PIO_POPULATIONS_PRIOR, popPriorSyntax())
+              new ElementRule(PIO_POP_PRIOR_SCALE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+              new ElementRule(PIO_POP_PRIOR_INVGAMMAS, popPriorSyntax())
         };
     }
 

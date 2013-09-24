@@ -2,15 +2,12 @@ package dr.evomodelxml.speciation;
 
 import dr.evomodel.speciation.AlloppNumHybsStatistic;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
-import dr.inference.model.Statistic;
+
 import dr.xml.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Graham
- * Date: 08/10/12
- * Time: 18:31
- * To change this template use File | Settings | File Templates.
+ * @author Graham Jones
+ * Date: 08/10/2012
  */
 public class AlloppNumHybsStatisticParser  extends AbstractXMLObjectParser {
     public static final String NUMHYBS_STATISTIC = "alloppNumHybsStatistic";

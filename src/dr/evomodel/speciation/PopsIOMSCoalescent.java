@@ -3,8 +3,8 @@ package dr.evomodel.speciation;
 import dr.inference.model.Likelihood;
 
 /**
- * User: Graham Jones
- * Date: 10/05/12
+ * @author  Graham  Jones
+ * Date: 10/05/2012
  */
 
 public class PopsIOMSCoalescent extends Likelihood.Abstract {
@@ -29,7 +29,7 @@ public class PopsIOMSCoalescent extends Likelihood.Abstract {
 
     @Override
     protected double calculateLogLikelihood() {
-        for (int i = 0; i < piosb.numberOfGeneTrees(); i++) {
+for (int i = 0; i < piosb.numberOfGeneTrees(); i++) {
             if (!piosb.geneTreeFitsInNetwork(i, piostm)) {
                 return Double.NEGATIVE_INFINITY;
             }
@@ -37,13 +37,8 @@ public class PopsIOMSCoalescent extends Likelihood.Abstract {
         // grjtodo-oneday JH has compatible flags for efficiency. I'm checking
         // every time.
 
-        double logl = 0;
-        for(int i = 0; i < piosb.numberOfGeneTrees(); i++) {
-            final double v = piosb.geneTreeLogLikelihood(i, piostm);
-            assert ! Double.isNaN(v);
-            logl += v;
-        }
-        return logl;
+        piosb.fillSpeciesTreeWithCoalescentInfo(piostm);
+        return piostm.logLhoodAllGeneTreesInSpeciesTree();
     }
 
 

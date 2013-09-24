@@ -8,8 +8,7 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Graham
+ * @author Graham Jones
  * Date: 03/08/12
  */
 public class AlloppHybPopSizesScale  extends SimpleMCMCOperator {

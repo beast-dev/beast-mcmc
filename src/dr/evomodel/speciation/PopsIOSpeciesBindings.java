@@ -11,8 +11,8 @@ import jebl.util.FixedBitSet;
 import java.util.*;
 
 /**
- * User: Graham  Jones
- * Date: 10/05/12
+ * @author  Graham  Jones
+ * Date: 10/05/2012
  */
 
 
@@ -63,7 +63,7 @@ public class PopsIOSpeciesBindings extends AbstractModel   {
         private class GeneUnionNode {
             private GeneUnionNode child[];
             private double height;
-            private FixedBitSet union;
+            private final FixedBitSet union;
             private String name; // for debugging
 
             // Constructor makes a half-formed tip node. Tips need unions
@@ -104,7 +104,7 @@ public class PopsIOSpeciesBindings extends AbstractModel   {
         * for one gene tree at a time, then discarded.
         */
         private class GeneUnionTree {
-            private GeneUnionNode[] nodes;
+            private final GeneUnionNode[] nodes;
             private int nextn;
 
 
@@ -244,17 +244,22 @@ public class PopsIOSpeciesBindings extends AbstractModel   {
         }
 
 
-        // returns log(P(g_i|S)) = probability that gene tree fits into species network
-        public double treeLogLikelihood(final PopsIOSpeciesTreeModel piostm) {
+        /*
+         * Sets things up for likelihood calculation with info from one gene
+         */
+        public void fillSpeciesTreeWithGeneCoalescentInfo(final PopsIOSpeciesTreeModel piostm) {
             GeneUnionTree gutree = new GeneUnionTree();
             piostm.clearCoalescences();
             gutree.subtreeRecordCoalescences(gutree.getRoot(), piostm);
             piostm.sortCoalescences();
             piostm.recordLineageCounts();
-            double llhood = piostm.geneTreeInSpeciesTreeLogLikelihood();
-            return llhood;
+            piostm.accumCoalCountsIntensities();
         }
 
+
+        /*
+         * Finds limit for node slide
+         */
         public double coalescenceUpperBoundBetween(FixedBitSet spp0, FixedBitSet spp1) {
             GeneUnionTree gutree = new GeneUnionTree();
             return subtreeUpperBoundBetween(gutree.getRoot(), spp0, spp1, Double.MAX_VALUE);
@@ -376,9 +381,18 @@ public class PopsIOSpeciesBindings extends AbstractModel   {
         return geneTreeInfos[i].fitsInNetwork(piostm);
     }
 
-    public double geneTreeLogLikelihood(int i, PopsIOSpeciesTreeModel piostm) {
-        return geneTreeInfos[i].treeLogLikelihood(piostm);
+
+
+    /*
+    * Sets things up for likelihood calculation with info from all genes
+    */
+    public void fillSpeciesTreeWithCoalescentInfo(PopsIOSpeciesTreeModel piostm) {
+        piostm.zeroCoalCountsIntensities();
+        for (int j = 0; j < geneTreeInfos.length; j++ ) {
+            geneTreeInfos[j].fillSpeciesTreeWithGeneCoalescentInfo(piostm);
+        }
     }
+
 
     public FixedBitSet emptyUnion() {
         return new FixedBitSet(taxa.length);

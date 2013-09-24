@@ -2,13 +2,12 @@ package dr.evomodel.speciation;
 
 import dr.inference.model.Statistic;
 
+
 /**
- * Created with IntelliJ IDEA.
- * User: Graham
+ * @author  Graham  Jones
  * Date: 08/10/12
- * Time: 18:24
- * To change this template use File | Settings | File Templates.
  */
+
 public class AlloppNumHybsStatistic  extends Statistic.Abstract {
     AlloppSpeciesNetworkModel aspnet;
 

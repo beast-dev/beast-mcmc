@@ -28,6 +28,7 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.tree.BackboneNodeFilter;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.CountableMixtureBranchRatesParser;
@@ -108,9 +109,9 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         return columns;
     }
 
-    public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade) throws Tree.MissingTaxonException {
-        if (!excludeClade) {
-            throw new IllegalArgumentException("Excluding clades not yet implemented in countable branch rate mixture models.");
+    public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade, boolean trunk) throws Tree.MissingTaxonException {
+            if (!excludeClade) {
+            throw new IllegalArgumentException("Including clades not yet implemented in countable branch rate mixture models.");
         }
 
         if (!includeStem) {
@@ -118,11 +119,19 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         }
 
         Set<String> leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
-        if (leafSetList == null) {
-            leafSetList = new ArrayList<CladeContainer>();
+        if (!trunk){
+            if (leafSetList == null) {
+                leafSetList = new ArrayList<CladeContainer>();
+            }
+            leafSetList.add(new CladeContainer(leafSet, rateCategory));
+            cladesChanged = true;
+        }  else {
+            if (trunkSetList == null) {
+                trunkSetList = new ArrayList<CladeContainer>();
+            }
+            trunkSetList.add(new CladeContainer(leafSet, rateCategory));
+            cladesChanged = true;
         }
-        leafSetList.add(new CladeContainer(leafSet, rateCategory));
-        cladesChanged = true;
     }
 
     private class CladeContainer {
@@ -141,6 +150,7 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         public int getRateCategory() {
             return rateCategory;
         }
+
     }
 
     private void updateCladeRateCategories() {
@@ -157,6 +167,29 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
                 }
             }
         }
+
+        if (trunkSetList != null) {
+            //we keep the default rates assignments by clade definitions if they exist (leafSetList != null), if they do not exist, set default to 0.0
+            if (leafSetList == null) {
+                    for (NodeRef node : treeModel.getNodes()) {
+                    if (node != treeModel.getRoot()) {
+                        rateCategories.setNodeValue(treeModel, node, 0.0);
+                    }
+                }
+            }
+           // currently, specific backbone rates will overwrite branch assignments by clade definitions
+           //TODO: think about turning this around. One can imagine setting backbone rates and then additional rates based on clade definitions
+            for (CladeContainer trunk : trunkSetList) {
+                for (NodeRef node : treeModel.getNodes()) {
+                    if (onAncestralPath(treeModel,node,trunk.getLeafSet())) {
+                        if (node != treeModel.getRoot()) {
+                            rateCategories.setNodeValue(treeModel, node, trunk.getRateCategory());
+                        }
+                    }
+                }
+            }
+        }
+
     }
 
     public void randomize() {
@@ -166,6 +199,31 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
                 rateCategories.setNodeValue(treeModel, node, index);
             }
         }
+    }
+
+    private boolean onAncestralPath(Tree tree, NodeRef node, Set targetSet) {
+
+        if (tree.isExternal(node)) return false;
+
+        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
+        int size = leafSet.size();
+
+        leafSet.retainAll(targetSet);
+
+        if (leafSet.size() > 0) {
+
+            // if all leaves below are in target then check just above.
+            if (leafSet.size() == size) {
+
+                Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
+                superLeafSet.removeAll(targetSet);
+
+                // the branch is on ancestral path if the super tree has some non-targets in it
+                return (superLeafSet.size() > 0);
+
+            } else return true;
+
+        } else return false;
     }
 
     private class OccupancyColumn extends NumberColumn {
@@ -254,5 +312,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     private final TreeParameterModel rateCategories;
     private boolean cladesChanged = false;
     private List<CladeContainer> leafSetList = null;
+    private List<CladeContainer> trunkSetList = null;
     private final boolean modelInLogSpace;
 }

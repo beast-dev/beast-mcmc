@@ -6,7 +6,7 @@ import dr.evomodel.speciation.SpeciationModel;
 import dr.xml.*;
 
 /**
- * User: Graham Jones
+ * @author Graham Jones
  * Date: 10/05/12
  */
 public class PopsIOSpeciesTreePriorParser extends AbstractXMLObjectParser {

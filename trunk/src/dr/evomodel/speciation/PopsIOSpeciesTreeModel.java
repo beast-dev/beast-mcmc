@@ -1,6 +1,7 @@
 package dr.evomodel.speciation;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 import dr.evolution.tree.*;
 import dr.evomodel.tree.TreeLogger;
@@ -8,19 +9,21 @@ import dr.evomodelxml.speciation.PopsIOSpeciesTreeModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
 import dr.util.AlloppMisc;
 import dr.util.Author;
+import dr.util.Citable;
 import dr.util.Citation;
 import jebl.util.FixedBitSet;
 import dr.evolution.util.Taxon;
 import dr.math.MathUtils;
 
 /**
- * User: Graham
- * Date: 10/05/12
+ * @author  Graham  Jones
+ * Date: 10/05/2012
  */
 
 /*
@@ -39,9 +42,11 @@ topology and node times  from nodes[].
 */
 
 
-public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTree, Tree, Scalable, TreeLogger.LogUpon {
-    private PopsIOSpeciesBindings piosb;
-    private PriorComponent[] priorComponents;
+public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTree, Tree,
+                                               Scalable, TreeLogger.LogUpon, Citable {
+    private final PopsIOSpeciesBindings piosb;
+    private final Parameter popPriorScale;
+    private final PriorComponent[] priorComponents;
     private PopsIONode[] pionodes;
     private int rootn;
     private PopsIONode[] oldpionodes;
@@ -54,24 +59,17 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
         //    <!--  species tree log file.  -->
         //    <logTree id="pioTreeFileLog" logEvery="0" fileName="C:\Users\....
 
-        /*if (state == 40) {
-            System.out.println("DEBUGGING: PopsIOSpeciesTreeModel.logNow(), state == 40");
-        }  */
-
-        if (state <= 100) {
-            return true;
+        if (state % 10000 == 0) {
+            System.out.println("DEBUGGING: PopsIOSpeciesTreeModel.logNow(), state = " + state);
         }
-        if (state <= 10000) {
-            return (state % 100) == 0;
-        }
-        return (state % 10000) == 0;
+        return (state % 2500) == 0;
     }
 
 
     public static class PriorComponent {
-        private double weight;
-        private double alpha;
-        private double beta;
+        private final double weight;
+        private final double alpha;
+        private final double beta;
 
         // inv gamma pdf is parameterized as  b^a/Gamma(a)  x^(-a-1)  exp(-b/x)
         // mean is b/(a-1) if a>1, var is  b^2/((a-1)^2 (a-2)) if a>2.
@@ -103,6 +101,8 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
         private FixedBitSet union;
         private ArrayList<Double> coalheights;
         private int nlineages;
+        private int coalcount;
+        private double coalintensity;
         private int nodeNumber;
 
         // dud constuctor
@@ -114,6 +114,8 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
             coalheights = new ArrayList<Double>();
             taxon = new Taxon("");
             union = null;
+            coalcount = 0;
+            coalintensity = 0.0;
             nodeNumber = nn;
         }
 
@@ -255,10 +257,16 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     }
 
 
-    public PopsIOSpeciesTreeModel(PopsIOSpeciesBindings piosb, PriorComponent[] priorComponents) {
+    public PopsIOSpeciesTreeModel(PopsIOSpeciesBindings piosb,  Parameter popPriorScale, PriorComponent[] priorComponents) {
         super(PopsIOSpeciesTreeModelParser.PIO_SPECIES_TREE);
         this.piosb = piosb;
+
+        this.popPriorScale = popPriorScale;
+        addVariable(popPriorScale);
+        popPriorScale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
         this.priorComponents = priorComponents;
+
         PopsIOSpeciesBindings.SpInfo[] species = piosb.getSpecies();
         int nTaxa = species.length;
         int nNodes = 2 * nTaxa - 1;
@@ -295,8 +303,10 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
         pionodes[rootn].fillinUnionsInSubtree(piosb.getSpecies().length);
 
         stree = makeSimpleTree();
-    }
 
+        Logger.getLogger("dr.evomodel.speciation.popsio").info("\tConstructing a PopsIO Species Tree Model, please cite:\n"
+                + Citable.Utils.getCitationString(this));
+    }
 
 
 
@@ -346,7 +356,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     }
 
 
-    public String pioTreeAsText() {
+    String pioTreeAsText() {
         String header = "topology             height         union         nlin coalheights" + System.getProperty("line.separator");
 
         String s = "";
@@ -364,18 +374,28 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     }
 
 
+
     /*
-    * Called from PopsIOSpeciesBindings to remove coalescent information
-    * from branches of mullabtree. Required before call to recordCoalescence
+    * Called from PopsIOSpeciesBindings to zero coalescent information
+    * in branches of species tree. Called once for all genes.
+    */
+    public void zeroCoalCountsIntensities() {
+        zeroSubtreeCoalCountsIntensities(pionodes[rootn]);
+    }
+
+    /*
+    * Called from PopsIOSpeciesBindings to remove gene-specific coalescent information
+    * from branches of species tree. Required before call to recordCoalescence.
     */
     public void clearCoalescences() {
         clearSubtreeCoalescences(pionodes[rootn]);
     }
 
 
+
     /*
       * Called from PopsIOSpeciesBindings to add a node from a gene tree
-      * to its branch in mullabtree.
+      * to its branch in species tree.
       */
     public void recordCoalescence(double height, FixedBitSet union) {
         PopsIONode node = (PopsIONode) pionodes[rootn].nodeOfUnionInSubtree(union);
@@ -387,40 +407,72 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
     }
 
-
+    /*
+    * Called from PopsIOSpeciesBindings to sort coalecent times of a gene
+    * in the branch of a node in species tree.
+    */
     public void sortCoalescences() {
         for (PopsIONode node : pionodes) {
             Collections.sort(node.coalheights);
         }
     }
 
-
-
     /*
-      * Records the number of gene lineages at nodes of mullabtree.
+      * Called from PopsIOSpeciesBindings to record the number
+      * of gene lineages at nodes of species tree.
       */
     public void recordLineageCounts() {
         recordSubtreeLineageCounts(pionodes[rootn]);
     }
 
 
+    /*
+      * Called from PopsIOSpeciesBindings to accumulate information
+      * for all genes at nodes of species tree.
+      */
+    public void accumCoalCountsIntensities() {
+        accumSubtreeCoalCountsIntensities(pionodes[rootn]);
+    }
+
+
+    public double logLhoodAllGeneTreesInSpeciesTree() {
+        double [] llhoodcpts = new double[priorComponents.length];
+
+        double totalweight = 0.0;
+        for (int i = 0; i < priorComponents.length; i++) {
+            totalweight += priorComponents[i].weight;
+        }
+        for (int i = 0; i < priorComponents.length; i++) {
+            llhoodcpts[i] = Math.log(priorComponents[i].weight / totalweight);
+            double sigma = popPriorScale.getParameterValue(0);
+            double alpha = priorComponents[i].alpha;
+            double beta = sigma * priorComponents[i].beta;
+            llhoodcpts[i] += logLhoodAllGeneTreesInSpeciesSubtree(pionodes[rootn], alpha, beta);
+        }
+        return logsumexp(llhoodcpts);
+    }
+
+
+
+    private double logsumexp(double x[]) {
+        double maxx = Double.MIN_VALUE;
+        for (double d : x) {
+            if (d > maxx) { maxx = d; }
+        }
+        double sum = 0.0;
+        for (double d : x) {
+            sum += Math.exp(d-maxx);
+        }
+        return maxx + Math.log(sum);
+    }
+
+
     public void fixupAfterNodeSlide() {
+        pionodes[rootn].fillinUnionsInSubtree(piosb.getSpecies().length);
         stree = makeSimpleTree();
     }
 
-    /*
-      * Calculates the log-likelihood for a single gene tree in the network
-      *
-      * Requires that clearCoalescences(), recordCoalescence(), recordLineageCounts()
-      * called to fill tree in nodes[] with information about gene tree coalescences first.
-      */
-    /*
-     * The formula comes from my note at http://www.indriid.com/goteborg/2011-09-23-simple-pop-model.pdf
-     * See branchLL() for more.
-     */
-    public double geneTreeInSpeciesTreeLogLikelihood() {
-        return geneTreeInPopsIOSubtreeLogLikelihood(pionodes[rootn]);
-    }
+
 
 
     private String subtreeAsText(PopsIONode node, String s, Stack<Integer> x, int depth, String b) {
@@ -449,75 +501,28 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     }
 
 
-    private double geneTreeInPopsIOSubtreeLogLikelihood(PopsIONode node) {
+    private double logLhoodAllGeneTreesInSpeciesSubtree(PopsIONode node, double alpha, double beta) {
         double loglike = 0.0;
         if (node.lft >= 0) {
-            loglike += geneTreeInPopsIOSubtreeLogLikelihood(pionodes[node.lft]);
-            loglike += geneTreeInPopsIOSubtreeLogLikelihood(pionodes[node.rgt]);
+            loglike += logLhoodAllGeneTreesInSpeciesSubtree(pionodes[node.lft], alpha, beta);
+            loglike += logLhoodAllGeneTreesInSpeciesSubtree(pionodes[node.rgt], alpha, beta);
         }
-        loglike += branchLLInPopsIOtree(node);
+        loglike += branchLLInPopsIOtree(node, alpha, beta);
         return loglike;
     }
 
 
-    private double branchLLInPopsIOtree(PopsIONode node) {
-        double loglike = 0.0;
-        double t[];
-        if (node.anc < 0) {
-            t = new double[node.coalheights.size() + 2];
-            t[0] = node.height;
-            t[t.length - 1] = piosb.maxGeneTreeHeight();
-            for (int i = 0; i < node.coalheights.size(); i++) {
-                t[i + 1] = node.coalheights.get(i);
-            }
-            loglike += branchLL(t, node.nlineages);
-        } else {
-            t = new double[node.coalheights.size() + 2];
-            t[0] = node.height;
-            t[t.length - 1] = pionodes[node.anc].height;
-            for (int i = 0; i < node.coalheights.size(); i++) {
-                t[i + 1] = node.coalheights.get(i);
-            }
-            loglike += branchLL(t, node.nlineages);
+    private double branchLLInPopsIOtree(PopsIONode node, double alpha, double beta) {
+        int q = node.coalcount;
+        double gamma = node.coalintensity;
+        double llhood = 0.0;
+        for (int i = 1; i <= q-1; i++) {
+            llhood += Math.log(alpha+i);
         }
-        return loglike;
+        llhood += alpha * Math.log(beta);
+        llhood -= (alpha + q) * Math.log(beta + gamma);
+        return llhood;
     }
-
-    /*
-    * For one branch with tipward time t[0], rootward time t[k+1], k-1 coalescent times t[1]...t[k],
-    * and n lineages at tipward end, set
-    *      x = sum from i=0 to k of
-    *           ((n-i) choose 2) * (t[i+1]-t[i])
-    * Then sum over j (j is component index) of
-    *     weight[j]  *  b[j]^a[i]  *  (b[j] + x)^-(a[j]+k+1)  *  GAMMA(a[j]+k+1)  /  GAMMA(a[j])
-    *
-    *     G(z+1) = zG(z)
-    *     GAMMA(a[j]+k+1) = (a[j]+k)GAMMA(a[j]+k)
-    *                 = (a[j]+k)(a[j]+k-1)GAMMA(a[j]+k-1)
-    *                 = ...
-    *                 = (a[j]+k)(a[j]+k-1)...a[j]GAMMA(a[j])
-    *    so GAMMA(a[j]+k+1)  /  GAMMA(a[j]  = (a[j]+k)(a[j]+k-1)...a[j]
-    */
-    private double branchLL(double t[], int n) {
-        double lhood = 0.0;
-        double x = 0.0;
-        int k = t.length - 2;
-        for (int i = 0; i <= k; i++) {
-            x += (t[i+1] - t[i]) * 0.5*(n-i)*(n-i-1);
-        }
-        for (int j = 0; j < priorComponents.length; j++) {
-            double w = priorComponents[j].weight;
-            double a = priorComponents[j].alpha;
-            double b = priorComponents[j].beta;
-            double G = 1.0;
-            for (int i = 0; i <= k; i++) {
-                G *= (a+i);
-            }
-            lhood += w * Math.pow(a,b) * Math.pow(b+x, -(a+k+1)) * G;
-        }
-        return Math.log(lhood);
-    }
-
 
     private SimpleTree makeSimpleTree() {
         SimpleNode[] snodes = new SimpleNode[pionodes.length];
@@ -552,6 +557,17 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
 
 
+    private void zeroSubtreeCoalCountsIntensities(PopsIONode node) {
+        if (node.lft >= 0) {
+            zeroSubtreeCoalCountsIntensities(pionodes[node.lft]);
+            zeroSubtreeCoalCountsIntensities(pionodes[node.rgt]);
+        }
+        node.coalcount = 0;
+        node.coalintensity = 0.0;
+    }
+
+
+
     private void clearSubtreeCoalescences(PopsIONode node) {
         if (node.lft >= 0) {
             clearSubtreeCoalescences(pionodes[node.lft]);
@@ -579,6 +595,27 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
             node.nlineages += pionodes[node.rgt].nlineages - pionodes[node.rgt].coalheights.size();
         }
     }
+
+
+    private void accumSubtreeCoalCountsIntensities(PopsIONode node) {
+        if (node.lft >= 0) {
+            accumSubtreeCoalCountsIntensities(pionodes[node.lft]);
+            accumSubtreeCoalCountsIntensities(pionodes[node.rgt]);
+        }
+        int k = node.coalheights.size();
+        node.coalcount += k;
+        double [] t = new double[k + 2];
+        t[0] = node.height;
+        for (int i = 0; i < k; i++) {
+            t[i + 1] = node.coalheights.get(i);
+        }
+        t[k+1] = (node.anc < 0) ? piosb.maxGeneTreeHeight() : pionodes[node.anc].height;
+        int n = node.nlineages;
+        for (int i = 0; i <= k; i++) {
+            node.coalintensity += (t[i + 1] - t[i]) * 0.5 * (n - i) * (n - i - 1);
+        }
+    }
+
 
     private double randomnodeheight(double rate) {
         return MathUtils.nextExponential(rate) + 1e-6/rate;

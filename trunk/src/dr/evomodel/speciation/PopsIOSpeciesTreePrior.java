@@ -3,9 +3,11 @@ package dr.evomodel.speciation;
 import dr.inference.model.Likelihood;
 
 /**
- * User: Graham Jones
- * Date: 10/05/12
+ * @author  Graham  Jones
+ * Date: 10/05/2012
  */
+
+
 public class PopsIOSpeciesTreePrior  extends Likelihood.Abstract {
     private SpeciationModel sppm;
     private PopsIOSpeciesTreeModel piostm;

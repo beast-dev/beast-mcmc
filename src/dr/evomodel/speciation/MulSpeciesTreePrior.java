@@ -1,3 +1,9 @@
+/**
+ *
+ * @author Graham Jones
+ *         Date: 21/12/2011
+ */
+
 package dr.evomodel.speciation;
 
 import dr.inference.model.Likelihood;

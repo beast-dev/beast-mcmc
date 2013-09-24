@@ -13,9 +13,8 @@ import dr.math.MathUtils;
 import jebl.util.FixedBitSet;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Graham
- * Date: 22/07/12
+ * @author Graham Jones
+ * Date: 22/07/2012
  */
 
 

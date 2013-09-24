@@ -1,7 +1,7 @@
 package dr.evomodel.operators;
 
-/*
- * User: Graham Jones
+/**
+ * @author: Graham Jones
  * Date: 11/05/12
  */
 

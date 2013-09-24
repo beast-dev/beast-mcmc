@@ -80,9 +80,20 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
                         boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
                         int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
                         try {
-                            model.setClade(taxonList, rateCategory, includeStem, excludeClade);
+                            model.setClade(taxonList, rateCategory, includeStem, excludeClade, false);
                         } catch (Tree.MissingTaxonException e) {
-                            throw new XMLParseException("Unable to find taxon in countable mixture model: " + e.getMessage());
+                            throw new XMLParseException("Unable to find taxon for clade in countable mixture model: " + e.getMessage());
+                        }
+                    }  else if (xoc.getName().equals(LocalClockModelParser.TRUNK)) {
+                        TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
+
+                        boolean includeStem = xoc.getAttribute(LocalClockModelParser.INCLUDE_STEM, false);
+                        boolean excludeClade = xoc.getAttribute(LocalClockModelParser.EXCLUDE_CLADE, false);
+                        int rateCategory = xoc.getIntegerAttribute(CATEGORY) - 1; // XML index-start = 1 not 0
+                        try {
+                            model.setClade(taxonList, rateCategory, includeStem, excludeClade, true);
+                        } catch (Tree.MissingTaxonException e) {
+                            throw new XMLParseException("Unable to find taxon for trunk in countable mixture model: " + e.getMessage());
                         }
                     }
                 }

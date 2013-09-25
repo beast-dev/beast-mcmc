@@ -215,7 +215,7 @@ public class AboutDialog extends JDialog {
 		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setSize(WIDTH, HEIGHT);
-		setResizable(false);
+		setResizable(true);
 	}// END: initUI
 
 	private class ListenSendMail extends MouseAdapter {

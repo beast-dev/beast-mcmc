@@ -452,10 +452,14 @@ public class XMLGenerator {
 		writer.writeOpenTag(
 				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,
 				new Attribute[] {
-						new Attribute.Default<String>(XMLParser.ID, "simulator"),
+						new Attribute.Default<String>(XMLParser.ID, "simulator"), //
 						new Attribute.Default<String>(
 								BeagleSequenceSimulatorParser.PARALLEL, String
-										.valueOf(dataList.useParallel)) });
+										.valueOf(dataList.useParallel)), //
+										new Attribute.Default<String>(
+												BeagleSequenceSimulatorParser.OUTPUT, String
+														.valueOf(dataList.outputFormat))						
+				});
 
 		int suffix = 1;
 		for (PartitionData data : dataList) {
@@ -954,7 +958,7 @@ public class XMLGenerator {
 
 		writer.writeOpenTag(Report.REPORT,
 				new Attribute[] { new Attribute.Default<String>(
-						Report.FILENAME, "sequences.fasta") });
+						Report.FILENAME, "sequences."+String.valueOf(dataList.outputFormat)) });
 
 		writer.writeIDref(
 				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,

@@ -8,7 +8,9 @@ import java.util.Arrays;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
+import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.app.util.Arguments;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
@@ -528,11 +530,31 @@ public class BeagleSequenceSimulatorConsoleApp {
 				System.out.println();
 			}
 			
+			//TODO: decide here if nexus or fasta
+			SimpleAlignment alignment = new SimpleAlignment();
 			String outputFile = null;
 			if (leftoverArguments.length > 0) {
+
 				outputFile = leftoverArguments[0];
-			} else {
-				outputFile = "output.fasta";
+				String extension = outputFile.split("\\.", 2)[1];
+
+				if (extension
+						.equalsIgnoreCase(BeagleSequenceSimulatorParser.FASTA)
+						|| extension.equalsIgnoreCase("fst")) {
+
+					dataList.outputFormat = BeagleSequenceSimulatorParser.FASTA;
+
+				} else if (extension
+						.equalsIgnoreCase(BeagleSequenceSimulatorParser.NEXUS)
+						|| extension.equalsIgnoreCase("nxs")) {
+
+					dataList.outputFormat = BeagleSequenceSimulatorParser.NEXUS;
+
+				} else {
+					outputFile = "output.fasta";
+					dataList.outputFormat = BeagleSequenceSimulatorParser.FASTA;
+				}
+
 			}
 			
 			if (leftoverArguments.length > 1) {
@@ -541,21 +563,25 @@ public class BeagleSequenceSimulatorConsoleApp {
 			}
 			
 			if (dataList.setSeed) {
-				
-//				System.out.println(dataList.startingSeed);
-				
 				MathUtils.setSeed(dataList.startingSeed);
 			}
 			
 			if(leftoverArguments.length > 2){
 			dataList.useParallel = Boolean.parseBoolean(leftoverArguments[2]);
 			}
-			
+
 			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 					partitionsList);
-			
+		    alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
+
+			if (dataList.outputFormat.equalsIgnoreCase(BeagleSequenceSimulatorParser.NEXUS)) {
+				alignment.setNexusOutput();
+			} else {
+				alignment.setFastaOutput();
+			}
+
 			PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
-			writer.println(beagleSequenceSimulator.simulate(dataList.useParallel).toString());
+			writer.println(alignment.toString());
 			writer.close();
 			
 		} catch (Exception e) {

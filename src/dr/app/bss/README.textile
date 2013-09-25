@@ -33,7 +33,6 @@ h1. CITING
    
 h1. TODO
 
-* nexus output format
 * SeaView has problems reading first two blank lines in Report.createReport()
 * output tree with inner nodes annoted with trait values (annotate with rate as well)
 * simulation / inference in one XML

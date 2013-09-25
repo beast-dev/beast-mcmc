@@ -59,7 +59,6 @@ public class BeagleSeqSimTest {
     public static final boolean simulateInPar = true;
 
     public static void main(String[] args) {
-
     	
 		// start timing
 		long tic = System.currentTimeMillis();

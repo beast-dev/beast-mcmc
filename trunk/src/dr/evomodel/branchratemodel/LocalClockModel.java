@@ -1,7 +1,7 @@
 /*
  * LocalClockModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,7 +28,6 @@ package dr.evomodel.branchratemodel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.LocalClockModelParser;
@@ -98,17 +97,17 @@ public class LocalClockModel extends AbstractBranchRateModel {
         }
 
         helper.addTrait("trunk", new TreeTrait.S() {
-            @Override
+            //            @Override
             public String getTraitName() {
                 return "trunk";
             }
 
-            @Override
+            //            @Override
             public Intent getIntent() {
                 return Intent.BRANCH;
             }
 
-            @Override
+            //            @Override
             public String getTrait(Tree tree, NodeRef node) {
                 setupNodeClocks(tree);
                 if (nodeClockMap.get(node) == trunkClock) {
@@ -217,7 +216,7 @@ public class LocalClockModel extends AbstractBranchRateModel {
 
         if (tree.isExternal(node)) {
             if (trunkClock.indexParameter != null) {
-                if (trunkClock.tipList.get((int)trunkClock.indexParameter.getParameterValue(0)) == node.getNumber()) {
+                if (trunkClock.tipList.get((int) trunkClock.indexParameter.getParameterValue(0)) == node.getNumber()) {
                     clock = trunkClock;
                 }
             } else if (trunkClock.tips.contains(node.getNumber())) {

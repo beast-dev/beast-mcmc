@@ -55,12 +55,15 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     private final double[] baseMatrix;
     private Parameter rateScalar;
 
+    private boolean birthDeathModel;
+    private boolean geometricRates;
+
     public MarkovModulatedSubstitutionModel(String name,
                                             List<SubstitutionModel> baseModels,
                                             Parameter switchingRates,
                                             DataType dataType,
                                             EigenSystem eigenSystem) {
-        this(name, baseModels, switchingRates, dataType, eigenSystem, null);
+        this(name, baseModels, switchingRates, dataType, eigenSystem, null, false);
     }
 
     public MarkovModulatedSubstitutionModel(String name,
@@ -68,7 +71,8 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                                             Parameter switchingRates,
                                             DataType dataType,
                                             EigenSystem eigenSystem,
-                                            Parameter rateScalar) {
+                                            Parameter rateScalar,
+                                            boolean geometricRates) {
 //        super(name, dataType, null, eigenSystem);
         super(name, dataType, null, null);
 
@@ -103,9 +107,12 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             throw new RuntimeException("Incompatible state counts in " + getModelName() + ". Models add up to " + stateSizes + ".");
         }
 
+        birthDeathModel = true;
+        this.geometricRates = geometricRates;
         // Check switching rate dimension
         if (numBaseModel > 1) {
             if (switchingRates.getDimension() != 2 * (numBaseModel - 1)) {
+                birthDeathModel = false;
                 throw new RuntimeException("Wrong dimension of switching rates in MarkovModulatedSubstitutionModel");
             }
         }
@@ -122,7 +129,15 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     }
 
     private double getModelRateScalar(int model) {
-        return rateScalar != null ? rateScalar.getParameterValue(0) : 1.0;
+        if (rateScalar == null) {
+            return 1.0;
+        } else {
+            if (rateScalar.getDimension() == 1) {
+                return rateScalar.getParameterValue(0);
+            } else {
+                return rateScalar.getParameterValue(model);
+            }
+        }
         //return 1E-2;
     }
 
@@ -152,9 +167,14 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             int sw = 0;
             for (int g = 0; g < numBaseModel; ++g) {
                 for (int h = 0; h < numBaseModel; ++h) { // from g -> h
-                    if (g != h) {
+                    boolean valid = birthDeathModel ? Math.abs(g - h) == 1 : g != h;
+                    if (valid) {
+                        double rate = swRates[sw];
+                        if (geometricRates) {
+                            rate *= getModelRateScalar(numBaseModel - h - 1); // TODO Why not: "/ numBaseModel" ??
+                        }
                         for (int i = 0; i < baseStateCount; ++i) {
-                            matrix[g * baseStateCount + i][h * baseStateCount + i] = swRates[sw]; // TODO Need to modify by stationary distribution?
+                            matrix[g * baseStateCount + i][h * baseStateCount + i] = rate;
                         }
                         sw++;
                     }

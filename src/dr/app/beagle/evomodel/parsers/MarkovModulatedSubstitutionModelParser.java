@@ -46,6 +46,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     public static final String SWITCHING_RATES = "switchingRates";
     //    public static final String DIAGONALIZATION = "diagonalization";
     public static final String RATE_SCALAR = "rateScalar";
+    public static final String GEOMETRIC_RATES = "geometricRates";
 
     public String getParserName() {
         return MARKOV_MODULATED_MODEL;
@@ -85,10 +86,13 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
             }
         }
 
+        boolean geometricRates = xo.getAttribute(GEOMETRIC_RATES, false);
+
         Parameter rateScalar = xo.hasChildNamed(RATE_SCALAR) ?
                 (Parameter) xo.getChild(RATE_SCALAR).getChild(Parameter.class) : null;
 
-        return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null, rateScalar);
+        return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null,
+                rateScalar, geometricRates);
     }
 
     public String getParserDescription() {
@@ -116,6 +120,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 //            new ElementRule(FrequencyModel.class),
 //            AttributeRule.newStringRule(DIAGONALIZATION),
             new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(GEOMETRIC_RATES, true),
             new ElementRule(RATE_SCALAR,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
     };

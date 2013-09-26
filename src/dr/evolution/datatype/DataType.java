@@ -1,7 +1,7 @@
 /*
  * DataType.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -89,6 +89,7 @@ public abstract class DataType implements Serializable {
             registerDataType(HiddenCodons.DESCRIPTION + "3-" + GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);
             registerDataType(NewHiddenNucleotides.DESCRIPTION + "1", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_1);
             registerDataType(NewHiddenNucleotides.DESCRIPTION + "2", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_2);
+            registerDataType(NewHiddenNucleotides.DESCRIPTION + "3", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_3);
             registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);

@@ -1,3 +1,28 @@
+/*
+ * CommonCitations.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.util;
 
 /**
@@ -39,7 +64,7 @@ public class CommonCitations {
     );
 
     public static Citation ALEKSEYENKO_2008 = new Citation(
-            new Author[] {
+            new Author[]{
                     new Author("AV", "Alekseyenko"),
                     new Author("C", "Lee"),
                     new Author("MA", "Suchard")
@@ -53,15 +78,16 @@ public class CommonCitations {
     );
 
     public static Citation SUCHARD_2012 = new Citation(
-            new Author[] {
+            new Author[]{
                     new Author("MA", "Suchard"),
-                    new Author("C", "Simon"),
+                    new Author("P", "Lemey"),
+                    new Author("V", "Minin"),
             },
             Citation.Status.IN_PREPARATION
     );
 
     public static Citation SHAPIRO_2012 = new Citation(
-            new Author[] {
+            new Author[]{
                     new Author("B", "Shapiro"),
                     new Author("MA", "Suchard"),
             },
@@ -69,17 +95,17 @@ public class CommonCitations {
     );
 
     public static Citation LEMEY_2012 = new Citation(
-            new Author[] {
+            new Author[]{
                     new Author("P", "Lemey"),
                     new Author("T", "Bedford"),
                     new Author("A", "Rambaut"),
-                    new Author("MA", "Suchard"),                   
+                    new Author("MA", "Suchard"),
             },
             Citation.Status.IN_PREPARATION
     );
 
     public static Citation LEMEY_MIXTURE_2012 = new Citation(
-            new Author[] {
+            new Author[]{
                     new Author("P", "Lemey"),
                     new Author("MA", "Suchard"),
             },
@@ -87,15 +113,15 @@ public class CommonCitations {
     );
 
     public static Citation BLOOM_2012 = new Citation(
-            new Author[] {
-                    new Author("J", "Bloom"),                    
+            new Author[]{
+                    new Author("J", "Bloom"),
                     new Author("MA", "Suchard"),
             },
             Citation.Status.IN_PREPARATION
     );
 
     public static Citation SUCHARD_2012_LATENT = new Citation(
-            new Author[] {
+            new Author[]{
                     new Author("MA", "Suchard"),
                     new Author("J", "Felsenstein"),
             },

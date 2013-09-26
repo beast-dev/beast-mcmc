@@ -1,7 +1,7 @@
 /*
  * MarkovModulatedFrequencyModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -57,16 +57,16 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
             int size = freqModels.get(i).getFrequencyCount();
             if (stateCount != size) {
                 throw new RuntimeException("MarkovModulatedFrequencyModel requires all frequencies model to have the same dimension");
-            }           
+            }
             freqCount += size;
         }
         totalFreqCount = freqCount;
         this.switchingRates = switchingRates;
         addVariable(switchingRates);
 
-        if (switchingRates.getDimension() > 2 ||  numBaseModel > 2) {
-            throw new RuntimeException("MarkovModulatedFrequencyModel not yet implemented for more than 2 hidden classes");
-        }
+//        if (switchingRates.getDimension() > 2 ||  numBaseModel > 2) {
+//            throw new RuntimeException("MarkovModulatedFrequencyModel not yet implemented for more than 2 hidden classes");
+//        }
 
         baseStationaryDistribution = new double[numBaseModel];
         storedBaseStationaryDistribution = new double[numBaseModel];
@@ -153,11 +153,11 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
             double rowTotal = 0.0;
             for (int j = 0; j < numBaseModel; ++j) {
                 if (i != j) {
-                    rowTotal += mat2.get(j,i); // Transposed
+                    rowTotal += mat2.get(j, i); // Transposed
                 }
 
             }
-            mat2.set(i,i, -rowTotal);
+            mat2.set(i, i, -rowTotal);
         }
 
         // Add row for sum-to-one constraint
@@ -170,13 +170,13 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
         x.set(numBaseModel, 0, 1.0);
         DoubleMatrix2D y = decomp.solve(x);
         for (int i = 0; i < numBaseModel; ++i) {
-            statDistr[i] = y.get(i,0);
+            statDistr[i] = y.get(i, 0);
         }
         //System.err.println(new Vector(statDistr));              
     }
 
     protected void storeState() {
-        System.arraycopy(baseStationaryDistribution, 0, storedBaseStationaryDistribution, 0, numBaseModel);        
+        System.arraycopy(baseStationaryDistribution, 0, storedBaseStationaryDistribution, 0, numBaseModel);
         storedStationaryDistributionKnown = stationaryDistributionKnown;
     }
 
@@ -189,7 +189,7 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == switchingRates) {           
+        if (variable == switchingRates) {
             stationaryDistributionKnown = false;
         }
     }
@@ -201,7 +201,7 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
     public Parameter getFrequencyParameter() {
         throw new RuntimeException("Not implemented");
     }
-     
+
     private List<FrequencyModel> freqModels;
 
     private final int numBaseModel;

@@ -157,7 +157,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
         double total = 0;
         for (int i = 0; i < numSimulants; i++) {
-            StateHistory history;
+            StateHistory history = null;
             try {
                 history = UniformizedStateHistory.simulateConditionalOnEndingState(
                         0.0,

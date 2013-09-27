@@ -31,6 +31,7 @@ import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
 
+import dr.app.bss.XMLExporter;
 import dr.app.tools.NexusExporter;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
@@ -62,7 +63,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
 
 	private enum outputTypes {
-		FASTA, NEXUS
+		FASTA, NEXUS, XML
 	}
     
     // **************************************************************
@@ -97,6 +98,10 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
     public void setFastaOutput() {
     	outputType = outputTypes.FASTA;
+    }
+
+    public void setXMLOutput() {
+    	outputType = outputTypes.XML;
     }
     
     public List<Sequence> getSequences() {
@@ -512,6 +517,22 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 		return buffer.toString();
 	}// END: toNexus
 
+	private String toXML() {
+
+		StringBuffer buffer = new StringBuffer();
+
+		try {
+			
+			XMLExporter xmlExporter = new XMLExporter();
+			buffer.append(xmlExporter.exportAlignment(this));
+			
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		}
+
+		return buffer.toString();
+	}// END: toXML
+	
 	public String toString() {
 
 		String string = null;
@@ -519,6 +540,8 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 			string = toNexus();
 		} else if (outputType == outputTypes.FASTA) {
 			string = toFasta();
+		} else if(outputType == outputTypes.XML) {
+			string = toXML();
 		} else {
 			// do nothing
 		}

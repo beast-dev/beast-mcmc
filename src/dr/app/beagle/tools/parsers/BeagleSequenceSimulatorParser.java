@@ -1,7 +1,7 @@
 /*
  * BeagleSequenceSimulatorParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,22 +25,16 @@
 
 package dr.app.beagle.tools.parsers;
 
-import java.util.ArrayList;
-import java.util.logging.Logger;
-
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.StringAttributeRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.logging.Logger;
 
 /**
  * @author Filip Bielejec
@@ -48,115 +42,113 @@ import dr.xml.XMLSyntaxRule;
  */
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
-	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
-	public static final String PARALLEL = "parallel";
-	public static final String OUTPUT = "output";
-	public static final String FASTA = "fasta";
-	public static final String NEXUS = "nexus";
-	
-	public String getParserName() {
-		return BEAGLE_SEQUENCE_SIMULATOR;
-	}
+    public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
+    public static final String PARALLEL = "parallel";
+    public static final String OUTPUT = "output";
 
-	@Override
-	public String getParserDescription() {
-		return "Beagle sequence simulator";
-	}
+    public String getParserName() {
+        return BEAGLE_SEQUENCE_SIMULATOR;
+    }
 
-	@Override
-	public Class<Alignment> getReturnType() {
-		return Alignment.class;
-	}
+    @Override
+    public String getParserDescription() {
+        return "Beagle sequence simulator";
+    }
 
-	@Override
-	public XMLSyntaxRule[] getSyntaxRules() {
-		
-		return new XMLSyntaxRule[] {
-				AttributeRule.newBooleanRule(PARALLEL, true, "Whether to use multiple Beagle instances for simulation, default is false (sequential execution)."),
-				new StringAttributeRule(OUTPUT, "Possible output formats", new String[]{ FASTA, NEXUS }, false),
-				new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
-				};
-	}// END: getSyntaxRules
+    @Override
+    public Class<Alignment> getReturnType() {
+        return Alignment.class;
+    }
 
-	@Override
-	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    @Override
+    public XMLSyntaxRule[] getSyntaxRules() {
 
-		String msg = "";
-		boolean parallel = false;
-		
-		if (xo.hasAttribute(PARALLEL)) {
-			parallel = xo.getBooleanAttribute(PARALLEL);
-		}
-		
-		String output = FASTA;
-		if (xo.hasAttribute(OUTPUT)) {
-			output = xo.getStringAttribute(OUTPUT);
-		}
-		
-		int siteCount = 0;
-		int to = 0;
-		for (int i = 0; i < xo.getChildCount(); i++) {
-			Partition partition = (Partition) xo.getChild(i);
-			
-			to = partition.to + 1;
-			if (to > siteCount) {
-				siteCount = to;
-			}
+        return new XMLSyntaxRule[]{
+                AttributeRule.newBooleanRule(PARALLEL, true, "Whether to use multiple Beagle instances for simulation, default is false (sequential execution)."),
+                new StringAttributeRule(OUTPUT, "Possible output formats",
+                        SimpleAlignment.OutputType.values(), false),
+                new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
+        };
+    }// END: getSyntaxRules
 
-		}// END: partitions loop
-		
-		ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-		for (int i = 0; i < xo.getChildCount(); i++) {
+    @Override
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-			Partition partition = (Partition) xo.getChild(i);
-			
-			if (partition.from > siteCount) {
-				throw new XMLParseException(
-						"Illegal 'from' attribute in " + PartitionParser.PARTITION + " element");
-			}
+        String msg = "";
+        boolean parallel = false;
 
-			if (partition.to > siteCount) {
-				throw new XMLParseException(
-						"Illegal 'to' attribute in " + PartitionParser.PARTITION + " element");
-			}
+        if (xo.hasAttribute(PARALLEL)) {
+            parallel = xo.getBooleanAttribute(PARALLEL);
+        }
 
-			if (partition.to == -1) {
-				partition.to = siteCount - 1;
-			}
-			
-			if (partition.getAncestralSequence() != null) {
+        SimpleAlignment.OutputType output = SimpleAlignment.OutputType.FASTA;
+        if (xo.hasAttribute(OUTPUT)) {
+            output = SimpleAlignment.OutputType.parseFromString(
+                    xo.getStringAttribute(OUTPUT));
+        }
 
-				if (partition.getAncestralSequence().getLength() != 3 * siteCount && partition.getFreqModel().getDataType() instanceof Codons) {
+        int siteCount = 0;
+        int to = 0;
+        for (int i = 0; i < xo.getChildCount(); i++) {
+            Partition partition = (Partition) xo.getChild(i);
 
-					throw new RuntimeException("Ancestral codon sequence has "
-							+ partition.getAncestralSequence().getLength() + " characters "
-							+ "expecting " + 3 * siteCount + " characters");
+            to = partition.to + 1;
+            if (to > siteCount) {
+                siteCount = to;
+            }
 
-				} else if (partition.getAncestralSequence().getLength() != siteCount && partition.getFreqModel().getDataType() instanceof Nucleotides) {
+        }// END: partitions loop
 
-					throw new RuntimeException("Ancestral nuleotide sequence has "
-							+ partition.getAncestralSequence().getLength() + " characters "
-							+ "expecting " + siteCount + " characters");
+        ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+        for (int i = 0; i < xo.getChildCount(); i++) {
 
-				}// END: dataType check
-			}// END: ancestralSequence check
-			
-			partitionsList.add(partition);
-		}// END: partitions loop
+            Partition partition = (Partition) xo.getChild(i);
 
-		 msg += "\n\t" + siteCount + ( (siteCount > 1) ? " replications " : " replication");
-		 if (msg.length() > 0) {
-	            Logger.getLogger("dr.app.beagle.tools").info("Using Beagle Sequence Simulator: " + msg);
-		 }
-		
-		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
+            if (partition.from > siteCount) {
+                throw new XMLParseException(
+                        "Illegal 'from' attribute in " + PartitionParser.PARTITION + " element");
+            }
+
+            if (partition.to > siteCount) {
+                throw new XMLParseException(
+                        "Illegal 'to' attribute in " + PartitionParser.PARTITION + " element");
+            }
+
+            if (partition.to == -1) {
+                partition.to = siteCount - 1;
+            }
+
+            if (partition.getAncestralSequence() != null) {
+
+                if (partition.getAncestralSequence().getLength() != 3 * siteCount && partition.getFreqModel().getDataType() instanceof Codons) {
+
+                    throw new RuntimeException("Ancestral codon sequence has "
+                            + partition.getAncestralSequence().getLength() + " characters "
+                            + "expecting " + 3 * siteCount + " characters");
+
+                } else if (partition.getAncestralSequence().getLength() != siteCount && partition.getFreqModel().getDataType() instanceof Nucleotides) {
+
+                    throw new RuntimeException("Ancestral nuleotide sequence has "
+                            + partition.getAncestralSequence().getLength() + " characters "
+                            + "expecting " + siteCount + " characters");
+
+                }// END: dataType check
+            }// END: ancestralSequence check
+
+            partitionsList.add(partition);
+        }// END: partitions loop
+
+        msg += "\n\t" + siteCount + ((siteCount > 1) ? " replications " : " replication");
+        if (msg.length() > 0) {
+            Logger.getLogger("dr.app.beagle.tools").info("Using Beagle Sequence Simulator: " + msg);
+        }
+
+        BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
         SimpleAlignment alignment = s.simulate(parallel);
 
-		if (output.equalsIgnoreCase(NEXUS)) {
-			alignment.setNexusOutput();
-		}
+        alignment.setOutputType(output);
 
-		return alignment;
-	}// END: parseXMLObject
+        return alignment;
+    }// END: parseXMLObject
 
 }// END: class

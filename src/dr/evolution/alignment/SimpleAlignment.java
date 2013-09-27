@@ -1,7 +1,7 @@
 /*
  * SimpleAlignment.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,12 +25,6 @@
 
 package dr.evolution.alignment;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.Collections;
-import java.util.List;
-
 import dr.app.bss.XMLExporter;
 import dr.app.tools.NexusExporter;
 import dr.evolution.datatype.Codons;
@@ -41,6 +35,12 @@ import dr.evolution.sequence.Sequences;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.NumberFormatter;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple alignment class that implements gaps by characters in the sequences.
@@ -56,21 +56,21 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private outputTypes outputType = outputTypes.FASTA;
+    private OutputType outputType = OutputType.FASTA;
     private DataType dataType = null;
     private int siteCount = 0;
     private boolean siteCountKnown = false;
     private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
 
-	private enum outputTypes {
-		FASTA, NEXUS, XML
-	}
-    
+//	private enum outputTypes {
+//		FASTA, NEXUS, XML
+//	}
+
     // **************************************************************
     // SimpleAlignment METHODS
     // **************************************************************
 
-	/**
+    /**
      * parameterless constructor.
      */
     public SimpleAlignment() {
@@ -92,18 +92,22 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         }
     }
 
-    public void setNexusOutput() {
-    	outputType = outputTypes.NEXUS;
+//    public void setNexusOutput() {
+//    	outputType = OutputType.NEXUS;
+//    }
+//
+//    public void setFastaOutput() {
+//    	outputType = OutputType.FASTA;
+//    }
+//
+//    public void setXMLOutput() {
+//    	outputType = OutputType.XML;
+//    }
+
+    public void setOutputType(OutputType out) {
+        outputType = out;
     }
 
-    public void setFastaOutput() {
-    	outputType = outputTypes.FASTA;
-    }
-
-    public void setXMLOutput() {
-    	outputType = outputTypes.XML;
-    }
-    
     public List<Sequence> getSequences() {
         return Collections.unmodifiableList(sequences);
     }
@@ -468,86 +472,12 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     }
 
     public void setReportCountStatistics(boolean report) {
-    	countStatistics = report;
+        countStatistics = report;
     }
-    
-    private String toFasta() {
-        
-    	NumberFormatter formatter = new NumberFormatter(6);
-        StringBuffer buffer = new StringBuffer();
 
-//        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
-
-        if (countStatistics) {
-            buffer.append("Site count = ").append(getSiteCount()).append("\n");
-            buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n");
-            buffer.append("Singleton sites = ").append(getSingletonCount()).append("\n");
-            buffer.append("Parsimony informative sites = ").append(getInformativeCount()).append("\n");
-            buffer.append("Unique site patterns = ").append(getUniquePatternCount()).append("\n\n");
-        }
-        
-        for (int i = 0; i < getSequenceCount(); i++) {
-            String name = formatter.formatToFieldWidth(getTaxonId(i), 10);
-            buffer.append(">" + name + "\n");
-            buffer.append(getAlignedSequenceString(i) + "\n");
-        }
-
-		return buffer.toString();
-	}
-    
-	private String toNexus() {
-
-		StringBuffer buffer = new StringBuffer();
-		// PrintStream ps = new PrintStream();
-
-		try {
-
-			File tmp = File.createTempFile("tempfile", ".tmp"); 
-			PrintStream ps = new PrintStream(tmp);
-			
-			NexusExporter nexusExporter = new NexusExporter(ps);
-			buffer.append(nexusExporter.exportAlignment(this));
-			
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return buffer.toString();
-	}// END: toNexus
-
-	private String toXML() {
-
-		StringBuffer buffer = new StringBuffer();
-
-		try {
-			
-			XMLExporter xmlExporter = new XMLExporter();
-			buffer.append(xmlExporter.exportAlignment(this));
-			
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		}
-
-		return buffer.toString();
-	}// END: toXML
-	
-	public String toString() {
-
-		String string = null;
-		if (outputType == outputTypes.NEXUS) {
-			string = toNexus();
-		} else if (outputType == outputTypes.FASTA) {
-			string = toFasta();
-		} else if(outputType == outputTypes.XML) {
-			string = toXML();
-		} else {
-			// do nothing
-		}
-
-		return string;
-	}// END: toString
+    public String toString() {
+        return outputType.makeOutputString(this);   // generic delegation to ease extensibility
+    }// END: toString
 
     public String toXHTML() {
         String xhtml = "<p><em>Alignment</em> data type = ";
@@ -578,4 +508,111 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return xhtml;
     }
 
+
+    private interface Outputter {
+
+        String makeOutputString(SimpleAlignment alignment);
+
+        class Fasta implements Outputter {
+
+            public String makeOutputString(SimpleAlignment alignment) {
+
+                NumberFormatter formatter = new NumberFormatter(6);
+                StringBuffer buffer = new StringBuffer();
+
+//        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
+
+                if (alignment.countStatistics) {
+                    buffer.append("Site count = ").append(alignment.getSiteCount()).append("\n");
+                    buffer.append("Invariant sites = ").append(alignment.getInvariantCount()).append("\n");
+                    buffer.append("Singleton sites = ").append(alignment.getSingletonCount()).append("\n");
+                    buffer.append("Parsimony informative sites = ").append(alignment.getInformativeCount()).append("\n");
+                    buffer.append("Unique site patterns = ").append(alignment.getUniquePatternCount()).append("\n\n");
+                }
+
+                for (int i = 0; i < alignment.getSequenceCount(); i++) {
+                    String name = formatter.formatToFieldWidth(alignment.getTaxonId(i), 10);
+                    buffer.append(">" + name + "\n");
+                    buffer.append(alignment.getAlignedSequenceString(i) + "\n");
+                }
+
+                return buffer.toString();
+            }
+        }
+
+        class Nexus implements Outputter {
+
+            public String makeOutputString(SimpleAlignment alignment) {
+
+                StringBuffer buffer = new StringBuffer();
+                // PrintStream ps = new PrintStream();
+
+                try {
+
+                    File tmp = File.createTempFile("tempfile", ".tmp");
+                    PrintStream ps = new PrintStream(tmp);
+
+                    NexusExporter nexusExporter = new NexusExporter(ps);
+                    buffer.append(nexusExporter.exportAlignment(alignment));
+
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                return buffer.toString();
+            }// END: toNexus
+        }
+
+        class XML implements Outputter {
+
+            public String makeOutputString(SimpleAlignment alignment) {
+
+                StringBuffer buffer = new StringBuffer();
+
+                try {
+
+                    XMLExporter xmlExporter = new XMLExporter();
+                    buffer.append(xmlExporter.exportAlignment(alignment));
+
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+
+                return buffer.toString();
+            }// END: toXML
+        }
+    }
+
+    public enum OutputType {
+        FASTA("fasta", new Outputter.Fasta()),
+        NEXUS("nexus", new Outputter.Nexus()),
+        XML("xml", new Outputter.XML());
+
+        private final String text;
+        private final Outputter outputter;
+
+        OutputType(String text, Outputter outputter) {
+            this.text = text;
+            this.outputter = outputter;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public String makeOutputString(SimpleAlignment alignment) {
+            return outputter.makeOutputString(alignment);
+        }
+
+        public static OutputType parseFromString(String text) {
+            for (OutputType type : OutputType.values()) {
+                if (type.getText().compareToIgnoreCase(text) == 0) {
+                    return type;
+                }
+            }
+            return null;
+        }
+    }
 }// END: class

@@ -228,8 +228,9 @@ public class BeagleSeqSimTest {
             );
 
 			SimpleAlignment alignment = simulator.simulate(simulateInPar);
-			alignment.setNexusOutput();
-      
+//			alignment.setNexusOutput();
+			alignment.setXMLOutput();
+			
             System.out.println(alignment.toString());
 
         } catch (Exception e) {

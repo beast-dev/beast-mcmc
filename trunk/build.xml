@@ -1,3 +1,28 @@
+<!--
+  ~ build.xml
+  ~
+  ~ Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+  ~
+  ~ This file is part of BEAST.
+  ~ See the NOTICE file distributed with this work for additional
+  ~ information regarding copyright ownership and licensing.
+  ~
+  ~ BEAST is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2
+  ~ of the License, or (at your option) any later version.
+  ~
+  ~  BEAST is distributed in the hope that it will be useful,
+  ~  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~  GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with BEAST; if not, write to the
+  ~ Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+  ~ Boston, MA  02110-1301  USA
+  -->
+
 <!-- Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build. -->
 <project basedir="." default="build" name="BEAST">
     <description>
@@ -49,12 +74,14 @@
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
-        <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="${src}" destdir="${build}" classpathref="classpath"
+        <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="${src}" destdir="${build}"
+               classpathref="classpath"
                fork="true"
                memoryinitialsize="256m"
                memorymaximumsize="1024m">
             <include name="dr/app/beast/**"/>
             <include name="dr/app/beauti/**"/>
+            <include name="dr/app/bss/**"/>
             <include name="dr/app/tracer/**"/>
             <include name="dr/app/gui/**"/>
             <include name="dr/app/oldbeauti/**"/>
@@ -101,6 +128,7 @@
                 <include name="dr/app/beast/**/*.class"/>
                 <!--<include name="dr/app/beastdev/**/*.class"/>-->
                 <include name="dr/app/beauti/**/*.class"/>
+                <include name="dr/app/bss/**/*.class"/>
                 <include name="dr/app/gui/**/*.class"/>
                 <include name="dr/app/seqgen/**"/>
                 <include name="dr/app/plugin/**"/>

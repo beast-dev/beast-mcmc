@@ -38,7 +38,7 @@ import java.util.*;
  * @author Andrew Rambaut
  */
 
-public interface Model extends Identifiable {
+public interface Model extends Identifiable  {
 
 	/**
 	 * Adds a listener that is notified when the this model changes.

@@ -1,43 +1,44 @@
+/*
+ * MainFrame.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.bss;
-
-import jam.framework.DocumentFrame;
-import jam.framework.Exportable;
-
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.util.ArrayList;
-
-import javax.swing.AbstractAction;
-import javax.swing.Action;
-import javax.swing.JComponent;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-import javax.swing.JTabbedPane;
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-import javax.swing.plaf.BorderUIResource;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
-import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
+import jam.framework.DocumentFrame;
+import jam.framework.Exportable;
+
+import javax.swing.*;
+import javax.swing.plaf.BorderUIResource;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.io.*;
+import java.util.ArrayList;
 
 /**
  * @author Filip Bielejec
@@ -46,644 +47,644 @@ import dr.math.MathUtils;
 @SuppressWarnings("serial")
 public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
-	private PartitionDataList dataList;
-	
-	private final String TAXA_TAB_NAME = "Taxa";
-	private final String TREES_TAB_NAME = "Data";
-	private final String PARTITIONS_TAB_NAME = "Partitions";
-	private final String SIMULATION_TAB_NAME = "Simulation";
-	private final String TERMINAL_TAB_NAME = "Terminal";
-	
-	private JTabbedPane tabbedPane = new JTabbedPane();
-	private TaxaPanel taxaPanel;
-	private TreesPanel treesPanel;
-	private PartitionsPanel partitionsPanel;
-	private SimulationPanel simulationPanel;
-	private TerminalPanel terminalPanel;
-	
-	private JLabel statusLabel;
-	private JProgressBar progressBar;
-	private File workingDirectory = null;
+    private PartitionDataList dataList;
 
-	public MainFrame(String title) {
+    private final String TAXA_TAB_NAME = "Taxa";
+    private final String TREES_TAB_NAME = "Data";
+    private final String PARTITIONS_TAB_NAME = "Partitions";
+    private final String SIMULATION_TAB_NAME = "Simulation";
+    private final String TERMINAL_TAB_NAME = "Terminal";
 
-		super();
+    private JTabbedPane tabbedPane = new JTabbedPane();
+    private TaxaPanel taxaPanel;
+    private TreesPanel treesPanel;
+    private PartitionsPanel partitionsPanel;
+    private SimulationPanel simulationPanel;
+    private TerminalPanel terminalPanel;
 
-		setTitle(title);
-		dataList = new PartitionDataList();
-		dataList.add(new PartitionData());
+    private JLabel statusLabel;
+    private JProgressBar progressBar;
+    private File workingDirectory = null;
 
-	}// END: Constructor
+    public MainFrame(String title) {
 
-	@Override
-	protected void initializeComponents() {
+        super();
 
-		setSize(new Dimension(1300, 600));
-		setMinimumSize(new Dimension(260, 100));
+        setTitle(title);
+        dataList = new PartitionDataList();
+        dataList.add(new PartitionData());
 
-		taxaPanel = new TaxaPanel(dataList);
-		treesPanel = new TreesPanel(this, dataList);
-		partitionsPanel = new PartitionsPanel(dataList);
-		simulationPanel = new SimulationPanel(this, dataList);
-		terminalPanel = new TerminalPanel();
-		
-		tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
-		tabbedPane.addTab(TREES_TAB_NAME, null, treesPanel);
-		tabbedPane.addTab(PARTITIONS_TAB_NAME, null, partitionsPanel);
-		tabbedPane.addTab(SIMULATION_TAB_NAME, null, simulationPanel);
-		tabbedPane.addTab(TERMINAL_TAB_NAME, null, terminalPanel);
-		
-		statusLabel = new JLabel("No taxa loaded");
+    }// END: Constructor
 
-		JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
-		progressBar = new JProgressBar();
-		progressPanel.add(progressBar, BorderLayout.CENTER);
+    @Override
+    protected void initializeComponents() {
 
-		JPanel statusPanel = new JPanel(new BorderLayout(0, 0));
-		statusPanel.add(statusLabel, BorderLayout.CENTER);
-		statusPanel.add(progressPanel, BorderLayout.EAST);
-		statusPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
-				new Insets(0, 6, 0, 6)));
+        setSize(new Dimension(1300, 600));
+        setMinimumSize(new Dimension(260, 100));
 
-		JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
-		tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
-		tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
-		tabbedPanePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
-				new Insets(12, 12, 12, 12)));
+        taxaPanel = new TaxaPanel(dataList);
+        treesPanel = new TreesPanel(this, dataList);
+        partitionsPanel = new PartitionsPanel(dataList);
+        simulationPanel = new SimulationPanel(this, dataList);
+        terminalPanel = new TerminalPanel();
 
-		getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-		getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
+        tabbedPane.addTab(TAXA_TAB_NAME, null, taxaPanel);
+        tabbedPane.addTab(TREES_TAB_NAME, null, treesPanel);
+        tabbedPane.addTab(PARTITIONS_TAB_NAME, null, partitionsPanel);
+        tabbedPane.addTab(SIMULATION_TAB_NAME, null, simulationPanel);
+        tabbedPane.addTab(TERMINAL_TAB_NAME, null, terminalPanel);
 
-		tabbedPane.setSelectedComponent(treesPanel);
+        statusLabel = new JLabel("No taxa loaded");
 
-	}// END: initializeComponents
+        JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
+        progressBar = new JProgressBar();
+        progressPanel.add(progressBar, BorderLayout.CENTER);
 
-	// ////////////////
-	// ---SIMULATE---//
-	// ////////////////
+        JPanel statusPanel = new JPanel(new BorderLayout(0, 0));
+        statusPanel.add(statusLabel, BorderLayout.CENTER);
+        statusPanel.add(progressPanel, BorderLayout.EAST);
+        statusPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
+                new Insets(0, 6, 0, 6)));
 
-	// file chooser
-	public void doExport() {
+        JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
+        tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
+        tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
+        tabbedPanePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
+                new Insets(12, 12, 12, 12)));
 
-		if (getTreesCount() == 0){
+        getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
+        getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
-			tabbedPane.setSelectedComponent(treesPanel);
-	         Utils.showDialog("Please load at least one tree file before generating alignment.");
-		
-		} else {
+        tabbedPane.setSelectedComponent(treesPanel);
 
-			JFileChooser chooser = new JFileChooser();
-			chooser.setDialogTitle("Simulate...");
-			chooser.setMultiSelectionEnabled(false);
-			chooser.setCurrentDirectory(workingDirectory);
+    }// END: initializeComponents
 
-			int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
-			if (returnVal == JFileChooser.APPROVE_OPTION) {
+    // ////////////////
+    // ---SIMULATE---//
+    // ////////////////
 
-				File file = chooser.getSelectedFile();
+    // file chooser
+    public void doExport() {
 
-				collectAllSettings();
-				generateNumberOfSimulations(file);
-				
-				File tmpDir = chooser.getCurrentDirectory();
-				if (tmpDir != null) {
-					workingDirectory = tmpDir;
-				}
+        if (getTreesCount() == 0) {
 
-			}// END: approve check
+            tabbedPane.setSelectedComponent(treesPanel);
+            Utils.showDialog("Please load at least one tree file before generating alignment.");
 
-		}// END: tree loaded check
+        } else {
 
-	}// END: doExport
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Simulate...");
+            chooser.setMultiSelectionEnabled(false);
+            chooser.setCurrentDirectory(workingDirectory);
 
-	// threading, UI, exceptions handling
-	private void generateNumberOfSimulations(final File outFile) {
+            int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-		setBusy();
+                File file = chooser.getSelectedFile();
 
-		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+                collectAllSettings();
+                generateNumberOfSimulations(file);
 
-			ArrayList<TreeModel> simulatedTreeModelList = new ArrayList<TreeModel>();
-			// Executed in background thread
-			public Void doInBackground() {
+                File tmpDir = chooser.getCurrentDirectory();
+                if (tmpDir != null) {
+                    workingDirectory = tmpDir;
+                }
 
-				try {
+            }// END: approve check
 
-					if (BeagleSequenceSimulatorApp.VERBOSE) {
-						Utils.printPartitionDataList(dataList);
-						System.out.println();
-					}
-					
-					long startingSeed = dataList.startingSeed;
-					for (int i = 0; i < dataList.simulationsCount; i++) {
+        }// END: tree loaded check
 
-						String fullPath = Utils.getMultipleWritePath(outFile,
-								"fasta", i);
-						PrintWriter writer = new PrintWriter(new FileWriter(
-								fullPath));
+    }// END: doExport
 
-						ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+    // threading, UI, exceptions handling
+    private void generateNumberOfSimulations(final File outFile) {
 
-						for (PartitionData data : dataList) {
+        setBusy();
 
-							if (data.record == null) {
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
-								throw new RuntimeException(
-										"Set data in Partitions tab for "
-												+ (partitionsList.size() + 1)
-												+ " partition.");
+            ArrayList<TreeModel> simulatedTreeModelList = new ArrayList<TreeModel>();
 
-							} else {
+            // Executed in background thread
+            public Void doInBackground() {
 
-								TreeModel treeModel = data.createTreeModel();
-								simulatedTreeModelList.add(treeModel);
-										
-								// create partition
-								Partition partition = new Partition(
-										treeModel, //
-										data.createBranchModel(), //
-										data.createSiteRateModel(), //
-										data.createClockRateModel(), //
-										data.createFrequencyModel(), //
-										data.from - 1, // from
-										data.to - 1, // to
-										data.every // every
-								);
+                try {
 
-								if(data.ancestralSequenceString != null) {
-									partition.setAncestralSequence(data.createAncestralSequence());
-								}
-								
-								partitionsList.add(partition);
+                    if (BeagleSequenceSimulatorApp.VERBOSE) {
+                        Utils.printPartitionDataList(dataList);
+                        System.out.println();
+                    }
 
-							}
+                    long startingSeed = dataList.startingSeed;
+                    for (int i = 0; i < dataList.simulationsCount; i++) {
 
-						}// END: data list loop
+                        String fullPath = Utils.getMultipleWritePath(outFile,
+                                "fasta", i);
+                        PrintWriter writer = new PrintWriter(new FileWriter(
+                                fullPath));
 
-						if (dataList.setSeed) {
-							MathUtils.setSeed(startingSeed);
-							startingSeed += 1;
-						}
-						
-						BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-								partitionsList
-								);
+                        ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
-						SimpleAlignment alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
-						
-						if (dataList.outputFormat
-								.equalsIgnoreCase(BeagleSequenceSimulatorParser.NEXUS)) {
-							alignment.setNexusOutput();
-						}
-						
-						writer.println(alignment.toString());
-						writer.close();
+                        for (PartitionData data : dataList) {
 
-					}// END: simulationsCount loop
+                            if (data.record == null) {
 
-				} catch (Exception e) {
-					Utils.handleException(e);
-					setStatus("Exception occured.");
-					setIdle();
-				}
+                                throw new RuntimeException(
+                                        "Set data in Partitions tab for "
+                                                + (partitionsList.size() + 1)
+                                                + " partition.");
 
-				return null;
-			}// END: doInBackground
+                            } else {
 
-			// Executed in event dispatch thread
-			public void done() {
+                                TreeModel treeModel = data.createTreeModel();
+                                simulatedTreeModelList.add(treeModel);
 
-				terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList));
-				setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
-				setIdle();
+                                // create partition
+                                Partition partition = new Partition(
+                                        treeModel, //
+                                        data.createBranchModel(), //
+                                        data.createSiteRateModel(), //
+                                        data.createClockRateModel(), //
+                                        data.createFrequencyModel(), //
+                                        data.from - 1, // from
+                                        data.to - 1, // to
+                                        data.every // every
+                                );
 
-			}// END: done
-		};
+                                if (data.ancestralSequenceString != null) {
+                                    partition.setAncestralSequence(data.createAncestralSequence());
+                                }
 
-		worker.execute();
+                                partitionsList.add(partition);
 
-	}// END: generateNumberOfSimulations
+                            }
 
-	// ////////////////////
-	// ---GENERATE XML---//
-	// ////////////////////
+                        }// END: data list loop
 
-	public final void doGenerateXML() {
+                        if (dataList.setSeed) {
+                            MathUtils.setSeed(startingSeed);
+                            startingSeed += 1;
+                        }
 
-		if (getTreesCount() == 0) {
+                        BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+                                partitionsList
+                        );
 
-			tabbedPane.setSelectedComponent(treesPanel);
+                        SimpleAlignment alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
+
+                        if (dataList.outputFormat == SimpleAlignment.OutputType.NEXUS) {
+                            alignment.setOutputType(dataList.outputFormat);
+                        }
+
+                        writer.println(alignment.toString());
+                        writer.close();
+
+                    }// END: simulationsCount loop
+
+                } catch (Exception e) {
+                    Utils.handleException(e);
+                    setStatus("Exception occured.");
+                    setIdle();
+                }
+
+                return null;
+            }// END: doInBackground
+
+            // Executed in event dispatch thread
+            public void done() {
+
+                terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList));
+                setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
+                setIdle();
+
+            }// END: done
+        };
+
+        worker.execute();
+
+    }// END: generateNumberOfSimulations
+
+    // ////////////////////
+    // ---GENERATE XML---//
+    // ////////////////////
+
+    public final void doGenerateXML() {
+
+        if (getTreesCount() == 0) {
+
+            tabbedPane.setSelectedComponent(treesPanel);
             Utils.showDialog("Please load at least one tree file before generating XML.");
-			
-			
-		} else {
 
-			JFileChooser chooser = new JFileChooser();
-			chooser.setDialogTitle("Generate XML...");
-			chooser.setMultiSelectionEnabled(false);
-			chooser.setCurrentDirectory(workingDirectory);
 
-			int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
-			if (returnVal == JFileChooser.APPROVE_OPTION) {
+        } else {
 
-				File file = chooser.getSelectedFile();
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Generate XML...");
+            chooser.setMultiSelectionEnabled(false);
+            chooser.setCurrentDirectory(workingDirectory);
 
-				generateXML(file);
+            int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-				File tmpDir = chooser.getCurrentDirectory();
-				if (tmpDir != null) {
-					workingDirectory = tmpDir;
-				}
+                File file = chooser.getSelectedFile();
 
-			}// END: approve check
+                generateXML(file);
 
-		}// END: tree loaded check
+                File tmpDir = chooser.getCurrentDirectory();
+                if (tmpDir != null) {
+                    workingDirectory = tmpDir;
+                }
 
-	}// END: doGenerateXML
+            }// END: approve check
 
-	private void generateXML(final File outFile) {
+        }// END: tree loaded check
 
-		setBusy();
+    }// END: doGenerateXML
 
-		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+    private void generateXML(final File outFile) {
 
-			// Executed in background thread
-			public Void doInBackground() {
+        setBusy();
 
-				try {
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
-					collectAllSettings();
-					XMLGenerator xmlGenerator = new XMLGenerator(dataList);
-					xmlGenerator.generateXML(outFile);
+            // Executed in background thread
+            public Void doInBackground() {
 
-				} catch (Exception e) {
-					Utils.handleException(e);
-					setStatus("Exception occured.");
-					setIdle();
-				}
+                try {
 
-				return null;
-			}// END: doInBackground
+                    collectAllSettings();
+                    XMLGenerator xmlGenerator = new XMLGenerator(dataList);
+                    xmlGenerator.generateXML(outFile);
 
-			// Executed in event dispatch thread
-			public void done() {
+                } catch (Exception e) {
+                    Utils.handleException(e);
+                    setStatus("Exception occured.");
+                    setIdle();
+                }
 
-				setStatus("Generated " + outFile);
-				setIdle();
+                return null;
+            }// END: doInBackground
 
-			}// END: done
-		};
+            // Executed in event dispatch thread
+            public void done() {
 
-		worker.execute();
+                setStatus("Generated " + outFile);
+                setIdle();
 
-	}// END: generateNumberOfSimulations
+            }// END: done
+        };
 
-	// /////////////////
-	// ---MAIN MENU---//
-	// /////////////////
+        worker.execute();
 
-	@Override
-	public Action getSaveSettingsAction() {
-		return new AbstractAction("Save settings...") {
-			public void actionPerformed(ActionEvent ae) {
-				doSaveSettings();
-			}
-		};
-	}// END: generateXMLAction
+    }// END: generateNumberOfSimulations
 
-	private void doSaveSettings() {
+    // /////////////////
+    // ---MAIN MENU---//
+    // /////////////////
 
-		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Save as...");
-		chooser.setMultiSelectionEnabled(false);
-		chooser.setCurrentDirectory(workingDirectory);
+    //	@Override
+    public Action getSaveSettingsAction() {
+        return new AbstractAction("Save settings...") {
+            public void actionPerformed(ActionEvent ae) {
+                doSaveSettings();
+            }
+        };
+    }// END: generateXMLAction
 
-		int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
+    private void doSaveSettings() {
 
-			File file = chooser.getSelectedFile();
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Save as...");
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setCurrentDirectory(workingDirectory);
 
-			saveSettings(file);
+        int returnVal = chooser.showSaveDialog(Utils.getActiveFrame());
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-			File tmpDir = chooser.getCurrentDirectory();
-			if (tmpDir != null) {
-				workingDirectory = tmpDir;
-			}
+            File file = chooser.getSelectedFile();
 
-			setStatus("Saved as " + file.getAbsolutePath());
+            saveSettings(file);
 
-		}// END: approve check
+            File tmpDir = chooser.getCurrentDirectory();
+            if (tmpDir != null) {
+                workingDirectory = tmpDir;
+            }
 
-	}// END: saveSettings
+            setStatus("Saved as " + file.getAbsolutePath());
 
-	private void saveSettings(File file) {
+        }// END: approve check
 
-		try {
+    }// END: saveSettings
 
-			String fullPath = Utils.getWritePath(file, "bss");
-			OutputStream fileOut = new FileOutputStream(new File(fullPath));
-			ObjectOutputStream out = new ObjectOutputStream(fileOut);
+    private void saveSettings(File file) {
 
-			out.writeObject(dataList);
-			out.close();
-			fileOut.close();
+        try {
 
-		} catch (FileNotFoundException e) {
-			Utils.handleException(e);
-		} catch (IOException e) {
-			Utils.handleException(e);
-		}
+            String fullPath = Utils.getWritePath(file, "bss");
+            OutputStream fileOut = new FileOutputStream(new File(fullPath));
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
 
-	}// END: saveSettings
+            out.writeObject(dataList);
+            out.close();
+            fileOut.close();
 
-	@Override
-	public Action getLoadSettingsAction() {
-		return new AbstractAction("Load settings...") {
-			public void actionPerformed(ActionEvent ae) {
-				doLoadSettings();
-			}
-		};
-	}// END: generateXMLAction
+        } catch (FileNotFoundException e) {
+            Utils.handleException(e);
+        } catch (IOException e) {
+            Utils.handleException(e);
+        }
 
-	private void doLoadSettings() {
+    }// END: saveSettings
 
-		JFileChooser chooser = new JFileChooser();
-		chooser.setDialogTitle("Load...");
-		chooser.setMultiSelectionEnabled(false);
-		chooser.setCurrentDirectory(workingDirectory);
+    //	@Override
+    public Action getLoadSettingsAction() {
+        return new AbstractAction("Load settings...") {
+            public void actionPerformed(ActionEvent ae) {
+                doLoadSettings();
+            }
+        };
+    }// END: generateXMLAction
 
-		int returnVal = chooser.showOpenDialog(Utils.getActiveFrame());
-		if (returnVal == JFileChooser.APPROVE_OPTION) {
+    private void doLoadSettings() {
 
-			File file = chooser.getSelectedFile();
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Load...");
+        chooser.setMultiSelectionEnabled(false);
+        chooser.setCurrentDirectory(workingDirectory);
 
-			loadSettings(file);
+        int returnVal = chooser.showOpenDialog(Utils.getActiveFrame());
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
 
-			File tmpDir = chooser.getCurrentDirectory();
-			if (tmpDir != null) {
-				workingDirectory = tmpDir;
-			}
+            File file = chooser.getSelectedFile();
 
-			setStatus("Loaded " + file.getAbsolutePath());
+            loadSettings(file);
 
-		}// END: approve check
+            File tmpDir = chooser.getCurrentDirectory();
+            if (tmpDir != null) {
+                workingDirectory = tmpDir;
+            }
 
-	}// END: doLoadSettings
+            setStatus("Loaded " + file.getAbsolutePath());
 
-	private void loadSettings(File file) {
+        }// END: approve check
 
-		try {
+    }// END: doLoadSettings
 
-			FileInputStream fileIn = new FileInputStream(file);
-			ObjectInputStream in = new ObjectInputStream(fileIn);
+    private void loadSettings(File file) {
 
-			dataList = (PartitionDataList) in.readObject();
+        try {
 
-			in.close();
-			fileIn.close();
+            FileInputStream fileIn = new FileInputStream(file);
+            ObjectInputStream in = new ObjectInputStream(fileIn);
 
-			if (BeagleSequenceSimulatorApp.VERBOSE) {
-				Utils.printPartitionDataList(dataList);
-				System.out.println();
-			}
-			
-			partitionsPanel.updatePartitionTable(dataList);
-			taxaPanel.updateTaxaTable(dataList);
-			treesPanel.updateTreesTable(dataList);
+            dataList = (PartitionDataList) in.readObject();
 
-		} catch (IOException ioe) {
+            in.close();
+            fileIn.close();
 
-			Utils.handleException(
-					ioe,
-					"Unable to read BSS file. "
-							+ "BSS can only read files created by 'Saving' within BSS. "
-							+ "It cannot read XML files.");
+            if (BeagleSequenceSimulatorApp.VERBOSE) {
+                Utils.printPartitionDataList(dataList);
+                System.out.println();
+            }
 
-		} catch (ClassNotFoundException cnfe) {
+            partitionsPanel.updatePartitionTable(dataList);
+            taxaPanel.updateTaxaTable(dataList);
+            treesPanel.updateTreesTable(dataList);
 
-			Utils.handleException(cnfe);
+        } catch (IOException ioe) {
 
-		}// END: try-catch block
+            Utils.handleException(
+                    ioe,
+                    "Unable to read BSS file. "
+                            + "BSS can only read files created by 'Saving' within BSS. "
+                            + "It cannot read XML files.");
 
-	}// END: loadSettings
+        } catch (ClassNotFoundException cnfe) {
 
-	@Override
-	protected boolean readFromFile(File arg0) throws IOException {
-		return false;
-	}
+            Utils.handleException(cnfe);
 
-	@Override
-	protected boolean writeToFile(File arg0) throws IOException {
-		return false;
-	}
+        }// END: try-catch block
 
-	// //////////////////////
-	// ---SHARED METHODS---//
-	// //////////////////////
+    }// END: loadSettings
 
-	public File getWorkingDirectory() {
-		return workingDirectory;
-	}// END: getWorkingDirectory
+    @Override
+    protected boolean readFromFile(File arg0) throws IOException {
+        return false;
+    }
 
-	public void setWorkingDirectory(File workingDirectory) {
-		this.workingDirectory = workingDirectory;
-	}// END: setWorkingDirectory
+    @Override
+    protected boolean writeToFile(File arg0) throws IOException {
+        return false;
+    }
 
-	public void collectAllSettings() {
+    // //////////////////////
+    // ---SHARED METHODS---//
+    // //////////////////////
 
-		// frequencyPanel.collectSettings();
-		// substModelPanel.collectSettings();
-		// clockPanel.collectSettings();
-		// sitePanel.collectSettings();
-		simulationPanel.collectSettings();
+    public File getWorkingDirectory() {
+        return workingDirectory;
+    }// END: getWorkingDirectory
 
-	}// END: collectAllSettings
+    public void setWorkingDirectory(File workingDirectory) {
+        this.workingDirectory = workingDirectory;
+    }// END: setWorkingDirectory
 
-	public void fireTaxaChanged() {
+    public void collectAllSettings() {
 
-		if (SwingUtilities.isEventDispatchThread()) {
+        // frequencyPanel.collectSettings();
+        // substModelPanel.collectSettings();
+        // clockPanel.collectSettings();
+        // sitePanel.collectSettings();
+        simulationPanel.collectSettings();
 
-			doTaxaChanged();
-			
-		} else {
+    }// END: collectAllSettings
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+    public void fireTaxaChanged() {
 
-					doTaxaChanged();
+        if (SwingUtilities.isEventDispatchThread()) {
 
-				}
-			});
-		}// END: edt check
+            doTaxaChanged();
 
-	}// END: fireTaxaChanged
+        } else {
 
-	private void doTaxaChanged() {
-		
-		treesPanel.fireTableDataChanged();
-		taxaPanel.fireTaxaChanged();
-		setStatus(Integer.toString(dataList.allTaxa
-				.getTaxonCount()) + " taxa loaded.");
-		
-	}//END: doTaxaChanged
-	
-	public void setBusy() {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
 
-		if (SwingUtilities.isEventDispatchThread()) {
+                    doTaxaChanged();
 
-			simulationPanel.setBusy();
-			progressBar.setIndeterminate(true);
+                }
+            });
+        }// END: edt check
 
-		} else {
+    }// END: fireTaxaChanged
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+    private void doTaxaChanged() {
 
-					simulationPanel.setBusy();
-					progressBar.setIndeterminate(true);
+        treesPanel.fireTableDataChanged();
+        taxaPanel.fireTaxaChanged();
+        setStatus(Integer.toString(dataList.allTaxa
+                .getTaxonCount()) + " taxa loaded.");
 
-				}
-			});
-		}// END: edt check
+    }//END: doTaxaChanged
 
-	}// END: setBusy
+    public void setBusy() {
 
-	public void setIdle() {
+        if (SwingUtilities.isEventDispatchThread()) {
 
-		if (SwingUtilities.isEventDispatchThread()) {
+            simulationPanel.setBusy();
+            progressBar.setIndeterminate(true);
 
-			simulationPanel.setIdle();
-			progressBar.setIndeterminate(false);
+        } else {
 
-		} else {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+                    simulationPanel.setBusy();
+                    progressBar.setIndeterminate(true);
 
-					simulationPanel.setIdle();
-					progressBar.setIndeterminate(false);
+                }
+            });
+        }// END: edt check
 
-				}
-			});
-		}// END: edt check
+    }// END: setBusy
 
-	}// END: setIdle
+    public void setIdle() {
 
-	public void setStatus(final String status) {
+        if (SwingUtilities.isEventDispatchThread()) {
 
-		if (SwingUtilities.isEventDispatchThread()) {
+            simulationPanel.setIdle();
+            progressBar.setIndeterminate(false);
 
-			statusLabel.setText(status);
+        } else {
 
-		} else {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+                    simulationPanel.setIdle();
+                    progressBar.setIndeterminate(false);
 
-					statusLabel.setText(status);
+                }
+            });
+        }// END: edt check
 
-				}
-			});
-		}// END: edt check
+    }// END: setIdle
 
-	}// END: setStatus
+    public void setStatus(final String status) {
 
-	public void hideTreeColumn() {
+        if (SwingUtilities.isEventDispatchThread()) {
 
-		if (SwingUtilities.isEventDispatchThread()) {
+            statusLabel.setText(status);
 
-			partitionsPanel.hideTreeColumn();
+        } else {
 
-		} else {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+                    statusLabel.setText(status);
 
-					partitionsPanel.hideTreeColumn();
+                }
+            });
+        }// END: edt check
 
-				}
-			});
-		}// END: edt check
+    }// END: setStatus
 
-	}// END: hideTreeColumn
+    public void hideTreeColumn() {
 
-	public void showTreeColumn() {
+        if (SwingUtilities.isEventDispatchThread()) {
 
-		if (SwingUtilities.isEventDispatchThread()) {
+            partitionsPanel.hideTreeColumn();
 
-			partitionsPanel.showTreeColumn();
+        } else {
 
-		} else {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+                    partitionsPanel.hideTreeColumn();
 
-					partitionsPanel.showTreeColumn();
+                }
+            });
+        }// END: edt check
 
-				}
-			});
-		}// END: edt check
+    }// END: hideTreeColumn
 
-	}// END: showTreeColumn
+    public void showTreeColumn() {
 
-	public void disableTaxaPanel() {
+        if (SwingUtilities.isEventDispatchThread()) {
 
-		final int index = Utils.getTabbedPaneComponentIndex(tabbedPane, TAXA_TAB_NAME);
-		
-		if (SwingUtilities.isEventDispatchThread()) {
+            partitionsPanel.showTreeColumn();
 
-			tabbedPane.setEnabledAt(index, false);
-			
-		} else {
+        } else {
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
 
-					tabbedPane.setEnabledAt(index, false);
-					
-				}
-			});
-		}// END: edt check
+                    partitionsPanel.showTreeColumn();
 
-	}// END: disableTaxaPanel
+                }
+            });
+        }// END: edt check
 
-	public void enableTaxaPanel() {
+    }// END: showTreeColumn
 
-		final int index = Utils.getTabbedPaneComponentIndex(tabbedPane, TAXA_TAB_NAME);
-		
-		if (SwingUtilities.isEventDispatchThread()) {
+    public void disableTaxaPanel() {
 
-			tabbedPane.setEnabledAt(index, true);
-			
-		} else {
+        final int index = Utils.getTabbedPaneComponentIndex(tabbedPane, TAXA_TAB_NAME);
 
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
+        if (SwingUtilities.isEventDispatchThread()) {
 
-					tabbedPane.setEnabledAt(index, true);
-					
-				}
-			});
-		}// END: edt check
+            tabbedPane.setEnabledAt(index, false);
 
-	}// END: enableTaxaPanel
+        } else {
 
-	private int getTreesCount() {
-		return dataList.recordsList.size();
-	}// END: getTreesCount
-	
-	@Override
-	public JComponent getExportableComponent() {
-		JComponent exportable = null;
-		Component component = tabbedPane.getSelectedComponent();
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
 
-		if (component instanceof Exportable) {
-			exportable = ((Exportable) component).getExportableComponent();
-		} else if (component instanceof JComponent) {
-			exportable = (JComponent) component;
-		}
+                    tabbedPane.setEnabledAt(index, false);
 
-		return exportable;
-	}// END: getExportableComponent
+                }
+            });
+        }// END: edt check
+
+    }// END: disableTaxaPanel
+
+    public void enableTaxaPanel() {
+
+        final int index = Utils.getTabbedPaneComponentIndex(tabbedPane, TAXA_TAB_NAME);
+
+        if (SwingUtilities.isEventDispatchThread()) {
+
+            tabbedPane.setEnabledAt(index, true);
+
+        } else {
+
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+
+                    tabbedPane.setEnabledAt(index, true);
+
+                }
+            });
+        }// END: edt check
+
+    }// END: enableTaxaPanel
+
+    private int getTreesCount() {
+        return dataList.recordsList.size();
+    }// END: getTreesCount
+
+    //	@Override  // Please use Java 1.5
+    public JComponent getExportableComponent() {
+        JComponent exportable = null;
+        Component component = tabbedPane.getSelectedComponent();
+
+        if (component instanceof Exportable) {
+            exportable = ((Exportable) component).getExportableComponent();
+        } else if (component instanceof JComponent) {
+            exportable = (JComponent) component;
+        }
+
+        return exportable;
+    }// END: getExportableComponent
 
 }// END: class

@@ -1,23 +1,41 @@
+/*
+ * SimulationPanel.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.bss;
 
+import dr.app.gui.components.WholeNumberField;
+import dr.evolution.alignment.SimpleAlignment;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 
-import java.awt.BorderLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-
-import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
-import dr.app.gui.components.WholeNumberField;
 
 /**
  * @author Filip Bielejec
@@ -26,152 +44,156 @@ import dr.app.gui.components.WholeNumberField;
 @SuppressWarnings("serial")
 public class SimulationPanel extends JPanel implements Exportable {
 
-	private MainFrame frame;
-	private PartitionDataList dataList;
-	private OptionsPanel optionPanel;
+    private MainFrame frame;
+    private PartitionDataList dataList;
+    private OptionsPanel optionPanel;
 
-	private WholeNumberField simulationsNumberField;
-	private WholeNumberField startingSeedNumberField;
+    private WholeNumberField simulationsNumberField;
+    private WholeNumberField startingSeedNumberField;
 
-	// Buttons
-	private JButton simulate;
-	private JButton generateXML;
+    // Buttons
+    private JButton simulate;
+    private JButton generateXML;
 
-	// Check boxes
-	private JCheckBox setSeed;
-	private JCheckBox useParallel;
+    // Check boxes
+    private JCheckBox setSeed;
+    private JCheckBox useParallel;
 
-	//Combo boxes
-	private JComboBox outputFormat;
-	
-	public SimulationPanel(final MainFrame frame,
-			final PartitionDataList dataList) {
+    //Combo boxes
+    private JComboBox outputFormat;
 
-		this.frame = frame;
-		this.dataList = dataList;
+    public SimulationPanel(final MainFrame frame,
+                           final PartitionDataList dataList) {
 
-		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
+        this.frame = frame;
+        this.dataList = dataList;
 
-		simulationsNumberField = new WholeNumberField(1, Integer.MAX_VALUE);
-		simulationsNumberField.setColumns(10);
-		simulationsNumberField.setValue(dataList.simulationsCount);
-		optionPanel.addComponentWithLabel("Number of simulations:",
-				simulationsNumberField);
+        optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 
-		setSeed = new JCheckBox();
-		setSeed.addItemListener(new SetSeedCheckBoxListener());
-		setSeed.setSelected(dataList.setSeed);
-		optionPanel.addComponentWithLabel("Set seed:", setSeed);
+        simulationsNumberField = new WholeNumberField(1, Integer.MAX_VALUE);
+        simulationsNumberField.setColumns(10);
+        simulationsNumberField.setValue(dataList.simulationsCount);
+        optionPanel.addComponentWithLabel("Number of simulations:",
+                simulationsNumberField);
 
-		startingSeedNumberField = new WholeNumberField(1, Long.MAX_VALUE);
-		startingSeedNumberField.setColumns(10);
-		startingSeedNumberField.setValue(dataList.startingSeed);
-		startingSeedNumberField.setEnabled(dataList.setSeed);
-		optionPanel.addComponentWithLabel("Starting seed:",
-				startingSeedNumberField);
+        setSeed = new JCheckBox();
+        setSeed.addItemListener(new SetSeedCheckBoxListener());
+        setSeed.setSelected(dataList.setSeed);
+        optionPanel.addComponentWithLabel("Set seed:", setSeed);
 
-		outputFormat = new JComboBox(new String[]{BeagleSequenceSimulatorParser.FASTA,BeagleSequenceSimulatorParser.NEXUS});
-		optionPanel.addComponentWithLabel("Output format:",
-				outputFormat);
-		
-		useParallel = new JCheckBox();
-		useParallel.addItemListener(new UseParallelCheckBoxListener());
-		useParallel.setSelected(dataList.useParallel);
-		optionPanel.addComponentWithLabel("Use parallel implementation:",
-				useParallel);
+        startingSeedNumberField = new WholeNumberField(1, Long.MAX_VALUE);
+        startingSeedNumberField.setColumns(10);
+        startingSeedNumberField.setValue(dataList.startingSeed);
+        startingSeedNumberField.setEnabled(dataList.setSeed);
+        optionPanel.addComponentWithLabel("Starting seed:",
+                startingSeedNumberField);
 
-		// Buttons holder
-		JPanel buttonsHolder = new JPanel();
-		buttonsHolder.setOpaque(false);
+        outputFormat = new JComboBox(
+//                new String[]{BeagleSequenceSimulatorParser.FASTA,BeagleSequenceSimulatorParser.NEXUS}
+                SimpleAlignment.OutputType.values()
+        );
+        optionPanel.addComponentWithLabel("Output format:",
+                outputFormat);
 
-		// simulate button
-		simulate = new JButton("Simulate",
-				Utils.createImageIcon(Utils.BIOHAZARD_ICON));
-		simulate.addActionListener(new ListenSimulate());
-		buttonsHolder.add(simulate);
+        useParallel = new JCheckBox();
+        useParallel.addItemListener(new UseParallelCheckBoxListener());
+        useParallel.setSelected(dataList.useParallel);
+        optionPanel.addComponentWithLabel("Use parallel implementation:",
+                useParallel);
 
-		generateXML = new JButton("Generate XML",
-				Utils.createImageIcon(Utils.HAMMER_ICON));
-		generateXML.addActionListener(new ListenGenerateXML());
-		buttonsHolder.add(generateXML);
+        // Buttons holder
+        JPanel buttonsHolder = new JPanel();
+        buttonsHolder.setOpaque(false);
 
-		setOpaque(false);
-		setLayout(new BorderLayout());
-		add(optionPanel, BorderLayout.NORTH);
-		add(buttonsHolder, BorderLayout.SOUTH);
+        // simulate button
+        simulate = new JButton("Simulate",
+                Utils.createImageIcon(Utils.BIOHAZARD_ICON));
+        simulate.addActionListener(new ListenSimulate());
+        buttonsHolder.add(simulate);
 
-	}// END: SimulationPanel
+        generateXML = new JButton("Generate XML",
+                Utils.createImageIcon(Utils.HAMMER_ICON));
+        generateXML.addActionListener(new ListenGenerateXML());
+        buttonsHolder.add(generateXML);
 
-	public final void collectSettings() {
+        setOpaque(false);
+        setLayout(new BorderLayout());
+        add(optionPanel, BorderLayout.NORTH);
+        add(buttonsHolder, BorderLayout.SOUTH);
 
-		dataList.simulationsCount = simulationsNumberField.getValue();
-		if (dataList.setSeed) {
-			dataList.startingSeed = startingSeedNumberField.getValue();
-		}
+    }// END: SimulationPanel
 
-		dataList.outputFormat = (outputFormat.getSelectedItem().toString());
-		
-	}// END: collectSettings
+    public final void collectSettings() {
 
-	private class SetSeedCheckBoxListener implements ItemListener {
-		public void itemStateChanged(ItemEvent e) {
+        dataList.simulationsCount = simulationsNumberField.getValue();
+        if (dataList.setSeed) {
+            dataList.startingSeed = startingSeedNumberField.getValue();
+        }
 
-			if (setSeed.isSelected()) {
-				startingSeedNumberField.setEnabled(true);
-				dataList.setSeed = true;
-			} else {
-				startingSeedNumberField.setEnabled(false);
-				dataList.setSeed = false;
-			}
+        dataList.outputFormat = SimpleAlignment.OutputType.parseFromString(
+                outputFormat.getSelectedItem().toString());
 
-		}
-	}// END: CheckBoxListener
+    }// END: collectSettings
 
-	private class UseParallelCheckBoxListener implements ItemListener {
-		public void itemStateChanged(ItemEvent e) {
+    private class SetSeedCheckBoxListener implements ItemListener {
+        public void itemStateChanged(ItemEvent e) {
 
-			if (useParallel.isSelected()) {
-				dataList.useParallel = true;
-			} else {
-				dataList.useParallel = false;
-			}
+            if (setSeed.isSelected()) {
+                startingSeedNumberField.setEnabled(true);
+                dataList.setSeed = true;
+            } else {
+                startingSeedNumberField.setEnabled(false);
+                dataList.setSeed = false;
+            }
 
-		}
-	}// END: CheckBoxListener
+        }
+    }// END: CheckBoxListener
 
-	private class ListenSimulate implements ActionListener {
-		public void actionPerformed(ActionEvent ev) {
+    private class UseParallelCheckBoxListener implements ItemListener {
+        public void itemStateChanged(ItemEvent e) {
 
-			frame.doExport();
+            if (useParallel.isSelected()) {
+                dataList.useParallel = true;
+            } else {
+                dataList.useParallel = false;
+            }
 
-		}// END: actionPerformed
-	}// END: ListenSimulate
+        }
+    }// END: CheckBoxListener
 
-	private class ListenGenerateXML implements ActionListener {
-		public void actionPerformed(ActionEvent ev) {
+    private class ListenSimulate implements ActionListener {
+        public void actionPerformed(ActionEvent ev) {
 
-			frame.doGenerateXML();
+            frame.doExport();
 
-		}// END: actionPerformed
-	}// END: ListenSaveLocationCoordinates
+        }// END: actionPerformed
+    }// END: ListenSimulate
 
-	public void setBusy() {
-		simulate.setEnabled(false);
-		generateXML.setEnabled(false);
-	}// END: setBusy
+    private class ListenGenerateXML implements ActionListener {
+        public void actionPerformed(ActionEvent ev) {
 
-	public void setIdle() {
-		simulate.setEnabled(true);
-		generateXML.setEnabled(true);
-	}// END: setIdle
+            frame.doGenerateXML();
 
-	@Override
-	public JComponent getExportableComponent() {
-		return this;
-	}// END: getExportableComponent
+        }// END: actionPerformed
+    }// END: ListenSaveLocationCoordinates
 
-	public void setDataList(PartitionDataList dataList) {
-		this.dataList = dataList;
-	}// END: setDataList
+    public void setBusy() {
+        simulate.setEnabled(false);
+        generateXML.setEnabled(false);
+    }// END: setBusy
+
+    public void setIdle() {
+        simulate.setEnabled(true);
+        generateXML.setEnabled(true);
+    }// END: setIdle
+
+    //	@Override  Use java 1.5
+    public JComponent getExportableComponent() {
+        return this;
+    }// END: getExportableComponent
+
+    public void setDataList(PartitionDataList dataList) {
+        this.dataList = dataList;
+    }// END: setDataList
 
 }// END: class

@@ -25,8 +25,6 @@
 
 package dr.app.bss.test;
 
-import java.util.ArrayList;
-
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
@@ -54,29 +52,31 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
+import java.util.ArrayList;
+
 public class BeagleSeqSimTest {
 
     public static final boolean simulateInPar = true;
 
     public static void main(String[] args) {
-    	
-		// start timing
-		long tic = System.currentTimeMillis();
+
+        // start timing
+        long tic = System.currentTimeMillis();
         int N = 1;
-		for (int i = 0; i < N; i++) {
+        for (int i = 0; i < N; i++) {
 //			simulateTopology();
-			simulateOnePartition();
+            simulateOnePartition();
 //			simulateTwoPartitions();
 //			simulateThreePartitions(i, N);
 //			simulateAminoAcid();
-		
-		}
-		long toc = System.currentTimeMillis();
-		
-		long time = toc-tic;
-		System.out.println("Time: " + time);
-				
-		
+
+        }
+        long toc = System.currentTimeMillis();
+
+        long time = toc - tic;
+        System.out.println("Time: " + time);
+
+
     } // END: main
 
     static void simulateTopology() {
@@ -215,9 +215,9 @@ public class BeagleSeqSimTest {
                     1 // every
             );
 
-			Sequence ancestralSequence = new Sequence();
-			ancestralSequence.appendSequenceString("TCAAGTGAGG");
-			partition1.setAncestralSequence(ancestralSequence);
+            Sequence ancestralSequence = new Sequence();
+            ancestralSequence.appendSequenceString("TCAAGTGAGG");
+            partition1.setAncestralSequence(ancestralSequence);
 
             partitionsList.add(partition1);
 
@@ -227,10 +227,11 @@ public class BeagleSeqSimTest {
                     // , sequenceLength
             );
 
-			SimpleAlignment alignment = simulator.simulate(simulateInPar);
+            SimpleAlignment alignment = simulator.simulate(simulateInPar);
 //			alignment.setNexusOutput();
-			alignment.setXMLOutput();
-			
+//			alignment.setXMLOutput();
+            alignment.setOutputType(SimpleAlignment.OutputType.XML);
+
             System.out.println(alignment.toString());
 
         } catch (Exception e) {
@@ -247,7 +248,7 @@ public class BeagleSeqSimTest {
             System.out.println("Test case 3: simulateTwoPartitions");
 
             MathUtils.setSeed(666);
-            
+
             int sequenceLength = 11;
             ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
@@ -298,9 +299,9 @@ public class BeagleSeqSimTest {
                     1 // every
             );
 
-             Sequence ancestralSequence = new Sequence();
-             ancestralSequence.appendSequenceString("TCAAGTG");
-             Partition.setAncestralSequence(ancestralSequence);
+            Sequence ancestralSequence = new Sequence();
+            ancestralSequence.appendSequenceString("TCAAGTG");
+            Partition.setAncestralSequence(ancestralSequence);
 
             partitionsList.add(partition1);
             partitionsList.add(Partition);
@@ -402,12 +403,12 @@ public class BeagleSeqSimTest {
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
                     partitionsList);
 
-			if (i == (N - 1)) {
-				System.out.println(simulator.simulate(simulateInPar).toString());
-			} else {
-				simulator.simulate(simulateInPar);
-			}
-            	
+            if (i == (N - 1)) {
+                System.out.println(simulator.simulate(simulateInPar).toString());
+            } else {
+                simulator.simulate(simulateInPar);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
@@ -415,75 +416,75 @@ public class BeagleSeqSimTest {
 
     }// END: simulateThreePartitions
 
-	static void simulateAminoAcid() {
+    static void simulateAminoAcid() {
 
-		try {
+        try {
 
-			System.out.println("Test case 1: simulateAminoAcid");
+            System.out.println("Test case 1: simulateAminoAcid");
 
-			MathUtils.setSeed(666);
+            MathUtils.setSeed(666);
 
-			int sequenceLength = 10;
-			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+            int sequenceLength = 10;
+            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
-			// create tree
-			NewickImporter importer = new NewickImporter(
-					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
+            // create tree
+            NewickImporter importer = new NewickImporter(
+                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+            Tree tree = importer.importTree(null);
+            TreeModel treeModel = new TreeModel(tree);
 
-			// create site model
-			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-					"siteModel");
+            // create site model
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+                    "siteModel");
 
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+            // create branch rate model
+            BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
-			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] { 
-					0.05, 0.05, 0.05, 0.05, 0.05,
-					0.05, 0.05, 0.05, 0.05, 0.05,
-					0.05, 0.05, 0.05, 0.05, 0.05,
-					0.05, 0.05, 0.05, 0.05, 0.05
-			});
-			FrequencyModel freqModel = new FrequencyModel(AminoAcids.INSTANCE,
-					freqs);
+            // create Frequency Model
+            Parameter freqs = new Parameter.Default(new double[]{
+                    0.05, 0.05, 0.05, 0.05, 0.05,
+                    0.05, 0.05, 0.05, 0.05, 0.05,
+                    0.05, 0.05, 0.05, 0.05, 0.05,
+                    0.05, 0.05, 0.05, 0.05, 0.05
+            });
+            FrequencyModel freqModel = new FrequencyModel(AminoAcids.INSTANCE,
+                    freqs);
 
-			// create substitution model
-			EmpiricalRateMatrix rateMatrix = Blosum62.INSTANCE;
+            // create substitution model
+            EmpiricalRateMatrix rateMatrix = Blosum62.INSTANCE;
 
-			EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
-					rateMatrix, freqModel);
+            EmpiricalAminoAcidModel empiricalAminoAcidModel = new EmpiricalAminoAcidModel(
+                    rateMatrix, freqModel);
 
-			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
-					empiricalAminoAcidModel);
+            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(
+                    empiricalAminoAcidModel);
 
-			// create partition
-			Partition partition1 = new Partition(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					0, // from
-					sequenceLength - 1, // to
-					1 // every
-			);
+            // create partition
+            Partition partition1 = new Partition(treeModel, //
+                    substitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    0, // from
+                    sequenceLength - 1, // to
+                    1 // every
+            );
 
-			partitionsList.add(partition1);
+            partitionsList.add(partition1);
 
-			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
-					partitionsList);
+            // feed to sequence simulator and generate data
+            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
+                    partitionsList);
 
-			System.out.println(simulator.simulate(simulateInPar).toString());
+            System.out.println(simulator.simulate(simulateInPar).toString());
 
-		} catch (Exception e) {
+        } catch (Exception e) {
 
-			e.printStackTrace();
-			System.exit(-1);
+            e.printStackTrace();
+            System.exit(-1);
 
-		} // END: try-catch
+        } // END: try-catch
 
-	}// END: simulateAminoAcid
-    
+    }// END: simulateAminoAcid
+
 }// END: class

@@ -508,13 +508,9 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return xhtml;
     }
 
-
-    private interface Outputter {
-
-        String makeOutputString(SimpleAlignment alignment);
-
-        class Fasta implements Outputter {
-
+    public enum OutputType {
+        FASTA("fasta", "fsa") {
+            @Override
             public String makeOutputString(SimpleAlignment alignment) {
 
                 NumberFormatter formatter = new NumberFormatter(6);
@@ -538,10 +534,10 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
                 return buffer.toString();
             }
-        }
+        },
 
-        class Nexus implements Outputter {
-
+        NEXUS("nexus", "nxs") {
+            @Override
             public String makeOutputString(SimpleAlignment alignment) {
 
                 StringBuffer buffer = new StringBuffer();
@@ -563,10 +559,9 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
                 return buffer.toString();
             }// END: toNexus
-        }
-
-        class XML implements Outputter {
-
+        },
+        XML("xml", "xml") {
+            @Override
             public String makeOutputString(SimpleAlignment alignment) {
 
                 StringBuffer buffer = new StringBuffer();
@@ -582,33 +577,38 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
                 return buffer.toString();
             }// END: toXML
-        }
-    }
-
-    public enum OutputType {
-        FASTA("fasta", new Outputter.Fasta()),
-        NEXUS("nexus", new Outputter.Nexus()),
-        XML("xml", new Outputter.XML());
+        };
 
         private final String text;
-        private final Outputter outputter;
+        private final String extension;
 
-        OutputType(String text, Outputter outputter) {
+        private OutputType(String text, String extension) {
             this.text = text;
-            this.outputter = outputter;
+            this.extension = extension;
         }
 
         public String getText() {
             return text;
         }
 
-        public String makeOutputString(SimpleAlignment alignment) {
-            return outputter.makeOutputString(alignment);
+        public String getExtension() {
+            return extension;
         }
+
+        public abstract String makeOutputString(SimpleAlignment alignment);
 
         public static OutputType parseFromString(String text) {
             for (OutputType type : OutputType.values()) {
                 if (type.getText().compareToIgnoreCase(text) == 0) {
+                    return type;
+                }
+            }
+            return null;
+        }
+
+        public static OutputType parseFromExtension(String extension) {
+            for (OutputType type : OutputType.values()) {
+                if (type.getExtension().compareToIgnoreCase(extension) == 0) {
                     return type;
                 }
             }

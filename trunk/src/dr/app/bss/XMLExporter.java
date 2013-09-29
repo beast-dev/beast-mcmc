@@ -7,7 +7,9 @@ import java.io.Writer;
 
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.util.Taxon;
 import dr.evoxml.TaxaParser;
+import dr.evoxml.TaxonParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -25,6 +27,27 @@ public class XMLExporter {
 		writer.writeOpenTag(TaxaParser.TAXA, // tagname
 				new Attribute[] { // attributes[]
 				new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA) });
+		
+		// TODO: dates
+		for (int i = 0; i < alignment.getTaxonCount(); i++) {
+
+			Taxon taxon = alignment.getTaxon(i);
+
+			writer.writeTag(
+					TaxonParser.TAXON, // tagname
+					new Attribute[] { // attributes[]
+					new Attribute.Default<String>(XMLParser.ID, taxon.getId()) },
+					false // close
+			);
+
+			writer.writeCloseTag(TaxonParser.TAXON);
+			writer.writeBlankLine();
+			
+		}// END: taxon loop
+		
+		writer.writeCloseTag(TaxaParser.TAXA);
+		
+		
 		
 		
 		buffer.append(writer.toString());

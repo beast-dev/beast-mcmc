@@ -33,6 +33,8 @@ h1. CITING
    
 h1. TODO
 
+* XML output format
+* output type not updated after lading bussdata
 * SeaView has problems reading first two blank lines in Report.createReport()
 * output tree with inner nodes annoted with trait values (annotate with rate as well)
 * simulation / inference in one XML

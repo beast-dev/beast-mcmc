@@ -224,12 +224,11 @@ public class BeagleSeqSimTest {
             // feed to sequence simulator and generate data
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
                     partitionsList
-                    // , sequenceLength
             );
 
             SimpleAlignment alignment = simulator.simulate(simulateInPar);
-//			alignment.setNexusOutput();
-//			alignment.setXMLOutput();
+            
+//			alignment.setOutputType(SimpleAlignment.OutputType.NEXUS);
             alignment.setOutputType(SimpleAlignment.OutputType.XML);
 
             System.out.println(alignment.toString());

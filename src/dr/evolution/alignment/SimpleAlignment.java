@@ -62,10 +62,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     private boolean siteCountKnown = false;
     private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
 
-//	private enum outputTypes {
-//		FASTA, NEXUS, XML
-//	}
-
     // **************************************************************
     // SimpleAlignment METHODS
     // **************************************************************
@@ -91,18 +87,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             addSequence(sequence);
         }
     }
-
-//    public void setNexusOutput() {
-//    	outputType = OutputType.NEXUS;
-//    }
-//
-//    public void setFastaOutput() {
-//    	outputType = OutputType.FASTA;
-//    }
-//
-//    public void setXMLOutput() {
-//    	outputType = OutputType.XML;
-//    }
 
     public void setOutputType(OutputType out) {
         outputType = out;
@@ -516,8 +500,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
                 NumberFormatter formatter = new NumberFormatter(6);
                 StringBuffer buffer = new StringBuffer();
 
-//        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
-
                 if (alignment.countStatistics) {
                     buffer.append("Site count = ").append(alignment.getSiteCount()).append("\n");
                     buffer.append("Invariant sites = ").append(alignment.getInvariantCount()).append("\n");
@@ -558,7 +540,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
                 }
 
                 return buffer.toString();
-            }// END: toNexus
+            }// END: makeOutputString
         },
         XML("xml", "xml") {
             @Override
@@ -576,7 +558,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
                 }
 
                 return buffer.toString();
-            }// END: toXML
+            }// END: makeOutputString
         };
 
         private final String text;

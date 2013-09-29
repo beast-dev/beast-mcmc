@@ -1,7 +1,10 @@
 package dr.app.bss;
 
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.Writer;
 
@@ -10,6 +13,7 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evoxml.AlignmentParser;
+import dr.evoxml.SequenceParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.util.Attribute;
@@ -18,13 +22,14 @@ import dr.xml.XMLParser;
 public class XMLExporter {
 
 	public XMLExporter() {
-		
-	}//END: Constructor
+
+	}// END: Constructor
 	
-	public String exportAlignment(SimpleAlignment alignment) {
+	public String exportAlignment(SimpleAlignment alignment) throws IOException {
 		
 		StringBuffer buffer = new StringBuffer();
-		XMLWriter writer = new XMLWriter(new BufferedWriter(new OutputStreamWriter(System.out)));
+		File tmp = File.createTempFile("tempfile", ".tmp");
+		XMLWriter writer = new XMLWriter(new PrintWriter(tmp));
 
 		writer.writeOpenTag(TaxaParser.TAXA, // tagname
 				new Attribute[] { // attributes[]
@@ -43,11 +48,12 @@ public class XMLExporter {
 			);
 
 			writer.writeCloseTag(TaxonParser.TAXON);
-			writer.writeBlankLine();
+//			writer.writeBlankLine();
 			
 		}// END: taxon loop
 		
 		writer.writeCloseTag(TaxaParser.TAXA);
+		
 		writer.writeBlankLine();
 		
 		writer.writeOpenTag(AlignmentParser.ALIGNMENT, // tagname
@@ -57,13 +63,18 @@ public class XMLExporter {
 		});
 		
 
+		for (int i = 0; i < alignment.getSequenceCount(); i++) {
+			
+			Taxon taxon = alignment.getTaxon(i);
+			
+			writer.writeOpenTag(SequenceParser.SEQUENCE);
+			writer.writeIDref(TaxonParser.TAXON, taxon.getId());
+			writer.writeText(alignment.getSequence(i).getSequenceString());
+			writer.writeCloseTag(SequenceParser.SEQUENCE);
+			
+		}//END: sequences loop
 		
-		
-		
-		
-		
-		
-		
+		writer.writeCloseTag(AlignmentParser.ALIGNMENT);
 		
 		buffer.append(writer.toString());
 		writer.close();

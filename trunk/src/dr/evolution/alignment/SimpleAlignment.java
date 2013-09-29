@@ -555,7 +555,9 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
                 } catch (IllegalArgumentException e) {
                     e.printStackTrace();
-                }
+                } catch (IOException e) {
+					e.printStackTrace();
+				}
 
                 return buffer.toString();
             }// END: makeOutputString

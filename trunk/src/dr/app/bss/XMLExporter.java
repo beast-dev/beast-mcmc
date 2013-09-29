@@ -38,11 +38,12 @@ public class XMLExporter {
 					TaxonParser.TAXON, // tagname
 					new Attribute[] { // attributes[]
 					new Attribute.Default<String>(XMLParser.ID, taxon.getId()) },
-					false // close
+					true // close
 			);
 
-			writer.writeCloseTag(TaxonParser.TAXON);
-//			writer.writeBlankLine();
+//			System.out.println(taxon.getAttribute(Utils.ABSOLUTE_HEIGHT));
+			
+//			writer.writeCloseTag(TaxonParser.TAXON);
 			
 		}// END: taxon loop
 		
@@ -56,7 +57,6 @@ public class XMLExporter {
 				new Attribute.Default<String>(DataType.DATA_TYPE, alignment.getDataType().getDescription())
 		});
 		
-
 		for (int i = 0; i < alignment.getSequenceCount(); i++) {
 			
 			Taxon taxon = alignment.getTaxon(i);

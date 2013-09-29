@@ -270,9 +270,6 @@ public class MCMCPanel extends BeautiPanel {
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addComponent(mleInfo);
 
-        // get the MLE options
-        mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
-
         optionsPanel.addComponent(performMLE);
         //will be false by default
         //options.performMLE = false;
@@ -365,7 +362,10 @@ public class MCMCPanel extends BeautiPanel {
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
-        
+
+        // get the MLE options
+        mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+
         if (mleDialog != null) {
         	mleDialog.setOptions(mleOptions);
         }

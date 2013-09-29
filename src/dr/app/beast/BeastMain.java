@@ -526,6 +526,10 @@ public class BeastMain {
 
         }
 
+        if (useBeagle) {
+            BeagleInfo.printVersionInformation();
+        }
+
         if (beagleShowInfo) {
             BeagleInfo.printResourceList();
             return;

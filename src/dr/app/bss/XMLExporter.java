@@ -7,7 +7,9 @@ import java.io.Writer;
 
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
+import dr.evoxml.AlignmentParser;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.util.Attribute;
@@ -46,6 +48,19 @@ public class XMLExporter {
 		}// END: taxon loop
 		
 		writer.writeCloseTag(TaxaParser.TAXA);
+		writer.writeBlankLine();
+		
+		writer.writeOpenTag(AlignmentParser.ALIGNMENT, // tagname
+				new Attribute[] { // attributes[]
+				new Attribute.Default<String>(XMLParser.ID, AlignmentParser.ALIGNMENT),
+				new Attribute.Default<String>(DataType.DATA_TYPE, alignment.getDataType().getDescription())
+		});
+		
+
+		
+		
+		
+		
 		
 		
 		

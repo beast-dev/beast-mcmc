@@ -180,7 +180,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
                     for (int i = 0; i < dataList.simulationsCount; i++) {
 
                         String fullPath = Utils.getMultipleWritePath(outFile,
-                                "fasta", i);
+                               dataList.outputFormat.toString().toLowerCase(), i);
                         PrintWriter writer = new PrintWriter(new FileWriter(
                                 fullPath));
 
@@ -233,10 +233,15 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
                         );
 
                         SimpleAlignment alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
-
-                        if (dataList.outputFormat == SimpleAlignment.OutputType.NEXUS) {
-                            alignment.setOutputType(dataList.outputFormat);
-                        }
+                        alignment.setOutputType(dataList.outputFormat);
+                        
+//                        if (dataList.outputFormat == SimpleAlignment.OutputType.NEXUS) {
+//                            alignment.setOutputType(dataList.outputFormat);
+//                        } else if(dataList.outputFormat == SimpleAlignment.OutputType.XML) {
+//                        	alignment.setOutputType(dataList.outputFormat);
+//                        }else {
+//                        	//
+//                        }
 
                         writer.println(alignment.toString());
                         writer.close();

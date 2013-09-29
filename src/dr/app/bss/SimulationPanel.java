@@ -60,7 +60,7 @@ public class SimulationPanel extends JPanel implements Exportable {
     private JCheckBox useParallel;
 
     //Combo boxes
-    private JComboBox outputFormat;
+    private JComboBox<Object> outputFormat;
 
     public SimulationPanel(final MainFrame frame,
                            final PartitionDataList dataList) {
@@ -88,8 +88,7 @@ public class SimulationPanel extends JPanel implements Exportable {
         optionPanel.addComponentWithLabel("Starting seed:",
                 startingSeedNumberField);
 
-        outputFormat = new JComboBox(
-//                new String[]{BeagleSequenceSimulatorParser.FASTA,BeagleSequenceSimulatorParser.NEXUS}
+        outputFormat = new JComboBox<Object>(
                 SimpleAlignment.OutputType.values()
         );
         optionPanel.addComponentWithLabel("Output format:",
@@ -187,7 +186,6 @@ public class SimulationPanel extends JPanel implements Exportable {
         generateXML.setEnabled(true);
     }// END: setIdle
 
-    //	@Override  Use java 1.5
     public JComponent getExportableComponent() {
         return this;
     }// END: getExportableComponent

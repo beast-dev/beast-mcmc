@@ -956,9 +956,12 @@ public class XMLGenerator {
 
 	private void writeReport(XMLWriter writer) {
 
-		writer.writeOpenTag(Report.REPORT,
+		writer.writeOpenTag(
+				Report.REPORT,
 				new Attribute[] { new Attribute.Default<String>(
-						Report.FILENAME, "sequences."+String.valueOf(dataList.outputFormat)) });
+						Report.FILENAME, "sequences."
+								+ String.valueOf(dataList.outputFormat)
+										.toLowerCase()) });
 
 		writer.writeIDref(
 				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,
@@ -1391,8 +1394,8 @@ public class XMLGenerator {
 
 		case 0: // Nucleotide
 
-//			dataType = data.createDataType();
-			dataType = Nucleotides.INSTANCE;
+			dataType = data.createDataType();
+//			dataType = Nucleotides.INSTANCE;
 
 			frequencies = data.frequencyParameterValues[0] + "";
 			for (int i = 1; i < 4; i++) {
@@ -1416,8 +1419,8 @@ public class XMLGenerator {
 
 		case 1: // Codon
 
-//			dataType = data.createDataType();
-			dataType = Codons.UNIVERSAL;
+			dataType = data.createDataType();
+//			dataType = Codons.UNIVERSAL;
 
 			frequencies = data.frequencyParameterValues[4] + "";
 			for (int i = 5; i < 65; i++) {
@@ -1443,8 +1446,8 @@ public class XMLGenerator {
 
 		case 2: // Amino acid
 			
-//			dataType = data.createDataType();
-			dataType = AminoAcids.INSTANCE;
+			dataType = data.createDataType();
+//			dataType = AminoAcids.INSTANCE;
 			
 			frequencies = data.frequencyParameterValues[65] + "";
 			for (int i = 66; i < 85; i++) {
@@ -1508,98 +1511,5 @@ public class XMLGenerator {
 		}
 
 	}// END: writeParameter
-
-	// /////////////////////////////////
-	// ---demographic model element---//
-	// /////////////////////////////////
-	
-//	try {	
-//		
-//		int suffix = 1;
-//		ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
-//		for (PartitionData data : dataList) {
-//
-//			if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT)) {
-//
-//				data.demographicModelIdref += suffix;
-////				data.treeModelIdref += suffix;
-//				
-//				writeDemographicModel(data, writer, String.valueOf(suffix));
-//				writer.writeBlankLine();
-//				partitionList.add(data);
-//
-//				// System.out.println("NOT IN LIST");
-//
-//			} else {
-//
-//				int index = Utils.isIdenticalWith(data, partitionList, Utils.DEMOGRAPHIC_MODEL_ELEMENT) + 1;
-//				data.demographicModelIdref += index;
-////				data.treeModelIdref += suffix;
-//				// System.out.println("IDENTICAL WITH " + index);
-//
-//			}
-//
-//			suffix++;
-//
-//		}// END: partition loop
-//		
-//	} catch (Exception e) {
-//
-//		throw new RuntimeException("Demographic model generation has failed:\n"
-//				+ e.getMessage());
-//
-//	}// END: try-catch block
-	
-	// //////////////////////
-	// ---newick element---//
-	// //////////////////////
-
-//	try {
-//
-//		int suffix = 1;
-//		ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
-//		for (PartitionData data : dataList) {
-//
-//				if (data.demographicModelIndex == 0) {
-//
-//					TreeModel treeModel = data.createTreeModel();
-//
-//					if (treeModelList.size() == 0 | !Utils.isTreeModelInList(treeModel, treeModelList)) {
-//
-//						data.treeModelIdref += suffix;
-//
-//						writeNewick(treeModel, writer, String.valueOf(suffix));
-//						writer.writeBlankLine();
-//
-//						treeModelList.add(treeModel);
-//
-//						// System.out.println("NOT IN LIST");
-//
-//					} else {
-//
-//						int index = Utils.treeModelIsIdenticalWith(treeModel, treeModelList) + 1;
-//						data.treeModelIdref += index;
-//
-//						// System.out.println("IDENTICAL WITH " + index);
-//
-//					}
-//
-//				} else {
-//
-//					// do nothing
-//
-//				}// END: NoModel check
-//
-//
-//			suffix++;
-//
-//		}// END: partition loop
-//
-//	} catch (Exception e) {
-//
-//		throw new RuntimeException("Starting tree generation has failed:\n"
-//				+ e.getMessage());
-//
-//	}// END: try-catch block
 	
 }// END: class

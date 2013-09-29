@@ -28,10 +28,12 @@ package dr.app.beauti.mcmcpanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.components.marginalLikelihoodEstimation.MLEDialog;
+import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.STARBEASTOptions;
-import dr.app.beauti.tipdatepanel.GuessDatesDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
@@ -86,6 +88,7 @@ public class MCMCPanel extends BeautiPanel {
     private BeautiOptions options;
     
     private MLEDialog mleDialog = null;
+    private MarginalLikelihoodEstimationOptions mleOptions;
 
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
@@ -266,7 +269,10 @@ public class MCMCPanel extends BeautiPanel {
         mleInfo.setColumns(50);
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addComponent(mleInfo);
-        
+
+        // get the MLE options
+        mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+
         optionsPanel.addComponent(performMLE);
         //will be false by default
         //options.performMLE = false;
@@ -275,10 +281,10 @@ public class MCMCPanel extends BeautiPanel {
         performMLE.addActionListener(new java.awt.event.ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		if (performMLE.isSelected()) {
-        			options.performMLE = true;
+                    mleOptions.performMLE = true;
         			buttonMLE.setEnabled(true);
         		} else {
-        			options.performMLE = false;
+                    mleOptions.performMLE = false;
         			buttonMLE.setEnabled(false);
         		}
         	}
@@ -286,7 +292,7 @@ public class MCMCPanel extends BeautiPanel {
         buttonMLE.addActionListener(new java.awt.event.ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		if (mleDialog == null) {
-                    mleDialog = new MLEDialog(frame, options);
+                    mleDialog = new MLEDialog(frame, mleOptions);
                     int result = mleDialog.showDialog();
                     
                     if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
@@ -318,28 +324,28 @@ public class MCMCPanel extends BeautiPanel {
     private void updateTreeFileNameList() {
         options.treeFileName.clear();
         options.substTreeFileName.clear();
-        String treeFN;
+        String treeFileName;
 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
             if (options.substTreeLog) {
-                treeFN = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
+                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
             } else {
-                treeFN = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
+                treeFileName = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
             }
-            if (addTxt.isSelected()) treeFN = treeFN + ".txt";
-            options.treeFileName.add(treeFN);
+            if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
+            options.treeFileName.add(treeFileName);
 
             if (options.substTreeLog) {
-                treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + STARBEASTOptions.TREE_FILE_NAME;
-                if (addTxt.isSelected()) treeFN = treeFN + ".txt";
-                options.substTreeFileName.add(treeFN);
+                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + STARBEASTOptions.TREE_FILE_NAME;
+                if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
+                options.substTreeFileName.add(treeFileName);
             }
         }
 
         if (options.useStarBEAST) {
-            treeFN = options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME;
-            if (addTxt.isSelected()) treeFN = treeFN + ".txt";
-            options.treeFileName.add(treeFN);
+            treeFileName = options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME;
+            if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
+            options.treeFileName.add(treeFileName);
             //TODO: species sub tree
         }
     }
@@ -361,7 +367,7 @@ public class MCMCPanel extends BeautiPanel {
         this.options = options;
         
         if (mleDialog != null) {
-        	mleDialog.setOptions(options);
+        	mleDialog.setOptions(mleOptions);
         }
 
         chainLengthField.setValue(options.chainLength);
@@ -464,7 +470,7 @@ public class MCMCPanel extends BeautiPanel {
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
         
         if (mleDialog != null) {
-        	mleDialog.getOptions(options);
+        	mleDialog.getOptions(mleOptions);
         }
         
     }

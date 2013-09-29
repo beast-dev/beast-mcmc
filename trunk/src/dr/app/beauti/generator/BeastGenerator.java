@@ -688,17 +688,6 @@ public class BeastGenerator extends Generator {
             throw new GeneratorException("MCMC or log generation has failed:\n" + e.getMessage());
         }
         
-        //++++++++++++++++ MLE ++++++++++++++++++
-        try {
-            writeMLE(writer);
-            writer.writeText("");
-
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MLE, writer);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new GeneratorException("MLE generation has failed:\n" + e.getMessage());
-        }
-
         //++++++++++++++++  ++++++++++++++++++
         try {
             writeTimerReport(writer);
@@ -954,71 +943,4 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag("mcmc");
     }
     
-    /**
-     * Write the marginalLikelihoodEstimator, pathSamplingAnalysis and steppingStoneSamplingAnalysis blocks.
-     *
-     * @param writer XMLWriter
-     */
-    public void writeMLE(XMLWriter writer) {
-    	
-    	if (options.performMLE) {
-    		
-    		writer.writeComment("Define marginal likelihood estimator settings");
-    	
-    		List<Attribute> attributes = new ArrayList<Attribute>();
-    		//attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
-    		attributes.add(new Attribute.Default<Integer>("chainLength", options.mleChainLength));
-    		attributes.add(new Attribute.Default<Integer>("pathSteps", options.pathSteps));
-    		attributes.add(new Attribute.Default<String>("pathScheme", options.pathScheme));
-    		if (!options.pathScheme.equals("linear")) {
-    			attributes.add(new Attribute.Default<Double>("alpha", options.schemeParameter));
-    		}
-        
-    		writer.writeOpenTag("marginalLikelihoodEstimator", attributes);
-        
-    		writer.writeOpenTag("samplers");
-    		writer.writeIDref("mcmc", "mcmc");
-    		writer.writeCloseTag("samplers");
-        
-    		attributes = new ArrayList<Attribute>();
-    		attributes.add(new Attribute.Default<String>(XMLParser.ID, "pathLikelihood"));
-    		writer.writeOpenTag("pathLikelihood", attributes);
-    		writer.writeOpenTag("source");
-    		writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, CompoundLikelihoodParser.POSTERIOR);
-    		writer.writeCloseTag("source");
-    		writer.writeOpenTag("destination");
-    		writer.writeIDref(CompoundLikelihoodParser.PRIOR, CompoundLikelihoodParser.PRIOR);
-    		writer.writeCloseTag("destination");
-    		writer.writeCloseTag("pathLikelihood");
-        
-    		attributes = new ArrayList<Attribute>();
-    		attributes.add(new Attribute.Default<String>(XMLParser.ID, "MLELog"));
-    		attributes.add(new Attribute.Default<Integer>("logEvery", options.mleLogEvery));
-    		attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
-    		writer.writeOpenTag("log", attributes);
-    		writer.writeIDref("pathLikelihood", "pathLikelihood");
-    		writer.writeCloseTag("log");
-        
-    		writer.writeCloseTag("marginalLikelihoodEstimator");
-        
-    		writer.writeComment("Path sampling estimator from collected samples");
-    		attributes = new ArrayList<Attribute>();
-    		attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
-    		writer.writeOpenTag("pathSamplingAnalysis", attributes);
-    		writer.writeTag("likelihoodColumn", new Attribute.Default<String>("name", "pathLikelihood.delta"), true);
-    		writer.writeTag("thetaColumn", new Attribute.Default<String>("name", "pathLikelihood.theta"), true);
-    		writer.writeCloseTag("pathSamplingAnalysis");
-        
-    		writer.writeComment("Stepping-stone sampling estimator from collected samples");
-    		attributes = new ArrayList<Attribute>();
-    		attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
-    		writer.writeOpenTag("steppingStoneSamplingAnalysis", attributes);
-    		writer.writeTag("likelihoodColumn", new Attribute.Default<String>("name", "pathLikelihood.delta"), true);
-    		writer.writeTag("thetaColumn", new Attribute.Default<String>("name", "pathLikelihood.theta"), true);
-    		writer.writeCloseTag("steppingStoneSamplingAnalysis");
-        
-    	}
-    	
-    }
-
 }

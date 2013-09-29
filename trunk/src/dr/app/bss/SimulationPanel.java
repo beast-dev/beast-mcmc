@@ -60,7 +60,7 @@ public class SimulationPanel extends JPanel implements Exportable {
     private JCheckBox useParallel;
 
     //Combo boxes
-    private JComboBox<Object> outputFormat;
+    private JComboBox outputFormat;
 
     public SimulationPanel(final MainFrame frame,
                            final PartitionDataList dataList) {
@@ -88,7 +88,7 @@ public class SimulationPanel extends JPanel implements Exportable {
         optionPanel.addComponentWithLabel("Starting seed:",
                 startingSeedNumberField);
 
-        outputFormat = new JComboBox<Object>(
+        outputFormat = new JComboBox(
                 SimpleAlignment.OutputType.values()
         );
         optionPanel.addComponentWithLabel("Output format:",

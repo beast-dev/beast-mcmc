@@ -554,32 +554,40 @@ public class BeagleSequenceSimulatorConsoleApp {
                 System.out.println();
             }
 
-            //TODO: decide here if nexus or fasta
             SimpleAlignment alignment = new SimpleAlignment();
             String outputFile = null;
             if (leftoverArguments.length > 0) {
 
                 outputFile = leftoverArguments[0];
+                
+                String file = outputFile.split("\\.", 2)[0];
                 String extension = outputFile.split("\\.", 2)[1];
+
                 // TODO Delegate here to enum-class; switches are not generic
-                if (extension
-                        .equalsIgnoreCase(SimpleAlignment.OutputType.FASTA.getText())
-                        || extension.equalsIgnoreCase("fst")) {
+				if (extension.equalsIgnoreCase(SimpleAlignment.OutputType.FASTA
+						.getText()) || extension.equalsIgnoreCase("fst")) {
 
-                    dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
+					dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
 
-                } else if (extension
-                        .equalsIgnoreCase(SimpleAlignment.OutputType.NEXUS.getText())
-                        || extension.equalsIgnoreCase("nxs")) {
+				} else if (extension
+						.equalsIgnoreCase(SimpleAlignment.OutputType.NEXUS
+								.getText())
+						|| extension.equalsIgnoreCase("nxs")) {
 
-                    dataList.outputFormat = SimpleAlignment.OutputType.NEXUS;
+					dataList.outputFormat = SimpleAlignment.OutputType.NEXUS;
 
-                } else {
-                    outputFile = "output.fasta";
-                    dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
-                }
+				} else if (extension
+						.equalsIgnoreCase(SimpleAlignment.OutputType.XML
+								.getText())) {
 
-            }
+					dataList.outputFormat = SimpleAlignment.OutputType.XML;
+
+				} else {
+					outputFile = file + ".fasta";
+					dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
+				}
+
+			}
 
             if (leftoverArguments.length > 1) {
                 dataList.startingSeed = Long.parseLong(leftoverArguments[1]);
@@ -597,12 +605,6 @@ public class BeagleSequenceSimulatorConsoleApp {
             BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
                     partitionsList);
             alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
-
-//			if (dataList.outputFormat.equalsIgnoreCase(BeagleSequenceSimulatorParser.NEXUS)) {
-//				alignment.setNexusOutput();
-//			} else {
-//				alignment.setFastaOutput();
-//			}
             alignment.setOutputType(dataList.outputFormat);
 
             PrintWriter writer = new PrintWriter(new FileWriter(outputFile));

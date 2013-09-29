@@ -46,9 +46,12 @@ public class Report {
     private PrintWriter writer;
 
     public void createReport() {
-        writer.println(getTitle());
-        writer.println();
-
+    	
+		if (!title.equalsIgnoreCase("")) {
+			writer.println(getTitle());
+			writer.println();
+		}
+ 
         for (Object object : objects) {
             final String item;
 

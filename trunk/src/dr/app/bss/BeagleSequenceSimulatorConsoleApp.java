@@ -554,40 +554,42 @@ public class BeagleSequenceSimulatorConsoleApp {
                 System.out.println();
             }
 
-            SimpleAlignment alignment = new SimpleAlignment();
-            String outputFile = null;
-            if (leftoverArguments.length > 0) {
+			SimpleAlignment alignment = new SimpleAlignment();
+			String outputFile = null;
+			if (leftoverArguments.length > 0) {
 
-                outputFile = leftoverArguments[0];
-                
-                String file = outputFile.split("\\.", 2)[0];
-                String extension = outputFile.split("\\.", 2)[1];
+				outputFile = leftoverArguments[0];
+				String[] file = outputFile.split("\\.", 2);
+				if (file.length > 1) {
 
-                // TODO Delegate here to enum-class; switches are not generic
-				if (extension.equalsIgnoreCase(SimpleAlignment.OutputType.FASTA
-						.getText()) || extension.equalsIgnoreCase("fst")) {
+					String extension = outputFile.split("\\.", 2)[1];
 
-					dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
+					// TODO Delegate here to enum-class; switches are not generic
+					if (extension.equalsIgnoreCase(SimpleAlignment.OutputType.FASTA
+									.getText()) || extension.equalsIgnoreCase("fst")) {
 
-				} else if (extension
-						.equalsIgnoreCase(SimpleAlignment.OutputType.NEXUS
-								.getText())
-						|| extension.equalsIgnoreCase("nxs")) {
+						dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
 
-					dataList.outputFormat = SimpleAlignment.OutputType.NEXUS;
+					} else if (extension.equalsIgnoreCase(SimpleAlignment.OutputType.NEXUS
+									.getText()) || extension.equalsIgnoreCase("nxs")) {
 
-				} else if (extension
-						.equalsIgnoreCase(SimpleAlignment.OutputType.XML
-								.getText())) {
+						dataList.outputFormat = SimpleAlignment.OutputType.NEXUS;
 
-					dataList.outputFormat = SimpleAlignment.OutputType.XML;
+					} else if (extension.equalsIgnoreCase(SimpleAlignment.OutputType.XML
+									.getText())) {
+
+						dataList.outputFormat = SimpleAlignment.OutputType.XML;
+
+					} else {
+						dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
+					}//END: extension check
 
 				} else {
-					outputFile = file + ".fasta";
+					outputFile = file[0] + "." + SimpleAlignment.OutputType.FASTA.toString().toLowerCase();
 					dataList.outputFormat = SimpleAlignment.OutputType.FASTA;
-				}
+				}//END: 
 
-			}
+			}// END: leftoverArguments check
 
             if (leftoverArguments.length > 1) {
                 dataList.startingSeed = Long.parseLong(leftoverArguments[1]);

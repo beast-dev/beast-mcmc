@@ -190,11 +190,12 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
                             if (data.record == null) {
 
+                            	writer.close();
                                 throw new RuntimeException(
                                         "Set data in Partitions tab for "
                                                 + (partitionsList.size() + 1)
                                                 + " partition.");
-
+                                
                             } else {
 
                                 TreeModel treeModel = data.createTreeModel();

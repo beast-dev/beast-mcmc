@@ -1,4 +1,4 @@
-package dr.app.beauti.mcmcpanel;
+package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import jam.panels.OptionsPanel;
 
@@ -44,11 +44,11 @@ public class MLEDialog {
 		
 	private JComboBox stepDistribution = new JComboBox();
 	
-    private BeautiOptions options;
+    private MarginalLikelihoodEstimationOptions options;
     
     private String description = "Settings for marginal likelihood estimation";
 	
-	public MLEDialog(final JFrame frame, final BeautiOptions options) {
+	public MLEDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options) {
 		this.frame = frame;
 		this.options = options;
 
@@ -193,7 +193,7 @@ public class MLEDialog {
 		return optionsPanel;
 	}*/
 
-	public void setOptions(BeautiOptions options) {
+	public void setOptions(MarginalLikelihoodEstimationOptions options) {
 		this.options = options;
 		
 		pathStepsField.setValue(options.pathSteps);
@@ -206,7 +206,7 @@ public class MLEDialog {
         optionsPanel.repaint();
 	}
 
-	public void getOptions(BeautiOptions options) {		
+	public void getOptions(MarginalLikelihoodEstimationOptions options) {
 		options.pathSteps = pathStepsField.getValue();
 		options.mleChainLength = chainLengthField.getValue();
 		options.mleLogEvery = logEveryField.getValue();

@@ -1,12 +1,7 @@
 package dr.app.bss;
 
-import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.io.Writer;
+import java.io.StringWriter;
 
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.SimpleAlignment;
@@ -27,10 +22,9 @@ public class XMLExporter {
 	
 	public String exportAlignment(SimpleAlignment alignment) throws IOException {
 		
-		StringBuffer buffer = new StringBuffer();
-		File tmp = File.createTempFile("tempfile", ".tmp");
-		XMLWriter writer = new XMLWriter(new PrintWriter(tmp));
-
+		StringWriter sw = new StringWriter();
+		XMLWriter writer = new XMLWriter(sw);
+		
 		writer.writeOpenTag(TaxaParser.TAXA, // tagname
 				new Attribute[] { // attributes[]
 				new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA) });
@@ -75,11 +69,9 @@ public class XMLExporter {
 		}//END: sequences loop
 		
 		writer.writeCloseTag(AlignmentParser.ALIGNMENT);
-		
-		buffer.append(writer.toString());
 		writer.close();
 		
-		return buffer.toString();
+		return sw.toString();
 	}//END: exportAlignment
 	
 }//END: class

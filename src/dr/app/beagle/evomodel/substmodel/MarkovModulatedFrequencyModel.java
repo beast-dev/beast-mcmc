@@ -91,7 +91,7 @@ public class MarkovModulatedFrequencyModel extends FrequencyModel {
                 computeStationaryDistribution(baseStationaryDistribution);
                 stationaryDistributionKnown = true;
             }
-            relativeFreq *= baseStationaryDistribution[whichModel];
+//            relativeFreq *= baseStationaryDistribution[whichModel]; // Try: no adjustment, appears to cause store/restore issue
         }
 
         return relativeFreq;

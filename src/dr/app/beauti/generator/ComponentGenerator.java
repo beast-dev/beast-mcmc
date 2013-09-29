@@ -38,8 +38,7 @@ public interface ComponentGenerator {
         AFTER_FILE_LOG,             // after the file log
         IN_TREES_LOG,               // in the trees log
         AFTER_TREES_LOG,            // after the trees log
-        AFTER_MCMC,                 // after the mcmc element
-        AFTER_MLE					// after the marginal likelihood estimator settings
+        AFTER_MCMC                 // after the mcmc element
     }
 
     /**

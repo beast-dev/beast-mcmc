@@ -110,11 +110,7 @@ public class BeautiOptions extends ModelOptions {
 
         // Operator schedule options
         coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
-        
-        //MLE options
-        mleChainLength = 10000000;
-        
-        
+
         // MCMC options
         chainLength = 10000000;
         logEvery = 1000;
@@ -1262,15 +1258,6 @@ public class BeautiOptions extends ModelOptions {
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
     
-    //MLE options
-    public boolean performMLE = false;
-    public int pathSteps = 100;
-    public int mleChainLength = 10000000;
-    public int mleLogEvery = 1000;
-    public String mleFileName = "MLE.log";
-    public String pathScheme = "betaquantile";
-    public double schemeParameter = 0.30;
-
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
     public boolean allowOverwriteLog = false;

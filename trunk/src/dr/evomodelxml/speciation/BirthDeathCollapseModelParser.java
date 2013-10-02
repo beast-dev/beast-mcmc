@@ -1,11 +1,8 @@
 package dr.evomodelxml.speciation;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Graham
- * Date: 01/09/13
- * Time: 14:39
- * To change this template use File | Settings | File Templates.
+ * @author Graham Jones
+ *         Date: 01/09/2013
  */
 
 
@@ -24,7 +21,6 @@ public class BirthDeathCollapseModelParser extends AbstractXMLObjectParser {
 
     public static final String BIRTH_DEATH_COLLAPSE_MODEL = "birthDeathCollapseModel";
 
-    public static final String COLLAPSE_WEIGHT = "collapseWeight";
     public static final String COLLAPSE_HEIGHT = "collapseHeight";
 
     public static final String TREE = "speciesTree";
@@ -32,6 +28,7 @@ public class BirthDeathCollapseModelParser extends AbstractXMLObjectParser {
     public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
     public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";
     public static final String ORIGIN_HEIGHT = "originHeight";
+    public static final String COLLAPSE_WEIGHT = "collapseWeight";
 
 
 
@@ -43,13 +40,7 @@ public class BirthDeathCollapseModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
-        if (!xo.hasAttribute(COLLAPSE_WEIGHT)) {
-            throw new XMLParseException("Attribute " + COLLAPSE_WEIGHT + " required.");
-        }
-        if (!xo.hasAttribute(COLLAPSE_HEIGHT)) {
-            throw new XMLParseException("Attribute " + COLLAPSE_HEIGHT + " required.");
-        }
-        final double collW = xo.getDoubleAttribute(COLLAPSE_WEIGHT);
+
         final double collH = xo.getDoubleAttribute(COLLAPSE_HEIGHT);
 
         XMLObject cxo = xo.getChild(TREE);
@@ -58,11 +49,12 @@ public class BirthDeathCollapseModelParser extends AbstractXMLObjectParser {
         final Parameter birthMinusDeath = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
         final Parameter relativeDeathRate = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
         final Parameter originHeight = (Parameter) xo.getElementFirstChild(ORIGIN_HEIGHT);
-
+        final Parameter collapseWeight = (Parameter) xo.getElementFirstChild(COLLAPSE_WEIGHT);
 
         final String modelName = xo.getId();
 
-        return new BirthDeathCollapseModel(modelName, tree, birthMinusDeath, relativeDeathRate, originHeight, collW, collH, units);
+        return new BirthDeathCollapseModel(modelName, tree, units,
+                birthMinusDeath, relativeDeathRate, originHeight, collapseWeight, collH);
     }
 
     //************************************************************************
@@ -87,8 +79,8 @@ public class BirthDeathCollapseModelParser extends AbstractXMLObjectParser {
             new ElementRule(BIRTHDIFF_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RELATIVE_DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(ORIGIN_HEIGHT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(COLLAPSE_WEIGHT, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0],
-            newDoubleRule(COLLAPSE_WEIGHT),
             newDoubleRule(COLLAPSE_HEIGHT),
     };
 }

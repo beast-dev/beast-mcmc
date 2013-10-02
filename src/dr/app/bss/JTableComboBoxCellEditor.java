@@ -15,12 +15,8 @@ public class JTableComboBoxCellEditor extends DefaultCellEditor {
 	public JTableComboBoxCellEditor(PartitionDataList dataList) {
 		super(new JComboBox());
 		this.dataList = dataList;
-	}
+	}// END: Constructor
 	
-//	public JTableComboBoxCellEditor() {
-//		super(new JComboBox());
-//	}
-
 	public Component getTableCellEditorComponent(JTable table,
 			Object value, boolean isSelected, int row, int column) {
 
@@ -50,4 +46,8 @@ public class JTableComboBoxCellEditor extends DefaultCellEditor {
 		return editorComponent;
 	}// END: getTableCellEditorComponent
 
+	public void setDataList(PartitionDataList dataList) {
+		this.dataList = dataList;
+	}// END: setDataList
+	
 }// END: JTableComboBoxCellEditor class

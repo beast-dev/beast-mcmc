@@ -31,6 +31,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private JTable partitionTable = null;
 	private PartitionTableModel partitionTableModel = null;
+	private JTableComboBoxCellEditor jTableComboBoxCellEditor = null;
 	
 	private TableColumnHider hider;
 	private JScrollPane scrollPane;
@@ -89,11 +90,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		add(scrollPane, BorderLayout.CENTER);
 
+		//TODO: Input
 		columnIndex = PartitionTableModel.DATA_INDEX;
 		column = partitionTable.getColumnModel().getColumn(
 				columnIndex);
 		column.setCellRenderer(new JTableComboBoxCellRenderer(columnIndex));
-		column.setCellEditor(new JTableComboBoxCellEditor(this.dataList));
+	    jTableComboBoxCellEditor = new JTableComboBoxCellEditor(this.dataList); 
+		column.setCellEditor(jTableComboBoxCellEditor);
 		column.setMinWidth(100);
 		
 		column = partitionTable.getColumnModel().getColumn(
@@ -117,14 +120,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 						0, 2)));
 		column.setPreferredWidth(80);
 
-		
-		//TODO: data type
 		columnIndex = PartitionTableModel.DATA_TYPE_INDEX;
 		column = partitionTable.getColumnModel().getColumn(
 				columnIndex);
 		column.setCellEditor(new JTableComboBoxCellEditor(this.dataList));
 		column.setCellRenderer(new JTableComboBoxCellRenderer(columnIndex));
-		
 		
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.DEMOGRAPHIC_MODEL_INDEX);
@@ -202,107 +202,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			}// END: event check
 
-			// frame.collectAllSettings();
+//			 frame.collectAllSettings();
 
 		}// END: tableChanged
 	}// END: InteractiveTableModelListener
-
-//	public class JTableComboBoxCellRenderer extends JComboBox implements
-//			TableCellRenderer {
-//
-//		private DefaultListCellRenderer comboBoxRenderer = new DefaultListCellRenderer() {
-//
-//			@Override
-//			public Component getListCellRendererComponent(JList list,
-//					Object value, int index, boolean isSelected,
-//					boolean cellHasFocus) {
-//
-//				 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-//				
-//				if (value != null) {
-//					
-//					TreesTableRecord record = (TreesTableRecord) value;
-//					this.setText(record.getName());
-//
-//				}
-//
-//				return this;
-//			}
-//
-//		};
-//
-//		public JTableComboBoxCellRenderer() {
-//
-//			super();
-//			setOpaque(true);
-//			this.setRenderer(comboBoxRenderer);
-//
-//		}// END: Constructor
-//
-//		public Component getTableCellRendererComponent(JTable table,
-//				Object value, boolean isSelected, boolean hasFocus, int row,
-//				int column) {
-//
-//			if (isSelected) {
-//
-//				this.setForeground(table.getSelectionForeground());
-//				this.setBackground(table.getSelectionBackground());
-//
-//			} else {
-//
-//				this.setForeground(table.getForeground());
-//				this.setBackground(table.getBackground());
-//
-//			}
-//
-//			// Select the current value
-//			setSelectedItem(value);
-//
-//			if (value != null) {
-//				removeAllItems();
-//				addItem(value);
-//			}
-//
-//			return this;
-//		}
-//	}// END: JTableComboBoxCellRenderer class
-//	
-//	private class JTableComboBoxCellEditor extends DefaultCellEditor {
-//
-//		public JTableComboBoxCellEditor(PartitionDataList dataList) {
-//			super(new JComboBox());
-//		}
-//
-//		public Component getTableCellEditorComponent(JTable table,
-//				Object value, boolean isSelected, int row, int column) {
-//
-//			((JComboBox) editorComponent).removeAllItems();
-//
-//			if (column == PartitionTableModel.DATA_INDEX) {
-//
-//				for (TreesTableRecord record : dataList.recordsList) {
-//					((JComboBox) editorComponent).addItem(record);
-//				}// END: fill loop
-//				
-////			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
-////
-////				for (String dataType : PartitionData.dataTypes) {
-////					((JComboBox) editorComponent).addItem(dataType);
-////				}// END: fill loop
-//
-//			} else {
-//
-//				// do nothing
-//
-//			}// END: column check
-//
-//			((JComboBox) editorComponent).setSelectedItem(value);
-//			delegate.setValue(value);
-//
-//			return editorComponent;
-//		}// END: getTableCellEditorComponent
-//
-//	}// END: JTableComboBoxCellEditor class
 
 	public void hideTreeColumn() {
 		hider.hide(PartitionTableModel.COLUMN_NAMES[PartitionTableModel.DATA_INDEX]);
@@ -320,6 +223,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		partitionTableModel.setDataList(dataList);
 		setDataList(dataList);
 		setPartitions();
+		jTableComboBoxCellEditor.setDataList(dataList);
 		partitionTableModel.fireTableDataChanged();
 	}// END: updatePartitionTable
 

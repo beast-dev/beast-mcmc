@@ -454,10 +454,11 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
                 System.out.println();
             }
 
-            partitionsPanel.updatePartitionTable(dataList);
-            taxaPanel.updateTaxaTable(dataList);
-            treesPanel.updateTreesTable(dataList);
-
+			partitionsPanel.updatePartitionTable(dataList);
+			taxaPanel.updateTaxaTable(dataList);
+			treesPanel.updateTreesTable(dataList);
+			simulationPanel.updateSimulationPanel(dataList);
+            
         } catch (IOException ioe) {
 
             Utils.handleException(

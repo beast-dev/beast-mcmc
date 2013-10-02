@@ -102,4 +102,8 @@ public class JTableButtonCellRenderer extends JButton implements
 		this.toolTipText = toolTipText;
 	}// END: setColumnToolTipText
 	
+//	public void setDataList(PartitionDataList dataList) {
+//		this.dataList = dataList;
+//	}//END: setDataList
+	
 }// END: class

@@ -223,8 +223,6 @@ public class PartitionData implements Serializable {
 
 	public TreesTableRecord record = null;
 	
-//	public Taxa taxa = null;
-	
 	public String taxaIdref = TaxaParser.TAXA;
 	
 	public void resetTaxaIdref() {

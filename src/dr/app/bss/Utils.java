@@ -44,8 +44,6 @@ public class Utils {
 	// ---CONSTANTS---//
 	// /////////////////
 
-//	public static final boolean VERBOSE = true;
-
 	// public static final int TREE_MODEL_ELEMENT = 0;
 	public static final int BRANCH_MODEL_ELEMENT = 1;
 	public static final int SITE_RATE_MODEL_ELEMENT = 2;
@@ -53,7 +51,6 @@ public class Utils {
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
 	public static final int DEMOGRAPHIC_MODEL_ELEMENT = 5;
 	
-//	public static final String TAXA = "taxa";
 	public static final String TOPOLOGY = "topology";
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
 	public static final String TREE_FILENAME = "treeFilename";
@@ -811,32 +808,46 @@ public class Utils {
 	}// END: printDataType
 	
 	public static void printTaxaSet(Taxa taxa) {
-
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {
-			
 			Taxon taxon = taxa.getTaxon(i);
-			System.out.print("\t\t" + taxonToString(taxon, false) + ("\n"));
-			
+			System.out.print("\t\t " + taxonToString(taxon, false) + ("\n"));
 		}
-		
 	}// END: printTaxaSet
+
+	public static void printTree(TreesTableRecord record) {
+		System.out.print(record.getTree().toString());
+		System.out.print("\n");
+	}// END: printTree
 	
-	public static void printPartitionData(PartitionData data) {
+	public static void printRecord(TreesTableRecord record) {
+		
+		if (record == null) {
 
-		if (data.record.isTreeSet()) {
+			System.out.println("\tRecord: NOT SET");
 
-			System.out.println("\tTree: "
-					+ data.record.getTree().toString());
+		} else if (record.isTreeSet()) {
 
-		} else if (data.record.isTaxaSet()) {
+			System.out.print("\t"+record.getName() + ": ");
+			printTree(record);
 
-			System.out.println("\tTaxa set: ");
-			printTaxaSet(data.record.getTaxa());
+		} else if (record.isTaxaSet()) {
+
+			System.out.println("\t"+record.getName() + ":");
+			printTaxaSet(record.getTaxa());
 
 		} else {
 			//
 		}
+	}// END: printRecord
 
+	public static void printRecords(PartitionDataList dataList) {
+		for (TreesTableRecord record : dataList.recordsList) {
+			printRecord(record);
+		}// END: record loop
+	}// END: printRecords
+	
+	public static void printPartitionData(PartitionData data) {
+        printRecord(data.record);
 		printDataType(data);
 		printDemographicModel(data);
 		System.out.println("\tFrom: " + data.from);
@@ -846,14 +857,18 @@ public class Utils {
 		printSiteRateModel(data);
 		printClockRateModel(data);
 		printFrequencyModel(data);
-
 	}// END: printPartitionData
 
 	public static void printPartitionDataList(PartitionDataList dataList) {
 
-//		printTaxonList(dataList);
-		 
+		if (BeagleSequenceSimulatorApp.DEBUG) {
+			System.out.println("Possible records: ");
+			printRecords(dataList);
+		}
+		
 		System.out.println("\tSite count: " + getSiteCount(dataList));
+		System.out.println("\tOutput type: " + dataList.outputFormat);
+		
 		if (dataList.setSeed) {
 			System.out.println("\tStarting seed: " + dataList.startingSeed);
 		}

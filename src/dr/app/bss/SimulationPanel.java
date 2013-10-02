@@ -31,6 +31,7 @@ import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -47,7 +48,7 @@ public class SimulationPanel extends JPanel implements Exportable {
     private MainFrame frame;
     private PartitionDataList dataList;
     private OptionsPanel optionPanel;
-
+    
     private WholeNumberField simulationsNumberField;
     private WholeNumberField startingSeedNumberField;
 
@@ -61,7 +62,8 @@ public class SimulationPanel extends JPanel implements Exportable {
 
     //Combo boxes
     private JComboBox outputFormat;
-
+    private ComboBoxModel outputFormatModel;
+    
     public SimulationPanel(final MainFrame frame,
                            final PartitionDataList dataList) {
 
@@ -88,12 +90,11 @@ public class SimulationPanel extends JPanel implements Exportable {
         optionPanel.addComponentWithLabel("Starting seed:",
                 startingSeedNumberField);
 
-        outputFormat = new JComboBox(
-                SimpleAlignment.OutputType.values()
-        );
-        optionPanel.addComponentWithLabel("Output format:",
-                outputFormat);
-
+    	outputFormat = new JComboBox();
+        optionPanel.addComponentWithLabel("Output format:", outputFormat);
+        outputFormatModel = new DefaultComboBoxModel(SimpleAlignment.OutputType.values());
+    	outputFormat.setModel(outputFormatModel);
+        
         useParallel = new JCheckBox();
         useParallel.addItemListener(new UseParallelCheckBoxListener());
         useParallel.setSelected(dataList.useParallel);
@@ -190,6 +191,15 @@ public class SimulationPanel extends JPanel implements Exportable {
         return this;
     }// END: getExportableComponent
 
+    public void updateSimulationPanel(PartitionDataList dataList) {
+    	
+    	setDataList(dataList);
+    	
+		// TODO: DOES NOT WORK
+//    	outputFormatModel.setSelectedItem(dataList.outputFormat);
+    	
+    }//END: updateSimulationPanel
+    
     public void setDataList(PartitionDataList dataList) {
         this.dataList = dataList;
     }// END: setDataList

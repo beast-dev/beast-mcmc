@@ -13,11 +13,8 @@ import java.io.*;
 import java.util.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Graham
- * Date: 12/09/13
- * Time: 11:31
- * To change this template use File | Settings | File Templates.
+ * @author Graham Jones
+ *         Date: 01/09/2013
  */
 public class SpeciesDelimitationAnalyser {
 
@@ -44,9 +41,9 @@ public class SpeciesDelimitationAnalyser {
             totalsimilarity = 1.0;
             deleted = false;
 
-            int ninodes = tree.getInternalNodeCount();
-            for (int n = 0; n < ninodes; n++) {
-                NodeRef nr = tree.getInternalNode(n);
+            int nnodes = tree.getNodeCount();
+            for (int n = 0; n < nnodes; n++) {
+                NodeRef nr = tree.getNode(n);
                 boolean collapse;
                 if (tree.isRoot(nr)) {
                     collapse = (tree.getNodeHeight(nr) < collapseheight);

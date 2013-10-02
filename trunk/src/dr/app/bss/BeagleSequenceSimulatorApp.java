@@ -18,6 +18,7 @@ import javax.swing.UnsupportedLookAndFeelException;
  */
 public class BeagleSequenceSimulatorApp {
 
+	public static final boolean DEBUG = true;
 	public static final boolean VERBOSE = true;
 	
 	// Share those if neccessary

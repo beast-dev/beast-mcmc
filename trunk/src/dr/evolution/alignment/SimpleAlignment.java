@@ -523,7 +523,6 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             public String makeOutputString(SimpleAlignment alignment) {
 
                 StringBuffer buffer = new StringBuffer();
-                // PrintStream ps = new PrintStream();
 
                 try {
 

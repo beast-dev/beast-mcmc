@@ -27,13 +27,13 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     private Parameter birthDiffRate; // lambda - mu
     private Parameter relativeDeathRate; // mu/lambda
     private Parameter originHeight;
-    private final double collapseWeight;
+    private Parameter collapseWeight;
     private final double collapseHeight;
 
-    public BirthDeathCollapseModel(String modelName, Tree tree, Parameter birthDiffRate, Parameter relativeDeathRate,
-                                   Parameter originHeight, double collW, double collH, Units.Type units) {
+    public BirthDeathCollapseModel(String modelName, Tree tree, Units.Type units,
+                                   Parameter birthDiffRate, Parameter relativeDeathRate,
+                                   Parameter originHeight, Parameter collapseWeight, double collH) {
         super(modelName, units);
-        this.collapseWeight = collW;
         this.collapseHeight = collH;
 
         this.birthDiffRate = birthDiffRate;
@@ -49,11 +49,18 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
         addVariable(originHeight);
         originHeight.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
+        this.collapseWeight = collapseWeight;
+        addVariable(collapseWeight);
+        collapseWeight.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+
         Logger.getLogger("dr.evomodel.speciation").info("\tConstructing a birth-death-collapse model, please cite:\n"
                 + Citable.Utils.getCitationString(this));
     }
 
 
+    public double getCollapseHeight() {
+        return collapseHeight;
+    }
 
 
     @Override
@@ -64,7 +71,7 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
         double alpha = birthDiffRate.getParameterValue(0);
         double beta = relativeDeathRate.getParameterValue(0);
         double tor = originHeight.getParameterValue(0);
-        double w = collapseWeight;
+        double w = collapseWeight.getParameterValue(0);
 
         double rooth = tree.getNodeHeight(tree.getRoot());
         if (rooth > tor) {

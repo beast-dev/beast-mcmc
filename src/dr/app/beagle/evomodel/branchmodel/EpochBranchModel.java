@@ -65,7 +65,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
 
         this.epochTimes = epochTimes;
         this.tree = tree;
-        
+
         for (SubstitutionModel model : substitutionModels) {
             addModel(model);
         }
@@ -74,11 +74,11 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         addVariable(epochTimes);
     }// END: Constructor
 
-//    @Override
+    //    @Override
     public Mapping getBranchModelMapping(NodeRef node) {
 
         int nModels = substitutionModels.size();
-        int lastTransitionTime = nModels - 2;
+        int epochCount = nModels - 1;
 
         double[] transitionTimes = epochTimes.getParameterValues();
 
@@ -89,67 +89,31 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         List<Double> weightList = new ArrayList<Double>();
         List<Integer> orderList = new ArrayList<Integer>();
 
-        if (parentHeight <= transitionTimes[0]) {
+        // find the epoch that the node height is in...
+        int epoch = 0;
+        while (epoch < epochCount && nodeHeight >= transitionTimes[epoch]) {
+            epoch ++;
+        }
 
-            weightList.add( branchLength );
-            orderList.add(0);
+        double currentHeight = nodeHeight;
 
-        } else {
+        // find the epoch that the parent height is in...
+        while (epoch < epochCount && parentHeight > transitionTimes[epoch]) {
+            weightList.add( transitionTimes[epoch] - currentHeight );
+            orderList.add(epoch);
 
-            // first case: 0-th transition time
-            if (nodeHeight < transitionTimes[0] && transitionTimes[0] <= parentHeight) {
+            currentHeight = transitionTimes[epoch];
 
-                weightList.add( transitionTimes[0] - nodeHeight );
-                orderList.add(0);
+            epoch ++;
+        }
 
-            } else {
-                // do nothing
-            }// END: 0-th model check
+        weightList.add( parentHeight - currentHeight );
+        orderList.add(epoch);
 
-            // second case: i to i+1 transition times
-            for (int i = 1; i <= lastTransitionTime; i++) {
 
-                if (nodeHeight < transitionTimes[i]) {
-
-                    if (parentHeight <= transitionTimes[i] && transitionTimes[i - 1] < nodeHeight) {
-
-                        weightList.add( branchLength );
-                        orderList.add(i);
-
-                    } else {
-
-                        double startTime = Math.max(nodeHeight, transitionTimes[i - 1]);
-                        double endTime = Math.min(parentHeight, transitionTimes[i]);
-
-                        if (endTime >= startTime) {
-
-                            weightList.add( endTime - startTime );
-                            orderList.add(i);
-
-                        }// END: negative weights check
-
-                    }// END: full branch in middle epoch check
-
-                }// END: i-th model check
-
-            }// END: i loop
-
-            // third case: last transition time
-            if (parentHeight >= transitionTimes[lastTransitionTime] && transitionTimes[lastTransitionTime] > nodeHeight) {
-
-                weightList.add( parentHeight - transitionTimes[lastTransitionTime] );
-                orderList.add(nModels - 1);
-
-            } else if (nodeHeight > transitionTimes[lastTransitionTime]) {
-
-                weightList.add( branchLength );
-                orderList.add(nModels - 1);
-
-            } else {
-                // nothing to add
-            }// END: last transition time check
-
-        }// END: if branch below first transition time bail out
+        if (orderList.size() == 0) {
+            throw new RuntimeException("EpochBranchModel failed to give a valid mapping");
+        }
 
         final int[] order = new int[orderList.size()];
         final double[] weights = new double[weightList.size()];
@@ -159,29 +123,29 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         }
 
         return new Mapping() {
-//            @Override
+            //            @Override
             public int[] getOrder() {
                 return order;
             }
 
-//            @Override
+            //            @Override
             public double[] getWeights() {
                 return weights;
             }
         };
     }// END: getBranchModelMapping
 
-//    @Override  // use java 1.5
+    //    @Override  // use java 1.5
     public boolean requiresMatrixConvolution() {
         return true;
     }
 
-//    @Override
+    //    @Override
     public List<SubstitutionModel> getSubstitutionModels() {
         return substitutionModels;
     }
 
-//    @Override
+    //    @Override
     public SubstitutionModel getRootSubstitutionModel() {
         return substitutionModels.get(substitutionModels.size() - 1);
     }

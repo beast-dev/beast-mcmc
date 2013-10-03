@@ -107,7 +107,7 @@ public class TabDelimitedFormatter implements LogFormatter {
     }
 
     public void stopLogging() {
-        // Nothing to do...
+        printWriter.close();
     }
 
 }

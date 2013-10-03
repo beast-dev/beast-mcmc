@@ -38,22 +38,28 @@ import java.io.PrintWriter;
  */
 public class TabDelimitedFormatter implements LogFormatter {
 
-    protected PrintWriter printWriter;
+    protected final PrintWriter printWriter;
+    private final boolean outputLabels;
+    private final boolean closeFile;
+
 
     public TabDelimitedFormatter(PrintWriter printWriter) {
         this.printWriter = printWriter;
+        outputLabels = true;
+        closeFile = false;
     }
 
     public TabDelimitedFormatter(OutputStream stream) {
-        this(new PrintWriter(new OutputStreamWriter(stream)));
+        this.printWriter = new PrintWriter(new OutputStreamWriter(stream));
+        outputLabels = true;
+        closeFile = false;
     }
-
-    boolean outputLabels = true;
 
     public TabDelimitedFormatter(PrintWriter printWriter, boolean labels) {
 
-        this(printWriter);
+        this.printWriter = printWriter;
         outputLabels = labels;
+        closeFile = true;
     }
 
     public void startLogging(String title) {
@@ -107,7 +113,10 @@ public class TabDelimitedFormatter implements LogFormatter {
     }
 
     public void stopLogging() {
-        printWriter.close();
+        printWriter.flush();
+        if (closeFile) {
+            printWriter.close();
+        }
     }
 
 }

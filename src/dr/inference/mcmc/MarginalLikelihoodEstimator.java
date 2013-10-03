@@ -38,6 +38,9 @@ import dr.xml.*;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.BetaDistributionImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Andrew Rambaut
  * @author Alex Alekseyenko
@@ -48,10 +51,10 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
     public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps, double fixedRunValue,
 //                                       boolean linear, boolean lacing,
-PathScheme scheme,
-PathLikelihood pathLikelihood,
-OperatorSchedule schedule,
-MCLogger logger) {
+                                       PathScheme scheme,
+                                       PathLikelihood pathLikelihood,
+                                       OperatorSchedule schedule,
+                                       List<MCLogger> loggers) {
 
         this.id = id;
         this.chainLength = chainLength;
@@ -75,7 +78,7 @@ MCLogger logger) {
 
         mc = new MarkovChain(Prior.UNIFORM_PRIOR, pathLikelihood, schedule, criterion, 0, 0, true);
 
-        this.logger = logger;
+        this.loggers = loggers;
     }
 
     private void setDefaultBurnin() {
@@ -107,7 +110,10 @@ MCLogger logger) {
             mc.runChain(burnin, false/*, 0*/);
             mc.setCurrentLength(cl);
             mc.runChain(chainLength, false);
-            (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+
+            // AR - I have commented this out. Was it being used for debugging or did it have
+            // actual usefulness?
+            // (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
             ((CombinedOperatorSchedule) schedule).reset();
         }
     }
@@ -126,24 +132,24 @@ MCLogger logger) {
 
         abstract double nextPathParameter();
     }
-    
+
     public class FixedThetaRun extends Integrator {
-    	private double value;
-    	
-    	public FixedThetaRun(double value) {
-    		super(1);
-    		this.value = value;
-    	}
-    	
-    	double nextPathParameter() {
-    		if (step == 0) {
-    			step++;
-    			return value;
-    		} else {
-    			return -1.0;
-    		}
-    	}
-    	
+        private double value;
+
+        public FixedThetaRun(double value) {
+            super(1);
+            this.value = value;
+        }
+
+        double nextPathParameter() {
+            if (step == 0) {
+                step++;
+                return value;
+            } else {
+                return -1.0;
+            }
+        }
+
     }
 
     public class LinearIntegrator extends Integrator {
@@ -162,45 +168,45 @@ MCLogger logger) {
     }
 
     public class SigmoidIntegrator extends Integrator {
-    	private double alpha;
+        private double alpha;
 
-    	public SigmoidIntegrator(double alpha, int pathSteps) {
-    		super(pathSteps);
-    		this.alpha = alpha;
-    	}
+        public SigmoidIntegrator(double alpha, int pathSteps) {
+            super(pathSteps);
+            this.alpha = alpha;
+        }
 
-    	double nextPathParameter() {
-    		if (step == 0) {
-    			step++;
-    			return 1.0;
-    		} else if (step == pathSteps) {
-    			step++;
-    			return 0.0;
-    		} else if (step > pathSteps) {
-    			return -1.0;
-    		} else {
-    			double xvalue = ((pathSteps - step)/((double)pathSteps)) - 0.5;
-    			step++;
-    			return Math.exp(alpha*xvalue)/(Math.exp(alpha*xvalue) + Math.exp(-alpha*xvalue));
-    		}
-    	}
+        double nextPathParameter() {
+            if (step == 0) {
+                step++;
+                return 1.0;
+            } else if (step == pathSteps) {
+                step++;
+                return 0.0;
+            } else if (step > pathSteps) {
+                return -1.0;
+            } else {
+                double xvalue = ((pathSteps - step)/((double)pathSteps)) - 0.5;
+                step++;
+                return Math.exp(alpha*xvalue)/(Math.exp(alpha*xvalue) + Math.exp(-alpha*xvalue));
+            }
+        }
     }
 
     public class BetaQuantileIntegrator extends Integrator {
-    	private double alpha;
+        private double alpha;
 
-    	public BetaQuantileIntegrator(double alpha, int pathSteps) {
-    		super(pathSteps);
-    		this.alpha = alpha;
-    	}
+        public BetaQuantileIntegrator(double alpha, int pathSteps) {
+            super(pathSteps);
+            this.alpha = alpha;
+        }
 
-    	double nextPathParameter() {
-    		if (step > pathSteps)
+        double nextPathParameter() {
+            if (step > pathSteps)
                 return -1;
-    		double result = Math.pow((pathSteps - step)/((double)pathSteps), 1.0/alpha);
-    		step++;
-    		return result;
-    	}
+            double result = Math.pow((pathSteps - step)/((double)pathSteps), 1.0/alpha);
+            step++;
+            return result;
+        }
     }
 
     public class BetaIntegrator extends Integrator {
@@ -301,7 +307,9 @@ MCLogger logger) {
 
     public void run() {
 
-        logger.startLogging();
+        for (MCLogger logger : loggers) {
+            logger.startLogging();
+        }
         mc.addMarkovChainListener(chainListener);
 
         /*switch (scheme) {
@@ -322,9 +330,9 @@ MCLogger logger) {
         }*/
 
         switch (scheme) {
-        	case FIXED:
-        		integrate(new FixedThetaRun(fixedRunValue));
-        		break;
+            case FIXED:
+                integrate(new FixedThetaRun(fixedRunValue));
+                break;
             case LINEAR:
                 integrate(new LinearIntegrator(pathSteps));
                 break;
@@ -338,11 +346,11 @@ MCLogger logger) {
                 integrate(new BetaIntegrator(alphaFactor, betaFactor, pathSteps));
                 break;
             case BETA_QUANTILE:
-            	integrate(new BetaQuantileIntegrator(alphaFactor, pathSteps));
-            	break;
+                integrate(new BetaQuantileIntegrator(alphaFactor, pathSteps));
+                break;
             case SIGMOID:
-            	integrate(new SigmoidIntegrator(alphaFactor, pathSteps));
-            	break;
+                integrate(new SigmoidIntegrator(alphaFactor, pathSteps));
+                break;
             default:
                 throw new RuntimeException("Illegal path scheme");
         }
@@ -363,7 +371,9 @@ MCLogger logger) {
             currentState = state;
 
             if (currentState >= burnin) {
-                logger.log(state);
+                for (MCLogger logger : loggers) {
+                    logger.log(state);
+                }
             }
         }
 
@@ -381,7 +391,9 @@ MCLogger logger) {
             currentState = chainLength;
             (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
 //            logger.log(currentState);
-            logger.stopLogging();
+            for (MCLogger logger : loggers) {
+                logger.stopLogging();
+            }
         }
     };
 
@@ -429,7 +441,15 @@ MCLogger logger) {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             PathLikelihood pathLikelihood = (PathLikelihood) xo.getChild(PathLikelihood.class);
-            MCLogger logger = (MCLogger) xo.getChild(MCLogger.class);
+
+            List<MCLogger> loggerList = new ArrayList<MCLogger>();
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof MCLogger) {
+                    loggerList.add((MCLogger)xo.getChild(i));
+                }
+            }
+
+//            MCLogger logger = (MCLogger) xo.getChild(MCLogger.class);
 
             int chainLength = xo.getIntegerAttribute(CHAIN_LENGTH);
             int pathSteps = xo.getIntegerAttribute(PATH_STEPS);
@@ -444,7 +464,7 @@ MCLogger logger) {
             }
             double fixedRunValue = -1.0;
             if (xo.hasAttribute(FIXED_VALUE)) {
-            	fixedRunValue = xo.getDoubleAttribute(FIXED_VALUE);
+                fixedRunValue = xo.getDoubleAttribute(FIXED_VALUE);
             }
 
             // deprecated
@@ -490,7 +510,7 @@ MCLogger logger) {
             }
 
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
-                    burninLength, pathSteps, fixedRunValue, scheme, pathLikelihood, os, logger);
+                    burninLength, pathSteps, fixedRunValue, scheme, pathLikelihood, os, loggerList);
 
             if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
@@ -509,9 +529,9 @@ MCLogger logger) {
             } else if (scheme == PathScheme.BETA) {
                 alphaBetaText += "(" + mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA_QUANTILE) {
-            	alphaBetaText += "(" + mle.getAlphaFactor() + ")";
+                alphaBetaText += "(" + mle.getAlphaFactor() + ")";
             } else if (scheme == PathScheme.SIGMOID) {
-            	alphaBetaText += "(" + mle.getAlphaFactor() + ")";
+                alphaBetaText += "(" + mle.getAlphaFactor() + ")";
             }
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
@@ -519,10 +539,10 @@ MCLogger logger) {
                     "\n  pathScheme=" + scheme.getText() + alphaBetaText +
                     "\n  If you use these results, please cite:" +
                     "\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
-                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " + 
+                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " +
                     "\n          phylogenetic uncertainty. Mol. Biol. Evol. 29(9):2157-2167." +
-                    "\n    and " + 
-                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2013" + 
+                    "\n    and " +
+                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2013" +
                     "\n    Accurate model selection of relaxed molecular clocks in Bayesian phylogenetics. Mol. Biol. Evol. 30(2):239-243.\n");
             return mle;
         }
@@ -559,7 +579,7 @@ MCLogger logger) {
                         new XMLSyntaxRule[]{new ElementRule(MCMC.class, 1, Integer.MAX_VALUE)}, false),
                 //new ElementRule(MCMC.class),
                 new ElementRule(PathLikelihood.class),
-                new ElementRule(MCLogger.class)
+                new ElementRule(MCLogger.class, 1, Integer.MAX_VALUE)
         };
 
     };
@@ -573,7 +593,7 @@ MCLogger logger) {
     }
 
     enum PathScheme {
-    	FIXED("fixed"),
+        FIXED("fixed"),
         LINEAR("linear"),
         GEOMETRIC("geometric"),
         BETA("beta"),
@@ -626,7 +646,7 @@ MCLogger logger) {
     private final double pathDelta;
     private double pathParameter;
 
-    private final MCLogger logger;
+    private final List<MCLogger> loggers;
 
     private final PathLikelihood pathLikelihood;
 

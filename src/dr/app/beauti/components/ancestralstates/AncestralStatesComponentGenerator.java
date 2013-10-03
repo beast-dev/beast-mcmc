@@ -121,7 +121,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         DataType dataType = partition.getDataType();
         int stateCount = dataType.getStateCount();
 
-        if (dataType == GeneralDataType.INSTANCE) {
+        if (dataType.getType() == DataType.GENERAL) {
             PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
             stateCount = substModel.getDiscreteStateSet().size();
         }
@@ -274,7 +274,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             }
 
             if (component.isCountingStates(partition)) {
-                if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+                if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
                     throw new RuntimeException("Can't do counting on Continuous data partition");
                 }
 
@@ -299,7 +299,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     private void writeTrait(XMLWriter writer, AbstractPartitionData partition, String prefix, String tag, String name) {
         String traitName = prefix + tag;
 
-        if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
             traitName = partition.getName();
         }
 
@@ -309,7 +309,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("tag", name)
                 }
         );
-        if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
             writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
         } else {
             writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
@@ -362,7 +362,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     private void writeAncestralTrait(XMLWriter writer, AbstractPartitionData partition, String mrcaId, String prefix, String nameString) {
         String traitName = prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG;
-        if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
             traitName = partition.getName();
         }
 
@@ -374,7 +374,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         );
         writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
 
-        if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
             writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
         } else {
             writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");

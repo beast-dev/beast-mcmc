@@ -1,7 +1,7 @@
 /*
  * TreePriorGenerator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -632,7 +632,9 @@ public class TreePriorGenerator extends Generator {
 
                 break;
 
-            case SPECIES_YULE:
+            case SKYGRID:
+                break;
+           case SPECIES_YULE:
             case SPECIES_YULE_CALIBRATION:
             case SPECIES_BIRTH_DEATH:
                 break;
@@ -680,6 +682,9 @@ public class TreePriorGenerator extends Generator {
             case GMRF_SKYRIDE:
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, priorPrefix + "skyride");
                 break;
+            case SKYGRID:
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, priorPrefix + "skygrid");
+                break;
             case YULE:
             case YULE_CALIBRATION:
                 writer.writeIDref(YuleModelParser.YULE_MODEL, priorPrefix + YuleModelParser.YULE);
@@ -701,9 +706,58 @@ public class TreePriorGenerator extends Generator {
         }
     }
 
-    void writeEBSPVariableDemographic(PartitionTreePrior prior, XMLWriter writer) {
+    void writeMultiLociTreePriors(PartitionTreePrior prior, XMLWriter writer) {
 
-        if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
+        if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+
+            setModelPrefix(prior.getPrefix());
+            writer.writeComment("Generate a gmrfSkyGridLikelihood for the Bayesian SkyGrid process");
+            writer.writeOpenTag(
+                    GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "skygrid"),
+                            new Attribute.Default<String>(GMRFSkyrideLikelihoodParser.OLD_SKYRIDE, "false"),
+                    }
+            );
+
+            int skyGridIntervalCount = prior.getSkyGridCount();
+            double skyGridInterval = prior.getSkyGridInterval();
+
+            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
+            writer.writeComment("skygrid.logPopSize is in log units unlike other popSize");
+            writeParameter(prior.getParameter("skygrid.logPopSize"), skyGridIntervalCount, writer);
+            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
+
+            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
+            writeParameter(prior.getParameter("skygrid.precision"), 1, writer);
+            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
+
+            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS);
+            Parameter numGridPoint = prior.getParameter("skygrid.numGridPoints");
+            numGridPoint.initial = skyGridIntervalCount - 1;
+            writeParameter(numGridPoint,1, writer);
+            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS);
+
+            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.CUT_OFF);
+            Parameter cutOff = prior.getParameter("skygrid.cutOff");
+            cutOff.initial = skyGridInterval;
+            writeParameter(cutOff,1, writer);
+            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.CUT_OFF);
+
+            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+            // TODO Add all linked trees
+            if (options.isShareSameTreePrior()) {
+                for (PartitionTreeModel thisModel : options.getPartitionTreeModels()) {
+                    writer.writeIDref(TreeModel.TREE_MODEL, thisModel.getPrefix() + TreeModel.TREE_MODEL);
+                }
+            } else {
+                writer.writeIDref(TreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + TreeModel.TREE_MODEL);
+            }
+            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
+
+            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD);
+
+        } else if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
 
             setModelPrefix(prior.getPrefix());
 
@@ -841,6 +895,12 @@ public class TreePriorGenerator extends Generator {
                 writeParameterRef(modelPrefix + "demographic.popSize", writer);
                 writeParameterRef(modelPrefix + "demographic.indicators", writer);
                 break;
+            case SKYGRID:
+                writeParameterRef(modelPrefix + "skygrid.precision", writer);
+                writeParameterRef(modelPrefix + "skygrid.logPopSize", writer);
+                // TODO Need to log interval time or time-at-last-change
+//                writeParameterRef(modelPrefix + "skygrid.groupSize", writer);
+                break;
             case GMRF_SKYRIDE:
                 writeParameterRef(modelPrefix + "skyride.precision", writer);
                 writeParameterRef(modelPrefix + "skyride.logPopSize", writer);
@@ -971,6 +1031,9 @@ public class TreePriorGenerator extends Generator {
             case GMRF_SKYRIDE:
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
+            case SKYGRID:
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+                break;
             case LOGISTIC:
 //                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
@@ -1008,6 +1071,9 @@ public class TreePriorGenerator extends Generator {
                 break;
             case GMRF_SKYRIDE:
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
+                break;
+            case SKYGRID:
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
                 break;
 //            case LOGISTIC:
 //                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");

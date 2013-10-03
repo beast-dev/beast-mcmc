@@ -1,3 +1,28 @@
+/*
+ * OperatorsGenerator.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
@@ -52,7 +77,16 @@ public class OperatorsGenerator extends Generator {
 //			case SimpleOperatorSchedule.LOG_SCHEDULE:
 //        if (options.nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
         // TODO: multi-prior, currently simplify to share same prior case
-        if (options.isShareSameTreePrior() && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
+
+        boolean shouldLogCool = false;
+        for (PartitionTreePrior partition : options.getPartitionTreePriors()) {
+            if (partition.getNodeHeightPrior() == TreePriorType.SKYGRID ||
+                    partition.getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
+                shouldLogCool = true;
+                break;
+            }
+        }
+        if (shouldLogCool) {
             operatorAttributes = new Attribute[2];
             operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
         } else {
@@ -170,9 +204,12 @@ public class OperatorsGenerator extends Generator {
             case GMRF_GIBBS_OPERATOR:
                 writeGMRFGibbsOperator(operator, writer);
                 break;
+            case SKY_GRID_GIBBS_OPERATOR:
+                writeSkyGridGibbsOperator(operator, writer);
+                break;
             case NODE_REHIGHT:
-            	writeSpeciesTreeOperator(operator, writer);
-            	break;
+                writeSpeciesTreeOperator(operator, writer);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown operator type");
         }
@@ -483,6 +520,18 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.INDICATOR_PARAMETER);
 
         writer.writeCloseTag(SampleNonActiveGibbsOperatorParser.SAMPLE_NONACTIVE_GIBBS_OPERATOR);
+    }
+
+    private void writeSkyGridGibbsOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(
+                GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR,
+                new Attribute[]{
+                        new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.tuning),
+                        getWeightAttribute(operator.weight)
+                }
+        );
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,  modelPrefix + "skygrid");
+        writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR);
     }
 
     private void writeGMRFGibbsOperator(Operator operator, XMLWriter writer) {

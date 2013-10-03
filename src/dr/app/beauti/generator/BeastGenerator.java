@@ -1,7 +1,7 @@
 /*
  * BeastGenerator.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -34,9 +34,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
-import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -527,7 +525,7 @@ public class BeastGenerator extends Generator {
             }
 
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                treePriorGenerator.writeEBSPVariableDemographic(prior, writer);
+                treePriorGenerator.writeMultiLociTreePriors(prior, writer);
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);

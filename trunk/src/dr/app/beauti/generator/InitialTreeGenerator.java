@@ -277,7 +277,7 @@ public class InitialTreeGenerator extends Generator {
         writer.writeOpenTag(
                 NewickParser.NEWICK,
                 new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, STARTING_TREE),
+                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
                         new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
                 }
@@ -313,7 +313,7 @@ public class InitialTreeGenerator extends Generator {
         writer.writeOpenTag(
                 SimpleTreeParser.SIMPLE_TREE,
                 new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, STARTING_TREE),
+                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
                         new Attribute.Default<Object>(DateParser.UNITS, options.units.toString()),
                         new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())

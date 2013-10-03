@@ -51,7 +51,25 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         MCMC mcmc = new MCMC(xo.getAttribute(NAME, "mcmc1"));
-        MCMCOptions options = new MCMCOptions();
+
+        long chainLength = xo.getLongIntegerAttribute(CHAIN_LENGTH);
+        boolean useCoercion = xo.getAttribute(COERCION, true);
+        long coercionDelay = chainLength / 100;
+        if (xo.hasAttribute(PRE_BURNIN)) {
+            coercionDelay = xo.getIntegerAttribute(PRE_BURNIN);
+        }
+        coercionDelay = xo.getAttribute(COERCION_DELAY, coercionDelay);
+        double temperature = xo.getAttribute(TEMPERATURE, 1.0);
+        long fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, 2000);
+        int minOperatorCountForFullEvaluation = xo.getAttribute(MIN_OPS_EVALUATIONS, 1);
+
+        MCMCOptions options = new MCMCOptions(chainLength,
+                fullEvaluationCount,
+                minOperatorCountForFullEvaluation,
+                useCoercion,
+                coercionDelay,
+                temperature);
+
         OperatorSchedule opsched = (OperatorSchedule) xo.getChild(OperatorSchedule.class);
         Likelihood likelihood = (Likelihood) xo.getChild(Likelihood.class);
 
@@ -77,15 +95,6 @@ public class MCMCParser extends AbstractXMLObjectParser {
 //            }
 //        }
 
-        options.setChainLength(xo.getLongIntegerAttribute(CHAIN_LENGTH));
-        options.setUseCoercion(xo.getAttribute(COERCION, true));
-        if (xo.hasAttribute(PRE_BURNIN)) {
-            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, (int) (options.getChainLength() / 100)));
-        }
-        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, (int) (options.getChainLength() / 100)));
-        options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
-        options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
-        options.setMinOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
 
         ArrayList<Logger> loggers = new ArrayList<Logger>();
         ArrayList<MarkovChainDelegate> delegates = new ArrayList<MarkovChainDelegate>();

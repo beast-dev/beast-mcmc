@@ -34,14 +34,37 @@ package dr.inference.mcmc;
  */
 public class MCMCOptions {
 
-    private long chainLength;
-    private int fullEvaluationCount = 2000;
-    private int minOperatorCountForFullEvaluation = 1;
-    private boolean coercion = true;
-    private int coercionDelay = 0;
-    private double temperature = 1.0;
+    private final long chainLength;
+    private final long fullEvaluationCount;
+    private final int minOperatorCountForFullEvaluation;
+    private final boolean coercion;
+    private final long coercionDelay;
+    private final double temperature;
 
-    public MCMCOptions() {
+    /**
+     * constructor
+     * @param chainLength
+     */
+    public MCMCOptions(long chainLength) {
+        this(chainLength, 2000, 1, true, 0, 1.0);
+    }
+
+    /**
+     * constructor
+     * @param chainLength
+     * @param fullEvaluationCount
+     * @param minOperatorCountForFullEvaluation
+     * @param coercion
+     * @param coercionDelay
+     * @param temperature
+     */
+    public MCMCOptions(long chainLength, long fullEvaluationCount, int minOperatorCountForFullEvaluation, boolean coercion, long coercionDelay, double temperature) {
+        this.chainLength = chainLength;
+        this.fullEvaluationCount = fullEvaluationCount;
+        this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
+        this.coercion = coercion;
+        this.coercionDelay = coercionDelay;
+        this.temperature = temperature;
     }
 
     /**
@@ -51,7 +74,7 @@ public class MCMCOptions {
         return chainLength;
     }
 
-    public final int fullEvaluationCount() {
+    public final long fullEvaluationCount() {
         return fullEvaluationCount;
     }
 
@@ -60,7 +83,7 @@ public class MCMCOptions {
     }
 
 
-    public final int getCoercionDelay() {
+    public final long getCoercionDelay() {
         return coercionDelay;
     }
 
@@ -68,32 +91,7 @@ public class MCMCOptions {
         return temperature;
     }
 
-    public final void setTemperature(double temperature) {
-        this.temperature = temperature;
-    }
-
-    public final void setChainLength(long length) {
-        chainLength = length;
-    }
-
-    public final void setFullEvaluationCount(int fullEvaluationCount) {
-        this.fullEvaluationCount = fullEvaluationCount;
-    }
-
-    public final void setUseCoercion(boolean coercion) {
-        this.coercion = coercion;
-        if (!coercion) coercionDelay = 0;
-    }
-
-    public final void setCoercionDelay(int coercionDelay) {
-        this.coercionDelay = coercionDelay;
-    }
-
     public int minOperatorCountForFullEvaluation() {
         return minOperatorCountForFullEvaluation;
-    }
-
-    public final void setMinOperatorCountForFullEvaluation(int count) {
-        this.minOperatorCountForFullEvaluation = count;
     }
 }

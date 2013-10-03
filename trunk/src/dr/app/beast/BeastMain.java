@@ -31,6 +31,9 @@ import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
+import dr.inference.mcmc.MCMC;
+import dr.inference.mcmcmc.MCMCMC;
+import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.math.MathUtils;
 import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
@@ -49,6 +52,9 @@ import java.util.logging.*;
 public class BeastMain {
 
     private final static Version version = new BeastVersion();
+
+    public static final double DEFAULT_DELTA = 1.0;
+    public static final int DEFAULT_SWAP_CHAIN_EVERY = 100;
 
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
@@ -72,7 +78,8 @@ public class BeastMain {
     }
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
-                     boolean parserWarning, boolean strictXML, List<String> additionalParsers) {
+                     boolean parserWarning, boolean strictXML, List<String> additionalParsers,
+                     boolean useMC3, double[] chainTemperatures, int swapChainsEvery) {
 
         if (inputFile == null) {
             System.err.println();
@@ -97,13 +104,13 @@ public class BeastMain {
             // so the messages will go to StdOut..
             Logger logger = Logger.getLogger("dr");
 
-            Handler handler = new MessageLogHandler();
-            handler.setFilter(new Filter() {
+            Handler messageHandler = new MessageLogHandler();
+            messageHandler.setFilter(new Filter() {
                 public boolean isLoggable(LogRecord record) {
                     return record.getLevel().intValue() < Level.WARNING.intValue();
                 }
             });
-            logger.addHandler(handler);
+            logger.addHandler(messageHandler);
 
 //            // Add a handler to handle warnings and errors. This is a ConsoleHandler
 //            // so the messages will go to StdErr..
@@ -128,9 +135,9 @@ public class BeastMain {
             // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
             // RuntimeException to shut down the run.
             //Logger errorLogger = Logger.getLogger("error");
-            handler = new ErrorLogHandler(maxErrorCount);
-            handler.setLevel(Level.WARNING);
-            logger.addHandler(handler);
+            messageHandler = new ErrorLogHandler(maxErrorCount);
+            messageHandler.setLevel(Level.WARNING);
+            logger.addHandler(messageHandler);
 
             for (String pluginName : PluginLoader.getAvailablePlugins()) {
                 Plugin plugin = PluginLoader.loadPlugin(pluginName);
@@ -142,7 +149,55 @@ public class BeastMain {
                 }
             }
 
-            parser.parse(fileReader, true);
+            if (!useMC3) {
+                // just parse the file running all threads...
+
+                parser.parse(fileReader, true);
+
+            } else {
+                int chainCount = chainTemperatures.length;
+                MCMC[] chains = new MCMC[chainCount];
+                MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
+
+                Logger.getLogger("dr.apps.beast").info("Starting cold chain plus hot chains with temperatures: ");
+                for (int i = 1; i < chainTemperatures.length; i++) {
+                    Logger.getLogger("dr.apps.beast").info("Hot Chain " + i + ": " + chainTemperatures[i]);
+                }
+
+                Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
+
+                // parse the file for the initial cold chain returning the MCMC object
+                chains[0] = (MCMC) parser.parse(fileReader, MCMC.class);
+                if (chains[0] == null) {
+                    throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
+                }
+                fileReader.close();
+
+                chainTemperatures[0] = 1.0;
+
+                for (int i = 1; i < chainCount; i++) {
+                    // parse the file once for each hot chain
+                    fileReader = new FileReader(inputFile);
+
+                    // turn off all messages for subsequent reads of the file (they will be the same as the
+                    // first time).
+                    messageHandler.setLevel(Level.OFF);
+                    parser = new BeastParser(new String[]{fileName}, null, verbose, parserWarning, strictXML);
+
+                    chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
+                    if (chains[i] == null) {
+                        throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
+                    }
+                    fileReader.close();
+                }
+
+                // restart messages
+                messageHandler.setLevel(Level.ALL);
+
+                MCMCMC mc3 = new MCMCMC(chains, options);
+                Thread thread = new Thread(mc3);
+                thread.start();
+            }
 
         } catch (java.io.IOException ioe) {
             infoLogger.severe("File error: " + ioe.getMessage());
@@ -269,6 +324,7 @@ public class BeastMain {
 //                                "in number of states."),
                         new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
+
                         new Arguments.Option("beagle", "Use beagle library if available"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
@@ -284,6 +340,12 @@ public class BeastMain {
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.IntegerOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
+
+                        new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
+                        new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
+                        new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
+                        new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
@@ -337,6 +399,47 @@ public class BeastMain {
             fileNamePrefix = arguments.getStringOption("prefix");
         }
 
+        // ============= MC^3 settings =============
+
+        int chainCount = 1;
+        if (arguments.hasOption("mc3_chains")) {
+            chainCount = arguments.getIntegerOption("mc3_chains");
+        } else if (arguments.hasOption("mc3_temperatures")) {
+            chainCount = 1 + arguments.getRealArrayOption("mc3_temperatures").length;
+        }
+
+        double delta = DEFAULT_DELTA;
+        if (arguments.hasOption("mc3_delta")) {
+            if (arguments.hasOption("mc3_temperatures")) {
+                System.err.println("Either the -mc3_delta or the -mc3_temperatures option should be used, not both");
+                System.err.println();
+                printUsage(arguments);
+                System.exit(1);
+            }
+            delta = arguments.getRealOption("mc3_delta");
+        }
+
+        double[] chainTemperatures = new double[chainCount];
+        chainTemperatures[0] = 1.0;
+        if (arguments.hasOption("mc3_temperatures")) {
+            double[] hotChainTemperatures = arguments.getRealArrayOption("mc3_temperatures");
+            assert hotChainTemperatures.length == chainCount - 1;
+
+            System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
+        } else {
+            for (int i = 1; i < chainCount; i++) {
+                chainTemperatures[i] = 1.0 / (1.0 + (delta * i));
+            }
+        }
+
+        int swapChainsEvery = DEFAULT_SWAP_CHAIN_EVERY;
+        if (arguments.hasOption("mc3_swap")) {
+            swapChainsEvery = arguments.getIntegerOption("mc3_swap");
+        }
+
+        boolean useMC3 = chainCount > 1;
+
+        // ============= BEAGLE settings =============
         long beagleFlags = 0;
 
         // if any beagle flag is specified then use beagle...
@@ -394,6 +497,7 @@ public class BeastMain {
             System.setProperty("beagle.rescale", Integer.toString(arguments.getIntegerOption("beagle_rescale")));
         }
 
+        // ============= Other settings =============
         if (arguments.hasOption("threads")) {
             // threadCount defaults to -1 unless the user specifies an option
             threadCount = arguments.getIntegerOption("threads");
@@ -604,7 +708,7 @@ public class BeastMain {
         System.out.println();
 
         try {
-            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers);
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
             if (window) {
                 System.out.println();

@@ -78,12 +78,7 @@ public class LognormalPriorTest extends TraceCorrelationAssert {
 
         // MCMC
         MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(1000000);
-        options.setUseCoercion(true); // autoOptimize = true
-        options.setCoercionDelay(100);
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
+        MCMCOptions options = new MCMCOptions(1000000);
 
         DistributionLikelihood logNormalLikelihood = new DistributionLikelihood(new LogNormalDistribution(1.0, 1.0), 0); // meanInRealSpace="false"
         logNormalLikelihood.addData(popSize);

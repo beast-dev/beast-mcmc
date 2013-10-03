@@ -33,7 +33,6 @@ import dr.xml.*;
 public class CoalescentIntervalStatisticParser extends AbstractXMLObjectParser {
 
     public static final String COALESCENT_INTERVAL_STATISTIC = "coalescentIntervalStatistic";
-    public static final String GMRFLIKELIHOOD = "gmrfSkyrideLikelihood";
 
     public String getParserDescription() {
         return "";

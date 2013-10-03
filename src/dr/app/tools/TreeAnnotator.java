@@ -334,6 +334,7 @@ public class TreeAnnotator {
         if (stepSize < 1) stepSize = 1;
 
         int counter = 0;
+        int bestTreeNumber = 0;
         TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
         try {
             while (importer.hasTree()) {
@@ -345,6 +346,7 @@ public class TreeAnnotator {
                     if (score > bestScore) {
                         bestTree = tree;
                         bestScore = score;
+                        bestTreeNumber = counter + 1;
                     }
                 }
                 if (counter > 0 && counter % stepSize == 0) {
@@ -359,6 +361,7 @@ public class TreeAnnotator {
         }
         progressStream.println();
         progressStream.println();
+        progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
         if (useSumCladeCredibility) {
             progressStream.println("Highest Sum Clade Credibility: " + bestScore);
         } else {

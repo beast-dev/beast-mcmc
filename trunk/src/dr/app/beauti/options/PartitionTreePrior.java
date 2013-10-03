@@ -1,7 +1,7 @@
 /*
  * PartitionTreePrior.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -47,6 +47,8 @@ public class PartitionTreePrior extends PartitionOptions {
     private int skylineGroupCount = 10;
     private TreePriorParameterizationType skylineModel = TreePriorParameterizationType.CONSTANT_SKYLINE;
     private TreePriorParameterizationType skyrideSmoothing = TreePriorParameterizationType.TIME_AWARE_SKYRIDE;
+    private int skyGridCount = 50;
+    private double skyGridInterval = 10.0;
     private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
@@ -117,6 +119,15 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+
+        createParameterUniformPrior("skygrid.logPopSize", "GMRF Bayesian SkyGrid population sizes (log unit)",
+                PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
+        createParameterGammaPrior("skygrid.precision", "GMRF Bayesian SkyGrid precision",
+                PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+        createParameterUniformPrior("skygrid.numGridPoints", "GMRF Bayesian SkyGrid number of grid points)",
+                PriorScaleType.NONE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
+        createParameterUniformPrior("skygrid.cutOff", "GMRF Bayesian SkyGrid cut-off time",
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
 
         createNonNegativeParameterUniformPrior("demographic.popSize", "Extended Bayesian Skyline population sizes",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
@@ -199,8 +210,11 @@ public class PartitionTreePrior extends PartitionOptions {
                 "demographic.indicators", OperatorType.SAMPLE_NONACTIVE, 1, 5 * demoWeights);
         createOperatorUsing2Parameters("demographic.scaleActive", "demographic.scaleActive", "", "demographic.popSize",
                 "demographic.indicators", OperatorType.SCALE_WITH_INDICATORS, 0.5, 2 * demoWeights);
-        createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF", "skyride.logPopSize",
+        createOperatorUsing2Parameters("gmrfGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for GMRF Skyride", "skyride.logPopSize",
                 "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
+        createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
+                "skygrid.precision", OperatorType.SKY_GRID_GIBBS_OPERATOR, 2, 2);
+        createScaleOperator("skygrid.precision","description", 0.75, 0.1);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 
@@ -272,6 +286,9 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
 //            params.add(getParameter("skyride.popSize")); // force user to use GMRF, not allowed to change
             params.add(getParameter("skyride.precision"));
+        } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
+//            params.add(getParameter("skyride.popSize")); // force user to use GMRF, not allowed to change
+            params.add(getParameter("skygrid.precision"));
         } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
@@ -341,6 +358,9 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("skyline.groupSize"));
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
             ops.add(getOperator("gmrfGibbsOperator"));
+        } else if (nodeHeightPrior == TreePriorType.SKYGRID) {
+            ops.add(getOperator("gmrfSkyGridGibbsOperator"));
+            ops.add(getOperator("skygrid.precision"));
         } else if (nodeHeightPrior == TreePriorType.EXTENDED_SKYLINE) {
             ops.add(getOperator("demographic.populationMean"));
             ops.add(getOperator("demographic.popSize"));
@@ -430,6 +450,22 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public void setSkyrideSmoothing(TreePriorParameterizationType skyrideSmoothing) {
         this.skyrideSmoothing = skyrideSmoothing;
+    }
+
+    public int getSkyGridCount() {
+        return skyGridCount;
+    }
+
+    public void setSkyGridCount(int count) {
+        this.skyGridCount = count;
+    }
+
+    public double getSkyGridInterval() {
+        return skyGridInterval;
+    }
+
+    public void setSkyGridInterval(double x) {
+        this.skyGridInterval = x;
     }
 
     public double getBirthDeathSamplingProportion() {

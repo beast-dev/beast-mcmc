@@ -155,7 +155,10 @@ public class NexusApplicationImporter extends NexusImporter {
 
         while (getLastDelimiter() != ';') {
 
-            String token = readToken(";");
+            String token = readToken(";,");
+            while (getLastDelimiter() != ';' && getLastDelimiter() != ',') {
+                token += readToken(";,");
+            }
 
             String[] parts = token.split("-");
             System.out.print(token + " ");
@@ -163,17 +166,17 @@ public class NexusApplicationImporter extends NexusImporter {
             try {
 
                 if (parts.length == 2) {
-                    from = Integer.parseInt(parts[0]);
+                    from = Integer.parseInt(parts[0].trim());
 
                     String[] toParts = parts[1].split("\\\\");
 
-                    to = Integer.parseInt(toParts[0]);
+                    to = Integer.parseInt(toParts[0].trim());
 
                     every = 1;
-                    if (toParts.length > 1) every = Integer.parseInt(toParts[1]);
+                    if (toParts.length > 1) every = Integer.parseInt(toParts[1].trim());
 
                 } else if (parts.length == 1) {
-                    from = Integer.parseInt(parts[0]);
+                    from = Integer.parseInt(parts[0].trim());
                     to = from;
                 } else {
                     throw new ImportException("CharSet, " + name + ", unable to be parsed");

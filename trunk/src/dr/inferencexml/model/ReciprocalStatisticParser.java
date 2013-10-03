@@ -25,7 +25,7 @@ public class ReciprocalStatisticParser extends AbstractXMLObjectParser {
 
         Object child = xo.getChild(0);
         if (child instanceof Statistic) {
-            recipStatistic = new ReciprocalStatistic(xo.getId(), (Statistic) child);
+            recipStatistic = new ReciprocalStatistic((xo.hasId() ? xo.getId() : "RECIPROCAL"), (Statistic) child);
         } else {
             throw new XMLParseException("Unknown element found in " + getParserName() + " element:" + child);
         }

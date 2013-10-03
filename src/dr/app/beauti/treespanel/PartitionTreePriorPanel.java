@@ -1,7 +1,7 @@
 /*
  * PartitionTreePriorPanel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -31,6 +31,7 @@ import dr.app.beauti.types.PopulationSizeModelType;
 import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evomodel.coalescent.VariableDemographicModel;
@@ -67,6 +68,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
             TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());
+
+    private JComboBox skyGridPointsCombo = new JComboBox(new Integer[] {10,20,50,100});
+    private RealNumberField skyGridInterval = new RealNumberField(0.0, Double.MAX_VALUE);
+
+//    private JComboBox skyGridCombo = new JComboBox(EnumSet.range())
 
     private JComboBox populationSizeCombo = new JComboBox(PopulationSizeModelType.values());
 
@@ -126,6 +132,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         });
 
+        PanelUtils.setupComponent(skyGridInterval);
+        skyGridInterval.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent ev) {
+            }
+        });
 
         PanelUtils.setupComponent(bayesianSkylineCombo);
         bayesianSkylineCombo.addItemListener(new ItemListener() {
@@ -148,6 +159,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         gmrfBayesianSkyrideCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
+                parent.fireTreePriorsChanged();
+            }
+        });
+
+        PanelUtils.setupComponent(skyGridPointsCombo);
+        skyGridPointsCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent itemEvent) {
+                partitionTreePrior.setSkyGridCount((Integer) skyGridPointsCombo.getSelectedItem());
                 parent.fireTreePriorsChanged();
             }
         });
@@ -265,6 +284,23 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                             "Minin VN, Bloomquist EW, Suchard MA (2008) Mol Biol Evol 25, 1459-1471 [Skyride Coalescent].";
                     break;
 
+                case SKYGRID:
+                    skyGridInterval.setColumns(6);
+                    addComponentWithLabel("# parameters ( = # grid-points + 1):", skyGridPointsCombo);
+                    addComponentWithLabel("Time at last point:", skyGridInterval);
+//                    addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+                    treesPanel.linkTreePriorCheck.setSelected(true);
+                    treesPanel.linkTreePriorCheck.setEnabled(false);
+                    treesPanel.updateShareSameTreePriorChanged();
+                    //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
+//                    addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
+//                            + "It is only available for single tree<br>model partition for this release. "
+//                            + "Please go to Data Partition panel to link all tree models." + "</html>");
+
+                    citation = //citationCoalescent + "\n" +
+                            "Gill MS, Lemey P, Faria NR, Rambaut A, Shapiro B, Suchard MA (2013) Mol Biol Evol 30, 713-724 [SkyGrid Coalescent].";
+                    break;
+
                 case YULE:
                     citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
                             "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
@@ -343,6 +379,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 
+        skyGridPointsCombo.setSelectedItem(partitionTreePrior.getSkyGridCount());
+        skyGridInterval.setValue(partitionTreePrior.getSkyGridInterval());
+
         populationSizeCombo.setSelectedItem(partitionTreePrior.getPopulationSizeModel());
 
 //        calibrationCorrectionCombo.setSelectedItem(partitionTreePrior.getCalibCorrectionType());
@@ -367,6 +406,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             } else {
                 partitionTreePrior.setSkylineGroupCount(5);
             }
+        } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+            Double interval = skyGridInterval.getValue();
+            // TODO is != null check necessary like above?
+            partitionTreePrior.setSkyGridInterval(interval);
         } else if (partitionTreePrior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH) {
 //            Double samplingProportion = samplingProportionField.getValue();
 //            if (samplingProportion != null) {

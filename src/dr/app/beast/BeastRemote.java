@@ -13,7 +13,7 @@ import java.io.File;
 public class BeastRemote extends BeastMain {
 
     public BeastRemote(File inputFile, BeastConsoleApp consoleApp, boolean verbose, boolean parserWarning) {
-        super(inputFile, consoleApp, 0, verbose, parserWarning, true, null);
+        super(inputFile, consoleApp, 0, verbose, parserWarning, true, null, false, null, 0);
     }
 
     public static void terminateSlaves() {

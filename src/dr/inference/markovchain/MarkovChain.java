@@ -60,14 +60,14 @@ public final class MarkovChain {
 
     private boolean useCoercion = true;
 
-    private final int fullEvaluationCount;
+    private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
 
     private static final double EVALUATION_TEST_THRESHOLD = 1e-6;
 
     public MarkovChain(Prior prior, Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
-                       int fullEvaluationCount, int minOperatorCountForFullEvaluation, boolean useCoercion) {
+                       long fullEvaluationCount, int minOperatorCountForFullEvaluation, boolean useCoercion) {
         currentLength = 0;
         this.prior = prior;
         this.likelihood = likelihood;

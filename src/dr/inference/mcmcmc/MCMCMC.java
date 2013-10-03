@@ -105,7 +105,7 @@ public class MCMCMC implements Runnable {
         timer.start();
 
         if (isPreBurninNeeded()) {
-            int preBurnin = mcmcOptions.getCoercionDelay();
+            long preBurnin = mcmcOptions.getCoercionDelay();
             if (preBurnin > 0) {
                 MarkovChainListener burninListener = new BurninListener(preBurnin);
 
@@ -143,7 +143,6 @@ public class MCMCMC implements Runnable {
             threads[i] = new MCMCMCRunner(chains[i], mcmcmcOptions.getSwapChainsEvery(), getChainLength(), false);
             threads[i].start();
         }
-
 
         while (chains[coldChain].getCurrentLength() < getChainLength()) {
 
@@ -203,7 +202,7 @@ public class MCMCMC implements Runnable {
         timer.stop();
     }
 
-    private void runChains(int length, boolean disableCoerce) {
+    private void runChains(long length, boolean disableCoerce) {
 
         Thread[] threads = new Thread[chains.length];
         for (int i = 0; i < chains.length; i++) {

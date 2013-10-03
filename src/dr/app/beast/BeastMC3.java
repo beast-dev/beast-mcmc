@@ -82,9 +82,7 @@ public class BeastMC3 {
 
         int chainCount = chainTemperatures.length;
         MCMC[] chains = new MCMC[chainCount];
-        MCMCMCOptions options = new MCMCMCOptions();
-        options.setChainTemperatures(chainTemperatures);
-        options.setSwapChainsEvery(swapChainsEvery);
+        MCMCMCOptions options = new MCMCMCOptions(chainTemperatures, swapChainsEvery);
 
         // Add a handler to handle warnings and errors. This is a ConsoleHandler
         // so the messages will go to StdOut..

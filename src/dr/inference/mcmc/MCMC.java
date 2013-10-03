@@ -159,14 +159,12 @@ public class MCMC implements Identifiable, Spawnable {
      * @param operators  an array of MCMC operators
      * @param loggers    an array of loggers to record output of this MCMC run
      */
-    public void init(int chainlength,
+    public void init(long chainlength,
                      Likelihood likelihood,
                      MCMCOperator[] operators,
                      Logger[] loggers) {
 
-        MCMCOptions options = new MCMCOptions();
-        options.setCoercionDelay(0);
-        options.setChainLength(chainlength);
+        MCMCOptions options = new MCMCOptions(chainlength);
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(1);
         OperatorSchedule schedule = new SimpleOperatorSchedule();
@@ -223,7 +221,7 @@ public class MCMC implements Identifiable, Spawnable {
 
             long chainLength = getChainLength();
 
-            final int coercionDelay = getCoercionDelay();
+            final long coercionDelay = getCoercionDelay();
 
             if (coercionDelay > 0) {
                 // Run the chain for coercionDelay steps with coercion disabled
@@ -494,11 +492,11 @@ public class MCMC implements Identifiable, Spawnable {
 
 
     //PRIVATE METHODS *****************************************
-    protected int getCoercionDelay() {
+    protected long getCoercionDelay() {
 
-        int delay = options.getCoercionDelay();
+        long delay = options.getCoercionDelay();
         if (delay < 0) {
-            delay = (int)(options.getChainLength() / 100);
+            delay = (long)(options.getChainLength() / 100);
         }
         if (options.useCoercion()) return delay;
 

@@ -307,6 +307,9 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 boolean enableRC = ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
                 // && !ancestralStatesComponent.isCountingStates(partition);
                 dNdSRobustCountingCheck.setEnabled(enableRC);
+
+                ancestralStatesComponent.setDNdSRobustCounting(partition, enableRC && dNdSRobustCountingCheck.isSelected());
+
                 dNnSText.setEnabled(enableRC);
                 if (!enableRC) {
                     dNdSRobustCountingCheck.setSelected(false);

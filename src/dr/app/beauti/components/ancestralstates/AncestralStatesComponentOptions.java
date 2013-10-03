@@ -37,7 +37,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
     }
 
     public boolean usingAncestralStates(final AbstractPartitionData partition) {
-            return reconstructAtNodes(partition) || reconstructAtMRCA(partition) || dNdSRobustCounting(partition);
+            return reconstructAtNodes(partition) || reconstructAtMRCA(partition) || isCountingStates(partition) || dNdSRobustCounting(partition);
         }
 
     public boolean reconstructAtNodes(final AbstractPartitionData partition) {

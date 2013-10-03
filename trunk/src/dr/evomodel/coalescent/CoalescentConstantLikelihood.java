@@ -60,11 +60,14 @@ public final class CoalescentConstantLikelihood extends Likelihood.Abstract {
 
 		intervals.setIntervalsUnknown();
 		final int nIntervals = intervals.getIntervalCount();
+		//System.err.println(treeModel);
 		//System.err.println("Interval count: " + nIntervals);
 		double logPDF = 0.0;
         for (int i = 0; i < nIntervals; i++) {
         	//System.err.println("Lineage count " + i + ": " + intervals.getLineageCount(i));
-        	if (intervals.getLineageCount(i) > 2) {
+        	//System.err.println("Interval time " + i + ": " + intervals.getIntervalTime(i));
+        	//System.err.println("Coalescent event " + i + ": " + intervals.getCoalescentEvents(i));
+        	if (intervals.getLineageCount(i) > 2 && intervals.getCoalescentEvents(i) > 0) {
         		logPDF += Math.log(Binomial.choose2(intervals.getLineageCount(i)));
         	}
         }

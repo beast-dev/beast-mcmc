@@ -44,9 +44,10 @@ import java.util.logging.Logger;
  * @version $Id: MarkovChain.java,v 1.10 2006/06/21 13:34:42 rambaut Exp $
  */
 public final class MarkovChain {
-
     private final static boolean DEBUG = false;
     private final static boolean PROFILE = true;
+
+    public static final double EVALUATION_TEST_THRESHOLD = 1e-6;
 
     private final OperatorSchedule schedule;
     private final Acceptor acceptor;
@@ -63,11 +64,14 @@ public final class MarkovChain {
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
 
-    private static final double EVALUATION_TEST_THRESHOLD = 1e-6;
+    private double evaluationTestThreshold = EVALUATION_TEST_THRESHOLD;
+
 
     public MarkovChain(Prior prior, Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
-                       long fullEvaluationCount, int minOperatorCountForFullEvaluation, boolean useCoercion) {
+                       long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold,
+                       boolean useCoercion) {
+
         currentLength = 0;
         this.prior = prior;
         this.likelihood = likelihood;
@@ -77,6 +81,7 @@ public final class MarkovChain {
 
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
+        this.evaluationTestThreshold = evaluationTestThreshold;
 
         currentScore = evaluate(likelihood, prior);
     }
@@ -257,7 +262,7 @@ public final class MarkovChain {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 
-                    if (Math.abs(testScore - score) > EVALUATION_TEST_THRESHOLD) {
+                    if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         Logger.getLogger("error").severe(
                                 "State was not correctly calculated after an operator move.\n"
                                         + "Likelihood evaluation: " + score
@@ -327,7 +332,7 @@ public final class MarkovChain {
                 final String d2 = likelihood instanceof CompoundLikelihood ?
                         ((CompoundLikelihood) likelihood).getDiagnosis() : "";
 
-                if (Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD) {
+                if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
 
 
                     final Logger logger = Logger.getLogger("error");

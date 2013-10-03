@@ -129,7 +129,9 @@ public class MCMC implements Identifiable, Spawnable {
         criterion.setTemperature(options.getTemperature());
 
         mc = new MarkovChain(prior, likelihood, schedule, criterion,
-                options.fullEvaluationCount(), options.minOperatorCountForFullEvaluation(), options.useCoercion());
+                options.getFullEvaluationCount(), options.minOperatorCountForFullEvaluation(),
+                options.getEvaluationTestThreshold(),
+                options.useCoercion());
 
         this.options = options;
         this.loggers = loggers;

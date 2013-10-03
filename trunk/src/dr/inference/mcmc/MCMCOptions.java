@@ -25,11 +25,14 @@
 
 package dr.inference.mcmc;
 
+import dr.inference.markovchain.MarkovChain;
+
 /**
  * A class that brings together the auxillary information associated
  * with an MCMC analysis.
  *
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @version $Id: MCMCOptions.java,v 1.7 2005/05/24 20:25:59 rambaut Exp $
  */
 public class MCMCOptions {
@@ -37,6 +40,7 @@ public class MCMCOptions {
     private final long chainLength;
     private final long fullEvaluationCount;
     private final int minOperatorCountForFullEvaluation;
+    private final double evaluationTestThreshold;
     private final boolean coercion;
     private final long coercionDelay;
     private final double temperature;
@@ -46,7 +50,7 @@ public class MCMCOptions {
      * @param chainLength
      */
     public MCMCOptions(long chainLength) {
-        this(chainLength, 2000, 1, true, 0, 1.0);
+        this(chainLength, 2000, 1, MarkovChain.EVALUATION_TEST_THRESHOLD, true, 0, 1.0);
     }
 
     /**
@@ -54,14 +58,16 @@ public class MCMCOptions {
      * @param chainLength
      * @param fullEvaluationCount
      * @param minOperatorCountForFullEvaluation
+     * @param evaluationTestThreshold
      * @param coercion
      * @param coercionDelay
      * @param temperature
      */
-    public MCMCOptions(long chainLength, long fullEvaluationCount, int minOperatorCountForFullEvaluation, boolean coercion, long coercionDelay, double temperature) {
+    public MCMCOptions(long chainLength, long fullEvaluationCount, int minOperatorCountForFullEvaluation, double evaluationTestThreshold, boolean coercion, long coercionDelay, double temperature) {
         this.chainLength = chainLength;
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
+        this.evaluationTestThreshold = evaluationTestThreshold;
         this.coercion = coercion;
         this.coercionDelay = coercionDelay;
         this.temperature = temperature;
@@ -74,8 +80,12 @@ public class MCMCOptions {
         return chainLength;
     }
 
-    public final long fullEvaluationCount() {
+    public final long getFullEvaluationCount() {
         return fullEvaluationCount;
+    }
+
+    public double getEvaluationTestThreshold() {
+        return evaluationTestThreshold;
     }
 
     public final boolean useCoercion() {

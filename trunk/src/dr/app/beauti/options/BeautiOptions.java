@@ -68,7 +68,7 @@ public class BeautiOptions extends ModelOptions {
 
         // Install all the component's options from the given list of factories:
         for (ComponentFactory component : components) {
-            addComponent(component.getOptions(this));
+            addComponent(component.createOptions(this));
         }
     }
 

@@ -15,22 +15,13 @@ public class DiscreteTraitsComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
-    public ComponentGenerator getGenerator(final BeautiOptions beautiOptions) {
-        if (generator == null) {
-            generator = new DiscreteTraitsComponentGenerator(beautiOptions);
-        }
-        return generator;
+    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+        return new DiscreteTraitsComponentGenerator(beautiOptions);
     }
 
-    public ComponentOptions getOptions(final BeautiOptions beautiOptions) {
-        if (options == null) {
-            options = new DiscreteTraitsComponentOptions(beautiOptions);
-        }
-        return options;
+    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+        return new DiscreteTraitsComponentOptions(beautiOptions);
     }
-
-    private DiscreteTraitsComponentGenerator generator = null;
-    private DiscreteTraitsComponentOptions options = null;
 
     public static ComponentFactory INSTANCE = new DiscreteTraitsComponentFactory();
 }

@@ -15,22 +15,13 @@ public class HierarchicalModelComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
-    public ComponentGenerator getGenerator(final BeautiOptions beautiOptions) {
-        if (generator == null) {
-            generator = new HierarchicalModelComponentGenerator(beautiOptions);
-        }
-        return generator;
+    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+        return new HierarchicalModelComponentGenerator(beautiOptions);
     }
 
-    public ComponentOptions getOptions(final BeautiOptions beautiOptions) {
-        if (options == null) {
-            options = new HierarchicalModelComponentOptions(beautiOptions);
-        }
-        return options;
+    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+        return new HierarchicalModelComponentOptions(beautiOptions);
     }
-
-    private HierarchicalModelComponentGenerator generator = null;
-    private HierarchicalModelComponentOptions options = null;
 
     public static ComponentFactory INSTANCE = new HierarchicalModelComponentFactory();
 }

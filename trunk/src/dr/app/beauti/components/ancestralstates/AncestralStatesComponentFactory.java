@@ -15,22 +15,13 @@ public class AncestralStatesComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
-    public ComponentGenerator getGenerator(final BeautiOptions beautiOptions) {
-        if (generator == null) {
-            generator = new AncestralStatesComponentGenerator(beautiOptions);
-        }
-        return generator;
+    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+        return new AncestralStatesComponentGenerator(beautiOptions);
     }
 
-    public ComponentOptions getOptions(final BeautiOptions beautiOptions) {
-        if (options == null) {
-            options = new AncestralStatesComponentOptions();
-        }
-        return options;
+    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+        return new AncestralStatesComponentOptions();
     }
-
-    private AncestralStatesComponentGenerator generator = null;
-    private AncestralStatesComponentOptions options = null;
 
     public static ComponentFactory INSTANCE = new AncestralStatesComponentFactory();
 }

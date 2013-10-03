@@ -42,22 +42,13 @@ public class MarginalLikelihoodEstimationComponentFactory implements ComponentFa
         // singleton pattern - private constructor
     }
 
-    public ComponentGenerator getGenerator(final BeautiOptions beautiOptions) {
-        if (generator == null) {
-            generator = new MarginalLikelihoodEstimationGenerator(beautiOptions);
-        }
-        return generator;
+    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+        return new MarginalLikelihoodEstimationGenerator(beautiOptions);
     }
 
-    public ComponentOptions getOptions(final BeautiOptions beautiOptions) {
-        if (options == null) {
-            options = new MarginalLikelihoodEstimationOptions();
-        }
-        return options;
+    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+        return new MarginalLikelihoodEstimationOptions();
     }
-
-    private MarginalLikelihoodEstimationGenerator generator = null;
-    private MarginalLikelihoodEstimationOptions options = null;
 
     public static ComponentFactory INSTANCE = new MarginalLikelihoodEstimationComponentFactory();
 }

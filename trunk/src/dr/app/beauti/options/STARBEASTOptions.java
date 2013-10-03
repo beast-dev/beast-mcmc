@@ -45,8 +45,8 @@ public class STARBEASTOptions extends ModelOptions {
 
 	public static final String TREE_FILE_NAME = "trees";
 
-    public final String POP_MEAN = "popMean";
-    public final String SPECIES_TREE_FILE_NAME = TraitData.TRAIT_SPECIES
+    public static final String POP_MEAN = "popMean";
+    public static final String SPECIES_TREE_FILE_NAME = TraitData.TRAIT_SPECIES
     							+ "." + STARBEASTOptions.TREE_FILE_NAME; // species.trees
 
     public static final String CITATION = "<html>Joseph Heled and Alexei J. Drummond,<br>" +

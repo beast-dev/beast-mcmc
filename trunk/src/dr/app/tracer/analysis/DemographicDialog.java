@@ -76,7 +76,7 @@ public class DemographicDialog {
             {"ancestralsize", "ancestralproportion", "ancpopsize", "proportion", "ancestral", "n1"},
             {"exponentialgrowthrate", "exponentialrate", "growthrate", "expgrowth", "growth", "rate", "r"},
             {"doublingtime", "doubling", "time", "t"},
-            {"logisticshape", "halflife", "t50", "time50", "logt50", "shape"},
+            {"logisticshape", "shape", "halflife", "t50", "t_50", "time50", "logt50"},
             {"spikefactor", "spike", "factor", "f"},
             {"cataclysmtime", "cataclysm", "time", "t"},
             {"transitiontime", "time1", "time", "t1", "t"},
@@ -531,7 +531,7 @@ public class DemographicDialog {
                 }
 
             } else if (demographicCombo.getSelectedIndex() == 3) { // Logistic Growth (Growth Rate)
-                title = "Logistic Growth";
+                title = "Logistic t50";
                 LogisticGrowth demo = new LogisticGrowth();
                 for (int i = 0; i < values.get(0).size(); i++) {
                     demo.setN0((Double) values.get(0).get(i));

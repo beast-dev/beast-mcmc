@@ -47,7 +47,7 @@ public abstract class Generator {
         this.options = options;
         if (components != null) {
             for (ComponentFactory component : components) {
-                this.components.add(component.getGenerator(options));
+                this.components.add(component.createGenerator(options));
             }
         }
     }

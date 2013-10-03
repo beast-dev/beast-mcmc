@@ -1,3 +1,28 @@
+/*
+ * GMRFSkyrideLikelihoodParser.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodelxml.coalescent;
 
 import dr.evolution.tree.Tree;
@@ -19,6 +44,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
 	public static final String SKYLINE_LIKELIHOOD = "gmrfSkyrideLikelihood";
     public static final String SKYRIDE_LIKELIHOOD = "skyrideLikelihood";
+    public static final String SKYGRID_LIKELIHOOD = "gmrfSkyGridLikelihood";
 
 	public static final String POPULATION_PARAMETER = "populationSizes";
 	public static final String GROUP_SIZES = "groupSizes";
@@ -43,7 +69,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public String[] getParserNames(){
-        return new String[]{getParserName(), SKYRIDE_LIKELIHOOD}; // cannot duplicate 
+        return new String[]{getParserName(), SKYRIDE_LIKELIHOOD, SKYGRID_LIKELIHOOD}; // cannot duplicate
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -150,7 +176,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " +
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
-        if (xo.getAttribute(OLD_SKYRIDE, true)) {
+        if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
 
              return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                 lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight);

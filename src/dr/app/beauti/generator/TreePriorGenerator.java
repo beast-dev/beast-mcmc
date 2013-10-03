@@ -1032,7 +1032,8 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
             case SKYGRID:
-                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+//                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+                // only 1 coalescent, so write it separately after this method
                 break;
             case LOGISTIC:
 //                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
@@ -1073,7 +1074,8 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
             case SKYGRID:
-                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+//                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+                // only 1 coalescent, so write it separately after this method
                 break;
 //            case LOGISTIC:
 //                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
@@ -1091,7 +1093,7 @@ public class TreePriorGenerator extends Generator {
         }
     }
 
-    public void writeEBSPVariableDemographicReference(PartitionTreePrior prior, XMLWriter writer) {
+    public void writeMultiLociLikelihoodReference(PartitionTreePrior prior, XMLWriter writer) {
 
         setModelPrefix(prior.getPrefix());
 
@@ -1115,6 +1117,8 @@ public class TreePriorGenerator extends Generator {
             writeParameterRef(MixedDistributionLikelihoodParser.INDICATORS, modelPrefix + "demographic.indicators", writer);
 
             writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD);
+        } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+            writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, modelPrefix + "skygrid");
         }
 
     }

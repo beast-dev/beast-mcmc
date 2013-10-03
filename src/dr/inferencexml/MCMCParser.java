@@ -35,8 +35,6 @@ import dr.inference.model.Likelihood;
 import dr.inference.operators.OperatorSchedule;
 import dr.xml.*;
 
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class MCMCParser extends AbstractXMLObjectParser {
@@ -61,11 +59,19 @@ public class MCMCParser extends AbstractXMLObjectParser {
         coercionDelay = xo.getAttribute(COERCION_DELAY, coercionDelay);
         double temperature = xo.getAttribute(TEMPERATURE, 1.0);
         long fullEvaluationCount = xo.getAttribute(FULL_EVALUATION, 2000);
+
+        double evaluationTestThreshold = MarkovChain.EVALUATION_TEST_THRESHOLD;
+        if (System.getProperty("mcmc.evaluation.threshold") != null) {
+            evaluationTestThreshold = Double.parseDouble(System.getProperty("mcmc.evaluation.threshold"));
+        }
+        evaluationTestThreshold = xo.getAttribute(EVALUATION_THRESHOLD, evaluationTestThreshold);
+
         int minOperatorCountForFullEvaluation = xo.getAttribute(MIN_OPS_EVALUATIONS, 1);
 
         MCMCOptions options = new MCMCOptions(chainLength,
                 fullEvaluationCount,
                 minOperatorCountForFullEvaluation,
+                evaluationTestThreshold,
                 useCoercion,
                 coercionDelay,
                 temperature);
@@ -123,7 +129,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
                 "\n  chainLength=" + options.getChainLength() +
                 "\n  autoOptimize=" + options.useCoercion() +
                 (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : "") +
-                (options.fullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
+                (options.getFullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
         );
 
         MarkovChainDelegate[] delegateArray = new MarkovChainDelegate[delegates.size()];
@@ -175,6 +181,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(TEMPERATURE, true),
             AttributeRule.newIntegerRule(FULL_EVALUATION, true),
             AttributeRule.newIntegerRule(MIN_OPS_EVALUATIONS, true),
+            AttributeRule.newDoubleRule(EVALUATION_THRESHOLD, true),
             AttributeRule.newBooleanRule(SPAWN, true),
             AttributeRule.newStringRule(NAME, true),
             AttributeRule.newStringRule(OPERATOR_ANALYSIS, true),
@@ -191,6 +198,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     public static final String MCMC = "mcmc";
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String FULL_EVALUATION = "fullEvaluation";
+    public static final String EVALUATION_THRESHOLD  = "evaluationThreshold";
     public static final String MIN_OPS_EVALUATIONS = "minOpsFullEvaluations";
     public static final String WEIGHT = "weight";
     public static final String TEMPERATURE = "temperature";

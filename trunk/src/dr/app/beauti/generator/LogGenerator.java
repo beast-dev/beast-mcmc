@@ -1,7 +1,7 @@
 /*
- * TreeModelGenerator.java
+ * LogGenerator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -40,6 +40,7 @@ import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
+import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
@@ -327,8 +328,11 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE)
+            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+            } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
+            }
         }
 
         writer.writeCloseTag(LoggerParser.LOG);

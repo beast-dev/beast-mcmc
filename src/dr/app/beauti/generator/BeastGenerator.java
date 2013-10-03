@@ -261,8 +261,8 @@ public class BeastGenerator extends Generator {
         if (options.getPartitionTreeModels().size() > 1) { //TODO not allowed multi-prior yet
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if (prior.getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
-                    throw new GeneratorException("For GMRF, tree model/tree prior combination not implemented by BEAST yet" +
-                            "\nIt is only available for single tree model partition for this release.", BeautiFrame.TREES);
+                    throw new GeneratorException("For the Skyride, tree model/tree prior combination not implemented by BEAST." +
+                            "\nThe Skyride is only available for a single tree model partition in this release.", BeautiFrame.TREES);
                 }
             }
         }
@@ -904,7 +904,7 @@ public class BeastGenerator extends Generator {
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            treePriorGenerator.writeEBSPVariableDemographicReference(prior, writer);
+            treePriorGenerator.writeMultiLociLikelihoodReference(prior, writer);
             writer.writeText("");
         }
 

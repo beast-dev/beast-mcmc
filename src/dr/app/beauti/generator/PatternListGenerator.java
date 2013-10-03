@@ -61,7 +61,7 @@ public class PatternListGenerator extends Generator {
         boolean unique = isAncestralStatesModel || isCovarionModel;
         boolean strip = isAncestralStatesModel || isCovarionModel;
 
-        if (model.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
+        if (model.getDataType().getType() == DataType.NUCLEOTIDES && codonHeteroPattern != null && partitionCount > 1) {
 
             if (codonHeteroPattern.equals("112")) {
                 writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon positions 1 & 2");

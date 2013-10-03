@@ -335,7 +335,7 @@ public class SubstitutionModelGenerator extends Generator {
 
     private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix, int num) {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-            if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
+            if (model.getDataType().getType() == DataType.NUCLEOTIDES && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
                 for (AbstractPartitionData partition : options.getDataPartitions(model)) { //?
                     if (num >= 0)
                         writeCodonPatternsRef(prefix + partition.getPrefix(), num, model.getCodonPartitionCount(), writer);

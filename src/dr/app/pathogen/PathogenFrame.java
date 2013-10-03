@@ -9,13 +9,11 @@
 package dr.app.pathogen;
 
 import dr.evolution.io.*;
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.TaxonList;
 import dr.app.tools.NexusExporter;
-import dr.app.pathogen.TemporalRooting;
 import dr.stats.Regression;
 import dr.util.NumberFormatter;
 import jam.framework.DocumentFrame;
@@ -29,7 +27,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.*;
-import java.util.List;
 
 /**
  * @author Andrew Rambaut

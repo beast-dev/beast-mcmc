@@ -14,21 +14,12 @@ public class DolloComponentFactory implements ComponentFactory {
 
 	public static ComponentFactory INSTANCE = new DolloComponentFactory();
 
-	private DolloComponentGenerator generator = null;
-	private DolloComponentOptions options = null;
-
-	public ComponentGenerator getGenerator(BeautiOptions beautiOptions) {
-		if (generator == null) {
-			generator = new DolloComponentGenerator(beautiOptions);
-		}
-		return generator;
+	public ComponentGenerator createGenerator(BeautiOptions beautiOptions) {
+        return new DolloComponentGenerator(beautiOptions);
 	}
 
-	public ComponentOptions getOptions(BeautiOptions beautiOptions) {
-		if (options == null) {
-			options = new DolloComponentOptions(beautiOptions);
-		}
-		return options;
+	public ComponentOptions createOptions(BeautiOptions beautiOptions) {
+        return new DolloComponentOptions(beautiOptions);
 	}
 
 }

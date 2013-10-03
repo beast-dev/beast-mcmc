@@ -54,7 +54,7 @@
         <jar jarfile="${dist}/pathogen.jar">
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Main-Class" value="dr.app.pathogen.PathogenApp"/>
+                <attribute name="Main-Class" value="dr.app.pathogen.TemporalSamplerApp"/>
             </manifest>
             <fileset dir="${build}">
                 <include name="dr/app/pathogen/**/*.class"/>
@@ -170,7 +170,7 @@
         <!-- create a jar bundle for the mac -->
         <jarbundler dir="${Mac_package_dir}"
                         name="${name} v${version}"
-                        mainclass="dr.app.pathogen.PathogenApp"
+                        mainclass="dr.app.pathogen.TemporalSamplerApp"
                         icon="${Mac_dir}/icons/Path-O-Gen.icns"
                         jvmversion="1.5+"
                         arguments=""

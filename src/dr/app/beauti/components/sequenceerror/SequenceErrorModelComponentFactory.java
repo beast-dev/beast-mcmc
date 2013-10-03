@@ -15,22 +15,13 @@ public class SequenceErrorModelComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
-    public ComponentGenerator getGenerator(final BeautiOptions beautiOptions) {
-        if (generator == null) {
-            generator = new SequenceErrorModelComponentGenerator(beautiOptions);
-        }
-        return generator;
+    public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
+        return new SequenceErrorModelComponentGenerator(beautiOptions);
     }
 
-    public ComponentOptions getOptions(final BeautiOptions beautiOptions) {
-        if (options == null) {
-            options = new SequenceErrorModelComponentOptions();
-        }
-        return options;
+    public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
+        return new SequenceErrorModelComponentOptions();
     }
-
-    private SequenceErrorModelComponentGenerator generator = null;
-    private SequenceErrorModelComponentOptions options = null;
 
     public static ComponentFactory INSTANCE = new SequenceErrorModelComponentFactory();
 }

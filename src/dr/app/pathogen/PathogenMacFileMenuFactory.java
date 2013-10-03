@@ -76,7 +76,7 @@ public class PathogenMacFileMenuFactory implements MenuFactory {
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
             menu.add(item);
 
-//            item = new JMenuItem(((PathogenFrame)frame).getExportGraphicAction());
+//            item = new JMenuItem(((TemporalSamplerFrame)frame).getExportGraphicAction());
 //            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK + KeyEvent.ALT_MASK));
 //            menu.add(item);
 

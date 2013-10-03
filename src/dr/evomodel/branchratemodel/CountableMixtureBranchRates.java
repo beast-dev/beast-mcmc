@@ -27,10 +27,7 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.tree.BackboneNodeFilter;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.CountableMixtureBranchRatesParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
@@ -38,11 +35,6 @@ import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.MathUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Marc Suchard
@@ -53,36 +45,21 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     private final Parameter ratesParameter;
     private final TreeModel treeModel;
     private final AbstractBranchRateModel randomEffectsModel;
-
     private final int categoryCount;
 
-    public CountableMixtureBranchRates(TreeModel treeModel, Parameter ratesParameter, Parameter rateCategoryParameter) {
-        this(treeModel, ratesParameter, rateCategoryParameter, null);
-    }
-
-    public CountableMixtureBranchRates(TreeModel treeModel, Parameter ratesParameter, Parameter rateCategoryParameter,
-                                       AbstractBranchRateModel randomEffectsModel) {
-        this(treeModel, ratesParameter, rateCategoryParameter, randomEffectsModel, false);
-    }
-
-    public CountableMixtureBranchRates(TreeModel treeModel, Parameter ratesParameter, Parameter rateCategoryParameter,
+    public CountableMixtureBranchRates(CountableBranchCategoryProvider rateCategories,
+                                       TreeModel treeModel, Parameter ratesParameter,
                                        AbstractBranchRateModel randomEffects, boolean inLogSpace) {
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
         this.treeModel = treeModel;
-        rateCategories = new TreeParameterModel(treeModel, rateCategoryParameter, false);
         categoryCount = ratesParameter.getDimension();
+        this.rateCategories = rateCategories;
+        rateCategories.setCategoryCount(categoryCount);
 
-        for (int i = 0; i < rateCategoryParameter.getDimension(); ++i) {
-            rateCategoryParameter.setParameterValue(i, 0.0);
+        if (rateCategories instanceof Model) {
+            addModel((Model)rateCategories);
         }
-
-        //Force the boundaries of rateCategoryParameter to match the category count
-        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, rateCategoryParameter.getDimension());
-        rateCategoryParameter.addBounds(bound);
-
-        addModel(rateCategories);
-        addModel(treeModel);
         this.ratesParameter = ratesParameter;
         addVariable(ratesParameter);
 
@@ -109,123 +86,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         return columns;
     }
 
-    public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade, boolean trunk) throws Tree.MissingTaxonException {
-            if (!excludeClade) {
-            throw new IllegalArgumentException("Including clades not yet implemented in countable branch rate mixture models.");
-        }
-
-        if (!includeStem) {
-            throw new IllegalArgumentException("Excluding stems not yet implemented in countable branch rate mixture models.");
-        }
-
-        Set<String> leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
-        if (!trunk){
-            if (leafSetList == null) {
-                leafSetList = new ArrayList<CladeContainer>();
-            }
-            leafSetList.add(new CladeContainer(leafSet, rateCategory));
-            cladesChanged = true;
-        }  else {
-            if (trunkSetList == null) {
-                trunkSetList = new ArrayList<CladeContainer>();
-            }
-            trunkSetList.add(new CladeContainer(leafSet, rateCategory));
-            cladesChanged = true;
-        }
-    }
-
-    private class CladeContainer {
-        private Set<String> leafSet;
-        private int rateCategory;
-
-        public CladeContainer(Set<String> leafSet, int rateCategory) {
-            this.leafSet = leafSet;
-            this.rateCategory = rateCategory;
-        }
-
-        public Set<String> getLeafSet() {
-            return leafSet;
-        }
-
-        public int getRateCategory() {
-            return rateCategory;
-        }
-
-    }
-
-    private void updateCladeRateCategories() {
-        if (leafSetList != null) {
-            for (NodeRef node : treeModel.getNodes()) {
-                if (node != treeModel.getRoot()) {
-                    rateCategories.setNodeValue(treeModel, node, 0.0);
-                }
-            }
-            for (CladeContainer clade : leafSetList) {
-                NodeRef node = Tree.Utils.getCommonAncestorNode(treeModel, clade.getLeafSet());
-                if (node != treeModel.getRoot()) {
-                    rateCategories.setNodeValue(treeModel, node, clade.getRateCategory());
-                }
-            }
-        }
-
-        if (trunkSetList != null) {
-            //we keep the default rates assignments by clade definitions if they exist (leafSetList != null), if they do not exist, set default to 0.0
-            if (leafSetList == null) {
-                    for (NodeRef node : treeModel.getNodes()) {
-                    if (node != treeModel.getRoot()) {
-                        rateCategories.setNodeValue(treeModel, node, 0.0);
-                    }
-                }
-            }
-           // currently, specific backbone rates will overwrite branch assignments by clade definitions
-           //TODO: think about turning this around. One can imagine setting backbone rates and then additional rates based on clade definitions
-            for (CladeContainer trunk : trunkSetList) {
-                for (NodeRef node : treeModel.getNodes()) {
-                    if (onAncestralPath(treeModel,node,trunk.getLeafSet())) {
-                        if (node != treeModel.getRoot()) {
-                            rateCategories.setNodeValue(treeModel, node, trunk.getRateCategory());
-                        }
-                    }
-                }
-            }
-        }
-
-    }
-
-    public void randomize() {
-        for (NodeRef node : treeModel.getNodes()) {
-            if (node != treeModel.getRoot()) {
-                int index = MathUtils.nextInt(categoryCount);
-                rateCategories.setNodeValue(treeModel, node, index);
-            }
-        }
-    }
-
-    private boolean onAncestralPath(Tree tree, NodeRef node, Set targetSet) {
-
-        if (tree.isExternal(node)) return false;
-
-        Set leafSet = Tree.Utils.getDescendantLeaves(tree, node);
-        int size = leafSet.size();
-
-        leafSet.retainAll(targetSet);
-
-        if (leafSet.size() > 0) {
-
-            // if all leaves below are in target then check just above.
-            if (leafSet.size() == size) {
-
-                Set superLeafSet = Tree.Utils.getDescendantLeaves(tree, tree.getParent(node));
-                superLeafSet.removeAll(targetSet);
-
-                // the branch is on ancestral path if the super tree has some non-targets in it
-                return (superLeafSet.size() > 0);
-
-            } else return true;
-
-        } else return false;
-    }
-
     private class OccupancyColumn extends NumberColumn {
         private final int index;
 
@@ -238,7 +98,7 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
             int occupancy = 0;
             for (NodeRef node : treeModel.getNodes()) {
                 if (node != treeModel.getRoot()) {
-                    if (Math.round(rateCategories.getNodeValue(treeModel, node)) == index) {
+                    if (rateCategories.getBranchCategory(treeModel, node) == index) {
                         occupancy++;
                     }
                 }
@@ -249,9 +109,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == rateCategories) {
-//            fireModelChanged();
-        } else if (model == treeModel) {
-            cladesChanged = true;
             fireModelChanged();
         } else if (model == randomEffectsModel) {
             if (object == randomEffectsModel) {
@@ -284,17 +141,9 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
-
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
-        synchronized (this) {
-            if (cladesChanged) {
-                updateCladeRateCategories();
-                cladesChanged = false;
-            }
-        }
-
-        int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
+        int rateCategory = rateCategories.getBranchCategory(tree, node);
         double effect = ratesParameter.getParameterValue(rateCategory);
         if (randomEffectsModel != null) {
             if (modelInLogSpace) {
@@ -309,9 +158,6 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         return effect;
     }
 
-    private final TreeParameterModel rateCategories;
-    private boolean cladesChanged = false;
-    private List<CladeContainer> leafSetList = null;
-    private List<CladeContainer> trunkSetList = null;
+    private final CountableBranchCategoryProvider rateCategories;
     private final boolean modelInLogSpace;
 }

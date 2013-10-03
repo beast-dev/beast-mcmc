@@ -589,8 +589,8 @@ public class BeastGenerator extends Generator {
                 // generate tree likelihoods for alignment data partitions
                 if (partition.getTaxonList() != null) {
                     if (partition instanceof PartitionData) {
-                        if (partition.getDataType() != GeneralDataType.INSTANCE &&
-                                partition.getDataType() != ContinuousDataType.INSTANCE) {
+                        if (partition.getDataType().getType() != DataType.GENERAL &&
+                                partition.getDataType().getType() != DataType.CONTINUOUS) {
                             treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
                             writer.writeText("");
                         }

@@ -593,7 +593,7 @@ public class BeautiOptions extends ModelOptions {
             PartitionClockModel model = partition.getPartitionClockModel();
             if (model != null && (!activeModels.contains(model))
                     // species excluded
-                    && (!partition.getDataType().equals(DataType.CONTINUOUS))) {
+                    && !(partition.getDataType().getType() == DataType.CONTINUOUS)) {
                 activeModels.add(model);
             }
         }

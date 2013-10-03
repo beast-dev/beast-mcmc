@@ -31,6 +31,7 @@ import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.GammaSiteModel;
@@ -91,7 +92,7 @@ public class TreeLikelihoodGenerator extends Generator {
             }
         }
 
-        if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
+        if (model.getDataType().getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
 
             for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
                 writeTreeLikelihood(treeLikelihoodTag, TreeLikelihoodParser.TREE_LIKELIHOOD, i, partition, writer);
@@ -221,7 +222,7 @@ public class TreeLikelihoodGenerator extends Generator {
                 if (partition instanceof PartitionData && partition.getTraits() == null) {
                     // is an alignment data partition
                     PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-                    if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
+                    if (substModel.getDataType().getType() == DataType.NUCLEOTIDES && substModel.getCodonHeteroPattern() != null) {
                         for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
                             writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + substModel.getPrefix(i) + TreeLikelihoodParser.TREE_LIKELIHOOD);
                         }

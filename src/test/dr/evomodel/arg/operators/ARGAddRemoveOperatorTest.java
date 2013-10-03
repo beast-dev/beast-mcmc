@@ -72,12 +72,7 @@ public class ARGAddRemoveOperatorTest extends TraceCorrelationAssert {
             throws IOException, Importer.ImportException {
 
         MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(chainLength);
-        options.setUseCoercion(true);
-        options.setCoercionDelay(100);
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
+        MCMCOptions options = new MCMCOptions(chainLength);
 
 //        double nodeCountSetting = 2.0;
 //        double rootHeightAlpha = 100;

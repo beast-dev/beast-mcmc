@@ -136,12 +136,7 @@ public class TestCalibratedYuleModel {
             throws IOException, Tree.MissingTaxonException {
 
         MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(chainLength);
-        options.setUseCoercion(true);
-        options.setCoercionDelay((int)(options.getChainLength() / 100));
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
+        MCMCOptions options = new MCMCOptions(chainLength);
 
         TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);

@@ -29,33 +29,29 @@ package dr.inference.mcmcmc;
 
 /**
  * A class that brings together the auxillary information associated
- * with an MCMC analysis.
+ * with an MCMCMC analysis.
  *
  * @version $Id: MCMCMCOptions.java,v 1.2 2005/01/06 14:46:36 rambaut Exp $
  *
+ * @author Andrew Rambaut
  * @author Alexei Drummond
  */
 public class MCMCMCOptions {
 
-	public MCMCMCOptions() {
+    public MCMCMCOptions(final double[] temperatures, final int swapChainsEvery) {
+        this.temperatures = temperatures;
+        this.swapChainsEvery = swapChainsEvery;
     }
+
 
     public double[] getChainTemperatures() {
         return temperatures;
-    }
-
-    public void setChainTemperatures(double[] temperatures) {
-        this.temperatures = temperatures;
     }
 
     public int getSwapChainsEvery() {
         return swapChainsEvery;
     }
 
-    public void setSwapChainsEvery(int swapChainsEvery) {
-        this.swapChainsEvery = swapChainsEvery;
-    }
-
-    private double[] temperatures = new double[] { 1.0 };
-    private int swapChainsEvery = 0;
+    private final double[] temperatures;
+    private final int swapChainsEvery;
 }

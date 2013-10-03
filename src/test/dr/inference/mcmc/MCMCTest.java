@@ -126,12 +126,7 @@ public class MCMCTest extends TraceCorrelationAssert {
 
         // MCMC
         MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(10000000);
-        options.setUseCoercion(true); // autoOptimize = true
-        options.setCoercionDelay(100);
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
+        MCMCOptions options = new MCMCOptions(10000000);
 
         mcmc.setShowOperatorAnalysis(true);
         mcmc.init(options, treeLikelihood, schedule, loggers);

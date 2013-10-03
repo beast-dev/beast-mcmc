@@ -87,12 +87,7 @@ public class RLYModelTest extends TraceCorrelationAssert {
     private void randomLocalYuleTester(TreeModel treeModel, Parameter I, Parameter b, OperatorSchedule schedule) {
 
         MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(1000000);
-        options.setUseCoercion(true);
-        options.setCoercionDelay(100);
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
+        MCMCOptions options = new MCMCOptions(1000000);
 
         TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);
         TreeHeightStatistic rootHeight = new TreeHeightStatistic(TREE_HEIGHT, treeModel);

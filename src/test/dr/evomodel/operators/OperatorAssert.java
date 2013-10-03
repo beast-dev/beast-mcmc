@@ -93,12 +93,7 @@ public abstract class OperatorAssert extends TestCase {
             throws IOException, Importer.ImportException {
 
     	MCMC mcmc = new MCMC("mcmc1");
-        MCMCOptions options = new MCMCOptions();
-        options.setChainLength(chainLength);
-        options.setUseCoercion(true);
-        options.setCoercionDelay(100);
-        options.setTemperature(1.0);
-        options.setFullEvaluationCount(2000);
+        MCMCOptions options = new MCMCOptions(chainLength);
 
         TreeModel treeModel = new TreeModel("treeModel", tree);
         TreeLengthStatistic tls = new TreeLengthStatistic(TL, treeModel);

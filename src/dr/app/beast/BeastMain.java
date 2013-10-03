@@ -319,11 +319,9 @@ public class BeastMain {
                         new Arguments.StringOption("prefix", "PREFIX", "Specify a prefix for all output log filenames"),
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
-                        // new Arguments.Option("logops", "hack: log ops to stderr"),
-//                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
-//                                "in number of states."),
                         new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
+                        new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 1E-6)"),
 
                         new Arguments.Option("beagle", "Use beagle library if available"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
@@ -388,6 +386,11 @@ public class BeastMain {
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
+
+        if (arguments.hasOption("threshold")) {
+            double evaluationThreshold = arguments.getRealOption("threshold");
+            System.setProperty("mcmc.evaluation.threshold", Double.toString(evaluationThreshold));
+        }
 
         int threadCount = -1;
 

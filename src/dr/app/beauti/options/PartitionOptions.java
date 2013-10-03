@@ -27,6 +27,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.PriorScaleType;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.math.MathUtils;
 
 import java.util.List;
@@ -148,6 +149,9 @@ public abstract class PartitionOptions extends ModelOptions {
     }
 
     public DataType getDataType() {
+        if (options.getDataPartitions(this).size() == 0) {
+            return Nucleotides.INSTANCE;
+        }
         return options.getDataPartitions(this).get(0).getDataType();
     }
 

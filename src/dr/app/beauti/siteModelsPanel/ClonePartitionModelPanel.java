@@ -90,13 +90,13 @@ public class ClonePartitionModelPanel extends OptionsPanel {
         }
     }
 
-    public void setOptions(List<PartitionSubstitutionModel> models) {
+    public void setOptions(List<PartitionSubstitutionModel> models, List<PartitionSubstitutionModel> sourceModels) {
         this.models = models;
 
         removeAll();
 
         sourceModelCombo = new JComboBox();
-        for (PartitionSubstitutionModel model : models) {
+        for (PartitionSubstitutionModel model : sourceModels) {
             sourceModelCombo.addItem(model);
         }
 

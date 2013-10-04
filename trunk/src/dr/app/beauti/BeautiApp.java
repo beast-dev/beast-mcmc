@@ -27,12 +27,14 @@ package dr.app.beauti;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.util.CommandLineBeauti;
+import dr.app.util.Arguments;
 import dr.app.util.OSType;
 import dr.util.Version;
 import jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.Locale;
@@ -50,6 +52,35 @@ public class BeautiApp extends MultiDocApplication {
                      String websiteURLString, String helpURLString) {
         super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
     }
+
+    public static void centreLine(String line, int pageWidth) {
+        int n = pageWidth - line.length();
+        int n1 = n / 2;
+        for (int i = 0; i < n1; i++) {
+            System.out.print(" ");
+        }
+        System.out.println(line);
+    }
+
+    public static void printTitle() {
+        System.out.println();
+        centreLine("BEAUti " + version.getVersionString() + ", " + version.getDateString(), 60);
+        centreLine("Bayesian Evolutionary Analysis Utility", 60);
+        for (String creditLine : version.getCredits()) {
+            centreLine(creditLine, 60);
+        }
+        System.out.println();
+    }
+
+    public static void printUsage(Arguments arguments) {
+
+        arguments.printUsage("beauti", "[<input-file-name> ...]");
+        System.out.println();
+        System.out.println("  Example: beauti test.nex");
+        System.out.println("  Example: beauti -help");
+        System.out.println();
+    }
+
 
 //    /**
 //     * In a departure from the standard UI, there is no "Open" command for this application
@@ -73,11 +104,53 @@ public class BeautiApp extends MultiDocApplication {
         // To ensure compatibility between programs in the package, enforce the US locale.
         Locale.setDefault(Locale.US);
 
-        if (args.length > 1) {
+        Arguments arguments = new Arguments(
+                new Arguments.Option[]{
+                        new Arguments.Option("advanced", "Enable advanced & developer features"),
+                        new Arguments.Option("version", "Print the version and credits and stop"),
+                        new Arguments.Option("help", "Print this information and stop"),
+                });
+
+        int argumentCount = 0;
+
+        try {
+            argumentCount = arguments.parseArguments(args);
+        } catch (Arguments.ArgumentException ae) {
+            printTitle();
+            System.out.println();
+            System.out.println(ae.getMessage());
+            System.out.println();
+            printUsage(arguments);
+            System.exit(1);
+        }
+
+        if (arguments.hasOption("help")) {
+            printTitle();
+            printUsage(arguments);
+            System.exit(0);
+        }
+
+        if (arguments.hasOption("version")) {
+            printTitle();
+        }
+
+        advanced = arguments.hasOption("advanced");
+
+        String[] args2 = arguments.getLeftoverArguments();
+
+        if (args2.length > 1) {
+            System.err.println("Unknown option: " + args2[1]);
+            System.err.println();
+            printUsage(arguments);
+            return;
+        }
+
+        if (args2.length > 1) {
 
             if (args.length != 3) {
-                System.err.println("Usage: beauti <input_file> <template_file> <output_file>");
-                return;
+                printTitle();
+                printUsage(arguments);
+                System.exit(1);
             }
 
             String inputFileName = args[0];
@@ -87,9 +160,9 @@ public class BeautiApp extends MultiDocApplication {
             new CommandLineBeauti(inputFileName, templateFileName, outputFileName);
 
         } else {
-
-            if (args.length == 1 && args[0].equalsIgnoreCase("-advanced")) {
-                advanced = true;
+            String inputFileName = null;
+            if (args2.length == 1) {
+                inputFileName = args2[0];
             }
 
             if (OSType.isMac()) {
@@ -187,7 +260,12 @@ public class BeautiApp extends MultiDocApplication {
                     }
                 });
                 app.initialize();
-                app.doNew();
+
+                if (inputFileName != null) {
+                    app.doOpen(inputFileName);
+                } else {
+                    app.doNew();
+                }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(new JFrame(), "Fatal exception: " + e,
                         "Please report this to the authors",

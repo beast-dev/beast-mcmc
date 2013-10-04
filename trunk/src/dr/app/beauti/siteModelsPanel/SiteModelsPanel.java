@@ -50,9 +50,8 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -68,17 +67,18 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
 
-    JTable modelTable = null;
-    ModelTableModel modelTableModel = null;
-    BeautiOptions options = null;
+    private JTable modelTable = null;
+    private ModelTableModel modelTableModel = null;
+    private BeautiOptions options = null;
 
-    JPanel modelPanelParent;
-    PartitionSubstitutionModel currentModel = null;
-    Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
-    TitledBorder modelBorder;
+    private JPanel modelPanelParent;
+    private PartitionSubstitutionModel currentModel = null;
+    private Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
+    private TitledBorder modelBorder;
+    private ClonePartitionModelPanel clonePartitionModelPanel = null;
 
     BeautiFrame frame = null;
-//    CreateModelDialog createModelDialog = null;
+    //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
@@ -101,7 +101,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(modelTable);
 
-        modelTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        modelTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         modelTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
                 selectionChanged();
@@ -151,17 +151,17 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void resetPanel() {
-    	if (!options.hasData()) {
-    		currentModel = null;
-    		modelPanels.clear();
-    		modelPanelParent.removeAll();
-    		modelBorder.setTitle("Substitution Model");
+        if (!options.hasData()) {
+            currentModel = null;
+            modelPanels.clear();
+            modelPanelParent.removeAll();
+            modelBorder.setTitle("Substitution Model");
 
 //            if (currentDiscreteTraitOption != null) {
 //                this.remove(d_splitPane);
 //                currentDiscreteTraitOption = null;
 //            }
-        	return;
+            return;
         }
     }
 
@@ -205,16 +205,27 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void selectionChanged() {
-        int selRow = modelTable.getSelectedRow();
+        if (modelTable.getSelectedRowCount() == 1) {
+            int selRow = modelTable.getSelectedRow();
 
-        if (selRow >= options.getPartitionSubstitutionModels().size()) {
-            selRow = 0;
-            modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        }
+            if (selRow >= options.getPartitionSubstitutionModels().size()) {
+                selRow = 0;
+                modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+            }
 
-        if (selRow >= 0) {
-            setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
+            if (selRow >= 0) {
+                setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
+            }
+        } else {
+            java.util.List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
+            for (int row : modelTable.getSelectedRows()) {
+                models.add(options.getPartitionSubstitutionModels().get(row));
+            }
+            if (models.size() == 0) {
+                models.addAll(options.getPartitionSubstitutionModels());
+            }
+            setSelectedModels(models);
         }
     }
 
@@ -224,52 +235,80 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
      * @param model the new model to display
      */
     private void setCurrentModel(PartitionSubstitutionModel model) {
-        if (model != null) {
-            if (currentModel != null) modelPanelParent.removeAll();
+        modelPanelParent.removeAll();
 
-            PartitionModelPanel panel = modelPanels.get(model);
+        currentModel = model;
+
+        if (currentModel != null) {
+            PartitionModelPanel panel = modelPanels.get(currentModel);
             if (panel == null) {
-                panel = new PartitionModelPanel(model);
-                modelPanels.put(model, panel);
+                panel = new PartitionModelPanel(currentModel);
+                modelPanels.put(currentModel, panel);
             }
 
-            currentModel = model;
             panel.setOptions();
             modelPanelParent.add(panel);
 
-            updateBorder();
+        } else {
+
         }
+        updateBorder();
+    }
+
+    private void setSelectedModels(List<PartitionSubstitutionModel> models) {
+        modelPanelParent.removeAll();
+
+        currentModel = null;
+
+        Set<DataType> dataTypes = new HashSet<DataType>();
+        for (PartitionSubstitutionModel model : models) {
+            dataTypes.add(model.getDataType());
+        }
+
+        if (dataTypes.size() == 1) {
+            modelBorder.setTitle("Multiple " + getDataTypeName(dataTypes.iterator().next()) + " substitution models selected");
+
+            if (clonePartitionModelPanel == null) {
+                clonePartitionModelPanel = new ClonePartitionModelPanel();
+            }
+
+            clonePartitionModelPanel.setOptions(models);
+            modelPanelParent.add(clonePartitionModelPanel);
+
+        } else {
+            modelBorder.setTitle("Multiple mixed type substitution models selected");
+        }
+        repaint();
     }
 
     private void updateBorder() {
 
-        String title;
+        if (currentModel != null) {
+            modelBorder.setTitle(getDataTypeName(currentModel.getDataType()) + " Substitution Model - " + currentModel.getName());
+        } else {
+            modelBorder.setTitle("Multiple substitution models selected");
+        }
+        repaint();
+    }
 
-        switch (currentModel.getDataType().getType()) {
+    private String getDataTypeName(DataType dataType) {
+        switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
-                title = "Nucleotide";
-                break;
+                return "Nucleotide";
             case DataType.AMINO_ACIDS:
-                title = "Amino Acid";
-                break;
+                return "Amino Acid";
             case DataType.TWO_STATES:
-                title = "Binary";
-                break;
+                return "Binary";
             case DataType.GENERAL:
-                title = "Discrete Traits";
-                break;
+                return "Discrete Traits";
             case DataType.CONTINUOUS:
-                title = "Continuous Traits";
-                break;
+                return "Continuous Traits";
             case DataType.MICRO_SAT:
-                title = "Microsatellite";
-                break;
+                return "Microsatellite";
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 
         }
-        modelBorder.setTitle(title + " Substitution Model - " + currentModel.getName());
-        repaint();
     }
 
     private boolean isUsed(int row) {

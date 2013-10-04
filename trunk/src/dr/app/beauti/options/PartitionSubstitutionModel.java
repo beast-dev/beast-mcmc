@@ -1075,4 +1075,37 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return states;
     }
 
+    public void copyFrom(PartitionSubstitutionModel source) {
+        nucSubstitutionModel = source.nucSubstitutionModel;
+        aaSubstitutionModel = source.aaSubstitutionModel;
+        binarySubstitutionModel = source.binarySubstitutionModel;
+        discreteSubstType = source.discreteSubstType;
+        continuousSubstModelType = source.continuousSubstModelType;
+
+        activateBSSVS = source.activateBSSVS;
+        useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
+
+        frequencyPolicy = source.frequencyPolicy;
+        gammaHetero = source.gammaHetero;
+        gammaCategories = source.gammaCategories;
+        invarHetero = source.invarHetero;
+        codonHeteroPattern = source.codonHeteroPattern;
+        unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
+        unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
+        unlinkedFrequencyModel = source.unlinkedFrequencyModel;
+
+        dolloModel = source.dolloModel;
+
+        ratePorportion = source.ratePorportion;
+        mutationBias = source.mutationBias;
+        phase = source.phase;
+
+        microsatellite = source.microsatellite;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
+    }
+
 }

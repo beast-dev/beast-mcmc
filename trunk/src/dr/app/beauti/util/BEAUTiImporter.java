@@ -709,7 +709,7 @@ public class BEAUTiImporter {
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
         partition.setPartitionSubstitutionModel(psm);
 
-        if (psm.getDataType() != partition.getDataType())
+        if (psm.getDataType().getType() != partition.getDataType().getType())
             throw new IllegalArgumentException("Partition " + partition.getName()
                     + "\ncannot assign to Substitution Model\n" + psm.getName()
                     + "\nwith different data type.");

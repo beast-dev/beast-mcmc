@@ -69,7 +69,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private JComboBox gmrfBayesianSkyrideCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.UNIFORM_SKYRIDE,
             TreePriorParameterizationType.TIME_AWARE_SKYRIDE).toArray());
 
-    private JComboBox skyGridPointsCombo = new JComboBox(new Integer[] {10,20,50,100});
+    private JComboBox skyGridPointsCombo = new JComboBox(new Integer[]{10, 20, 50, 100});
     private RealNumberField skyGridInterval = new RealNumberField(0.0, Double.MAX_VALUE);
 
 //    private JComboBox skyGridCombo = new JComboBox(EnumSet.range())
@@ -382,11 +382,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         skyGridPointsCombo.setSelectedItem(partitionTreePrior.getSkyGridCount());
 
         double initialCutOff = partitionTreePrior.getOptions().getPartitionTreeModels().get(0).getInitialRootHeight();
-        initialCutOff = roundToSignificantFigures(2 * initialCutOff, 2);
+        final double arbitraryScalar = 1.0;
+        initialCutOff = roundToSignificantFigures(arbitraryScalar * initialCutOff, 2);
 
         skyGridInterval.setValue(
                 partitionTreePrior.getSkyGridInterval() == -1.0 ?
-                initialCutOff : partitionTreePrior.getSkyGridInterval()
+                        initialCutOff : partitionTreePrior.getSkyGridInterval()
         );
 
         populationSizeCombo.setSelectedItem(partitionTreePrior.getPopulationSizeModel());

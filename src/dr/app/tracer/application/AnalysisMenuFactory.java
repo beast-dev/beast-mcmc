@@ -1,3 +1,28 @@
+/*
+ * AnalysisMenuFactory.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.application;
 
 import jam.framework.AbstractFrame;
@@ -16,6 +41,7 @@ public class AnalysisMenuFactory implements MenuFactory {
     public static final String BAYESIAN_SKYLINE_RECONSTRUCTION = "Bayesian Skyline Reconstruction...";
     public static final String EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION = "Extended Bayesian Skyline Reconstruction...";
     public static final String GMRF_SKYRIDE_RECONSTRUCTION = "GMRF Skyride Reconstruction...";
+    public static final String SKY_GRID_RECONSTRUCTION = "SkyGrid Reconstruction...";
     public static final String LINEAGES_THROUGH_TIME = "Lineages Through Time...";
     public static final String TRAIT_THROUGH_TIME = "Trait Through Time...";
 
@@ -47,6 +73,9 @@ public class AnalysisMenuFactory implements MenuFactory {
 //            menu.add(item);
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getGMRFSkyrideAction());
+            menu.add(item);
+
+            item = new JMenuItem(((AnalysisMenuHandler) frame).getSkyGridAction());
             menu.add(item);
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getLineagesThroughTimeAction());

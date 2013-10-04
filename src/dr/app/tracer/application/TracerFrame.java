@@ -1,3 +1,28 @@
+/*
+ * TracerFrame.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.application;
 
 import com.lowagie.text.Document;
@@ -82,6 +107,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private BayesianSkylineDialog bayesianSkylineDialog = null;
     private ExtendedBayesianSkylineDialog extendedBayesianSkylineDialog = null;
     private GMRFSkyrideDialog gmrfSkyrideDialog = null;
+    private SkyGridDialog skyGridDialog = null;
     private TimeDensityDialog timeDensityDialog = null;
     private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
     private TraitThroughTimeDialog traitThroughTimeDialog = null;
@@ -398,6 +424,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         getDemographicAction().setEnabled(enabled);
         getBayesianSkylineAction().setEnabled(enabled);
         getGMRFSkyrideAction().setEnabled(enabled);
+        getSkyGridAction().setEnabled(enabled);
         getLineagesThroughTimeAction().setEnabled(enabled);
         getBayesFactorsAction().setEnabled(enabled);
         getCreateTemporalAnalysisAction().setEnabled(enabled);
@@ -923,13 +950,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 tracePanel.getExportableComponent().print(g2d);
                 g2d.dispose();
                 cb.addTemplate(tp, 0, 0);
-            }
-            catch (DocumentException de) {
+            } catch (DocumentException de) {
                 JOptionPane.showMessageDialog(this, "Error writing PDF file: " + de,
                         "Export PDF Error",
                         JOptionPane.ERROR_MESSAGE);
-            }
-            catch (FileNotFoundException e) {
+            } catch (FileNotFoundException e) {
                 JOptionPane.showMessageDialog(this, "Error writing PDF file: " + e,
                         "Export PDF Error",
                         JOptionPane.ERROR_MESSAGE);
@@ -1237,6 +1262,34 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             extendedBayesianSkylineDialog.createExtendedBayesianSkylineFrame(currentTraceLists.get(0), this);
         }
     }
+
+    public void doSkyGrid(boolean add) {
+        if (skyGridDialog == null) {
+            skyGridDialog = new SkyGridDialog(this);
+        }
+
+        if (currentTraceLists.size() != 1) {
+            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+                    "this analysis on, (but not the Combined trace).",
+                    "Unable to perform analysis",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        if (add) {
+            if (skyGridDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            skyGridDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
+        } else {
+            if (skyGridDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            skyGridDialog.createSkyGridFrame(currentTraceLists.get(0), this);
+        }
+    }
+
 
     public void doGMRFSkyride(boolean add) {
         if (gmrfSkyrideDialog == null) {
@@ -1575,6 +1628,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return extendedBayesianSkylineAction;
     }
 
+    public Action getSkyGridAction() {
+        return skyGridAction;
+    }
+
     public Action getGMRFSkyrideAction() {
         return gmrfSkyrideAction;
     }
@@ -1630,6 +1687,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction extendedBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doExtendedBayesianSkyline(false);
+        }
+    };
+
+    private final AbstractAction skyGridAction = new AbstractAction(AnalysisMenuFactory.SKY_GRID_RECONSTRUCTION) {
+        public void actionPerformed(ActionEvent ae) {
+            doSkyGrid(false);
         }
     };
 

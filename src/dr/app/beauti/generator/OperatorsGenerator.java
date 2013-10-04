@@ -105,9 +105,9 @@ public class OperatorsGenerator extends Generator {
 
         for (Operator operator : operators) {
             if (operator.weight > 0. && operator.inUse) {
-            	setModelPrefix(operator.getPrefix());
+                setModelPrefix(operator.getPrefix());
 
-            	writeOperator(operator, writer);
+                writeOperator(operator, writer);
             }
         }
 
@@ -145,7 +145,7 @@ public class OperatorsGenerator extends Generator {
                 writeUpDownOperator(MicrosatUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
                 break;
             case UP_DOWN_ALL_RATES_HEIGHTS:
-            	writeUpDownOperatorAllRatesTrees(operator, writer);
+                writeUpDownOperatorAllRatesTrees(operator, writer);
                 break;
             case SCALE_ALL:
                 writeScaleAllOperator(operator, writer);
@@ -260,7 +260,7 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>("windowSize", operator.tuning),
                         getWeightAttribute(operator.weight)
                 });
-            writeParameter1Ref(writer, operator);
+        writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
         writer.writeCloseTag(name);
     }
@@ -364,7 +364,7 @@ public class OperatorsGenerator extends Generator {
 
         } else if (operator.getBaseName().startsWith(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
 
-        	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights(operator.getClockModelGroup());
+            int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights(operator.getClockModelGroup());
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];
@@ -457,8 +457,8 @@ public class OperatorsGenerator extends Generator {
 
     private void writeTreeBitMoveOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR,
-                        getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
+                getWeightAttribute(operator.weight));
+        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(TreeBitMoveOperatorParser.BIT_MOVE_OPERATOR);
     }
 
@@ -481,21 +481,21 @@ public class OperatorsGenerator extends Generator {
     private void writeNarrowExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.NARROW_EXCHANGE,
                 getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.NARROW_EXCHANGE);
     }
 
     private void writeWideExchangeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(ExchangeOperatorParser.WIDE_EXCHANGE,
                 getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(ExchangeOperatorParser.WIDE_EXCHANGE);
     }
 
     private void writeWilsonBaldingOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(WilsonBaldingParser.WILSON_BALDING,
                 getWeightAttribute(operator.weight));
-        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
         // not supported anymore. probably never worked. (todo) get it out of GUI too
 //        if (options.nodeHeightPrior == TreePriorType.CONSTANT) {
 //            treePriorGenerator.writeNodeHeightPriorModelRef(writer);
@@ -524,14 +524,14 @@ public class OperatorsGenerator extends Generator {
 
     private void writeSkyGridGibbsOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(
-                GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR,
+                GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>(GMRFSkyrideBlockUpdateOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,  modelPrefix + "skygrid");
-        writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR);
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+        writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.GRID_BLOCK_UPDATE_OPERATOR);
     }
 
     private void writeGMRFGibbsOperator(Operator operator, XMLWriter writer) {
@@ -542,7 +542,7 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD,  modelPrefix + "skyride");
+        writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
         writer.writeCloseTag(GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR);
     }
 
@@ -568,16 +568,16 @@ public class OperatorsGenerator extends Generator {
                         getWeightAttribute(operator.weight)
                 }
         );
-        writer.writeIDref(TreeModel.TREE_MODEL,  modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
         writer.writeCloseTag(SubtreeSlideOperatorParser.SUBTREE_SLIDE);
     }
 
     private void writeSpeciesTreeOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT,
-                new Attribute[]{ getWeightAttribute(operator.weight) }
+                new Attribute[]{getWeightAttribute(operator.weight)}
         );
-        writer.writeIDref(TraitData.TRAIT_SPECIES,  TraitData.TRAIT_SPECIES);
-        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE,  Generator.SP_TREE);
+        writer.writeIDref(TraitData.TRAIT_SPECIES, TraitData.TRAIT_SPECIES);
+        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, Generator.SP_TREE);
         writer.writeCloseTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
     }
 
@@ -592,7 +592,7 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(UpDownOperatorParser.UP);
         // for isEstimatedRate() = false, write nothing on up part of upDownOp
         if (!operator.parameter1.isFixed && operator.getClockModelGroup().getRateTypeOption() != FixRateType.FIX_MEAN) {
-        	writeParameter1Ref(writer, operator);
+            writeParameter1Ref(writer, operator);
         }
         writer.writeCloseTag(UpDownOperatorParser.UP);
 
@@ -601,7 +601,7 @@ public class OperatorsGenerator extends Generator {
 //	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
             writeParameter2Ref(writer, operator);
         } else {
-        	writer.writeIDref(operator.tag,  operator.idref);
+            writer.writeIDref(operator.tag, operator.idref);
         }
         writer.writeCloseTag(UpDownOperatorParser.DOWN);
 
@@ -609,7 +609,7 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
-    	writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
+        writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
                 new Attribute[]{
                         new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
                         getWeightAttribute(operator.weight)
@@ -619,45 +619,45 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(UpDownOperatorParser.UP);
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-			if (model.isEstimatedRate()) {
-				switch (model.getClockType()) {
-	            case STRICT_CLOCK:
-	            case RANDOM_LOCAL_CLOCK:
-	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
-	                break;
+            if (model.isEstimatedRate()) {
+                switch (model.getClockType()) {
+                    case STRICT_CLOCK:
+                    case RANDOM_LOCAL_CLOCK:
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                        break;
 
-	            case UNCORRELATED:
-                    switch (model.getClockDistributionType()) {
-                        case LOGNORMAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
+                    case UNCORRELATED:
+                        switch (model.getClockDistributionType()) {
+                            case LOGNORMAL:
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                                break;
+                            case GAMMA:
+                                throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
 //                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
+                            case CAUCHY:
+                                throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
 //                            break;
-                        case EXPONENTIAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                            break;
-                    }
-	            	break;
+                            case EXPONENTIAL:
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+                                break;
+                        }
+                        break;
 
-	            case AUTOCORRELATED:
-                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
+                    case AUTOCORRELATED:
+                        throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
 //	                break;
 
-	            default:
-	                throw new IllegalArgumentException("Unknown clock model");
-				}
-			}
+                    default:
+                        throw new IllegalArgumentException("Unknown clock model");
+                }
+            }
         }
         if (options.useStarBEAST) {
-	        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-	        	writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
-	        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-	        	writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-	        }
+            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
+                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
+            } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
+                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
+            }
         }// nothing for EBSP
 
         writer.writeCloseTag(UpDownOperatorParser.UP);
@@ -665,16 +665,16 @@ public class OperatorsGenerator extends Generator {
         writer.writeOpenTag(UpDownOperatorParser.DOWN);
 
         if (options.useStarBEAST) {
-	        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
-	        writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
+            writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
+            writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
         } else if (options.isEBSPSharingSamePrior()) {
-        	writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".populationMean");
-	        writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".popSize");
+            writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".populationMean");
+            writer.writeIDref(ParameterParser.PARAMETER, VariableDemographicModelParser.demoElementName + ".popSize");
         }
 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-        	writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
+            writer.writeIDref(ParameterParser.PARAMETER, tree.getPrefix() + "treeModel.allInternalNodeHeights");
         }
 
         writer.writeCloseTag(UpDownOperatorParser.DOWN);
@@ -683,8 +683,8 @@ public class OperatorsGenerator extends Generator {
     }
 
     private Attribute getWeightAttribute(double weight) {
-        if (weight == (int)weight) {
-            return new Attribute.Default<Integer>("weight", (int)weight);
+        if (weight == (int) weight) {
+            return new Attribute.Default<Integer>("weight", (int) weight);
         } else {
             return new Attribute.Default<Double>("weight", weight);
         }

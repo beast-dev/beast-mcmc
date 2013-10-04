@@ -212,8 +212,8 @@ public class SpeciesDelimitationAnalyser {
                 while (simstr.length() < 22) simstr += " ";
                 int clustercount = 0;
                 for (int j = 0; j < sd.partition.length; j ++) {
-                    if (sd.partition[j]+1 > clustercount) {
-                        clustercount = sd.partition[j]+1;
+                    if (sd.partition[j] > clustercount) {
+                        clustercount = sd.partition[j];
                     }
                 }
                 String ccstr = "" + clustercount;

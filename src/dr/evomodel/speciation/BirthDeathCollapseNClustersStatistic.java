@@ -36,9 +36,11 @@ public class BirthDeathCollapseNClustersStatistic extends Statistic.Abstract {
             }
         }
 
+        /*
+        int nnodes = spptree.getNodeCount();
         int nshort = 0;
-        for (int i = 0; i < ninodes; i++) {
-            NodeRef nr = spptree.getInternalNode(i);
+        for (int i = 0; i < nnodes; i++) {
+            NodeRef nr = spptree.getNode(i);
             boolean collapse;
             if (spptree.isRoot(nr)) {
                 collapse = (spptree.getNodeHeight(nr) < eps);
@@ -56,6 +58,7 @@ public class BirthDeathCollapseNClustersStatistic extends Statistic.Abstract {
             System.out.println("DEBUG in BirthDeathCollapseNClustersStatistic");
         }
         assert nshort  == n+1;
+        */
 
         return n+1;
     }

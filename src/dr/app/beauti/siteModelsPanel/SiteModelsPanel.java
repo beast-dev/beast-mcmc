@@ -48,6 +48,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
@@ -76,10 +77,13 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     private Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
     private TitledBorder modelBorder;
     private ClonePartitionModelPanel clonePartitionModelPanel = null;
+    private CloneModelDialog cloneModelDialog = null;
 
     BeautiFrame frame = null;
     //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
+
+    CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
@@ -125,6 +129,16 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         panel.add(scrollPane, BorderLayout.CENTER);
 //        panel.add(controlPanel1, BorderLayout.SOUTH);
         panel.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
+
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setOpaque(false);
+
+        toolBar.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        JButton button = new JButton(cloneModelsAction);
+        PanelUtils.setupComponent(button);
+        toolBar.add(button);
+        panel.add(toolBar, BorderLayout.SOUTH);
 
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         modelPanelParent.setOpaque(false);
@@ -217,16 +231,24 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
             }
+
+            cloneModelsAction.setEnabled(true);
         } else {
-            java.util.List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
-            for (int row : modelTable.getSelectedRows()) {
-                models.add(options.getPartitionSubstitutionModels().get(row));
-            }
-            if (models.size() == 0) {
-                models.addAll(options.getPartitionSubstitutionModels());
-            }
-            setSelectedModels(models);
+            setCurrentModels(getSelectedModels());
         }
+    }
+
+    private List<PartitionSubstitutionModel> getSelectedModels() {
+        java.util.List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
+
+        for (int row : modelTable.getSelectedRows()) {
+            models.add(options.getPartitionSubstitutionModels().get(row));
+        }
+        if (models.size() == 0) {
+            models.addAll(options.getPartitionSubstitutionModels());
+        }
+
+        return models;
     }
 
     /**
@@ -255,7 +277,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         updateBorder();
     }
 
-    private void setSelectedModels(List<PartitionSubstitutionModel> models) {
+    private void setCurrentModels(List<PartitionSubstitutionModel> models) {
         modelPanelParent.removeAll();
 
         currentModel = null;
@@ -266,17 +288,30 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
         if (dataTypes.size() == 1) {
-            modelBorder.setTitle("Multiple " + getDataTypeName(dataTypes.iterator().next()) + " substitution models selected");
+            DataType dataType = dataTypes.iterator().next();
+
+            List<PartitionSubstitutionModel> sourceModels = new ArrayList<PartitionSubstitutionModel>();
+
+            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+                if (model.getDataType().equals(dataType)) {
+                    sourceModels.add(model);
+                }
+            }
+
+            modelBorder.setTitle("Multiple " + getDataTypeName(dataType) + " substitution models selected");
 
             if (clonePartitionModelPanel == null) {
                 clonePartitionModelPanel = new ClonePartitionModelPanel();
             }
 
-            clonePartitionModelPanel.setOptions(models);
+            clonePartitionModelPanel.setOptions(models, sourceModels);
             modelPanelParent.add(clonePartitionModelPanel);
+
+            cloneModelsAction.setEnabled(true);
 
         } else {
             modelBorder.setTitle("Multiple mixed type substitution models selected");
+            cloneModelsAction.setEnabled(false);
         }
         repaint();
     }
@@ -307,6 +342,37 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 return "Microsatellite";
             default:
                 throw new IllegalArgumentException("Unsupported data type");
+
+        }
+    }
+
+    private void cloneModelSettings() {
+        if (cloneModelDialog == null) {
+            cloneModelDialog = new CloneModelDialog(frame);
+        }
+
+        Set<DataType> dataTypes = new HashSet<DataType>();
+        for (PartitionSubstitutionModel model : getSelectedModels()) {
+            dataTypes.add(model.getDataType());
+        }
+
+        if (dataTypes.size() == 1) {
+            DataType dataType = dataTypes.iterator().next();
+
+            List<PartitionSubstitutionModel> sourceModels = new ArrayList<PartitionSubstitutionModel>();
+
+            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+                if (model.getDataType().equals(dataType)) {
+                    sourceModels.add(model);
+                }
+            }
+
+            int result = cloneModelDialog.showDialog(sourceModels);
+
+            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
 
         }
     }
@@ -432,9 +498,16 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     }
 
-//    Action addModelAction = new AbstractAction("+") {
-//        public void actionPerformed(ActionEvent ae) {
-//            createModel();
-//        }
-//    };
+    public class CloneModelsAction extends AbstractAction {
+        public CloneModelsAction() {
+            super("Clone Settings");
+            setToolTipText("Use this tool to copy settings to selected models");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            cloneModelSettings();
+        }
+    }
+
+
 }

@@ -634,7 +634,7 @@ public class TreePriorGenerator extends Generator {
 
             case SKYGRID:
                 break;
-           case SPECIES_YULE:
+            case SPECIES_YULE:
             case SPECIES_YULE_CALIBRATION:
             case SPECIES_BIRTH_DEATH:
                 break;
@@ -716,7 +716,6 @@ public class TreePriorGenerator extends Generator {
                     GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, modelPrefix + "skygrid"),
-                            new Attribute.Default<String>(GMRFSkyrideLikelihoodParser.OLD_SKYRIDE, "false"),
                     }
             );
 
@@ -735,13 +734,13 @@ public class TreePriorGenerator extends Generator {
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS);
             Parameter numGridPoint = prior.getParameter("skygrid.numGridPoints");
             numGridPoint.initial = skyGridIntervalCount - 1;
-            writeParameter(numGridPoint,1, writer);
+            writeParameter(numGridPoint, 1, writer);
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS);
 
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.CUT_OFF);
             Parameter cutOff = prior.getParameter("skygrid.cutOff");
             cutOff.initial = skyGridInterval;
-            writeParameter(cutOff,1, writer);
+            writeParameter(cutOff, 1, writer);
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.CUT_OFF);
 
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
@@ -898,7 +897,7 @@ public class TreePriorGenerator extends Generator {
             case SKYGRID:
                 writeParameterRef(modelPrefix + "skygrid.precision", writer);
                 writeParameterRef(modelPrefix + "skygrid.logPopSize", writer);
-                // TODO Need to log interval time or time-at-last-change
+                writeParameterRef(modelPrefix + "skygrid.cutOff", writer);
 //                writeParameterRef(modelPrefix + "skygrid.groupSize", writer);
                 break;
             case GMRF_SKYRIDE:

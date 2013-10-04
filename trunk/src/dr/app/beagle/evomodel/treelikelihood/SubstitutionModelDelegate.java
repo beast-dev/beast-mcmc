@@ -25,17 +25,17 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-
 import beagle.Beagle;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
 import dr.util.Timer;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -117,8 +117,12 @@ public final class SubstitutionModelDelegate {
     }// END: Constructor
 
     public boolean canReturnComplexDiagonalization() {
-        // TODO Should return true if any model in list is complex.
-        return substitutionModelList.get(0).canReturnComplexDiagonalization();
+        for (SubstitutionModel model : substitutionModelList) {
+            if (model.canReturnComplexDiagonalization()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public int getEigenBufferCount() {

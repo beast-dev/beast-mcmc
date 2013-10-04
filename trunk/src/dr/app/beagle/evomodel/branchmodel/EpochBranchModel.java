@@ -74,7 +74,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         addVariable(epochTimes);
     }// END: Constructor
 
-    //    @Override
+    @Override
     public Mapping getBranchModelMapping(NodeRef node) {
 
         int nModels = substitutionModels.size();
@@ -84,7 +84,6 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
 
         double parentHeight = tree.getNodeHeight(tree.getParent(node));
         double nodeHeight = tree.getNodeHeight(node);
-        double branchLength = tree.getBranchLength(node);
 
         List<Double> weightList = new ArrayList<Double>();
         List<Integer> orderList = new ArrayList<Integer>();
@@ -98,7 +97,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         double currentHeight = nodeHeight;
 
         // find the epoch that the parent height is in...
-        while (epoch < epochCount && parentHeight > transitionTimes[epoch]) {
+        while (epoch < epochCount && parentHeight >= transitionTimes[epoch]) {
             weightList.add( transitionTimes[epoch] - currentHeight );
             orderList.add(epoch);
 
@@ -123,29 +122,29 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         }
 
         return new Mapping() {
-            //            @Override
+            @Override
             public int[] getOrder() {
                 return order;
             }
 
-            //            @Override
+            @Override
             public double[] getWeights() {
                 return weights;
             }
         };
     }// END: getBranchModelMapping
 
-    //    @Override  // use java 1.5
+    @Override
     public boolean requiresMatrixConvolution() {
         return true;
     }
 
-    //    @Override
+    @Override
     public List<SubstitutionModel> getSubstitutionModels() {
         return substitutionModels;
     }
 
-    //    @Override
+    @Override
     public SubstitutionModel getRootSubstitutionModel() {
         return substitutionModels.get(substitutionModels.size() - 1);
     }

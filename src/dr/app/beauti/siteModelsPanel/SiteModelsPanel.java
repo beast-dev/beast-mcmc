@@ -76,7 +76,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     private PartitionSubstitutionModel currentModel = null;
     private Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
     private TitledBorder modelBorder;
-    private ClonePartitionModelPanel clonePartitionModelPanel = null;
     private CloneModelDialog cloneModelDialog = null;
 
     BeautiFrame frame = null;
@@ -296,13 +295,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
         cloneModelsAction.setEnabled(dataTypes.size() == 1);
-
-        if (clonePartitionModelPanel == null) {
-            clonePartitionModelPanel = new ClonePartitionModelPanel();
-        }
-
-        clonePartitionModelPanel.setOptions(models);
-        modelPanelParent.add(clonePartitionModelPanel);
 
         repaint();
     }

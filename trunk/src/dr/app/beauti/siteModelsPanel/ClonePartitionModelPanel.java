@@ -58,9 +58,6 @@ public class ClonePartitionModelPanel extends OptionsPanel {
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
-    private JComboBox sourceModelCombo;
-    private JButton cloneModelButton;
-
     private List<PartitionSubstitutionModel> models;
 
     public ClonePartitionModelPanel() {
@@ -68,55 +65,17 @@ public class ClonePartitionModelPanel extends OptionsPanel {
         super(12, (OSType.isMac() ? 6 : 24));
         setOpaque(false);
 
-        cloneModelButton = new JButton();
-        cloneModelButton = new JButton("Clone source to selected models");
-        cloneModelButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ev) {
-                cloneModels();
-            }
-        });
-        // PanelUtils.setupComponent(cloneModelButton);
-        cloneModelButton
-                .setToolTipText("<html>Clones all the settings of source model<br>"
-                        + "to the selected models in the table.</html>");
     }
 
-    private void cloneModels() {
-        PartitionSubstitutionModel sourceModel = (PartitionSubstitutionModel)sourceModelCombo.getSelectedItem();
-        for (PartitionSubstitutionModel model : models) {
-            if (!model.equals(sourceModel)) {
-                model.copyFrom(sourceModel);
-            }
-        }
-    }
-
-    public void setOptions(List<PartitionSubstitutionModel> models, List<PartitionSubstitutionModel> sourceModels) {
-        this.models = models;
+    public void setOptions(List<PartitionSubstitutionModel> models) {
 
         removeAll();
-
-        sourceModelCombo = new JComboBox();
-        for (PartitionSubstitutionModel model : sourceModels) {
-            sourceModelCombo.addItem(model);
+        for (PartitionSubstitutionModel model : models) {
+            addSpanningComponent(new JLabel("<html>" +
+                            model.getName() +
+                            " (" + model.getDataType().getName() + ")" +
+                            "</html>"));
         }
-
-        PanelUtils.setupComponent(sourceModelCombo);
-        sourceModelCombo
-                .setToolTipText("<html>Select the substitution model to act as a source<br>to copy to the other selected models.</html>");
-
-        setupPanel();
-    }
-
-    /**
-     * Lays out the appropriate components in the panel for this partition
-     * model.
-     */
-    private void setupPanel() {
-
-        addSpanningComponent(new JLabel("<html>Select the substitution model to act as a source<br>to copy to the other selected models.</html>"));
-        addComponentWithLabel("Source Model:", sourceModelCombo);
-        addSeparator();
-        addSpanningComponent(cloneModelButton);
     }
 
 }

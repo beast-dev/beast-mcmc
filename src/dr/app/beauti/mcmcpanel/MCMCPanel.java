@@ -70,18 +70,18 @@ public class MCMCPanel extends BeautiPanel {
 
     private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
 
-    JTextField logFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + ".log");
-    JTextField treeFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + "." + STARBEASTOptions.TREE_FILE_NAME);
+    JTextArea logFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".log");
+    JTextArea treeFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + "." + STARBEASTOptions.TREE_FILE_NAME);
 //    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
 
 //    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
 //    JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
 
     JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
-    JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
+    JTextArea substTreeFileNameField = new JTextArea("untitled(subst).trees");
 
     JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
-    JTextField operatorAnalaysisFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + ".ops");
+    JTextArea operatorAnalaysisFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".ops");
 
     BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
@@ -268,7 +268,7 @@ public class MCMCPanel extends BeautiPanel {
                 "which performs an additional analysis after the standard MCMC chain has finished.");
         mleInfo.setColumns(50);
         PanelUtils.setupComponent(mleInfo);
-        optionsPanel.addComponent(mleInfo);
+        optionsPanel.addSpanningComponent(mleInfo);
 
         optionsPanel.addComponent(performMLE);
         //will be false by default

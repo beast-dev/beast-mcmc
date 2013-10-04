@@ -67,11 +67,24 @@ public final class CoalescentConstantLikelihood extends Likelihood.Abstract {
         	//System.err.println("Lineage count " + i + ": " + intervals.getLineageCount(i));
         	//System.err.println("Interval time " + i + ": " + intervals.getIntervalTime(i));
         	//System.err.println("Coalescent event " + i + ": " + intervals.getCoalescentEvents(i));
-        	if (intervals.getLineageCount(i) > 2 && intervals.getCoalescentEvents(i) > 0) {
+        	if (intervals.getLineageCount(i) > 2) {
         		logPDF += Math.log(Binomial.choose2(intervals.getLineageCount(i)));
+        		//System.err.println("PDF: " + Binomial.choose2(intervals.getLineageCount(i)));
         	}
         }
-        //System.err.println("logPDF = " + (-logPDF));
+        
+        //START TEST CONTEMPORANEOUS
+        /*double test = 0.0;
+        for (int i = 5; i > 2; --i) {
+            test += Math.log(Binomial.choose2(i));
+        }
+        if (test != logPDF) {
+        	System.err.println(test + "    " + logPDF);
+        	System.exit(0);
+        }*/
+        //END TEST CONTEMPORANEOUS
+        
+        //System.err.println("logPDF = " + (-logPDF) + "\n");
         return -logPDF;
         
 	}

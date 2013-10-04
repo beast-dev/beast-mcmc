@@ -341,6 +341,126 @@ public class LogGenerator extends Generator {
 
     }
 
+    public void writeDemographicLogToFile(XMLWriter writer,
+                               TreePriorGenerator treePriorGenerator,
+                               BranchRatesModelGenerator branchRatesModelGenerator,
+                               SubstitutionModelGenerator substitutionModelGenerator,
+                               TreeLikelihoodGenerator treeLikelihoodGenerator) {
+        writer.writeComment("demographic log file");
+
+        if (options.demographicLogFileName == null) {
+            options.demographicLogFileName = options.fileNameStem + ".demo.log";
+        }
+
+        String header = "Demographic Model: " + options.demographicModelName;
+        writer.writeOpenTag(LoggerParser.LOG,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, "fileLog"),
+                        new Attribute.Default<String>(LoggerParser.HEADER, header + ""),
+                        new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
+                        new Attribute.Default<String>(LoggerParser.FILE_NAME, options.logFileName),
+                        new Attribute.Default<Boolean>(LoggerParser.ALLOW_OVERWRITE_LOG, options.allowOverwriteLog)
+                });
+
+        if (options.hasData()) {
+            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, "posterior");
+        }
+        writer.writeIDref(CompoundLikelihoodParser.PRIOR, "prior");
+
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
+        }
+
+        if (options.useStarBEAST) {
+            for (Taxa taxa : options.speciesSets) {
+                // make tmrca(tree.name) eay to read in log for Tracer
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
+            }
+        } else {
+            for (Taxa taxa : options.taxonSets) {
+                // make tmrca(tree.name) eay to read in log for Tracer
+                PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
+            }
+        }
+
+//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
+//	        treePriorGenerator.setModelPrefix("");
+//        	treePriorGenerator.writeParameterLog(options.activedSameTreePrior, writer);
+//        } else { // no species
+        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+//	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // priorName.treeModel
+            treePriorGenerator.writeParameterLog(prior, writer);
+        }
+//	    }
+
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            substitutionModelGenerator.writeLog(model, writer);
+            if (model.hasCodon()) {
+                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
+            }
+        }
+
+        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
+            if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
+                writer.writeIDref(ParameterParser.PARAMETER, clockModelGroup.getName());
+                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
+                    if (model.getClockType() == ClockType.UNCORRELATED) {
+                        switch (model.getClockDistributionType()) {
+                            case LOGNORMAL:
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                                break;
+                            case GAMMA:
+                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+//                            break;
+                            case CAUCHY:
+                                throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+//                            break;
+                            case EXPONENTIAL:
+                                // nothing required
+                                break;
+                        }
+                    }
+                }
+            } else {
+                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
+                    branchRatesModelGenerator.writeLog(model, writer);
+                }
+            }
+        }
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            branchRatesModelGenerator.writeLogStatistic(model, writer);
+        }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
+
+        treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
+        branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
+
+        // coalescentLikelihood
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            PartitionTreePrior prior = model.getPartitionTreePrior();
+            treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+            writer.writeText("");
+        }
+
+        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+            if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
+                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+            } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
+            }
+        }
+
+        writer.writeCloseTag(LoggerParser.LOG);
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_FILE_LOG, writer);
+
+    }
+
     /**
      * write tree log to file
      *

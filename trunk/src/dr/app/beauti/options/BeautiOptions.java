@@ -1260,6 +1260,11 @@ public class BeautiOptions extends ModelOptions {
     
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
+
+    public boolean generateDemographicLogFile = false;
+    public String demographicModelName = null;
+    public String demographicLogFileName = null;
+
     public boolean allowOverwriteLog = false;
     //    public boolean mapTreeLog = false;
     //    public String mapTreeFileName = null;

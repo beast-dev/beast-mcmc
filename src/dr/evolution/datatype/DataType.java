@@ -403,6 +403,30 @@ public abstract class DataType implements Serializable {
         return (state == getGapState());
     }
 
+    public String getName() {
+        switch (getType()) {
+            case DataType.NUCLEOTIDES:
+                return "Nucleotide";
+            case DataType.AMINO_ACIDS:
+                return "Amino Acid";
+            case DataType.CODONS:
+                return "Codon";
+            case DataType.TWO_STATES:
+                return "Binary";
+            case DataType.COVARION:
+                return "Covarion";
+            case DataType.GENERAL:
+                return "Discrete Traits";
+            case DataType.CONTINUOUS:
+                return "Continuous Traits";
+            case DataType.MICRO_SAT:
+                return "Microsatellite";
+            default:
+                throw new IllegalArgumentException("Unsupported data type");
+
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

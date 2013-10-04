@@ -231,8 +231,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
             }
-
-            cloneModelsAction.setEnabled(true);
         } else {
             setCurrentModels(getSelectedModels());
         }
@@ -274,6 +272,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         } else {
 
         }
+
+        cloneModelsAction.setEnabled(true);
+
         updateBorder();
     }
 
@@ -289,61 +290,31 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         if (dataTypes.size() == 1) {
             DataType dataType = dataTypes.iterator().next();
-
-            List<PartitionSubstitutionModel> sourceModels = new ArrayList<PartitionSubstitutionModel>();
-
-            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-                if (model.getDataType().equals(dataType)) {
-                    sourceModels.add(model);
-                }
-            }
-
-            modelBorder.setTitle("Multiple " + getDataTypeName(dataType) + " substitution models selected");
-
-            if (clonePartitionModelPanel == null) {
-                clonePartitionModelPanel = new ClonePartitionModelPanel();
-            }
-
-            clonePartitionModelPanel.setOptions(models, sourceModels);
-            modelPanelParent.add(clonePartitionModelPanel);
-
-            cloneModelsAction.setEnabled(true);
-
+            modelBorder.setTitle("Multiple " + dataType.getName() + " substitution models selected");
         } else {
             modelBorder.setTitle("Multiple mixed type substitution models selected");
-            cloneModelsAction.setEnabled(false);
         }
+
+        cloneModelsAction.setEnabled(dataTypes.size() == 1);
+
+        if (clonePartitionModelPanel == null) {
+            clonePartitionModelPanel = new ClonePartitionModelPanel();
+        }
+
+        clonePartitionModelPanel.setOptions(models);
+        modelPanelParent.add(clonePartitionModelPanel);
+
         repaint();
     }
 
     private void updateBorder() {
 
         if (currentModel != null) {
-            modelBorder.setTitle(getDataTypeName(currentModel.getDataType()) + " Substitution Model - " + currentModel.getName());
+            modelBorder.setTitle(currentModel.getDataType().getName() + " Substitution Model - " + currentModel.getName());
         } else {
             modelBorder.setTitle("Multiple substitution models selected");
         }
         repaint();
-    }
-
-    private String getDataTypeName(DataType dataType) {
-        switch (dataType.getType()) {
-            case DataType.NUCLEOTIDES:
-                return "Nucleotide";
-            case DataType.AMINO_ACIDS:
-                return "Amino Acid";
-            case DataType.TWO_STATES:
-                return "Binary";
-            case DataType.GENERAL:
-                return "Discrete Traits";
-            case DataType.CONTINUOUS:
-                return "Continuous Traits";
-            case DataType.MICRO_SAT:
-                return "Microsatellite";
-            default:
-                throw new IllegalArgumentException("Unsupported data type");
-
-        }
     }
 
     private void cloneModelSettings() {
@@ -373,6 +344,14 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 return;
             }
 
+            PartitionSubstitutionModel sourceModel = cloneModelDialog.getSourceModel();
+            for (PartitionSubstitutionModel model : getSelectedModels()) {
+                if (!model.equals(sourceModel)) {
+                    model.copyFrom(sourceModel);
+                }
+            }
+
+            repaint();
 
         }
     }

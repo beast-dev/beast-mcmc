@@ -46,6 +46,7 @@ public abstract class DataType implements Serializable {
     public static final int GENERAL = 4;
     public static final int COVARION = 5;
     public static final int MICRO_SAT = 6;
+
     public static final int P2PTYPE = 7;
     public static final int CONTINUOUS = 8;
 
@@ -401,5 +402,23 @@ public abstract class DataType implements Serializable {
     public boolean isGapState(int state) {
         return (state == getGapState());
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DataType)) return false;
+
+        DataType dataType = (DataType) o;
+
+        if (this.getType() != dataType.getType()) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return getType();
+    }
+
 
 }

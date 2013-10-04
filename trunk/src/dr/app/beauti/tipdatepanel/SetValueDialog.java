@@ -37,17 +37,20 @@ import javax.swing.border.EmptyBorder;
  * @author Walter Xie
  * @version $Id: GuessTraitDialog.java,v 1.4 2009/05/25 13:29:34 rambaut Exp $
  */
-public class DateValueDialog {
+public class SetValueDialog {
 
     private JFrame frame;
     private final OptionsPanel optionPanel;
+    private String title = "Set Values for Taxa";
 
     JLabel descriptionText = new JLabel();
 
     private final JTextField valueText = new JTextField(16);
 
-    public DateValueDialog(JFrame frame) {
+    public SetValueDialog(JFrame frame, String title) {
         this.frame = frame;
+
+        this.title = title;
 
         optionPanel = new OptionsPanel(12, 12);
 
@@ -57,6 +60,10 @@ public class DateValueDialog {
 
     public void setDescription(String description) {
         descriptionText.setText(description);
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public int showDialog() {
@@ -69,7 +76,7 @@ public class DateValueDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Set Date Value for Taxa");
+        final JDialog dialog = optionPane.createDialog(frame, title);
         dialog.pack();
 
         dialog.setVisible(true);
@@ -83,7 +90,7 @@ public class DateValueDialog {
         return result;
     }
 
-    public String getDateValue() {
+    public String getValue() {
         return valueText.getText();
     }
 }

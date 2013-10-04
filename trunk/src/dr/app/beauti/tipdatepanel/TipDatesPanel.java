@@ -31,7 +31,6 @@ import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.traitspanel.TraitValueDialog;
 import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
@@ -72,6 +71,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     ClearDatesAction clearDatesAction = new ClearDatesAction();
     GuessDatesAction guessDatesAction = new GuessDatesAction();
 
+    SetPrecisionAction setPrecisionAction = new SetPrecisionAction();
+
     JCheckBox usingTipDates = new JCheckBox("Use tip dates");
     JCheckBox specifyOriginDate = new JCheckBox("Specify origin date:");
     JTextField originDateText = new JTextField(20);
@@ -96,7 +97,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     double[] heights = null;
 
     private GuessDatesDialog guessDatesDialog = null;
-    private DateValueDialog dateValueDialog = null;
+    private SetValueDialog dateValueDialog = null;
+    private SetValueDialog precisionValueDialog = null;
 
     public TipDatesPanel(BeautiFrame parent) {
 
@@ -166,6 +168,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         toolBar1.add(button);
 
         button = new JButton(clearDatesAction);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
+
+        button = new JButton(setPrecisionAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
@@ -430,12 +436,14 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         int result;
         do {
             if (dateValueDialog == null) {
-                dateValueDialog = new DateValueDialog(frame);
+                dateValueDialog = new SetValueDialog(frame, "Set Date for Taxa");
             }
 
             int[] selRows = dataTable.getSelectedRows();
 
-            if (selRows.length > 0) {
+            if (selRows.length == 1) {
+                precisionValueDialog.setDescription("Set date value for selected taxon");
+            } else if (selRows.length > 1) {
                 dateValueDialog.setDescription("Set date values for selected taxa");
             } else {
                 dateValueDialog.setDescription("Set date values for all taxa");
@@ -448,7 +456,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
             }
 
 //            currentTrait.guessTrait = true; // ?? no use?
-            String value = dateValueDialog.getDateValue();
+            String value = dateValueDialog.getValue();
 
             java.util.Date origin = new java.util.Date(0);
             double d = Double.parseDouble(value);
@@ -466,6 +474,57 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
             // adjust the dates to the current timescale...
             timeScaleChanged();
+
+            dataTableModel.fireTableDataChanged();
+        } while (result < 0);
+    }
+
+    public void setPrecisions() {
+        if (options.taxonList == null) { // validation of check empty taxonList
+            return;
+        }
+
+        int result;
+        do {
+            if (precisionValueDialog == null) {
+                precisionValueDialog = new SetValueDialog(frame, "Set Precision for Taxa");
+            }
+
+            int[] selRows = dataTable.getSelectedRows();
+
+            if (selRows.length == 1) {
+                precisionValueDialog.setDescription("Set precision value for selected taxon");
+            } else if (selRows.length > 1) {
+                precisionValueDialog.setDescription("Set precision values for selected taxa");
+            } else {
+                precisionValueDialog.setDescription("Set precision values for all taxa");
+            }
+
+            result = precisionValueDialog.showDialog();
+
+            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            double value;
+            try {
+                value = Double.parseDouble(precisionValueDialog.getValue());
+            } catch (NumberFormatException nfe) {
+                value = 0.0;
+            }
+            if (value < 0.0 || Double.isNaN(value) || Double.isInfinite(value)) {
+                value = 0.0;
+            }
+
+            if (selRows.length > 0) {
+                for (int row : selRows) {
+                    options.taxonList.getTaxon(row).getDate().setPrecision(value);
+                }
+            } else {
+                for (Taxon taxon : options.taxonList) {
+                    taxon.setAttribute("precision", value);
+                }
+            }
 
             dataTableModel.fireTableDataChanged();
         } while (result < 0);
@@ -547,7 +606,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         public SetDatesAction() {
             super("Set Dates");
-            setToolTipText("Use this tool to set sampling date values from selected taxa");
+            setToolTipText("Use this tool to set sampling date values for the selected taxa");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -584,6 +643,22 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             guessDates();
+        }
+    }
+
+    public class SetPrecisionAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = -7281309694753868639L;
+
+        public SetPrecisionAction() {
+            super("Set Precision");
+            setToolTipText("Use this tool to set precision values for the selected taxa");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            setPrecisions();
         }
     }
 

@@ -1,7 +1,7 @@
 /*
  * GMRFSkyrideBlockUpdateOperatorParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -44,6 +44,7 @@ import java.util.logging.*;
 public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParser {
 
     public static final String BLOCK_UPDATE_OPERATOR = "gmrfBlockUpdateOperator";
+    public static final String GRID_BLOCK_UPDATE_OPERATOR = "gmrfGridBlockUpdateOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String MAX_ITERATIONS = "maxIterations";
     public static final String STOP_VALUE = "stopValue";
@@ -52,6 +53,13 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
 
     public String getParserName() {
         return BLOCK_UPDATE_OPERATOR;
+    }
+
+    public String[] getParserNames() {
+        return new String[]{
+                getParserName(),
+                GRID_BLOCK_UPDATE_OPERATOR,
+        };
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -99,8 +107,9 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
         double stopValue = xo.getAttribute(STOP_VALUE, 0.01);
 
 
-        if (xo.getAttribute(OLD_SKYRIDE, true)) {
-
+        if (xo.getAttribute(OLD_SKYRIDE, true)
+                && !(xo.getName().compareTo(GRID_BLOCK_UPDATE_OPERATOR) == 0)
+                ) {
             GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
             return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                     maxIterations, stopValue);

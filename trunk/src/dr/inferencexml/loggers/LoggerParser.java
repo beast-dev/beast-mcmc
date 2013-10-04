@@ -47,6 +47,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
     public static final String ECHO = "echo";
     public static final String ECHO_EVERY = "echoEvery";
     public static final String TITLE = "title";
+    public static final String HEADER = "header";
     public static final String FILE_NAME = FileHelpers.FILE_NAME;
     public static final String FORMAT = "format";
     public static final String TAB = "tab";
@@ -88,18 +89,30 @@ public class LoggerParser extends AbstractXMLObjectParser {
         // added a performance measurement delay to avoid the full evaluation period.
         final MCLogger logger = new MCLogger(formatter, logEvery, performanceReport, 10000);
 
+        String title = null;
         if (xo.hasAttribute(TITLE)) {
-            logger.setTitle(xo.getStringAttribute(TITLE));
-        } else {
+            title = xo.getStringAttribute(TITLE);
+        }
 
+        String header = null;
+        if (xo.hasAttribute(HEADER)) {
+            header = xo.getStringAttribute(HEADER);
+        }
+
+        if (title == null) {
             final BeastVersion version = new BeastVersion();
 
-            final String title = "BEAST " + version.getVersionString() +
+            title = "BEAST " + version.getVersionString() +
                     ", " + version.getBuildString() + "\n" +
-
+                    (header != null ? header + "\n" : "") +
                     "Generated " + (new Date()).toString() + " [seed=" + MathUtils.getSeed() + "]";
-            logger.setTitle(title);
+        } else {
+            if (header != null) {
+                title += "\n" + header;
+            }
         }
+
+        logger.setTitle(title);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
 
@@ -148,6 +161,8 @@ public class LoggerParser extends AbstractXMLObjectParser {
                             "If no file name is specified then log is sent to standard output", true),
             new StringAttributeRule(TITLE,
                     "The title of the log", true),
+            new StringAttributeRule(HEADER,
+                    "The subtitle of the log", true),
             new OrRule(
                     new XMLSyntaxRule[]{
                             new ElementRule(Columns.class, 1, Integer.MAX_VALUE),

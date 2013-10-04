@@ -29,39 +29,39 @@ import dr.app.util.OSType;
  * @author Guy Baele
  */
 public class MLEDialog {
-	
-	private JFrame frame;
-	
-	private final OptionsPanel optionsPanel;
-	
-	private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName, labelStepDistribution;
-	
-	private WholeNumberField pathStepsField = new WholeNumberField(1, Integer.MAX_VALUE);
-	private WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
-	private WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
-	
-	private JTextField logFileNameField = new JTextField("MLE.log");
-		
-	private JComboBox stepDistribution = new JComboBox();
-	
+
+    private JFrame frame;
+
+    private final OptionsPanel optionsPanel;
+
+    private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName, labelStepDistribution;
+
+    private WholeNumberField pathStepsField = new WholeNumberField(1, Integer.MAX_VALUE);
+    private WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
+    private WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
+
+    private JTextArea logFileNameField = new JTextArea("MLE.log");
+
+    private JComboBox stepDistribution = new JComboBox();
+
     private MarginalLikelihoodEstimationOptions options;
-    
+
     private String description = "Settings for marginal likelihood estimation";
-	
-	public MLEDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options) {
-		this.frame = frame;
-		this.options = options;
+
+    public MLEDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options) {
+        this.frame = frame;
+        this.options = options;
 
         optionsPanel = new OptionsPanel(12, 12);
-		
+
         optionsPanel.setOpaque(false);
 
         JTextArea mleInfo = new JTextArea("Set the options to perform marginal likelihoood " +
-        		"estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS).");
+                "estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS).");
         mleInfo.setColumns(56);
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addSpanningComponent(mleInfo);
-        
+
         pathStepsField.setValue(100);
         pathStepsField.setColumns(16);
         pathStepsField.setMinimumSize(pathStepsField.getPreferredSize());
@@ -77,7 +77,7 @@ public class MLEDialog {
                 //options.pathSteps = pathStepsField.getValue();
             }
         });*/
-        
+
         chainLengthField.setValue(1000000);
         chainLengthField.setColumns(16);
         chainLengthField.setMinimumSize(chainLengthField.getPreferredSize());
@@ -95,7 +95,7 @@ public class MLEDialog {
         });*/
 
         optionsPanel.addSeparator();
-        
+
         logEveryField.setValue(1000);
         logEveryField.setColumns(16);
         logEveryField.setMinimumSize(logEveryField.getPreferredSize());
@@ -113,11 +113,11 @@ public class MLEDialog {
         });*/
 
         optionsPanel.addSeparator();
-        
+
         logFileNameField.setColumns(32);
+        logFileNameField.setEditable(false);
         logFileNameField.setMinimumSize(logFileNameField.getPreferredSize());
         labelLogFileName = optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
-        logFileNameField.setEditable(true);
         /*logFileNameField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
@@ -129,27 +129,27 @@ public class MLEDialog {
                 //options.mleFileName = logFileNameField.getText();
             }
         });*/
-        
+
         optionsPanel.addSeparator();
-        
-        JTextArea betaInfo = new JTextArea("By default, the power posteriors are determined according to " + 
-        		"evenly spaced quantiles of a Beta(0.3, 1.0) distribution, thereby estimating " +
-        		"more power posteriors close to the prior.");
+
+        JTextArea betaInfo = new JTextArea("By default, the power posteriors are determined according to " +
+                "evenly spaced quantiles of a Beta(0.3, 1.0) distribution, thereby estimating " +
+                "more power posteriors close to the prior.");
         betaInfo.setColumns(56);
         PanelUtils.setupComponent(betaInfo);
         optionsPanel.addSpanningComponent(betaInfo);
-        
+
         stepDistribution.addItem("Beta");
         labelStepDistribution = optionsPanel.addComponentWithLabel("Path step distribution:", stepDistribution);
-        
+
         optionsPanel.addSeparator();
-        
-        JTextArea mleTutorial = new JTextArea("Additional information on marginal likelihood estimation " + 
-        		"can be found on http://beast.bio.ed.ac.uk/Model_selection");
-       	mleTutorial.setColumns(56);
-       	PanelUtils.setupComponent(mleTutorial);
+
+        JTextArea mleTutorial = new JTextArea("Additional information on marginal likelihood estimation " +
+                "can be found on http://beast.bio.ed.ac.uk/Model_selection");
+        mleTutorial.setColumns(56);
+        PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
-        
+
         optionsPanel.addSeparator();
         
         /*JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -162,10 +162,10 @@ public class MLEDialog {
         scrollPane.getViewport().setOpaque(false);
 
         add(scrollPane, BorderLayout.CENTER);*/
-        
-	}
-	
-	public int showDialog() {
+
+    }
+
+    public int showDialog() {
 
         JOptionPane optionPane = new JOptionPane(optionsPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -193,25 +193,29 @@ public class MLEDialog {
 		return optionsPanel;
 	}*/
 
-	public void setOptions(MarginalLikelihoodEstimationOptions options) {
-		this.options = options;
-		
-		pathStepsField.setValue(options.pathSteps);
-		chainLengthField.setValue(options.mleChainLength);
-		logEveryField.setValue(options.mleLogEvery);
-		
-		logFileNameField.setText(options.mleFileName);
-		
-		optionsPanel.validate();
-        optionsPanel.repaint();
-	}
+    public void setFilenameStem(String fileNameStem, boolean addTxt) {
+        logFileNameField.setText(fileNameStem + ".mle.log" + (addTxt ? ".txt" : ""));
+    }
 
-	public void getOptions(MarginalLikelihoodEstimationOptions options) {
-		options.pathSteps = pathStepsField.getValue();
-		options.mleChainLength = chainLengthField.getValue();
-		options.mleLogEvery = logEveryField.getValue();
-		
-		options.mleFileName = logFileNameField.getText();
-	}
+    public void setOptions(MarginalLikelihoodEstimationOptions options) {
+        this.options = options;
+
+        pathStepsField.setValue(options.pathSteps);
+        chainLengthField.setValue(options.mleChainLength);
+        logEveryField.setValue(options.mleLogEvery);
+
+        logFileNameField.setText(options.mleFileName);
+
+        optionsPanel.validate();
+        optionsPanel.repaint();
+    }
+
+    public void getOptions(MarginalLikelihoodEstimationOptions options) {
+        options.pathSteps = pathStepsField.getValue();
+        options.mleChainLength = chainLengthField.getValue();
+        options.mleLogEvery = logEveryField.getValue();
+
+        options.mleFileName = logFileNameField.getText();
+    }
 
 }

@@ -86,7 +86,7 @@ public class MCMCPanel extends BeautiPanel {
     BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
     private BeautiOptions options;
-    
+
     private MLEDialog mleDialog = null;
     private MarginalLikelihoodEstimationOptions mleOptions;
 
@@ -260,12 +260,12 @@ public class MCMCPanel extends BeautiPanel {
                 frame.setDirty();
             }
         });
-        
+
         optionsPanel.addSeparator();
-        
+
         JTextArea mleInfo = new JTextArea("Select the option below to perform marginal likelihoood " +
-        		"estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS) " + 
-		"which performs an additional analysis after the standard MCMC chain has finished.");
+                "estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS) " +
+                "which performs an additional analysis after the standard MCMC chain has finished.");
         mleInfo.setColumns(50);
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addComponent(mleInfo);
@@ -276,27 +276,31 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.addComponent(buttonMLE);
         buttonMLE.setEnabled(false);
         performMLE.addActionListener(new java.awt.event.ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        		if (performMLE.isSelected()) {
+            public void actionPerformed(ActionEvent e) {
+                if (performMLE.isSelected()) {
                     mleOptions.performMLE = true;
-        			buttonMLE.setEnabled(true);
-        		} else {
+                    buttonMLE.setEnabled(true);
+                } else {
                     mleOptions.performMLE = false;
-        			buttonMLE.setEnabled(false);
-        		}
-        	}
+                    buttonMLE.setEnabled(false);
+                }
+            }
         });
         buttonMLE.addActionListener(new java.awt.event.ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        		if (mleDialog == null) {
+            public void actionPerformed(ActionEvent e) {
+                if (mleDialog == null) {
                     mleDialog = new MLEDialog(frame, mleOptions);
-                    int result = mleDialog.showDialog();
-                    
-                    if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                        return;
-                    }
                 }
-        	}
+
+                mleDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
+
+                int result = mleDialog.showDialog();
+
+                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                }
+
+            }
         });
 
 //        logFileNameField.addKeyListener(listener);
@@ -367,7 +371,7 @@ public class MCMCPanel extends BeautiPanel {
         mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
 
         if (mleDialog != null) {
-        	mleDialog.setOptions(mleOptions);
+            mleDialog.setOptions(mleOptions);
         }
 
         chainLengthField.setValue(options.chainLength);
@@ -468,11 +472,11 @@ public class MCMCPanel extends BeautiPanel {
         options.operatorAnalysisFileName = operatorAnalaysisFileNameField.getText();
 
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
-        
+
         if (mleDialog != null) {
-        	mleDialog.getOptions(mleOptions);
+            mleDialog.getOptions(mleOptions);
         }
-        
+
     }
 
     public JComponent getExportableComponent() {

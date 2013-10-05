@@ -76,7 +76,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
     LinkTreesAction linkTreesAction = new LinkTreesAction();
 
     CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
-    JButton createTraitPartitionButton;
+
+    ViewPartitionAction viewPartitionAction = new ViewPartitionAction();
+
 //    ShowAction showAction = new ShowAction();
 
     public JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
@@ -197,11 +199,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
 
-        createTraitPartitionButton = new JButton(createTraitPartitionAction);
-
+        button = new JButton(viewPartitionAction);
         controlPanel1.add(new JLabel("   "));
-        PanelUtils.setupComponent(createTraitPartitionButton);
-        controlPanel1.add(createTraitPartitionButton);
+        viewPartitionAction.setEnabled(false);
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
+
+        button = new JButton(createTraitPartitionAction);
+        controlPanel1.add(new JLabel("   "));
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
 
 //        controlPanel1.add(new JLabel(" or "));
 //
@@ -280,9 +287,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireDataChanged() {
-//        options.updateLinksBetweenPDPCMPSMPTMPTPP();
         options.updatePartitionAllLinks();
-//        frame.setAllOptions();
         frame.setDirty();
     }
 
@@ -344,6 +349,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         unlinkTreesAction.setEnabled(canUnlink);
         linkTreesAction.setEnabled(canLink);
+
+        viewPartitionAction.setEnabled(options.dataPartitions.size() > 1 && hasSelection);
     }
 
     public void setOptions(BeautiOptions options) {
@@ -356,8 +363,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean traitAvailable = options.traits != null && options.traits.size() > 0 && (!options.useStarBEAST);
 
         useStarBEASTCheck.setEnabled(taxaAvailable);
-        createTraitPartitionButton.setEnabled(traitAvailable);
-
+        createTraitPartitionAction.setEnabled(traitAvailable);
 
         dataTableModel.fireTableDataChanged();
     }
@@ -859,6 +865,17 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             linkTrees();
+        }
+    }
+
+    public class ViewPartitionAction extends AbstractAction {
+        public ViewPartitionAction() {
+            super("View Partition ...");
+            setToolTipText("View alignment in a window.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            showAlignment();
         }
     }
 

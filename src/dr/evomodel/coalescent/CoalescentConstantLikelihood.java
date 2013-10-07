@@ -35,7 +35,9 @@ import dr.inference.model.Likelihood;
  *
  * @author Guy Baele
  */
-public final class CoalescentConstantLikelihood extends Likelihood.Abstract {
+public class CoalescentConstantLikelihood extends Likelihood.Abstract {
+	
+	public final static boolean COALESCENT_EVENTS_ONLY = false;
 
 	private TreeModel treeModel;
 	private TreeIntervals intervals;
@@ -67,10 +69,14 @@ public final class CoalescentConstantLikelihood extends Likelihood.Abstract {
         	//System.err.println("Lineage count " + i + ": " + intervals.getLineageCount(i));
         	//System.err.println("Interval time " + i + ": " + intervals.getIntervalTime(i));
         	//System.err.println("Coalescent event " + i + ": " + intervals.getCoalescentEvents(i));
-        	if (intervals.getLineageCount(i) > 2) {
-        		logPDF += Math.log(Binomial.choose2(intervals.getLineageCount(i)));
-        		//System.err.println("PDF: " + Binomial.choose2(intervals.getLineageCount(i)));
-        	}
+        	if (COALESCENT_EVENTS_ONLY) {
+        		if (intervals.getCoalescentEvents(i) > 0) {
+        			logPDF += Math.log(Binomial.choose2(intervals.getLineageCount(i)));
+        		}
+        	} else if (intervals.getLineageCount(i) > 2) {
+       			logPDF += Math.log(Binomial.choose2(intervals.getLineageCount(i)));
+       			//System.err.println("PDF: " + Binomial.choose2(intervals.getLineageCount(i)));
+       		}
         }
         
         //START TEST CONTEMPORANEOUS
@@ -85,6 +91,7 @@ public final class CoalescentConstantLikelihood extends Likelihood.Abstract {
         //END TEST CONTEMPORANEOUS
         
         //System.err.println("logPDF = " + (-logPDF) + "\n");
+                
         return -logPDF;
         
 	}

@@ -409,6 +409,7 @@ public class PartitionClockModel extends PartitionOptions {
     }
 
     public void setClockModelGroup(ClockModelGroup clockModelGroup) {
+        options.clearDataPartitionCaches();
         this.clockModelGroup = clockModelGroup;
     }
 

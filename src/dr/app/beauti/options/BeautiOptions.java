@@ -153,6 +153,8 @@ public class BeautiOptions extends ModelOptions {
         statistics.clear();
 
         shareMicroSat = true;
+
+        clearDataPartitionCaches();
     }
 
     public void selectTaxonSetsStatistics(List<Parameter> params) {
@@ -460,74 +462,147 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
+    private final Map<PartitionSubstitutionModel, List<AbstractPartitionData>> psmCache = new HashMap<PartitionSubstitutionModel, List<AbstractPartitionData>>();
+
     public List<AbstractPartitionData> getDataPartitions(PartitionSubstitutionModel model) {
-        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
-        for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionSubstitutionModel() == model) {
-                pdList.add(pd);
+        List<AbstractPartitionData> pdList = psmCache.get(model);
+
+        if (pdList == null) {
+            pdList = new ArrayList<AbstractPartitionData>();
+
+            for (AbstractPartitionData pd : dataPartitions) {
+                if (pd.getPartitionSubstitutionModel() == model) {
+                    pdList.add(pd);
+                }
             }
+
+            psmCache.put(model, pdList);
         }
         return pdList;
     }
+
+    private final Map<PartitionClockModel, List<AbstractPartitionData>> pcmCache = new HashMap<PartitionClockModel, List<AbstractPartitionData>>();
 
     public List<AbstractPartitionData> getDataPartitions(PartitionClockModel model) {
-        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
-        for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionClockModel() == model) {
-                pdList.add(pd);
+        List<AbstractPartitionData> pdList = pcmCache.get(model);
+
+        if (pdList == null) {
+            pdList = new ArrayList<AbstractPartitionData>();
+
+            for (AbstractPartitionData pd : dataPartitions) {
+                if (pd.getPartitionClockModel() == model) {
+                    pdList.add(pd);
+                }
             }
+
+            pcmCache.put(model, pdList);
         }
         return pdList;
     }
+
+    private final Map<PartitionTreeModel, List<AbstractPartitionData>> ptmCache = new HashMap<PartitionTreeModel, List<AbstractPartitionData>>();
 
     public List<AbstractPartitionData> getDataPartitions(PartitionTreeModel model) {
-        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
-        for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionTreeModel() == model) {
-                pdList.add(pd);
+        List<AbstractPartitionData> pdList = ptmCache.get(model);
+
+        if (pdList == null) {
+            pdList = new ArrayList<AbstractPartitionData>();
+
+            for (AbstractPartitionData pd : dataPartitions) {
+                if (pd.getPartitionTreeModel() == model) {
+                    pdList.add(pd);
+                }
             }
+
+            ptmCache.put(model, pdList);
         }
         return pdList;
     }
+
+    private final Map<PartitionTreePrior, List<AbstractPartitionData>> ptpCache = new HashMap<PartitionTreePrior, List<AbstractPartitionData>>();
 
     public List<AbstractPartitionData> getDataPartitions(PartitionTreePrior prior) {
-        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
-        for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionTreeModel().getPartitionTreePrior() == prior) {
-                pdList.add(pd);
+        List<AbstractPartitionData> pdList = ptpCache.get(prior);
+
+        if (pdList == null) {
+            pdList = new ArrayList<AbstractPartitionData>();
+
+            for (AbstractPartitionData pd : dataPartitions) {
+                if (pd.getPartitionTreeModel().getPartitionTreePrior() == prior) {
+                    pdList.add(pd);
+                }
             }
+
+            ptpCache.put(prior, pdList);
         }
         return pdList;
     }
+
+    private final Map<PartitionClockModelTreeModelLink, List<AbstractPartitionData>> pcmtmlCache = new HashMap<PartitionClockModelTreeModelLink, List<AbstractPartitionData>>();
 
     public List<AbstractPartitionData> getDataPartitions(PartitionClockModelTreeModelLink link) {
-        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
-        for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionClockModel() == link.getPartitionClockModel() && pd.getPartitionTreeModel() == link.getPartitionTreeTree()) {
-                pdList.add(pd);
+        List<AbstractPartitionData> pdList = pcmtmlCache.get(link);
+
+        if (pdList == null) {
+            pdList = new ArrayList<AbstractPartitionData>();
+
+            for (AbstractPartitionData pd : dataPartitions) {
+                if (pd.getPartitionClockModel() == link.getPartitionClockModel() && pd.getPartitionTreeModel() == link.getPartitionTreeTree()) {
+                    pdList.add(pd);
+                }
             }
+
+            pcmtmlCache.put(link, pdList);
         }
         return pdList;
     }
+
+    private final Map<PartitionClockModelSubstModelLink, List<AbstractPartitionData>> pcmsmlCache = new HashMap<PartitionClockModelSubstModelLink, List<AbstractPartitionData>>();
 
     public List<AbstractPartitionData> getDataPartitions(PartitionClockModelSubstModelLink link) {
-        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
-        for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionClockModel() == link.getClockModel() && pd.getPartitionSubstitutionModel() == link.getSubstModel()) {
-                pdList.add(pd);
+        List<AbstractPartitionData> pdList = pcmsmlCache.get(link);
+
+        if (pdList == null) {
+            pdList = new ArrayList<AbstractPartitionData>();
+
+            for (AbstractPartitionData pd : dataPartitions) {
+                if (pd.getPartitionClockModel() == link.getClockModel() && pd.getPartitionSubstitutionModel() == link.getSubstModel()) {
+                    pdList.add(pd);
+                }
             }
+
+            pcmsmlCache.put(link, pdList);
         }
         return pdList;
     }
 
+    private final Map<ClockModelGroup, List<AbstractPartitionData>> cmgCache = new HashMap<ClockModelGroup, List<AbstractPartitionData>>();
+
     public List<AbstractPartitionData> getDataPartitions(ClockModelGroup clockModelGroup) {
-        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
-        for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionClockModel() != null && pd.getPartitionClockModel().getClockModelGroup() == clockModelGroup) {
-                pdList.add(pd);
+        List<AbstractPartitionData> pdList = pcmsmlCache.get(clockModelGroup);
+
+        if (pdList == null) {
+            pdList = new ArrayList<AbstractPartitionData>();
+
+            for (AbstractPartitionData pd : dataPartitions) {
+                if (pd.getPartitionClockModel() != null && pd.getPartitionClockModel().getClockModelGroup() == clockModelGroup) {
+                    pdList.add(pd);
+                }
             }
+
+            cmgCache.put(clockModelGroup, pdList);
         }
         return pdList;
+    }
+
+    public void clearDataPartitionCaches() {
+        psmCache.clear();
+        pcmCache.clear();
+        ptmCache.clear();
+        ptpCache.clear();
+        pcmtmlCache.clear();
+        pcmsmlCache.clear();
+        cmgCache.clear();
     }
 
     public boolean isEBSPSharingSamePrior() {
@@ -716,6 +791,7 @@ public class BeautiOptions extends ModelOptions {
                 model.setPartitionTreePrior(ptp);
             }
         }
+        clearDataPartitionCaches();
     }
 
     // link all to given treePrior
@@ -724,6 +800,7 @@ public class BeautiOptions extends ModelOptions {
         for (PartitionTreeModel model : getPartitionTreeModels()) {
             model.setPartitionTreePrior(treePrior);
         }
+        clearDataPartitionCaches();
     }
 
     public boolean isShareSameTreePrior() {
@@ -751,6 +828,7 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public void updatePartitionAllLinks() {
+        clearDataPartitionCaches();
         partitionClockTreeLinks.clear();
         partitionClockSubstLinks.clear();
 
@@ -1246,7 +1324,7 @@ public class BeautiOptions extends ModelOptions {
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
-    
+
     // MCMC options
     public int chainLength = 10000000;
     public int logEvery = 1000;
@@ -1257,7 +1335,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean performTraceAnalysis = false;
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
-    
+
     public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
 

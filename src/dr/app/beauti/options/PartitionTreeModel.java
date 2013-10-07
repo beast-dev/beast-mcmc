@@ -161,6 +161,7 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public void setPartitionTreePrior(PartitionTreePrior treePrior) {
+        options.clearDataPartitionCaches();
         this.treePrior = treePrior;
     }
 

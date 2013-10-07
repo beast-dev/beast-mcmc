@@ -37,6 +37,8 @@ import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -107,6 +109,8 @@ public class SkyGridDialog {
         ageOfYoungestField.setColumns(12);
 
         optionPanel = new OptionsPanel(12, 12);
+
+        maxHeightCombo.setSelectedIndex(3);
     }
 
     private int findArgument(JComboBox comboBox, String argument) {
@@ -243,17 +247,10 @@ public class SkyGridDialog {
             }
 
             if (result == JOptionPane.OK_OPTION) {
-//                if (treeFile == null) {
-//                    JOptionPane.showMessageDialog(frame, "A tree file was not selected",
-//                            "Error parsing file",
-//                            JOptionPane.ERROR_MESSAGE);
-//                    done = false;
-//                } else {
                 for (int i = 0; i < argumentCombos.length; i++) {
                     argumentTraces[i] = argumentCombos[i].getSelectedItem() + "1";
                 }
                 rootHeightTrace = (String) rootHeightCombo.getSelectedItem();
-//                }
             }
         } while (!done);
 
@@ -300,37 +297,37 @@ public class SkyGridDialog {
 //            optionPanel.addSeparator();
 //            optionPanel.addComponentWithLabel("Number of bins:", binCountField);
 //
-//            optionPanel.addSpanningComponent(manualRangeCheckBox);
-//            final JLabel label1 = optionPanel.addComponentWithLabel("Minimum time:", minTimeField);
-//            final JLabel label2 = optionPanel.addComponentWithLabel("Maximum time:", maxTimeField);
-//
-//            if (manualRangeCheckBox.isSelected()) {
-//                label1.setEnabled(true);
-//                minTimeField.setEnabled(true);
-//                label2.setEnabled(true);
-//                maxTimeField.setEnabled(true);
-//            } else {
-//                label1.setEnabled(false);
-//                minTimeField.setEnabled(false);
-//                label2.setEnabled(false);
-//                maxTimeField.setEnabled(false);
-//            }
-//
-//            manualRangeCheckBox.addChangeListener(new ChangeListener() {
-//                public void stateChanged(ChangeEvent changeEvent) {
-//                    if (manualRangeCheckBox.isSelected()) {
-//                        label1.setEnabled(true);
-//                        minTimeField.setEnabled(true);
-//                        label2.setEnabled(true);
-//                        maxTimeField.setEnabled(true);
-//                    } else {
-//                        label1.setEnabled(false);
-//                        minTimeField.setEnabled(false);
-//                        label2.setEnabled(false);
-//                        maxTimeField.setEnabled(false);
-//                    }
-//                }
-//            });
+            optionPanel.addSpanningComponent(manualRangeCheckBox);
+            final JLabel label1 = optionPanel.addComponentWithLabel("Minimum time:", minTimeField);
+            final JLabel label2 = optionPanel.addComponentWithLabel("Maximum time:", maxTimeField);
+
+            if (manualRangeCheckBox.isSelected()) {
+                label1.setEnabled(true);
+                minTimeField.setEnabled(true);
+                label2.setEnabled(true);
+                maxTimeField.setEnabled(true);
+            } else {
+                label1.setEnabled(false);
+                minTimeField.setEnabled(false);
+                label2.setEnabled(false);
+                maxTimeField.setEnabled(false);
+            }
+
+            manualRangeCheckBox.addChangeListener(new ChangeListener() {
+                public void stateChanged(ChangeEvent changeEvent) {
+                    if (manualRangeCheckBox.isSelected()) {
+                        label1.setEnabled(true);
+                        minTimeField.setEnabled(true);
+                        label2.setEnabled(true);
+                        maxTimeField.setEnabled(true);
+                    } else {
+                        label1.setEnabled(false);
+                        minTimeField.setEnabled(false);
+                        label2.setEnabled(false);
+                        maxTimeField.setEnabled(false);
+                    }
+                }
+            });
         }
 
         optionPanel.addSeparator();
@@ -360,7 +357,7 @@ public class SkyGridDialog {
             if (minTime >= maxTime) {
                 JOptionPane.showMessageDialog(parent,
                         "The minimum time value should be less than the maximum.",
-                        "Error creating GMRF Skyride",
+                        "Error creating Bayesian SkyGrid",
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
@@ -447,16 +444,6 @@ public class SkyGridDialog {
             lengthOfTask = traceList.getStateCount() /* + binCount*/;
 
             stateCount = traceList.getStateCount();
-
-            popSizes = new ArrayList<ArrayList>();
-            for (int i = 0; i < popSizeCount; i++) {
-                ArrayList column = new ArrayList(traceList.getValues(firstPopSize + i));
-                popSizes.add(column);
-                for (int j = 0; j < column.size(); ++j) {
-                    column.set(j, Math.exp((Double) column.get(j)));
-                }
-            }
-
         }
 
         public int getCurrent() {
@@ -475,7 +462,18 @@ public class SkyGridDialog {
             return null;
         }
 
+
+        private double transform(double x) {
+            return Math.exp(x);
+        }
+
         public Object doWork() {
+
+            popSizes = new ArrayList<ArrayList>();
+            for (int i = 0; i < popSizeCount; i++) {
+                ArrayList column = new ArrayList(traceList.getValues(firstPopSize + i));
+                popSizes.add(column);
+            }
 
             List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 
@@ -503,6 +501,26 @@ public class SkyGridDialog {
                 case 3:
                     maxHeight = timeUpper;
                     break;
+            }
+
+            // Check for large difference between maxHeight and cutOff
+            double factor = 10.0;
+            boolean condition = (gridHeight > maxHeight * factor || gridHeight < maxHeight / factor);
+            if (condition) {
+
+                String pt1 = "<html><body width='";
+                String pt2 = "'><h1>Bayesian SkyGrid: Caution</h1>" +
+                                "<p>Inferred root height is considerably smaller or larger than the SkyGrid cut-off value (" +
+                                gridHeight +
+                                ").  " +
+                                "For improved interpretability, it is advisable to re-run the SkyGrid posterior inference using a cut-off commensurate with the root height.";
+
+                int width = 400;
+                String s = pt1 + width + pt2;
+
+                JOptionPane.showMessageDialog(frame,
+                        s, "Reconstruction Warning",
+                        JOptionPane.OK_OPTION);
             }
 
             if (rangeSet) {
@@ -549,16 +567,16 @@ public class SkyGridDialog {
                 if (maxTime <= timeUpper) timeUpper = -1;
             }
 
-//            double delta = (maxTime - minTime) / (binCount - 1);
             int numGridPoints = popSizeCount - 1;
             double delta = gridHeight / (double) numGridPoints;
 
             try {
                 double height;
                 if (ageOfYoungest > 0.0) {
-                    height = ageOfYoungest - maxTime;
-                } else {
                     height = ageOfYoungest;
+                    delta = -delta;
+                } else {
+                    height = 0.0;
                 }
 
                 Variate.D xData = new Variate.D();
@@ -567,73 +585,34 @@ public class SkyGridDialog {
                 Variate.D yDataUpper = new Variate.D();
                 Variate.D yDataLower = new Variate.D();
 
+                double plotMin = minTime;
+                double plotMax = maxTime;
+
                 for (int i = 0; i < popSizeCount; ++i) {
 
-                    if (height >= 0.0 && height <= maxHeight) {
+                    if (height >= plotMin && height <= plotMax) {
 
                         xData.add(height);
                         TraceDistribution dist = new TraceDistribution(popSizes.get(i), TraceFactory.TraceType.DOUBLE);
-                        yDataMean.add(dist.getMean());
-                        yDataMedian.add(dist.getMedian());
-                        yDataUpper.add(dist.getUpperHPD());
-                        yDataLower.add(dist.getLowerHPD());
+                        yDataMean.add(transform(dist.getMean()));
+                        yDataMedian.add(transform(dist.getMedian()));
+                        yDataUpper.add(transform(dist.getUpperHPD()));
+                        yDataLower.add(transform(dist.getLowerHPD()));
 
                         if (i == popSizeCount - 1) {
 //                        double fillTime = (popSizeCount + 1.5) * gridSpacing;
-                            while (height >= 0.0 && height <= maxHeight) {
+                            while (height >= plotMin && height <= plotMax) {
                                 xData.add(height);
-                                yDataMean.add(dist.getMean());
-                                yDataMedian.add(dist.getMedian());
-                                yDataUpper.add(dist.getUpperHPD());
-                                yDataLower.add(dist.getLowerHPD());
+                                yDataMean.add(transform(dist.getMean()));
+                                yDataMedian.add(transform(dist.getMedian()));
+                                yDataUpper.add(transform(dist.getUpperHPD()));
+                                yDataLower.add(transform(dist.getLowerHPD()));
                                 height += delta;
                             }
                         }
                     }
                     height += delta;
                 }
-
-
-//                xData.add(0.0);
-//                xData.add(1.0);
-//
-//                yDataMean.add(1.0);
-//                yDataMean.add(2.0);
-//
-//                yDataMedian.add(1.5);
-//                yDataMedian.add(1.5);
-//
-//                yDataLower.add(0.9);
-//                yDataLower.add(1.9);
-//
-//                yDataUpper.add(1.1);
-//                yDataUpper.add(2.1);
-
-                double t;
-                if (ageOfYoungest > 0.0) {
-                    t = maxTime;
-                } else {
-                    t = minTime;
-                }
-//                for (Variate.D bin : bins) {
-//                    xData.add(t);
-//                    if (bin.getCount() > 0) {
-//                        yDataMean.add(bin.getMean());
-//                        yDataMedian.add(bin.getQuantile(0.5));
-//                        yDataLower.add(bin.getQuantile(0.025));
-//                        yDataUpper.add(bin.getQuantile(0.975));
-//                    } else {
-//                        yDataMean.add(Double.NaN);
-//                        yDataMedian.add(Double.NaN);
-//                        yDataLower.add(Double.NaN);
-//                        yDataUpper.add(Double.NaN);
-//                    }
-//                    if (ageOfYoungest > 0.0) {
-//                        t -= delta;
-//                    } else {
-//                        t += delta;
-//                    }
-//                }
 
                 frame.addDemographic("Bayesian SkyGrid: " + traceList.getName(), xData,
                         yDataMean, yDataMedian,
@@ -653,6 +632,14 @@ public class SkyGridDialog {
             }
 
             return null;
+        }
+    }
+
+    private boolean inPlot(double height, double plotMin, double plotMax, double ageOfYoungest) {
+        if (ageOfYoungest > 0.0) {
+            return (height <= plotMin) && (height >= plotMax);
+        } else {
+            return (height >= plotMin) && (height <= plotMax);
         }
     }
 }

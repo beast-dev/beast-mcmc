@@ -25,13 +25,7 @@
 
 package dr.app.beauti.options;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
@@ -603,6 +597,9 @@ public class BeautiOptions extends ModelOptions {
         pcmtmlCache.clear();
         pcmsmlCache.clear();
         cmgCache.clear();
+        psmlCache.clear();
+        ptmlCache.clear();
+        pcmlCache.clear();
     }
 
     public boolean isEBSPSharingSamePrior() {
@@ -631,18 +628,27 @@ public class BeautiOptions extends ModelOptions {
         return models;
     }
 
+    private final Map<List<? extends AbstractPartitionData>, List<PartitionSubstitutionModel>> psmlCache = new HashMap<List<? extends AbstractPartitionData>, List<PartitionSubstitutionModel>>();
+
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(List<? extends AbstractPartitionData> givenDataPartitions) {
+        List<PartitionSubstitutionModel> psmList = psmlCache.get(givenDataPartitions);
 
-        List<PartitionSubstitutionModel> activeModels = new ArrayList<PartitionSubstitutionModel>();
+        if (psmList == null) {
+            Set<PartitionSubstitutionModel> activeModels = new LinkedHashSet<PartitionSubstitutionModel>();
 
-        for (AbstractPartitionData partition : givenDataPartitions) {
-            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-            if (model != null && (!activeModels.contains(model))) {
-                activeModels.add(model);
+            for (AbstractPartitionData partition : givenDataPartitions) {
+                PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+                if (model != null) {
+                    activeModels.add(model);
+                }
             }
+
+            psmList = new ArrayList<PartitionSubstitutionModel>(activeModels);
+
+            psmlCache.put(givenDataPartitions, psmList);
         }
 
-        return activeModels;
+        return psmList;
     }
 
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
@@ -660,20 +666,27 @@ public class BeautiOptions extends ModelOptions {
 
     // ++++++++++++++ Partition Clock Model ++++++++++++++
 
+    private final Map<List<? extends AbstractPartitionData>, List<PartitionClockModel>> pcmlCache = new HashMap<List<? extends AbstractPartitionData>, List<PartitionClockModel>>();
+
     public List<PartitionClockModel> getPartitionClockModels(List<? extends AbstractPartitionData> givenDataPartitions) {
+        List<PartitionClockModel> pcmList = pcmlCache.get(givenDataPartitions);
 
-        List<PartitionClockModel> activeModels = new ArrayList<PartitionClockModel>();
+        if (pcmList == null) {
+            Set<PartitionClockModel> activeModels = new LinkedHashSet<PartitionClockModel>();
 
-        for (AbstractPartitionData partition : givenDataPartitions) {
-            PartitionClockModel model = partition.getPartitionClockModel();
-            if (model != null && (!activeModels.contains(model))
-                    // species excluded
-                    && !(partition.getDataType().getType() == DataType.CONTINUOUS)) {
-                activeModels.add(model);
+            for (AbstractPartitionData partition : givenDataPartitions) {
+                PartitionClockModel model = partition.getPartitionClockModel();
+                if (model != null && !(partition.getDataType().getType() == DataType.CONTINUOUS)) {
+                    activeModels.add(model);
+                }
             }
+
+            pcmList = new ArrayList<PartitionClockModel>(activeModels);
+
+            pcmlCache.put(givenDataPartitions, pcmList);
         }
 
-        return activeModels;
+        return pcmList;
     }
 
     public List<PartitionClockModel> getPartitionClockModels(DataType dataType) {
@@ -720,18 +733,25 @@ public class BeautiOptions extends ModelOptions {
 //        return partitionTreeModels;
 //    }
 
+    private final Map<List<? extends AbstractPartitionData>, List<PartitionTreeModel>> ptmlCache = new HashMap<List<? extends AbstractPartitionData>, List<PartitionTreeModel>>();
+
     public List<PartitionTreeModel> getPartitionTreeModels(List<? extends AbstractPartitionData> givenDataPartitions) {
+        List<PartitionTreeModel> ptmList = ptmlCache.get(givenDataPartitions);
 
-        List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
+        if (ptmList == null) {
+            Set<PartitionTreeModel> activeTrees = new LinkedHashSet<PartitionTreeModel>();
 
-        for (AbstractPartitionData partition : givenDataPartitions) {
-            PartitionTreeModel tree = partition.getPartitionTreeModel();
-            if (tree != null && (!activeTrees.contains(tree))) {
-                activeTrees.add(tree);
+            for (AbstractPartitionData partition : givenDataPartitions) {
+                if (partition.getPartitionTreeModel() != null) {
+                    activeTrees.add(partition.getPartitionTreeModel());
+                }
             }
-        }
 
-        return activeTrees;
+            ptmList = new ArrayList<PartitionTreeModel>(activeTrees);
+
+            ptmlCache.put(givenDataPartitions, ptmList);
+        }
+        return ptmList;
     }
 
     public List<PartitionTreeModel> getPartitionTreeModels() {

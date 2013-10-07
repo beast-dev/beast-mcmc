@@ -100,6 +100,7 @@ public abstract class AbstractPartitionData implements Serializable {
     }
 
     public void setPartitionSubstitutionModel(PartitionSubstitutionModel model) {
+        options.clearDataPartitionCaches();
         this.model = model;
     }
 
@@ -108,6 +109,7 @@ public abstract class AbstractPartitionData implements Serializable {
     }
 
     public void setPartitionClockModel(PartitionClockModel clockModel) {
+        options.clearDataPartitionCaches();
         this.clockModel = clockModel;
     }
 
@@ -120,6 +122,7 @@ public abstract class AbstractPartitionData implements Serializable {
     }
 
     public void setPartitionTreeModel(PartitionTreeModel treeModel) {
+        options.clearDataPartitionCaches();
         this.treeModel = treeModel;
     }
 

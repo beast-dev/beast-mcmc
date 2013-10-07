@@ -288,14 +288,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                     skyGridInterval.setColumns(6);
                     addComponentWithLabel("# parameters ( = # grid-points + 1):", skyGridPointsCombo);
                     addComponentWithLabel("Time at last point:", skyGridInterval);
-//                    addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+                    addLabel("It is advisable to set this cut-off time commensurate with the expected root height for optimal model interpretability.");
                     treesPanel.linkTreePriorCheck.setSelected(true);
                     treesPanel.linkTreePriorCheck.setEnabled(false);
                     treesPanel.updateShareSameTreePriorChanged();
-                    //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-//                    addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
-//                            + "It is only available for single tree<br>model partition for this release. "
-//                            + "Please go to Data Partition panel to link all tree models." + "</html>");
 
                     citation = //citationCoalescent + "\n" +
                             "Gill MS, Lemey P, Faria NR, Rambaut A, Shapiro B, Suchard MA (2013) Mol Biol Evol 30, 713-724 [SkyGrid Coalescent].";

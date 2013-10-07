@@ -35,6 +35,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -58,9 +60,13 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
         Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
         Parameter allocationParameter = (Parameter) xo.getElementFirstChild(ALLOCATION);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        AbstractBranchRateModel randomEffects = null;
+        List<AbstractBranchRateModel> randomEffects = null;
         if (xo.hasChildNamed(RANDOM_EFFECTS)) {
-            randomEffects = (AbstractBranchRateModel) xo.getElementFirstChild(RANDOM_EFFECTS);
+            XMLObject cxo = xo.getChild(RANDOM_EFFECTS);
+            randomEffects = new ArrayList<AbstractBranchRateModel>();
+            for (int i = 0; i < cxo.getChildCount(); ++i) {
+                randomEffects.add((AbstractBranchRateModel)cxo.getChild(i));
+            }
         }
 
         boolean inLogSpace = xo.getAttribute(IN_LOG_SPACE, false);
@@ -133,7 +139,11 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new ElementRule(RATES, Parameter.class, "The molecular evolutionary rate parameter", false),
             new ElementRule(ALLOCATION, Parameter.class, "Allocation parameter", false),
-            new ElementRule(RANDOM_EFFECTS, AbstractBranchRateModel.class, "Possible random effects", true),
+            new ElementRule(RANDOM_EFFECTS,
+                    new XMLSyntaxRule[] {
+                            new ElementRule(AbstractBranchRateModel.class, 0, Integer.MAX_VALUE),
+                    },
+                    "Possible random effects", true),
             AttributeRule.newBooleanRule(IN_LOG_SPACE, true),
             AttributeRule.newBooleanRule(RANDOMIZE, true),
             new ElementRule(LocalClockModelParser.CLADE,

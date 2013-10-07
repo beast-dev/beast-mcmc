@@ -36,6 +36,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
+import java.util.List;
+
 /**
  * @author Marc Suchard
  * @author Philippe Lemey
@@ -44,12 +46,12 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
     private final Parameter ratesParameter;
     private final TreeModel treeModel;
-    private final AbstractBranchRateModel randomEffectsModel;
+    private final List<AbstractBranchRateModel> randomEffectsModels;
     private final int categoryCount;
 
     public CountableMixtureBranchRates(CountableBranchCategoryProvider rateCategories,
                                        TreeModel treeModel, Parameter ratesParameter,
-                                       AbstractBranchRateModel randomEffects, boolean inLogSpace) {
+                                       List<AbstractBranchRateModel> randomEffects, boolean inLogSpace) {
         super(CountableMixtureBranchRatesParser.COUNTABLE_CLOCK_BRANCH_RATES);
 
         this.treeModel = treeModel;
@@ -64,17 +66,24 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         addVariable(ratesParameter);
 
         // Handle random effects
-        this.randomEffectsModel = randomEffects;
-        if (randomEffectsModel != null) {
-            addModel(randomEffectsModel);
+        this.randomEffectsModels = randomEffects;
+        if (randomEffectsModels != null) {
+            for (AbstractBranchRateModel model : randomEffectsModels)
+            addModel(model);
         }
-        // TODO Check that randomEffectsModel mean is zero
+        // TODO Check that randomEffectsModel means are zero
 
         modelInLogSpace = inLogSpace;
     }
 
     public double getLogLikelihood() {
-        return (randomEffectsModel != null) ? randomEffectsModel.getLogLikelihood() : 0.0;
+        double logLike = 0.0;
+        if (randomEffectsModels != null) {
+            for (AbstractBranchRateModel model : randomEffectsModels) {
+                logLike += model.getLogLikelihood();
+            }
+        }
+        return logLike;
     }
 
     public LogColumn[] getColumns() {
@@ -110,17 +119,29 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == rateCategories) {
             fireModelChanged();
-        } else if (model == randomEffectsModel) {
-            if (object == randomEffectsModel) {
-                fireModelChanged();
-            } else if (object == null) {
-                fireModelChanged(null, index);
-            } else {
-                throw new IllegalArgumentException("Unknown object component!");
-            }
         } else {
-            throw new IllegalArgumentException("Unknown model component!");
+            AbstractBranchRateModel foundModel = findRandomEffectsModel(model);
+            if (foundModel != null) {
+                if (object == model) {
+                    fireModelChanged();
+                } else if (object == null) {
+                    fireModelChanged(null, index);
+                } else {
+                    throw new IllegalArgumentException("Unknown object component!");
+                }
+            } else {
+                throw new IllegalArgumentException("Unknown model component!");
+            }
         }
+    }
+
+    private AbstractBranchRateModel findRandomEffectsModel(Model model) {
+        AbstractBranchRateModel found = null;
+        int index = randomEffectsModels.indexOf(model);
+        if (index != -1) {
+            found = randomEffectsModels.get(index);
+        }
+        return found;
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -145,11 +166,13 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
 
         int rateCategory = rateCategories.getBranchCategory(tree, node);
         double effect = ratesParameter.getParameterValue(rateCategory);
-        if (randomEffectsModel != null) {
-            if (modelInLogSpace) {
-                effect += randomEffectsModel.getBranchRate(tree, node);
-            } else {
-                effect *= randomEffectsModel.getBranchRate(tree, node);
+        if (randomEffectsModels != null) {
+            for (AbstractBranchRateModel model : randomEffectsModels) {
+                if (modelInLogSpace) {
+                    effect += model.getBranchRate(tree, node);
+                } else {
+                    effect *= model.getBranchRate(tree, node);
+                }
             }
         }
         if (modelInLogSpace) {

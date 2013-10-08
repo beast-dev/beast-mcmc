@@ -76,28 +76,28 @@ public class PartitionClockModel extends PartitionOptions {
 
         if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR) {
             new Parameter.Builder("clock.rate", "substitution rate").
-                    prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(rate)
+                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                     .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
             new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
-                    prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(rate)
+                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                     .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
             new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
-                    prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(rate)
+                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                     .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
         } else {
-            if (dataLength <= 1) { // TODO Discuss threshold
-                new Parameter.Builder("clock.rate", "substitution rate").prior(PriorType.UNDEFINED).initial(rate)
+            if (dataLength <= 10) { // TODO Discuss threshold
+                new Parameter.Builder("clock.rate", "substitution rate").prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                         .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
                 new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
-                        prior(PriorType.UNDEFINED).initial(rate)
+                        prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                         .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
                 new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
-                        prior(PriorType.UNDEFINED).initial(rate)
+                        prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                         .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
             } else {
                 new Parameter.Builder("clock.rate", "substitution rate").
@@ -387,7 +387,7 @@ public class PartitionClockModel extends PartitionOptions {
     public void setUseReferencePrior(boolean useReferencePrior) {
         Parameter rateParam = getClockRateParam();
         if (useReferencePrior) {
-            rateParam.priorType = PriorType.CMTC_RATE_REFERENCE_PRIOR;
+            rateParam.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;
         } else {
             rateParam.priorType = PriorType.UNDEFINED;
         }

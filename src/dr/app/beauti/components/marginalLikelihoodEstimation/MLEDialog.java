@@ -2,27 +2,16 @@ package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import jam.panels.OptionsPanel;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
-import java.awt.event.KeyEvent;
-
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
-import dr.app.util.OSType;
 
 
 /**

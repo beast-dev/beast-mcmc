@@ -262,47 +262,59 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref("treeModel", treeModelId);
 
         writer.writeOpenTag("distribution");
-        writer.writeOpenTag("onePGammaDistributionModel");
-        // don't think this needs an id
-//                new Attribute[] {
-//                        new Attribute.Default<String>("id", prefix + "gamma"),
-//                });
 
-        writer.writeOpenTag("shape");
-        switch (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType()) {
+        if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.LOGNORMAL_RRW) {
+            writer.writeOpenTag("logNormalDistributionModel",
+                    new Attribute[]{ new Attribute.Default<String>("meanInRealSpace", "true") });
 
-            case HOMOGENOUS:
-                throw new IllegalArgumentException("Shouldn't be here");
-            case CAUCHY_RRW:
-                writer.writeComment("half DF (i.e., df = 1)");
-                writer.writeTag("parameter",
-                        new Attribute[]{
-                                // don't think this needs an id
+            writer.writeOpenTag("mean");
+            writer.writeTag("parameter",
+                    new Attribute[]{
+                            new Attribute.Default<String>("value", "1.0")
+                    }, true);
+
+            writer.writeCloseTag("mean");
+
+            writer.writeOpenTag("stdev");
+            writer.writeTag("parameter",
+                    new Attribute[]{
+                            new Attribute.Default<String>("id", prefix + ContinuousComponentOptions.STDEV),
+                            new Attribute.Default<String>("value", "1.0"),
+                            new Attribute.Default<String>("lower", "0.0")
+                    }, true);
+
+            writer.writeCloseTag("stdev");
+            writer.writeCloseTag("logNormalDistributionModel");
+        } else {
+            writer.writeOpenTag("onePGammaDistributionModel");
+            writer.writeOpenTag("shape");
+            switch (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType()) {
+                case CAUCHY_RRW:
+                    writer.writeComment("half DF (i.e., df = 1)");
+                    writer.writeTag("parameter",
+                            new Attribute[]{
+                                    // don't think this needs an id
 //                        new Attribute.Default<String>("id", "halfDF"),
-                                new Attribute.Default<String>("value", "0.5")
-                        }, true);
-                break;
-            case GAMMA_RRW:
-                writer.writeComment("half DF");
-                writer.writeTag("parameter",
-                        new Attribute[]{
-                                new Attribute.Default<String>("id", prefix + ContinuousComponentOptions.HALF_DF),
-                                new Attribute.Default<String>("value", "0.5")
-                        }, true);
-                break;
-            case LOGNORMAL_RRW:
-                writer.writeComment("log normal");
-                writer.writeTag("parameter",
-                        new Attribute[]{
-                                new Attribute.Default<String>("id", prefix + ContinuousComponentOptions.STDEV),
-                                new Attribute.Default<String>("value", "0.5")
-                        }, true);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown continuous substitution type");
+                                    new Attribute.Default<String>("value", "0.5")
+                            }, true);
+                    break;
+                case GAMMA_RRW:
+                    writer.writeComment("half DF");
+                    writer.writeTag("parameter",
+                            new Attribute[]{
+                                    new Attribute.Default<String>("id", prefix + ContinuousComponentOptions.HALF_DF),
+                                    new Attribute.Default<String>("value", "0.5")
+                            }, true);
+                    break;
+                case LOGNORMAL_RRW:
+                case HOMOGENOUS:
+                    throw new IllegalArgumentException("Shouldn't be here");
+                default:
+                    throw new IllegalArgumentException("Unknown continuous substitution type");
+            }
+            writer.writeCloseTag("shape");
+            writer.writeCloseTag("onePGammaDistributionModel");
         }
-        writer.writeCloseTag("shape");
-        writer.writeCloseTag("onePGammaDistributionModel");
         writer.writeCloseTag("distribution");
 
 
@@ -508,7 +520,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeMultivariatePriors(XMLWriter writer,
-                                                       ContinuousComponentOptions component) {
+                                         ContinuousComponentOptions component) {
 
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
             writer.writeIDref("multivariateWishartPrior", partitionData.getName() + ".precisionPrior");

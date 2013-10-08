@@ -25,41 +25,19 @@
 
 package dr.inferencexml.distribution;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.Reader;
-
-import jebl.math.Binomial;
-import dr.evolution.io.Importer.ImportException;
-import dr.evolution.io.TreeTrace;
-import dr.evomodel.coalescent.CoalescentConstantLikelihood;
-import dr.evomodel.tree.ConditionalCladeFrequency;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.distribution.ConditionalCladeProbability;
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.ConstantLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceException;
 import dr.math.distributions.BetaDistribution;
 import dr.math.distributions.ExponentialDistribution;
 import dr.math.distributions.GammaDistribution;
-import dr.math.distributions.GammaKDEDistribution;
 import dr.math.distributions.HalfTDistribution;
 import dr.math.distributions.InverseGammaDistribution;
 import dr.math.distributions.LaplaceDistribution;
 import dr.math.distributions.LogNormalDistribution;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
-import dr.math.distributions.MultivariateGammaDistribution;
 import dr.math.distributions.NormalDistribution;
-import dr.math.distributions.NormalKDEDistribution;
 import dr.math.distributions.PoissonDistribution;
 import dr.math.distributions.UniformDistribution;
-import dr.math.functionEval.GammaFunction;
-import dr.util.FileHelpers;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;

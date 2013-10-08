@@ -82,9 +82,7 @@ public class BeastMain {
                      boolean useMC3, double[] chainTemperatures, int swapChainsEvery) {
 
         if (inputFile == null) {
-            System.err.println();
-            System.err.println("Error: no input file specified");
-            System.exit(1);
+            throw new RuntimeException("Error: no input file specified");
         }
 
         String fileName = inputFile.getName();
@@ -201,7 +199,7 @@ public class BeastMain {
 
         } catch (java.io.IOException ioe) {
             infoLogger.severe("File error: " + ioe.getMessage());
-            System.exit(1);
+            throw new RuntimeException("Terminate");
         } catch (org.xml.sax.SAXParseException spe) {
             if (spe.getMessage() != null && spe.getMessage().equals("Content is not allowed in prolog")) {
                 infoLogger.severe("Parsing error - the input file, " + fileName + ", is not a valid XML file.");
@@ -210,12 +208,12 @@ public class BeastMain {
                 infoLogger.severe("Parsing error - poorly formed XML (possibly not an XML file):\n" +
                         spe.getMessage());
             }
-            System.exit(1);
+            throw new RuntimeException("Terminate");
         } catch (org.w3c.dom.DOMException dome) {
             infoLogger.severe("Error running file: " + fileName);
             infoLogger.severe("Parsing error - poorly formed XML:\n" +
                     dome.getMessage());
-            System.exit(1);
+            throw new RuntimeException("Terminate");
         } catch (dr.xml.XMLParseException pxe) {
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
                 infoLogger.severe("Error running file: " + fileName);
@@ -231,7 +229,7 @@ public class BeastMain {
                 infoLogger.severe("Parsing error - poorly formed BEAST file, " + fileName + ":\n" +
                         pxe.getMessage());
             }
-            System.exit(1);
+            throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
             if (rex.getMessage() != null && rex.getMessage().startsWith("The initial posterior is zero")) {
                 infoLogger.warning("Error running file: " + fileName);
@@ -255,13 +253,13 @@ public class BeastMain {
                 System.err.println("Fatal exception: " + rex.getMessage());
                 rex.printStackTrace(System.err);
             }
-            System.exit(1);
+            throw new RuntimeException("Terminate");
         } catch (Exception ex) {
             infoLogger.warning("Error running file: " + fileName);
             infoLogger.severe("Fatal exception: " + ex.getMessage());
             System.err.println("Fatal exception: " + ex.getMessage());
             ex.printStackTrace(System.err);
-            System.exit(1);
+            throw new RuntimeException("Terminate");
         }
     }
 

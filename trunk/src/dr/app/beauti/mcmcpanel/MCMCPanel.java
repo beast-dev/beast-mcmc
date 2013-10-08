@@ -280,6 +280,7 @@ public class MCMCPanel extends BeautiPanel {
                 if (performMLE.isSelected()) {
                     mleOptions.performMLE = true;
                     buttonMLE.setEnabled(true);
+                    updateMLEFileNameStem();
                 } else {
                     mleOptions.performMLE = false;
                     buttonMLE.setEnabled(false);
@@ -288,11 +289,7 @@ public class MCMCPanel extends BeautiPanel {
         });
         buttonMLE.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (mleDialog == null) {
-                    mleDialog = new MLEDialog(frame, mleOptions);
-                }
-
-                mleDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
+                updateMLEFileNameStem();
 
                 int result = mleDialog.showDialog();
 
@@ -442,6 +439,7 @@ public class MCMCPanel extends BeautiPanel {
             substTreeLogCheck.setEnabled(true);
             substTreeLogCheck.setSelected(options.substTreeLog);
 
+            updateMLEFileNameStem();
         } else {
 //            fileNameStemField.setText(fileNameStem);
 //            fileNameStemField.setEnabled(false);
@@ -456,6 +454,13 @@ public class MCMCPanel extends BeautiPanel {
             operatorAnalaysisCheck.setSelected(false);
             operatorAnalaysisFileNameField.setText("");
         }
+    }
+
+    private void updateMLEFileNameStem() {
+        if (mleDialog == null) {
+            mleDialog = new MLEDialog(frame, mleOptions);
+        }
+        mleDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
     }
 
     public void getOptions(BeautiOptions options) {

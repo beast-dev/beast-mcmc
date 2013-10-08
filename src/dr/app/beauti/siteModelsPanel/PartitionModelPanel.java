@@ -312,6 +312,9 @@ public class PartitionModelPanel extends OptionsPanel {
         });
 
         PanelUtils.setupComponent(continuousTraitSiteModelCombo);
+        continuousTraitSiteModelCombo
+                .setToolTipText("<html>Select the model of continuous random walk, either homogenous<br>" +
+                        "or relaxed random walk (RRW) with a choice of distributions.</html>");
         continuousTraitSiteModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model

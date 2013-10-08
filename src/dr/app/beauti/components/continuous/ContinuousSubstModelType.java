@@ -6,7 +6,9 @@ package dr.app.beauti.components.continuous;
 public enum ContinuousSubstModelType {
     HOMOGENOUS("Homogenous Brownian model"),
     CAUCHY_RRW("Cauchy RRW model"),
-    GAMMA_RRW("Gamma RRW model");
+    GAMMA_RRW("Gamma RRW model"),
+    LOGNORMAL_RRW("Lognormal RRW model"),
+    ;
 
     ContinuousSubstModelType(String name) {
         this.name = name;

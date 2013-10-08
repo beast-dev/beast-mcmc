@@ -172,7 +172,7 @@ public class LogAxis extends Axis.AbstractAxis {
 	*	Untransform a value from the log axis
 	*/
 	public double untransform(double value) {
-		return Math.pow(value, 10.0);
+		return Math.pow(10.0, value);
 	}
 
 	/**

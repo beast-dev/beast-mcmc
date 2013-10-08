@@ -29,7 +29,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         }
 
         switch (point) {
-//            case IN_TAXON:
+            case IN_TAXON:
             case AFTER_SITE_MODEL:
             case AFTER_TREE_LIKELIHOOD:
             case IN_OPERATORS:
@@ -51,11 +51,10 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 .getComponentOptions(ContinuousComponentOptions.class);
 
         switch (point) {
-//          Don't need this because all traits are written for all taxa:
-//            case IN_TAXON:
-//                Taxon taxon = (Taxon)item;
-//                writeTaxonTraits(taxon, writer);
-//                break;
+            case IN_TAXON:
+                Taxon taxon = (Taxon)item;
+                writeTaxonTraits(taxon, writer);
+                break;
             case AFTER_SITE_MODEL:
                 writeMultivariateDiffusionModels(writer, component);
                 break;
@@ -287,7 +286,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writer.writeComment("half DF");
                 writer.writeTag("parameter",
                         new Attribute[]{
-                                new Attribute.Default<String>("id", prefix + "halfDF"),
+                                new Attribute.Default<String>("id", prefix + ContinuousComponentOptions.HALF_DF),
                                 new Attribute.Default<String>("value", "0.5")
                         }, true);
                 break;
@@ -295,7 +294,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writer.writeComment("log normal");
                 writer.writeTag("parameter",
                         new Attribute[]{
-                                new Attribute.Default<String>("id", prefix + "halfDF"),
+                                new Attribute.Default<String>("id", prefix + ContinuousComponentOptions.STDEV),
                                 new Attribute.Default<String>("value", "0.5")
                         }, true);
                 break;

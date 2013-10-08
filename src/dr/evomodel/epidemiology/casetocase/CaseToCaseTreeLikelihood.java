@@ -95,6 +95,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private boolean extended;
 
+    // don't model the infectious periods
+
+    private boolean noInfPeriodModels;
+
     // no need to normalise if the tree is fixed
 
     private boolean normalise;
@@ -106,21 +110,23 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     public static final String CASE_TO_CASE_TREE_LIKELIHOOD = "caseToCaseTreeLikelihood";
     public static final String PARTITIONS_KEY = "partition";
 
+
     // Basic constructor.
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
                                     String startingNetworkFileName, Parameter infectionTimes,
-                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise)
+                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise,
+                                    boolean noInfPeriodModels)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimes,
-                maxFirstInfToRoot, extended, normalise);
+                maxFirstInfToRoot, extended, normalise, noInfPeriodModels);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
             startingNetworkFileName, Parameter infectionTimes, Parameter maxFirstInfToRoot,
-                                    boolean extended, boolean normalise) {
+                                    boolean extended, boolean normalise, boolean noInfPeriodModels) {
         super(name, caseData, virusTree);
 
         updateNodeForSingleTraverse = new boolean[nodeCount];
@@ -138,6 +144,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         cases = caseData;
         this.extended = extended;
+        this.noInfPeriodModels = noInfPeriodModels;
         addModel(cases);
         verbose = false;
 
@@ -246,6 +253,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 }
             });
         }
+
     }
 
     public AbstractOutbreak getOutbreak(){
@@ -695,6 +703,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
      */
     protected double calculateLogLikelihood() {
 
+        if(noInfPeriodModels){
+            return isAllowed() ? 0 : Double.NEGATIVE_INFINITY;
+        }
+
         if(DEBUG && !checkPartitions(branchMap, true)){
             throw new RuntimeException("Partition rules are violated");
         }
@@ -751,6 +763,31 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         return logL;
 
+    }
+
+    // if no infectious models, just need to check whether any infections occur after the infector was no
+    // longer infectious
+
+    private boolean isAllowed(){
+        return isAllowed(treeModel.getRoot());
+    }
+
+    private boolean isAllowed(NodeRef node){
+        if(!treeModel.isRoot(node)){
+            AbstractCase childCase = branchMap[node.getNumber()];
+            AbstractCase parentCase = branchMap[treeModel.getParent(node).getNumber()];
+            if(childCase!=parentCase){
+                double infectionTime = getInfectionTime(childCase);
+                if(infectionTime>=parentCase.getCullDate().getTimeValue()){
+                    return false;
+                }
+            }
+        }
+        if(!treeModel.isExternal(node)){
+            return isAllowed(treeModel.getChild(node,0)) && isAllowed(treeModel.getChild(node,1));
+        } else {
+            return true;
+        }
     }
 
     // unnormalised probability of this branchMap and corresponding infTimes
@@ -850,49 +887,49 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 HashSet<AbstractCase> nodeDescTips = descendantTipPartitions.get(node.getNumber());
                 HashSet<AbstractCase> parentDescTips = descendantTipPartitions.get(parent.getNumber());
                 for(int i=0; i<stateCount; i++){
-                    AbstractCase origin = cases.getCase(i);{
-                        for(int j=0; j<stateCount; j++){
-                            AbstractCase destination = cases.getCase(j);
+                    AbstractCase origin = cases.getCase(i);
+                    for(int j=0; j<stateCount; j++){
+                        AbstractCase destination = cases.getCase(j);
 
-                            // is the tip in parent's partition a descendant of this node? If so, the node must be in
-                            // this partition also
-                            boolean paintingForcedByParent = nodeDescTips.contains(origin);
-                            boolean treeCompatibilityCheck;
+                        // is the tip in parent's partition a descendant of this node? If so, the node must be in
+                        // this partition also
+                        boolean paintingForcedByParent = nodeDescTips.contains(origin);
+                        boolean treeCompatibilityCheck;
+                        if(!extended){
+                            // valid combinations:
+                            // 1) paintingForcedByParent = false
+                            // 2) paintingForcedByParent = true and both nodes in same partition
+                            treeCompatibilityCheck = nodeDescTips.contains(destination)
+                                    && parentDescTips.contains(origin)
+                                    && (!paintingForcedByParent || origin==destination);
+                        } else {
+                            boolean nodeCreep = !nodeDescTips.contains(destination);
+                            boolean parentCreep = !parentDescTips.contains(origin);
+                            // valid combinations:
+                            // 1) no creep in either case, paintingForcedByParent = false
+                            // 2) no creep in either case, paintingForcedByParent = true and both nodes in same
+                            // partition
+                            // 3) parent creep but no node creep
+                            // 4) node creep, parent and child in same partition
+                            treeCompatibilityCheck = ((!nodeCreep && !parentCreep
+                                    && (!paintingForcedByParent || origin == destination))
+                                    || (parentCreep && !nodeCreep) || (nodeCreep && (origin == destination)));
+                        }
+                        if(!treeCompatibilityCheck){
+                            normProbs[stateCount*i + j]=0;
+                        } else if(origin==destination) {
+                            normProbs[stateCount*i + j]=1;
+                        } else {
                             if(!extended){
-                                // valid combinations:
-                                // 1) paintingForcedByParent = false
-                                // 2) paintingForcedByParent = true and both nodes in same partition
-                                treeCompatibilityCheck = nodeDescTips.contains(destination)
-                                        && parentDescTips.contains(origin)
-                                        && (!paintingForcedByParent || origin==destination);
+                                normProbs[stateCount*i + j]=cases.probXInfectedByYAtTimeT(destination, origin,
+                                        getNodeTime(parent));
                             } else {
-                                boolean nodeCreep = !nodeDescTips.contains(destination);
-                                boolean parentCreep = !parentDescTips.contains(origin);
-                                // valid combinations:
-                                // 1) no creep in either case, paintingForcedByParent = false
-                                // 2) no creep in either case, paintingForcedByParent = true and both nodes in same
-                                // partition
-                                // 3) parent creep but no node creep
-                                // 4) node creep, parent and child in same partition
-                                treeCompatibilityCheck = ((!nodeCreep && !parentCreep
-                                        && (!paintingForcedByParent || origin == destination))
-                                        || (parentCreep && !nodeCreep) || (nodeCreep && (origin == destination)));
-                            }
-                            if(!treeCompatibilityCheck){
-                                normProbs[stateCount*i + j]=0;
-                            } else if(origin==destination) {
-                                normProbs[stateCount*i + j]=1;
-                            } else {
-                                if(!extended){
-                                    normProbs[stateCount*i + j]=cases.probXInfectedByYAtTimeT(destination, origin,
-                                            getNodeTime(parent));
-                                } else {
-                                    normProbs[stateCount*i + j]=cases.probXInfectedByYBetweenTandU(destination, origin,
-                                            getNodeTime(parent), getNodeTime(node));
-                                }
+                                normProbs[stateCount*i + j]=cases.probXInfectedByYBetweenTandU(destination, origin,
+                                        getNodeTime(parent), getNodeTime(node));
                             }
                         }
                     }
+
                 }
             }
             core.setNodeMatrix(nodeNum, 0, normProbs);
@@ -943,6 +980,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         // now need to deal with the root branch
 
         for(int i=0; i<noTips; i++){
+
             normRootPartials[i] *= cases.probXInfectedBetweenTandU
                     (cases.getCase(i), getNodeTime(treeModel.getRoot()) - maxFirstInfToRoot.getParameterValue(0),
                             getNodeTime(treeModel.getRoot()));
@@ -1374,6 +1412,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         public static final String MAX_FIRST_INF_TO_ROOT= "maxFirstInfToRoot";
         public static final String EXTENDED = "extended";
         public static final String NORMALISE = "normalise";
+        public static final String NO_INF_PERIOD_MODELS = "noInfPeriodModels";
 
         public String getParserName() {
             return CASE_TO_CASE_TREE_LIKELIHOOD;
@@ -1399,12 +1438,14 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
             final boolean normalise = xo.getBooleanAttribute(NORMALISE);
 
+            final boolean noInfPeriodModels = xo.getBooleanAttribute(NO_INF_PERIOD_MODELS);
+
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName,
-                        infectionTimes, earliestFirstInfection, extended, normalise);
+                        infectionTimes, earliestFirstInfection, extended, normalise, noInfPeriodModels);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -1428,6 +1469,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(EXTENDED),
                 AttributeRule.newBooleanRule(NORMALISE),
+                AttributeRule.newBooleanRule(NO_INF_PERIOD_MODELS),
                 new ElementRule(TreeModel.class, "The tree"),
                 new ElementRule(AbstractOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",

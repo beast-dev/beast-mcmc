@@ -2,6 +2,7 @@ package dr.app.beauti.components.continuous;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
@@ -62,7 +63,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writeMultivariateTreeLikelihoods(writer, component);
                 break;
             case IN_OPERATORS:
-                writeRRWOperators(writer, component);
+                // the RRW operators are added to the operator list
+//                writeRRWOperators(writer, component);
                 writePrecisionGibbsOperators(writer, component);
                 break;
             case IN_MCMC_PRIOR:
@@ -289,6 +291,14 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                 new Attribute.Default<String>("value", "0.5")
                         }, true);
                 break;
+            case LOGNORMAL_RRW:
+                writer.writeComment("log normal");
+                writer.writeTag("parameter",
+                        new Attribute[]{
+                                new Attribute.Default<String>("id", prefix + "halfDF"),
+                                new Attribute.Default<String>("value", "0.5")
+                        }, true);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown continuous substitution type");
         }
@@ -461,53 +471,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
  </treeDispersionStatistic>
     */
 
-    private void writeRRWOperators(XMLWriter writer,
-                                   ContinuousComponentOptions component) {
-
-        for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
-            ContinuousSubstModelType type = partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType();
-
-            if (type != ContinuousSubstModelType.HOMOGENOUS) {
-                // this is now in the parameter table...
-//                if (type == ContinuousSubstModelType.GAMMA_RRW) {
-//                    writer.writeOpenTag("scaleOperator",
-//                            new Attribute[] {
-//                                    new Attribute.Default<String>("scaleFactor", "0.75"),
-//                                    new Attribute.Default<String>("weight", "1")
-//                            });
-//                    writer.writeIDref("parameter", partitionData.getName() + ".halfDF");
-//                    writer.writeCloseTag("scaleOperator");
-//                }
-
-                writer.writeOpenTag("swapOperator",
-                        new Attribute[] {
-                                new Attribute.Default<String>("size", "1"),
-                                new Attribute.Default<String>("weight", "30"),
-                                new Attribute.Default<String>("autoOptimize", "false")
-                        });
-                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
-                writer.writeCloseTag("swapOperator");
-
-                // See Issue 500:
-                // http://code.google.com/p/beast-mcmc/issues/detail?id=500&can=1&start=400
-//                writer.writeOpenTag("randomWalkIntegerOperator",
-//                        new Attribute[] {
-//                                new Attribute.Default<String>("windowSize", "2"),
-//                                new Attribute.Default<String>("weight", "10")
-//                        });
-//                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
-//                writer.writeCloseTag("randomWalkIntegerOperator");
-
-                writer.writeOpenTag("uniformIntegerOperator",
-                        new Attribute[] {
-                                new Attribute.Default<String>("weight", "10")
-                        });
-                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
-                writer.writeCloseTag("uniformIntegerOperator");
-            }
-        }
-    }
-
     private void writePrecisionGibbsOperators(XMLWriter writer,
                                               ContinuousComponentOptions component) {
 
@@ -520,13 +483,13 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                              final ContinuousComponentOptions component,
                                              AbstractPartitionData partitionData
     ) {
-        writer.writeOpenTag("precisionGibbsOperator",
+        writer.writeOpenTag(ContinuousComponentOptions.PRECISION_GIBBS_OPERATOR,
                 new Attribute[] {
                         new Attribute.Default<String>("weight", "" + partitionData.getTraits().size())
                 });
         writer.writeIDref("multivariateTraitLikelihood", partitionData.getName() + ".traitLikelihood");
         writer.writeIDref("multivariateWishartPrior", partitionData.getPartitionSubstitutionModel().getName() + ".precisionPrior");
-        writer.writeCloseTag("precisionGibbsOperator");
+        writer.writeCloseTag(ContinuousComponentOptions.PRECISION_GIBBS_OPERATOR);
 
     }
 

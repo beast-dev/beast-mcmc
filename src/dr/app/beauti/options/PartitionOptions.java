@@ -73,7 +73,7 @@ public abstract class PartitionOptions extends ModelOptions {
 //
 //    protected void createParameterClockRateReferencePrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
 //                                                          double initial) { // it will change to Uniform
-//        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(initial)
+//        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(initial)
 //                .isCMTCRate(true).isNonNegative(true)
 //                .truncationLower(truncationLower).truncationUpper(truncationUpper).partitionOptions(options).build(parameters);
 //    }

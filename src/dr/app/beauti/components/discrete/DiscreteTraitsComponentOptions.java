@@ -59,10 +59,6 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 // BSSVS
                 modelOptions.createParameter(prefix + "indicators", "a vector of bits indicating non-zero rates for BSSVS", 1.0);
 
-                // = strick clock TODO trait.mu belongs Clock Model?
-//        modelOptions.createParameterExponentialPrior(prefix + "mu", "discrete trait CTMC rate parameter",
-//                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0);
-
                 // Poisson Prior on non zero ratesBSSVS
                 modelOptions.createDiscreteStatistic(prefix + "nonZeroRates", "the number of non-zero rates for BSSVS");
 
@@ -107,8 +103,6 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
             }
             params.add(modelOptions.getParameter(prefix + "frequencies"));
             params.add(modelOptions.getParameter(prefix + "rates"));
-//            System.err.println("Selected OK");
-//               params.add(getParameter(prefix + "mu"));
         }
 
     }

@@ -84,7 +84,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_FILE_LOG_PARAMETERS:
             case IN_FILE_LOG_LIKELIHOODS:
             case AFTER_FILE_LOG:
-//            case IN_TREES_LOG:
                 return true;
             case IN_MCMC_PRIOR:
                 return hasBSSVS();
@@ -129,9 +128,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case AFTER_FILE_LOG:
                 writeDiscreteTraitFileLoggers(writer);
 
-                // This was for ancestral state writing which is now handled by the ancestral state component
-//            case IN_TREES_LOG:
-//                writeTreeLogEntries((PartitionTreeModel)item, writer);
                 break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
@@ -511,17 +507,5 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
         }
     }
-
-    // This was for ancestral state writing which is now handled by the ancestral state component
-//    private void writeTreeLogEntries(PartitionTreeModel treeModel, XMLWriter writer) {
-//        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
-//            if (partitionData.getPartitionTreeModel() == treeModel) {
-//                String prefix = partitionData.getName() + ".";
-//                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-//                        prefix + OldTreeLikelihoodParser.TREE_LIKELIHOOD);
-//            }
-//        }
-//    }
-
 
 }

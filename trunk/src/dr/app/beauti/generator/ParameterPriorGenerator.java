@@ -239,7 +239,7 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.BETA_PRIOR);
                 break;
-            case CMTC_RATE_REFERENCE_PRIOR:
+            case CTMC_RATE_REFERENCE_PRIOR:
                 writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME);
                 writer.writeOpenTag(CTMCScalePriorParser.SCALEPARAMETER);
                 writeParameterIdref(writer, parameter);

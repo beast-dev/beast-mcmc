@@ -23,7 +23,7 @@ public enum PriorType {
     INVERSE_GAMMA_PRIOR("Inverse Gamma", true, true),
     BETA_PRIOR("Beta", true, true),
     ONE_OVER_X_PRIOR("1/x", true, false),
-    CMTC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", false, false),
+    CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", false, false),
     NORMAL_HPM_PRIOR("Normal HPM", false, false),
     POISSON_PRIOR("Poisson", false, false);
@@ -79,7 +79,7 @@ public enum PriorType {
                 break;
             case ONE_OVER_X_PRIOR:
                 break;
-            case CMTC_RATE_REFERENCE_PRIOR:
+            case CTMC_RATE_REFERENCE_PRIOR:
                 break;
             case NORMAL_HPM_PRIOR:
                 break;
@@ -190,7 +190,7 @@ public enum PriorType {
                 buffer.append(NumberUtil.formatDecimal(parameter.shapeB, 10, 6));
                 buffer.append("]");
                 break;
-            case CMTC_RATE_REFERENCE_PRIOR:
+            case CTMC_RATE_REFERENCE_PRIOR:
                 buffer.append("Approx. Reference Prior");
                 break;
             case NORMAL_HPM_PRIOR:
@@ -300,7 +300,7 @@ public enum PriorType {
                     NORMAL_PRIOR,
                     LOGNORMAL_PRIOR,
                     GAMMA_PRIOR,
-                    CMTC_RATE_REFERENCE_PRIOR,
+                    CTMC_RATE_REFERENCE_PRIOR,
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
         }

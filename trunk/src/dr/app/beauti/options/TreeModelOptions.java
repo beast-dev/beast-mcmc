@@ -123,7 +123,7 @@ public class TreeModelOptions extends ModelOptions {
                 || para.priorType == PriorType.GAMMA_PRIOR
                 || para.priorType == PriorType.INVERSE_GAMMA_PRIOR
                 || para.priorType == PriorType.BETA_PRIOR
-                || para.priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR
+                || para.priorType == PriorType.CTMC_RATE_REFERENCE_PRIOR
                 || para.priorType == PriorType.LOGNORMAL_HPM_PRIOR
                 || para.priorType == PriorType.POISSON_PRIOR;
     }

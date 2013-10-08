@@ -80,7 +80,7 @@ public class PriorDialog {
         optionsPanels.put(PriorType.GAMMA_PRIOR, PriorOptionsPanel.GAMMA);
         optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, PriorOptionsPanel.INVERSE_GAMMA);
         optionsPanels.put(PriorType.BETA_PRIOR, PriorOptionsPanel.BETA);
-        optionsPanels.put(PriorType.CMTC_RATE_REFERENCE_PRIOR, PriorOptionsPanel.CTMC_RATE_REFERENCE);
+        optionsPanels.put(PriorType.CTMC_RATE_REFERENCE_PRIOR, PriorOptionsPanel.CTMC_RATE_REFERENCE);
         optionsPanels.put(PriorType.ONE_OVER_X_PRIOR, PriorOptionsPanel.ONE_OVER_X);
 //        optionsPanels.put(PriorType.NORMAL_HPM_PRIOR, new NormalHPMOptionsPanel());
 //        optionsPanels.put(PriorType.LOGNORMAL_HPM_PRIOR, new LognormalHPMOptionsPanel());
@@ -284,7 +284,7 @@ public class PriorDialog {
             optionsPanel.addSpanningComponent(panel3);
         }
 
-        if (priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR) {
+        if (priorType == PriorType.CTMC_RATE_REFERENCE_PRIOR) {
             optionsPanel.addSpanningComponent(citationText);
         }
 

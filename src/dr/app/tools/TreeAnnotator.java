@@ -1369,6 +1369,8 @@ public class TreeAnnotator {
                 heights = HeightsSummary.MEDIAN_HEIGHTS;
             } else if (value.equalsIgnoreCase("ca")) {
                 heights = HeightsSummary.CA_HEIGHTS;
+                System.out.println("Please cite: Heled and Bouckaert: Looking for trees in the forest:\n" +
+                        "summary tree from posterior samples. BMC Evolutionary Biology 2013 13:221.");
             }
         }
 

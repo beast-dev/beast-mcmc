@@ -21,7 +21,7 @@ import javax.swing.SwingUtilities;
  * @author Filip Bielejec
  * @version $Id$
  */
-public class AncestralSequenceEditor {
+public class RootSequenceEditor {
 
 	// Data
 	private PartitionDataList dataList = null;
@@ -40,13 +40,13 @@ public class AncestralSequenceEditor {
 	private JDialog window;
 	private Frame owner;
 	
-	public AncestralSequenceEditor(PartitionDataList dataList, int row) {
+	public RootSequenceEditor(PartitionDataList dataList, int row) {
 		
 		this.dataList = dataList;
 		this.row = row;
 
 		ancestralSequenceField = new JTextField("", 10);
-		window = new JDialog(owner, "Setup ancestral sequence for partition " + (row + 1));
+		window = new JDialog(owner, "Setup root sequence for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
         optionPanel.setOpaque(false);

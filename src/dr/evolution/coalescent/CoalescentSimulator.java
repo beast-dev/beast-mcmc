@@ -102,7 +102,7 @@ public class CoalescentSimulator {
         throw new RuntimeException("failed to merge trees after 1000 tries.");
 	}
 
-	public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight, double maxHeight) {
+    public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight, double maxHeight) {
         // If only one node, return it
         // continuing results in an infinite loop
         if( nodes.length == 1 ) return nodes;

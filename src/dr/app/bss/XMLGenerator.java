@@ -21,6 +21,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
@@ -925,7 +926,7 @@ public class XMLGenerator {
 		writer.writeIDref("tree", Utils.TOPOLOGY + suffix);
 
 		writeParameter(TreeModelParser.ROOT_HEIGHT, treeModelName + "."
-				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, writer);
+				+ OldCoalescentSimulatorParser.ROOT_HEIGHT, 1, null, writer);
 
 		writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
 				new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES,

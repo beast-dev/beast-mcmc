@@ -1,38 +1,37 @@
-package dr.evomodelxml.coalescent;
+package dr.evomodelxml.tree;
 
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodelxml.tree.TreeModelParser;
-import dr.inference.distribution.ParametricDistributionModel;
+import dr.evomodel.tree.TreeGenerator;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Generates a starting tree compatible with constraints and an initial tree topology.
  */
-public class NewCoalescentSimulatorParser extends AbstractXMLObjectParser {
+public class TreeGeneratorParser extends AbstractXMLObjectParser {
 
-    public static final String COALESCENT_SIMULATOR = "coalescentSimulator";
+    public static final String TREE_GENERATOR = "treeGenerator";
+    public static final String TOPOLOGY = "topology";
     public static final String HEIGHT = "height";
 
     public String getParserName() {
-        return COALESCENT_SIMULATOR;
+        return TREE_GENERATOR;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        CoalescentSimulator simulator = new CoalescentSimulator();
+        TreeGenerator generator = new TreeGenerator();
 
-        DemographicModel demoModel = (DemographicModel) xo.getChild(DemographicModel.class);
         List<TaxonList> taxonLists = new ArrayList<TaxonList>();
         List<Tree> subtrees = new ArrayList<Tree>();
+
+        Tree guideTopology = (Tree)xo.getChild(TOPOLOGY);
 
         double height = xo.getAttribute(HEIGHT, Double.NaN);
 
@@ -76,13 +75,15 @@ public class NewCoalescentSimulatorParser extends AbstractXMLObjectParser {
             for (int i = 0; i < remainingTaxa.getTaxonCount(); i++) {
                 Taxa tip = new Taxa();
                 tip.addTaxon(remainingTaxa.getTaxon(i));
-                trees[i + subtrees.size()] = simulator.simulateTree(tip, demoModel);
+                trees[i + subtrees.size()] = generator.simulateTree(guideTopology, null, height);
             }
 
-            return simulator.simulateTree(trees, demoModel, height, trees.length != 1);
+            return generator.simulateTree(guideTopology, trees, height);
 
         } catch (IllegalArgumentException iae) {
             throw new XMLParseException(iae.getMessage());
+        } catch (TreeGenerator.GenerationFailedException gfe) {
+            throw new XMLParseException(gfe.getMessage());
         }
     }
 
@@ -91,7 +92,7 @@ public class NewCoalescentSimulatorParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element returns a simulated tree under the given demographic model. The element can " +
+        return "This element returns a generated tree compatible with the given topology. The element can " +
                 "be nested to simulate with monophyletic clades. The tree will be rescaled to the given height.";
     }
 
@@ -107,6 +108,6 @@ public class NewCoalescentSimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(HEIGHT, true, ""),
             new ElementRule(Tree.class, 0, Integer.MAX_VALUE),
             new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
-            new ElementRule(DemographicModel.class, 0, Integer.MAX_VALUE),
+            new ElementRule(TOPOLOGY, Tree.class),
     };
 }

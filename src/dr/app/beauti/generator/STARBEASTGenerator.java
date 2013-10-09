@@ -41,7 +41,7 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
@@ -109,21 +109,21 @@ public class STARBEASTGenerator extends Generator {
     public void writeStartingTreeForCalibration(XMLWriter writer) {
         writer.writeComment("species starting tree for calibration");
         writer.writeText("");
-        writer.writeOpenTag(CoalescentSimulatorParser.COALESCENT_TREE,
+        writer.writeOpenTag(OldCoalescentSimulatorParser.COALESCENT_TREE,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SP_START_TREE)}
         );
 
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, ALL_SPECIES)};
 
-        writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+        writer.writeOpenTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
         writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
         for (Taxa taxa : options.speciesSets) {
             Parameter statistic = options.getStatistic(taxa);
 
             Attribute mono = new Attribute.Default<Boolean>(
-                    CoalescentSimulatorParser.IS_MONOPHYLETIC, options.speciesSetsMono.get(taxa));
+                    OldCoalescentSimulatorParser.IS_MONOPHYLETIC, options.speciesSetsMono.get(taxa));
 
-            writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
+            writer.writeOpenTag(OldCoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
 
@@ -132,10 +132,10 @@ public class STARBEASTGenerator extends Generator {
                 writeDistribution(statistic, false, writer);
             }
 
-            writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
+            writer.writeCloseTag(OldCoalescentSimulatorParser.TMRCA_CONSTRAINT);
 
         }
-        writer.writeCloseTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+        writer.writeCloseTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
 
 
         writer.writeOpenTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
@@ -154,7 +154,7 @@ public class STARBEASTGenerator extends Generator {
         writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
         writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
 
-        writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
+        writer.writeCloseTag(OldCoalescentSimulatorParser.COALESCENT_TREE);
     }
 
 
@@ -255,7 +255,7 @@ public class STARBEASTGenerator extends Generator {
 
         writer.writeCloseTag(SpeciesTreeModelParser.SPP_SPLIT_POPULATIONS);
 
-        if (calibration) writer.writeIDref(CoalescentSimulatorParser.COALESCENT_TREE, SP_START_TREE);
+        if (calibration) writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, SP_START_TREE);
 
         writer.writeCloseTag(SpeciesTreeModelParser.SPECIES_TREE);
     }

@@ -16,7 +16,7 @@ import dr.evomodel.tree.TreeHeightStatistic;
 import dr.evomodel.tree.TreeLengthStatistic;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.inference.loggers.MCLogger;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.mcmc.MCMC;
@@ -42,7 +42,7 @@ import java.util.Set;
 public abstract class OperatorAssert extends TestCase {
 
 	static final String TL = "TL";
-    static final String TREE_HEIGHT = CoalescentSimulatorParser.ROOT_HEIGHT;
+    static final String TREE_HEIGHT = OldCoalescentSimulatorParser.ROOT_HEIGHT;
 
     protected FlexibleTree tree5;
     protected FlexibleTree tree6;

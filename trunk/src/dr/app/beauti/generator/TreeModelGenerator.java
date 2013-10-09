@@ -32,7 +32,7 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.MicrosatellitePatternParser;
@@ -77,7 +77,7 @@ public class TreeModelGenerator extends Generator {
                 writer.writeIDref(UPGMATreeParser.UPGMA_TREE, modelPrefix + STARTING_TREE);
                 break;
             case RANDOM:
-                writer.writeIDref(CoalescentSimulatorParser.COALESCENT_TREE, modelPrefix + STARTING_TREE);
+                writer.writeIDref(OldCoalescentSimulatorParser.COALESCENT_TREE, modelPrefix + STARTING_TREE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
@@ -85,7 +85,7 @@ public class TreeModelGenerator extends Generator {
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
         writer.writeTag(ParameterParser.PARAMETER,
-                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + CoalescentSimulatorParser.ROOT_HEIGHT), true);
+                new Attribute.Default<String>(XMLParser.ID, treeModelName + "." + OldCoalescentSimulatorParser.ROOT_HEIGHT), true);
         writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
 
 

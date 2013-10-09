@@ -196,7 +196,8 @@ public class SimulationPanel extends JPanel implements Exportable {
     	setDataList(dataList);
     	
 		// TODO: DOES NOT WORK
-//    	outputFormatModel.setSelectedItem(dataList.outputFormat);
+    	outputFormatModel.setSelectedItem(dataList.outputFormat);
+    	outputFormat.setSelectedItem(dataList.outputFormat);
     	
     }//END: updateSimulationPanel
     

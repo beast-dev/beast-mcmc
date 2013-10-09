@@ -153,7 +153,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		String toolTipText = "Leave this field empty to start from a random ancestral sequence.";
 		column = partitionTable.getColumnModel().getColumn(
-				PartitionTableModel.ANCESTRAL_SEQUENCE_INDEX);
+				PartitionTableModel.ROOT_SEQUENCE_INDEX);
 		JTableButtonCellRenderer jTableButtonCellRenderer = new JTableButtonCellRenderer();
 		jTableButtonCellRenderer.setColumnToolTipText(toolTipText);
 		column.setCellRenderer(jTableButtonCellRenderer);

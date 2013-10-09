@@ -58,6 +58,8 @@ import java.awt.*;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -102,8 +104,8 @@ public class BeautiFrame extends DocumentFrame {
 
     private BeautiPanel currentPanel;
 
-    private JFileChooser importChooser; // make JFileChooser chooser remember previous path
-    private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
+    private Map<String, FileDialog> fileDialogs = new HashMap<String, FileDialog>();
+    private Map<String, JFileChooser> fileChoosers = new HashMap<String, JFileChooser>();
 
     final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
@@ -276,21 +278,6 @@ public class BeautiFrame extends DocumentFrame {
 
         setAllOptions();
 
-        // make JFileChooser chooser remember previous path
-        exportChooser = new JFileChooser(Utils.getCWD());
-        exportChooser.setFileFilter(new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
-        exportChooser.setDialogTitle("Generate BEAST XML File...");
-
-
-        importChooser = new JFileChooser(Utils.getCWD());
-
-        importChooser.setMultiSelectionEnabled(true);
-        importChooser.setFileFilter(new FileNameExtensionFilter(
-                "Microsatellite (tab-delimited *.txt) Files", "txt"));
-        importChooser.setFileFilter(new FileNameExtensionFilter(
-                "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa"));
-        importChooser.setDialogTitle("Import Aligment...");
-
         Color focusColor = UIManager.getColor("Focus.color");
         Border focusBorder = BorderFactory.createMatteBorder(2, 2, 2, 2, focusColor);
         dataPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
@@ -438,14 +425,14 @@ public class BeautiFrame extends DocumentFrame {
         FileInputStream fileIn =
                 new FileInputStream(file);
         try {
-        ObjectInputStream in = new ObjectInputStream(fileIn);
+            ObjectInputStream in = new ObjectInputStream(fileIn);
             options = (BeautiOptions) in.readObject();
             in.close();
         } catch (IOException ioe) {
             JOptionPane.showMessageDialog(this,
                     "Unable to read BEAUti file. BEAUti can only read files\n" +
-                    "created by 'Saving' within BEAUti. It cannot read BEAST\n" +
-                    "XML files. To read data within BEAST XML files, use\n" +
+                            "created by 'Saving' within BEAUti. It cannot read BEAST\n" +
+                            "XML files. To read data within BEAST XML files, use\n" +
                             "the 'Import' option.",
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
@@ -478,9 +465,12 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public final void doImport() {
-        int returnVal = importChooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File[] files = importChooser.getSelectedFiles();
+        File[] files = selectImportFiles("Import Aligment...", true, new FileNameExtensionFilter[] {
+                new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt"),
+                new FileNameExtensionFilter(
+                        "NEXUS, BEAST or FASTA Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa")});
+        // new FileNameExtensionFilter( "Microsatellite (tab-delimited *.txt) Files", "txt");
+        if (files != null && files.length != 0) {
             importFiles(files);
             tabbedPane.setSelectedComponent(dataPanel);
         }
@@ -523,16 +513,6 @@ public class BeautiFrame extends DocumentFrame {
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     jde.printStackTrace();
-//                } catch (IllegalArgumentException illegEx) {
-//                    JOptionPane.showMessageDialog(this, illegEx.getMessage(),
-//                            "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
-//
-//                } catch (Exception ex) {
-//                    JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-//                            "Error reading file",
-//                            JOptionPane.ERROR_MESSAGE);
-//                    ex.printStackTrace();
-//                    return;
                 }
             }
         }
@@ -549,17 +529,13 @@ public class BeautiFrame extends DocumentFrame {
 
     public final boolean doImportTraits() {
         if (options.taxonList != null) { // validation of check empty taxonList
-            FileDialog dialog = new FileDialog(this,
-                    "Import Traits File...",
-                    FileDialog.LOAD);
+            File[] files = selectImportFiles("Import Traits File...", false, new FileNameExtensionFilter[] {
+                    new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat") });
 
-            dialog.setVisible(true);
-            if (dialog.getFile() != null) {
-                final File file = new File(dialog.getDirectory(), dialog.getFile());
-
+            if (files != null && files.length != 0) {
                 try {
                     BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
-                    beautiImporter.importTraits(file);
+                    beautiImporter.importTraits(files[0]);
                 } catch (FileNotFoundException fnfe) {
                     JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                             "Unable to open file",
@@ -739,45 +715,135 @@ public class BeautiFrame extends DocumentFrame {
             return false;
         }
 
-        // offer stem as default
-        exportChooser.setSelectedFile(new File(options.fileNameStem + ".xml"));
+        File file = selectExportFile("Generate BEAST XML File...", new FileNameExtensionFilter("BEAST XML File", "xml", "beast"));
 
-        final int returnVal = exportChooser.showSaveDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = exportChooser.getSelectedFile();
+        if (file != null) {
+            try {
+                getAllOptions();
+                generator.generateXML(file);
 
-            int n = JOptionPane.YES_OPTION;
-
-            if (file.exists()) {
-                n = JOptionPane.showConfirmDialog(this, file.getName(),
-                        "Overwrite the existing file?", JOptionPane.YES_NO_OPTION);
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
+                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (Generator.GeneratorException e) {
+                JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
+                        "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
+                return false;
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
+                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+                return false;
             }
 
-            if (n == JOptionPane.YES_OPTION) {
-                try {
-                    getAllOptions();
-                    generator.generateXML(file);
+            clearDirty();
+            return true;
+        }
 
-                } catch (IOException ioe) {
-                    JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
-                            "Unable to generate file", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                } catch (Generator.GeneratorException e) {
-                    JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
-                            "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
-                            "Unable to generate file", JOptionPane.ERROR_MESSAGE);
-                    return false;
+        return false;
+    }
+
+    /**
+     * Use the native file dialog on the Mac because the Swing one is bad. On linux, the native
+     * one is bad. No preference on Windows.
+     * @param title
+     * @return
+     */
+    private File[] selectImportFiles(final String title, boolean multipleSelection, FileNameExtensionFilter[] fileNameExtensionFilters) {
+        if (Boolean.parseBoolean(System.getProperty("use.native.choosers", Boolean.toString(OSType.isMac())))) {
+            FileDialog importDialog = fileDialogs.get(title);
+            if (importDialog == null) {
+                importDialog = new FileDialog(this, title, FileDialog.LOAD);
+                fileDialogs.put(title, importDialog);
+            }
+
+            importDialog.setVisible(true);
+            if (importDialog.getFile() != null) {
+                return new File[] { new File(importDialog.getDirectory(), importDialog.getFile()) };
+            }
+        } else {
+            JFileChooser importChooser = fileChoosers.get(title);
+            if (importChooser == null) {
+                importChooser = new JFileChooser(Utils.getCWD());
+
+                importChooser.setMultiSelectionEnabled(multipleSelection);
+                for (FileNameExtensionFilter fileNameExtensionFilter : fileNameExtensionFilters) {
+                    importChooser.setFileFilter(fileNameExtensionFilter);
                 }
-            } else {
-                doGenerate();
+                importChooser.setDialogTitle(title);
+
+                fileChoosers.put(title, importChooser);
+            }
+
+            int returnVal = importChooser.showOpenDialog(this);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                if (importChooser.isMultiSelectionEnabled()) {
+                    return importChooser.getSelectedFiles();
+                } else {
+                    return new File[] { importChooser.getSelectedFile() };
+                }
             }
         }
 
-        clearDirty();
-        return true;
+        return null;
+    }
+
+    /**
+     * Use the native file dialog on the Mac because the Swing one is bad. On linux, the native
+     * one is bad. No preference on Windows.
+     * @param title
+     * @return
+     */
+    private File selectExportFile(final String title, FileNameExtensionFilter fileNameExtensionFilter) {
+        if (Boolean.parseBoolean(System.getProperty("use.native.choosers", Boolean.toString(OSType.isMac())))) {
+            FileDialog exportDialog = fileDialogs.get(title);
+            if (exportDialog == null) {
+                exportDialog = new FileDialog(this, title, FileDialog.SAVE);
+                fileDialogs.put(title, exportDialog);
+            }
+
+            exportDialog.setFile(options.fileNameStem + ".xml");
+
+            exportDialog.setVisible(true);
+
+            // Mac dialog box will already have asked about overwriting file...
+            if (exportDialog.getFile() != null) {
+                return new File(exportDialog.getDirectory(), exportDialog.getFile());
+            }
+        } else {
+            JFileChooser exportChooser = fileChoosers.get(title);
+            if (exportChooser == null) {
+                exportChooser = new JFileChooser(Utils.getCWD());
+
+                // make JFileChooser chooser remember previous path
+                exportChooser = new JFileChooser(Utils.getCWD());
+                exportChooser.setFileFilter(fileNameExtensionFilter);
+                exportChooser.setDialogTitle(title);
+
+                fileChoosers.put(title, exportChooser);
+            }
+
+            // offer stem as default
+            exportChooser.setSelectedFile(new File(options.fileNameStem + ".xml"));
+
+            final int returnVal = exportChooser.showSaveDialog(this);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                File file = exportChooser.getSelectedFile();
+
+                int n = JOptionPane.YES_OPTION;
+
+                if (file.exists()) {
+                    n = JOptionPane.showConfirmDialog(this, file.getName(),
+                            "Overwrite the existing file?", JOptionPane.YES_NO_OPTION);
+                }
+
+                if (n == JOptionPane.YES_OPTION) {
+                    return file;
+                }
+            }
+        }
+
+        return null;
     }
 
     public void switchToPanel(String panelName) {
@@ -802,65 +868,6 @@ public class BeautiFrame extends DocumentFrame {
 
         return exportable;
     }
-
-//    public boolean doSave() {
-//        return doSaveAs();
-//    }
-//
-//    public boolean doSaveAs() {
-//        FileDialog dialog = new FileDialog(this,
-//                "Save Template As...",
-//                FileDialog.SAVE);
-//
-//        dialog.setVisible(true);
-//        if (dialog.getFile() == null) {
-//            // the dialog was cancelled...
-//            return false;
-//        }
-//
-//        File file = new File(dialog.getDirectory(), dialog.getFile());
-//
-//        try {
-//            if (writeToFile(file)) {
-//
-//                clearDirty();
-//            }
-//        } catch (IOException ioe) {
-//            JOptionPane.showMessageDialog(this, "Unable to save file: " + ioe,
-//                    "Unable to save file",
-//                    JOptionPane.ERROR_MESSAGE);
-//        }
-//
-//        return true;
-//    }
-
-//    public Action getOpenAction() {
-//        return openTemplateAction;
-//    }
-//
-//    private final AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
-//        private static final long serialVersionUID = 2450459627280385426L;
-//
-//        public void actionPerformed(ActionEvent ae) {
-//            doApplyTemplate();
-//        }
-//    };
-
-//    public Action getSaveAction() {
-//        return saveAsAction;
-//    }
-//
-//    public Action getSaveAsAction() {
-//        return saveAsAction;
-//    }
-//
-//    private final AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
-//        private static final long serialVersionUID = 2424923366448459342L;
-//
-//        public void actionPerformed(ActionEvent ae) {
-//            doSaveAs();
-//        }
-//    };
 
     public Action getImportAction() {
         return importAlignmentAction;

@@ -29,7 +29,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	
 	public final static int SITE_RATE_MODEL_INDEX = 8;
 	public final static int CLOCK_RATE_MODEL_INDEX = 9;
-	public final static int ANCESTRAL_SEQUENCE_INDEX = 10;
+	public final static int ROOT_SEQUENCE_INDEX = 10;
 	
 	public static String[] COLUMN_NAMES = { "Input", //
 			"From", //
@@ -41,7 +41,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			"Frequencies", //
 			"Site Rate Model", //
 			"Clock Rate Model", //
-			"Ancestral Sequence" //
+			"Root Sequence" //
 	};
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
@@ -63,7 +63,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	private SiteRateModelEditor siteRateModelEditor;
 	private ClockRateModelEditor clockRateModelEditor;
 	private FrequencyModelEditor frequencyModelEditor;
-	private AncestralSequenceEditor ancestralSequenceEditor;
+	private RootSequenceEditor rootSequenceEditor;
 	
 	public PartitionTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
@@ -121,7 +121,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			return false;
 		case FREQUENCY_MODEL_INDEX:
 			return false;
-		case ANCESTRAL_SEQUENCE_INDEX:
+		case ROOT_SEQUENCE_INDEX:
 			return false;
 		default:
 			return false;
@@ -194,10 +194,10 @@ public class PartitionTableModel extends AbstractTableModel {
 					.addActionListener(new ListenOpenFrequencyModelEditor(row));
 			return frequencyModelButton;
 			
-		case ANCESTRAL_SEQUENCE_INDEX:
+		case ROOT_SEQUENCE_INDEX:
 			
 			final JButton ancestralSequenceButton = new JButton(COLUMN_NAMES[column]);
-			ancestralSequenceButton.addActionListener(new ListenOpenAncestralSequenceEditor(row));
+			ancestralSequenceButton.addActionListener(new ListenOpenRootSequenceEditor(row));
 			return ancestralSequenceButton;
 			
 		default:
@@ -341,17 +341,17 @@ public class PartitionTableModel extends AbstractTableModel {
 	}// END: ListenOpenSiteRateModelEditor
 
 	
-	private class ListenOpenAncestralSequenceEditor implements ActionListener {
+	private class ListenOpenRootSequenceEditor implements ActionListener {
 		private int row;
 
-		public ListenOpenAncestralSequenceEditor(int row) {
+		public ListenOpenRootSequenceEditor(int row) {
 			this.row = row;
 		}
 
 		public void actionPerformed(ActionEvent ev) {
 
-			ancestralSequenceEditor = new AncestralSequenceEditor(dataList, row);
-			ancestralSequenceEditor.launch();
+			rootSequenceEditor = new RootSequenceEditor(dataList, row);
+			rootSequenceEditor.launch();
 
 		}// END: actionPerformed
 	}// END: ListenOpenAncestralSequenceEditor

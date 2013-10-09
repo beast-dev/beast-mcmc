@@ -92,7 +92,7 @@ public class IndependentCoalescentSampler extends SimpleMCMCOperator {
         for (int i = 0; i < xo.getChildCount(); i++) {
             final Object child = xo.getChild(i);
             
-            //careful: Trees are TaxonLists ... (AER); see CoalescentSimulatorParser
+            //careful: Trees are TaxonLists ... (AER); see OldCoalescentSimulatorParser
             if (child instanceof Tree) {
                 //do nothing
             } else if (child instanceof TaxonList) {

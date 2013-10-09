@@ -669,7 +669,7 @@ public class BeastGenerator extends BeautiOptions {
         if (userTree) {
             writer.writeTag("tree", new Attribute.Default<String>(XMLParser.IDREF, InitialTreeGenerator.STARTING_TREE), true);
         } else {
-            writer.writeTag(CoalescentSimulatorParser.COALESCENT_TREE, new Attribute.Default<String>(XMLParser.IDREF, InitialTreeGenerator.STARTING_TREE), true);
+            writer.writeTag(OldCoalescentSimulatorParser.COALESCENT_TREE, new Attribute.Default<String>(XMLParser.IDREF, InitialTreeGenerator.STARTING_TREE), true);
         }
 
         writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
@@ -2882,7 +2882,7 @@ public class BeastGenerator extends BeautiOptions {
             Parameter rootHeight = getParameter("treeModel.rootHeight");
             if (rootHeight.priorType != PriorType.NONE) {
                 writer.writeOpenTag(
-                        CoalescentSimulatorParser.COALESCENT_TREE,
+                        OldCoalescentSimulatorParser.COALESCENT_TREE,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, InitialTreeGenerator.STARTING_TREE),
                                 new Attribute.Default<String>(TreeModelParser.ROOT_HEIGHT, "" + rootHeight.initial)
@@ -2890,7 +2890,7 @@ public class BeastGenerator extends BeautiOptions {
                 );
             } else {
                 writer.writeOpenTag(
-                        CoalescentSimulatorParser.COALESCENT_TREE,
+                        OldCoalescentSimulatorParser.COALESCENT_TREE,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, InitialTreeGenerator.STARTING_TREE)
                         }
@@ -2899,14 +2899,14 @@ public class BeastGenerator extends BeautiOptions {
 
             Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, TaxaParser.TAXA)};
             if (taxonSets.size() > 0) {
-                writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+                writer.writeOpenTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
                 for (Taxa taxonSet : taxonSets) {
                     Parameter statistic = statistics.get(taxonSet);
 
-                    Attribute mono = new Attribute.Default<Boolean>(CoalescentSimulatorParser.IS_MONOPHYLETIC, taxonSetsMono.get(taxonSet));
+                    Attribute mono = new Attribute.Default<Boolean>(OldCoalescentSimulatorParser.IS_MONOPHYLETIC, taxonSetsMono.get(taxonSet));
 
-                    writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
+                    writer.writeOpenTag(OldCoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
                     writer.writeTag(TaxaParser.TAXA,
                             new Attribute[]{new Attribute.Default<String>(XMLParser.IDREF, taxonSet.getId())}, true);
@@ -2919,15 +2919,15 @@ public class BeastGenerator extends BeautiOptions {
                         }
                     }
 
-                    writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
+                    writer.writeCloseTag(OldCoalescentSimulatorParser.TMRCA_CONSTRAINT);
                 }
-                writer.writeCloseTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+                writer.writeCloseTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
             } else {
                 writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             }
 
             writeInitialDemoModelRef(writer);
-            writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
+            writer.writeCloseTag(OldCoalescentSimulatorParser.COALESCENT_TREE);
         }
     }
 

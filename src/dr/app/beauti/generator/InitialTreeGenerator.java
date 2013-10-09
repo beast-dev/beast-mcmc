@@ -34,9 +34,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.OldCoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
-import dr.evomodelxml.coalescent.NewCoalescentSimulatorParser;
 import dr.evoxml.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -130,7 +130,7 @@ public class InitialTreeGenerator extends Generator {
                     writeSubTree(simulatorId, taxaId, options.taxonList, model, writer);
                 } else {
                     writer.writeOpenTag(
-                            NewCoalescentSimulatorParser.COALESCENT_SIMULATOR,
+                            CoalescentSimulatorParser.COALESCENT_SIMULATOR,
                             new Attribute[]{
                                     new Attribute.Default<String>(XMLParser.ID, simulatorId)
                             }
@@ -154,16 +154,16 @@ public class InitialTreeGenerator extends Generator {
 
         if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
             // *BEAST case is in STARBEASTGenerator.writeStartingTreeForCalibration(XMLWriter writer)
-            writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+            writer.writeOpenTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             for (Taxa taxa : options.taxonSets) {
                 if (options.taxonSetsTreeModel.get(taxa).equals(model)) {
                     Parameter statistic = options.getStatistic(taxa);
 
                     Attribute mono = new Attribute.Default<Boolean>(
-                            CoalescentSimulatorParser.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxa));
+                            OldCoalescentSimulatorParser.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxa));
 
-                    writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
+                    writer.writeOpenTag(OldCoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
                     writer.writeIDref(TaxaParser.TAXA, taxa.getId());
 
@@ -172,10 +172,10 @@ public class InitialTreeGenerator extends Generator {
                         writeDistribution(statistic, false, writer);
                     }
 
-                    writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
+                    writer.writeCloseTag(OldCoalescentSimulatorParser.TMRCA_CONSTRAINT);
                 }
             }
-            writer.writeCloseTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+            writer.writeCloseTag(OldCoalescentSimulatorParser.CONSTRAINED_TAXA);
         } else {
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
         }
@@ -197,14 +197,14 @@ public class InitialTreeGenerator extends Generator {
             } else {
                 attributes = new Attribute[] {
                         new Attribute.Default<String>(XMLParser.ID, treeId),
-                        new Attribute.Default<String>(NewCoalescentSimulatorParser.HEIGHT, "" + height)
+                        new Attribute.Default<String>(CoalescentSimulatorParser.HEIGHT, "" + height)
                 };
 
             }
         } else {
             if (!Double.isNaN(height)) {
                 attributes = new Attribute[] {
-                        new Attribute.Default<String>(NewCoalescentSimulatorParser.HEIGHT, "" + height)
+                        new Attribute.Default<String>(CoalescentSimulatorParser.HEIGHT, "" + height)
                 };
 
             }
@@ -213,7 +213,7 @@ public class InitialTreeGenerator extends Generator {
         // construct a subtree
 
         writer.writeOpenTag(
-                NewCoalescentSimulatorParser.COALESCENT_SIMULATOR,
+                CoalescentSimulatorParser.COALESCENT_SIMULATOR,
                 attributes
         );
 
@@ -255,7 +255,7 @@ public class InitialTreeGenerator extends Generator {
             writer.writeIDref(TaxaParser.TAXA, taxaId);
         }
         writeInitialDemoModelRef(model, writer);
-        writer.writeCloseTag(NewCoalescentSimulatorParser.COALESCENT_SIMULATOR);
+        writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
     }
 
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {

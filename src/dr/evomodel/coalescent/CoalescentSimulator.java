@@ -51,13 +51,13 @@ public class CoalescentSimulator {
     /**
      * Simulates a coalescent tree from a set of subtrees.
      *
-     * @param subtrees         an array of tree to be used as subtrees
-     * @param model            the demographic model to use
-     * @param rootHeight       an optional root height with which to scale the whole tree
-     * @param preserveSubtrees true of subtrees should be preserved
+     * @param subtrees                an array of tree to be used as subtrees
+     * @param model                   the demographic model to use
+     * @param rootHeight              an optional root height with which to scale the whole tree
+     * @param preserveSubtreesHeights true if heights of subtrees should be preserved
      * @return a simulated coalescent tree
      */
-    public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight, boolean preserveSubtrees) {
+    public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight, boolean preserveSubtreesHeights) {
 
         SimpleNode[] roots = new SimpleNode[subtrees.length];
         SimpleTree tree;
@@ -74,7 +74,7 @@ public class CoalescentSimulator {
         }
 
         if (!Double.isNaN(rootHeight) && rootHeight > 0.0) {
-            if (preserveSubtrees) {
+            if (preserveSubtreesHeights) {
                 limitNodes(tree, rootHeight - 1e-12);
                 tree.setRootHeight(rootHeight); 
             } else {

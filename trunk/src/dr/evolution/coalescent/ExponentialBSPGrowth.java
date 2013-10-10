@@ -50,6 +50,16 @@ public class ExponentialBSPGrowth extends DemographicFunction.Abstract {
         this.r = (Math.log(N0) - Math.log(N1)) / time;
     }
 
+    public void setup(double N0, double r){
+        this.N0 = N0;
+        this.r = r;
+    }
+
+    public void setupN1(double N1, double r, double time) {
+        this.r = r;
+        this.N0 = N1*Math.exp(r*time);
+    }
+
     // Implementation of abstract methods
 
     public double getDemographic(double t) {

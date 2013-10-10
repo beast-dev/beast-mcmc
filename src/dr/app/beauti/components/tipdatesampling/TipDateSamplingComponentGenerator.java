@@ -47,7 +47,7 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
+    protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
         TipDateSamplingComponentOptions comp = (TipDateSamplingComponentOptions)options.getComponentOptions(TipDateSamplingComponentOptions.class);
 
         TaxonList taxa = comp.getTaxonSet();

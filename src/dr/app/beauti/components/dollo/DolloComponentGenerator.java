@@ -85,7 +85,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
 
 	}// END: usesInsertionPoint
 
-	protected void generate(InsertionPoint point, Object item, XMLWriter writer) {
+	protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
 
 		DolloComponentOptions component = (DolloComponentOptions) options
 				.getComponentOptions(DolloComponentOptions.class);

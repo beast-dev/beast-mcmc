@@ -54,7 +54,7 @@ public class BeastVersion implements Version {
 
     private static final String REVISION = "$Rev$";
 
-    private static final String ID = "$Id$";
+    private static final String ID = "$Id $";
 
     public String getVersion() {
         return VERSION;

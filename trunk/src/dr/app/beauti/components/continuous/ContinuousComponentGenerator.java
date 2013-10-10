@@ -45,7 +45,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
     }// END: usesInsertionPoint
 
-    protected void generate(InsertionPoint point, Object item, XMLWriter writer) {
+    protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
 
         ContinuousComponentOptions component = (ContinuousComponentOptions) options
                 .getComponentOptions(ContinuousComponentOptions.class);

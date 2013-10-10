@@ -76,7 +76,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     }// END: usesInsertionPoint
 
-    protected void generate(InsertionPoint point, Object item, XMLWriter writer) {
+    protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
 
         AncestralStatesComponentOptions component = (AncestralStatesComponentOptions) options
                 .getComponentOptions(AncestralStatesComponentOptions.class);
@@ -86,7 +86,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writeCodonPartitionedRobustCounting(writer, component);
                 break;
             case IN_TREE_LIKELIHOOD:
-                writeCountingParameter(writer, (AbstractPartitionData)item);
+                writeCountingParameter(writer, (AbstractPartitionData)item, prefix);
                 break;
             case IN_FILE_LOG_PARAMETERS:
                 writeLogs(writer, component);
@@ -108,7 +108,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     }// END: generate
 
-    private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition) {
+    private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition, String prefix) {
         AncestralStatesComponentOptions component = (AncestralStatesComponentOptions) options
                 .getComponentOptions(AncestralStatesComponentOptions.class);
         if (!component.isCountingStates(partition)) {
@@ -137,7 +137,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         }
         writer.writeTag("parameter",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", partition.getPrefix() + "count"),  // TODO Pass codon partition number, so can construct unique name
+                        new Attribute.Default<String>("id", prefix + "count"),
                         new Attribute.Default<String>("value", matrix.toString()) },
                 true);
 

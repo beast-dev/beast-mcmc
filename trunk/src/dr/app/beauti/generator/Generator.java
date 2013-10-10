@@ -387,6 +387,14 @@ public abstract class Generator {
         }
     }
 
+    public void generateInsertionPoint(final ComponentGenerator.InsertionPoint ip, final Object item, final String prefix, final XMLWriter writer) {
+        for (ComponentGenerator component : components) {
+            if (component.usesInsertionPoint(ip)) {
+                component.generateAtInsertionPoint(this, ip, item, prefix, writer);
+            }
+        }
+    }
+
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
 
     public class GeneratorException extends Exception {

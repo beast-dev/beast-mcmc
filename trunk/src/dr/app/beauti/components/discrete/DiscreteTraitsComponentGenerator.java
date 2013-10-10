@@ -92,7 +92,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
+    protected void generate(final InsertionPoint point, final Object item, String prefix, final XMLWriter writer) {
         DiscreteTraitsComponentOptions comp = (DiscreteTraitsComponentOptions)options.getComponentOptions(DiscreteTraitsComponentOptions.class);
 
         switch (point) {

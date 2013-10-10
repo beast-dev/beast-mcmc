@@ -35,6 +35,7 @@ import java.util.Map;
  */
 public class Operator implements Serializable {
 
+    private static final long serialVersionUID = -1165043783660638155L;
     private String prefix = null;
 
     // final

@@ -16,6 +16,8 @@ import java.util.TreeSet;
  * @author Walter Xie
  */
 public class TraitData implements Serializable {
+    private static final long serialVersionUID = -9152518508699327745L;
+
     public static final String TRAIT_SPECIES = "species";
 
     public static enum TraitType {

@@ -11,6 +11,7 @@ import java.io.Serializable;
  */
 public class ClockModelGroup implements Serializable {
 
+    private static final long serialVersionUID = -3034174176050520635L;
     private String name;
     private boolean fixMean = false;
     private double fixMeanRate = 1.0;

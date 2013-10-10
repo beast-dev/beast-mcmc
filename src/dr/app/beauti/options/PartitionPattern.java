@@ -8,7 +8,8 @@ import dr.evolution.util.TaxonList;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class PartitionPattern extends AbstractPartitionData { // microsatellite
+public class PartitionPattern extends AbstractPartitionData {
+    private static final long serialVersionUID = 6631884346312113086L; // microsatellite
 
     private final Patterns patterns;
 

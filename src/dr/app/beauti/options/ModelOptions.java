@@ -40,6 +40,8 @@ import java.util.Map;
  */
 public class ModelOptions implements Serializable {
 
+    private static final long serialVersionUID = 6199011531067286245L;
+
     protected final Map<String, Parameter> parameters = new HashMap<String, Parameter>();
     protected final Map<String, Operator> operators = new HashMap<String, Operator>();
    	protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();

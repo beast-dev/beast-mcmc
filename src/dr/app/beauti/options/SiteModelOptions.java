@@ -6,6 +6,8 @@ import java.util.List;
  * @author Walter Xie
  */
 public class SiteModelOptions extends ModelOptions {
+    private static final long serialVersionUID = -3347506415688390314L;
+
     // Instance variables
     private final BeautiOptions options;
 

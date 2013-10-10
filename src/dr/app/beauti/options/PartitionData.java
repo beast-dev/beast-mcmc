@@ -37,6 +37,8 @@ import java.util.List;
  */
 public class PartitionData extends AbstractPartitionData {
 
+    private static final long serialVersionUID = 1642891822797102561L;
+
     private final Alignment alignment;
 
     private int fromSite;

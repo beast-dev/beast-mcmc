@@ -54,6 +54,8 @@ import dr.inference.operators.OperatorSchedule;
  */
 public class BeautiOptions extends ModelOptions {
 
+    private static final long serialVersionUID = -3676802825545741012L;
+
     public BeautiOptions() {
         this(new ComponentFactory[]{});
     }

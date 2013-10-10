@@ -40,6 +40,8 @@ import java.util.regex.Pattern;
  * @author Andrew Rambaut
  */
 public class DateGuesser implements Serializable {
+    private static final long serialVersionUID = -9106689400887615213L;
+
     public enum GuessType {
         ORDER,
         PREFIX,

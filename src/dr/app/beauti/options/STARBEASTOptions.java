@@ -42,8 +42,9 @@ import java.util.List;
  * @version $Id$
  */
 public class STARBEASTOptions extends ModelOptions {
+    private static final long serialVersionUID = -668734758207432455L;
 
-	public static final String TREE_FILE_NAME = "trees";
+    public static final String TREE_FILE_NAME = "trees";
 
     public static final String POP_MEAN = "popMean";
     public static final String SPECIES_TREE_FILE_NAME = TraitData.TRAIT_SPECIES

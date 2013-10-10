@@ -35,6 +35,8 @@ import java.util.Map;
  * @author Alexei Drummond
  */
 public class Parameter implements Serializable {
+    private static final long serialVersionUID = -8008521511485034329L;
+
     public static final double UNIFORM_MAX_BOUND = 1.0E100;
 
     private String prefix = null;

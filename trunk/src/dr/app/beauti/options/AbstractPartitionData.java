@@ -41,7 +41,6 @@ import java.util.List;
  */
 public abstract class AbstractPartitionData implements Serializable {
 
-
     protected String fileName;
     protected String name;
     protected List<TraitData> traits;

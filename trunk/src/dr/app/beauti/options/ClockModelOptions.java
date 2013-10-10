@@ -49,6 +49,7 @@ import java.util.Vector;
  */
 public class ClockModelOptions extends ModelOptions {
 
+    private static final long serialVersionUID = 3544930558477534541L;
     // Instance variables
     private final BeautiOptions options;
 

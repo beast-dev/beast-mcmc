@@ -37,6 +37,7 @@ import java.util.List;
  * @version $Id$
  */
 public class TreeModelOptions extends ModelOptions {
+    private static final long serialVersionUID = 5328826852511460749L;
 
     // Instance variables
     private final BeautiOptions options;

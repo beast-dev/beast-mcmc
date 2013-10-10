@@ -66,50 +66,24 @@ public class InitialTreeGenerator extends Generator {
 
         setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1)
 
-        Parameter rootHeight = model.getParameter("treeModel.rootHeight");
-
         switch (model.getStartingTreeType()) {
             case USER:
-                if (model.isNewick()) {
-                    writeNewickTree(model.getUserStartingTree(), writer);
-                } else {
-                    writeSimpleTree(model.getUserStartingTree(), writer);
-                }
-                break;
-
             case UPGMA:
-                // generate a upgma starting tree
-                writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
-                if (rootHeight.priorType != PriorType.NONE_TREE_PRIOR) {
-                    writer.writeOpenTag(
-                            UPGMATreeParser.UPGMA_TREE,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-                                    new Attribute.Default<String>(UPGMATreeParser.ROOT_HEIGHT, "" + rootHeight.initial)
-                            }
-                    );
-                } else {
-                    writer.writeOpenTag(
-                            UPGMATreeParser.UPGMA_TREE,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
-                            }
-                    );
-                }
-                writer.writeOpenTag(
-                        DistanceMatrixParser.DISTANCE_MATRIX,
-                        new Attribute[]{
-                                new Attribute.Default<String>(DistanceMatrixParser.CORRECTION, "JC")
-                        }
-                );
-                writer.writeOpenTag(SitePatternsParser.PATTERNS);
-                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
-                        + "which may be 1 of many aligments using this tree.");
-                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
-                // alignment has no gene prefix
-                writer.writeCloseTag(SitePatternsParser.PATTERNS);
-                writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
-                writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
+                Parameter rootHeight = model.getParameter("treeModel.rootHeight");
+
+                // generate a rescaled starting tree
+                writer.writeComment("Construct a starting tree that is compatible with specified clade heights");
+                Attribute[] attributes = (rootHeight.priorType != PriorType.NONE_TREE_PRIOR ?
+                        new Attribute[] {
+                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+                                new Attribute.Default<String>(RescaledTreeParser.HEIGHT, "" + rootHeight.initial)
+                        } :
+                        new Attribute[] {
+                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
+                        });
+                writer.writeOpenTag(RescaledTreeParser.RESCALED_TREE, attributes);
+                writeSourceTree(model, writer);
+                writer.writeCloseTag(RescaledTreeParser.RESCALED_TREE);
                 break;
 
             case RANDOM:
@@ -147,6 +121,46 @@ public class InitialTreeGenerator extends Generator {
 
         }
     }
+
+    public void writeSourceTree(PartitionTreeModel model, XMLWriter writer) {
+
+    switch (model.getStartingTreeType()) {
+        case USER:
+            if (model.isNewick()) {
+                writeNewickTree(model.getUserStartingTree(), writer);
+            } else {
+                writeSimpleTree(model.getUserStartingTree(), writer);
+            }
+            break;
+
+        case UPGMA:
+            // generate a upgma starting tree
+            writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
+            writer.writeOpenTag(UPGMATreeParser.UPGMA_TREE);
+            writer.writeOpenTag(
+                    DistanceMatrixParser.DISTANCE_MATRIX,
+                    new Attribute[]{
+                            new Attribute.Default<String>(DistanceMatrixParser.CORRECTION, "JC")
+                    }
+            );
+            writer.writeOpenTag(SitePatternsParser.PATTERNS);
+            writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
+                    + "which may be 1 of many aligments using this tree.");
+            writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
+            // alignment has no gene prefix
+            writer.writeCloseTag(SitePatternsParser.PATTERNS);
+            writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
+            writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
+            break;
+
+        case RANDOM:
+            throw new IllegalArgumentException("Shouldn't be here");
+
+        default:
+            throw new IllegalArgumentException("Unknown StartingTreeType");
+
+    }
+}
 
     private void writeTaxaRef(String taxaId, PartitionTreeModel model, XMLWriter writer) {
 
@@ -277,7 +291,7 @@ public class InitialTreeGenerator extends Generator {
         writer.writeOpenTag(
                 NewickParser.NEWICK,
                 new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+//                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
                         new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
                 }
@@ -313,7 +327,7 @@ public class InitialTreeGenerator extends Generator {
         writer.writeOpenTag(
                 SimpleTreeParser.SIMPLE_TREE,
                 new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+//                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
                         new Attribute.Default<Object>(DateParser.UNITS, options.units.toString()),
                         new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())

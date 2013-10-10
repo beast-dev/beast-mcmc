@@ -38,6 +38,8 @@ import java.util.List;
  */
 public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
+    private static final long serialVersionUID = -5594175190415743674L;
+
     private final PartitionClockModel model;
     private final PartitionTreeModel tree;
 

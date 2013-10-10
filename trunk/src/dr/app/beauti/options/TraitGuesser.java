@@ -36,6 +36,8 @@ import java.util.regex.Pattern;
  */
 public class TraitGuesser implements Serializable {
 
+    private static final long serialVersionUID = 1786080930502001515L;
+
     private final TraitData traitData;
 
     public TraitGuesser(TraitData traitData) {

@@ -83,6 +83,19 @@ public class InitialTreeGenerator extends Generator {
                         });
                 writer.writeOpenTag(RescaledTreeParser.RESCALED_TREE, attributes);
                 writeSourceTree(model, writer);
+                if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) {
+                    for (Taxa taxa : options.taxonSets) {
+                        Double height = options.taxonSetsHeights.get(taxa);
+                        if (height != null) {
+                            writer.writeOpenTag(RescaledTreeParser.CLADE, new Attribute.Default<String>(RescaledTreeParser.HEIGHT, height.toString()));
+                        } else {
+                            writer.writeOpenTag(RescaledTreeParser.CLADE);
+                        }
+                        writer.writeTag("taxa", new Attribute.Default<String>(XMLParser.IDREF, taxa.getId()), true);
+                        writer.writeCloseTag(RescaledTreeParser.CLADE);
+                    }
+                }
+
                 writer.writeCloseTag(RescaledTreeParser.RESCALED_TREE);
                 break;
 
@@ -124,43 +137,43 @@ public class InitialTreeGenerator extends Generator {
 
     public void writeSourceTree(PartitionTreeModel model, XMLWriter writer) {
 
-    switch (model.getStartingTreeType()) {
-        case USER:
-            if (model.isNewick()) {
-                writeNewickTree(model.getUserStartingTree(), writer);
-            } else {
-                writeSimpleTree(model.getUserStartingTree(), writer);
-            }
-            break;
+        switch (model.getStartingTreeType()) {
+            case USER:
+                if (model.isNewick()) {
+                    writeNewickTree(model.getUserStartingTree(), writer);
+                } else {
+                    writeSimpleTree(model.getUserStartingTree(), writer);
+                }
+                break;
 
-        case UPGMA:
-            // generate a upgma starting tree
-            writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
-            writer.writeOpenTag(UPGMATreeParser.UPGMA_TREE);
-            writer.writeOpenTag(
-                    DistanceMatrixParser.DISTANCE_MATRIX,
-                    new Attribute[]{
-                            new Attribute.Default<String>(DistanceMatrixParser.CORRECTION, "JC")
-                    }
-            );
-            writer.writeOpenTag(SitePatternsParser.PATTERNS);
-            writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
-                    + "which may be 1 of many aligments using this tree.");
-            writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
-            // alignment has no gene prefix
-            writer.writeCloseTag(SitePatternsParser.PATTERNS);
-            writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
-            writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
-            break;
+            case UPGMA:
+                // generate a upgma starting tree
+                writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
+                writer.writeOpenTag(UPGMATreeParser.UPGMA_TREE);
+                writer.writeOpenTag(
+                        DistanceMatrixParser.DISTANCE_MATRIX,
+                        new Attribute[]{
+                                new Attribute.Default<String>(DistanceMatrixParser.CORRECTION, "JC")
+                        }
+                );
+                writer.writeOpenTag(SitePatternsParser.PATTERNS);
+                writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
+                        + "which may be 1 of many aligments using this tree.");
+                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
+                // alignment has no gene prefix
+                writer.writeCloseTag(SitePatternsParser.PATTERNS);
+                writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
+                writer.writeCloseTag(UPGMATreeParser.UPGMA_TREE);
+                break;
 
-        case RANDOM:
-            throw new IllegalArgumentException("Shouldn't be here");
+            case RANDOM:
+                throw new IllegalArgumentException("Shouldn't be here");
 
-        default:
-            throw new IllegalArgumentException("Unknown StartingTreeType");
+            default:
+                throw new IllegalArgumentException("Unknown StartingTreeType");
 
+        }
     }
-}
 
     private void writeTaxaRef(String taxaId, PartitionTreeModel model, XMLWriter writer) {
 

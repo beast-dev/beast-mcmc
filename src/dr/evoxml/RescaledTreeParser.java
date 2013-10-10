@@ -151,6 +151,6 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
             new ElementRule(CLADE, new XMLSyntaxRule[] {
                     AttributeRule.newDoubleRule(HEIGHT),
                     new ElementRule(TaxonList.class)
-            }, 1, Integer.MAX_VALUE)
+            }, 0, Integer.MAX_VALUE)
     };
 }

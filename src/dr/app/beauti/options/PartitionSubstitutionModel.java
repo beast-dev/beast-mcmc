@@ -45,6 +45,7 @@ import java.util.Set;
  * @author Walter Xie
  */
 public class PartitionSubstitutionModel extends PartitionOptions {
+    private static final long serialVersionUID = -2570346396317131108L;
 
     // Instance variables
 

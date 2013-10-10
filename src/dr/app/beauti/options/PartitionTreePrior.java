@@ -42,6 +42,8 @@ import java.util.List;
  */
 public class PartitionTreePrior extends PartitionOptions {
 
+    private static final long serialVersionUID = 8222609132259262723L;
+
     private TreePriorType nodeHeightPrior = TreePriorType.CONSTANT;
     private TreePriorParameterizationType parameterization = TreePriorParameterizationType.GROWTH_RATE;
     private int skylineGroupCount = 10;

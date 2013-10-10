@@ -10,6 +10,8 @@ import java.util.List;
  * @version $Id$
  */
 public class MicrosatelliteOptions extends ModelOptions {
+    private static final long serialVersionUID = -814539657791957173L;
+
     private final BeautiOptions options;
 
     public MicrosatelliteOptions(BeautiOptions options) {

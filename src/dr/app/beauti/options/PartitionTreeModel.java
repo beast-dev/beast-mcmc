@@ -39,6 +39,8 @@ import java.util.List;
  */
 public class PartitionTreeModel extends PartitionOptions {
 
+    private static final long serialVersionUID = 4829401415152235625L;
+
     private PartitionTreePrior treePrior;
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;

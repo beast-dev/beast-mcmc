@@ -47,7 +47,7 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
     //
     // Public stuff
     //
-    public final static String RESCALED_TREE = "rescaleTree";
+    public final static String RESCALED_TREE = "rescaledTree";
     public final static String CLADE = "clade";
     public final static String HEIGHT = "height";
 
@@ -56,6 +56,8 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree tree = (Tree)xo.getChild(Tree.class);
+
+        // make a mutable copy
         SimpleTree rescaledTree = new SimpleTree(tree);
 
         // First flag all internal nodes as unset....
@@ -64,24 +66,26 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
         }
 
         for (int i = 0; i < xo.getChildCount(); i++) {
-            XMLObject cxo = (XMLObject)xo.getChild(i);
-            if (cxo.getName().equals(CLADE)) {
-                TaxonList taxa = (TaxonList)cxo.getChild(TaxonList.class);
-                double height = cxo.getDoubleAttribute(HEIGHT);
+            if (xo.getChild(i) instanceof XMLObject) {
+                XMLObject cxo = (XMLObject)xo.getChild(i);
+                if (cxo.getName().equals(CLADE)) {
+                    TaxonList taxa = (TaxonList)cxo.getChild(TaxonList.class);
+                    double height = cxo.getDoubleAttribute(HEIGHT);
 
-                Map<String, SimpleNode> leafNodes = new HashMap<String, SimpleNode>();
+                    Map<String, SimpleNode> leafNodes = new HashMap<String, SimpleNode>();
 
-                Set<String> leafSet = new HashSet<String>();
-                for (Taxon taxon : taxa) {
-                    leafSet.add(taxon.getId());
+                    Set<String> leafSet = new HashSet<String>();
+                    for (Taxon taxon : taxa) {
+                        leafSet.add(taxon.getId());
+                    }
+
+                    NodeRef mrca = Tree.Utils.getCommonAncestorNode(rescaledTree, leafSet);
+                    if (mrca == null ||  Tree.Utils.getLeafCount(rescaledTree, mrca) != leafSet.size()) {
+                        throw new XMLParseException("Clade defined by taxon Set, " + taxa.getId() + ", is not found in the guide tree");
+                    }
+
+                    rescaledTree.setNodeHeight(mrca, height);
                 }
-
-                NodeRef mrca = Tree.Utils.getCommonAncestorNode(tree, leafSet);
-                if (mrca == null ||  Tree.Utils.getLeafCount(tree, mrca) != leafSet.size()) {
-                    throw new XMLParseException("Clade defined by taxon Set, " + taxa.getId() + ", is not found in the guide tree");
-                }
-
-                rescaledTree.setNodeHeight(mrca, height);
             }
         }
 
@@ -99,8 +103,8 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
 
             double maxHeight = Double.NEGATIVE_INFINITY;
 
-            for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-                NodeRef child = tree.getInternalNode(i);
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                NodeRef child = tree.getChild(node, i);
 
                 double h = interpolateHeights(tree, child);
 
@@ -142,7 +146,7 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
-            AttributeRule.newDoubleRule(HEIGHT),
+            AttributeRule.newDoubleRule(HEIGHT, true),
             new ElementRule(Tree.class),
             new ElementRule(CLADE, new XMLSyntaxRule[] {
                     AttributeRule.newDoubleRule(HEIGHT),

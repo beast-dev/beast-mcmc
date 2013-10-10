@@ -50,7 +50,7 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
         }
     }
 
-    protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
+    protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
         HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
                 options.getComponentOptions(HierarchicalModelComponentOptions.class);
 

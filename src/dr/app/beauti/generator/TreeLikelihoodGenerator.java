@@ -196,7 +196,7 @@ public class TreeLikelihoodGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, prefix, writer);
 
         writer.writeCloseTag(tag);
     }

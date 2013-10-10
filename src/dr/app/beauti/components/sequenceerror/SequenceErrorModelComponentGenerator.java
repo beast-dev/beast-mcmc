@@ -43,7 +43,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
         return false;
     }
 
-    protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
+    protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
         SequenceErrorModelComponentOptions component = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
 
         switch (point) {

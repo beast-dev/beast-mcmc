@@ -19,7 +19,15 @@ public abstract class BaseComponentGenerator extends Generator implements Compon
     public void generateAtInsertionPoint(Generator generator, final InsertionPoint point, final Object item, final XMLWriter writer) {
         callingGenerator = generator;
         writer.writeComment("START " + getCommentLabel());
-        generate(point, item, writer);
+        generate(point, item, "", writer);
+        writer.writeComment("END " + getCommentLabel());
+        writer.writeBlankLine();
+    }
+
+    public void generateAtInsertionPoint(Generator generator, final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
+        callingGenerator = generator;
+        writer.writeComment("START " + getCommentLabel());
+        generate(point, item, prefix, writer);
         writer.writeComment("END " + getCommentLabel());
         writer.writeBlankLine();
     }
@@ -28,7 +36,7 @@ public abstract class BaseComponentGenerator extends Generator implements Compon
         return callingGenerator;
     }
 
-    protected abstract void generate(final InsertionPoint point, final Object item, final XMLWriter writer);
+    protected abstract void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer);
 
     protected abstract String getCommentLabel();
 }

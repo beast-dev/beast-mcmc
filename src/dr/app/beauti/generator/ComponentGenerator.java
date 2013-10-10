@@ -58,4 +58,15 @@ public interface ComponentGenerator {
      */
     void generateAtInsertionPoint(Generator generator, InsertionPoint point, Object item, XMLWriter writer);
 
+    /**
+     * Called to allow the component to generate at the particular insertion point. For
+     * some insertion points the specific item is given plus a prefix to allow for unique IDs.
+     * @param generator the calling generator
+     * @param point the insertion point
+     * @param item a reference to the item being generated (or null if not applicable)
+     * @param prefix a prefix string
+     * @param writer the XMLWriter
+     */
+    void generateAtInsertionPoint(Generator generator, InsertionPoint point, Object item, String prefix, XMLWriter writer);
+
 }

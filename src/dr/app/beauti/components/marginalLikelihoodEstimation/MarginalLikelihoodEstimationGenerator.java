@@ -70,7 +70,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
         return false;
     }
 
-    protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
+    protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
         MarginalLikelihoodEstimationOptions component = (MarginalLikelihoodEstimationOptions) options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
 
         switch (point) {

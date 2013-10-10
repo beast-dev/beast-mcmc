@@ -38,13 +38,15 @@ import dr.util.Version;
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ *
+ * $Id$
  */
 public class BeastVersion implements Version {
 
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.8.0pre";
+    private static final String VERSION = "1.8.0";
 
     private static final String DATE_STRING = "2002-2013";
 

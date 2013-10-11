@@ -1,4 +1,4 @@
-                    BEAST v1.7.5 2002-2013
+                    BEAST v1.8.0 2002-2013
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 14th February 2013
+Last updated: a.rambaut@ed.ac.uk - 11th October 2013
 
 Contents:
 1) INTRODUCTION
@@ -58,7 +58,7 @@ ___________________________________________________________________________
 2) INSTALLING BEAST
 
 BEAST requires a Java Virtual Machine to run. Many systems will already
-have this installed. It requires at least version 1.5 of Java to run. The
+have this installed. It requires at least version 1.6 of Java to run. The
 latest versions of Java can be downloaded from:
 
 <http://java.sun.com/>
@@ -83,7 +83,7 @@ A program called "BEAUti" will import data in NEXUS format, allow you to
 select various models and options and generate an XML file ready for use in
 BEAST.
 
-To run BEAUti simply double-click the "BEAUti v1.7.x" application in the BEAST
+To run BEAUti simply double-click the "BEAUti v1.8.x" application in the BEAST
 folder. If this doesn't work then you may not have Java installed correctly.
 Try opening an MS-DOS window and typing:
 
@@ -94,7 +94,7 @@ See also the separate BEAUti README.txt document.
 __________________________________________________________________________
 4) RUNNING BEAST
 
-To run BEAST simply double-click the "BEAST v1.7.x" application in the BEAST
+To run BEAST simply double-click the "BEAST v1.8.x" application in the BEAST
 folder. You will be asked to select a BEAST XML input file.
 
 Alternatively open a Command window and type:
@@ -216,7 +216,7 @@ inadvertently absent names):
 
 	Alex Alekseyenko, Daniel Ayres, Guy Baele, Trevor Bedford, Peter Beerli,
 	Filip Bielejec, Erik Bloomquist, Aaron Darling, Gytis Dudas, Roald Forsberg,
-	Jess Hedge, Joseph Heled, Simon Ho, Sebastian Hoehna, Mark Holder,
+	Matthew Hall, Jess Hedge, Joseph Heled, Simon Ho, Sebastian Hoehna, Mark Holder,
 	Denise Kuehnert, Philippe Lemey, Paul Lewis, Wai Lok Sibon Li, Gerton Lunter,
 	Sam Lycett, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,
 	Oliver Pybus, Tulio de Oliveira, Jayna Ragwani, Beth Shapiro,

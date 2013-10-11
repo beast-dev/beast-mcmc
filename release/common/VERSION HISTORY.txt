@@ -1,4 +1,4 @@
-                    BEAST v1.7.5 2002-2013
+                    BEAST v1.8.0 2002-2013
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,36 +17,83 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 14th February 2013
+Last updated: a.rambaut@ed.ac.uk - 11th October 2013
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
+
+================================================================================
+
+Version 1.8.0 released 11th October 2013
+
+    New Features:
+       Skygrid, multi-locus GMRF tree prior now available in BEAUti.
+       Specify marginal likelihood estimating options (path-sampling or stepping-
+           stone) from within BEAUti (in the MCMC tab).
+       User-specified starting trees and UPGMA trees can now be rescaled to fit the 
+           specified taxon set ages in BEAUti. 
+       Clone model settings for selected (or all) partitions from a source 
+           partition to help manage large numbers of partitions.
+       The ability to set precisions for tip dates and sample uniformally from these
+           added to BEAUti.
+       Lognormal Relaxed Random Walk added as an option for continuous data.
+
+	Bug Fixes:
+		Issue 703:	Error combining Markov jumps with codon partitioned 
+					substitution model
+		Issue 699:	BEAUti becomes unresponsive with 100s of partitions
+		Issue 698:	Add a button to easy set precisions on multiple selected taxa
+		Issue 695:	Implementing the Mk substitution model with BEAST and BEAGLE
+		Issue 694:	BEAUti refresh error
+		Issue 693:	Close all log files at the end of MCMC chain
+		Issue 691:	Nexus importer doesn't allow spaces in nucleotide ranges
+		Issue 688:	TreeAnnotator report selected tree
+		Issue 685:	Creating multiple user starting trees for different partitions
+		Issue 684:	Aspects of BEAUti model selection persists between windows
+		Issue 683:	RandomWalkOperator is reflecting negative value to positive
+		Issue 682:	Saving/loading files in BEAUti doesn't completely restore the 
+					model
+		Issue 680:	Count state changes option in BEAUti doesn't generate a 
+					markovJumpsTreeLikelihood
+		Issue 677:	Using Microsatellite loci for inferring one phylogenetic tree 
+					that uses all the loci
+		Issue 663:	Add new command line option to specify the precision to which 
+					the full evaluation checks are made
+		Issue 630:	Add a progress indicator to Path Sampling
+		Issue 628:	Unlinked clock models on multiple partitions fail to run
+		Issue 626:	Trouble unsetting robust counting when partitioning scheme remove
 
 ================================================================================
 
 Version 1.7.5 released 14th February 2013
 
     New Features:
-       Added ability to add a starting value for the age of clades specified in BEAUti using
-       taxon sets. This allows the user to ensure they are within any hard` bounds specified in
-       the priors table. These starting dates are now used by BEAST when generating an initial
-       tree.
-       Conditional reference prior for mutation rates returns a proper density when tree height is
-       is a random quantity.
+       Added ability to add a starting value for the age of clades specified in 
+       BEAUti using taxon sets. This allows the user to ensure they are within any 
+       hard bounds specified in the priors table. These starting dates are now used 
+       by BEAST when generating an initial tree.
+       Conditional reference prior for mutation rates returns a proper density when 
+       tree height is is a random quantity.
        Ancestral recombination graph inference improved for two partition problems.
        BEAST runs on NSF Keeneland supercomputer in a massively parallel fashion.
-       BEAUti site model options now has a 'Yang96' button to set a codon position model described in
-       that paper.
+       BEAUti site model options now has a 'Yang96' button to set a codon position 
+       model described in that paper.
        TreeAnnotator now reads MrBayes clock trees.
 
 	Bug Fixes:
-        Issue 676:	Attempting to open a file that isn't a BEAUti file will now display a message warning
-                    about loading a BEAST XML file.
-        Issue 675:	The BirthDeath(Calibrated) model was not generating the calibration distribution model
+        Issue 676:	Attempting to open a file that isn't a BEAUti file will now 
+        			display a message warning about loading a BEAST XML file.
+        Issue 675:	The BirthDeath(Calibrated) model was not generating the 
+        			calibration distribution model
         Issue 672:	BEAUti duplicates rates in phylograms
-        Issue 671:	Exporting taxon names in Nexus format - names with apostrophes are enclosed in single quotes.
-        Issue 667:	Dollo ambiguity code is incorrect when using BEAUti's no data option.
-        Issue 666 (the issue of the BEAST):	BEAUti should read charsets from sets blocks in NEXUS files
-        Issue 665:	The coalescent based simulator doesn't respect hard bounds placed on MRCAs of taxon sets.
-        Issue 662:	Problem with reconstructing synonymous/non-synonymous change counts (BEAGLE must be used).
+        Issue 671:	Exporting taxon names in Nexus format - names with apostrophes 
+        			are enclosed in single quotes.
+        Issue 667:	Dollo ambiguity code is incorrect when using BEAUti's no data 
+        			option.
+        Issue 666 (the issue of the BEAST):	BEAUti should read charsets from sets 
+        			blocks in NEXUS files
+        Issue 665:	The coalescent based simulator doesn't respect hard bounds placed 
+        			on MRCAs of taxon sets.
+        Issue 662:	Problem with reconstructing synonymous/non-synonymous change 
+        			counts (BEAGLE must be used).
         Issue 659:  BEAUti generates various Dollo ambiguity codes
 
 ================================================================================
@@ -58,38 +105,50 @@ Version 1.7.4 released 12th Sept 2012
 
 	Bug Fixes:
         Issue 661:	Fails to generate XML after particular sequence of options
-        Issue 660:	For trait specification errors, error messages should include name of taxon.
+        Issue 660:	For trait specification errors, error messages should include 
+        			name of taxon.
 
 ================================================================================
 
 Version 1.7.3 released 20th Aug 2012
 
     New Features:
-       Added 'precision' attribute in Date element to allow easy sampling of tip date when the date of sampling is
-            known to a limited precision (see testTipDatePrecision.xml in examples/testXML folder).
+       Added 'precision' attribute in Date element to allow easy sampling of tip 
+       		date when the date of sampling is known to a limited precision (see 
+       		testTipDatePrecision.xml in examples/testXML folder).
 
 	Bug Fixes:
-       Issue 631:	Code generated by BEAUti for substitutions trees doesn't load into BEAST
-       Issue 635:	*BEAST 'species' attributes are being created outside the <taxon> elements
-       Issue 633:	Multivariate continuous trait analyses doesn't respect ancestral state reconstruction choices
+       Issue 631:	Code generated by BEAUti for substitutions trees doesn't load 
+       				into BEAST
+       Issue 635:	*BEAST 'species' attributes are being created outside the 
+       				<taxon> elements
+       Issue 633:	Multivariate continuous trait analyses doesn't respect ancestral 
+       				state reconstruction choices
        Issue 636:	Unlinked codons and state reconstruction in BEAUTi
        Issue 637:	birth-death sampling model seems to not work smoothly
        Issue 640:	GUI error when canceling species-tree analysis
-       Issue 642:	Inappropriate default values provided for microsatellite model parameters in BEAUti
+       Issue 642:	Inappropriate default values provided for microsatellite model 
+       				parameters in BEAUti
        Issue 643:	Unable to specify a MRCA node to reconstruct ancestral states
-       Issue 645:	Discrete traits were generating ancestral reconstructions irrespective of the Ancestral States settings
+       Issue 645:	Discrete traits were generating ancestral reconstructions 
+       				irrespective of the Ancestral States settings
        Issue 647:	Selecting robust counting was not creating the correct XML
        Issue 649:	Suggest BEAST stops if any of the probabilities go to +Inf
-       Issue 651:	Default Poisson prior for asymmetric BSSVS model of discrete traits is not standard
-       Issue 652:	Some conditioning priors need to be evaluated before the data likelihood
+       Issue 651:	Default Poisson prior for asymmetric BSSVS model of discrete 
+       				traits is not standard
+       Issue 652:	Some conditioning priors need to be evaluated before the data 
+       				likelihood
        Issue 654:	Dollo model does not parse when BEAGLE is switched on.
-       Issue 655:   Operator log sometimes attempts to write to locked folder causing exception
+       Issue 655:   Operator log sometimes attempts to write to locked folder 
+       				causing exception
        Issue 656:   fix p=0 in Birth Death Serial Sampling Model
 
     Other changes:
-       Restored non-BEAGLE AncestralTreeLikelihood availability - should be considered deprecated.
-       Some changes to the default BEAGLE options to help discrete trait models run (SSE is switched off for
-           non-nucleotide partitions and the default scaling scheme is now 'delayed').
+       Restored non-BEAGLE AncestralTreeLikelihood availability - should be 
+       		considered deprecated.
+       Some changes to the default BEAGLE options to help discrete trait models 
+       		run (SSE is switched off for non-nucleotide partitions and the default 
+       		scaling scheme is now 'delayed').
 
 ================================================================================
 

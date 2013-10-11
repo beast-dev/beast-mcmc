@@ -44,8 +44,15 @@ public class PartitionClockModel extends PartitionOptions {
 
     private ClockModelGroup clockModelGroup = null;
 
-    public PartitionClockModel(BeautiOptions options, AbstractPartitionData partition) {
-        super(options, partition.getName());
+    private final int dataLength;
+
+    public PartitionClockModel(final BeautiOptions options, AbstractPartitionData partition) {
+        super(options);
+
+        this.partitionName = partition.getName();
+        dataLength = partition.getSiteCount();
+
+        initModelParametersAndOpererators();
     }
 
     /**
@@ -56,12 +63,19 @@ public class PartitionClockModel extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionClockModel(BeautiOptions options, String name, PartitionClockModel source) {
-        super(options, name);
+        super(options);
+
+        this.partitionName = name;
+
         this.clockType = source.clockType;
         clockDistributionType = source.clockDistributionType;
         rate = source.rate;
 
+        dataLength = source.dataLength;
+
         clockModelGroup = source.clockModelGroup;
+
+        initModelParametersAndOpererators();
     }
 
 //    public PartitionClockModel(BeautiOptions options, String name) {
@@ -71,10 +85,6 @@ public class PartitionClockModel extends PartitionOptions {
 
     protected void initModelParametersAndOpererators() {
         rate = 1.0;
-        int dataLength = 0;
-        for (AbstractPartitionData partitionData : options.getDataPartitions(this)) {
-            dataLength += partitionData.getSiteCount();
-        }
 
         if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR) {
             new Parameter.Builder("clock.rate", "substitution rate").
@@ -103,18 +113,15 @@ public class PartitionClockModel extends PartitionOptions {
                         .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
             } else {
                 new Parameter.Builder("clock.rate", "substitution rate").
-                        prior(PriorType.UNIFORM_PRIOR).initial(rate)
-                        .truncationLower(0.0).truncationUpper(100)
+                        prior(PriorType.UNDEFINED).initial(rate)
                         .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
                 new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
-                        prior(PriorType.UNIFORM_PRIOR).initial(rate)
-                        .truncationLower(0.0).truncationUpper(100)
+                        prior(PriorType.UNDEFINED).initial(rate)
                         .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
                 new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
-                        prior(PriorType.UNIFORM_PRIOR).initial(rate)
-                        .truncationLower(0.0).truncationUpper(100)
+                        prior(PriorType.UNDEFINED).initial(rate)
                         .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
             }
         }

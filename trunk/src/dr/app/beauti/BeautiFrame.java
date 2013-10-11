@@ -381,7 +381,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public boolean requestClose() {
-        if (isDirty() && options.hasData()) {
+        if (isDirty() && options.hasData() && isVisible()) {
             int option = JOptionPane.showConfirmDialog(this,
                     "You have made changes but have not generated\n" +
                             "a BEAST XML file. Do you wish to generate\n" +

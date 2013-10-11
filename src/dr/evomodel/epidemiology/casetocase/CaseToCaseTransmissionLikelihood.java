@@ -355,25 +355,24 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 }
             };
         }
-        final double[] summary = treeLikelihood.getSummaryStatistics();
         columns[2*size] = new LogColumn.Abstract("infectious_period.mean"){
             protected String getFormattedValue() {
-                return String.valueOf(summary[0]);
+                return String.valueOf(treeLikelihood.getSummaryStatistics()[0]);
             }
         };
         columns[2*size+1] = new LogColumn.Abstract("infectious_period.median"){
             protected String getFormattedValue() {
-                return String.valueOf(summary[1]);
+                return String.valueOf(treeLikelihood.getSummaryStatistics()[1]);
             }
         };
         columns[2*size+2] = new LogColumn.Abstract("infectious_period.var"){
             protected String getFormattedValue() {
-                return String.valueOf(summary[2]);
+                return String.valueOf(treeLikelihood.getSummaryStatistics()[2]);
             }
         };
         columns[2*size+3] = new LogColumn.Abstract("infectious_period.stdev"){
             protected String getFormattedValue() {
-                return String.valueOf(summary[3]);
+                return String.valueOf(treeLikelihood.getSummaryStatistics()[3]);
             }
         };
         return columns;

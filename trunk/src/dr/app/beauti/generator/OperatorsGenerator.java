@@ -32,6 +32,7 @@ import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.RelativeRatesType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.DataType;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
@@ -73,11 +74,8 @@ public class OperatorsGenerator extends Generator {
      */
     public void writeOperatorSchedule(List<Operator> operators, XMLWriter writer) {
         Attribute[] operatorAttributes;
-//		switch (options.coolingSchedule) {
-//			case SimpleOperatorSchedule.LOG_SCHEDULE:
-//        if (options.nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
-        // TODO: multi-prior, currently simplify to share same prior case
 
+        // certain models would benefit from a logarithm operator optimization
         boolean shouldLogCool = false;
         for (PartitionTreePrior partition : options.getPartitionTreePriors()) {
             if (partition.getNodeHeightPrior() == TreePriorType.SKYGRID ||
@@ -86,15 +84,19 @@ public class OperatorsGenerator extends Generator {
                 break;
             }
         }
-        if (shouldLogCool) {
-            operatorAttributes = new Attribute[2];
-            operatorAttributes[1] = new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE, SimpleOperatorSchedule.LOG_STRING);
-        } else {
-//				break;
-//			default:
-            operatorAttributes = new Attribute[1];
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            if (model.getDataType().getType() == DataType.GENERAL ||
+                    model.getDataType().getType() == DataType.CONTINUOUS) {
+                shouldLogCool = true;
+                break;
+            }
         }
-        operatorAttributes[0] = new Attribute.Default<String>(XMLParser.ID, "operators");
+
+        operatorAttributes = new Attribute[] {
+                new Attribute.Default<String>(XMLParser.ID, "operators"),
+                new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE,
+                        (shouldLogCool ? SimpleOperatorSchedule.LOG_STRING : SimpleOperatorSchedule.DEFAULT_STRING))
+        };
 
         writer.writeComment("Define operators");
         writer.writeOpenTag(

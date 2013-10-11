@@ -225,7 +225,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeDiscreteFrequencyModel(model, stateCount, true, writer);
+            writeDiscreteFrequencyModel(model, FrequencyModelParser.FREQUENCY_MODEL, stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -244,7 +244,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeDiscreteFrequencyModel(model, stateCount, true, writer);
+            writeDiscreteFrequencyModel(model, FrequencyModelParser.FREQUENCY_MODEL, stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -274,14 +274,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         return false;
     }
 
-    private void writeDiscreteFrequencyModel(PartitionSubstitutionModel model, int stateCount, Boolean normalize, XMLWriter writer) {
+    private void writeDiscreteFrequencyModel(PartitionSubstitutionModel model, String name, int stateCount, Boolean normalize, XMLWriter writer) {
         String prefix = model.getName() + ".";
         if (normalize == null) {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + FrequencyModelParser.FREQUENCY_MODEL)});
+                    new Attribute.Default<String>(XMLParser.ID, prefix + name)});
         } else {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + FrequencyModelParser.FREQUENCY_MODEL),
+                    new Attribute.Default<String>(XMLParser.ID, prefix + name),
                     new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
         }
 
@@ -416,6 +416,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             default:
                 throw new IllegalArgumentException("Unknown clock model");
+        }
+
+        if (substModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+            int stateCount = options.getStatesForDiscreteModel(substModel).size();
+            writer.writeComment("The root state frequencies");
+            writeDiscreteFrequencyModel(substModel, "root." + FrequencyModelParser.FREQUENCY_MODEL, stateCount, true, writer);
         }
 
         getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);

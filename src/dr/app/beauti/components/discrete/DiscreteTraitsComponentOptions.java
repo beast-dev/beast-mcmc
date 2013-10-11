@@ -67,6 +67,9 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 1.0);
 //                modelOptions.createScaleOperator(prefix + "mu", demoTuning, 10);
 
+                modelOptions.createZeroOneParameterUniformPrior(prefix + "root.frequencies", "discrete state root frequencies", 0.25);
+                modelOptions.createOperator(prefix + "root.frequencies", OperatorType.DELTA_EXCHANGE, 0.75, 1.0);
+
                 //bit Flip on clock.rate in PartitionClockModelSubstModelLink
 //                modelOptions.createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", prefix + "mu",
 //                        "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
@@ -101,8 +104,14 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
                 params.add(nonZeroRates);
             }
+
             params.add(modelOptions.getParameter(prefix + "frequencies"));
             params.add(modelOptions.getParameter(prefix + "rates"));
+
+            if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+                params.add(modelOptions.getParameter(prefix + "root.frequencies"));
+            }
+
         }
 
     }
@@ -120,6 +129,10 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
             if (partitionData.getPartitionSubstitutionModel().isActivateBSSVS()) {
                 ops.add(modelOptions.getOperator(prefix + "indicators"));
+            }
+
+            if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+                ops.add(modelOptions.getOperator(prefix + "root.frequencies"));
             }
         }
     }

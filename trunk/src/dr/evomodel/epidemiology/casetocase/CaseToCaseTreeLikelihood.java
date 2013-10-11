@@ -19,6 +19,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.*;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 import java.io.*;
 import java.util.*;
@@ -1061,10 +1062,35 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
     }
 
+    public double getInfectiousPeriod(AbstractCase thisCase){
+        return getInfectiousPeriod(thisCase, branchMap);
+    }
+
+    public double getInfectiousPeriod(AbstractCase thisCase, AbstractCase[] branchMap){
+        double infectionTime = getInfectionTime(thisCase, branchMap);
+        double cullTime = thisCase.getCullTime();
+        return cullTime - infectionTime;
+    }
+
     private double getInfectionTime(double min, double max, AbstractCase infected){
         final double branchLength = max-min;
 
         return max - branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(infected));
+    }
+
+    // return an array of the mean, median, variance and standard deviation of infectious periods
+
+    public double[] getSummaryStatistics(){
+        DescriptiveStatistics stats = new DescriptiveStatistics();
+        for(AbstractCase thisCase: cases.getCases()){
+            stats.addValue(getInfectiousPeriod(thisCase));
+        }
+        double[] out = new double[4];
+        out[0] = stats.getMean();
+        out[1] = stats.getPercentile(50);
+        out[2] = stats.getVariance();
+        out[3] = stats.getStandardDeviation();
+        return out;
     }
 
 
@@ -1487,7 +1513,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
 
     public LogColumn[] getColumns(){
-        LogColumn[] columns = new LogColumn[2*cases.size()];
+        LogColumn[] columns = new LogColumn[cases.size()];
         for(int i=0; i<cases.size(); i++){
             final AbstractCase infected = cases.getCase(i);
             columns[i] = new LogColumn.Abstract(infected.toString()+"_infector"){
@@ -1499,15 +1525,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                     }
                 }
             };
-        }
-        for(int i=0; i<cases.size(); i++){
-            final AbstractCase infected = cases.getCase(i);
-            columns[i+cases.size()] = new LogColumn.Abstract(infected.toString()+"_infection_date"){
-                protected String getFormattedValue() {
-                    return String.valueOf(getInfectionTime(infected));
-                }
-            };
-
         }
         return columns;
     }

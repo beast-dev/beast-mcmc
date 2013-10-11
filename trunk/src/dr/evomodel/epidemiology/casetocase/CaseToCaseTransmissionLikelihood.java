@@ -1,5 +1,7 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.RiemannApproximation;
@@ -20,7 +22,7 @@ import java.util.*;
  * @version $Id: $
  */
 
-public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
+public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
 
     private AbstractOutbreak outbreak;
     private CaseToCaseTreeLikelihood treeLikelihood;
@@ -332,6 +334,50 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood {
         };
 
     };
+
+    // Not the most elegant solution, but you want two types of log out of this model, one with numerical parameters
+    // (which Tracer can read) and one for the transmission tree (which it cannot). This is set up so that C2CTransL
+    // is the numerical log and C2CTreeL the TT one.
+
+    public LogColumn[] getColumns(){
+        int size = outbreak.size();
+        LogColumn[] columns = new LogColumn[2*size+4];
+        for(int i=0; i<outbreak.size(); i++){
+            final AbstractCase infected = outbreak.getCase(i);
+            columns[i] = new LogColumn.Abstract(infected.toString()+"_infection_date"){
+                protected String getFormattedValue() {
+                    return String.valueOf(treeLikelihood.getInfectionTime(infected));
+                }
+            };
+            columns[i+size] = new LogColumn.Abstract(infected.toString()+"_infectious_period"){
+                protected String getFormattedValue() {
+                    return String.valueOf(treeLikelihood.getInfectiousPeriod(infected));
+                }
+            };
+        }
+        final double[] summary = treeLikelihood.getSummaryStatistics();
+        columns[2*size] = new LogColumn.Abstract("infectious_period.mean"){
+            protected String getFormattedValue() {
+                return String.valueOf(summary[0]);
+            }
+        };
+        columns[2*size+1] = new LogColumn.Abstract("infectious_period.median"){
+            protected String getFormattedValue() {
+                return String.valueOf(summary[1]);
+            }
+        };
+        columns[2*size+2] = new LogColumn.Abstract("infectious_period.var"){
+            protected String getFormattedValue() {
+                return String.valueOf(summary[2]);
+            }
+        };
+        columns[2*size+3] = new LogColumn.Abstract("infectious_period.stdev"){
+            protected String getFormattedValue() {
+                return String.valueOf(summary[3]);
+            }
+        };
+        return columns;
+    }
 
 
 

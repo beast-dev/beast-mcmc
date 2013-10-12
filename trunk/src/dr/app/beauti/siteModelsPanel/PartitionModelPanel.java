@@ -651,6 +651,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
                 addComponent(latLongCheck);
+                addSeparator();
                 addComponent(useLambdaCheck);
                 break;
 

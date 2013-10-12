@@ -289,8 +289,8 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
             boolean diffCoeff = xo.getAttribute(BOOLEAN_DC_OPTION, false); // Default value is false
 
-            final double upperHeight = xo.hasAttribute(HEIGHT_UPPER) ? xo.getDoubleAttribute(HEIGHT_UPPER) : Double.MAX_VALUE;
-            final double lowerHeight = xo.hasAttribute(HEIGHT_LOWER) ? xo.getDoubleAttribute(HEIGHT_LOWER) : 0;
+            final double upperHeight = xo.getAttribute(HEIGHT_UPPER, Double.MAX_VALUE);
+            final double lowerHeight = xo.getAttribute(HEIGHT_LOWER, 0.0);
 
             List<AbstractMultivariateTraitLikelihood> traitLikelihoods = new ArrayList<AbstractMultivariateTraitLikelihood>();
             DiscretizedBranchRates branchRates = null;

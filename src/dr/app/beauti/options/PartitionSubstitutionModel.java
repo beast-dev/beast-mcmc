@@ -78,6 +78,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private MicroSatModelType.MutationalBias mutationBias = MicroSatModelType.MutationalBias.UNBIASED;
     private MicroSatModelType.Phase phase = MicroSatModelType.Phase.ONE_PHASE;
     private Microsatellite microsatellite = null;
+    private boolean isLatitudeLongitude = false;
 
     public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
 //        this(options, partition.getName(),(partition.getTrait() == null)
@@ -887,6 +888,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void setContinuousSubstModelType(final ContinuousSubstModelType continuousSubstModelType) {
         this.continuousSubstModelType = continuousSubstModelType;
+    }
+
+    public void setIsLatitudeLongitude(boolean latitudeLongitude) {
+        isLatitudeLongitude = latitudeLongitude;
+    }
+
+    public boolean isLatitudeLongitude() {
+        return isLatitudeLongitude;
     }
 
     public int getContinuousTraitCount() {

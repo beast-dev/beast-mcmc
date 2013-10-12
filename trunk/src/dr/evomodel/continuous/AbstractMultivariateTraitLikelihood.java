@@ -74,6 +74,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String ASCERTAINMENT = "ascertainedTaxon";
     public static final String EXCHANGEABLE_TIPS = "exchangeableTips";
     public static final String DRIFT_MODELS = "driftModels";
+    private BranchRateModel branchRateModel;
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                                MultivariateTraitTree treeModel,
@@ -380,6 +381,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         } else { // Normalizing by tree height.
             treeLength = treeModel.getNodeHeight(treeModel.getRoot());
         }
+    }
+
+    public BranchRateModel getBranchRateModel() {
+        return branchRateModel;
     }
 
     // **************************************************************

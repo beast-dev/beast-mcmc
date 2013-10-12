@@ -104,6 +104,9 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
 
+    private JCheckBox latLongCheck = new JCheckBox(
+            "Bivariate trait represents latitude and longitude");
+
     private JCheckBox useLambdaCheck = new JCheckBox(
             "Estimate phylogenetic signal using tree transform");
 
@@ -323,6 +326,18 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
 
+        PanelUtils.setupComponent(latLongCheck);
+        latLongCheck
+                .setToolTipText("<html>Specify whether this is a geographical trait representing <br>"
+                        + "latitude and longitude. Provides appropriate statistics to log file.</html>");
+
+        latLongCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setIsLatitudeLongitude(latLongCheck.isSelected());
+            }
+        });
+        latLongCheck.setEnabled(false);
+
         PanelUtils.setupComponent(useLambdaCheck);
         useLambdaCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -479,6 +494,8 @@ public class PartitionModelPanel extends OptionsPanel {
                 ContinuousComponentOptions component = (ContinuousComponentOptions) model.getOptions()
                         .getComponentOptions(ContinuousComponentOptions.class);
 
+                latLongCheck.setSelected(model.isLatitudeLongitude());
+                latLongCheck.setEnabled(model.getContinuousTraitCount() == 2);
                 useLambdaCheck.setSelected(component.useLambda(model));
                 break;
             case DataType.MICRO_SAT:
@@ -633,6 +650,7 @@ public class PartitionModelPanel extends OptionsPanel {
             case DataType.CONTINUOUS:
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
+                addComponent(latLongCheck);
                 addComponent(useLambdaCheck);
                 break;
 

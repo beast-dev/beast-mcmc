@@ -238,13 +238,13 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
             writeMultivariateTreeLikelihood(writer, partitionData, diffusionModelId, treeModelId);
 
-            if (partitionData.getTraits().size() == 2) {
-                // if we are analysing bivariate traits we can add these special statistics...
-                String precisionMatrixId = model.getName() + ".precision";
-                write2DStatistics(writer, partitionData, precisionMatrixId, treeModelId);
-            }
+            String precisionMatrixId = model.getName() + ".precision";
+
+            writeDiffusionStatistics(writer, partitionData, treeModelId, precisionMatrixId,
+                    partitionData.getName() + ".traitLikelihood");
         }
     }
+
 
 
     private void writeRelaxedBranchRateModel(XMLWriter writer,
@@ -392,18 +392,22 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag("multivariateTraitLikelihood");
     }
 
-    private void write2DStatistics(XMLWriter writer, AbstractPartitionData partitionData, String precisionMatrixId, String treeModelId) {
+    private void writeDiffusionStatistics(XMLWriter writer, AbstractPartitionData partitionData,
+                                          String precisionMatrixId, String treeModelId, String traitLikelihoodId) {
         String prefix = partitionData.getName() + ".";
 
-        writer.writeOpenTag("correlation",
-                new Attribute[] {
-                        new Attribute.Default<String>("id", prefix + "correlation"),
-                        new Attribute.Default<Integer>("dimension1", 1),
-                        new Attribute.Default<Integer>("dimension2", 2)
-                });
-        writer.writeIDref("matrixParameter", precisionMatrixId);
-        writer.writeCloseTag("correlation");
+        if (partitionData.getTraits().size() == 2) {
+            writer.writeOpenTag("correlation",
+                    new Attribute[] {
+                            new Attribute.Default<String>("id", prefix + "correlation"),
+                            new Attribute.Default<Integer>("dimension1", 1),
+                            new Attribute.Default<Integer>("dimension2", 2)
+                    });
+            writer.writeIDref("matrixParameter", precisionMatrixId);
+            writer.writeCloseTag("correlation");
+        }
 
+        /*
         writer.writeOpenTag("treeLengthStatistic",
                 new Attribute[] {
                         new Attribute.Default<String>("id", prefix + "treeLength")
@@ -439,48 +443,28 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref("parameter", prefix + "precision.col2");
         writer.writeCloseTag("subStatistic");
         writer.writeCloseTag("productStatistic");
+        */
 
+        writer.writeOpenTag("matrixInverse",
+                new Attribute[] {
+                        new Attribute.Default<String>("id", prefix + "varCovar")
+                });
+        writer.writeIDref("matrixParameter", precisionMatrixId);
+        writer.writeCloseTag("matrixInverse");
+
+        writer.writeOpenTag("diffusionRateStatistic", (partitionData.getPartitionSubstitutionModel().isLatitudeLongitude() ?
+                new Attribute[] {
+                        new Attribute.Default<String>("id", prefix + "diffusionRate"),
+                        new Attribute.Default<String>("greatCircleDistance", "true")
+                } :
+                new Attribute[] {
+                        new Attribute.Default<String>("id", prefix + "diffusionRate"),
+                }));
+
+        writer.writeIDref("treeModel", treeModelId);
+        writer.writeIDref("multivariateTraitLikelihood", traitLikelihoodId);
+        writer.writeCloseTag("diffusionRateStatistic");
     }
-
-    private void write2DStatisticsIDrefs(XMLWriter writer, AbstractPartitionData partitionData) {
-        String prefix = partitionData.getName() + ".";
-        writer.writeIDref("correlation", prefix + "correlation");
-
-        writer.writeIDref("treeLengthStatistic", prefix + "treeLength");
-
-        writer.writeIDref("productStatistic", prefix + "treeLengthPrecision1");
-
-        writer.writeIDref("productStatistic", prefix + "treeLengthPrecision2");
-    }
-
-    /*
- <correlation id="locationCorrelation" dimension1="1" dimension2="2">
- <matrixParameter idref="precisionMatrix"/>
- </correlation>
-
- <treeLengthStatistic id="treeLength">
- <treeModel idref="treeModel"/>
- </treeLengthStatistic>
-
- <productStatistic id="treeLengthPrecision1">
- <treeLengthStatistic idref="treeLength"/>
- <subStatistic id="precision1" dimension="0">  <!-- I do not  know why Joseph programmed these to start counting from 0 -->
- <parameter idref="col1"/>
- </subStatistic>
- </productStatistic>
-
- <productStatistic id="treeLengthPrecision2">
- <treeLengthStatistic idref="treeLength"/>
- <subStatistic id="precision2" dimension="1">
- <parameter idref="col2"/>
- </subStatistic>
- </productStatistic>
-
- <treeDispersionStatistic id="dispersionRate" greatCircleDistance="true">
- <treeModel idref="treeModel"/>
- <multivariateTraitLikelihood idref="traitLikelihood"/>
- </treeDispersionStatistic>
-    */
 
     private void writePrecisionGibbsOperators(XMLWriter writer,
                                               ContinuousComponentOptions component) {
@@ -509,10 +493,16 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
             PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
             writer.writeIDref("matrixParameter", model.getName() + ".precision");
 
-            if (model.getContinuousTraitCount() == 2) {
-                // if we are analysing bivariate traits we can add these special statistics...
-                write2DStatisticsIDrefs(writer, partitionData);
+            String prefix = partitionData.getName() + ".";
+            if (partitionData.getTraits().size() == 2) {
+                writer.writeIDref("correlation", prefix + "correlation");
+//            writer.writeIDref("treeLengthStatistic", prefix + "treeLength");
+//            writer.writeIDref("productStatistic", prefix + "treeLengthPrecision1");
+//            writer.writeIDref("productStatistic", prefix + "treeLengthPrecision2");
             }
+            writer.writeIDref("matrixInverse", prefix + "varCovar");
+            writer.writeIDref("diffusionRateStatistic", prefix + "diffusionRate");
+
             if (component.useLambda(model)) {
                 writer.writeIDref("parameter", model.getName() + "." + ContinuousComponentOptions.LAMBDA);
             }

@@ -225,7 +225,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeDiscreteFrequencyModel(model, FrequencyModelParser.FREQUENCY_MODEL, stateCount, true, writer);
+            writeDiscreteFrequencyModel(model, "", stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -244,7 +244,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeDiscreteFrequencyModel(model, FrequencyModelParser.FREQUENCY_MODEL, stateCount, true, writer);
+            writeDiscreteFrequencyModel(model, "", stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -278,17 +278,17 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         String prefix = model.getName() + ".";
         if (normalize == null) {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + name)});
+                    new Attribute.Default<String>(XMLParser.ID, prefix + name + FrequencyModelParser.FREQUENCY_MODEL)});
         } else {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + name),
+                    new Attribute.Default<String>(XMLParser.ID, prefix + name + FrequencyModelParser.FREQUENCY_MODEL),
                     new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
         }
 
         writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
 
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-        writeParameter(prefix + "frequencies", stateCount, Double.NaN, Double.NaN, Double.NaN, writer);
+        writeParameter(prefix + name + "frequencies", stateCount, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
         writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
@@ -421,7 +421,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         if (substModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             int stateCount = options.getStatesForDiscreteModel(substModel).size();
             writer.writeComment("The root state frequencies");
-            writeDiscreteFrequencyModel(substModel, "root." + FrequencyModelParser.FREQUENCY_MODEL, stateCount, true, writer);
+            writeDiscreteFrequencyModel(substModel, "root.", stateCount, true, writer);
         }
 
         getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);

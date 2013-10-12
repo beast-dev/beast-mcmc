@@ -393,7 +393,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeDiffusionStatistics(XMLWriter writer, AbstractPartitionData partitionData,
-                                          String precisionMatrixId, String treeModelId, String traitLikelihoodId) {
+                                          String treeModelId, String precisionMatrixId, String traitLikelihoodId) {
         String prefix = partitionData.getName() + ".";
 
         if (partitionData.getTraits().size() == 2) {

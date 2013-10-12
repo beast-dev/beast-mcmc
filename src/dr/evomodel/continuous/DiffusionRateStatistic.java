@@ -60,7 +60,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
     public static final String HEIGHT_UPPER = "heightUpper";
     public static final String HEIGHT_LOWER = "heightLower";
 
-    public DiffusionRateStatistic(String name, TreeModel tree, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
+    public DiffusionRateStatistic(String name, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
                                   boolean option, Mode mode, boolean diffusionCoefficient, double heightUpper, double heightLower, DiscretizedBranchRates branchRates) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
@@ -272,7 +272,6 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             String name = xo.getAttribute(NAME, xo.getId());
-            TreeModel tree = (TreeModel) xo.getChild(Tree.class);
 
             boolean option = xo.getAttribute(BOOLEAN_DIS_OPTION, false); // Default value is false
             Mode averageMode;
@@ -305,7 +304,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 }
             }
 
-            return new DiffusionRateStatistic(name, tree, traitLikelihoods, option, averageMode, diffCoeff, upperHeight, lowerHeight, branchRates);
+            return new DiffusionRateStatistic(name, traitLikelihoods, option, averageMode, diffCoeff, upperHeight, lowerHeight, branchRates);
         }
 
         //************************************************************************
@@ -313,7 +312,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
         //************************************************************************
 
         public String getParserDescription() {
-            return "A statistic that returns the average of the branch rates";
+            return "A statistic that returns the average of the branch diffusion rates";
         }
 
         public Class getReturnType() {

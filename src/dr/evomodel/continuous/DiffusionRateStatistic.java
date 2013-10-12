@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
@@ -61,7 +62,9 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
     public static final String HEIGHT_LOWER = "heightLower";
 
     public DiffusionRateStatistic(String name, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
-                                  boolean option, Mode mode, boolean diffusionCoefficient, double heightUpper, double heightLower, DiscretizedBranchRates branchRates) {
+                                  boolean option, Mode mode,
+                                  boolean diffusionCoefficient, double heightUpper, double heightLower,
+                                  DiscretizedBranchRates branchRates) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
         this.useGreatCircleDistances = option;
@@ -69,7 +72,6 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
         this.diffusionCoefficient = diffusionCoefficient;
         this.heightUpper = heightUpper;
         this.heightLower = heightLower;
-        this.branchRates = branchRates;
 
     }
 
@@ -92,6 +94,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
             MultivariateTraitTree tree = traitLikelihood.getTreeModel();
+            BranchRateModel branchRates = traitLikelihood.getBranchRateModel();
 
             for (int i = 0; i < tree.getNodeCount(); i++) {
                 NodeRef node = tree.getNode(i);
@@ -297,7 +300,8 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof AbstractMultivariateTraitLikelihood) {
-                    traitLikelihoods.add((AbstractMultivariateTraitLikelihood) xo.getChild(i));
+                    AbstractMultivariateTraitLikelihood amtl = (AbstractMultivariateTraitLikelihood) xo.getChild(i);
+                    traitLikelihoods.add(amtl);
                 }
                 if (xo.getChild(i) instanceof DiscretizedBranchRates) {
                     branchRates = (DiscretizedBranchRates) xo.getChild(i);
@@ -330,8 +334,6 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 AttributeRule.newStringRule(MODE, true),
                 AttributeRule.newDoubleRule(HEIGHT_UPPER, true),
                 AttributeRule.newDoubleRule(HEIGHT_LOWER, true),
-                new ElementRule(MultivariateTraitTree.class),
-                new ElementRule(DiscretizedBranchRates.class),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, 1, Integer.MAX_VALUE),
         };
     };
@@ -342,5 +344,5 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
     private boolean diffusionCoefficient;
     private double heightUpper;
     private double heightLower;
-    private DiscretizedBranchRates branchRates;
+//    private DiscretizedBranchRates branchRates;
 }

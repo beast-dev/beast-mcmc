@@ -63,8 +63,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
     public DiffusionRateStatistic(String name, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
                                   boolean option, Mode mode,
-                                  boolean diffusionCoefficient, double heightUpper, double heightLower,
-                                  DiscretizedBranchRates branchRates) {
+                                  boolean diffusionCoefficient, double heightUpper, double heightLower) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
         this.useGreatCircleDistances = option;
@@ -113,10 +112,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                         double timeUp = tree.getNodeHeight(parentNode);
                         double timeLow = tree.getNodeHeight(node);
 
-                        double rate = 1;
-                        if (branchRates != null){
-                            rate = branchRates.getBranchRate(tree,node);
-                        }
+                        double rate = branchRates.getBranchRate(tree, node);
 
                         MultivariateDiffusionModel diffModel = traitLikelihoods.get(0).diffusionModel;
                         double[] precision = diffModel.getPrecisionParameter().getParameterValues();
@@ -296,19 +292,15 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
             final double lowerHeight = xo.getAttribute(HEIGHT_LOWER, 0.0);
 
             List<AbstractMultivariateTraitLikelihood> traitLikelihoods = new ArrayList<AbstractMultivariateTraitLikelihood>();
-            DiscretizedBranchRates branchRates = null;
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof AbstractMultivariateTraitLikelihood) {
                     AbstractMultivariateTraitLikelihood amtl = (AbstractMultivariateTraitLikelihood) xo.getChild(i);
                     traitLikelihoods.add(amtl);
                 }
-                if (xo.getChild(i) instanceof DiscretizedBranchRates) {
-                    branchRates = (DiscretizedBranchRates) xo.getChild(i);
-                }
             }
 
-            return new DiffusionRateStatistic(name, traitLikelihoods, option, averageMode, diffCoeff, upperHeight, lowerHeight, branchRates);
+            return new DiffusionRateStatistic(name, traitLikelihoods, option, averageMode, diffCoeff, upperHeight, lowerHeight);
         }
 
         //************************************************************************

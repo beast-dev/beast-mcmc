@@ -17,12 +17,12 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 11th October 2013
+Last updated: a.rambaut@ed.ac.uk - 14th October 2013
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.8.0 released 11th October 2013
+Version 1.8.0 released 14th October 2013
 
     New Features:
        Skygrid, multi-locus GMRF tree prior now available in BEAUti.
@@ -35,10 +35,16 @@ Version 1.8.0 released 11th October 2013
        The ability to set precisions for tip dates and sample uniformally from these
            added to BEAUti.
        Lognormal Relaxed Random Walk added as an option for continuous data.
+       DiffusionRateStatistic logged for continuous data.
+       Variance/Covariance matrix logged for multivariate continuous data.
 
 	Bug Fixes:
 		Issue 703:	Error combining Markov jumps with codon partitioned 
 					substitution model
+		Issue 702:	set the cmctScale prior as default for the trait.clock.rate in 
+					discrete trait analysis in BEAuti and include the estimation of root 
+					frequencies in the nonreversible model
+		Issue 701:	diffusionRateStatistic set-up in BEAUti	
 		Issue 699:	BEAUti becomes unresponsive with 100s of partitions
 		Issue 698:	Add a button to easy set precisions on multiple selected taxa
 		Issue 695:	Implementing the Mk substitution model with BEAST and BEAGLE

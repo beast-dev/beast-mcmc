@@ -90,11 +90,11 @@ public class DeltaMixOperator extends AbstractCoercableOperator {
     }
 
     public double getCoercableParameter() {
-        return Math.log(delta);
+        return Math.log(delta)-Math.log(1-delta);
     }
 
     public void setCoercableParameter(double value) {
-        delta = Math.exp(value);
+        delta = 1/(1+Math.exp(-value));
     }
 
     public double getRawParameter() {

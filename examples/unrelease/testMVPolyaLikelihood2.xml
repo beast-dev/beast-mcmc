@@ -29,7 +29,7 @@
 
     <matrixParameter id="OTU.abundance.matrix">
         <parameter id="OTU1.abundanceCol"
-                   value="1"/>
+                   value="10"/>
         <parameter id="OTU2.abundanceCol"
                    value="3"/>
         <parameter id="OTU3.abundanceCol"
@@ -38,53 +38,103 @@
 
 
 
+    <mvPolyaLikelihood id="bkg.mvPolyaLike.fit">
+               <data>
+                   <matrixParameter idref="bkg.OTU.abundance.matrix"/>
+               </data>
+               <dispersion>
+                   <parameter id="bkg.rate" value="1"/>
+               </dispersion>
+               <frequencies>
+                   <parameter id="bkg.freqs" value="0.01 0.29 0.7"/>
+               </frequencies>
+       </mvPolyaLikelihood>
+
+
     <mvPolyaLikelihood id="bkg.mvPolyaLike">
             <data>
-                <matrixParameter idref="bkg.OTU.abundance.matrix"/>
+                <matrixParameter idref="OTU.abundance.matrix"/>
             </data>
-            <alpha>
-                <parameter id="bkg.rates" value="5 5 5"/>
-            </alpha>
+            <dispersion>
+                <parameter idref="bkg.rate"/>
+            </dispersion>
+            <frequencies>
+                <parameter idref="bkg.freqs"/>
+            </frequencies>
     </mvPolyaLikelihood>
+
 
     <mvPolyaLikelihood id="mvPolyaLike">
         <data>
             <matrixParameter idref="OTU.abundance.matrix"/>
         </data>
-        <alpha>
-            <parameter id="rates" value="5 5 5"/>
-        </alpha>
+        <dispersion>
+            <parameter id="rate" value="5"/>
+        </dispersion>
+        <frequencies>
+            <parameter id="freqs" value="0.3 0.3 0.4"/>
+        </frequencies>
     </mvPolyaLikelihood>
 
+    <parameter id="MVPolya.mix" value="0.5 0.5"/>
+
     <operators id="operators">
-        <deltaMixOperator delta=".5" weight="1">
-            <parameter idref="rates"/>
+       <deltaMixOperator delta=".5" weight="1">
+            <parameter idref="freqs"/>
+       </deltaMixOperator>
+
+       <scaleOperator scaleFactor="0.54" weight="1">
+            <parameter idref="rate"/>
+       </scaleOperator>
+
+        <deltaMixOperator delta=".1" weight="1">
+            <parameter idref="bkg.freqs"/>
         </deltaMixOperator>
+
         <scaleOperator scaleFactor="0.54" weight="1">
-            <parameter idref="rates"/>
+            <parameter idref="bkg.rate"/>
         </scaleOperator>
+
+
+        <deltaMixOperator delta="0.5" weight="1">
+            <parameter idref="MVPolya.mix"/>
+        </deltaMixOperator>
     </operators>
 
-    <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
+    <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
         <posterior id="posterior">
             <likelihood id="likelihood">
+                <mvPolyaLikelihood idref="bkg.mvPolyaLike.fit"/>
                 <mixtureModelLikelihood normalize="true">
                     <mvPolyaLikelihood idref="mvPolyaLike"/>
                     <mvPolyaLikelihood idref="bkg.mvPolyaLike"/>
-                    <parameter id="MVPolya.mix" value="0.5 0.5"/>
+                    <parameter idref="MVPolya.mix"/>
                 </mixtureModelLikelihood>
             </likelihood>
             <prior id="prior">
-                <gammaPrior id="prior.Gamma" shape="0.001" scale="100" offset="0.0">
-                    <parameter idref="rates"/>
-                    <parameter idref="bkg.rates"/>
+                <gammaPrior id="prior.Gamma" shape="0.001" scale="1000" offset="0.0">
+                    <parameter idref="rate"/>
+                    <parameter idref="bkg.rate"/>
                 </gammaPrior>
+
             </prior>
         </posterior>
         <operators idref="operators"/>
-        <log logEvery="100">
+        <log logEvery="1000">
+            <column>
+                <parameter idref="MVPolya.mix"/>
+            </column>
             <column label="Abundances" sf="4" width="12">
-                <parameter idref="rates"/>
+                <parameter idref="rate"/>
+            </column>
+            <column label="Mean.freq" sf="4" width="12">
+                <parameter idref="freqs"/>
+            </column>
+            <column label="Abundances" sf="4" width="12">
+                <parameter idref="bkg.rate"/>
+            </column>
+            <column label="Mean.freq" sf="4" width="12">
+                <parameter idref="bkg.freqs"/>
             </column>
             <column dp="8" label="Likelihood" width="12">
                 <likelihood idref="likelihood"/>
@@ -99,7 +149,11 @@
         <log logEvery="1000" fileName="testMVPolyaLike.log">
             <likelihood idref="likelihood"/>
             <prior idref="prior"/>
-            <parameter idref="rates"/>
+            <parameter idref="rate"/>
+            <parameter idref="freqs"/>
+            <parameter idref="bkg.rate"/>
+            <parameter idref="bkg.freqs"/>
+            <parameter idref="MVPolya.mix"/>
         </log>
     </mcmc>
     <traceAnalysis fileName="testMVPolyaLike.log" stdError="true"/>

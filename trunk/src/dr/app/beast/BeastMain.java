@@ -443,6 +443,8 @@ public class BeastMain {
         // ============= BEAGLE settings =============
         long beagleFlags = 0;
 
+        boolean beagleShowInfo = arguments.hasOption("beagle_info");
+
         // if any beagle flag is specified then use beagle...
         boolean useBeagle = arguments.hasOption("beagle") ||
                 arguments.hasOption("beagle_CPU") ||
@@ -455,9 +457,8 @@ public class BeastMain {
                 arguments.hasOption("beagle_order") ||
                 arguments.hasOption("beagle_scaling") ||
                 arguments.hasOption("beagle_rescale") ||
-                arguments.hasOption("beagle_instances");
-
-        boolean beagleShowInfo = arguments.hasOption("beagle_info");
+                arguments.hasOption("beagle_instances") ||
+                beagleShowInfo;
 
         if (arguments.hasOption("beagle_CPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();

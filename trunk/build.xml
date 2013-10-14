@@ -39,7 +39,6 @@
     <property name="dist" location="${build}/dist"/>
 
     <property name="main_class_BEAST" value="dr.app.beast.BeastMain"/>
-    <property name="main_class_BEASTMC3" value="dr.app.beast.BeastMC3"/>
     <property name="main_class_BEAUTI" value="dr.app.beauti.BeautiApp"/>
     <property name="main_class_TRACER" value="dr.app.tracer.application.TracerApp"/>
     <property name="main_class_Annotator" value="dr.app.tools.TreeAnnotator"/>
@@ -91,7 +90,6 @@
             <include name="dr/app/tools/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/app/treestat/**"/>
-            <include name="dr/app/java16compat/**"/>
             <include name="dr/evolution/**"/>
             <include name="dr/evomodel/**"/>
             <include name="dr/evomodelxml/**"/>
@@ -135,7 +133,6 @@
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/app/tools/**/*.class"/>
                 <include name="dr/app/treestat/**/*.class"/>
-                <include name="dr/app/java16compat/**/*.class"/>
                 <include name="dr/app/beagle/**/*.class"/>
                 <!-- include beagle -->
                 <include name="dr/evolution/**/*.class"/>
@@ -298,7 +295,6 @@
     <property name="version_number" value="1.8.0"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
-    <property name="BEASTMC3_name" value="BEASTMC3"/>
     <property name="BEAUti_name" value="BEAUti"/>
     <property name="TreeAnnotator_name" value="TreeAnnotator"/>
     <property name="LogCombiner_name" value="LogCombiner"/>
@@ -364,15 +360,6 @@
         <launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
                   jar="${dist}/beast.jar"
                   outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
-                  fileVersion="${version_number}.0"
-                  txtFileVersion="${version}"
-                  productVersion="${version_number}.0"
-                  txtProductVersion="${version}"/>
-
-        <!-- BEAST MC3 v?.?.?.exe -->
-        <launch4j configFile="${Windows_dir}/BEASTMC3_launch4j.xml"
-                  jar="${dist}/beast.jar"
-                  outfile="${Windows_package_dir}/${BEASTMC3_name} v${version}.exe"
                   fileVersion="${version_number}.0"
                   txtFileVersion="${version}"
                   productVersion="${version_number}.0"
@@ -508,32 +495,11 @@
                     name="${BEAST_name} v${version}"
                     mainclass="dr.app.beast.BeastMain"
                     icon="${common_dir}/icons/beast.icns"
-                    jvmversion="1.5+"
-                    vmoptions="-Xmx2048M"
-                    arguments="-window -working -options"
+                    jvmversion="1.6+"
+                    vmoptions="-d64 -Xmx2048M"
+                    arguments="-window -working -options -beagle_sse"
                     version="${version}"
                     infostring="${BEAST_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
-                    bundleid="dr.app.beast">
-            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/beast.jar"/>
-                <include name="**/beast-beagle.jar"/>
-            </jarfileset>
-            <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="libNucleotideLikelihoodCore.jnilib"/>
-            </jarfileset>
-        </jarbundler>
-
-        <jarbundler dir="${Mac_package_dir}"
-                    name="${BEASTMC3_name} v${version}"
-                    mainclass="dr.app.beast.BeastMC3"
-                    icon="${common_dir}/icons/beast.icns"
-                    jvmversion="1.5+"
-                    vmoptions="-Xmx2048M"
-                    arguments="-window -working -options"
-                    version="${version}"
-                    infostring="${BEASTMC3_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.beast">
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
@@ -550,8 +516,8 @@
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
                     icon="${common_dir}/icons/beauti.icns"
-                    jvmversion="1.5+"
-                    vmoptions="-Xmx2048M"
+                    jvmversion="1.6+"
+                    vmoptions="-d64 -Xmx2048M"
                     arguments=""
                     version="${version}"
                     infostring="${BEAUti_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
@@ -577,8 +543,8 @@
                     name="${LogCombiner_name} v${version}"
                     mainclass="dr.app.tools.LogCombiner"
                     icon="${common_dir}/icons/utility.icns"
-                    jvmversion="1.5+"
-                    vmoptions="-Xmx2048M"
+                    jvmversion="1.6+"
+                    vmoptions="-d64 -Xmx2048M"
                     arguments=""
                     version="${version}"
                     infostring="${LogCombiner_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
@@ -594,8 +560,8 @@
                     name="${TreeAnnotator_name} v${version}"
                     mainclass="dr.app.tools.TreeAnnotator"
                     icon="${common_dir}/icons/utility.icns"
-                    jvmversion="1.5+"
-                    vmoptions="-Xmx4096M"
+                    jvmversion="1.6+"
+                    vmoptions="-d64 -Xmx4096M"
                     arguments=""
                     version="${version}"
                     infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
@@ -611,8 +577,8 @@
                     name="${TreeStat_name} v${version}"
                     mainclass="dr.app.treestat.TreeStatApp"
                     icon="${common_dir}/icons/TreeStat.icns"
-                    jvmversion="1.5+"
-                    vmoptions="-Xmx1024M"
+                    jvmversion="1.6+"
+                    vmoptions="-d64 -Xmx1024M"
                     arguments=""
                     version="${version}"
                     infostring="${TreeStat_name} v${version}, Copyright 2002-2013, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
@@ -634,8 +600,6 @@
             <arg value="${Mac_package_dir}"/>
             <arg value="-volname"/>
             <arg value="${BEAST_name} v${version}"/>
-            <arg value="-imagekey"/>
-            <arg value="zlib-level=6"/>
             <arg value="${Mac_dir}/${BEAST_name} v${version}.dmg"/>
         </exec>
 

@@ -11,8 +11,8 @@ import dr.xml.*;
  * Description:
  * this class provides a model for over-dispersed multinomial counts. The model follows Dirichlet-Multinomial distribution with
  * multinomial parameters integrated out analytically. This model is also known as Multivariate Polya distribution.
- * Standard parameterization involves k intensities a_i's. This implementation uses the standard parametrization internally, but allows
- * for reparametrization as frequencies (k-1 df) and dispersion parameters, where a = sum_i=1^k a_i is dispersion and f_i = a_i/a
+ * Standard parametrization involves k intensities a_i's. This implementation uses the standard parametrization internally, but allows
+ * for re-parametrization as frequencies (k-1 df) and dispersion parameters, where a = sum_i=1^k a_i is dispersion and f_i = a_i/a
  * <p/>
  * Created by
  *
@@ -25,6 +25,7 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
     protected Parameter frequencies;
     protected Parameter dispersion;
     protected Parameter alphas;
+    protected boolean usingAlphas;
     protected boolean isAlphasKnown;
     protected MatrixParameter data;
     protected double fixedNorm;
@@ -52,7 +53,7 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         addVariable(this.dispersion);
         addVariable(this.data);
         if (this.alphas.getDimension() != data.getColumnDimension()) {
-            System.err.println("Dimensions of the frequncy vector and number of columns do not match!");
+            System.err.println("Dimensions of the frequency vector and number of columns do not match!");
         }
     }
 
@@ -60,6 +61,7 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         super(modelID);
         this.alphas = alphas;
         isAlphasKnown = true;
+        usingAlphas = true;
 
         this.frequencies = new Parameter.Default(alphas.getDimension());
         this.dispersion = new Parameter.Default(1);
@@ -69,7 +71,7 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         addVariable(this.alphas);
         addVariable(this.data);
         if (this.alphas.getDimension() != data.getColumnDimension()) {
-            System.err.println("Dimensions of the frequncy vector and number of columns do not match!");
+            System.err.println("Dimensions of the frequency vector and number of columns do not match!");
         }
     }
 
@@ -96,7 +98,7 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         // logLikes = sapply(1:n, function(i)  lfactX[subset,1][i] - sum(lfactX[subset,][i,2:p1]) +
         // lgamma(sum(alpha)) - lgamma(X[subset,1][i] + sum(alpha)) + sum(lgamma(X[subset,2:p1][i,] + alpha)) - sum(lgamma(alpha)));
         // sum(logLikes)
-
+        if(!isAlphasKnown) computeAlphas();
         if (!isFixedNormKnown) {
             computeFixedNorm();
         }
@@ -180,6 +182,7 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         variableNorm = storedVariableNorm;
         fixedNorm = storedFixedNorm;
         logLikelihood = storedLogLikelihood;
+        if(!usingAlphas) computeAlphas();
     }
 
     protected void acceptState() {

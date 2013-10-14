@@ -37,10 +37,10 @@ package dr.math;
 public class Binomial
 {
 	//
-	// Public stuff
+	// Public stuff; lnGamma is used, so parameters can be doubles.
 	//
 	
-	public static double logChoose(int n, int k){
+	public static double logChoose(double n, double k){
 		return GammaFunction.lnGamma(n + 1.0) -	GammaFunction.lnGamma(k + 1.0) 
 			- GammaFunction.lnGamma(n - k + 1.0);
 	}

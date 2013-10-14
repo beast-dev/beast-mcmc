@@ -81,7 +81,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
-    private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DELAYED;
+    private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
 
     private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
@@ -90,7 +90,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static List<String> scalingOrder = null;
     private static List<Integer> extraBufferOrder = null;
 
-    private static final int RESCALE_FREQUENCY = 10000;
+    // Default frequency for complete recomputation of scaling factors under the 'dynamic' scheme
+    private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
 
     public BeagleTreeLikelihood(PatternList patternList,

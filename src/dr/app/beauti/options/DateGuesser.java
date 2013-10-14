@@ -33,6 +33,7 @@ import java.io.Serializable;
 import java.text.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -61,7 +62,7 @@ public class DateGuesser implements Serializable {
     public boolean parseCalendarDatesAndPrecision = false;
     public String calendarDateFormat = "yyyy-MM-dd";
 
-    private DateFormat dateFormat = new SimpleDateFormat(calendarDateFormat);
+    private DateFormat dateFormat;
 
     public void guessDates(TaxonList taxonList) {
         // To avoid duplicating code, add all the taxa into a list and
@@ -77,8 +78,11 @@ public class DateGuesser implements Serializable {
     public void guessDates(List<Taxon> taxonList) {
 
         dateFormat = new SimpleDateFormat(calendarDateFormat);
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 
         for (int i = 0; i < taxonList.size(); i++) {
+            // Allocates a Date object and initializes it to represent the specified number of milliseconds since the
+            // standard base time known as "the epoch", namely January 1, 1970, 00:00:00 GMT
             java.util.Date origin = new java.util.Date(0);
 
             double[] values = new double[2];
@@ -125,7 +129,10 @@ public class DateGuesser implements Serializable {
         double[] values = new double[2];
         parseDate("", value, values);
 
+        // Allocates a Date object and initializes it to represent the specified number of milliseconds since the
+        // standard base time known as "the epoch", namely January 1, 1970, 00:00:00 GMT
         java.util.Date origin = new java.util.Date(0);
+
         return Date.createTimeSinceOrigin(values[0], Units.Type.YEARS, origin);
 
     }
@@ -273,13 +280,23 @@ public class DateGuesser implements Serializable {
     }
 
 
-    private DateFormat dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
-    private DateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM");
-    private DateFormat dateFormat3 = new SimpleDateFormat("yyyy");
+    private DateFormat dateFormat1 = null;
+    private DateFormat dateFormat2 = null;
+    private DateFormat dateFormat3 = null;
 
     private void parseDate(String label, String value, double[] values) throws GuessDatesException {
         double d;
         double p = 0.0;
+
+        if (dateFormat1 == null) {
+            // set the timezones to GMT so they match the origin date...
+            dateFormat1 = new SimpleDateFormat("yyyy-MM-dd");
+            dateFormat1.setTimeZone(TimeZone.getTimeZone("GMT"));
+            dateFormat2 = new SimpleDateFormat("yyyy-MM");
+            dateFormat2.setTimeZone(TimeZone.getTimeZone("GMT"));
+            dateFormat3 = new SimpleDateFormat("yyyy");
+            dateFormat3.setTimeZone(TimeZone.getTimeZone("GMT"));
+        }
 
         if (parseCalendarDatesAndPrecision) {
             try {
@@ -310,6 +327,7 @@ public class DateGuesser implements Serializable {
 
         } else if (parseCalendarDates) {
             try {
+
                 Date date = new Date(dateFormat.parse(value));
 
                 d = date.getTimeValue();

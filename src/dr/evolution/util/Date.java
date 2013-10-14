@@ -181,7 +181,10 @@ public class Date extends TimeScale implements Attribute {
 			case YEARS:
                 //time = daysAhead / DAYS_PER_YEAR;
                 // more precise (so 1st Jan 2013 is 2013.0)
-                Calendar cal = Calendar.getInstance();
+
+                // to avoid timezone specific differences in date calculations, all dates and calendars are
+                // set to GMT.
+                Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
                 cal.setTime(date);
 
                 int year = cal.get(Calendar.YEAR);

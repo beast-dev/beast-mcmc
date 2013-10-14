@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import beagle.BeagleFactory;
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
 import dr.app.plugin.Plugin;
@@ -634,6 +635,11 @@ public class BeastMain {
 
         if (useBeagle) {
             BeagleInfo.printVersionInformation();
+
+            if (BeagleInfo.getVersion().startsWith("1.")) {
+                System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
+                        "with models in BEAST, please upgrade to BEAGLE v2.0 at http://beagle-lib.googlecode.com/\n");
+            }
         }
 
         if (beagleShowInfo) {

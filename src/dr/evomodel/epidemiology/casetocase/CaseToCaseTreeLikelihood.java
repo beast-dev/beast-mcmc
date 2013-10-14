@@ -8,6 +8,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
@@ -95,7 +96,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     //@todo (experimental): mean of exponential prior on variance of infectious periods
 
-    private Parameter variancePriorMean;
+    private ParametricDistributionModel variancePriorDistribution;
 
     // for extended version
 
@@ -119,21 +120,21 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     // Basic constructor.
 
-    public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
-                                    String startingNetworkFileName, Parameter infectionTimes,
-                                    Parameter maxFirstInfToRoot, Parameter variancePriorMean,
-                                    boolean extended, boolean normalise,
+    public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
+                                    Parameter infectionTimes, ParametricDistributionModel variancePriorDistribution,
+                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise,
                                     boolean noInfPeriodModels)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimes,
-                maxFirstInfToRoot, variancePriorMean, extended, normalise, noInfPeriodModels);
+                variancePriorDistribution, maxFirstInfToRoot, extended, normalise, noInfPeriodModels);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
-            startingNetworkFileName, Parameter infectionTimes, Parameter variancePriorMean, Parameter maxFirstInfToRoot,
-                                    boolean extended, boolean normalise, boolean noInfPeriodModels) {
+            startingNetworkFileName, Parameter infectionTimes, ParametricDistributionModel variancePriorDistribution,
+                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise,
+                                    boolean noInfPeriodModels) {
         super(name, caseData, virusTree);
 
         updateNodeForSingleTraverse = new boolean[nodeCount];
@@ -154,7 +155,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         this.noInfPeriodModels = noInfPeriodModels;
 
         //@todo take this out if it doesn't work
-        this.variancePriorMean = variancePriorMean;
+        this.variancePriorDistribution = variancePriorDistribution;
         addModel(cases);
         verbose = false;
 
@@ -714,7 +715,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     protected double calculateLogLikelihood() {
 
         double variance = getSummaryStatistics()[2];
-        double logVariancePriorProb = ExponentialDistribution.logPdf(variance, variancePriorMean.getParameterValue(0));
+        double logVariancePriorProb = variancePriorDistribution.logPdf(variance);
 
         if(noInfPeriodModels){
             return isAllowed() ? (0+logVariancePriorProb) : Double.NEGATIVE_INFINITY;
@@ -1451,7 +1452,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         public static final String EXTENDED = "extended";
         public static final String NORMALISE = "normalise";
         public static final String NO_INF_PERIOD_MODELS = "noInfPeriodModels";
-        public static final String VARIANCE_PRIOR_MEAN = "variancePriorMean";
+        public static final String VARIANCE_PRIOR_DISTRIBUTION = "variancePriorDistribution";
 
         public String getParserName() {
             return CASE_TO_CASE_TREE_LIKELIHOOD;
@@ -1480,13 +1481,14 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             final boolean noInfPeriodModels = xo.getBooleanAttribute(NO_INF_PERIOD_MODELS);
 
 
-            Parameter variancePriorMean = (Parameter) xo.getElementFirstChild(VARIANCE_PRIOR_MEAN);
+            ParametricDistributionModel variancePriorDistribution = (ParametricDistributionModel)
+                    xo.getElementFirstChild(VARIANCE_PRIOR_DISTRIBUTION);
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName, infectionTimes,
-                        earliestFirstInfection, variancePriorMean, extended, normalise, noInfPeriodModels);
+                        variancePriorDistribution, earliestFirstInfection, extended, normalise, noInfPeriodModels);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -1518,7 +1520,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
                         "the root node"),
                 new ElementRule(INFECTION_TIMES, Parameter.class),
-                new ElementRule(VARIANCE_PRIOR_MEAN, Parameter.class)
+                new ElementRule(VARIANCE_PRIOR_DISTRIBUTION, ParametricDistributionModel.class)
         };
     };
 

@@ -1,7 +1,8 @@
 /*
  * IBDReporter.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2011 Alexei Drummond,
+ * Andrew Rambaut, Marc Suchard and Alexander V. Alekseyenko
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional

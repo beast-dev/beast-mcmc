@@ -44,6 +44,10 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.logging.*;
 
+/**
+ * MCMCMC functionality now rolled into the BEAST Main class.
+ * @deprecated
+ */
 public class BeastMC3 {
 
     public final static int HOT_CHAIN_COUNT = 2;

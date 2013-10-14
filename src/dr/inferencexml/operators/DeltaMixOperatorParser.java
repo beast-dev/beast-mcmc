@@ -26,8 +26,8 @@ public class DeltaMixOperatorParser extends AbstractXMLObjectParser {
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double delta = xo.getDoubleAttribute(DELTA);
 
-        if (delta <= 0.0) {
-            throw new XMLParseException("delta must be greater than 0.0");
+        if (delta <= 0.0 || delta>=1) {
+            throw new XMLParseException("delta must be between 0.0 and 1.0");
         }
 
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);

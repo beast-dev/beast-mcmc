@@ -138,12 +138,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 infectionTimes = treeLikelihood.getInfTimesMap();
             }
             if(!transProbKnown){
-                transLogProb = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha() - Math.log(N);
+                transLogProb = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha();
             }
             if(!normalisationKnown){
                 if(hasGeography){
                     if(integrateToInfinity){
-                        normalisation = Math.log(probFunct.evaluateIntegral(0, 1));
+                        normalisation = Math.log(-probFunct.evaluateIntegral(0, 1));
                     } else {
                         normalisation = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
                     }
@@ -283,7 +283,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         public double evaluate(double argument) {
-            return originalFunction.evaluate(argument/(1-Math.pow(argument,2)))/Math.pow(1-argument,2);
+            return -originalFunction.evaluate((1/argument)-1)/Math.pow(argument,2);
         }
 
         public double getLowerBound() {
@@ -335,7 +335,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     };
 
-    // Not the most elegant solution, but you want two types of log out of this model, one with numerical parameters
+    // Not the most elegant solution, but you want two types of log out of this model, one for numerical parameters
     // (which Tracer can read) and one for the transmission tree (which it cannot). This is set up so that C2CTransL
     // is the numerical log and C2CTreeL the TT one.
 

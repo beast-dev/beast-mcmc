@@ -28,6 +28,7 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -328,6 +329,18 @@ public class BeastGenerator extends Generator {
                     throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
                             "\ninitial value " + param.initial + " should lie in the interval [0, 1]. Please check the Prior panel.", BeautiFrame.PRIORS);
                 }
+            }
+        }
+
+        MarginalLikelihoodEstimationOptions mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+        if (mleOptions.performMLE) {
+            for (Parameter param : options.selectParameters()) {
+//                    if (param.isPriorImproper()) {
+//                        throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+//                                "\nhas an improper prior and will not sample correctly when estimating" +
+//                                "the marginal likelihood. " +
+//                                "\nPlease check the Prior panel.", BeautiFrame.PRIORS);
+//                    }
             }
         }
 
@@ -685,7 +698,7 @@ public class BeastGenerator extends Generator {
             e.printStackTrace();
             throw new GeneratorException("MCMC or log generation has failed:\n" + e.getMessage());
         }
-        
+
         //++++++++++++++++  ++++++++++++++++++
         try {
             writeTimerReport(writer);
@@ -940,5 +953,5 @@ public class BeastGenerator extends Generator {
 
         writer.writeCloseTag("mcmc");
     }
-    
+
 }

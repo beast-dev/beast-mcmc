@@ -112,7 +112,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                         double timeUp = tree.getNodeHeight(parentNode);
                         double timeLow = tree.getNodeHeight(node);
 
-                        double rate = branchRates.getBranchRate(tree, node);
+                        double rate = (branchRates != null ? branchRates.getBranchRate(tree, node) : 1.0);
 
                         MultivariateDiffusionModel diffModel = traitLikelihoods.get(0).diffusionModel;
                         double[] precision = diffModel.getPrecisionParameter().getParameterValues();

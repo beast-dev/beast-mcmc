@@ -50,7 +50,7 @@ import dr.xml.XORRule;
 /**
  */
 public class PriorParsers {
-    public final static boolean DEBUG = true;
+    public final static boolean DEBUG = false;
 
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";

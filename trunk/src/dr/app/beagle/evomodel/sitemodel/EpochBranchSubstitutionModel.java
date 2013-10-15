@@ -106,8 +106,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 		if (DEBUG_EPOCH) {
 
-			stateCount = frequencyModelList.get(0).getDataType()
-					.getStateCount();
+			stateCount = frequencyModelList.get(0).getDataType().getStateCount();
 			categoryCount = 4;
 
 		}// END: DEBUG_EPOCH
@@ -121,8 +120,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 	public int getExtraBufferCount(TreeModel treeModel) {
 
 		requestedBuffers = 100;
-		System.out
-				.println("Allocating " + requestedBuffers + " extra buffers.");
+		System.out.println("Allocating " + requestedBuffers + " extra buffers.");
 
 		return requestedBuffers;
 	}// END: getBufferCount
@@ -212,31 +210,44 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		double currentHeight = nodeHeight;
 		
 		double[] transitionTimes = epochTimes.getParameterValues();
+		double[] weights;// = new double[1];
 
-		// find the epoch that the node height is in...
-		int epoch = 0;
-		while (epoch < epochCount && nodeHeight >= transitionTimes[epoch]) {
-			epoch++;
-		}
-
-		returnValue = epoch;
 		
-		// find the epoch that the parent height is in...
-		List<Double> weightList = new ArrayList<Double>();
-		while (epoch < epochCount && parentHeight >= transitionTimes[epoch]) {
+
+			// find the epoch that the node height is in...
+			int epoch = 0;
+			while (epoch < epochCount && nodeHeight >= transitionTimes[epoch]) {
+				epoch++;
+			}
+
+			// find the epoch that the parent height is in...
+			List<Double> weightList = new ArrayList<Double>();
+			List<Integer> orderList = new ArrayList<Integer>();
+
+			while (epoch < epochCount && parentHeight >= transitionTimes[epoch]) {
+
+				weightList.add(transitionTimes[epoch] - currentHeight);
+				orderList.add(epoch);
+				
+				currentHeight = transitionTimes[epoch];
+				epoch++;
+			}
+
+			weightList.add(parentHeight - currentHeight);
+			orderList.add(epoch);
+
+			weights = new double[nModels];
+			for (int i = 0; i < weightList.size(); i++) {
+				
+				weights[orderList.get(i)] = weightList.get(i);
+				
+			}
 			
-			weightList.add(transitionTimes[epoch] - currentHeight);
-			currentHeight = transitionTimes[epoch];
-
-			epoch++;
-		}
-
-		weightList.add(parentHeight - currentHeight);
-
-		double[] weights = new double[weightList.size()];
-		for (int i = 0; i < weightList.size(); i++) {
-			weights[i] = weightList.get(i);
-		}
+			if (weightList.size() == 1) {
+				returnValue = epoch;
+			} else {
+				returnValue = nModels;
+			}
 
 		if (branchRateModel != null) {
 			weights = scaleArray(weights, branchRateModel.getBranchRate(tree, node));
@@ -246,14 +257,13 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 		if (DEBUG_EPOCH) {
 
+		    System.out.println("return value: " + returnValue);
 			System.out.println("bufferIndex: " + bufferIndex);
 			System.out.println("weights: ");
 			printArray(weights, weights.length);
-
+			
 		}// END: DEBUG_EPOCH
 
-//		System.out.println(returnValue);
-		
 		return returnValue;
 	}// END: getBranchIndex
 
@@ -277,7 +287,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 			}// END: DEBUG_EPOCH
 
-			// Branches fall in a single category
+			// Branche falls in a single category
 			beagle.updateTransitionMatrices(
 					bufferHelper.getOffsetIndex(eigenIndex),
 					probabilityIndices, firstDerivativeIndices,
@@ -303,7 +313,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 		} else {
 
-			// Branches require convolution of two or more matrices
+			// Branche requires convolution of two or more matrices
 			int stepSize = requestedBuffers / 4;
 
 			if (DEBUG_EPOCH) {
@@ -377,6 +387,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 							}
 
+//							System.out.println(weights.length);
+//							System.out.println(convolutionMatricesMap.get(index).length);
+							
 							weights[j] = convolutionMatricesMap.get(index)[i];
 
 						}// END: index padding check

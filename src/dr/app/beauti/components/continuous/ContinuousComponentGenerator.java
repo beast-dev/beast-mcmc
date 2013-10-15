@@ -460,8 +460,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 new Attribute[] {
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
                 }));
-
-        writer.writeIDref("treeModel", treeModelId);
         writer.writeIDref("multivariateTraitLikelihood", traitLikelihoodId);
         writer.writeCloseTag("diffusionRateStatistic");
     }

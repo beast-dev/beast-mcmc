@@ -335,12 +335,12 @@ public class BeastGenerator extends Generator {
         MarginalLikelihoodEstimationOptions mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
         if (mleOptions.performMLE) {
             for (Parameter param : options.selectParameters()) {
-//                    if (param.isPriorImproper()) {
-//                        throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-//                                "\nhas an improper prior and will not sample correctly when estimating" +
-//                                "the marginal likelihood. " +
-//                                "\nPlease check the Prior panel.", BeautiFrame.PRIORS);
-//                    }
+                    if (param.isPriorImproper() || param.priorType == PriorType.ONE_OVER_X_PRIOR) {
+                        throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                                "\nhas an improper prior and will not sample correctly when estimating" +
+                                "the marginal likelihood. " +
+                                "\nPlease check the Prior panel.", BeautiFrame.PRIORS);
+                    }
             }
         }
 

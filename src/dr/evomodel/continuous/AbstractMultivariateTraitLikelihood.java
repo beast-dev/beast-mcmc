@@ -111,7 +111,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         this.traitName = traitName;
         this.treeModel = treeModel;
-        this.rateModel = rateModel;
+        this.branchRateModel = rateModel;
         this.driftModels = driftModels;
         this.diffusionModel = diffusionModel;
         this.traitParameter = traitParameter;
@@ -124,9 +124,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             addVariable(deltaParameter);
         }
 
-
         if (rateModel != null) {
-            hasRateModel = true;
+            hasBranchRateModel = true;
             addModel(rateModel);
         }
 
@@ -173,7 +172,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
         sb.append("\tTrait: ").append(traitName).append("\n");
         sb.append("\tDiffusion process: ").append(diffusionModel.getId()).append("\n");
-        sb.append("\tHeterogenity model: ").append(rateModel != null ? rateModel.getId() : "homogeneous").append("\n");
+        sb.append("\tHeterogenity model: ").append(branchRateModel != null ? branchRateModel.getId() : "homogeneous").append("\n");
         sb.append("\tTree normalization: ").append(scaleByTime ? (useTreeLength ? "length" : "height") : "off").append("\n");
         sb.append("\tUsing reciprocal (precision) rates: ").append(reciprocalRates).append("\n");
         if (scaleByTime) {
@@ -260,11 +259,11 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         double length = treeModel.getBranchLength(node);
 
-        if (hasRateModel) {
+        if (hasBranchRateModel) {
             if (reciprocalRates) {
-                length /= rateModel.getBranchRate(treeModel, node); // branch rate scales as precision (inv-time)
+                length /= branchRateModel.getBranchRate(treeModel, node); // branch rate scales as precision (inv-time)
             } else {
-                length *= rateModel.getBranchRate(treeModel, node); // branch rate scales as variance (time)
+                length *= branchRateModel.getBranchRate(treeModel, node); // branch rate scales as variance (time)
             }
         }
 
@@ -329,7 +328,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             } else {
                 throw new RuntimeException("Unexpected object throwing events in AbstractMultivariateTraitLikelihood");
             }
-        } else if (model == rateModel) {
+        } else if (model == branchRateModel) {
             if (index == -1) {
                 updateAllNodes();
             } else {
@@ -815,11 +814,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     private double storedLogLikelihood;
     protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
-    private BranchRateModel rateModel = null;
     protected List<BranchRateModel> driftModels = null;
     private BranchRateModel driftOne = null;
     private BranchRateModel driftTwo = null;
-    private boolean hasRateModel = false;
+    private boolean hasBranchRateModel = false;
 
     private double treeLength;
     private double storedTreeLength;

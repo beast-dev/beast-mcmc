@@ -1,0 +1,104 @@
+%% LyX 1.4.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[a4paper, english]{article}
+ \usepackage{graphicx}
+ \usepackage{amssymb}
+ \usepackage{epstopdf}
+ \usepackage[usenames]{color}
+ 
+\IfFileExists{url.sty}{\usepackage{url}}
+                      {\newcommand{\url}{\texttt}}
+                      
+                      
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+\newcommand{\noun}[1]{\textsc{#1}}
+%% Bold symbol macro for standard LaTeX users
+\providecommand{\boldsymbol}[1]{\mbox{\boldmath $#1$}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+\newenvironment{lyxlist}[1]
+{\begin{list}{}
+{\settowidth{\labelwidth}{#1}
+ \setlength{\leftmargin}{\labelwidth}
+ \addtolength{\leftmargin}{\labelsep}
+ \renewcommand{\makelabel}[1]{##1\hfil}}}
+{\end{list}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\definecolor{XMLColor}{rgb}{0.0,0.0,0.0} 
+\newcommand{\xml}[1]{\textcolor{XMLColor}{\texttt{#1}}}
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+\title{\textbf{The Yule model}}
+
+\author{\textsc{Alexei J. Drummond}}
+
+\maketitle
+
+\section{Probability density for Yule model}
+
+The Yule model of branching is a pure birth process in which each branch has associated with it a birth rate ($\lambda$) determining the instantaneous rate at which the branch gives birth to a new branch (bifurcates into two branches). Starting at the root of a tree (the first bifurcation), there are two descendant branches, each with a birth rate of $\lambda$. This gives rise to the following probability density function for the time to the second bifurcation ($t_2$):
+
+\begin{equation}
+p(t_2|\lambda) = 2\lambda e^{-2\lambda t_2}
+\end{equation}
+
+This is simply an exponential distribution with a mean of $\frac{1}{2\lambda}$. Likewise the probability density for the time from the $(i-1)$th to the $i$th bifurcation ($t_i$) is:
+
+\begin{equation}
+p(t_i|\lambda) = i\lambda e^{-i\lambda t_i}
+\end{equation}
+
+So the probability density for a tree that has {\it just reached} the $n$th bifurcation is:
+
+\begin{equation}
+q(\mathbf{t}|\lambda,n) = \prod_{i=2}^{n-1} i\lambda e^{-i\lambda t_i}
+\end{equation}
+
+However most trees are not sampled exactly at the moment of the final bifurcation event. This means there is a final time $t_n$ over which {\it none} of the $n$ branches bifurcated. The probability of waiting $t_n$ time without seeing any of the $n$ branches bifurcate is $e^{-n\lambda t_n}$ giving rise to a total probability of a tree of $n$ tips:
+
+\begin{equation}
+p(\mathbf{t}|\lambda,n) = (n-1)!\lambda^{n-2}\prod_{i=2}^{n} e^{-i\lambda t_i}
+\end{equation}
+
+Remembering that $e^ae^b = e^{a+b}$ and defining the total tree length $s = \sum_{i=2}^{n} it_i$ we have:
+
+\begin{equation}
+p(\mathbf{t}|\lambda,n) = (n-1)!\lambda^{n-2}e^{-\lambda s}
+\end{equation}
+
+This probability density is the same as that of equation (3) in Nee {\it et al} (2001), despite Nee making the confusing assertion that his equation (3) is conditional on the root height. From the construction above, it is clear that no such conditioning exists.
+
+\section{Expectation of the tree height and total tree length under the Yule model}
+
+Defining the total tree height, $t_{MRCA} = \sum_{i=2}^{n} t_i$, it is easy to show that the expected tree height is:
+
+ \begin{equation}
+E(t_{MRCA}) = \sum_{i=2}^{n} \frac{1}{i\lambda}
+\end{equation}
+
+So for a 4 taxon tree and $\lambda=2$ the expected height is:
+
+ \begin{equation}
+ E(t_{MRCA}) = \frac{1}{4} + \frac{1}{6} + \frac{1}{8} =  0.5416666
+\end{equation}
+
+The total expected tree length ($s$) of a Yule branching process is:
+
+ \begin{equation}
+E(s) = \sum_{i=2}^{n} \frac{1}{\lambda} = \frac{n-1}{\lambda}
+\end{equation}
+
+So for a 4 taxon tree and $\lambda=2$ the expected height is:
+
+ \begin{equation}
+ E(s) = \frac{3}{2.0} =  1.5
+\end{equation}
+ 
+\end{document}
+

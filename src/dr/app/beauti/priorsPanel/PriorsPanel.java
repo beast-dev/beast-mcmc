@@ -248,7 +248,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     private PriorDialog priorDialog = null;
-    //    private DiscretePriorDialog discretePriorDialog = null;
     private HierarchicalPriorDialog hierarchicalPriorDialog = null;
 
     private JButton continueButton = null;

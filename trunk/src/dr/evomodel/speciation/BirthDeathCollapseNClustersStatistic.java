@@ -26,40 +26,14 @@ public class BirthDeathCollapseNClustersStatistic extends Statistic.Abstract {
 
     @Override
     public double getStatisticValue(int dim) {
-        double eps = bdcm.getCollapseHeight();
         int ninodes = spptree.getInternalNodeCount();
         int n =  0;
         for (int i = 0; i < ninodes; i++) {
             double h = spptree.getNodeHeight(spptree.getInternalNode(i));
-            if (h > eps) {
+            if (!BirthDeathCollapseModel.belowCollapseHeight(h, bdcm.getCollapseHeight())) {
                 n++;
             }
         }
-
-        /*
-        int nnodes = spptree.getNodeCount();
-        int nshort = 0;
-        for (int i = 0; i < nnodes; i++) {
-            NodeRef nr = spptree.getNode(i);
-            boolean collapse;
-            if (spptree.isRoot(nr)) {
-                collapse = (spptree.getNodeHeight(nr) < eps);
-            } else {
-                NodeRef anc  = spptree.getParent(nr);
-                collapse = (spptree.getNodeHeight(nr) < eps  && spptree.getNodeHeight(anc) >= eps);
-            }
-            if (collapse) {
-                nshort++;
-            }
-        }
-
-        if (nshort  !=  n+1)
-        {
-            System.out.println("DEBUG in BirthDeathCollapseNClustersStatistic");
-        }
-        assert nshort  == n+1;
-        */
-
         return n+1;
     }
 }

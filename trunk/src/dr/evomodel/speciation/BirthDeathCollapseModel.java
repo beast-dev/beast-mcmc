@@ -62,6 +62,11 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
         return collapseHeight;
     }
 
+    // provided to help avoid inconsistent treatment of h == collapseHeight
+    public static boolean belowCollapseHeight(double h, double collapseHeight) {
+        return (h < collapseHeight);
+    }
+
 
     @Override
     public double calculateTreeLogLikelihood(Tree tree) {

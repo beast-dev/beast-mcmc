@@ -27,7 +27,7 @@
 <project basedir="." default="build" name="BEAST">
     <description>
         Build BEAST MCMC. It is also used by Hudson BEAST_MCMC project. JUnit test is available for this build.
-        $Id$
+        $Rev$
     </description>
 
     <property name="JDK_VERSION" value="1.6"/>

@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 11th October 2013
+Last updated: a.rambaut@ed.ac.uk - 16th October 2013
 
 Contents:
 1) INTRODUCTION
@@ -68,13 +68,13 @@ If in doubt type "java -version" to see what version of java is installed
 
 Mac OS X will already have a suitable version of Java installed.
 
-Within the BEAST.v1.7.x package will be the following directories:
+Within the BEAST.v1.8.x package will be the following directories:
 Directory       Contents
 doc/            documentation of BEAST
 examples/       some example NEXUS and XML files
 lib/            Java & native libraries used by BEAST
 native/         some C code to compile into native libraries
-bin/            Scripts of the corresponding OS
+bin/            Scripts for the corresponding OS
 
 ___________________________________________________________________________
 3) CONVERTING SEQUENCES

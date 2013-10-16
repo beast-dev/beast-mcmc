@@ -1,0 +1,150 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+	
+	<taxa id="taxa">
+		<taxon id="A"/>
+		<taxon id="B"/>
+		<!--<taxon id="C"/>-->
+	</taxa>
+	
+	<alignment id="alignment" dataType="nucleotide">
+		<sequence> <taxon idref="A"/> A </sequence>
+		<sequence> <taxon idref="B"/> A </sequence>
+		<!--<sequence> <taxon idref="C"/> N </sequence>		-->
+	</alignment>
+	
+	<patterns id="patterns" strip="false">
+		<alignment idref="alignment"/>
+	</patterns>
+	
+	<newick id="tree">
+		<!--((A:1,B:1):1,C:2);-->
+        (A:1,B:1);
+	</newick>
+	
+	<treeModel id="treeModel">
+		<newick idref="tree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+	</treeModel>
+	
+	<hkyModel id="hky">
+	  <frequencies>
+	    <frequencyModel dataType="nucleotide">
+	      <frequencies>
+		  	<parameter id="hky.frequencies" value="0.40 0.25 0.25 0.10"/>
+          	<!--<parameter id="hky.frequencies" value="0.25 0.25 0.25 0.25"/>-->
+	      </frequencies>
+	    </frequencyModel>
+	  </frequencies>
+	  <kappa>
+	    <parameter id="hky.kappa" value="10.0" lower="1.0E-8" upper="Infinity"/>
+	  </kappa>
+	</hkyModel>
+	
+	<siteModel id="siteModel">
+	  <substitutionModel>
+	    <hkyModel idref="hky"/>
+	  </substitutionModel>
+	  <mutationRate>
+	    <parameter id="clock.rate"  value="0.5" lower="0.0" upper="10.0"/>
+	  </mutationRate>
+	</siteModel>	
+
+	<markovJumpsTreeLikelihood id="treeLikelihood">
+	  <patterns idref="patterns"/>
+	  <treeModel idref="treeModel"/>
+	  <siteModel idref="siteModel"/>
+	  <hkyModel idref="hky"/>
+	  <parameter value="0 1 1 1
+	                    1 0 1 1
+	                    1 1 0 1	                    
+	                    1 1 1 0"/>
+	  <parameter value="0 1 1 1
+	                    0 0 1 1
+	                    0 0 0 1	                    
+	                    0 0 0 0" id="upper"/>
+	  <rewards>
+	    <parameter value="1 0 0 1" id="reward"/>
+	  </rewards>
+	</markovJumpsTreeLikelihood>	
+	
+	<operators id="operators">
+        <dirtyLikelihood weight="1">
+            <treeLikelihood idref="treeLikelihood"/>
+        </dirtyLikelihood>
+	</operators>
+			
+	<mcmc id="mcmc" chainLength="10000">
+		<posterior id="posterior">
+			<treeLikelihood idref="treeLikelihood"/>
+		</posterior>
+		<operators idref="operators"/>
+		<log logEvery="1000">
+			<posterior idref="posterior"/>
+		</log>
+        <log logEvery="2" fileName="testMarkovJumps.log" >
+            <treeLikelihood idref="treeLikelihood"/>
+        </log>
+		<logTree logEvery="1" nexusFormat="true" fileName="testMarkovJumps.trees">
+			<treeModel idref="treeModel"/>
+			<treeLikelihood idref="treeLikelihood"/>
+		</logTree>				
+	</mcmc>
+
+    <traceAnalysis fileName="testMarkovJumps.log"/>
+
+</beast>
+
+<!--
+
+java -cp build/dist/beast.jar dr.app.tools.TreeAnnotator -heights mean testMarkovJumps.trees markov.tree
+
+# R script using 'markovjumps'
+
+library(markovjumps)
+
+#stat.dist = c(0.25,0.25,0.25,0.25)
+stat.dist = c(0.40,0.25,0.25,0.10)
+kappa = 10
+
+subst.model.eigen = as.eigen.hky(c(kappa,1),
+	stat.dist,scale=T)
+
+R = matrix(1,nrow=4,ncol=4)
+R = R - diag(c(1,1,1,1))
+
+tree = read.tree(text="(A:0.5,B:0.5);")
+
+data = c(1,1) # A,A
+ 
+markov = tree.mean.jumps(tree, data, subst.model.eigen,
+		stat.dist, R)
+		
+J = sum(markov$cond.mean)
+
+R2 = matrix(c(0, 1, 1, 1,
+	          0, 0, 1, 1,
+	          0, 0, 0, 1,	                    
+	          0, 0, 0, 0),nrow=4,byrow=T)
+	          
+markov2 = tree.mean.jumps(tree, data, subst.model.eigen,
+		   stat.dist, R2)
+		   
+J2 = sum(markov2$cond.mean)
+
+rewards = c(1,0,0,1) # A,T
+
+markov3 = tree.mean.rewards(tree, data, subst.model.eigen,
+			stat.dist, rewards)
+
+R = sum(markov3$cond.mean) / 0.5 # divided by clock.rate
+
+-->

@@ -1,0 +1,120 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+	<taxa id="taxa">
+		<taxon id="1">  <!-- Rana pipiens -->
+			<attr name="size">1.911 6.022</attr>
+		</taxon>
+		<taxon id="2">  <!-- Chrysemys picta -->
+			<attr name="size">1.030 5.022</attr>
+		</taxon>
+		<taxon id="3">  <!-- Iguana iguana -->
+			<attr name="size">1.061 5.503</attr>
+		</taxon>
+		<taxon id="4">  <!-- Gekko sp. -->
+			<attr name="size">0.940 5.696</attr>
+		</taxon>
+	</taxa>
+
+	<matrixParameter id="dataIA">      <!-- indices are ordered by taxa-listing, matrix defined by its columns -->
+		<parameter id="dataIA.col1" value="1 2 3 4"/>
+		<parameter id="dataIA.col2" value="5 6 7 8"/>
+		<parameter id="dataIA.col3" value="5 6 7 8"/>
+		<parameter id="dataIA.col4" value="1 2 3 4"/>
+	</matrixParameter>
+
+	<newick id="dinosaurTree">
+		(1:3,(2:2,(3:1,4:1):1):1);
+	</newick>
+
+	<treeModel id="treeModel">
+		<coalescentTree idref="dinosaurTree"/>
+		<rootHeight>
+			<parameter id="treeModel.rootHeight"/>
+		</rootHeight>
+		<nodeHeights internalNodes="true">
+			<parameter id="treeModel.internalNodeHeights"/>
+		</nodeHeights>
+		<nodeHeights internalNodes="true" rootNode="true">
+			<parameter id="treeModel.allInternalNodeHeights"/>
+		</nodeHeights>
+		<nodeTraits rootNode="true" internalNodes="true" leafNodes="true" name="indicator">
+			<parameter id="clusterIndicator"/>
+		</nodeTraits>
+		<nodeTraits rootNode="true" internalNodes="true" leafNodes="true" name="mean">
+			<parameter id="clusterMean"/>
+		</nodeTraits>
+	</treeModel>
+
+
+	<inhibitionLikelihood id="traitLikelihood">
+		<treeModel idref="treeModel"/>
+		<matrixParameter idref="dataIA"/>
+		<precision>
+			<parameter id="precision" value="0.1"/>
+		</precision>
+	</inhibitionLikelihood>
+
+	<sumStatistic id="clusterChanges" elementwise="true">
+		<parameter idref="clusterIndicator"/>
+	</sumStatistic>
+
+	<report>
+		lnP =
+		<inhibitionLikelihood idref="traitLikelihood"/>
+	</report>
+
+	<operators id="operators">
+		<bitFlipOperator weight="15.0">
+			<parameter idref="clusterIndicator"/>
+		</bitFlipOperator>
+		<randomWalkOperator windowSize="0.75" weight="15.0">  <!-- should be able to Gibbs sample these -->
+			<parameter idref="clusterMean"/>
+		</randomWalkOperator>
+	</operators>
+
+	<dummyModel id="dummyModel">  <!-- not needed once treeModel is used -->
+		<parameter idref="clusterIndicator"/>
+		<parameter idref="clusterMean"/>
+	</dummyModel>
+
+
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+		<posterior id="posterior">
+			<likelihood id="likelihood">
+				<dummyModel idref="dummyModel"/>
+				<inhibitionLikelihood idref="traitLikelihood"/>
+			</likelihood>
+			<prior id="prior">
+				<normalPrior mean="0.0" stdev="1.0">
+					<parameter idref="clusterMean"/>
+				</normalPrior>
+				<poissonPrior mean="2.0" offset="0.0">
+					<statistic idref="clusterChanges"/>
+				</poissonPrior>
+			</prior>
+		</posterior>
+		<operators idref="operators"/>
+		<log id="screenLog" logEvery="1000">
+			<statistics idref="clusterChanges"/>
+			<inhibitionLikelihood idref="traitLikelihood"/>
+		</log>
+		<log id="fileLog" logEvery="1000" fileName="testIA.log">
+			<posterior idref="posterior"/>
+			<statistics idref="clusterChanges"/>
+			<parameter idref="clusterMean"/>
+		</log>
+		<log id="restrictedGrowth" logEvery="1000" fileName="testGrowth.log">
+			<inhibitionLikelihood idref="traitLikelihood"/>
+		</log>
+		<logTree id="logTree" logEvery="1000" nexusFormat="true" fileName="testIATrees.log">
+			<treeModel idref="treeModel"/>
+			<logAllTraits>
+				<treeModel idref="treeModel"/>
+			</logAllTraits>
+		</logTree>
+	</mcmc>
+
+	<traceAnalysis fileName="testIA.log"/>
+
+
+</beast>

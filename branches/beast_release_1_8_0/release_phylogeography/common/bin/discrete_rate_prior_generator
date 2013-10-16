@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ -z "$PHYLOGEOGRAPHY" ]; then
+	## resolve links - $0 may be a link to application
+	PRG="$0"
+
+	# need this for relative symlinks
+	while [ -h "$PRG" ] ; do
+	    ls=`ls -ld "$PRG"`
+	    link=`expr "$ls" : '.*-> \(.*\)$'`
+	    if expr "$link" : '/.*' > /dev/null; then
+		PRG="$link"
+	    else
+		PRG="`dirname "$PRG"`/$link"
+	    fi
+	done
+
+	# make it fully qualified
+	saveddir=`pwd`
+	PHYLOGEOGRAPHY0=`dirname "$PRG"`/..
+	PHYLOGEOGRAPHY=`cd "$PHYLOGEOGRAPHY0" && pwd`
+	cd "$saveddir"
+fi
+
+PHYLOGEOGRAPHY_LIB=$PHYLOGEOGRAPHY/lib
+java -Xmx512m -cp $PHYLOGEOGRAPHY_LIB/phylogeography.jar dr.app.phylogeography.tools.DiscreteRatePriorGenerator $*
+

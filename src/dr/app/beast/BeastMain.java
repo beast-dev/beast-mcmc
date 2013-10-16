@@ -181,7 +181,7 @@ public class BeastMain {
                     // turn off all messages for subsequent reads of the file (they will be the same as the
                     // first time).
                     messageHandler.setLevel(Level.OFF);
-                    parser = new BeastParser(new String[]{fileName}, null, verbose, parserWarning, strictXML);
+                    parser = new BeastParser(new String[]{fileName}, additionalParsers, verbose, parserWarning, strictXML);
 
                     chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                     if (chains[i] == null) {

@@ -104,17 +104,17 @@ public class MCMCMC implements Runnable {
 
         timer.start();
 
-        if (isPreBurninNeeded()) {
-            long preBurnin = mcmcOptions.getCoercionDelay();
-            if (preBurnin > 0) {
-                MarkovChainListener burninListener = new BurninListener(preBurnin);
-
-                chains[coldChain].addMarkovChainListener(burninListener);
-                runChains(preBurnin, true);
-                chains[coldChain].removeMarkovChainListener(burninListener);
-                resetChains();
-            }
-        }
+//        if (isPreBurninNeeded()) {
+//            long preBurnin = mcmcOptions.getCoercionDelay();
+//            if (preBurnin > 0) {
+//                MarkovChainListener burninListener = new BurninListener(preBurnin);
+//
+//                chains[coldChain].addMarkovChainListener(burninListener);
+//                runChains(preBurnin, true);
+//                chains[coldChain].removeMarkovChainListener(burninListener);
+//                resetChains();
+//            }
+//        }
 
         MCLogger[] coldChainLoggers = mcLoggers[coldChain];
         List<LogFormatter>[] logFormatters = new List[coldChainLoggers.length];

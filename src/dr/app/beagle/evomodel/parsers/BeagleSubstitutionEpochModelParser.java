@@ -131,7 +131,7 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
                                 new ElementRule(AbstractModel.class, 1, Integer.MAX_VALUE),
                         }
                 ),
-                new ElementRule(BranchRateModel.class, true),
+                new ElementRule(BranchRateModel.class, false),
                 new ElementRule(Parameter.class),
         };
 

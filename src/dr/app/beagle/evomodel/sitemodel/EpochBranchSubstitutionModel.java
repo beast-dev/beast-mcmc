@@ -210,9 +210,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		double currentHeight = nodeHeight;
 		
 		double[] transitionTimes = epochTimes.getParameterValues();
-		double[] weights;// = new double[1];
-
-		
+		double[] weights = new double[nModels];
 
 			// find the epoch that the node height is in...
 			int epoch = 0;
@@ -236,7 +234,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 			weightList.add(parentHeight - currentHeight);
 			orderList.add(epoch);
 
-			weights = new double[nModels];
 			for (int i = 0; i < weightList.size(); i++) {
 				
 				weights[orderList.get(i)] = weightList.get(i);
@@ -249,9 +246,10 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				returnValue = nModels;
 			}
 
-		if (branchRateModel != null) {
+//		if (branchRateModel != null) {
+//			System.out.println(branchRateModel.getBranchRate(tree, node));
 			weights = scaleArray(weights, branchRateModel.getBranchRate(tree, node));
-		}
+//		}
 
 		convolutionMatricesMap.put(bufferIndex, weights);
 

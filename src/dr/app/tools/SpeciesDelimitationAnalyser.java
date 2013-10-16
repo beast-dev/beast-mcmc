@@ -7,6 +7,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.speciation.BirthDeathCollapseModel;
 import dr.util.Version;
 
 import java.io.*;
@@ -46,10 +47,11 @@ public class SpeciesDelimitationAnalyser {
                 NodeRef nr = tree.getNode(n);
                 boolean collapse;
                 if (tree.isRoot(nr)) {
-                    collapse = (tree.getNodeHeight(nr) < collapseheight);
+                    collapse = BirthDeathCollapseModel.belowCollapseHeight(tree.getNodeHeight(nr), collapseheight);
                 } else {
                     NodeRef anc  = tree.getParent(nr);
-                    collapse = (tree.getNodeHeight(nr) < collapseheight  && tree.getNodeHeight(anc) >= collapseheight);
+                    collapse = (BirthDeathCollapseModel.belowCollapseHeight(tree.getNodeHeight(nr), collapseheight)
+                            && !BirthDeathCollapseModel.belowCollapseHeight(tree.getNodeHeight(anc), collapseheight));
                 }
                 if (collapse) {
                     nshort++;
@@ -227,6 +229,7 @@ public class SpeciesDelimitationAnalyser {
                 fileWriter.write("\n");
             }
         }
+        fileWriter.write("\n");
         fileWriter.close();
 
     }

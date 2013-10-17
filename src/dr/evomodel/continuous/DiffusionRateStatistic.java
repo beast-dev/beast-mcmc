@@ -25,11 +25,10 @@
 
 package dr.evomodel.continuous;
 
+import dr.app.util.Arguments;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DiscretizedBranchRates;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
 import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.model.Statistic;
@@ -37,8 +36,9 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.stats.DiscreteStatistics;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
+import java.io.IOException;
 
 /**
  * @author Marc Suchard
@@ -64,22 +64,32 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
     //    public static final String BOOLEAN_DC_OPTION = "diffusionCoefficient";
     public static final String HEIGHT_UPPER = "heightUpper";
     public static final String HEIGHT_LOWER = "heightLower";
+    public static final String HEIGHT_LOWER_SERIE = "heightLowerSerie";
+    public static final String CUMULATIVE = "cumulative";
 
     public DiffusionRateStatistic(String name, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
-                                  boolean option, Mode mode,
-                                  summaryStatistic statistic, double heightUpper, double heightLower) {
+                                        boolean option, Mode mode,
+                                        summaryStatistic statistic, double heightUpper, double heightLower,
+                                        double[] lowerHeights, boolean cumulative) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
         this.useGreatCircleDistances = option;
         summaryMode =  mode;
         summaryStat = statistic;
         this.heightUpper = heightUpper;
-        this.heightLower = heightLower;
 
+        if (lowerHeights == null){
+            heightLowers =  new double[]{heightLower};
+        } else {
+            heightLowers = extractUnique(lowerHeights);
+            Arrays.sort(heightLowers);
+            reverse(heightLowers);
+        }
+        this.cumulative = cumulative;
     }
 
     public int getDimension() {
-        return 1;
+        return heightLowers.length;
     }
 
     public double getStatisticValue(int dim) {
@@ -97,6 +107,20 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
         List<Double> diffusionCoefficients = new ArrayList<Double>();
         double waDiffusionCoefficient =  0;
 
+        double lowerHeight = heightLowers[dim];
+        double upperHeight = Double.MAX_VALUE;
+        if (heightLowers.length == 1){
+            upperHeight = heightUpper;
+        } else {
+            if (dim > 0) {
+                if (!cumulative) {
+                    upperHeight = heightLowers[dim -1];
+                }
+            }
+        }
+
+//        System.out.println("dim = "+dim+", heightLower = "+lowerHeight+", heightUpper = "+upperHeight);
+
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
             MultivariateTraitTree tree = traitLikelihood.getTreeModel();
             BranchRateModel branchRates = traitLikelihood.getBranchRateModel();
@@ -107,7 +131,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 if (node != tree.getRoot()) {
 
                     NodeRef parentNode = tree.getParent(node);
-                    if ((tree.getNodeHeight(parentNode) > heightLower) && (tree.getNodeHeight(node) < heightUpper)) {
+                    if ((tree.getNodeHeight(parentNode) > lowerHeight) && (tree.getNodeHeight(node) < upperHeight)) {
 
                         double[] trait = traitLikelihood.getTraitForNode(tree, node, traitName);
                         double[] parentTrait = traitLikelihood.getTraitForNode(tree, parentNode, traitName);
@@ -123,15 +147,15 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                         MultivariateDiffusionModel diffModel = traitLikelihood.diffusionModel;
                         double[] precision = diffModel.getPrecisionParameter().getParameterValues();
 
-                        if (tree.getNodeHeight(parentNode) > heightUpper) {
-                            timeUp = heightUpper;
+                        if (tree.getNodeHeight(parentNode) > upperHeight) {
+                            timeUp = upperHeight;
                             //TODO: implement TrueNoise??
-                            traitUp = imputeValue(trait, parentTrait, heightUpper, tree.getNodeHeight(node), tree.getNodeHeight(parentNode), precision, rate, false);
+                            traitUp = imputeValue(trait, parentTrait, upperHeight, tree.getNodeHeight(node), tree.getNodeHeight(parentNode), precision, rate, false);
                         }
 
-                        if (tree.getNodeHeight(node) < heightLower) {
-                            timeLow = heightLower;
-                            traitLow = imputeValue(trait, parentTrait, heightLower, tree.getNodeHeight(node), tree.getNodeHeight(parentNode), precision, rate, false);
+                        if (tree.getNodeHeight(node) < lowerHeight) {
+                            timeLow = lowerHeight;
+                            traitLow = imputeValue(trait, parentTrait, lowerHeight, tree.getNodeHeight(node), tree.getNodeHeight(parentNode), precision, rate, false);
                         }
 
                         double time = timeUp - timeLow;
@@ -155,7 +179,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                                 maxDistanceFromRoot = tempDistanceFromRoot;
                                 maxDistanceOverTimeFromRoot = tempDistanceFromRoot/(tree.getNodeHeight(tree.getRoot()) - timeLow);
                                 //distance between traitLow and traitUp for maxDistanceFromRoot
-                                if (timeUp == heightUpper) {
+                                if (timeUp == upperHeight) {
                                     maxDistanceFromRoot = distance;
                                     maxDistanceOverTimeFromRoot = distance/time;
                                 }
@@ -175,7 +199,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                                 maxDistanceFromRoot = tempDistanceFromRoot;
                                 maxDistanceOverTimeFromRoot = tempDistanceFromRoot/(tree.getNodeHeight(tree.getRoot()) - timeLow);
                                 //distance between traitLow and traitUp for maxDistanceFromRoot
-                                if (timeUp == heightUpper) {
+                                if (timeUp == upperHeight) {
                                     maxDistanceFromRoot = distance;
                                     maxDistanceOverTimeFromRoot = distance/time;
                                 }
@@ -289,6 +313,66 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
         return result;
     }
 
+    public static double[] parseVariableLengthDoubleArray(String inString) throws Arguments.ArgumentException {
+
+        List<Double> returnList = new ArrayList<Double>();
+        StringTokenizer st = new StringTokenizer(inString, ",");
+        while (st.hasMoreTokens()) {
+            try {
+                returnList.add(Double.parseDouble(st.nextToken()));
+            } catch (NumberFormatException e) {
+                throw new Arguments.ArgumentException();
+            }
+
+        }
+
+        if (returnList.size() > 0) {
+            double[] doubleArray = new double[returnList.size()];
+            for (int i = 0; i < doubleArray.length; i++)
+                doubleArray[i] = returnList.get(i);
+
+            return doubleArray;
+        }
+        return null;
+    }
+
+    @Override
+    public String getDimensionName(int dim) {
+        if (getDimension() == 1) {
+            return getStatisticName();
+        } else {
+            return getStatisticName() +".height"+ heightLowers[dim];
+        }
+    }
+
+    public static void reverse(double[] array) {
+        if (array == null) {
+            return;
+        }
+        int i = 0;
+        int j = array.length - 1;
+        double tmp;
+        while (j > i) {
+            tmp = array[j];
+            array[j] = array[i];
+            array[i] = tmp;
+            j--;
+            i++;
+        }
+    }
+
+    public static double[] extractUnique(double[] array){
+        Set<Double> tmp = new LinkedHashSet<Double>();
+        for (Double each : array) {
+            tmp.add(each);
+        }
+        double [] output = new double[tmp.size()];
+        int i = 0;
+        for (Double each : tmp) {
+            output[i++] = each;
+        }
+        return output;
+    }
 
     enum Mode {
         AVERAGE,
@@ -355,6 +439,20 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
             final double upperHeight = xo.getAttribute(HEIGHT_UPPER, Double.MAX_VALUE);
             final double lowerHeight = xo.getAttribute(HEIGHT_LOWER, 0.0);
 
+            double[] lowerHeights = null;
+            String lowerHeightsString = xo.getAttribute(HEIGHT_LOWER_SERIE, "absent");
+            if (!lowerHeightsString.equals("absent")) {
+                //System.out.println(sliceTimesFileString);
+                try {
+                    lowerHeights = parseVariableLengthDoubleArray(lowerHeightsString);
+                } catch (Arguments.ArgumentException e) {
+                    System.err.println("Error reading " + HEIGHT_LOWER_SERIE);
+                    System.exit(1);
+                }
+            }
+
+            boolean cumulative = xo.getAttribute(CUMULATIVE, false);
+
             List<AbstractMultivariateTraitLikelihood> traitLikelihoods = new ArrayList<AbstractMultivariateTraitLikelihood>();
 
             for (int i = 0; i < xo.getChildCount(); i++) {
@@ -364,7 +462,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 }
             }
 
-            return new DiffusionRateStatistic(name, traitLikelihoods, option, averageMode, summaryStat, upperHeight, lowerHeight);
+            return new DiffusionRateStatistic(name, traitLikelihoods, option, averageMode, summaryStat, upperHeight, lowerHeight, lowerHeights, cumulative);
         }
 
         //************************************************************************
@@ -390,6 +488,8 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
                 AttributeRule.newStringRule(STATISTIC,true),
                 AttributeRule.newDoubleRule(HEIGHT_UPPER, true),
                 AttributeRule.newDoubleRule(HEIGHT_LOWER, true),
+                AttributeRule.newStringRule(HEIGHT_LOWER_SERIE,true),
+                AttributeRule.newBooleanRule(CUMULATIVE, true),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, 1, Integer.MAX_VALUE),
         };
     };
@@ -399,6 +499,8 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
     private Mode summaryMode;
     private summaryStatistic summaryStat;
     private double heightUpper;
-    private double heightLower;
+    private double[] heightLowers;
+    private boolean cumulative;
+
 }
 

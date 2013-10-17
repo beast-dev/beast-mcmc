@@ -1,4 +1,4 @@
-package beast;
+package dr.app.beastgen;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;

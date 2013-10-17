@@ -133,11 +133,18 @@ public class MLEDialog {
 
         optionsPanel.addSeparator();
 
-        JTextArea mleTutorial = new JTextArea("Additional information on marginal likelihood estimation " +
+        JTextArea mleTutorial = new JTextArea("Additional information on marginal likelihood estimation in BEAST " +
                 "can be found on http://beast.bio.ed.ac.uk/Model_selection");
         mleTutorial.setColumns(56);
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
+        
+        JTextArea citationText = new JTextArea("Baele G, Lemey P, Bedford T, Rambaut A, Suchard MA, Alekseyenko AV (2012)\n" + 
+                "Mol Biol Evol 29(9), 2157-2167 [Advantages of PS/SS].\n" + 
+                "Baele G, Li WLS, Drummond AJ, Suchard MA, Lemey P (2013)\nMol Biol Evol 30(2), 239-243 " + 
+                "[Importance of using proper priors].");
+        citationText.setColumns(45);
+        optionsPanel.addComponentWithLabel("Citation:", citationText);
 
         optionsPanel.addSeparator();
         

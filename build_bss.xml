@@ -147,8 +147,124 @@
       <echo message="Successfully compiled." />
    </target>
 
+    <property name="version" value="1.0" />
+    <property name="release_dir" value="release_pibuss" />
+    <property name="name" value="πBUSS" />
 
-   <target name="clean">
+    <property name="common_dir" value="${release_dir}/common" />
+
+    <property name="Mac_dir" value="${release_dir}/Mac" />
+    <property name="Linux_dir" value="${release_dir}/Linux" />
+    <property name="Windows_dir" value="${release_dir}/Windows" />
+
+    <property name="Mac_package_dir" value="${Mac_dir}/${name} v${version}" />
+    <property name="Linux_package_dir" value="${Linux_dir}/${name}_v${version}" />
+    <property name="Windows_package_dir" value="${Windows_dir}/${name} v${version}" />
+
+    <!-- Need to either install Launch4j under {BEAST workspace}/${release}
+                 or install it in the default directory and change the location of launch4j.dir -->
+    <target name="windows" depends="build" description="release Windows version of πBUSS">
+
+        <delete dir="${Windows_package_dir}" />
+        <!-- Create the release directory -->
+        <mkdir dir="${Windows_package_dir}" />
+
+        <property name="launch4j.dir" location="${Windows_dir}/launch4j" />
+        <taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
+                 classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
+
+        <copy file="${dist}/buss.jar" todir="${Windows_package_dir}/lib"/>
+        <copy todir="${Windows_package_dir}/lib">
+            <fileset dir="${Windows_dir}/lib"/>
+        </copy>
+        <copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
+
+        <launch4j configFile="${Windows_dir}/pibuss_launch4j.xml"
+                  jar="${dist}/buss.jar"
+                  outfile="${Windows_package_dir}/${name} v${version}.exe"
+                  fileVersion="${version}.0.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version}.0.0"
+                  txtProductVersion="${version}"/>
+
+        <zip destfile="${release_dir}/${name} v${version}.zip">
+            <zipfileset dir="${Windows_package_dir}" prefix="${name} v${version}"/>
+        </zip>
+
+        <echo message="Windows version release is finished." />
+    </target>
+
+    <target name="linux" depends="build" description="release Linux/Unix version of πBUSS">
+        <delete dir="${Linux_package_dir}" />
+        <!-- Create the release directory -->
+        <mkdir dir="${Linux_package_dir}" />
+
+        <copy todir="${Linux_package_dir}/bin">
+            <fileset dir="${Linux_dir}/scripts"/>
+        </copy>
+
+        <copy file="${Linux_dir}/icons/pibuss.png" todir="${Linux_package_dir}/images"/>
+        <copy file="${dist}/buss.jar" todir="${Linux_package_dir}/lib"/>
+        <copy todir="${Linux_package_dir}/lib">
+            <fileset dir="${Linux_dir}/lib"/>
+        </copy>
+        <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
+
+        <tar destfile="${release_dir}/${name}_v${version}.tgz" compression="gzip">
+            <tarfileset dir="${Linux_package_dir}" prefix="${name}_v${version}"/>
+        </tar>
+
+        <echo message="Linux/Unix version release is finished." />
+    </target>
+
+    <target name="mac" depends="build" description="release Mac version of πBUSS">
+        <delete dir="${Mac_package_dir}" />
+        <!-- Create the release directory -->
+        <mkdir dir="${Mac_package_dir}" />
+
+        <copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
+
+        <taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler"/>
+
+        <!-- create a jar bundle for the mac -->
+        <jarbundler dir="${Mac_package_dir}"
+                    name="${name} v${version}"
+                    mainclass="dr.app.bss.BeagleSequenceSimulatorApp"
+                    icon="${Mac_dir}/icons/πBUSS.icns"
+                    jvmversion="1.6+"
+                    arguments=""
+                    version="${version}"
+                    infostring="${name} v${version}, Copyright 2013, Filip Bielejec, Andrew Rambaut, Philippe Lemey and Marc Suchard"
+                    bundleid="pibuss" >
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+            <jarfileset dir="${dist}">
+                <include name="**/buss.jar"/>
+            </jarfileset>
+            <jarfileset dir="${Mac_dir}/lib">
+                <include name="**/*.jar"/>
+            </jarfileset>
+        </jarbundler>
+
+        <echo message="Building disk image." />
+
+        <!-- create disk image -->
+        <exec executable="/usr/bin/hdiutil">
+            <arg value="create"/>
+            <arg value="-ov"/>
+            <arg value="-srcfolder"/>
+            <arg value="${Mac_package_dir}"/>
+            <arg value="-volname"/>
+            <arg value="${name} v${version}"/>
+            <arg value="-imagekey"/>
+            <arg value="zlib-level=6"/>
+            <arg value="${release_dir}/${name} v${version}.dmg"/>
+        </exec>
+
+        <echo message="Mac version release is finished." />
+    </target>
+
+
+    <target name="clean">
       <delete dir="${build}" />
       <delete dir="${dist}" />
    </target>

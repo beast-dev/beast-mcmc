@@ -1,13 +1,11 @@
-package beast;
+package dr.app.beastgen;
 
-import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import freemarker.template.*;
 
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.StringTokenizer;
 
 public class BEASTGen {
 
@@ -51,19 +49,6 @@ public class BEASTGen {
 
         return root;
     }
-
-    private int findArgument(String[] arguments, String label) {
-        for (int i = 0; i < arguments.length; i++) {
-
-            if (arguments[i].length() - 1 >= label.length()) {
-                if (arguments[i].startsWith("-")) {
-
-                }
-            }
-        }
-        return -1;
-    }
-
 
     public static String[] parseArguments(String[] arguments, Map dataModel) {
 

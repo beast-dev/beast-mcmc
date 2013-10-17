@@ -1,4 +1,4 @@
-package beast;
+package dr.app.beastgen;
 
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
@@ -322,7 +322,7 @@ public class DataModelImporter {
 
         checkTaxonList(taxonList);
         dataModel.put("taxa", createTaxonList(taxonList));
-        dataModel.put("taxon_count", taxonList.getTaxonCount());
+        dataModel.put("taxon_count", Integer.toString(taxonList.getTaxonCount()));
 
         if (taxonLists != null) {
             List<Map> tss = new ArrayList<Map>();
@@ -338,7 +338,7 @@ public class DataModelImporter {
         }
 
         dataModel.put("alignment", createAlignment(alignment));
-        dataModel.put("site_count", alignment.getSiteCount());
+        dataModel.put("site_count", Integer.toString(alignment.getSiteCount()));
 
         dataModel.put("filename", fileName);
         dataModel.put("filename_stem", fileNameStem);

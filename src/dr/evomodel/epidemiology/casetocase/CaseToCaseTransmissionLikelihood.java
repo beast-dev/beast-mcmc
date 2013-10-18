@@ -138,12 +138,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 infectionTimes = treeLikelihood.getInfTimesMap();
             }
             if(!transProbKnown){
-                transLogProb = Math.log(Math.pow(lambda, N-1)) + Math.log(aAlpha()) - lambda*bAlpha();
+                transLogProb = (N-1)*Math.log(lambda) + Math.log(aAlpha()) - lambda*bAlpha();
             }
             if(!normalisationKnown){
                 if(hasGeography){
                     if(integrateToInfinity){
-                        normalisation = Math.log(-probFunct.evaluateIntegral(0, 1));
+                        normalisation = Math.log(probFunct.evaluateIntegral(1, 0));
                     } else {
                         normalisation = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
                     }
@@ -231,10 +231,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     private double aAlpha(double alpha){
         double product = 1;
-        ArrayList<AbstractCase> copyOfCases = new ArrayList<AbstractCase>(outbreak.getCases());
-        Collections.sort(copyOfCases, new CaseInfectionComparator());
         for(int i=1; i<outbreak.size(); i++){
-            product *= outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(i-1), spatialKernel, alpha);
+            if(treeLikelihood.getInfector(i)!=null){
+                product *= outbreak.getKernalValue(outbreak.getCase(i), treeLikelihood.getInfector(i), spatialKernel,
+                        alpha);
+            }
         }
         return product;
     }

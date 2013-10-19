@@ -1,0 +1,17 @@
+<launch4jConfig>
+  <headerType>gui</headerType>
+  <icon>icons/Tracer.ico</icon>
+  <cmdLine/>
+  <jre>
+    <minVersion>1.5.0</minVersion>
+    <initialHeapSize>64</initialHeapSize>
+    <maxHeapSize>512</maxHeapSize>
+  </jre>    
+  <versionInfo>
+    <fileDescription>Tracer</fileDescription>
+    <copyright>2006-2009</copyright>
+    <productName>Tracer</productName>
+    <internalName>Tracer</internalName>
+    <originalFilename>Tracer.exe</originalFilename>    
+  </versionInfo>
+</launch4jConfig>

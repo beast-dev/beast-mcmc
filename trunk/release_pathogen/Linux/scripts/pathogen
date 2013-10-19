@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ -z "$PATHOGEN" ]; then
+	## resolve links - $0 may be a link to application
+	PRG="$0"
+
+	# need this for relative symlinks
+	while [ -h "$PRG" ] ; do
+	    ls=`ls -ld "$PRG"`
+	    link=`expr "$ls" : '.*-> \(.*\)$'`
+	    if expr "$link" : '/.*' > /dev/null; then
+		PRG="$link"
+	    else
+		PRG="`dirname "$PRG"`/$link"
+	    fi
+	done
+
+	# make it fully qualified
+	saveddir=`pwd`
+	PATHOGEN0=`dirname "$PRG"`
+	PATHOGEN=`cd "$PATHOGEN0" && pwd`
+	cd "$saveddir"
+fi
+
+PATHOGEN_LIB=$PATHOGEN/lib
+java -Xms64m -Xmx128m -jar $PATHOGEN_LIB/pathogen.jar $*
+

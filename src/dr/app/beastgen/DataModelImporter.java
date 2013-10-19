@@ -32,7 +32,14 @@ import java.util.List;
  */
 public class DataModelImporter {
 
+    private final DateGuesser guesser;
+
     public DataModelImporter() {
+        this.guesser = null;
+    }
+
+    public DataModelImporter(DateGuesser guesser) {
+        this.guesser = guesser;
     }
 
     public HashMap importFromFile(File file) throws IOException, Importer.ImportException {
@@ -48,13 +55,13 @@ public class DataModelImporter {
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
-                importNexusFile(file, dataModel);
+                importNexusFile(file, guesser, dataModel);
             } else if ((line != null && line.trim().startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
                 // is a FASTA file
-                importFastaFile(file, dataModel);
+                importFastaFile(file, guesser, dataModel);
             } else if ((line != null && (line.toUpperCase().contains("<?XML") || line.toUpperCase().contains("<BEAST")))) {
                 // assume it is a BEAST XML file and see if that works...
-                importBEASTFile(file, dataModel);
+                importBEASTFile(file, guesser, dataModel);
 //            } else {
 //                // assume it is a tab-delimited traits file and see if that works...
 //                importTraits(file);
@@ -72,7 +79,7 @@ public class DataModelImporter {
     }
 
     // xml
-    private void importBEASTFile(File file, Map dataModel) throws IOException, ImportException {
+    private void importBEASTFile(File file, DateGuesser guesser, Map dataModel) throws IOException, ImportException {
         try {
             FileReader reader = new FileReader(file);
 
@@ -95,7 +102,7 @@ public class DataModelImporter {
                         name += count;
                     }
                 }
-                setData(dataModel, name, taxa, taxonLists, alignment, null, null, null);
+                setData(dataModel, guesser, name, taxa, taxonLists, alignment, null, null, null);
 
                 count++;
             }
@@ -112,7 +119,7 @@ public class DataModelImporter {
     }
 
     // nexus
-    private void importNexusFile(File file, Map dataModel) throws IOException, ImportException {
+    private void importNexusFile(File file, DateGuesser guesser, Map dataModel) throws IOException, ImportException {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
@@ -215,12 +222,12 @@ public class DataModelImporter {
 //            throw new Exception(e.getMessage());
         }
 
-        setData(dataModel, file.getName(), taxa, null, alignment, charSets, null, trees);
+        setData(dataModel, guesser, file.getName(), taxa, null, alignment, charSets, null, trees);
     }
 
     // FASTA
 
-    private void importFastaFile(File file, Map dataModel) throws IOException, ImportException {
+    private void importFastaFile(File file, DateGuesser guesser, Map dataModel) throws IOException, ImportException {
         try {
             FileReader reader = new FileReader(file);
 
@@ -230,7 +237,7 @@ public class DataModelImporter {
 
             reader.close();
 
-            setData(dataModel, file.getName(), alignment, null, alignment, null, null, null);
+            setData(dataModel, guesser, file.getName(), alignment, null, alignment, null, null, null);
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
         } catch (IOException e) {
@@ -314,13 +321,13 @@ public class DataModelImporter {
 //    }
 
     // for Alignment
-    private void setData(Map dataModel, String fileName, TaxonList taxonList, List<TaxonList> taxonLists, Alignment alignment,
+    private void setData(Map dataModel, DateGuesser guesser, String fileName, TaxonList taxonList, List<TaxonList> taxonLists, Alignment alignment,
                          List<NexusApplicationImporter.CharSet> charSets,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "FA", "FAS", "FASTA", "TRE", "TREE", "XML", "TXT"});
 
-        checkTaxonList(taxonList);
+        checkTaxonList(taxonList, guesser);
         dataModel.put("taxa", createTaxonList(taxonList));
         dataModel.put("taxon_count", Integer.toString(taxonList.getTaxonCount()));
 
@@ -344,7 +351,7 @@ public class DataModelImporter {
         dataModel.put("filename_stem", fileNameStem);
     }
 
-    private void checkTaxonList(TaxonList taxonList) throws ImportException {
+    private void checkTaxonList(TaxonList taxonList, DateGuesser guesser) throws ImportException {
 
         // check the taxon names for invalid characters
         boolean foundAmp = false;
@@ -360,16 +367,19 @@ public class DataModelImporter {
                     "Please edit the taxon name(s) before reloading the data file.");
         }
 
-        // make sure they all have dates...
-        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            if (taxonList.getTaxonAttribute(i, "date") == null) {
-                Date origin = new Date(0);
+        if (guesser != null) {
+            guesser.guessDates(taxonList);
+        } else {
+            // make sure they all have dates...
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                if (taxonList.getTaxonAttribute(i, "date") == null) {
+                    Date origin = new Date(0);
 
-                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-                taxonList.getTaxon(i).setAttribute("date", date);
+                    dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
+                    taxonList.getTaxon(i).setAttribute("date", date);
+                }
             }
         }
-
     }
 
     private List<Map> createTaxonList(TaxonList taxa) {
@@ -383,9 +393,9 @@ public class DataModelImporter {
     }
 
     private Map createTaxon(Taxon taxon) {
-            Map t = new HashMap();
-            t.put("id", taxon.getId());
-            t.put("date", "1994");
+        Map t = new HashMap();
+        t.put("id", taxon.getId());
+        t.put("date", Double.toString(taxon.getDate().getTimeValue()));
         return t;
     }
 

@@ -145,11 +145,21 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
             if (geoSpatialDistributions.size() == 1) {
                 MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(geoSpatialDistributions.get(0));
                 for (Parameter spatialParameter : parameters) {
-                    if (spatialParameter.getDimension() != dimPoint)
+                    if (spatialParameter.getDimension() % dimPoint != 0)
                         throw new XMLParseException("Spatial priors currently only work in " + dimPoint + "D");
-                    likelihood.addData(spatialParameter);
+
+                    if (!label.equals(DEFAULT_LABEL)) {  // For a tip-taxon
+                        likelihood.addData(spatialParameter);
+                        return likelihood;
+                    } else {
+                        Logger.getLogger("dr.geo").info(
+                                "\nConstructing a GeoSpatialCollectionModel:\n" +
+                                        "\tParameter: " + spatialParameter.getId() + "\n" +
+                                        "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
+
+                        return new GeoSpatialCollectionModel(xo.getId(), spatialParameter, geoSpatialDistributions, !union);
+                    }
                 }
-                return likelihood;
             }
 
             if (geoSpatialDistributions.size() == 0) {

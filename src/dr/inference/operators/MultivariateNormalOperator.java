@@ -1,7 +1,7 @@
 /*
- * PrecisionMatrixGibbsOperator.java
+ * MultivariateNormalOperator.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -92,7 +92,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
         double[][] matrix = new double[P][P];
         for (int i = 0; i < P; i++) {
             for (int j = 0; j < P; j++) {
-                int total = 0;
+                double total = 0.0;
                 for (int k = 0; k < N; k++) {
                     total += X[k][i] * X[k][j];
                 }

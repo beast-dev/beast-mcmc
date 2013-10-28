@@ -703,20 +703,37 @@ public class Utils {
 	// ///////////////////
 
 	public static void printMap(Map<?, ?> mp) {
+		
 		Iterator<?> it = mp.entrySet().iterator();
 		while (it.hasNext()) {
+			
 			Entry<?, ?> pairs = (Entry<?, ?>) it.next();
 			Object obj = pairs.getValue();
+			
 			if (obj instanceof int[]) {
+				
 				int[] seq = (int[]) obj;
 				System.out.print(pairs.getKey() + " =");
+				
 				for (int i = 0; i < seq.length; ++i) {
 					System.out.print(" " + seq[i]);
 				}
 				System.out.println();
+				
+			} else if(obj instanceof double[]) { 
+			
+				double[] seq = (double[]) obj;
+				System.out.print(pairs.getKey() + " =");
+				
+				for (int i = 0; i < seq.length; ++i) {
+					System.out.print(" " + seq[i]);
+				}
+				System.out.println();
+			
 			} else {
 				System.out.println(pairs.getKey() + " = " + pairs.getValue());
-			}
+			}//END: obj class check
+			
 		}
 	}// END: printMap
 	

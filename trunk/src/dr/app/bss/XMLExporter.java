@@ -9,7 +9,6 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.SequenceParser;
-import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -24,32 +23,32 @@ public class XMLExporter {
 		
 		StringWriter sw = new StringWriter();
 		XMLWriter writer = new XMLWriter(sw);
-		
-		writer.writeOpenTag(TaxaParser.TAXA, // tagname
-				new Attribute[] { // attributes[]
-				new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA) });
-		
-		// TODO: dates
-		for (int i = 0; i < alignment.getTaxonCount(); i++) {
 
-			Taxon taxon = alignment.getTaxon(i);
-
-			writer.writeTag(
-					TaxonParser.TAXON, // tagname
-					new Attribute[] { // attributes[]
-					new Attribute.Default<String>(XMLParser.ID, taxon.getId()) },
-					true // close
-			);
-
-//			System.out.println(taxon.getAttribute(Utils.ABSOLUTE_HEIGHT));
-			
-//			writer.writeCloseTag(TaxonParser.TAXON);
-			
-		}// END: taxon loop
-		
-		writer.writeCloseTag(TaxaParser.TAXA);
-		
-		writer.writeBlankLine();
+//		TODO: if we keep the taxa element than lets also write dates		
+//		writer.writeOpenTag(TaxaParser.TAXA, // tagname
+//				new Attribute[] { // attributes[]
+//				new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA) });
+//		
+//		for (int i = 0; i < alignment.getTaxonCount(); i++) {
+//
+//			Taxon taxon = alignment.getTaxon(i);
+//
+//			writer.writeTag(
+//					TaxonParser.TAXON, // tagname
+//					new Attribute[] { // attributes[]
+//					new Attribute.Default<String>(XMLParser.ID, taxon.getId()) },
+//					true // close
+//			);
+//
+////			System.out.println(taxon.getAttribute(Utils.ABSOLUTE_HEIGHT));
+//			
+////			writer.writeCloseTag(TaxonParser.TAXON);
+//			
+//		}// END: taxon loop
+//		
+//		writer.writeCloseTag(TaxaParser.TAXA);
+//		
+//		writer.writeBlankLine();
 		
 		writer.writeOpenTag(AlignmentParser.ALIGNMENT, // tagname
 				new Attribute[] { // attributes[]

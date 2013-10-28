@@ -1,0 +1,27 @@
+#!/bin/sh
+
+if [ -z "$BEASTGEN" ]; then
+	## resolve links - $0 may be a link to application
+	PRG="$0"
+
+	# need this for relative symlinks
+	while [ -h "$PRG" ] ; do
+	    ls=`ls -ld "$PRG"`
+	    link=`expr "$ls" : '.*-> \(.*\)$'`
+	    if expr "$link" : '/.*' > /dev/null; then
+		PRG="$link"
+	    else
+		PRG="`dirname "$PRG"`/$link"
+	    fi
+	done
+
+	# make it fully qualified
+	saveddir=`pwd`
+	BEASTGEN0=`dirname "$PRG"`/..
+	BEASTGEN=`cd "$BEASTGEN0" && pwd`
+	cd "$saveddir"
+fi
+
+BEASTGEN_LIB=$BEASTGEN/lib
+java -Xmx1024M -cp $BEASTGEN_LIB/beastgen.jar dr.app.beastgen.BEASTGen $*
+

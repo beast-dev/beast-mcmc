@@ -29,6 +29,7 @@
         <javac source="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">
             <include name="dr/app/beastgen/**"/>
             <include name="dr/app/beast/**"/>
+            <include name="dr/app/beauti/**"/>
             <include name="dr/app/util/**"/>
             <include name="dr/evolution/**"/>
             <include name="dr/inference/trace/**"/>
@@ -52,6 +53,7 @@
             <fileset dir="${build}">
                 <include name="dr/app/beastgen/**/*.class"/>
                 <include name="dr/app/beast/BeastVersion.class"/>
+                <include name="dr/app/beauti/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/evolution/**/*.class"/>
                 <include name="dr/inference/trace/**/*.class"/>
@@ -81,6 +83,8 @@
         <copy todir="${package_dir}/bin">
             <fileset dir="${common_dir}/bin"/>
         </copy>
+
+        <chmod dir="${package_dir}/bin" perm="755" includes="**/**"/>
 
         <copy todir="${package_dir}/templates">
             <fileset dir="${common_dir}/templates"/>

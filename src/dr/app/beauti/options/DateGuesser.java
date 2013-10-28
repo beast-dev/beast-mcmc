@@ -23,7 +23,6 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.tipdatepanel.GuessDatesException;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;

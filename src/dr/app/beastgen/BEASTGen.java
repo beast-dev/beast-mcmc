@@ -96,6 +96,7 @@ public class BEASTGen {
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 
+
         try {
             arguments.parseArguments(args);
         } catch (Arguments.ArgumentException ae) {
@@ -161,7 +162,7 @@ public class BEASTGen {
 
         if (arguments.hasOption("D")) {
             String properties = arguments.getStringOption("D");
-            for (String property : properties.split(",\\s")) {
+            for (String property : properties.split("\\s*,\\s*")) {
                 String[] keyValue = property.split("=");
                 if (keyValue.length != 2) {
                     System.err.println("Properties should take the form: key=value");
@@ -189,6 +190,12 @@ public class BEASTGen {
 
 
         String[] args2 = arguments.getLeftoverArguments();
+
+        if (args2.length < 1) {
+            printTitle();
+            printUsage(arguments);
+            System.exit(0);
+        }
 
         if (args2.length < 2 || args2.length > 3) {
             System.err.println("Unknown option: " + args2[0]);

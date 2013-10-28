@@ -31,6 +31,7 @@ import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.options.GuessDatesException;
 import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;

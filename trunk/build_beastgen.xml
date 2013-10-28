@@ -53,7 +53,9 @@
             <fileset dir="${build}">
                 <include name="dr/app/beastgen/**/*.class"/>
                 <include name="dr/app/beast/BeastVersion.class"/>
-                <include name="dr/app/beauti/**/*.class"/>
+                <include name="dr/app/beauti/options/DateGuesser.class"/>
+                <include name="dr/app/beauti/options/DateGuesser$GuessType.class"/>
+                <include name="dr/app/beauti/options/GuessDatesException.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/evolution/**/*.class"/>
                 <include name="dr/inference/trace/**/*.class"/>

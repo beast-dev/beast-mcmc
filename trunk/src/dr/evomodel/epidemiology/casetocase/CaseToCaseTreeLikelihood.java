@@ -230,7 +230,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         //paint the starting network onto the tree
 
         if(startingNetworkFileName==null){
-            partitionAccordingToRandomTT();
+            partitionAccordingToRandomTT(!noInfPeriodModels);
         } else {
             partitionAccordingToSpecificTT(startingNetworkFileName);
         }
@@ -1332,7 +1332,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     * randomlyAssignNode then the network will be checked to prohibit links with zero (or rounded to zero)
     * likelihood first. This always uses a non-extended partition. */
 
-    private void partitionAccordingToRandomTT(){
+    private void partitionAccordingToRandomTT(boolean checkNonZero){
         boolean gotOne = false;
         int tries = 1;
         System.out.println("Generating a random starting painting of the tree (checking nonzero likelihood for all " +
@@ -1346,7 +1346,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             //likelihoods rounding to zero, you want to stop catching this to investigate.
 
             try{
-                partitionAccordingToRandomTT(branchMap);
+                partitionAccordingToRandomTT(branchMap, checkNonZero);
             } catch(BadPartitionException e){
                 failed = true;
             }
@@ -1371,15 +1371,15 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     is much less likely to).
     */
 
-    private AbstractCase[] partitionAccordingToRandomTT(AbstractCase[] map){
+    private AbstractCase[] partitionAccordingToRandomTT(AbstractCase[] map, boolean checkNonZero){
         Arrays.fill(updateNode, true);
         Arrays.fill(updateNodeForSingleTraverse, true);
         TreeModel.Node root = (TreeModel.Node) treeModel.getRoot();
-        randomlyAssignNode(root, map);
+        randomlyAssignNode(root, map, checkNonZero);
         return map;
     }
 
-    private AbstractCase randomlyAssignNode(TreeModel.Node node, AbstractCase[] map){
+    private AbstractCase randomlyAssignNode(TreeModel.Node node, AbstractCase[] map, boolean checkNonZero){
         //this makes a non-extended partition. This is OK, but if it keeps giving zero likelihoods then you could do
         //something else
 
@@ -1389,26 +1389,30 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             AbstractCase[] choices = new AbstractCase[2];
             for(int i=0; i<node.getChildCount(); i++){
                 if((map[node.getChild(i).getNumber()]==null)){
-                    choices[i] = randomlyAssignNode(node.getChild(i), map);
+                    choices[i] = randomlyAssignNode(node.getChild(i), map, checkNonZero);
                 } else {
                     choices[i] = map[node.getChild(i).getNumber()];
                 }
             }
             int randomSelection = MathUtils.nextInt(2);
             int decision;
-            Double[] branchLogLs = new Double[2];
-            for(int i=0; i<2; i++){
-                branchLogLs[i]= cases.logProbXInfectedByYBetweenTandU(choices[1-i], choices[i],
-                        getNodeTime(node), getNodeTime(treeModel.getChild(node, 1-i)));
-            }
-            if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
-                throw new BadPartitionException("Both branch possibilities have zero likelihood: "
-                        +node.toString()+", cases " + choices[0].getName() + " and " + choices[1].getName() + ".");
-            } else if(branchLogLs[0]==Double.NEGATIVE_INFINITY || branchLogLs[1]==Double.NEGATIVE_INFINITY){
-                if(branchLogLs[0]==Double.NEGATIVE_INFINITY){
-                    decision = 1;
+            if(checkNonZero){
+                Double[] branchLogLs = new Double[2];
+                for(int i=0; i<2; i++){
+                    branchLogLs[i]= cases.logProbXInfectedByYBetweenTandU(choices[1-i], choices[i],
+                            getNodeTime(node), getNodeTime(treeModel.getChild(node, 1-i)));
+                }
+                if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
+                    throw new BadPartitionException("Both branch possibilities have zero likelihood: "
+                            +node.toString()+", cases " + choices[0].getName() + " and " + choices[1].getName() + ".");
+                } else if(branchLogLs[0]==Double.NEGATIVE_INFINITY || branchLogLs[1]==Double.NEGATIVE_INFINITY){
+                    if(branchLogLs[0]==Double.NEGATIVE_INFINITY){
+                        decision = 1;
+                    } else {
+                        decision = 0;
+                    }
                 } else {
-                    decision = 0;
+                    decision = randomSelection;
                 }
             } else {
                 decision = randomSelection;

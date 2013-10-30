@@ -55,7 +55,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
                                             CaseToCaseTreeLikelihood treeLikelihood, SpatialKernel spatialKernal,
-                                            Parameter transmissionRate){
+                                            Parameter transmissionRate, int steps){
         super(name);
         this.outbreak = outbreak;
         this.treeLikelihood = treeLikelihood;
@@ -71,9 +71,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.addVariable(transmissionRate);
         infectionTimes = treeLikelihood.getInfTimesMap();
         if(spatialKernal!=null && integrateToInfinity){
-            probFunct = new InnerIntegralTransformed(new InnerIntegral());
+            probFunct = new InnerIntegralTransformed(new InnerIntegral(steps), steps);
         } else {
-            probFunct = new InnerIntegral();
+            probFunct = new InnerIntegral(steps);
         }
         likelihoodKnown = false;
         hasGeography = spatialKernal!=null;
@@ -138,19 +138,25 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 infectionTimes = treeLikelihood.getInfTimesMap();
             }
             if(!transProbKnown){
-                transLogProb = (N-1)*Math.log(lambda) + Math.log(aAlpha()) - lambda*bAlpha();
+                transLogProb = (N-1)*Math.log(lambda) + Math.log(aAlpha(kernelAlpha.getParameterValue(0)))
+                        - lambda*bAlpha(kernelAlpha.getParameterValue(0));
             }
             if(!normalisationKnown){
                 if(hasGeography){
+                    // @todo The casts here are ugly as hell, and the integrals should be their own abstract class
                     if(integrateToInfinity){
-                        normalisation = Math.log(probFunct.evaluateIntegral(1, 0));
+                        normalisation = -N*Math.log(((InnerIntegralTransformed)probFunct).getScalingFactor()) +
+                                Math.log(probFunct.evaluateIntegral(1, 0));
                     } else {
-                        normalisation = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+                        normalisation = -N*Math.log(((InnerIntegral)probFunct).getScalingFactor()) +
+                                Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
                     }
                 } else {
-                    normalisation = Math.log(aAlpha()/Math.pow(bAlpha(), N));
+                    normalisation = Math.log(aAlpha(kernelAlpha.getParameterValue(0))
+                            /Math.pow(bAlpha(kernelAlpha.getParameterValue(0)), N));
                 }
-                normalisation += Math.log(MathUtils.factorial(N-1));
+                // not necessary because it is constant
+                // normalisation += Math.log(MathUtils.factorial(N-1));
 
             }
             if(!treeProbKnown){
@@ -181,23 +187,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
     }
 
-    private double bAlpha(){
-        double total = 0;
-        ArrayList<AbstractCase> copyOfCases = new ArrayList<AbstractCase>(outbreak.getCases());
-        Collections.sort(copyOfCases, new CaseInfectionComparator());
-        for(int i=1; i<outbreak.size(); i++){
-            for(int j=0; j<i; j++){
-                double endOfWindow = Math.min(infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(i))),
-                        copyOfCases.get(j).getCullTime());
-
-                total += (endOfWindow -
-                        infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(j))))
-                        * outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(j), spatialKernel);
-            }
-        }
-        return total;
-    }
-
     private double bAlpha(double alpha){
         double total = 0;
         ArrayList<AbstractCase> copyOfCases = new ArrayList<AbstractCase>(outbreak.getCases());
@@ -215,23 +204,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return total;
     }
 
-    // aAlpha for the current value of alpha
-
-    private double aAlpha(){
-        double product = 1;
-        for(int i=1; i<outbreak.size(); i++){
-            if(treeLikelihood.getInfector(i)!=null){
-                product *= outbreak.getKernalValue(outbreak.getCase(i), treeLikelihood.getInfector(i), spatialKernel);
-            }
-        }
-        return product;
-    }
-
-    // aAlpha for a given value of alpha
-
     private double aAlpha(double alpha){
         double product = 1;
-        for(int i=1; i<outbreak.size(); i++){
+        for(int i=0; i<outbreak.size(); i++){
             if(treeLikelihood.getInfector(i)!=null){
                 product *= outbreak.getKernalValue(outbreak.getCase(i), treeLikelihood.getInfector(i), spatialKernel,
                         alpha);
@@ -245,17 +220,37 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private class InnerIntegral implements IntegrableUnivariateFunction {
 
         RiemannApproximation integrator;
+        double scalingFactor = 1;
+        boolean needToRescale = false;
 
-        private InnerIntegral(){
-            integrator = new RiemannApproximation(50);
+        private InnerIntegral(int steps){
+            integrator = new RiemannApproximation(steps);
         }
 
         public double evaluateIntegral(double a, double b) {
-            return integrator.integrate(this, a, b);
+            double result;
+            do{
+                needToRescale = false;
+                result = integrator.integrate(this, a, b);
+                if(needToRescale){
+                    scalingFactor *=10;
+                }
+            } while(needToRescale);
+            return result;
         }
 
         public double evaluate(double argument) {
-            return aAlpha(argument)/Math.pow(bAlpha(argument), outbreak.size());
+            if(!needToRescale){
+                double numerator = aAlpha(argument);
+                double b = bAlpha(argument)/scalingFactor;
+                double denominator = Math.pow(b, outbreak.size());
+                if(denominator==Double.POSITIVE_INFINITY){
+                    needToRescale = true;
+                }
+                return numerator/denominator;
+            } else {
+                return 0;
+            }
         }
 
         public double getLowerBound() {
@@ -265,6 +260,25 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         public double getUpperBound() {
             return Double.POSITIVE_INFINITY;
         }
+
+        public double getScalingFactor() {
+            return scalingFactor;
+        }
+
+        // @todo this really is horrible and should be fixed
+
+        public void setScalingFactor(double factor){
+            scalingFactor = factor;
+        }
+
+        public boolean needsRescaling(){
+            return needToRescale;
+        }
+
+        public void setRescaling(boolean value){
+            needToRescale = value;
+        }
+
     }
 
     // integral of the former from 0 to +Infinity
@@ -273,14 +287,23 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         RiemannApproximation integrator;
         InnerIntegral originalFunction;
+        boolean needToRescale = false;
 
-        private InnerIntegralTransformed(InnerIntegral inner){
+        private InnerIntegralTransformed(InnerIntegral inner, int steps){
             this.originalFunction = inner;
-            integrator = new RiemannApproximation(50);
+            integrator = new RiemannApproximation(steps);
         }
 
         public double evaluateIntegral(double a, double b) {
-            return integrator.integrate(this, a, b);
+            double result;
+            do{
+                originalFunction.setRescaling(false);
+                result = integrator.integrate(this, a, b);
+                if(originalFunction.needsRescaling()){
+                    originalFunction.setScalingFactor(originalFunction.getScalingFactor()*10);
+                }
+            } while(originalFunction.needsRescaling());
+            return result;
         }
 
         public double evaluate(double argument) {
@@ -295,20 +318,31 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             return 1;
         }
 
+        public double getScalingFactor() {
+            return originalFunction.getScalingFactor();
+        }
+
 
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public static final String TRANSMISSION_RATE = "transmissionRate";
+        public static final String INTEGRATOR_STEPS = "integratorSteps";
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             CaseToCaseTreeLikelihood c2cTL = (CaseToCaseTreeLikelihood)
                     xo.getChild(CaseToCaseTreeLikelihood.class);
             SpatialKernel kernel = (SpatialKernel) xo.getChild(SpatialKernel.class);
             Parameter transmissionRate = (Parameter) xo.getElementFirstChild(TRANSMISSION_RATE);
+            int steps = 50;
+
+            if(xo.hasAttribute(INTEGRATOR_STEPS)){
+                steps = (Integer)xo.getAttribute(INTEGRATOR_STEPS);
+            }
+
             return new CaseToCaseTransmissionLikelihood(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, c2cTL.getOutbreak(),
-                    c2cTL, kernel, transmissionRate);
+                    c2cTL, kernel, transmissionRate, steps);
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -331,7 +365,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(CaseToCaseTreeLikelihood.class, "The tree likelihood"),
                 new ElementRule(SpatialKernel.class, "The spatial kernel", 0, 1),
-                new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate")
+                new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate"),
+                AttributeRule.newIntegerRule(INTEGRATOR_STEPS, true)
         };
 
     };

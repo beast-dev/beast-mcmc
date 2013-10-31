@@ -35,7 +35,7 @@ import dr.math.MathUtils;
  * The narrow exchange is very similar to a rooted-tree nearest-neighbour
  * interchange but with the restriction that node height must remain consistent.
  * <p/>
- * KNOWN BUGS: WIDE operator cannot be used on trees with 4 or less tips!
+ * KNOWN BUGS: WIDE operator cannot be used on trees with 4 or fewer tips!
  */
 public class ExchangeOperator extends AbstractTreeOperator {
 

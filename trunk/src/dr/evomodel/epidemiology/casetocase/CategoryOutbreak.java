@@ -29,27 +29,26 @@ import java.util.ArrayList;
 public class CategoryOutbreak extends AbstractOutbreak {
 
     public static final String CATEGORY_OUTBREAK = "categoryOutbreak";
+    private double[][] distances;
 
-    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, Parameter riemannSampleSize){
+    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography){
         super(name, taxa);
         cases = new ArrayList<AbstractCase>();
         hasLatentPeriods = false;
         this.hasGeography = hasGeography;
     }
 
-    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, Parameter riemannSampleSize,
-                            ArrayList<AbstractCase> cases){
-        this(name, taxa, hasGeography, riemannSampleSize);
+    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, ArrayList<AbstractCase> cases){
+        this(name, taxa, hasGeography);
         this.cases.addAll(cases);
     }
 
-    public CategoryOutbreak(Taxa taxa, boolean hasGeography, Parameter riemannSampleSize){
-        this(CATEGORY_OUTBREAK, taxa, hasGeography, riemannSampleSize);
+    public CategoryOutbreak(Taxa taxa, boolean hasGeography){
+        this(CATEGORY_OUTBREAK, taxa, hasGeography);
     }
 
-    public CategoryOutbreak(Taxa taxa, boolean hasGeography, Parameter riemannSampleSize,
-                            ArrayList<AbstractCase> cases){
-        this(CATEGORY_OUTBREAK, taxa, hasGeography, riemannSampleSize, cases);
+    public CategoryOutbreak(Taxa taxa, boolean hasGeography, ArrayList<AbstractCase> cases){
+        this(CATEGORY_OUTBREAK, taxa, hasGeography, cases);
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel infectiousDist,
@@ -60,7 +59,20 @@ public class CategoryOutbreak extends AbstractOutbreak {
     }
 
     public double getDistance(AbstractCase a, AbstractCase b) {
-        return SpatialKernel.EuclideanDistance(a.getCoords(), b.getCoords());
+        if(distances==null){
+            throw new RuntimeException("Distance matrix has not been initialised");
+        }
+        return distances[getCaseIndex(a)][getCaseIndex(b)];
+    }
+
+    private void buildDistanceMatrix(){
+        distances = new double[cases.size()][cases.size()];
+
+        for(int i=0; i<cases.size(); i++){
+            for(int j=0; j<cases.size(); j++){
+                distances[i][j]=SpatialKernel.EuclideanDistance(getCase(i).getCoords(),getCase(j).getCoords());
+            }
+        }
     }
 
     // in all of the following infectiousness of the parent is assumed because there is no latent period, so Y is only
@@ -260,7 +272,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         //for the outbreak
 
-        public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
         public static final String HAS_GEOGRAPHY = "hasGeography";
         public static final String INFECTIOUS_PERIOD_DISTRIBUTIONS = "infectiousPeriodDistributions";
 
@@ -275,16 +286,16 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
-            CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography, riemannSampleSize);
+            CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(CategoryCase.CATEGORY_CASE)){
                     parseCase((XMLObject)cxo, cases);
                 }
             }
+            cases.buildDistanceMatrix();
             return cases;
         }
 
@@ -339,8 +350,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(CategoryCase.CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
-                new ElementRule(RIEMANN_SAMPLE_SIZE, Parameter.class, "The sample size for the Riemann numerical" +
-                        "integration method, used by all child cases.", true),
                 new ElementRule(Taxa.class),
                 new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTIONS, ParametricDistributionModel.class,
                         "One or more probability distributions for the infectious periods of cases in the oubreak", 1,

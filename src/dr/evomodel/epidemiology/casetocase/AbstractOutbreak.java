@@ -49,19 +49,20 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return hasGeography;
     }
 
-    public double getKernalValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){
+
+    public double getKernelValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){
         if(!hasGeography){
             return 1;
         } else {
-            return kernel.value(a.getCoords(), b.getCoords());
+            return kernel.value(getDistance(a,b));
         }
     }
 
-    public double getKernalValue(AbstractCase a, AbstractCase b, SpatialKernel kernel, double alpha){
+    public double getKernelValue(AbstractCase a, AbstractCase b, SpatialKernel kernel, double alpha){
         if(!hasGeography){
             return 1;
         } else {
-            return kernel.value(a.getCoords(), b.getCoords(), alpha);
+            return kernel.value(getDistance(a,b), alpha);
         }
     }
 

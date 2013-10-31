@@ -38,7 +38,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     public static final String SPATIAL_KERNEL_FUNCTION = "spatialKernelFunction";
     public static final String A = "a";
     public static final String KERNEL_TYPE = "type";
-    public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
+    public static final String INTEGRATOR_STEPS = "integratorSteps";
 
     public enum Type{
         EXPONENTIAL ("exponential", Exponential.class),
@@ -86,12 +86,12 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     protected void restoreState(){
     }
 
-    public double value(double[] point1, double[] point2){
-        return evaluate(EuclideanDistance(point1, point2));
+    public double value(double distance){
+        return evaluate(distance);
     }
 
-    public double value(double[] point1, double[] point2, double alpha){
-        return evaluate(EuclideanDistance(point1, point2), alpha);
+    public double value(double distance, double alpha){
+        return evaluate(distance, alpha);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
@@ -225,8 +225,8 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
                     throw new XMLParseException("Unknown spatial kernel type");
                 }
 
-                if(xo.hasAttribute(RIEMANN_SAMPLE_SIZE)){
-                    kernelFunction.configureIntegrator((Integer)xo.getAttribute(RIEMANN_SAMPLE_SIZE));
+                if(xo.hasAttribute(INTEGRATOR_STEPS)){
+                    kernelFunction.configureIntegrator(Integer.parseInt((String)xo.getAttribute(INTEGRATOR_STEPS)));
                 }
                 return kernelFunction;
             } catch(Exception e){
@@ -244,7 +244,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
             rules = new XMLSyntaxRule[]{
                     new ElementRule(A, Parameter.class, "The single parameter of this kernel"),
                     AttributeRule.newStringRule(KERNEL_TYPE),
-                    AttributeRule.newIntegerRule(RIEMANN_SAMPLE_SIZE, true)
+                    AttributeRule.newIntegerRule(INTEGRATOR_STEPS, true)
             };
         }
 

@@ -590,6 +590,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
 
+        // @todo at the moment, nothing in the outbreak will ever change, but if it does, then that should not force recalculation of the order of infection
+
         if(model == cases){
             Arrays.fill(updateNode, true);
             Arrays.fill(updateNodeForSingleTraverse, true);
@@ -618,9 +620,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 }
             }
             renormalisationNeeded = true;
+
         }
 
-        fireModelChanged();
+        fireModelChanged(model);
 
         likelihoodKnown = false;
     }
@@ -1598,6 +1601,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
 
     }
+
 }
 
 

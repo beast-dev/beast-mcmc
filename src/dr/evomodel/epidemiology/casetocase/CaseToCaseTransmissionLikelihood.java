@@ -6,7 +6,6 @@ import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.RiemannApproximation;
 import dr.xml.*;
-import org.apache.commons.math.util.MathUtils;
 
 import java.util.*;
 
@@ -23,6 +22,8 @@ import java.util.*;
  */
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
+
+    private final static boolean DEBUG = true;
 
     private AbstractOutbreak outbreak;
     private CaseToCaseTreeLikelihood treeLikelihood;
@@ -51,6 +52,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double storedTreeLogProb;
     private boolean hasGeography;
     private boolean integrateToInfinity;
+    private ArrayList<AbstractCase> sortedCases;
+    private ArrayList<AbstractCase> storedSortedCases;
+
+    // the last time that the case corresponding to the first index could have infected the case corresponding to
+    // the second
+
+    private double[][] lastTimesToInfect;
+    private double[][] storedLastTimesToInfect;
+
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
     public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
@@ -77,6 +87,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
         likelihoodKnown = false;
         hasGeography = spatialKernal!=null;
+        sortCases();
+        makeLastTimesToInfectMatrix();
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -85,6 +97,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             treeProbKnown = false;
             transProbKnown = false;
             normalisationKnown = false;
+            sortedCases = null;
+            lastTimesToInfect = null;
         } else if(model instanceof SpatialKernel){
             transProbKnown = false;
         }
@@ -101,6 +115,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         storedTreeLogProb = treeLogProb;
         storedTreeProbKnown = treeProbKnown;
         storedInfectionTimes = new HashMap<Integer, Double>(infectionTimes);
+        storedSortedCases = sortedCases;
+        storedLastTimesToInfect = lastTimesToInfect;
     }
 
     protected void restoreState() {
@@ -113,6 +129,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         normalisation = storedNormalisation;
         normalisationKnown = storedNormalisationKnown;
         infectionTimes = storedInfectionTimes;
+        sortedCases = storedSortedCases;
+        lastTimesToInfect = storedLastTimesToInfect;
     }
 
     protected void acceptState() {
@@ -140,16 +158,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(!transProbKnown){
                 transLogProb = (N-1)*Math.log(lambda) + Math.log(aAlpha(kernelAlpha.getParameterValue(0)))
                         - lambda*bAlpha(kernelAlpha.getParameterValue(0));
+                transProbKnown = true;
             }
             if(!normalisationKnown){
                 if(hasGeography){
                     // @todo The casts here are ugly as hell, and the integrals should be their own abstract class
                     if(integrateToInfinity){
-                        normalisation = -N*Math.log(((InnerIntegralTransformed)probFunct).getScalingFactor()) +
-                                Math.log(probFunct.evaluateIntegral(1, 0));
+                        normalisation =  Math.log(probFunct.evaluateIntegral(1, 0));
+                        normalisation -= -N*Math.log(((InnerIntegralTransformed)probFunct).getScalingFactor());
                     } else {
-                        normalisation = -N*Math.log(((InnerIntegral)probFunct).getScalingFactor()) +
-                                Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+                        normalisation = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+                        normalisation -= -N*Math.log(((InnerIntegral)probFunct).getScalingFactor());
                     }
                 } else {
                     normalisation = Math.log(aAlpha(kernelAlpha.getParameterValue(0))
@@ -157,10 +176,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 }
                 // not necessary because it is constant
                 // normalisation += Math.log(MathUtils.factorial(N-1));
+                normalisationKnown = true;
 
             }
             if(!treeProbKnown){
                 treeLogProb = treeLikelihood.getLogLikelihood();
+                treeProbKnown = true;
             }
             logLikelihood =  treeLogProb + transLogProb - normalisation;
             likelihoodKnown = true;
@@ -171,6 +192,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public void makeDirty() {
         likelihoodKnown = false;
+        transProbKnown = false;
+        treeProbKnown = false;
+        normalisationKnown = false;
         treeLikelihood.makeDirty();
     }
 
@@ -187,18 +211,46 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
     }
 
+    private void makeLastTimesToInfectMatrix(){
+        lastTimesToInfect = new double[outbreak.size()][outbreak.size()];
+        for(int i=0; i<outbreak.size(); i++){
+            for(int j=0; j<outbreak.size(); j++){
+                if (infectionTimes.get(i) > infectionTimes.get(j)){
+                    lastTimesToInfect[i][j] = Double.NEGATIVE_INFINITY;
+                } else {
+                    lastTimesToInfect[i][j] = Math.min(infectionTimes.get(j), sortedCases.get(i).getCullTime());
+                }
+            }
+        }
+
+    }
+
+    private void sortCases(){
+        sortedCases = new ArrayList<AbstractCase>(outbreak.getCases());
+        Collections.sort(sortedCases, new CaseInfectionComparator());
+    }
+
     private double bAlpha(double alpha){
         double total = 0;
-        ArrayList<AbstractCase> copyOfCases = new ArrayList<AbstractCase>(outbreak.getCases());
-        Collections.sort(copyOfCases, new CaseInfectionComparator());
+        if(sortedCases==null){
+            sortCases();
+        }
+        if(lastTimesToInfect == null){
+            makeLastTimesToInfectMatrix();
+        }
         for(int i=1; i<outbreak.size(); i++){
+            AbstractCase infected = sortedCases.get(i);
+            int infectedIndex = outbreak.getCaseIndex(infected);
             for(int j=0; j<i; j++){
-                double endOfWindow = Math.min(infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(i))),
-                        copyOfCases.get(j).getCullTime());
+                AbstractCase possibleInfector = sortedCases.get(j);
+                int possibleInfectorIndex = outbreak.getCaseIndex(possibleInfector);
+                double endOfWindow = lastTimesToInfect[possibleInfectorIndex][infectedIndex];
+                if(DEBUG && endOfWindow==Double.NEGATIVE_INFINITY){
+                    throw new RuntimeException("Something's gone wrong with case sorting");
+                }
 
-                total += (endOfWindow -
-                        infectionTimes.get(outbreak.getCaseIndex(copyOfCases.get(j))))
-                        * outbreak.getKernalValue(copyOfCases.get(i), copyOfCases.get(j), spatialKernel, alpha);
+                total += (endOfWindow - infectionTimes.get(possibleInfectorIndex))
+                        * outbreak.getKernelValue(infected, possibleInfector, spatialKernel, alpha);
             }
         }
         return total;
@@ -207,9 +259,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double aAlpha(double alpha){
         double product = 1;
         for(int i=0; i<outbreak.size(); i++){
-            if(treeLikelihood.getInfector(i)!=null){
-                product *= outbreak.getKernalValue(outbreak.getCase(i), treeLikelihood.getInfector(i), spatialKernel,
-                        alpha);
+            AbstractCase infector = treeLikelihood.getInfector(i);
+
+            if(infector!=null){
+                // @todo delete
+                double kval = outbreak.getKernelValue(outbreak.getCase(i), infector, spatialKernel, alpha);
+                product *= outbreak.getKernelValue(outbreak.getCase(i), infector, spatialKernel, alpha);
             }
         }
         return product;
@@ -338,7 +393,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             int steps = 50;
 
             if(xo.hasAttribute(INTEGRATOR_STEPS)){
-                steps = (Integer)xo.getAttribute(INTEGRATOR_STEPS);
+                steps = Integer.parseInt((String)xo.getAttribute(INTEGRATOR_STEPS));
             }
 
             return new CaseToCaseTransmissionLikelihood(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, c2cTL.getOutbreak(),

@@ -164,6 +164,10 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         // Add switching rates to matrix
         if (!IGNORE_RATES && numBaseModel > 1) {
             double[] swRates = switchingRates.getParameterValues();
+            double totalRate = 0.0;
+            for (double rate : swRates) {
+                totalRate += rate;
+            }
             int sw = 0;
             for (int g = 0; g < numBaseModel; ++g) {
                 for (int h = 0; h < numBaseModel; ++h) { // from g -> h
@@ -171,7 +175,8 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                     if (valid) {
                         double rate = swRates[sw];
                         if (geometricRates) {
-                            rate *= getModelRateScalar(numBaseModel - h - 1); // TODO Why not: "/ numBaseModel" ??
+                            rate *= getModelRateScalar(numBaseModel - h - 1) /// numBaseModel; // TODO Why not: "/ numBaseModel" ??
+                            / totalRate;
                         }
                         for (int i = 0; i < baseStateCount; ++i) {
                             matrix[g * baseStateCount + i][h * baseStateCount + i] = rate;

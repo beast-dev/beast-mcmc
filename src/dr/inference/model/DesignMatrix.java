@@ -1,5 +1,6 @@
 package dr.inference.model;
 
+import dr.stats.DiscreteStatistics;
 import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -14,6 +15,7 @@ public class DesignMatrix extends MatrixParameter {
     public static final String ROW_DIMENSION = "rowDimension";
     public static final String COL_DIMENSION = "colDimension";
     public static final String CHECK_IDENTIFABILITY = "checkIdentifiability";
+    public static final String STANDARDIZE = "standardize";
 
     public DesignMatrix(String name) {
         super(name);
@@ -31,6 +33,14 @@ public class DesignMatrix extends MatrixParameter {
         throw new RuntimeException("Not implemented yet!");
     }
 
+    public static void standardize(double[] vector) {
+        double mean = DiscreteStatistics.mean(vector);
+        double stDev = Math.sqrt(DiscreteStatistics.variance(vector, mean));
+        for (int i = 0; i < vector.length; ++i) {
+            vector[i] = (vector[i] - mean) / stDev;
+        }
+    }
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
 
@@ -42,16 +52,16 @@ public class DesignMatrix extends MatrixParameter {
 
             DesignMatrix designMatrix = new DesignMatrix(DESIGN_MATRIX);
             boolean addIntercept = xo.getAttribute(ADD_INTERCEPT, false);
-
+            boolean standardize = xo.getAttribute(STANDARDIZE, false);
 
             int dim = 0;
 
             if (xo.hasAttribute(FORM)) {
                 String type = xo.getStringAttribute(FORM);
                 if (type.compareTo("J") == 0) {
-                   int rowDim = xo.getAttribute(ROW_DIMENSION,1);
-                    int colDim = xo.getAttribute(COL_DIMENSION,1);
-                    for(int i=0; i<colDim; i++) {
+                    int rowDim = xo.getAttribute(ROW_DIMENSION, 1);
+                    int colDim = xo.getAttribute(COL_DIMENSION, 1);
+                    for (int i = 0; i < colDim; i++) {
                         Parameter parameter = new Parameter.Default(rowDim);
                         designMatrix.addParameter(parameter);
                     }
@@ -59,14 +69,28 @@ public class DesignMatrix extends MatrixParameter {
                     throw new XMLParseException("Unknown designMatrix form.");
             } else {
 
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                Parameter parameter = (Parameter) xo.getChild(i);
-                designMatrix.addParameter(parameter);
-                if (i == 0)
-                    dim = parameter.getDimension();
-                else if (dim != parameter.getDimension())
-                    throw new XMLParseException("All parameters must have the same dimension to construct a rectangular design matrix");
+                for (int i = 0; i < xo.getChildCount(); i++) {
+                    Parameter parameter = (Parameter) xo.getChild(i);
+                    designMatrix.addParameter(parameter);
+                    if (i == 0)
+                        dim = parameter.getDimension();
+                    else if (dim != parameter.getDimension())
+                        throw new XMLParseException("All parameters must have the same dimension to construct a rectangular design matrix");
+                }
             }
+
+            if (standardize) {
+                // Standardize all covariates except intercept
+                for (int j = 0; j < designMatrix.getColumnDimension(); ++j) {
+                    Parameter columnParameter = designMatrix.getParameter(j);
+                    double[] column = columnParameter.getParameterValues();
+                    standardize(column);
+                    for (int i = 0; i < column.length; ++i) {
+                        columnParameter.setParameterValueQuietly(i, column[i]);
+                    }
+                    columnParameter.setParameterValueNotifyChangedAll(0, columnParameter.getParameterValue(0));
+                }
+//                System.exit(-1);
             }
 
             if (addIntercept) {
@@ -94,9 +118,10 @@ public class DesignMatrix extends MatrixParameter {
                 AttributeRule.newBooleanRule(ADD_INTERCEPT, true),
                 AttributeRule.newBooleanRule(CHECK_IDENTIFABILITY, true),
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE), // TODO or have the following                            
-                AttributeRule.newStringRule(FORM,true),     // TODO Should have to include both FORM and DIMENSION at the same time
-                AttributeRule.newIntegerRule(COL_DIMENSION,true),
-                AttributeRule.newIntegerRule(ROW_DIMENSION,true),
+                AttributeRule.newStringRule(FORM, true),     // TODO Should have to include both FORM and DIMENSION at the same time
+                AttributeRule.newIntegerRule(COL_DIMENSION, true),
+                AttributeRule.newIntegerRule(ROW_DIMENSION, true),
+                AttributeRule.newBooleanRule(STANDARDIZE, true),
         };
 
         public Class getReturnType() {

@@ -54,6 +54,8 @@ public class RegressionJNIWrapper {
 
     public native int getBetaSize(int instance);
 
+    public native double getHessian(int instance, int index1, int index2);
+
     public native void setBeta(int instance, int index, double value);
 
     public native void setBeta(int instance, double[] values);
@@ -71,124 +73,6 @@ public class RegressionJNIWrapper {
     public native void setPriorType(int instance, int type);
 
     public native void makeDirty(int instance);
-
-//    public native int createInstance(
-//            int tipCount,
-//            int partialsBufferCount,
-//            int compactBufferCount,
-//            int stateCount,
-//            int patternCount,
-//            int eigenBufferCount,
-//            int matrixBufferCount,
-//            int categoryCount,
-//            int scaleBufferCount,
-//          less t  final int[] resourceList,
-//            int resourceCount,
-//            long preferenceFlags,
-//            long requirementFlags,
-//            InstanceDetails returnInfo);
-//
-//    public native int finalize(int instance);
-//
-//    public native int setPatternWeights(int instance,
-//                                        final double[] patternWeights);
-//
-//    public native int setTipStates(int instance, int tipIndex, final int[] inStates);
-//
-//    public native int getTipStates(int instance, int tipIndex, final int[] inStates);
-//
-//    public native int setTipPartials(int instance, int tipIndex, final double[] inPartials);
-//
-//    public native int setPartials(int instance, int bufferIndex, final double[] inPartials);
-//
-//    public native int getPartials(int instance, int bufferIndex, int scaleIndex,
-//                                  final double[] outPartials);
-//
-//
-//    public native int setEigenDecomposition(int instance,
-//                                            int eigenIndex,
-//                                            final double[] eigenVectors,
-//                                            final double[] inverseEigenValues,
-//                                            final double[] eigenValues);
-//
-//    public native int setStateFrequencies(int instance,
-//                                          int stateFrequenciesIndex,
-//                                          final double[] stateFrequencies);
-//
-//    public native int setCategoryWeights(int instance,
-//                                         int categoryWeightsIndex,
-//                                         final double[] categoryWeights);
-//
-//    public native int setCategoryRates(int instance,
-//                                       final double[] inCategoryRates);
-//
-//    public native int setTransitionMatrix(int instance, int matrixIndex, final double[] inMatrix, double paddedValue);
-//
-//    public native int getTransitionMatrix(int instance, int matrixIndex, final double[] outMatrix);
-//
-//	public native int convolveTransitionMatrices(int instance,
-//			                                     final int[] firstIndices,
-//			                                     final int[] secondIndices,
-//			                                     final int[] resultIndices,
-//			                                     int matrixCount);
-//
-//    public native int updateTransitionMatrices(int instance, int eigenIndex,
-//                                               final int[] probabilityIndices,
-//                                               final int[] firstDerivativeIndices,
-//                                               final int[] secondDervativeIndices,
-//                                               final double[] edgeLengths,
-//                                               int count);
-//
-//    public native int updatePartials(final int instance,
-//                                     final int[] operations,
-//                                     int operationCount,
-//                                     int cumulativeScalingIndex);
-//
-//    public native int waitForPartials(final int instance,
-//                                      final int[] destinationPartials,
-//                                      int destinationPartialsCount);
-//
-//    public native int accumulateScaleFactors(final int instance,
-//                                             final int[] scaleIndices,
-//                                             final int count,
-//                                             final int cumulativeScalingIndex);
-//
-//    public native int removeScaleFactors(final int instance,
-//                                         final int[] scaleIndices,
-//                                         final int count,
-//                                         final int cumulativeScalingIndex);
-//
-//    public native int resetScaleFactors(final int instance,
-//                                        final int cumulativeScalingIndex);
-//
-//    public native int copyScaleFactors(final int instance,
-//                                       final int destScalingIndex,
-//                                       final int srcScalingIndex);
-//
-//    public native int calculateRootLogLikelihoods(int instance,
-//                                                  final int[] bufferIndices,
-//                                                  final int[] categoryWeightsIndices,
-//                                                  final int[] stateFrequenciesIndices,
-//                                                  final int[] cumulativeScaleIndices,
-//                                                  int count,
-//                                                  final double[] outSumLogLikelihood);
-//
-//    public native int calculateEdgeLogLikelihoods(int instance,
-//                                                  final int[] parentBufferIndices,
-//                                                  final int[] childBufferIndices,
-//                                                  final int[] probabilityIndices,
-//                                                  final int[] firstDerivativeIndices,
-//                                                  final int[] secondDerivativeIndices,
-//                                                  final int[] categoryWeightsIndices,
-//                                                  final int[] stateFrequenciesIndices,
-//                                                  final int[] scalingFactorsIndices,
-//                                                  int count,
-//                                                  final double[] outSumLogLikelihood,
-//                                                  final double[] outSumFirstDerivative,
-//                                                  final double[] outSumSecondDerivative);
-//
-//    public native int getSiteLogLikelihoods(final int instance,
-//                                            final double[] outLogLikelihoods);
 
     /* Library loading routines */
 

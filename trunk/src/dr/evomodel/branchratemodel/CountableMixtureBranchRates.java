@@ -86,6 +86,10 @@ public class CountableMixtureBranchRates extends AbstractBranchRateModel impleme
         return logLike;
     }
 
+    void test() {
+        getTrait(null, null);
+    }
+
     public LogColumn[] getColumns() {
         LogColumn[] columns = new LogColumn[ratesParameter.getDimension()];
         for (int i = 0; i < ratesParameter.getDimension(); ++i) {

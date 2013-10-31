@@ -25,6 +25,7 @@
 
 package dr.evomodel.branchratemodel;
 
+import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
@@ -41,6 +42,7 @@ import java.util.Set;
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
+ * @author Andrew Rambaut
  */
 public interface CountableBranchCategoryProvider {
 
@@ -102,7 +104,39 @@ public interface CountableBranchCategoryProvider {
                 }
             }
         }
+    }
 
+    public class MarkovJumpBranchCategoryModel extends BranchCategoryModel {
+
+        public MarkovJumpBranchCategoryModel(MarkovJumpsTraitProvider markovJumpTrait, Parameter parameter) {
+            super(markovJumpTrait.getTreeModel(), parameter);
+        }
+
+        @Override
+        public int getBranchCategory(final Tree tree, final NodeRef node) {
+            synchronized (this) {
+                if (traitsChanged) {
+                    updateTraitRateCategories();
+                    traitsChanged = false;
+                }
+            }
+            return super.getBranchCategory(tree, node);
+        }
+
+        private void updateTraitRateCategories() {
+
+        }
+
+        public void handleModelChangedEvent(Model model, Object object, int index) {
+            if (model == treeModel) {
+                traitsChanged = true;
+                fireModelChanged();
+            } else {
+                throw new IllegalArgumentException("Unknown model component!");
+            }
+        }
+
+        private boolean traitsChanged = true;
     }
 
     public class CladeBranchCategoryModel extends BranchCategoryModel {
@@ -156,7 +190,6 @@ public interface CountableBranchCategoryProvider {
                     }
                 }
             }
-
         }
 
         private boolean onAncestralPath(Tree tree, NodeRef node, Set targetSet) {
@@ -237,7 +270,6 @@ public interface CountableBranchCategoryProvider {
             public int getRateCategory() {
                 return rateCategory;
             }
-
         }
 
         private boolean cladesChanged = false;

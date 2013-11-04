@@ -8,7 +8,7 @@
         <taxon id="LINEAGE3"/>
     </taxa>
 
-    <alignment id="alignment" dataType="nucleotide">
+    <alignment id="alignment" dataType="binary">
     <sequence>
         <taxon idref="LINEAGE1"/>
         0001110000
@@ -22,8 +22,8 @@
         1110011010
     </sequence>
     </alignment>
-    <!--
-      <matrixParameter id="MIXTURE">
+
+      <matrixParameter id="mixtureMatrix" transpose="true">
           <parameter id="sample.1"
                      value="0.2    0.2    0.8"/>
           <parameter id="sample.2"
@@ -35,8 +35,8 @@
           <parameter id="sample.5"
                      value="0.3    0.6   0.1"/>
       </matrixParameter>
-      -->
-      <matrixParameter id="REFERENCE">
+
+      <matrixParameter id="REFERENCE" transpose="true">
           <parameter id="SNP1.ref.counts"
                      value="12    37    46    35    43"/>
           <parameter id="SNP2.ref.counts"
@@ -59,7 +59,7 @@
                      value="49    50    49    50    50"/>
       </matrixParameter>
 
-      <matrixParameter id="NON_REFERENCE">
+      <matrixParameter id="NON_REFERENCE" transpose="true">
           <parameter id="SNP1.non.counts"
                      value="38    13    4    15    7"/>
           <parameter id="SNP2.non.counts"
@@ -82,28 +82,34 @@
                      value="1    0    1    0    0"/>
       </matrixParameter>
 
+      <lineageSNPS id="lineageSites">
+         <alignment idref="alignment"/>
+      </lineageSNPS>
 
-      <LineageModelLikelihood id="lineageModelLike">
-          <data>
+
+
+      <lineageModel id="lineageModelLike">
+          <parameter id="errorRate" value="0.01"/>
+          <lineageSNPS idref="lineageSites"/>
+          <ref>
               <matrixParameter idref="REFERENCE"/>
+          </ref>
+          <non>
               <matrixParameter idref="NON_REFERENCE"/>
-          </data>
-          <errorRate>
-              <parameter id="errorRate" value="0.01"/>
-          </errorRate>
-      </LineageModelLikelihood>
+          </non>
+          <mixture><matrixParameter idref="mixtureMatrix"/> </mixture>
+      </lineageModel>
 
       <operators id="operators">
           <deltaMixOperator delta=".5" weight="1">
               <parameter idref="mixtureMatrix"/>
           </deltaMixOperator>
-
       </operators>
 
       <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
           <posterior id="posterior">
               <likelihood id="likelihood">
-                  <LineageModelLikelihood idref="lineageModelLike"/>
+                  <lineageModel idref="lineageModelLike"/>
               </likelihood>
               <prior id="prior">
                   <uniformPrior id="prior.uniform" lower="0" upper="1">
@@ -141,10 +147,6 @@
               </column>
           </log>
       </mcmc>
-      <traceAnalysis fileName="testMVPolyaLike.log" stdError="true"/>
-
-      <report>
-          True multinomial frequencies 0.01 0.29 0.7
-      </report>
+      <traceAnalysis fileName="lineageTest.log" stdError="true"/>
 
   </beast>

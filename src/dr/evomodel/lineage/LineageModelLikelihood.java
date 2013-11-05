@@ -103,9 +103,12 @@ public class LineageModelLikelihood extends AbstractModelLikelihood {
                 p = 0;
                 for (k =0; k < numLineages; k++)
                 {
-                    p += mixtureMatrix.getParameterValue(i,k)*(1-patterns.getState(k, j));
+                    p += mixtureMatrix.getParameterValue(k,i)*(1-patterns.getState(k, j));
                 }
                 p = p - 2*errorRate.getParameterValue(0)*p +errorRate.getParameterValue(0);
+                if(p==0 || p==1){
+                    System.err.println("P==0???");
+                }
                 logLike += refData.getParameterValue(i,j)*Math.log(p) + nonData.getParameterValue(i,j)*Math.log(1-p);
             }
         }

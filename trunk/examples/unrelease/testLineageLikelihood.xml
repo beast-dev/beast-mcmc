@@ -106,7 +106,7 @@
           </deltaMixOperator>
       </operators>
 
-      <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+     <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
           <posterior id="posterior">
               <likelihood id="likelihood">
                   <lineageModel idref="lineageModelLike"/>

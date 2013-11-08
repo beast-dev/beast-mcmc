@@ -111,9 +111,9 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             mc.setCurrentLength(cl);
             mc.runChain(chainLength, false);
 
-            // AR - I have commented this out. Was it being used for debugging or did it have
-            // actual usefulness?
-            // (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            if (SHOW_OPERATOR_ANALYSIS) {
+            	(new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
+            }
             ((CombinedOperatorSchedule) schedule).reset();
         }
     }
@@ -302,7 +302,11 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     }*/
 
     private void reportIteration(double pathParameter, long chainLength, long burnin, long totalSteps, long steps) {
-        System.out.println("Attempting theta ("+steps+"/" + (totalSteps+1) +") = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
+    	if (scheme == PathScheme.FIXED) {
+    		System.out.println("Attempting fixed theta ("+steps+"/" + (totalSteps) +") = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
+    	} else {
+    		System.out.println("Attempting theta ("+steps+"/" + (totalSteps+1) +") = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
+    	}
     }
 
     public void run() {
@@ -501,7 +505,11 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                         }
                         mcmc.getMarkovChain().runChain(prerunLength, false);
                     }
-                    os.addOperatorSchedule(mcmc.getOperatorSchedule());
+                    if (xo.getChild(OperatorSchedule.class) != null) {
+                    	os.addOperatorSchedule((OperatorSchedule)xo.getChild(OperatorSchedule.class));
+                    } else {
+                    	os.addOperatorSchedule(mcmc.getOperatorSchedule());
+                    }
                 }
             }
 
@@ -542,7 +550,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                     "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " +
                     "\n          phylogenetic uncertainty. Mol. Biol. Evol. 29(9):2157-2167." +
                     "\n    and " +
-                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2013" +
+                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2013." +
                     "\n    Accurate model selection of relaxed molecular clocks in Bayesian phylogenetics. Mol. Biol. Evol. 30(2):239-243.\n");
             return mle;
         }
@@ -664,4 +672,6 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
     public static final String PRERUN = "prerun";
+    
+    public static final boolean SHOW_OPERATOR_ANALYSIS = false;
 }

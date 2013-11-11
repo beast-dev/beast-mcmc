@@ -74,8 +74,8 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
             matrix = formXtXInverse(inMatrix);
         }
 
-        System.err.println("Matrix:");
-        System.err.println(new Matrix(matrix));
+//        System.err.println("Matrix:");
+//        System.err.println(new Matrix(matrix));
 
         try {
             cholesky = (new CholeskyDecomposition(matrix)).getL();
@@ -83,9 +83,9 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
             throw new RuntimeException("Unable to decompose matrix in mvnOperator");
         }
 
-        System.err.println("Cholesky:");
-        System.err.println(new Matrix(cholesky));
-        System.exit(-1);
+//        System.err.println("Cholesky:");
+//        System.err.println(new Matrix(cholesky));
+//        System.exit(-1);
     }
 
     public MultivariateNormalOperator(Parameter parameter, double scaleFactor,
@@ -108,8 +108,8 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
             }
         }
 
-        System.err.println("XtX:");
-        System.err.println(new Matrix(matrix));
+//        System.err.println("XtX:");
+//        System.err.println(new Matrix(matrix));
 
         // Take inverse
         matrix = new SymmetricMatrix(matrix).inverse().toComponents();

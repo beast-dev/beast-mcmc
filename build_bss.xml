@@ -106,6 +106,7 @@
          <include name="dr/inference/loggers/**" />
           <include name="dr/inference/distribution/**" />
          <include name="dr/evomodel/branchratemodel/**" />
+         <include name="dr/evomodel/substmodel/**" />
          <include name="dr/app/beagle/evomodel/substmodel/**" />
          <include name="dr/app/beagle/evomodel/branchmodel/**" />
          <include name="dr/inference/parallel/**" />
@@ -149,7 +150,7 @@
 
     <property name="version" value="1.0" />
     <property name="release_dir" value="release_pibuss" />
-    <property name="name" value="πBUSS" />
+    <property name="name" value="piBUSS" />
 
     <property name="common_dir" value="${release_dir}/common" />
 

@@ -17,7 +17,7 @@ if [ -z "$PIBUSS" ]; then
 
 	# make it fully qualified
 	saveddir=`pwd`
-	PIBUSS0=`dirname "$PRG"`
+	PIBUSS0=`dirname "$PRG"`/..
 	PIBUSS=`cd "$PIBUSS0" && pwd`
 	cd "$saveddir"
 fi

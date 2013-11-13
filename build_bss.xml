@@ -203,6 +203,8 @@
             <fileset dir="${Linux_dir}/scripts"/>
         </copy>
 
+        <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
+
         <copy file="${Linux_dir}/icons/pibuss.png" todir="${Linux_package_dir}/images"/>
         <copy file="${dist}/buss.jar" todir="${Linux_package_dir}/lib"/>
         <copy todir="${Linux_package_dir}/lib">

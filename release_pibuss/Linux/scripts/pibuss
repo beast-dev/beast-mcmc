@@ -23,5 +23,5 @@ if [ -z "$PIBUSS" ]; then
 fi
 
 PIBUSS_LIB=$PIBUSS/lib
-java -Xms64m -Xmx1024m -jar $PIBUSS_LIB/buss.jar $*
+java -Xms64m -Xmx1024m -Djava.library.path="$PIBUSS_LIB:/usr/local/lib" -jar $PIBUSS_LIB/buss.jar $*
 

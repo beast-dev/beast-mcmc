@@ -25,6 +25,7 @@ public class BEASTGen {
             root = constructDataModel(inputFileName, guesser);
         } catch (Importer.ImportException ie) {
             System.err.println("Error importing file: " + ie.getMessage());
+            System.exit(1);
         }
 
         root.putAll(argumentMap);

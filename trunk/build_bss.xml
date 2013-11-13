@@ -43,6 +43,7 @@
             <include name="dr/inference/loggers/**/*.class" />
             <include name="dr/inference/distribution/**/*.class" />
             <include name="dr/evomodel/branchratemodel/**/*.class" />
+             <include name="dr/evomodel/substmodel/**/*.class" />
             <include name="dr/app/beagle/evomodel/substmodel/**/*.class" />
             <include name="dr/app/beagle/evomodel/branchmodel/**/*.class" />
             <include name="dr/inference/parallel/**/*.class**" />

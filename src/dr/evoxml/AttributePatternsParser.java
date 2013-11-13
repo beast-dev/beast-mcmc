@@ -1,7 +1,7 @@
 /*
  * SitePatternsParser.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut & Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -44,6 +44,8 @@ import java.util.logging.Logger;
 public class AttributePatternsParser extends AbstractXMLObjectParser {
 
     public static final String ATTRIBUTE = "attribute";
+    public static final String SECONDARY_ATTRIBUTE = "secondary";
+
     public static final String PATTERNS = "Patterns";
     public static final String ATTRIBUTE_PATTERNS = ATTRIBUTE + PATTERNS;
 
@@ -52,6 +54,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String attributeName = xo.getStringAttribute(ATTRIBUTE);
+        String secondaryAttributeName = xo.getStringAttribute(SECONDARY_ATTRIBUTE);
         TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
         DataType dataType = DataTypeUtils.getDataType(xo);
 
@@ -67,17 +70,35 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
 
         for (int i = 0; i < taxa.getTaxonCount(); i++) {
             Taxon taxon = taxa.getTaxon(i);
-            Object value = taxon.getAttribute(attributeName);
 
-            if (value != null) {
-                int state = dataType.getState(value.toString());
-                if (state < 0) {
-                    throw new XMLParseException("State for attribute, " + attributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + value.toString());
+            if (secondaryAttributeName == null || secondaryAttributeName.isEmpty()) {
+                Object value = taxon.getAttribute(attributeName);
+
+                if (value != null) {
+                    int state = dataType.getState(value.toString());
+                    if (state < 0) {
+                        throw new XMLParseException("State for attribute, " + attributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + value.toString());
+                    }
+                    pattern[i] = state;
+                    attributeFound = true;
+                } else {
+                    pattern[i] = dataType.getUnknownState();
                 }
-                pattern[i] = state;
-                attributeFound = true;
             } else {
-                pattern[i] = dataType.getUnknownState();
+                Object value1 = taxon.getAttribute(attributeName);
+                Object value2 = taxon.getAttribute(secondaryAttributeName);
+
+                if (value1 != null && value2 != null) {
+                    String code = value1.toString() + CompositeDataTypeParser.COMPOSITE_STATE_SEPARATOR + value2.toString();
+                    int state = dataType.getState(code);
+                    if (state < 0) {
+                        throw new XMLParseException("State for attributes, " + attributeName + " & " + secondaryAttributeName + ", in taxon, " + taxon.getId() + ", is unknown: " + code);
+                    }
+                    pattern[i] = state;
+                    attributeFound = true;
+                } else {
+                    pattern[i] = dataType.getUnknownState();
+                }
             }
         }
 
@@ -111,6 +132,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
                 new ElementRule(DataType.class)
                 ),
             AttributeRule.newStringRule(ATTRIBUTE),
+            AttributeRule.newStringRule(SECONDARY_ATTRIBUTE, true),
             new ElementRule(TaxonList.class, "The taxon set")
     };
 

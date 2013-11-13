@@ -1,7 +1,7 @@
 /*
  * GeneralDataTypeParser.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut & Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,6 +46,9 @@ public class CompositeDataTypeParser extends AbstractXMLObjectParser {
      */
     public static final String COMPOSITE_DATA_TYPE = "compositeDataType";
 
+    public static final String COMPOSITE_STATE_SEPARATOR = "-";
+
+
     public String getParserName() { return COMPOSITE_DATA_TYPE; }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -75,7 +78,7 @@ public class CompositeDataTypeParser extends AbstractXMLObjectParser {
             String code1  = dt1.getCode(state1);
             for (int state2 = 0; state2 < dt2.getStateCount(); state2++) {
                 String code2  = dt2.getCode(state2);
-                jointStates.add(code1 + "-" + code2);
+                jointStates.add(code1 + COMPOSITE_STATE_SEPARATOR + code2);
             }
         }
 

@@ -395,7 +395,9 @@ public class DataModelImporter {
     private Map createTaxon(Taxon taxon) {
         Map t = new HashMap();
         t.put("id", taxon.getId());
-        t.put("date", Double.toString(taxon.getDate().getTimeValue()));
+        if (taxon.getDate() != null) {
+            t.put("date", Double.toString(taxon.getDate().getTimeValue()));
+        }
         return t;
     }
 

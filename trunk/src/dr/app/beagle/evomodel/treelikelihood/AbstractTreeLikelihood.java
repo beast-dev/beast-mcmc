@@ -198,7 +198,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         }
         if (!likelihoodKnown) {
             if (COUNT_TOTAL_OPERATIONS)
-                totalcalculateLikelihoodCount++;
+                totalCalculateLikelihoodCount++;
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
@@ -225,7 +225,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
              rtnValue += " total operations = " + totalOperationCount +
                          " matrix updates = " + totalMatrixUpdateCount + " model changes = " + totalModelChangedCount +
                          " make dirties = " + totalMakeDirtyCount +
-                         " calculate likelihoods = " + totalcalculateLikelihoodCount +
+                         " calculate likelihoods = " + totalCalculateLikelihoodCount +
                          " get likelihoods = " + totalGetLogLikelihoodCount +
                          " all rate updates = " + totalRateUpdateAllCount +
                          " partial rate updates = " + totalRateUpdateSingleCount;
@@ -293,7 +293,7 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     protected int totalGetLogLikelihoodCount = 0;
     protected int totalModelChangedCount = 0;
     protected int totalMakeDirtyCount = 0;
-    protected int totalcalculateLikelihoodCount = 0;
+    protected int totalCalculateLikelihoodCount = 0;
     protected int totalRateUpdateAllCount = 0;
     protected int totalRateUpdateSingleCount = 0;
 

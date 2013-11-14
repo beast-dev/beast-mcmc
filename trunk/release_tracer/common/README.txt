@@ -1,7 +1,7 @@
-                     Tracer v1.5 2003-2009
+                     Tracer v1.6 2003-2013
         		  MCMC Trace Analysis Package
                               by
-             Andrew Rambaut and Alexei J. Drummond
+        Andrew Rambaut, Alexei J. Drummond & Marc Suchard
 
               Institute of Evolutionary Biology
                     University of Edinburgh
@@ -11,10 +11,13 @@
                      University of Auckland
                     alexei@cs.auckland.ac.nz
 
+               David Geffen School of Medicine
+            University of California, Los Angeles
+                      msuchard@ucla.edu
 
 
 UNIX / Mac OS X / Linux / Windows README 
-a.rambaut@ed.ac.uk - 30 November 2009
+a.rambaut@ed.ac.uk - 19 October 2013
 
 Contents:
 1) INTRODUCTION
@@ -80,6 +83,14 @@ To export the currently displayed graphic use the "Export PDF" function in the "
 
 ___________________________________________________________________________
 5) VERSION HISTORY
+
+---Version 1.6 20 Oct 2013---
+
+* Multilocus 'Skygrid' analysis option - use this option when analysing BEAST output generated under this model.
+
+* Density plots are now drawn as kernal density estimates instead of histograms.
+
+* Traces can be designated as integer or categorical with appropriate plots and statistics given.
 
 ---Version 1.5 30 Nov 2009---
 
@@ -175,6 +186,7 @@ ___________________________________________________________________________
 
 <a.rambaut@ed.ac.uk>
 <alexei@cs.auckland.ac.nz>
+<msuchard@ucla.edu>
 
 We would encourage you to join the BEAST users' mailing-list to get
 notifications of updates and bugs. At a later date this may be expanded to
@@ -200,4 +212,3 @@ of Tracer:
 	Joseph Heled
 	Oliver Pybus
 	Benjamin Redelings
-	Marc Suchard

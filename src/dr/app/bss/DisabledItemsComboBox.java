@@ -10,10 +10,11 @@ import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 @SuppressWarnings("serial")
-public class DisabledItemsComboBox extends JComboBox {
+public class DisabledItemsComboBox extends JComboBox<Object> {
 
 	private Set<Object> disabledItems = new HashSet<Object>();
 
+	@SuppressWarnings("unchecked")
 	public DisabledItemsComboBox() {
 		super();
 		super.setRenderer(new DisabledItemsRenderer());
@@ -62,7 +63,7 @@ public class DisabledItemsComboBox extends JComboBox {
 	private class DisabledItemsRenderer extends BasicComboBoxRenderer {
 
 		@Override
-		public Component getListCellRendererComponent(JList list, Object value,
+		public Component getListCellRendererComponent(@SuppressWarnings("rawtypes") JList list, Object value,
 				int index, boolean isSelected, boolean cellHasFocus) {
 
 			if (isSelected) {

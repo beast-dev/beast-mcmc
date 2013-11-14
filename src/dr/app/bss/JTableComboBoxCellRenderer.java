@@ -10,7 +10,7 @@ import javax.swing.table.TableCellRenderer;
 
 
 @SuppressWarnings("serial")
-public class JTableComboBoxCellRenderer extends JComboBox implements
+public class JTableComboBoxCellRenderer extends JComboBox<Object> implements
 		TableCellRenderer {
 
 	private int columnIndex;
@@ -18,7 +18,7 @@ public class JTableComboBoxCellRenderer extends JComboBox implements
 	private DefaultListCellRenderer comboBoxRenderer = new DefaultListCellRenderer() {
 
 		@Override
-		public Component getListCellRendererComponent(JList list, Object value,
+		public Component getListCellRendererComponent(JList<?> list, Object value,
 				int index, boolean isSelected, boolean cellHasFocus) {
 
 			super.getListCellRendererComponent(list, value, index, isSelected,

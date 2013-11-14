@@ -37,7 +37,7 @@ public class SiteRateModelEditor {
 	
 	// Settings	
 	private OptionsPanel optionPanel;
-	private JComboBox siteCombo;
+	private JComboBox<String> siteCombo;
 	private RealNumberField[] siteParameterFields;
     private JSpinner gammaCategoriesSpinner;
 	
@@ -58,7 +58,7 @@ public class SiteRateModelEditor {
 		window = new JDialog(owner, "Setup site rate model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 
-		siteCombo = new JComboBox();
+		siteCombo = new JComboBox<String>();
 		siteCombo.setOpaque(false);
 
 		for (String siteModel : PartitionData.siteRateModels) {

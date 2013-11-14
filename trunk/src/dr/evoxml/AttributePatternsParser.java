@@ -54,7 +54,7 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String attributeName = xo.getStringAttribute(ATTRIBUTE);
-        String secondaryAttributeName = xo.getStringAttribute(SECONDARY_ATTRIBUTE);
+        String secondaryAttributeName = xo.getAttribute(SECONDARY_ATTRIBUTE, (String)null);
         TaxonList taxa = (TaxonList)xo.getChild(TaxonList.class);
         DataType dataType = DataTypeUtils.getDataType(xo);
 

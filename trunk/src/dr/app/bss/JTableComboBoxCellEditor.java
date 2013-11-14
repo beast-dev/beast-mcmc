@@ -13,25 +13,26 @@ public class JTableComboBoxCellEditor extends DefaultCellEditor {
 	private PartitionDataList dataList = null;
 	
 	public JTableComboBoxCellEditor(PartitionDataList dataList) {
-		super(new JComboBox());
+		super(new JComboBox<Object>());
 		this.dataList = dataList;
 	}// END: Constructor
 	
+	@SuppressWarnings("unchecked")
 	public Component getTableCellEditorComponent(JTable table,
 			Object value, boolean isSelected, int row, int column) {
 
-		((JComboBox) editorComponent).removeAllItems();
+		((JComboBox<?>) editorComponent).removeAllItems();
 
 		if (column == PartitionTableModel.DATA_INDEX) {
 
 			for (TreesTableRecord record : dataList.recordsList) {
-				((JComboBox) editorComponent).addItem(record);
+				((JComboBox<TreesTableRecord>) editorComponent).addItem(record);
 			}// END: fill loop
 			
 		} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
 
 			for (String dataType : PartitionData.dataTypes) {
-				((JComboBox) editorComponent).addItem(dataType);
+				((JComboBox<String>) editorComponent).addItem(dataType);
 			}// END: fill loop
 
 		} else {
@@ -40,7 +41,7 @@ public class JTableComboBoxCellEditor extends DefaultCellEditor {
 
 		}// END: column check
 
-		((JComboBox) editorComponent).setSelectedItem(value);
+		((JComboBox<?>) editorComponent).setSelectedItem(value);
 		delegate.setValue(value);
 
 		return editorComponent;

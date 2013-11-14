@@ -42,7 +42,7 @@ import java.awt.event.ItemListener;
  * @author Filip Bielejec
  * @version $Id$
  */
-@SuppressWarnings("serial")
+@SuppressWarnings({ "rawtypes", "serial" })
 public class SimulationPanel extends JPanel implements Exportable {
 
     private MainFrame frame;
@@ -61,10 +61,11 @@ public class SimulationPanel extends JPanel implements Exportable {
     private JCheckBox useParallel;
 
     //Combo boxes
-    private JComboBox outputFormat;
-    private ComboBoxModel outputFormatModel;
+    private JComboBox<?> outputFormat;
+	private ComboBoxModel outputFormatModel;
     
-    public SimulationPanel(final MainFrame frame,
+    @SuppressWarnings({ "unchecked" })
+	public SimulationPanel(final MainFrame frame,
                            final PartitionDataList dataList) {
 
         this.frame = frame;

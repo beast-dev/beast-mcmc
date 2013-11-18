@@ -59,7 +59,7 @@ public class GY94CodonModel extends AbstractCodonModel {
                           Parameter kappaParameter,
                           FrequencyModel freqModel, EigenSystem eigenSystem) {
 
-        super(codonDataType, freqModel, eigenSystem);
+        super("GY94", codonDataType, freqModel, eigenSystem);
 
         this.omegaParameter = omegaParameter;
         addVariable(omegaParameter);

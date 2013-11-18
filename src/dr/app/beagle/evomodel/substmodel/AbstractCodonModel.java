@@ -53,8 +53,19 @@ public abstract class AbstractCodonModel extends BaseSubstitutionModel {
 //        this(codonDataType, omegaParameter, kappaParameter, freqModel,
 //                new DefaultEigenSystem(codonDataType.getStateCount()));
 //    }
+    
+    public AbstractCodonModel(String name, Codons codonDataType, FrequencyModel freqModel, EigenSystem eigenSystem) {
+    	super(name, codonDataType, freqModel, eigenSystem);
+    	
+    	this.codonDataType = codonDataType;
+        this.geneticCode = codonDataType.getGeneticCode();
 
-    public AbstractCodonModel(Codons codonDataType,
+        constructRateMap();
+
+        updateMatrix = true;
+    }
+
+    /*public AbstractCodonModel(Codons codonDataType,
                               FrequencyModel freqModel, EigenSystem eigenSystem) {
         super("GY94", codonDataType, freqModel, eigenSystem);
 
@@ -64,7 +75,7 @@ public abstract class AbstractCodonModel extends BaseSubstitutionModel {
         constructRateMap();
 
         updateMatrix = true;
-    }
+    }*/
 
     protected void frequenciesChanged() {
     }

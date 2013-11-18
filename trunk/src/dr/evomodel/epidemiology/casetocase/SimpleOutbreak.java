@@ -16,8 +16,14 @@ import dr.xml.*;
 import java.util.ArrayList;
 
 /**
- * A basic outbreak class. No latent periods. Infectious periods have a separate, stated prior distribution for each
- * case with the same variance.
+ * This version has a separate prior distribution on each infection time and they are not assumed to be drawn from
+ * the same distribution, so further infectious period parameters are not estimated. Latent periods could be handled,
+ * but only if the time of infection is independent of the time of infectiousness.
+ *
+ * @todo implement latent periods
+ *
+ * Construct the prior probability distributions on infection dates using oldMacDonald. The XML expects each to be
+ * stated up front.
  *
  * User: Matthew Hall
  * Date: 23/07/2012
@@ -26,26 +32,25 @@ import java.util.ArrayList;
 public class SimpleOutbreak extends AbstractOutbreak {
 
     public static final String SIMPLE_OUTBREAK = "simpleOutbreak";
-    private Parameter estimatedInfectionVariance;
 
-    public SimpleOutbreak(String name, Taxa taxa, Parameter estimatedInfectionVariance, boolean hasGeography,
-                          Parameter riemannSampleSize){
+    public SimpleOutbreak(String name, Taxa taxa, boolean hasGeography){
         super(name, taxa);
-        this.estimatedInfectionVariance = estimatedInfectionVariance;
         cases = new ArrayList<AbstractCase>();
         hasLatentPeriods = false;
         this.hasGeography = hasGeography;
     }
 
-    public SimpleOutbreak(String name, Taxa taxa, Parameter estimatedInfectionVariance, boolean hasGeography,
-                          Parameter riemannSampleSize, ArrayList<AbstractCase> cases){
-        this(name, taxa, estimatedInfectionVariance, hasGeography, riemannSampleSize);
+    public SimpleOutbreak(String name, Taxa taxa, boolean hasGeography,
+                          ArrayList<AbstractCase> cases){
+        this(name, taxa, hasGeography);
         this.cases.addAll(cases);
     }
 
-    private void addCase(String caseID, Date examDate, Date cullDate, Parameter oldestLesionAge, Parameter coords,
+    private void addCase(String caseID, Date examDate, Date cullDate,
+                         ParametricDistributionModel infectiousPeriodDistribution, Parameter coords,
                          Taxa associatedTaxa){
-        SimpleCase thisCase = new SimpleCase(caseID, examDate, cullDate, oldestLesionAge, coords, associatedTaxa);
+        SimpleCase thisCase = new SimpleCase(caseID, examDate, cullDate, infectiousPeriodDistribution, coords,
+                associatedTaxa);
         cases.add(thisCase);
         addModel(thisCase);
     }
@@ -130,38 +135,28 @@ public class SimpleOutbreak extends AbstractOutbreak {
     private class SimpleCase extends AbstractCase{
 
         public static final String SIMPLE_CASE = "simpleCase";
-        // this is in units of time SINCE THE EXAM DATE
-        private final Parameter estInfectionToExam;
         private final Parameter coords;
+        //this is time from infection to cull, NOT time from infection to exam
         private ParametricDistributionModel infectiousPeriodDistribution;
-        private ParametricDistributionModel storedInfectiousPeriodDistribution;
 
 
-        private SimpleCase(String name, String caseID, Date examDate, Date cullDate, Parameter estInfectionToExam,
-                          Parameter coords, Taxa associatedTaxa){
+        private SimpleCase(String name, String caseID, Date examDate, Date cullDate,
+                           ParametricDistributionModel infectiousPeriodDistribution, Parameter coords,
+                           Taxa associatedTaxa){
             super(name);
             this.caseID = caseID;
             this.examDate = examDate;
             endOfInfectiousDate = cullDate;
             this.associatedTaxa = associatedTaxa;
-            this.estInfectionToExam = estInfectionToExam;
             this.coords = coords;
-            infectiousPeriodDistribution = rebuildInfDistribution();
+            this.infectiousPeriodDistribution = infectiousPeriodDistribution;
             this.addModel(infectiousPeriodDistribution);
-            this.addVariable(estimatedInfectionVariance);
         }
 
-        private SimpleCase(String caseID, Date examDate, Date cullDate, Parameter estInfectionToExam,
-                           Parameter coords, Taxa associatedTaxa){
-            this(SIMPLE_CASE, caseID, examDate, cullDate, estInfectionToExam, coords, associatedTaxa);
-        }
-
-        private GammaDistributionModel rebuildInfDistribution(){
-            Parameter infectious_shape = new Parameter.Default
-                    (Math.pow(estInfectionToExam.getParameterValue(0),2)/estimatedInfectionVariance.getParameterValue(0));
-            Parameter infectious_scale = new Parameter.Default
-                    (estimatedInfectionVariance.getParameterValue(0)/ estInfectionToExam.getParameterValue(0));
-            return new GammaDistributionModel(infectious_shape, infectious_scale);
+        private SimpleCase(String caseID, Date examDate, Date cullDate,
+                           ParametricDistributionModel infectiousPeriodDistribution, Parameter coords,
+                           Taxa associatedTaxa){
+            this(SIMPLE_CASE, caseID, examDate, cullDate, infectiousPeriodDistribution, coords, associatedTaxa);
         }
 
         public Date getLatestPossibleInfectionDate() {
@@ -217,16 +212,15 @@ public class SimpleOutbreak extends AbstractOutbreak {
         }
 
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-            rebuildInfDistribution();
             fireModelChanged();
         }
 
         protected void storeState() {
-            storedInfectiousPeriodDistribution = rebuildInfDistribution();
+            //nothing should ever change
         }
 
         protected void restoreState() {
-            infectiousPeriodDistribution = storedInfectiousPeriodDistribution;
+            //nothing should ever change
         }
 
         protected void acceptState() {
@@ -242,8 +236,6 @@ public class SimpleOutbreak extends AbstractOutbreak {
 
         //for the outbreak
 
-        public static final String RIEMANN_SAMPLE_SIZE = "riemannSampleSize";
-        public static final String ESTIMATED_INFECTION_VARIANCE = "estimatedInfectionVariance";
         public static final String HAS_GEOGRAPHY = "hasGeography";
 
         //for the cases
@@ -251,18 +243,14 @@ public class SimpleOutbreak extends AbstractOutbreak {
         public static final String CASE_ID = "caseID";
         public static final String CULL_DAY = "cullDay";
         public static final String EXAMINATION_DAY = "examinationDay";
-        public static final String ESTIMATED_INFECTION_DATE = "estimatedInfectionDate";
+        public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "estimatedInfectionDate";
         public static final String COORDINATES = "coordinates";
-        public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
 
-        @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final Parameter d = (Parameter) xo.getElementFirstChild(ESTIMATED_INFECTION_VARIANCE);
-            final Parameter riemannSampleSize = (Parameter) xo.getElementFirstChild(RIEMANN_SAMPLE_SIZE);
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY)
                     ? (Boolean) xo.getAttribute(HAS_GEOGRAPHY) : false;
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
-            SimpleOutbreak cases = new SimpleOutbreak(null, taxa, d, hasGeography, riemannSampleSize);
+            SimpleOutbreak cases = new SimpleOutbreak(null, taxa, hasGeography);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(SimpleCase.SIMPLE_CASE)){
@@ -277,7 +265,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
             String farmID = (String) xo.getAttribute(CASE_ID);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
-            final Parameter oldestLesionAge = (Parameter) xo.getElementFirstChild(ESTIMATED_INFECTION_DATE);
+            final ParametricDistributionModel infDistribution
+                    = (ParametricDistributionModel) xo.getElementFirstChild(INFECTIOUS_PERIOD_DISTRIBUTION);
             final Parameter coords = xo.hasChildNamed(COORDINATES) ?
                     (Parameter) xo.getElementFirstChild(COORDINATES) : null;
             Taxa taxa = new Taxa();
@@ -286,7 +275,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
                     taxa.addTaxon((Taxon)xo.getChild(i));
                 }
             }
-            outbreak.addCase(farmID, examDate, cullDate, oldestLesionAge, coords, taxa);
+            outbreak.addCase(farmID, examDate, cullDate, infDistribution, coords, taxa);
         }
 
         public String getParserDescription(){
@@ -310,21 +299,14 @@ public class SimpleOutbreak extends AbstractOutbreak {
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
-                new ElementRule(ESTIMATED_INFECTION_DATE, Parameter.class, "The estimated oldest lesion date as " +
-                        "determined by investigating vets"),
-                new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
-                        " along which the infection of this case occurs that it actually does occur"),
+                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The prior " +
+                        "probability distribution of the time from infection to becoming noninfectious"),
                 new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true)
         };
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(SimpleCase.SIMPLE_CASE, caseRules, 1, Integer.MAX_VALUE),
-                new ElementRule(ESTIMATED_INFECTION_VARIANCE, Parameter.class, "The square root of the scale parameter of " +
-                        "all infectiousness periods (variances are proportional to the square of this, see Morelli" +
-                        "2012).", false),
-                new ElementRule(RIEMANN_SAMPLE_SIZE, Parameter.class, "The sample size for the Riemann numerical" +
-                        "integration method, used by all child cases.", true),
                 new ElementRule(Taxa.class),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
         };

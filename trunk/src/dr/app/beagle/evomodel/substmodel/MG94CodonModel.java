@@ -49,7 +49,7 @@ public class MG94CodonModel extends AbstractCodonModel {
                           Parameter alphaParameter,
                           Parameter betaParameter,
                           FrequencyModel freqModel, EigenSystem eigenSystem) {
-        super(codonDataType, freqModel, eigenSystem);
+        super("MG94", codonDataType, freqModel, eigenSystem);
 
         this.alphaParameter = alphaParameter;
         addVariable(alphaParameter);

@@ -262,8 +262,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             AbstractCase infector = treeLikelihood.getInfector(i);
 
             if(infector!=null){
-                // @todo delete
-                double kval = outbreak.getKernelValue(outbreak.getCase(i), infector, spatialKernel, alpha);
                 product *= outbreak.getKernelValue(outbreak.getCase(i), infector, spatialKernel, alpha);
             }
         }

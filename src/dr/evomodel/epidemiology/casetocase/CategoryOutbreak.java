@@ -4,15 +4,16 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.ProductStatistic;
 import dr.inference.model.Variable;
-import dr.math.RiemannApproximation;
+import dr.math.distributions.Distribution;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Each case will belong to an infectious category (and in future could have a latent category as well) which
@@ -51,7 +52,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         this(CATEGORY_OUTBREAK, taxa, hasGeography, cases);
     }
 
-    private void addCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel infectiousDist,
+    private void addCase(String caseID, Date examDate, Date cullDate, Distribution infectiousDist,
                          Parameter coords, Taxa associatedTaxa){
         CategoryCase thisCase = new CategoryCase(caseID, examDate, cullDate, infectiousDist, coords, associatedTaxa);
         cases.add(thisCase);
@@ -170,10 +171,10 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         public static final String CATEGORY_CASE = "categoryCase";
         private final Parameter coords;
-        private ParametricDistributionModel infectiousPeriodDistribution;
+        private Distribution infectiousPeriodDistribution;
 
-        private CategoryCase(String name, String caseID, Date examDate, Date cullDate,
-                             ParametricDistributionModel infectiousDist, Parameter coords, Taxa associatedTaxa){
+        private CategoryCase(String name, String caseID, Date examDate, Date cullDate, Distribution infectiousDist,
+                             Parameter coords, Taxa associatedTaxa){
             super(name);
             this.caseID = caseID;
             this.examDate = examDate;
@@ -181,11 +182,10 @@ public class CategoryOutbreak extends AbstractOutbreak {
             this.associatedTaxa = associatedTaxa;
             this.coords = coords;
             infectiousPeriodDistribution = infectiousDist;
-            this.addModel(infectiousPeriodDistribution);
         }
 
-        private CategoryCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel infectiousDist,
-                             Parameter coords, Taxa associatedTaxa){
+        private CategoryCase(String caseID, Date examDate, Date cullDate, Distribution infectiousDist, Parameter coords,
+                             Taxa associatedTaxa){
             this(CATEGORY_CASE, caseID, examDate, cullDate, infectiousDist, coords, associatedTaxa);
         }
 
@@ -263,7 +263,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
             return examDate;
         }
 
-        public ParametricDistributionModel getInfectiousPeriodDistribution(){
+        public Distribution getInfectiousPeriodDistribution(){
             return infectiousPeriodDistribution;
         }
     }
@@ -273,7 +273,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         //for the outbreak
 
         public static final String HAS_GEOGRAPHY = "hasGeography";
-        public static final String INFECTIOUS_PERIOD_DISTRIBUTIONS = "infectiousPeriodDistributions";
+        public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodProbability";
 
         //for the cases
 
@@ -282,30 +282,45 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String EXAMINATION_DAY = "examinationDay";
         public static final String COORDINATES = "spatialCoordinates";
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
-        public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodDistribution";
+        public static final String CATEGORY = "category";
+
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
             CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography);
+            HashMap<String, AnalyticallySolvablePosteriorFunction> map =
+                    new HashMap<String, AnalyticallySolvablePosteriorFunction>();
+            for(int i=0 ; i<xo.getChildCount(); i++){
+                Object cxo = xo.getChild(i);
+                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(INFECTIOUS_PERIOD_DISTRIBUTION)){
+                    if(((XMLObject) cxo).hasAttribute(CATEGORY)){
+                        map.put((String)((XMLObject) cxo).getAttribute(CATEGORY),
+                                (AnalyticallySolvablePosteriorFunction)((XMLObject) cxo)
+                                        .getChild(AnalyticallySolvablePosteriorFunction.class));
+                    }
+                }
+            }
+
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(CategoryCase.CATEGORY_CASE)){
-                    parseCase((XMLObject)cxo, cases);
+                    parseCase((XMLObject)cxo, cases, map);
                 }
             }
             cases.buildDistanceMatrix();
             return cases;
         }
 
-        public void parseCase(XMLObject xo, CategoryOutbreak outbreak)
+        public void parseCase(XMLObject xo, CategoryOutbreak outbreak,
+                              Map<String, AnalyticallySolvablePosteriorFunction> functionMap)
                 throws XMLParseException {
             String farmID = (String) xo.getAttribute(CASE_ID);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
-            final ParametricDistributionModel infectiousDist =
-                    (ParametricDistributionModel)xo.getElementFirstChild(INFECTIOUS_PERIOD_DISTRIBUTION);
+            final AnalyticallySolvablePosteriorFunction aspf = functionMap.get(xo.getAttribute(CATEGORY));
+            final Distribution infectiousDist = aspf.getPriorPredictiveDistribution();
             final Parameter coords = xo.hasChildNamed(COORDINATES) ?
                     (Parameter) xo.getElementFirstChild(COORDINATES) : null;
             Taxa taxa = new Taxa();
@@ -336,22 +351,21 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         private final XMLSyntaxRule[] caseRules = {
+                AttributeRule.newStringRule(CATEGORY),
                 new StringAttributeRule(CASE_ID, "The unique identifier for this farm"),
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
-                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability" +
-                        "distribution from which the infectious period of this case is drawn"),
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
                         " along which the infection of this case occurs that it actually does occur"),
                 new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true)
         };
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(ProductStatistic.class, 0,2),
+                new ElementRule(ProductStatistic.class, 0, 2),
                 new ElementRule(CategoryCase.CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTIONS, ParametricDistributionModel.class,
+                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, AnalyticallySolvablePosteriorFunction.class,
                         "One or more probability distributions for the infectious periods of cases in the oubreak", 1,
                         Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)

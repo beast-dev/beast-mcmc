@@ -8,7 +8,6 @@ import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
-import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
@@ -16,12 +15,13 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
-import dr.math.distributions.ExponentialDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.*;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math.stat.descriptive.moment.Mean;
 
 import java.io.*;
 import java.util.*;
@@ -76,6 +76,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     private double[] branchLogProbs;
     private double totalLogProb;
     private double storedTotalLogProb;
+    private double infMeanProb;
+    private double storedInfMeanProb;
 
     // for normalisation
 
@@ -88,27 +90,37 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // where along the relevant branches the infections happen. IMPORTANT: if extended=false then this should be
     // all 0s.
 
-    private Parameter infectionTimes;
+    private Parameter infectionTimeBranchPositions;
+
+    private double[] infectionTimes;
+    private double[] storedInfectionTimes;
+    private double[] infectiousPeriods;
+    private double[] storedInfectiousPeriods;
 
     //because of the way the former works, we need a maximum value of the time from first infection to root node.
 
     private Parameter maxFirstInfToRoot;
 
-    //@todo (experimental): mean of exponential prior on variance of infectious periods
+    private Parameter meanInfectiousPeriod;
 
-    private ParametricDistributionModel variancePriorDistribution;
+    private Mean meanProducer;
+
+    private AnalyticallySolvablePosteriorFunction infectiousPeriodProbability;
 
     // for extended version
 
     private boolean extended;
 
-    // don't model the infectious periods
-
-    private boolean noInfPeriodModels;
 
     // no need to normalise if the tree is fixed
 
     private boolean normalise;
+
+    private boolean traversalProbKnown = false;
+    private boolean storedTraversalProbKnown = false;
+    private boolean infMeanProbKnown = false;
+    private boolean storedInfMeanProbKnown = false;
+
 
     // PUBLIC STUFF
 
@@ -121,28 +133,27 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // Basic constructor.
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
-                                    Parameter infectionTimes, ParametricDistributionModel variancePriorDistribution,
-                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise,
-                                    boolean noInfPeriodModels)
-            throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimes,
-                variancePriorDistribution, maxFirstInfToRoot, extended, normalise, noInfPeriodModels);
+                                    Parameter infectionTimeBranchPositions,
+                                    AnalyticallySolvablePosteriorFunction infectiousPeriodProbability,
+                                    Parameter maxFirstInfToRoot, Parameter meanInfectiousPeriod, boolean extended,
+                                    boolean normalise) throws TaxonList.MissingTaxonException {
+        this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions,
+                infectiousPeriodProbability, maxFirstInfToRoot, meanInfectiousPeriod, extended, normalise);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
-            startingNetworkFileName, Parameter infectionTimes, ParametricDistributionModel variancePriorDistribution,
-                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise,
-                                    boolean noInfPeriodModels) {
+            startingNetworkFileName, Parameter infectionTimeBranchPositions,
+                                    AnalyticallySolvablePosteriorFunction infectiousPeriodProbability,
+                                    Parameter maxFirstInfToRoot, Parameter meanInfectiousPeriod, boolean extended,
+                                    boolean normalise) {
         super(name, caseData, virusTree);
 
         updateNodeForSingleTraverse = new boolean[nodeCount];
         for (int i = 0; i < nodeCount; i++) {
             updateNodeForSingleTraverse[i] = true;
         }
-
-        // @todo You should check the tree for zero branch lengths (or at least zero terminal branch lengths) and exit if you find any - it won't work
 
         if(stateCount!=treeModel.getExternalNodeCount()){
             throw new RuntimeException("There are duplicate tip cases.");
@@ -152,10 +163,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         cases = caseData;
         this.extended = extended;
-        this.noInfPeriodModels = noInfPeriodModels;
 
-        //@todo take this out if it doesn't work
-        this.variancePriorDistribution = variancePriorDistribution;
+        this.infectiousPeriodProbability = infectiousPeriodProbability;
         addModel(cases);
         verbose = false;
 
@@ -185,13 +194,18 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             }
         }
 
-        this.infectionTimes = infectionTimes;
-        addVariable(infectionTimes);
+        this.infectionTimeBranchPositions = infectionTimeBranchPositions;
+        addVariable(infectionTimeBranchPositions);
+
+        this.meanInfectiousPeriod = meanInfectiousPeriod;
+        addVariable(meanInfectiousPeriod);
+
+        meanProducer = new Mean();
 
         if(DEBUG){
             for(int i=0; i<cases.size(); i++){
-                if(!((CompoundParameter)infectionTimes).getParameter(i).getId().startsWith(cases.getCase(i).getName())){
-                    throw new RuntimeException("Elements of outbreak and infectionTimes do not match up");
+                if(!((CompoundParameter) infectionTimeBranchPositions).getParameter(i).getId().startsWith(cases.getCase(i).getName())){
+                    throw new RuntimeException("Elements of outbreak and infectionTimeBranchPositions do not match up");
                 }
             }
         }
@@ -230,10 +244,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         //paint the starting network onto the tree
 
         if(startingNetworkFileName==null){
-            partitionAccordingToRandomTT(!noInfPeriodModels);
+            partitionAccordingToRandomTT(true);
         } else {
             partitionAccordingToSpecificTT(startingNetworkFileName);
         }
+
+        infectionTimes = getInfectionTimes(branchMap);
+        infectiousPeriods = getInfectiousPeriods(branchMap);
 
         treeTraits.addTrait(PARTITIONS_KEY, new TreeTrait.S() {
             public String getTraitName() {
@@ -555,6 +572,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     }
 
     public HashMap<Integer, Double> getInfTimesMap(){
+        if(infectionTimes==null){
+            infectionTimes = getInfectionTimes(branchMap);
+        }
         HashMap<Integer, Double> out = new HashMap<Integer, Double>();
         for(AbstractCase thisCase : cases.getCases()){
             out.put(cases.getCaseIndex(thisCase), getInfectionTime(thisCase));
@@ -619,7 +639,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                     //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
             }
+            traversalProbKnown = false;
+            infMeanProbKnown = false;
             renormalisationNeeded = true;
+            infectionTimes = null;
+            infectiousPeriods = null;
 
         }
 
@@ -636,9 +660,16 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
-        updateAllNodes(variable!=infectionTimes);
+        infMeanProbKnown = false;
 
-        renormalisationNeeded = variable!=infectionTimes;
+        updateAllNodes(variable != infectionTimeBranchPositions);
+
+        if(variable == infectionTimeBranchPositions){
+            infectionTimes = null;
+            infectiousPeriods = null;
+            traversalProbKnown = false;
+            renormalisationNeeded = false;
+        }
 
         fireModelChanged();
 
@@ -660,6 +691,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         storedTotalLogProb = totalLogProb;
         storedBranchMap = Arrays.copyOf(branchMap, branchMap.length);
         storedDescendantTipPartitions = new HashMap<Integer, HashSet<AbstractCase>>(descendantTipPartitions);
+        storedInfectionTimes = infectionTimes;
+        storedInfectiousPeriods = infectiousPeriods;
+        storedTraversalProbKnown = traversalProbKnown;
+        storedInfMeanProbKnown = infMeanProbKnown;
+        storedInfMeanProb = infMeanProb;
     }
 
     /**
@@ -673,6 +709,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         totalLogProb = storedTotalLogProb;
         branchMap = storedBranchMap;
         descendantTipPartitions = storedDescendantTipPartitions;
+        infectionTimes = storedInfectionTimes;
+        infectiousPeriods = storedInfectiousPeriods;
+        traversalProbKnown = storedTraversalProbKnown;
+        infMeanProbKnown = storedInfMeanProbKnown;
+        infMeanProb = storedInfMeanProb;
     }
 
     protected final void acceptState() {
@@ -691,8 +732,12 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     }
 
     public final void setBranchMap(AbstractCase[] map){
+        infectionTimes = null;
+        infectiousPeriods = null;
         branchMap = map;
         likelihoodKnown = false;
+        traversalProbKnown = false;
+        infMeanProbKnown = false;
         // @todo you could get efficiency savings here
         Arrays.fill(updateNodeForSingleTraverse, true);
         fireModelChanged();
@@ -704,81 +749,102 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public final void makeDirty() {
         likelihoodKnown = false;
+        traversalProbKnown = false;
+        infMeanProbKnown = false;
         Arrays.fill(updateNode, true);
         Arrays.fill(updateNodeForSingleTraverse, true);
         renormalisationNeeded = true;
+        infectionTimes = null;
+        infectiousPeriods = null;
         if(!extended){
             recalculateDescTipPartitions();
         }
     }
+
+
 
     /**
      * Calculates the log likelihood of this set of node labels given the tree.
      */
     protected double calculateLogLikelihood() {
 
-        double variance = getSummaryStatistics()[2];
-        double logVariancePriorProb = variancePriorDistribution.logPdf(variance);
-
-        if(noInfPeriodModels){
-            return isAllowed() ? (0+logVariancePriorProb) : Double.NEGATIVE_INFINITY;
+        if(infectionTimes==null){
+            infectionTimes = getInfectionTimes(branchMap);
         }
 
-        if(DEBUG && !checkPartitions(branchMap, true)){
-            throw new RuntimeException("Partition rules are violated");
+        if(infectiousPeriods==null){
+            infectiousPeriods = getInfectiousPeriods(branchMap);
         }
 
-        final NodeRef root = treeModel.getRoot();
 
-        // unnormalised probability
+        if(!infMeanProbKnown){
+            infMeanProb = infectiousPeriodProbability.getLogPosteriorValue(meanInfectiousPeriod, infectiousPeriods);
+            infMeanProbKnown = true;
+        }
 
-        traverse(treeModel, root);
+        double treeLogL;
 
-        // normalisation value
-        if(normalise){
-            if(renormalisationNeeded){
+        if(!traversalProbKnown){
+
+            if(DEBUG && !checkPartitions(branchMap, true)){
+                throw new RuntimeException("Partition rules are violated");
+            }
+
+            if(DEBUG){
+                debugOutputTree("treeTest.nex");
+            }
+
+            final NodeRef root = treeModel.getRoot();
+
+            // unnormalised probability
+
+            traverse(treeModel, root);
+
+            // normalisation value
+            if(normalise){
+                if(renormalisationNeeded){
+                    traverseForNormalisation(treeModel, root);
+                }
+            } else {
+                normTotalProb = 0;
+            }
+
+            treeLogL =  totalLogProb - normTotalProb;
+
+            if (renormalisationNeeded && normTotalProb == Double.NEGATIVE_INFINITY) {
+    //            Logger.getLogger("dr.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial " +
+    //                    "likelihood scaling to avoid precision loss");
+
+                // We probably had an underflow... turn on scaling
+                core.setUseScaling(true);
+
+                // and try again...
+                updateAllNodes();
+                updateAllPatterns();
                 traverseForNormalisation(treeModel, root);
+
+                treeLogL = totalLogProb - (normTotalProb) * patternWeights[0];
+
+            }
+
+
+            for (int i = 0; i < nodeCount; i++) {
+                updateNode[i] = false;
+                updateNodeForSingleTraverse[i] = false;
+            }
+
+            renormalisationNeeded = false;
+
+            // If the normalisation value rounds to zero it is an almighty pain, but perhaps it can't be helped
+
+            if(treeLogL==Double.POSITIVE_INFINITY){
+                return Double.NEGATIVE_INFINITY;
             }
         } else {
-            normTotalProb = 0;
+            treeLogL =  totalLogProb - normTotalProb;
         }
 
-        double logL = totalLogProb - normTotalProb;
-
-        // If logL is zero because the partition is actually impossible, you most certainly don't want to turn scaling
-        // on, hence the okToRescale
-
-        if (renormalisationNeeded && normTotalProb == Double.NEGATIVE_INFINITY) {
-//            Logger.getLogger("dr.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial " +
-//                    "likelihood scaling to avoid precision loss");
-
-            // We probably had an underflow... turn on scaling
-            core.setUseScaling(true);
-
-            // and try again...
-            updateAllNodes();
-            updateAllPatterns();
-            traverseForNormalisation(treeModel, root);
-
-            logL = totalLogProb - (normTotalProb) * patternWeights[0];
-
-        }
-
-
-        for (int i = 0; i < nodeCount; i++) {
-            updateNode[i] = false;
-            updateNodeForSingleTraverse[i] = false;
-        }
-
-        renormalisationNeeded = false;
-
-        // If the normalisation value rounds to zero it is an almighty pain, but perhaps it can't be helped
-
-        if(logL==Double.POSITIVE_INFINITY){
-            return Double.NEGATIVE_INFINITY;
-        }
-
-        return logL;
+        return infMeanProb + treeLogL;
 
     }
 
@@ -859,10 +925,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // normalisation value
 
     private boolean traverseForNormalisation(Tree tree, NodeRef node){
-
-        if(DEBUG){
-            debugOutputTree("traverseProblem.nex");
-        }
 
         boolean update = false;
 
@@ -1078,8 +1140,50 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
     }
 
+    public double[] getInfectionTimes(AbstractCase[] branchMap){
+        double[] out = new double[noTips];
+        for(int i=0; i<noTips; i++){
+            out[i] = getInfectionTime(cases.getCase(i), branchMap);
+        }
+        return out;
+    }
+
+    public double[] getInfectionTimes(){
+        return infectionTimes;
+    }
+
+    private double getInfectionTime(double min, double max, AbstractCase infected){
+        final double branchLength = max-min;
+
+        return max - branchLength* infectionTimeBranchPositions.getParameterValue(cases.getCaseIndex(infected));
+    }
+
+    public double getInfectionTime(AbstractCase thisCase){
+        return getInfectionTime(cases.getCaseIndex(thisCase));
+    }
+
+    public double getInfectionTime(int caseIndex){
+        return infectionTimes[caseIndex];
+    }
+
     public double getInfectiousPeriod(AbstractCase thisCase){
-        return getInfectiousPeriod(thisCase, branchMap);
+        return getInfectiousPeriod(cases.getCaseIndex(thisCase));
+    }
+
+    public double getInfectiousPeriod(int caseIndex){
+        return infectiousPeriods[caseIndex];
+    }
+
+    public double[] getInfectiousPeriods(AbstractCase[] branchMap){
+        double[] out = new double[noTips];
+        for(int i=0; i<noTips; i++){
+            out[i] = getInfectiousPeriod(cases.getCase(i), branchMap);
+        }
+        return out;
+    }
+
+    public double[] getInfectiousPeriods(){
+        return infectiousPeriods;
     }
 
     public double getInfectiousPeriod(AbstractCase thisCase, AbstractCase[] branchMap){
@@ -1088,11 +1192,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return cullTime - infectionTime;
     }
 
-    private double getInfectionTime(double min, double max, AbstractCase infected){
-        final double branchLength = max-min;
 
-        return max - branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(infected));
-    }
 
     // return an array of the mean, median, variance and standard deviation of infectious periods
 
@@ -1109,6 +1209,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return out;
     }
 
+    public double getActualMeanOfInfectiousPeriods(){
+        if(infectiousPeriods == null){
+            infectiousPeriods = getInfectiousPeriods(branchMap);
+        }
+        return meanProducer.evaluate(infectiousPeriods);
+    }
+
 
     private double getRootInfectionTime(AbstractCase[] branchMap){
         NodeRef root = treeModel.getRoot();
@@ -1116,16 +1223,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         final double branchLength = maxFirstInfToRoot.getParameterValue(0);
 
         return heightToTime(treeModel.getNodeHeight(root)
-                + branchLength*infectionTimes.getParameterValue(cases.getCaseIndex(rootCase)));
+                + branchLength * infectionTimeBranchPositions.getParameterValue(cases.getCaseIndex(rootCase)));
 
     }
 
     private double getRootInfectionTime(){
-        return getRootInfectionTime(branchMap);
-    }
-
-    public double getInfectionTime(AbstractCase thisCase){
-        return getInfectionTime(thisCase, branchMap);
+        AbstractCase rootCase = branchMap[treeModel.getRoot().getNumber()];
+        return getInfectionTime(rootCase);
     }
 
     public AbstractCase getInfector(NodeRef node, AbstractCase[] branchMap){
@@ -1342,6 +1446,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 "branches and repeating up to 100 times until a start with nonzero likelihood is found)");
         System.out.print("Attempt: ");
         while(!gotOne){
+
+            likelihoodKnown = false;
+            traversalProbKnown = false;
+            infMeanProbKnown = false;
+            renormalisationNeeded = true;
             boolean failed = false;
             System.out.print(tries + "...");
             branchMap = prepareExternalNodeMap(new AbstractCase[treeModel.getNodeCount()]);
@@ -1353,6 +1462,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             } catch(BadPartitionException e){
                 failed = true;
             }
+
+            infectionTimes = getInfectionTimes(branchMap);
+            infectiousPeriods = getInfectiousPeriods(branchMap);
+
+            // @todo sort this out - no need for a starting value of the mean if you're always going to calculate it based on the tree
+
+            meanInfectiousPeriod.setParameterValue(0, getActualMeanOfInfectiousPeriods());
 
             if(!failed && calculateLogLikelihood()!=Double.NEGATIVE_INFINITY){
                 gotOne = true;
@@ -1402,8 +1518,14 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             if(checkNonZero){
                 Double[] branchLogLs = new Double[2];
                 for(int i=0; i<2; i++){
-                    branchLogLs[i]= cases.logProbXInfectedByYBetweenTandU(choices[1-i], choices[i],
-                            getNodeTime(node), getNodeTime(treeModel.getChild(node, 1-i)));
+                    double nodeTime = getNodeTime(node);
+                    double branchLength = getNodeTime(treeModel.getChild(node, 1-i)) - getNodeTime(node);
+                    AbstractCase infector = choices[i];
+                    AbstractCase infectee = choices[1-i];
+
+                    branchLogLs[i]= cases.logProbXInfectedByYAtTimeT(infectee, infector,
+                            nodeTime + infectionTimeBranchPositions.getParameterValue(
+                                    cases.getCaseIndex(infectee))*branchLength);
                 }
                 if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
                     throw new BadPartitionException("Both branch possibilities have zero likelihood: "
@@ -1454,12 +1576,12 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public static final String STARTING_NETWORK = "startingNetwork";
-        public static final String INFECTION_TIMES = "infectionTimes";
+        public static final String INFECTION_TIMES = "infectionTimeBranchPositions";
         public static final String MAX_FIRST_INF_TO_ROOT= "maxFirstInfToRoot";
         public static final String EXTENDED = "extended";
         public static final String NORMALISE = "normalise";
-        public static final String NO_INF_PERIOD_MODELS = "noInfPeriodModels";
-        public static final String VARIANCE_PRIOR_DISTRIBUTION = "variancePriorDistribution";
+        public static final String INFECTIOUS_PERIODS_PROBABILITY = "infectiousPeriodProbability";
+        public static final String MEAN_INFECTIOUS_PERIOD = "meanInfectiousPeriod";
 
         public String getParserName() {
             return CASE_TO_CASE_TREE_LIKELIHOOD;
@@ -1485,17 +1607,16 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
             final boolean normalise = xo.getBooleanAttribute(NORMALISE);
 
-            final boolean noInfPeriodModels = xo.getBooleanAttribute(NO_INF_PERIOD_MODELS);
 
-
-            ParametricDistributionModel variancePriorDistribution = (ParametricDistributionModel)
-                    xo.getElementFirstChild(VARIANCE_PRIOR_DISTRIBUTION);
+            AnalyticallySolvablePosteriorFunction variancePriorDistribution = (AnalyticallySolvablePosteriorFunction)
+                    xo.getElementFirstChild(INFECTIOUS_PERIODS_PROBABILITY);
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
+            Parameter meanInfectiousPeriod = (Parameter) xo.getElementFirstChild(MEAN_INFECTIOUS_PERIOD);
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName, infectionTimes,
-                        variancePriorDistribution, earliestFirstInfection, extended, normalise, noInfPeriodModels);
+                        variancePriorDistribution, earliestFirstInfection, meanInfectiousPeriod, extended, normalise);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -1519,7 +1640,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(EXTENDED),
                 AttributeRule.newBooleanRule(NORMALISE),
-                AttributeRule.newBooleanRule(NO_INF_PERIOD_MODELS),
                 new ElementRule(TreeModel.class, "The tree"),
                 new ElementRule(AbstractOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
@@ -1527,7 +1647,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
                         "the root node"),
                 new ElementRule(INFECTION_TIMES, Parameter.class),
-                new ElementRule(VARIANCE_PRIOR_DISTRIBUTION, ParametricDistributionModel.class)
+                new ElementRule(INFECTIOUS_PERIODS_PROBABILITY, AnalyticallySolvablePosteriorFunction.class),
+                new ElementRule(MEAN_INFECTIOUS_PERIOD, Parameter.class, "The mean of the distribution of infectious" +
+                        "periods", true)
         };
     };
 
@@ -1600,6 +1722,25 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             normTotalProb = outLLArray[0];
         }
 
+    }
+
+    // TT operators have the option to immediately resample the mean infectious period, which should help convergence.
+    // The new draw is from a normal distribution with a mean equal to the actual mean of the periods and given
+    // variance. The first method is the pdf value of the current value of the mean _parameter_ from the sampling
+    // distribution and should be called before the operator does its thing. The latter method returns the modification
+    // that needs to be made to the Hastings ratio.
+
+    public double getMeanSamplingDistributionPDFValue(double variance){
+        double actualMean = getActualMeanOfInfectiousPeriods();
+        double meanParameter = meanInfectiousPeriod.getParameterValue(0);
+        return NormalDistribution.pdf(meanParameter, actualMean, Math.sqrt(variance));
+    }
+
+    public double resampleInfPeriodDistMean(double variance){
+        double actualMean = getActualMeanOfInfectiousPeriods();
+        double newParameterValue = MathUtils.nextGaussian()*Math.sqrt(variance) + actualMean;
+        meanInfectiousPeriod.setParameterValue(0, newParameterValue);
+        return NormalDistribution.pdf(newParameterValue, actualMean, Math.sqrt(variance));
     }
 
 }

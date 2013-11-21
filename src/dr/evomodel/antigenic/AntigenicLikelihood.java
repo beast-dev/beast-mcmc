@@ -60,6 +60,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Parameter virusOffsetsParameter,
             Parameter serumOffsetsParameter,
             Parameter serumPotenciesParameter,
+            Parameter serumBreadthsParameter,
             Parameter virusAviditiesParameter,
             DataTable<String[]> dataTable,
             boolean mergeIsolates,
@@ -251,9 +252,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             setupOffsetParameter(serumOffsetsParameter, serumNames, strainDateMap, earliestDate);
         }
 
-        this.serumPotenciesParameter = setupSerumEffects(serumPotenciesParameter, maxColumnTitre);
-
-        this.virusAviditiesParameter = setupVirusEffects(virusAviditiesParameter, maxRowTitre);
+        this.serumPotenciesParameter = setupSerumPotencies(serumPotenciesParameter, maxColumnTitre);
+        this.serumBreadthsParameter = setupSerumBreadths(serumBreadthsParameter);
+        this.virusAviditiesParameter = setupVirusAvidities(virusAviditiesParameter, maxRowTitre);
 
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicLikelihood:\n");
@@ -282,7 +283,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         makeDirty();
     }
 
-    private Parameter setupVirusEffects(Parameter virusAviditiesParameter, double[] maxRowTitre) {
+    private Parameter setupVirusAvidities(Parameter virusAviditiesParameter, double[] maxRowTitre) {
         // If no row parameter is given, then we will only use the serum effects
         if (virusAviditiesParameter != null) {
             virusAviditiesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
@@ -298,7 +299,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return virusAviditiesParameter;
     }
 
-    private Parameter setupSerumEffects(Parameter serumPotenciesParameter, double[] maxColumnTitre) {
+    private Parameter setupSerumPotencies(Parameter serumPotenciesParameter, double[] maxColumnTitre) {
         // If no serum potencies parameter is given, make one to hold maximum values for scaling titres...
         if (serumPotenciesParameter == null) {
             serumPotenciesParameter = new Parameter.Default("serumPotencies");
@@ -316,6 +317,22 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
 
         return serumPotenciesParameter;
+    }
+
+    private Parameter setupSerumBreadths(Parameter serumBreadthsParameter) {
+        // If no serum breadths parameter is given, then we will only use the serum potencies
+        if (serumBreadthsParameter != null) {
+            serumBreadthsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+            serumBreadthsParameter.setDimension(serumLabels.size());
+            addVariable(serumBreadthsParameter);
+            String[] labelArray = new String[serumLabels.size()];
+            serumLabels.toArray(labelArray);
+            serumBreadthsParameter.setDimensionNames(labelArray);
+            for (int i = 0; i < serumLabels.size(); i++) {
+                serumBreadthsParameter.setParameterValueQuietly(i, 1.0);
+            }
+        }
+        return serumBreadthsParameter;
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter, List<String> strains) {
@@ -554,7 +571,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             difference = vLoc.getParameterValue(i) - sLoc.getParameterValue(i);
             sum += difference * difference;
         }
-        return Math.sqrt(sum);
+
+        double dist = Math.sqrt(sum);
+ //       if (serumBreadthsParameter != null) {
+ //           double serumBreadth = serumBreadthsParameter.getParameterValue(serumStrain);
+ //           dist /= serumBreadth;
+ //       }
+
+        return dist;
     }
 
     /**
@@ -670,8 +694,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     private int[] tipIndices;
 
-    private final Parameter serumPotenciesParameter;
     private final Parameter virusAviditiesParameter;
+    private final Parameter serumPotenciesParameter;
+    private final Parameter serumBreadthsParameter;
 
     private double logLikelihood = 0.0;
     private boolean likelihoodKnown = false;
@@ -700,6 +725,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public static final String LOCATION_DRIFT = "locationDrift";
         public static final String VIRUS_AVIDITIES = "virusAvidities";
         public static final String SERUM_POTENCIES = "serumPotencies";
+        public static final String SERUM_BREADTHS = "serumBreadths";
         public final static String VIRUS_OFFSETS = "virusOffsets";
         public final static String SERUM_OFFSETS = "serumOffsets";
 
@@ -768,6 +794,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             if (xo.hasChildNamed(SERUM_POTENCIES)) {
                 serumPotenciesParameter = (Parameter) xo.getElementFirstChild(SERUM_POTENCIES);
             }
+
+            Parameter serumBreadthsParameter = null;
+            if (xo.hasChildNamed(SERUM_BREADTHS)) {
+                serumBreadthsParameter = (Parameter) xo.getElementFirstChild(SERUM_BREADTHS);
+            }
+
             Parameter virusAviditiesParameter = null;
             if (xo.hasChildNamed(VIRUS_AVIDITIES)) {
                 virusAviditiesParameter = (Parameter) xo.getElementFirstChild(VIRUS_AVIDITIES);
@@ -785,6 +817,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     virusOffsetsParameter,
                     serumOffsetsParameter,
                     serumPotenciesParameter,
+                    serumBreadthsParameter,
                     virusAviditiesParameter,
                     assayTable,
                     mergeIsolates,
@@ -822,6 +855,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 new ElementRule(VIRUS_OFFSETS, Parameter.class, "An optional parameter for virus dates to be stored", true),
                 new ElementRule(SERUM_OFFSETS, Parameter.class, "An optional parameter for serum dates to be stored", true),
                 new ElementRule(SERUM_POTENCIES, Parameter.class, "An optional parameter for serum potencies", true),
+                new ElementRule(SERUM_BREADTHS, Parameter.class, "An optional parameter for serum breadths", true),
                 new ElementRule(VIRUS_AVIDITIES, Parameter.class, "An optional parameter for virus avidities", true),
                 new ElementRule(MDS_PRECISION, Parameter.class),
                 new ElementRule(LOCATION_DRIFT, Parameter.class)

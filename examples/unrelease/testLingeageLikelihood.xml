@@ -86,8 +86,6 @@
          <alignment idref="alignment"/>
       </lineageSNPS>
 
-
-
       <lineageModel id="lineageModelLike">
           <parameter id="errorRate" value="0.01"/>
           <lineageSNPS idref="lineageSites"/>
@@ -101,12 +99,18 @@
       </lineageModel>
 
       <operators id="operators">
-          <uniformOperator upper="0.05" lower = "0.0" weight="1">
+<!---          <deltaMixOperator delta=".5" weight="1">
+              <parameter idref="mixtureMatrix"/>
+          </deltaMixOperator>
+          <scaleOperator scaleFactor="0.75" weight="3">
+              <parameter idref="errorRate"/>
+          </scaleOperator>   -->
+          <uniformOperator weight ="1.0" upper="0.05" lower = "0.0">
               <parameter idref="errorRate"/>
           </uniformOperator>
-      </operators>
+   </operators>
 
-     <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+      <mcmc id="mcmc" chainLength="1000" autoOptimize="true">
           <posterior id="posterior">
               <likelihood id="likelihood">
                   <lineageModel idref="lineageModelLike"/>
@@ -118,7 +122,7 @@
               </prior>
           </posterior>
           <operators idref="operators"/>
-          <log logEvery="1000" fileName = "lineageTest.log">
+          <log logEvery="1" fileName = "lineageTest.log">
               <column label="errorRate" sf="4" width="12">
                   <parameter idref="errorRate"/>
               </column>
@@ -132,7 +136,7 @@
                   <posterior idref="posterior"/>
               </column>
           </log>
-          <log logEvery="1000">
+          <log logEvery="1">
               <column label="errorRate" sf="4" width="12">
                   <parameter idref="errorRate"/>
               </column>

@@ -137,7 +137,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
 
         double[] maxColumnTitres = new double[serumNames.size()];
-        double[] maxRowTitres = new double[virusNames.size()];
         for (Measurement measurement : measurements) {
             double titre = measurement.log2Titre;
             if (Double.isNaN(titre)) {
@@ -145,9 +144,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
             if (titre > maxColumnTitres[measurement.serum]) {
                 maxColumnTitres[measurement.serum] = titre;
-            }
-            if (titre > maxRowTitres[measurement.virus]) {
-                maxRowTitres[measurement.virus] = titre;
             }
         }
 
@@ -188,7 +184,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         this.serumPotenciesParameter = setupSerumPotencies(serumPotenciesParameter, maxColumnTitres);
         this.serumBreadthsParameter = setupSerumBreadths(serumBreadthsParameter);
-        this.virusAviditiesParameter = setupVirusAvidities(virusAviditiesParameter, maxRowTitres);
+        this.virusAviditiesParameter = setupVirusAvidities(virusAviditiesParameter);
 
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicLikelihood:\n");
@@ -205,8 +201,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         virusLocationChanged = new boolean[this.virusLocationsParameter.getParameterCount()];
         serumLocationChanged = new boolean[this.serumLocationsParameter.getParameterCount()];
-        virusEffectChanged = new boolean[maxRowTitres.length];
-        serumEffectChanged = new boolean[maxColumnTitres.length];
+        virusEffectChanged = new boolean[virusNames.size()];
+        serumEffectChanged = new boolean[serumNames.size()];
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
 
@@ -215,17 +211,17 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         makeDirty();
     }
 
-    private Parameter setupVirusAvidities(Parameter virusAviditiesParameter, double[] maxRowTitres) {
+    private Parameter setupVirusAvidities(Parameter virusAviditiesParameter) {
         // If no row parameter is given, then we will only use the serum effects
         if (virusAviditiesParameter != null) {
-            virusAviditiesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+            virusAviditiesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, Double.MIN_VALUE, 1));
             virusAviditiesParameter.setDimension(virusNames.size());
             addVariable(virusAviditiesParameter);
             String[] labelArray = new String[virusNames.size()];
             virusNames.toArray(labelArray);
             virusAviditiesParameter.setDimensionNames(labelArray);
-            for (int i = 0; i < maxRowTitres.length; i++) {
-                virusAviditiesParameter.setParameterValueQuietly(i, maxRowTitres[i]);
+            for (int i = 0; i < virusNames.size(); i++) {
+                virusAviditiesParameter.setParameterValueQuietly(i, 0.0);
             }
         }
         return virusAviditiesParameter;
@@ -522,13 +518,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     // Calculates the expected log2 titre when mapDistance = 0
     private double calculateBaseline(int virus, int serum) {
-        double baseline;
-        double serumEffect = serumPotenciesParameter.getParameterValue(serum);
+        double baseline = serumPotenciesParameter.getParameterValue(serum);
         if (virusAviditiesParameter != null) {
-            double virusEffect = virusAviditiesParameter.getParameterValue(virus);
-            baseline = 0.5 * (virusEffect + serumEffect);
-        } else {
-            baseline = serumEffect;
+            baseline += virusAviditiesParameter.getParameterValue(virus);
         }
         return baseline;
     }

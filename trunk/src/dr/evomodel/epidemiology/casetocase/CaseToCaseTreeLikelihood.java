@@ -76,8 +76,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     private double[] branchLogProbs;
     private double totalLogProb;
     private double storedTotalLogProb;
-    private double infMeanProb;
-    private double storedInfMeanProb;
 
     // for normalisation
 
@@ -105,8 +103,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private Mean meanProducer;
 
-    private AnalyticallySolvablePosteriorFunction infectiousPeriodProbability;
-
     // for extended version
 
     private boolean extended;
@@ -118,8 +114,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private boolean traversalProbKnown = false;
     private boolean storedTraversalProbKnown = false;
-    private boolean infMeanProbKnown = false;
-    private boolean storedInfMeanProbKnown = false;
 
 
     // PUBLIC STUFF
@@ -133,19 +127,17 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // Basic constructor.
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
-                                    Parameter infectionTimeBranchPositions,
-                                    AnalyticallySolvablePosteriorFunction infectiousPeriodProbability,
-                                    Parameter maxFirstInfToRoot, Parameter meanInfectiousPeriod, boolean extended,
-                                    boolean normalise) throws TaxonList.MissingTaxonException {
+                                    Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
+                                    Parameter meanInfectiousPeriod, boolean extended, boolean normalise)
+            throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions,
-                infectiousPeriodProbability, maxFirstInfToRoot, meanInfectiousPeriod, extended, normalise);
+                maxFirstInfToRoot, meanInfectiousPeriod, extended, normalise);
     }
 
     // Constructor for an instance with a non-default name
 
-    public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData, String
-            startingNetworkFileName, Parameter infectionTimeBranchPositions,
-                                    AnalyticallySolvablePosteriorFunction infectiousPeriodProbability,
+    public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData,
+                                    String startingNetworkFileName, Parameter infectionTimeBranchPositions,
                                     Parameter maxFirstInfToRoot, Parameter meanInfectiousPeriod, boolean extended,
                                     boolean normalise) {
         super(name, caseData, virusTree);
@@ -164,7 +156,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         cases = caseData;
         this.extended = extended;
 
-        this.infectiousPeriodProbability = infectiousPeriodProbability;
         addModel(cases);
         verbose = false;
 
@@ -640,7 +631,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 }
             }
             traversalProbKnown = false;
-            infMeanProbKnown = false;
             renormalisationNeeded = true;
             infectionTimes = null;
             infectiousPeriods = null;
@@ -659,8 +649,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
-        infMeanProbKnown = false;
 
         updateAllNodes(variable != infectionTimeBranchPositions);
 
@@ -694,8 +682,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         storedInfectionTimes = infectionTimes;
         storedInfectiousPeriods = infectiousPeriods;
         storedTraversalProbKnown = traversalProbKnown;
-        storedInfMeanProbKnown = infMeanProbKnown;
-        storedInfMeanProb = infMeanProb;
     }
 
     /**
@@ -712,8 +698,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         infectionTimes = storedInfectionTimes;
         infectiousPeriods = storedInfectiousPeriods;
         traversalProbKnown = storedTraversalProbKnown;
-        infMeanProbKnown = storedInfMeanProbKnown;
-        infMeanProb = storedInfMeanProb;
     }
 
     protected final void acceptState() {
@@ -737,7 +721,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         branchMap = map;
         likelihoodKnown = false;
         traversalProbKnown = false;
-        infMeanProbKnown = false;
         // @todo you could get efficiency savings here
         Arrays.fill(updateNodeForSingleTraverse, true);
         fireModelChanged();
@@ -750,7 +733,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     public final void makeDirty() {
         likelihoodKnown = false;
         traversalProbKnown = false;
-        infMeanProbKnown = false;
         Arrays.fill(updateNode, true);
         Arrays.fill(updateNodeForSingleTraverse, true);
         renormalisationNeeded = true;
@@ -774,12 +756,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         if(infectiousPeriods==null){
             infectiousPeriods = getInfectiousPeriods(branchMap);
-        }
-
-
-        if(!infMeanProbKnown){
-            infMeanProb = infectiousPeriodProbability.getLogPosteriorValue(meanInfectiousPeriod, infectiousPeriods);
-            infMeanProbKnown = true;
         }
 
         double treeLogL;
@@ -844,7 +820,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             treeLogL =  totalLogProb - normTotalProb;
         }
 
-        return infMeanProb + treeLogL;
+        return treeLogL;
 
     }
 
@@ -1449,7 +1425,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
             likelihoodKnown = false;
             traversalProbKnown = false;
-            infMeanProbKnown = false;
             renormalisationNeeded = true;
             boolean failed = false;
             System.out.print(tries + "...");
@@ -1608,7 +1583,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             final boolean normalise = xo.getBooleanAttribute(NORMALISE);
 
 
-            AnalyticallySolvablePosteriorFunction variancePriorDistribution = (AnalyticallySolvablePosteriorFunction)
+
                     xo.getElementFirstChild(INFECTIOUS_PERIODS_PROBABILITY);
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
@@ -1616,7 +1591,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName, infectionTimes,
-                        variancePriorDistribution, earliestFirstInfection, meanInfectiousPeriod, extended, normalise);
+                        earliestFirstInfection, meanInfectiousPeriod, extended, normalise);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -1647,7 +1622,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
                         "the root node"),
                 new ElementRule(INFECTION_TIMES, Parameter.class),
-                new ElementRule(INFECTIOUS_PERIODS_PROBABILITY, AnalyticallySolvablePosteriorFunction.class),
                 new ElementRule(MEAN_INFECTIOUS_PERIOD, Parameter.class, "The mean of the distribution of infectious" +
                         "periods", true)
         };

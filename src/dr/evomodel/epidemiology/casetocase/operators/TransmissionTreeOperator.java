@@ -19,8 +19,8 @@ import java.util.Arrays;
 
 /**
  * An operator that wraps a (phylogenetic) tree operator and adjusts the transmission tree accordingly. Only works
- * for the simpler (TT=TMRCA) version of the transmission tree. TT moves are deterministic, so the Hastings ratios
- * reported by the inner operators are not affected. Effectively deprecated as I favour the TT>TMRCA version now.
+ * for the simpler (TT=TMRCA) version of the transmission tree (suitable for birth-death models and their derivatives).
+ * TT moves are deterministic, so the Hastings ratios reported by the inner operators are not affected.
  *
  * @author Matthew Hall
  */

@@ -9,7 +9,6 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.Arrays;
-import java.util.HashSet;
 
 /**
  * This operator finds a branch that corresponds to a transmission event, and moves that event up one branch or down
@@ -17,19 +16,19 @@ import java.util.HashSet;
  *
  * @author Matthew Hall
  */
-public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
+public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
-    public static final String NODE_PAINTING_SWITCH_OPERATOR = "nodePaintingSwitchOperator";
+    public static final String INFECTION_BRANCH_MOVEMENT_OPERATOR = "infectionBranchMovementOperator";
     private CaseToCaseTreeLikelihood c2cLikelihood;
     boolean debug = false;
 
-    public NodePaintingSwitchOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight){
+    public InfectionBranchMovementOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight){
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
     }
 
     public String getOperatorName(){
-        return NODE_PAINTING_SWITCH_OPERATOR;
+        return INFECTION_BRANCH_MOVEMENT_OPERATOR;
     }
 
     /*  Switch the partition of a randomly selected internal node from the painting of one of its children to the
@@ -138,7 +137,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
         public String getParserName(){
-            return NODE_PAINTING_SWITCH_OPERATOR;
+            return INFECTION_BRANCH_MOVEMENT_OPERATOR;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -146,16 +145,16 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             CaseToCaseTreeLikelihood ftLikelihood =
                     (CaseToCaseTreeLikelihood) xo.getChild(CaseToCaseTreeLikelihood.class);
             final double weight = xo.getDoubleAttribute("weight");
-            return new NodePaintingSwitchOperator(ftLikelihood, weight);
+            return new InfectionBranchMovementOperator(ftLikelihood, weight);
         }
 
         public String getParserDescription(){
-            return "This operator switches the painting of a random eligible internal node from the painting of one of " +
-                    "its children to the painting of the other";
+            return "This operator switches the painting of a random eligible internal node from the painting of one " +
+                    "of its children to the painting of the other";
         }
 
         public Class getReturnType() {
-            return NodePaintingSwitchOperator.class;
+            return InfectionBranchMovementOperator.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

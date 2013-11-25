@@ -342,7 +342,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         }
     }
 
-    private void updateAllNodes() {
+    protected void updateAllNodes() {
         for (int i = 0; i < treeModel.getNodeCount(); i++)
             validLogLikelihoods[i] = false;
         likelihoodKnown = false;

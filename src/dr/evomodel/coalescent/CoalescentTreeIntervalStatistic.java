@@ -42,12 +42,14 @@ public class CoalescentTreeIntervalStatistic extends Statistic.Abstract {
     private TreeIntervals intervals;
     private int dimension;
     private double[] nonZeroIntervals;
+    private int[] lineageCounts;
 
     public CoalescentTreeIntervalStatistic(Tree tree) {
         this.tree = tree;
         this.intervals = new TreeIntervals(tree);
         //detect here if there are zero-length intervals and set the dimension accordingly
         setDimension(intervals);
+        this.lineageCounts = new int[this.dimension];
         this.nonZeroIntervals = new double[this.dimension];
         removeZeroLengthIntervals(intervals);
     }
@@ -67,6 +69,16 @@ public class CoalescentTreeIntervalStatistic extends Statistic.Abstract {
     	//return interval;
     	
     	return this.nonZeroIntervals[i];
+    }
+    
+    public double getLineageCount(int i) {
+    	//need more elegant way to trigger recalculation of intervals
+    	if (i == 0) {
+    		intervals.setIntervalsUnknown();
+    		removeZeroLengthIntervals(intervals);
+    	}
+    	
+    	return this.lineageCounts[i];
     }
     
     public String getStatisticName() {
@@ -89,6 +101,7 @@ public class CoalescentTreeIntervalStatistic extends Statistic.Abstract {
     		double intervalLength = intervals.getInterval(i);
     		if (intervalLength != 0.0) {
     			this.nonZeroIntervals[dim] = intervalLength;
+    			this.lineageCounts[dim] = intervals.getLineageCount(i);
     			dim++;
     		}
     	}

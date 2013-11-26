@@ -19,10 +19,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public WithinCaseCoalescent(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                     Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
-                                    Parameter meanInfectiousPeriod, boolean extended, boolean normalise)
+                                    boolean extended, boolean normalise, boolean jeffreys)
             throws TaxonList.MissingTaxonException {
         super(WITHIN_CASE_COALSECENT, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions,
-                maxFirstInfToRoot, meanInfectiousPeriod, extended, normalise);
+                maxFirstInfToRoot, extended, normalise, jeffreys);
     }
 
 

@@ -99,13 +99,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private Parameter maxFirstInfToRoot;
 
-    private Parameter meanInfectiousPeriod;
-
-    private Mean meanProducer;
-
     // for extended version
 
     private boolean extended;
+
+    // Jeffreys prior on infection times
+
+    private boolean jeffreys;
 
 
     // no need to normalise if the tree is fixed
@@ -128,18 +128,18 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                     Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
-                                    Parameter meanInfectiousPeriod, boolean extended, boolean normalise)
+                                    boolean extended, boolean normalise, boolean jeffreys)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions,
-                maxFirstInfToRoot, meanInfectiousPeriod, extended, normalise);
+                maxFirstInfToRoot, extended, normalise, jeffreys);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData,
                                     String startingNetworkFileName, Parameter infectionTimeBranchPositions,
-                                    Parameter maxFirstInfToRoot, Parameter meanInfectiousPeriod, boolean extended,
-                                    boolean normalise) {
+                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise,
+                                    boolean jeffreys) {
         super(name, caseData, virusTree);
 
         updateNodeForSingleTraverse = new boolean[nodeCount];
@@ -155,6 +155,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         cases = caseData;
         this.extended = extended;
+
+        this.jeffreys = jeffreys;
 
         addModel(cases);
         verbose = false;
@@ -187,11 +189,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         this.infectionTimeBranchPositions = infectionTimeBranchPositions;
         addVariable(infectionTimeBranchPositions);
-
-        this.meanInfectiousPeriod = meanInfectiousPeriod;
-        addVariable(meanInfectiousPeriod);
-
-        meanProducer = new Mean();
 
         if(DEBUG){
             for(int i=0; i<cases.size(); i++){
@@ -758,6 +755,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             infectiousPeriods = getInfectiousPeriods(branchMap);
         }
 
+        if(jeffreys){
+            // return isAllowed() ? -Math.pow(getInfectiousPeriodSD(),2) : Double.NEGATIVE_INFINITY;
+            return isAllowed() ? -Math.log(getLogInfectiousPeriodSD()) : Double.NEGATIVE_INFINITY;
+        }
+
         double treeLogL;
 
         if(!traversalProbKnown){
@@ -1168,8 +1170,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return cullTime - infectionTime;
     }
 
-
-
     // return an array of the mean, median, variance and standard deviation of infectious periods
 
     public double[] getSummaryStatistics(){
@@ -1185,11 +1185,17 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return out;
     }
 
-    public double getActualMeanOfInfectiousPeriods(){
-        if(infectiousPeriods == null){
-            infectiousPeriods = getInfectiousPeriods(branchMap);
+    public double getInfectiousPeriodSD(){
+        DescriptiveStatistics stats = new DescriptiveStatistics(getInfectiousPeriods());
+        return stats.getStandardDeviation();
+    }
+
+    public double getLogInfectiousPeriodSD(){
+        DescriptiveStatistics stats = new DescriptiveStatistics();
+        for(int i=0; i<infectiousPeriods.length; i++){
+            stats.addValue(Math.log(infectiousPeriods[i]));
         }
-        return meanProducer.evaluate(infectiousPeriods);
+        return stats.getStandardDeviation();
     }
 
 
@@ -1441,10 +1447,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             infectionTimes = getInfectionTimes(branchMap);
             infectiousPeriods = getInfectiousPeriods(branchMap);
 
-            // @todo sort this out - no need for a starting value of the mean if you're always going to calculate it based on the tree
-
-            meanInfectiousPeriod.setParameterValue(0, getActualMeanOfInfectiousPeriods());
-
             if(!failed && calculateLogLikelihood()!=Double.NEGATIVE_INFINITY){
                 gotOne = true;
                 System.out.println("found.");
@@ -1552,11 +1554,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public static final String STARTING_NETWORK = "startingNetwork";
         public static final String INFECTION_TIMES = "infectionTimeBranchPositions";
-        public static final String MAX_FIRST_INF_TO_ROOT= "maxFirstInfToRoot";
+        public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
         public static final String EXTENDED = "extended";
         public static final String NORMALISE = "normalise";
-        public static final String INFECTIOUS_PERIODS_PROBABILITY = "infectiousPeriodProbability";
-        public static final String MEAN_INFECTIOUS_PERIOD = "meanInfectiousPeriod";
+        public static final String JEFFREYS = "jeffreys";
 
         public String getParserName() {
             return CASE_TO_CASE_TREE_LIKELIHOOD;
@@ -1582,16 +1583,15 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
             final boolean normalise = xo.getBooleanAttribute(NORMALISE);
 
+            final boolean jeffreys = xo.getBooleanAttribute(JEFFREYS);
 
 
-                    xo.getElementFirstChild(INFECTIOUS_PERIODS_PROBABILITY);
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
-            Parameter meanInfectiousPeriod = (Parameter) xo.getElementFirstChild(MEAN_INFECTIOUS_PERIOD);
 
             try {
                 likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName, infectionTimes,
-                        earliestFirstInfection, meanInfectiousPeriod, extended, normalise);
+                        earliestFirstInfection, extended, normalise, jeffreys);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -1615,6 +1615,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(EXTENDED),
                 AttributeRule.newBooleanRule(NORMALISE),
+                AttributeRule.newBooleanRule(JEFFREYS),
                 new ElementRule(TreeModel.class, "The tree"),
                 new ElementRule(AbstractOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
@@ -1622,8 +1623,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
                         "the root node"),
                 new ElementRule(INFECTION_TIMES, Parameter.class),
-                new ElementRule(MEAN_INFECTIOUS_PERIOD, Parameter.class, "The mean of the distribution of infectious" +
-                        "periods", true)
         };
     };
 
@@ -1696,25 +1695,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             normTotalProb = outLLArray[0];
         }
 
-    }
-
-    // TT operators have the option to immediately resample the mean infectious period, which should help convergence.
-    // The new draw is from a normal distribution with a mean equal to the actual mean of the periods and given
-    // variance. The first method is the pdf value of the current value of the mean _parameter_ from the sampling
-    // distribution and should be called before the operator does its thing. The latter method returns the modification
-    // that needs to be made to the Hastings ratio.
-
-    public double getMeanSamplingDistributionPDFValue(double variance){
-        double actualMean = getActualMeanOfInfectiousPeriods();
-        double meanParameter = meanInfectiousPeriod.getParameterValue(0);
-        return NormalDistribution.pdf(meanParameter, actualMean, Math.sqrt(variance));
-    }
-
-    public double resampleInfPeriodDistMean(double variance){
-        double actualMean = getActualMeanOfInfectiousPeriods();
-        double newParameterValue = MathUtils.nextGaussian()*Math.sqrt(variance) + actualMean;
-        meanInfectiousPeriod.setParameterValue(0, newParameterValue);
-        return NormalDistribution.pdf(newParameterValue, actualMean, Math.sqrt(variance));
     }
 
 }

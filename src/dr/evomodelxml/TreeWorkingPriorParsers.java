@@ -99,7 +99,7 @@ public class TreeWorkingPriorParsers {
             return new ConstantLikelihood(-logPDF);*/
     		
     		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-    		System.err.println(tree);
+    		//System.err.println(tree);
     		return new CoalescentConstantLikelihood(tree);
     		
     	}
@@ -189,7 +189,9 @@ public class TreeWorkingPriorParsers {
     		
     		double logL = 0.0;
     		for (int i = 0; i < test.getDimension(); i++) {
-    			if (test.getLineageCount(i) > 1) {
+    			if (i == (test.getDimension()-1)) {
+    				logL += Math.log(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2) - popSize;
+    			} else if (test.getLineageCount(i) - test.getLineageCount(i+1) > 0) {
     				logL += Math.log(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2) - popSize;
     			}
     			logL -= test.getStatisticValue(i)*Math.exp(-popSize)*(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2);

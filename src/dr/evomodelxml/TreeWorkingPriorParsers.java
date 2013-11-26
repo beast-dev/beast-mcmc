@@ -34,6 +34,7 @@ import jebl.math.Binomial;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.TreeTrace;
 import dr.evomodel.coalescent.CoalescentConstantLikelihood;
+import dr.evomodel.coalescent.CoalescentTreeIntervalStatistic;
 import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ConditionalCladeProbability;
@@ -66,6 +67,7 @@ public class TreeWorkingPriorParsers {
     public static final String COALESCENT_CONSTANT_LIKELIHOOD = "coalescentConstantLikelihood";
     public static final String CONDITIONAL_CLADE_REFERENCE_PRIOR = "conditionalCladeProbability";
     public static final String COALESCENT_HEIGHTS_REFERENCE_PRIOR = "coalescentHeightsReferencePrior";
+    public static final String PRODUCT_OF_EXPONENTIALS = "productOfExponentials";
     public final static String BURNIN = "burnin";
     public final static String EPSILON = "epsilon";
     public static final String PARAMETER_COLUMN = "parameterColumn";
@@ -97,6 +99,7 @@ public class TreeWorkingPriorParsers {
             return new ConstantLikelihood(-logPDF);*/
     		
     		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+    		System.err.println(tree);
     		return new CoalescentConstantLikelihood(tree);
     		
     	}
@@ -158,6 +161,63 @@ public class TreeWorkingPriorParsers {
     	
     };
 
+    /**
+     * Parser that aims to mimic the behaviour of the GMRF Skyride for fixed log population sizes.
+     */
+    public static XMLObjectParser PRODUCT_OF_EXPONENTIALS_PARSER = new AbstractXMLObjectParser() {
+    	
+    	public String getParserName() {
+            return PRODUCT_OF_EXPONENTIALS;
+        }
+    	
+    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    		
+    		double popSize = xo.getDoubleAttribute("popSize");
+    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+    		
+    		/*TreeIntervals intervals = new TreeIntervals(treeModel);
+    		System.err.println("count: " + intervals.getIntervalCount());
+    		for (int i = 0; i < intervals.getIntervalCount(); i++) {
+    			System.err.println(intervals.getLineageCount(i));
+    		}*/
+    		
+    		CoalescentTreeIntervalStatistic test = new CoalescentTreeIntervalStatistic(treeModel);
+    		/*System.err.println("count: " + test.getDimension());
+    		for (int i = 0; i < test.getDimension(); i++) {
+    			System.err.println(test.getLineageCount(i));
+    		}*/
+    		
+    		double logL = 0.0;
+    		for (int i = 0; i < test.getDimension(); i++) {
+    			if (test.getLineageCount(i) > 1) {
+    				logL += Math.log(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2) - popSize;
+    			}
+    			logL -= test.getStatisticValue(i)*Math.exp(-popSize)*(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2);
+    		}
+    		//System.err.println(logL);
+    		return new ConstantLikelihood(logL);
+    		
+    	}
+    	
+    	public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+        		AttributeRule.newDoubleRule("popSize"),
+        		new ElementRule(TreeModel.class)
+        };
+
+        public String getParserDescription() {
+            return "Calculates a product of exponentials based on a (set of) fixed log population sizes.";
+        }
+
+        public Class getReturnType() {
+        	return Likelihood.class;
+        }
+    	
+    };
+    
     /**
      * A special parser that reads coalescent heights and builds reference priors for them.
      */
@@ -287,26 +347,12 @@ public class TreeWorkingPriorParsers {
                        }
                    }
 
-				/*for (int i = 0; i < flags.length; i++) {
-                	if (flags[i]) {
-                    	shapes[i] = 1.0;
-                    	scales[i] = 60.9194 / (double) (Binomial.choose2(9 - i));
-                	}
-            	}*/
-				
-				//set all flags to true, except for the first one
-				for (int i = 1; i < flags.length; i++) {
-					flags[i] = true;
-					
-				}
 				System.err.println("Columns to be evaluated:");
 				for (int i = 0; i < flags.length; i++) {
 					if (flags[i]) {
 						System.err.println("Column " + i);
 					}
 				}
-
-				//System.err.println("4 choose 2 = " + Binomial.choose2(4));
 
 				MultivariateGammaDistribution mvgd = new MultivariateGammaDistribution(shapes, scales, flags);
             
@@ -415,7 +461,7 @@ public class TreeWorkingPriorParsers {
             //Coalescent.TREEPRIOR = true;
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            if (false) {
+            
                 String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
                 try {
@@ -461,18 +507,14 @@ public class TreeWorkingPriorParsers {
                 } catch (ImportException ie) {
                     throw new XMLParseException(ie.getMessage());
                 }
-            }
 
-            final int nTaxa = treeModel.getExternalNodeCount();
+            /*final int nTaxa = treeModel.getExternalNodeCount();
             double logPDF = 0.0;
             for (int i = nTaxa; i > 2; --i) {
                 logPDF += Math.log(Binomial.choose2(i));
             }
 
-//            System.err.println("logPDF = " + logPDF);
-//            System.exit(-1);
-
-            return new ConstantLikelihood(-logPDF);
+            return new ConstantLikelihood(-logPDF);*/
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

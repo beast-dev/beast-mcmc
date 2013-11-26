@@ -61,7 +61,7 @@ public class SimulationPanel extends JPanel implements Exportable {
     private JCheckBox useParallel;
 
     //Combo boxes
-    private JComboBox<?> outputFormat;
+    private JComboBox outputFormat;
 	private ComboBoxModel outputFormatModel;
     
     @SuppressWarnings({ "unchecked" })

@@ -62,7 +62,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Parameter virusAviditiesParameter,
             DataTable<String[]> dataTable,
             boolean mergeSerumIsolates,
-            double intervalWidth) {
+            double intervalWidth,
+            double driftInitialLocations) {
 
         super(ANTIGENIC_LIKELIHOOD);
 
@@ -206,7 +207,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
 
-        setupInitialLocations();
+        setupInitialLocations(driftInitialLocations);
 
         makeDirty();
     }
@@ -333,17 +334,33 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return -1;
     }
 
-    private void setupInitialLocations() {
+    private void setupInitialLocations(double drift) {
         for (int i = 0; i < virusLocationsParameter.getParameterCount(); i++) {
-            for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
-                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+            double offset = 0.0;
+            if (virusOffsetsParameter != null) {
+                offset = drift * virusOffsetsParameter.getParameterValue(i);
+            }
+            double r = MathUtils.nextGaussian() + offset;
+            virusLocationsParameter.getParameter(i).setParameterValue(0, r);
+            if (mdsDimension > 1) {
+                for (int j = 1; j < mdsDimension; j++) {
+                    r = MathUtils.nextGaussian();
+                    virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+                }
             }
         }
         for (int i = 0; i < serumLocationsParameter.getParameterCount(); i++) {
-            for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
-                serumLocationsParameter.getParameter(i).setParameterValue(j, r);
+            double offset = 0.0;
+            if (serumOffsetsParameter != null) {
+                offset = drift * serumOffsetsParameter.getParameterValue(i);
+            }
+            double r = MathUtils.nextGaussian() + offset;
+            serumLocationsParameter.getParameter(i).setParameterValue(0, r);
+            if (mdsDimension > 1) {
+                for (int j = 1; j < mdsDimension; j++) {
+                    r = MathUtils.nextGaussian();
+                    serumLocationsParameter.getParameter(i).setParameterValue(j, r);
+                }
             }
         }
     }
@@ -639,6 +656,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public final static String SERUM_LOCATIONS = "serumLocations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MERGE_SERUM_ISOLATES = "mergeSerumIsolates";
+        public static final String DRIFT_INITIAL_LOCATIONS = "driftInitialLocations";
         public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
         public static final String LOCATION_DRIFT = "locationDrift";
@@ -669,6 +687,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             double intervalWidth = 0.0;
             if (xo.hasAttribute(INTERVAL_WIDTH)) {
                 intervalWidth = xo.getDoubleAttribute(INTERVAL_WIDTH);
+            }
+
+            double driftInitialLocations = 0.0;
+            if (xo.hasAttribute(DRIFT_INITIAL_LOCATIONS)) {
+                driftInitialLocations = xo.getDoubleAttribute(DRIFT_INITIAL_LOCATIONS);
             }
 
             CompoundParameter tipTraitParameter = null;
@@ -732,7 +755,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     virusAviditiesParameter,
                     assayTable,
                     mergeSerumIsolates,
-                    intervalWidth);
+                    intervalWidth,
+                    driftInitialLocations);
 
             Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 
@@ -757,6 +781,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(MERGE_SERUM_ISOLATES, true, "Should multiple serum isolates from the same strain have their locations merged (defaults to false)"),
                 AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
+                AttributeRule.newDoubleRule(DRIFT_INITIAL_LOCATIONS, true, "The degree to drift initial virus and serum locations, defaults to 0.0"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "Optional parameter of tip locations from the tree", true),
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "Parameter of locations of all virus"),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "Parameter of locations of all sera"),

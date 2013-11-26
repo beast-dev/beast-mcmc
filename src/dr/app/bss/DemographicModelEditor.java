@@ -33,7 +33,7 @@ public class DemographicModelEditor {
 	
 	// Settings
 	private OptionsPanel optionPanel;
-	private JComboBox<String> demographicCombo;
+	private JComboBox demographicCombo;
 	private RealNumberField[] demographicParameterFields;
 
 	//Buttons
@@ -53,7 +53,7 @@ public class DemographicModelEditor {
 		window = new JDialog(owner, "Setup tree model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
-		demographicCombo = new JComboBox<String>();
+		demographicCombo = new JComboBox();
 		demographicCombo.setOpaque(false);
 
 		for (String demographicModel : PartitionData.demographicModels) {

@@ -10,7 +10,7 @@ import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
 
 @SuppressWarnings("serial")
-public class DisabledItemsComboBox extends JComboBox<Object> {
+public class DisabledItemsComboBox extends JComboBox {
 
 	private Set<Object> disabledItems = new HashSet<Object>();
 

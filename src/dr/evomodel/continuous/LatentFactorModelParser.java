@@ -22,9 +22,9 @@ public abstract class LatentFactorModelParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        Parameter data;
-        Parameter factor;
-        Parameter latent;
+        Parameter data = null;
+        Parameter factor  = null;
+        Parameter latent  = null;
 
 
         int factors=xo.getAttribute(NUMBER_OF_FACTORS, 4);

@@ -806,7 +806,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (driftModels != null && driftModels.contains(model)) {
-            updateAllNodes();
+            if (cacheBranches) {
+                updateAllNodes();
+            } else {
+                likelihoodKnown = false;
+            }
         } else {
             super.handleModelChangedEvent(model, object, index);
         }

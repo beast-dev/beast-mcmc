@@ -1,7 +1,7 @@
 /*
  * LeafTraitExtractorParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml;
+package dr.evomodelxml.continuous;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.tree.TreeModelParser;

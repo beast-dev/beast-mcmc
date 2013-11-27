@@ -26,17 +26,26 @@
 package dr.app.bss.test;
 
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.app.beagle.evomodel.newtreelikelihood.NewBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.newtreelikelihood.SiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.app.bss.Utils;
+import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.datatype.AminoAcids;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.GeneticCode;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
@@ -65,11 +74,12 @@ public class BeagleSeqSimTest {
         int N = 1;
         for (int i = 0; i < N; i++) {
 //			simulateTopology();
-            simulateOnePartition();
+//            simulateOnePartition();
 //			simulateTwoPartitions();
 //			simulateThreePartitions(i, N);
 //			simulateAminoAcid();
-
+        	simulateCodon();
+        	
         }
         long toc = System.currentTimeMillis();
 
@@ -321,17 +331,10 @@ public class BeagleSeqSimTest {
     static void simulateThreePartitions(int i, int N) {
 
         try {
-/*
-        	>SimSeq1   
-        	GCAGGTCTCT
-        	>SimSeq2   
-        	CATCGGAACT
-        	>SimSeq3   
-        	CACCTTTACT
-*/
-            MathUtils.setSeed(666);
 
-//            System.out.println("Test case 4: simulateThreePartitions");
+        	MathUtils.setSeed(666);
+
+            System.out.println("Test case 3: simulateThreePartitions");
 
             int sequenceLength = 100000;
             ArrayList<Partition> partitionsList = new ArrayList<Partition>();
@@ -415,11 +418,12 @@ public class BeagleSeqSimTest {
 
     }// END: simulateThreePartitions
 
+    
     static void simulateAminoAcid() {
 
         try {
 
-            System.out.println("Test case 1: simulateAminoAcid");
+            System.out.println("Test case 4: simulateAminoAcid");
 
             MathUtils.setSeed(666);
 
@@ -486,4 +490,106 @@ public class BeagleSeqSimTest {
 
     }// END: simulateAminoAcid
 
+    
+    static void simulateCodon() {
+    	
+        try {
+
+        	boolean calculateLikelihood = true;
+        	
+            System.out.println("Test case 5: simulateAminoAcid");
+
+            MathUtils.setSeed(666);
+
+            int sequenceLength = 10;
+            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+
+            // create tree
+            NewickImporter importer = new NewickImporter(
+                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+            Tree tree = importer.importTree(null);
+            TreeModel treeModel = new TreeModel(tree);
+
+            // create site model
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+                    "siteModel");
+
+            // create branch rate model
+            BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+            // create Frequency Model
+          Parameter freqs = new Parameter.Default(new double[]{
+        	0.0163936, // 
+        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+            0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344 //
+        	});
+            FrequencyModel freqModel = new FrequencyModel(Codons.UNIVERSAL,
+                    freqs);
+
+            // create substitution model
+            Parameter alpha = new Parameter.Default(1, 10);
+            Parameter beta = new Parameter.Default(1, 5);
+            MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel);
+            
+            HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
+
+            // create partition
+            Partition partition1 = new Partition(treeModel, //
+                    substitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    0, // from
+                    sequenceLength - 1, // to
+                    1 // every
+            );
+
+            partitionsList.add(partition1);
+
+            // feed to sequence simulator and generate data
+            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
+                    partitionsList);
+
+            Alignment alignment = simulator.simulate(simulateInPar);
+            
+            System.out.println(alignment.toString());
+
+			if (calculateLikelihood) {
+
+				// NewBeagleTreeLikelihood nbtl = new
+				// NewBeagleTreeLikelihood(alignment, treeModel,
+				// substitutionModel, (SiteModel) siteRateModel,
+				// branchRateModel, null, false,
+				// PartialsRescalingScheme.DEFAULT);
+
+				
+				ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE, GeneticCode.UNIVERSAL, alignment);
+				BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(convert, //
+						treeModel, //
+						substitutionModel, //
+						siteRateModel, //
+						branchRateModel, //
+						null, //
+						false, //
+						PartialsRescalingScheme.DEFAULT);
+
+				System.out.println("likelihood = " + nbtl.getLogLikelihood());
+
+			}
+            
+        } catch (Exception e) {
+
+            e.printStackTrace();
+            System.exit(-1);
+
+        } // END: try-catch
+
+   	
+   }//END: simulateCodon
+    
+    
+    
 }// END: class

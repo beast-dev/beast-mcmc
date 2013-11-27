@@ -40,4 +40,4 @@ h1. TODO
 * command line interface
   - complex argument for partitions 
 * simulating indels  
-
+* simulate coalescent with heights, check if taxa heights are correctly reconstructed

@@ -31,6 +31,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.*;
 
@@ -132,6 +134,10 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     }
 
     public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip, boolean unique) {
+        this(alignment, taxa, from, to, every, strip, unique, null);
+    }
+
+    public SitePatterns(Alignment alignment, TaxonList taxa, int from, int to, int every, boolean strip, boolean unique, int[] constantSiteCounts) {
         if (taxa != null) {
             SimpleAlignment a = new SimpleAlignment();
 
@@ -146,7 +152,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         this.strip = strip;
         this.unique = unique;
 
-        setPatterns(alignment, from, to, every);
+        setPatterns(alignment, from, to, every, constantSiteCounts);
     }
 
     /**
@@ -176,7 +182,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     public SitePatterns(SiteList siteList, int from, int to, int every, boolean strip, boolean unique) {
         this.strip = strip;
         this.unique = unique;
-        setPatterns(siteList, from, to, every);
+        setPatterns(siteList, from, to, every, null);
     }
 
     /**
@@ -221,7 +227,7 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
     /**
      * sets up pattern list using an alignment
      */
-    public void setPatterns(SiteList siteList, int from, int to, int every) {
+    public void setPatterns(SiteList siteList, int from, int to, int every, int[] constantSiteCounts) {
 
         this.siteList = siteList;
         this.from = from;
@@ -251,12 +257,24 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         weights = new double[siteCount];
 
         invariantCount = 0;
-        int[] pattern;
+
+        if (constantSiteCounts != null) {
+            if (constantSiteCounts.length != siteList.getStateCount()) {
+                throw new IllegalArgumentException("Constant site count array length doesn't equal the number of states");
+            }
+            for (int i = 0; i < siteList.getStateCount(); i++) {
+                int[] pattern = new int[siteList.getPatternLength()];
+                for (int j = 0; j < siteList.getPatternLength(); j++) {
+                    pattern[j] = i;
+                }
+                addPattern(pattern, constantSiteCounts[i]);
+            }
+        }
 
         int site = 0;
 
         for (int i = from; i <= to; i += every) {
-            pattern = siteList.getSitePattern(i);
+            int[] pattern = siteList.getSitePattern(i);
 
             if (!strip || !isInvariant(pattern) ||
                     (!isGapped(pattern) &&
@@ -327,23 +345,32 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      * @return the index of the pattern in the pattern list
      */
     private int addPattern(int[] pattern) {
+        return addPattern(pattern, 1);
+    }
+
+    /**
+     * adds a pattern to the pattern list with the given weight
+     *
+     * @return the index of the pattern in the pattern list
+     */
+    private int addPattern(int[] pattern, int weight) {
 
         for (int i = 0; i < patternCount; i++) {
 
             if (unique && comparePatterns(patterns[i], pattern)) {
 
-                weights[i] += 1.0;
+                weights[i] += weight;
                 return i;
             }
         }
 
         if (isInvariant(pattern)) {
-            invariantCount++;
+            invariantCount += weight;
         }
 
         int index = patternCount;
         patterns[index] = pattern;
-        weights[index] = 1.0;
+        weights[index] = weight;
         patternCount++;
 
         return index;

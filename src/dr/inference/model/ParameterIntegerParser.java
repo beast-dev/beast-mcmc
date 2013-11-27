@@ -54,7 +54,7 @@ public class ParameterIntegerParser extends dr.xml.AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int[] values = new int[0];
+        int[] values = null;
 //        double[] uppers;
 //        double[] lowers;
 
@@ -177,7 +177,7 @@ public class ParameterIntegerParser extends dr.xml.AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerArrayRule(VALUE, true),
-            AttributeRule.newIntegerRule(DIMENSION),
+            AttributeRule.newIntegerRule(DIMENSION, true),
 //            AttributeRule.newDoubleArrayRule(UPPER, true),
 //            AttributeRule.newDoubleArrayRule(LOWER, true),
 //            new ElementRule(RANDOMIZE, new XMLSyntaxRule[] {

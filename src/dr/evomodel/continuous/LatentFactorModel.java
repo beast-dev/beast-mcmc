@@ -34,12 +34,19 @@ import dr.inference.model.Parameter;
 
 public class LatentFactorModel {
     private Parameter data;
-    private Parameter factor;
-    private Parameter latent;
+    private Parameter factors;
+    private Parameter loadings;
 
-    public LatentFactorModel(Parameter dataIn, Parameter factorIn, Parameter latentIn) {
+    public LatentFactorModel(){
+        data=null;
+        factors=null;
+        loadings=null;
+    }
+
+    public LatentFactorModel(Parameter dataIn, Parameter factorsIn, Parameter loadingsIn) {
         data = dataIn;
-        factor = factorIn;
-        latent = latentIn;
+        factors = factorsIn;
+        loadings = loadingsIn;
+        System.out.println("I'm here!");
     }
 }

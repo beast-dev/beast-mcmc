@@ -39,40 +39,31 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public final static String NUMBER_OF_FACTORS = "factorNumber";
     public final static String FACTORS = "factors";
     public final static String DATA = "data";
-    public final static String LATENT = "latent";
+    public final static String LOADINGS = "loadings";
 
     public String getParserName() {
         return LATENT_FACTOR_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-//        Parameter data = null;
-//        Parameter factor  = null;
 //        Parameter latent  = null;
-
-        Parameter factor = (Parameter) xo.getChild(FACTORS).getChild(Parameter.class);
-
-//        int factors=xo.getAttribute(NUMBER_OF_FACTORS, 4);
-//        XMLObject dataXML= xo.getChild(DATA);
-//        if (dataXML.getChild(0) instanceof Parameter) {
-//            data = (Parameter) dataXML.getChild(Parameter.class);
-//        }
-//        else {
-//            data = new Parameter.Default(dataXML.getDoubleChild(0));
-//        }
-//exit if there's no parameter? What happens?
+        Parameter factors = (Parameter) xo.getChild(FACTORS).getChild(Parameter.class);
+        Parameter data = (Parameter) xo.getChild(DATA).getChild(Parameter.class);
+        Parameter loadings = (Parameter) xo.getChild(LOADINGS).getChild(Parameter.class);
 
 //        int factors=xo.getAttribute(NUMBER_OF_FACTORS, 4);
-//        XMLObject dataXML= xo.getChild(DATA);
-//        if (dataXML.getChild(0) instanceof Parameter) {
-//            data = (Parameter) dataXML.getChild(Parameter.class);
-//        }
-        return new LatentFactorModel(null, factor, null);
+        return new LatentFactorModel(data, factors, loadings);
     }
 
     private static final XMLSyntaxRule[] rules = {
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class),
+            }),
+            new ElementRule(DATA, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
+            new ElementRule(LOADINGS, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
             })
     };
 
@@ -89,7 +80,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserDescription() {
-        return "TODO"; // TODO
+        return "Sets up a latent factor model, with starting guesses for the loadings and factor matrices as well as the data for the factor analysis";
     }
 
     @Override

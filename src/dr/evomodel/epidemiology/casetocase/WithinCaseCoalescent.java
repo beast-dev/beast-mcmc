@@ -1,5 +1,6 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.AbstractCoalescentLikelihood;
 import dr.evomodel.tree.TreeModel;
@@ -15,15 +16,14 @@ import dr.inference.model.Parameter;
 public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public static final String WITHIN_CASE_COALSECENT = "withinCaseCoalescent";
-    private AbstractCoalescentLikelihood coalescentLikelihood;
+    private DemographicFunction demoFunct;
 
     public WithinCaseCoalescent(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                     Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
                                     boolean extended, boolean normalise, boolean jeffreys)
             throws TaxonList.MissingTaxonException {
-        super(WITHIN_CASE_COALSECENT, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions,
+        super(WITHIN_CASE_COALSECENT, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, null,
                 maxFirstInfToRoot, extended, normalise, jeffreys);
     }
-
 
 }

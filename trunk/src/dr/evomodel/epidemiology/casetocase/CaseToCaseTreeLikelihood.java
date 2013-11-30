@@ -297,6 +297,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return cases;
     }
 
+    public boolean hasLatentPeriods(){
+        return hasLatentPeriods;
+    }
+
     /* Get the date of the last tip */
 
     private Date getLatestTaxonDate(){
@@ -641,6 +645,17 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         HashMap<Integer, Double> out = new HashMap<Integer, Double>();
         for(AbstractCase thisCase : cases.getCases()){
             out.put(cases.getCaseIndex(thisCase), getInfectionTime(thisCase));
+        }
+        return out;
+    }
+
+    public HashMap<Integer, Double> getInfnsTimesMap(){
+        if(infectiousTimes==null){
+            infectiousTimes = getInfectiousTimes(branchMap);
+        }
+        HashMap<Integer, Double> out = new HashMap<Integer, Double>();
+        for(AbstractCase thisCase : cases.getCases()){
+            out.put(cases.getCaseIndex(thisCase), getInfectiousTime(thisCase));
         }
         return out;
     }
@@ -1326,6 +1341,14 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public double[] getInfectiousTimes(){
         return infectiousTimes;
+    }
+
+    public double getInfectiousTime(AbstractCase thisCase){
+        return getInfectiousTime(cases.getCaseIndex(thisCase));
+    }
+
+    public double getInfectiousTime(int caseIndex){
+        return infectiousTimes[caseIndex];
     }
 
     public double getLatentPeriod(AbstractCase thisCase, AbstractCase[] branchMap){

@@ -33,6 +33,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private boolean hasLatentPeriods;
     private HashMap<Integer, Double> infectionTimes;
     private HashMap<Integer, Double> storedInfectionTimes;
+    private HashMap<Integer, Double> infectiousTimes;
+    private HashMap<Integer, Double> storedInfectiousTimes;
     private IntegrableUnivariateFunction probFunct;
     private boolean likelihoodKnown;
     private boolean storedLikelihoodKnown;
@@ -80,6 +82,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
         infectionTimes = treeLikelihood.getInfTimesMap();
+        if(treeLikelihood.hasLatentPeriods()){
+            infectiousTimes = treeLikelihood.getInfnsTimesMap();
+        } else {
+            infectiousTimes = infectionTimes;
+        }
         if(spatialKernal!=null && integrateToInfinity){
             probFunct = new InnerIntegralTransformed(new InnerIntegral(steps), steps);
         } else {
@@ -115,6 +122,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         storedTreeLogProb = treeLogProb;
         storedTreeProbKnown = treeProbKnown;
         storedInfectionTimes = new HashMap<Integer, Double>(infectionTimes);
+        if(treeLikelihood.hasLatentPeriods()){
+            storedInfectiousTimes = new HashMap<Integer, Double>(infectiousTimes);
+        }
         storedSortedCases = sortedCases;
         storedLastTimesToInfect = lastTimesToInfect;
     }
@@ -129,6 +139,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         normalisation = storedNormalisation;
         normalisationKnown = storedNormalisationKnown;
         infectionTimes = storedInfectionTimes;
+        if(treeLikelihood.hasLatentPeriods()){
+            infectiousTimes = storedInfectiousTimes;
+        }
         sortedCases = storedSortedCases;
         lastTimesToInfect = storedLastTimesToInfect;
     }
@@ -154,6 +167,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             double lambda = transmissionRate.getParameterValue(0);
             if(!treeProbKnown){
                 infectionTimes = treeLikelihood.getInfTimesMap();
+                if(treeLikelihood.hasLatentPeriods()){
+                    infectiousTimes = treeLikelihood.getInfnsTimesMap();
+                } else {
+                    infectiousTimes = infectionTimes;
+                }
             }
             if(!transProbKnown){
                 transLogProb = (N-1)*Math.log(lambda) + Math.log(aAlpha(kernelAlpha.getParameterValue(0)))
@@ -215,14 +233,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         lastTimesToInfect = new double[outbreak.size()][outbreak.size()];
         for(int i=0; i<outbreak.size(); i++){
             for(int j=0; j<outbreak.size(); j++){
-                if (infectionTimes.get(i) > infectionTimes.get(j)){
+                if (infectiousTimes.get(i) > infectionTimes.get(j)){
                     lastTimesToInfect[i][j] = Double.NEGATIVE_INFINITY;
                 } else {
                     lastTimesToInfect[i][j] = Math.min(infectionTimes.get(j), sortedCases.get(i).getCullTime());
                 }
             }
         }
-
     }
 
     private void sortCases(){
@@ -244,14 +261,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             for(int j=0; j<i; j++){
                 AbstractCase possibleInfector = sortedCases.get(j);
                 int possibleInfectorIndex = outbreak.getCaseIndex(possibleInfector);
-                double endOfWindow = lastTimesToInfect[possibleInfectorIndex][infectedIndex];
-                if(DEBUG && endOfWindow==Double.NEGATIVE_INFINITY){
-                    throw new RuntimeException("Something's gone wrong with case sorting");
-                }
+                if(!treeLikelihood.hasLatentPeriods() ||
+                        infectiousTimes.get(possibleInfectorIndex)<infectionTimes.get(infectedIndex)){
+                    double endOfWindow = lastTimesToInfect[possibleInfectorIndex][infectedIndex];
+                    if(DEBUG && endOfWindow==Double.NEGATIVE_INFINITY){
+                        throw new RuntimeException("Something's gone wrong with case sorting");
+                    }
 
-                total += (endOfWindow - infectionTimes.get(possibleInfectorIndex))
-                        * outbreak.getKernelValue(infected, possibleInfector, spatialKernel, alpha);
-            }
+                    total += (endOfWindow - infectiousTimes.get(possibleInfectorIndex))
+                            * outbreak.getKernelValue(infected, possibleInfector, spatialKernel, alpha);
+
+}             }
         }
         return total;
     }

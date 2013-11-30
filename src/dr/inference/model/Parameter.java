@@ -624,6 +624,7 @@ public interface Parameter extends Statistic, Variable<Double> {
             newValues[index] = value;
             System.arraycopy(values, index, newValues, index + 1, n - index);
             values = newValues;
+            storedValues = null;
             fireParameterChangedEvent(index, Parameter.ChangeType.ADDED);
         }
 
@@ -643,7 +644,7 @@ public interface Parameter extends Statistic, Variable<Double> {
             System.arraycopy(values, 0, newValues, 0, index);
             System.arraycopy(values, index, newValues, index - 1, n - index);
             values = newValues;
-
+            storedValues = null;
             fireParameterChangedEvent(index, Parameter.ChangeType.REMOVED);
             return value;
         }

@@ -44,25 +44,32 @@ extends AbstractModel
 //extends AbstractBranchRateModel 
 implements BranchModel {
 
-	private Parameter rateParameter;
+	private Parameter uParameter;
 	
 	private Map<NodeRef, Mapping> nodeMap = new HashMap<NodeRef, Mapping>();
 	private SubstitutionModel substModel;
 	private boolean setupMapping = true;
 	
-	private CountableBranchCategoryProvider rateCategories; 
+	private CountableBranchCategoryProvider uCategories; 
 	private TreeModel treeModel;
 	private FrequencyModel freqModel;
 	
-	public BranchSpecific(TreeModel treeModel, SubstitutionModel substModel,CountableBranchCategoryProvider rateCategories) {
+	public BranchSpecific(TreeModel treeModel, SubstitutionModel substModel, CountableBranchCategoryProvider uCategories
+			, Parameter uParameter
+			) {
 		
 		super("");
 		
 		this.treeModel = treeModel;
 		this.substModel = substModel;
-		this.rateCategories = rateCategories;
+		this.uCategories = uCategories;
+		
+		
+		this.uParameter = uParameter;
 		
 		this.freqModel = substModel.getFrequencyModel();
+		
+		
 		
 		
 	}
@@ -126,14 +133,15 @@ implements BranchModel {
 		
 		//form product? or draw from binomial for alpha and beta?
 		
-		int rateCategory = rateCategories.getBranchCategory(treeModel, branch);
-        double value = rateParameter.getParameterValue(rateCategory);
+		int uCategory = uCategories.getBranchCategory(treeModel, branch);
+        double uValue = uParameter.getParameterValue(uCategory);
         
-        Parameter alphaParameter = new Parameter.Default(1,   ((MG94CodonModel) substModel).getAlpha() * value);
-        Parameter betaParameter = new Parameter.Default(1,   ((MG94CodonModel) substModel).getBeta() * value);
+        Parameter alphaParameter = new Parameter.Default(1,   ((MG94CodonModel) substModel).getAlpha() * uValue);
+        Parameter betaParameter = new Parameter.Default(1,   ((MG94CodonModel) substModel).getBeta() * uValue);
         
-//		codonModel = new MG94CodonModel(codonDataType, alphaParameter, betaParameter, freqModel);
+        substModel = new MG94CodonModel(Codons.UNIVERSAL, alphaParameter, betaParameter, freqModel);
 		
+        getSubstitutionModels();
         
 		nodeMap.put(branch, new Mapping() {
 			@Override
@@ -151,8 +159,6 @@ implements BranchModel {
 	@Override
 	public List<SubstitutionModel> getSubstitutionModels() {
 		List<SubstitutionModel> list = new ArrayList<SubstitutionModel>();
-		
-		
 		list.add( substModel);
 		
 		return list;
@@ -165,8 +171,7 @@ implements BranchModel {
 
 	@Override
 	public FrequencyModel getRootFrequencyModel() {
-		// TODO Auto-generated method stub
-		return null;
+		return getRootSubstitutionModel().getFrequencyModel();
 	}
 
 	@Override
@@ -268,10 +273,10 @@ implements BranchModel {
 		ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE,
 				GeneticCode.UNIVERSAL, alignment);
 		
-		Parameter ratesParameter = new Parameter.Default(1, 0.0001);
-		CountableBranchCategoryProvider rateCategories = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, ratesParameter);
+		Parameter uParam = new Parameter.Default(1, 0.0001);
+		CountableBranchCategoryProvider uCateg = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uParam);
 		
-		BranchSpecific branchSpecific = new BranchSpecific(tree, mg94, rateCategories);
+		BranchSpecific branchSpecific = new BranchSpecific(tree, mg94, uCateg, uParam);
 		
 		BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(convert, //
 				tree, //

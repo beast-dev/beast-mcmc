@@ -47,11 +47,35 @@ public class LatentFactorModel {
         data = new Matrix(dataIn.getParameterAsMatrix());
         factors = new Matrix(factorsIn.getParameterAsMatrix());
         loadings = new Matrix(loadingsIn.getParameterAsMatrix());
+        computeResiduals();
+        System.out.print(residual.toComponents()[0][0]);
+    }
+
+    public Matrix getData(){
+        Matrix ans=data;
+        return ans;
+    }
+
+    public Matrix getFactors(){
+        Matrix ans=factors;
+        return ans;
+    }
+
+    public Matrix getLoadings(){
+        Matrix ans=loadings;
+        return ans;
+    }
+
+    public Matrix getResidual(){
+        Matrix ans=residual;
+        return ans;
+    }
+
+    public void computeResiduals(){
         try {
             residual = data.subtract(loadings.product(factors));
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
-        System.out.print(residual.toComponents()[0][0]);
     }
 }

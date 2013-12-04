@@ -25,7 +25,10 @@
 
 package dr.evomodel.continuous;
 
-import dr.inference.model.Parameter;
+import dr.inference.model.MatrixParameter;
+import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
+
 
 /**
  * @author Max Tolkoff
@@ -33,20 +36,22 @@ import dr.inference.model.Parameter;
  */
 
 public class LatentFactorModel {
-    private Parameter data;
-    private Parameter factors;
-    private Parameter loadings;
+    private Matrix data;
+    private Matrix factors;
+    private Matrix loadings;
+    private Matrix residual;
 
-    public LatentFactorModel(){
-        data=null;
-        factors=null;
-        loadings=null;
-    }
 
-    public LatentFactorModel(Parameter dataIn, Parameter factorsIn, Parameter loadingsIn) {
-        data = dataIn;
-        factors = factorsIn;
-        loadings = loadingsIn;
-        System.out.println("I'm here!");
+
+    public LatentFactorModel(MatrixParameter dataIn, MatrixParameter factorsIn, MatrixParameter loadingsIn) {
+        data = new Matrix(dataIn.getParameterAsMatrix());
+        factors = new Matrix(factorsIn.getParameterAsMatrix());
+        loadings = new Matrix(loadingsIn.getParameterAsMatrix());
+        try {
+            residual = data.subtract(loadings.product(factors));
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        System.out.print(residual.toComponents()[0][0]);
     }
 }

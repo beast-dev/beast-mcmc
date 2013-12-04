@@ -32,44 +32,32 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
 
     public MatrixVectorProductParameter(MatrixParameter matrix, Parameter vector) {
         // TODO Check dimensions
-//        paramList = new ArrayList<Parameter>();
-//        paramList.add(matrix);
-//        paramList.add(vector);
         this.matrix = matrix;
         this.vector = vector;
 
-//        for (Parameter p : paramList) {
-//            p.addVariableListener(this);
-//        }
         matrix.addVariableListener(this);
         vector.addVariableListener(this);
     }
 
     public int getDimension() {
-//        return paramList.get(0).getDimension();
         return matrix.getRowDimension();
     }
 
+    public void setDimension(int dim) {
+        throwError("setDimension()");
+    }
+
     protected void storeValues() {
-//        for (Parameter p : paramList) {
-//            p.storeParameterValues();
-//        }
         matrix.storeParameterValues();
         vector.storeParameterValues();
     }
 
     protected void restoreValues() {
-//        for (Parameter p : paramList) {
-//            p.restoreParameterValues();
-//        }
         matrix.restoreParameterValues();
         vector.restoreVariableValues();
     }
 
     protected void acceptValues() {
-//        for (Parameter p : paramList) {
-//            p.acceptParameterValues();
-//        }
         matrix.acceptParameterValues();
         vector.acceptParameterValues();
     }
@@ -80,9 +68,6 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
 
     public double getParameterValue(int dim) {
         double value = 0.0;
-//        for (Parameter p : paramList) {
-//            value *= p.getParameterValue(dim);
-//        }
         for (int k = 0; k < matrix.getColumnDimension(); ++k) {
             value += matrix.getParameterValue(dim, k) * vector.getParameterValue(k);
         }
@@ -90,23 +75,25 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
     }
 
     public void setParameterValue(int dim, double value) {
-        throw new RuntimeException("Not implemented");
+        throwError("setParameterValue()");
     }
 
     public void setParameterValueQuietly(int dim, double value) {
-        throw new RuntimeException("Not implemented");
+        throwError("setParameterValueQuietly()");
     }
 
     public void setParameterValueNotifyChangedAll(int dim, double value) {
-        throw new RuntimeException("Not implemented");
+        throwError("setParameterValueNotifyChangedAll()");
+    }
+
+    private void throwError(String functionName) throws RuntimeException {
+        throw new RuntimeException("Object " + getId() + " is a deterministic function. Calling "
+                + functionName + " is not allowed");
     }
 
     public String getParameterName() {
         if (getId() == null) {
             StringBuilder sb = new StringBuilder("product");
-//            for (Parameter p : paramList) {
-//                sb.append(".").append(p.getId());
-//            }
             sb.append(".").append(matrix.getId());
             sb.append(".").append(vector.getId());
             setId(sb.toString());
@@ -119,13 +106,8 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
     }
 
     public Bounds<Double> getBounds() {
-        if (bounds == null) {
-//            return paramList.get(0).getBounds(); // TODO
-            throw new NullPointerException(getParameterName() + " parameter: Bounds not set");
-//            return vector.getBounds();
-        } else {
-            return bounds;
-        }
+        throwError("getBounds()");
+        return null;
     }
 
     public void addDimension(int index, double value) {
@@ -140,7 +122,6 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
         fireParameterChangedEvent(index, type);
     }
 
-    //    private final List<Parameter> paramList;
     private final MatrixParameter matrix;
     private final Parameter vector;
 

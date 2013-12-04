@@ -45,7 +45,9 @@ public class MatrixVectorProductParameterParser extends AbstractXMLObjectParser 
         MatrixParameter matrix = (MatrixParameter) xo.getChild(MATRIX).getChild(MatrixParameter.class);
         Parameter vector = (Parameter) xo.getChild(VECTOR).getChild(Parameter.class);
 
-        // TODO Check dimensions
+        if (matrix.getColumnDimension() != vector.getDimension()) {
+            throw new XMLParseException("Wrong matrix-vector dimensions in " + xo.getId());
+        }
 
         return new MatrixVectorProductParameter(matrix, vector);
     }

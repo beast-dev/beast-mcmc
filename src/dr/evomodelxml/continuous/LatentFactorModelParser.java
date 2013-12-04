@@ -27,7 +27,9 @@ package dr.evomodelxml.continuous;
 
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
+import dr.inference.model.MatrixParameter;
 
 /**
  * @author Max Tolkoff
@@ -47,9 +49,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 //        Parameter latent  = null;
-        Parameter factors = (Parameter) xo.getChild(FACTORS).getChild(Parameter.class);
-        Parameter data = (Parameter) xo.getChild(DATA).getChild(Parameter.class);
-        Parameter loadings = (Parameter) xo.getChild(LOADINGS).getChild(Parameter.class);
+        MatrixParameter factors = (MatrixParameter) xo.getChild(FACTORS).getChild(MatrixParameter.class);
+        MatrixParameter data = (MatrixParameter) xo.getChild(DATA).getChild(MatrixParameter.class);
+        MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
 
 //        int factors=xo.getAttribute(NUMBER_OF_FACTORS, 4);
         return new LatentFactorModel(data, factors, loadings);
@@ -57,13 +59,13 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     private static final XMLSyntaxRule[] rules = {
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class),
+                    new ElementRule(MatrixParameter.class),
             }),
             new ElementRule(DATA, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+                    new ElementRule(MatrixParameter.class)
             }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+                    new ElementRule(MatrixParameter.class)
             })
     };
 

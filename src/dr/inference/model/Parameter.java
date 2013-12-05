@@ -624,7 +624,6 @@ public interface Parameter extends Statistic, Variable<Double> {
             newValues[index] = value;
             System.arraycopy(values, index, newValues, index + 1, n - index);
             values = newValues;
-            storedValues = null;
             fireParameterChangedEvent(index, Parameter.ChangeType.ADDED);
         }
 
@@ -644,7 +643,6 @@ public interface Parameter extends Statistic, Variable<Double> {
             System.arraycopy(values, 0, newValues, 0, index);
             System.arraycopy(values, index, newValues, index - 1, n - index);
             values = newValues;
-            storedValues = null;
             fireParameterChangedEvent(index, Parameter.ChangeType.REMOVED);
             return value;
         }
@@ -680,7 +678,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         protected final void storeValues() {
             // no need to pay a price in a very common call for one-time rare usage
             //hasBeenStored = true;
-            if (storedValues == null) {
+            if (storedValues == null || storedValues.length != values.length) {
                 storedValues = new double[values.length];
             }
             System.arraycopy(values, 0, storedValues, 0, storedValues.length);

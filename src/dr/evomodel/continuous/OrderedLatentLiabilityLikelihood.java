@@ -53,14 +53,14 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
     public final static String ORDERED_LATENT_LIABILITY_LIKELIHOOD = "orderedLatentLiabilityLikelihood";
 
-    public OrderedLatentLiabilityLikelihood(TreeModel treeModel, PatternList patternList, CompoundParameter tipTraitParameter, CompoundParameter thresholdParameter, Parameter numClasses) {
+    public OrderedLatentLiabilityLikelihood(TreeModel treeModel, PatternList patternList, CompoundParameter tipTraitParameter, CompoundParameter thresholdParameter, Parameter numClasses, boolean isUnordered) {
         super(ORDERED_LATENT_LIABILITY_LIKELIHOOD);
         this.treeModel = treeModel;
         this.patternList = patternList;
         this.tipTraitParameter = tipTraitParameter;
         this.thresholdParameter = thresholdParameter;
         this.numClasses = numClasses;
-
+        this.isUnordered = isUnordered;
 
         addVariable(tipTraitParameter);
         addVariable(thresholdParameter);
@@ -158,11 +158,15 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
     protected double computeLogLikelihood() {
         boolean valid = true;
+
         for (int tip = 0; tip < tipData.length && valid; ++tip) {
             valid = validTraitForTip(tip);
 
 
         }
+
+
+
         if (valid) {
             return 0.0;
         } else {
@@ -174,6 +178,13 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         boolean valid = true;
         Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
         int[] data = tipData[tip];
+
+
+       if (!isUnordered){
+
+
+
+
         int threshNum = 0;
 
         for (int index = 0; index < data.length && valid; ++index) {
@@ -214,8 +225,128 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                 threshNum++;
             }
         }
+       }else{
+           int LLpointer = 0;
+
+           for (int index = 0; index < data.length && valid; ++index) {
+
+               int datum = data[index];
+               int dim = (int) numClasses.getParameterValue(index);
+
+
+               if (dim == 1.0) {
+                   valid = true;
+                   LLpointer++;
+               } else if (dim == 2.0) {
+
+                   double trait = oneTipTraitParameter.getParameterValue(LLpointer);
+
+
+                   if (trait == 0) {
+                       valid = true;
+                   } else {
+
+
+                       boolean positive = trait > 0.0;
+                       if (positive) {
+                           valid = (datum == 1.0);
+                       } else {
+                           valid = (datum == 0.0);
+                       }
+                   }
+                   LLpointer++;
+               } else {
+                   double[] trait = new double[dim];
+                   trait[0] = 0.0;
+                   for (int l=1; l<dim; l++){
+                       trait[l]=oneTipTraitParameter.getParameterValue(LLpointer+l-1);
+                   }
+
+                   valid=isMax(trait, datum);
+
+
+                   LLpointer += dim-1;
+
+
+               }
+           }
+       }
+
         return valid;
     }
+
+
+
+  /*
+    public boolean unorderedValidTraitForTip(int tip) {
+        boolean valid = true;
+        Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
+        int[] data = tipData[tip];
+        int LLpointer = 0;
+
+        for (int index = 0; index < data.length && valid; ++index) {
+
+            int datum = data[index];
+            int dim = (int) numClasses.getParameterValue(index);
+
+
+            if (dim == 1.0) {
+                valid = true;
+                LLpointer++;
+            } else if (dim == 2.0) {
+
+                double trait = oneTipTraitParameter.getParameterValue(LLpointer);
+
+
+                if (trait == 0) {
+                    valid = true;
+                } else {
+
+
+                    boolean positive = trait > 0.0;
+                    if (positive) {
+                        valid = (datum == 1.0);
+                    } else {
+                        valid = (datum == 0.0);
+                    }
+                }
+                LLpointer++;
+            } else {
+                double[] trait = new double[dim];
+                trait[0] = 0.0;
+                for (int l=1; l<dim; l++){
+                    trait[l]=oneTipTraitParameter.getParameterValue(LLpointer+l-1);
+                }
+
+                valid=isMax(trait, datum);
+
+
+                LLpointer += dim-1;
+
+
+            }
+        }
+        return valid;
+    }
+  */
+
+    private boolean isMax(double[] trait, int datum) {
+
+        boolean isMax = true;
+
+
+        for (int j = 0; j < trait.length && isMax; j++) {
+            isMax = (trait[datum] >= trait[j]);
+        }
+
+
+        return isMax;
+    }
+
+
+
+
+
 
     public double getNormalizationConstant(Distribution working) {
         return normalizationDelegate.getNormalizationConstant(working); // delegate to abstract Delegate
@@ -238,6 +369,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         public final static String TIP_TRAIT = "tipTrait";
         public final static String THRESHOLD_PARAMETER = "threshold";
         public final static String NUM_CLASSES = "numClasses";
+        public static final String IS_UNORDERED = "isUnordered";
+
 
         public String getParserName() {
             return ORDERED_LATENT_LIABILITY_LIKELIHOOD;
@@ -252,22 +385,30 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
             CompoundParameter thresholdParameter = (CompoundParameter) xo.getElementFirstChild(THRESHOLD_PARAMETER);
             Parameter numClasses = (Parameter) xo.getElementFirstChild(NUM_CLASSES);
+            boolean isUnorderd = xo.getAttribute(IS_UNORDERED,false);
 
 
             int numTaxa = treeModel.getTaxonCount();
             int numData = traitLikelihood.getNumData();
             int dimTrait = traitLikelihood.getDimTrait();
 
-            if (tipTraitParameter.getDimension() != numTaxa * numData * dimTrait) {
-                throw new XMLParseException("Tip trait parameter is wrong dimension in latent liability model");
+
+
+
+                if (tipTraitParameter.getDimension() != numTaxa * numData * dimTrait) {
+                    throw new XMLParseException("Tip trait parameter is wrong dimension in latent liability model");
+                }
+
+            if (!isUnorderd){
+
+                if (patternList.getPatternCount() != numData * dimTrait) {
+                    throw new XMLParseException("Data is wrong dimension in latent liability model");
+                }
             }
 
 
-            if (patternList.getPatternCount() != numData * dimTrait) {
-                throw new XMLParseException("Data is wrong dimension in latent liability model");
-            }
 
-            return new OrderedLatentLiabilityLikelihood(treeModel, patternList, tipTraitParameter, thresholdParameter, numClasses);
+            return new OrderedLatentLiabilityLikelihood(treeModel, patternList, tipTraitParameter, thresholdParameter, numClasses,isUnorderd);
         }
 
         //************************************************************************
@@ -289,6 +430,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                 new ElementRule(NUM_CLASSES, Parameter.class, "Number of multinomial classes in each dimention"),
                 new ElementRule(PatternList.class, "The binary tip data"),
                 new ElementRule(TreeModel.class, "The tree model"),
+                AttributeRule.newBooleanRule(IS_UNORDERED,true),
         };
 
         public Class getReturnType() {
@@ -304,13 +446,15 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         return citations;
     }
 
-    private TreeModel treeModel;
+    public TreeModel treeModel;
     private PatternList patternList;
-    private CompoundParameter tipTraitParameter;
+    public CompoundParameter tipTraitParameter;
     private CompoundParameter thresholdParameter;
-    private Parameter numClasses;
+    public Parameter numClasses;
 
+    private boolean isUnordered = false;
     private int[][] tipData;
+
 
     private boolean likelihoodKnown = false;
     private double logLikelihood;

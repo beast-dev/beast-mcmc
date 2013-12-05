@@ -187,7 +187,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
 
                         } else {
-                            double distance = getNativeDistance(traitLow, traitLow);
+                            double distance = getNativeDistance(traitLow, traitUp);
                             treeDistance += distance;
                             double dc = Math.pow(distance,2)/(4*time);
                             diffusionCoefficients.add(dc);
@@ -254,6 +254,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
         double sum = 0;
         for (int i = 0; i < traitDimension; i++) {
             sum += Math.pow((location2[i] - location1[i]),2);
+//            System.out.println(sum);
         }
         return Math.sqrt(sum);
     }
@@ -440,9 +441,8 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
             final double lowerHeight = xo.getAttribute(HEIGHT_LOWER, 0.0);
 
             double[] lowerHeights = null;
-            String lowerHeightsString = xo.getAttribute(HEIGHT_LOWER_SERIE, "absent");
-            if (!lowerHeightsString.equals("absent")) {
-                //System.out.println(sliceTimesFileString);
+            if (xo.hasAttribute(HEIGHT_LOWER_SERIE)){
+                String lowerHeightsString = xo.getStringAttribute(HEIGHT_LOWER_SERIE);
                 try {
                     lowerHeights = parseVariableLengthDoubleArray(lowerHeightsString);
                 } catch (Arguments.ArgumentException e) {

@@ -22,12 +22,16 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     protected GeneralDataType caseDataType;
     protected TaxonList taxa;
-    protected boolean hasLatentPeriods;
+    protected boolean hasLatentPeriods = false;
     protected boolean hasGeography;
     private final String CASE_NAME = "caseID";
     protected ArrayList<AbstractCase> cases;
 
     public AbstractOutbreak(String name, Taxa taxa){
+        this(name, taxa, false);
+    }
+
+    public AbstractOutbreak(String name, Taxa taxa, boolean hasLatentPeriods){
         super(name);
         this.taxa = taxa;
         ArrayList<String> caseNames = new ArrayList<String>();
@@ -35,6 +39,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
             caseNames.add((String)taxa.getTaxonAttribute(i, CASE_NAME));
         }
         caseDataType = new GeneralDataType(caseNames);
+        this.hasLatentPeriods = hasLatentPeriods;
     }
 
     public ArrayList<AbstractCase> getCases(){
@@ -202,9 +207,5 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         if (taxa == null) throw new RuntimeException("Patterns has no TaxonList");
         return taxa.iterator();
     }
-
-
-
-
 
 }

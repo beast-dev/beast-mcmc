@@ -31,24 +31,29 @@ public class CategoryOutbreak extends AbstractOutbreak {
     public static final String CATEGORY_OUTBREAK = "categoryOutbreak";
     private double[][] distances;
 
-    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography){
+    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods){
         super(name, taxa);
         cases = new ArrayList<AbstractCase>();
-        hasLatentPeriods = false;
+        this.hasLatentPeriods = hasLatentPeriods;
         this.hasGeography = hasGeography;
     }
 
-    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, ArrayList<AbstractCase> cases){
-        this(name, taxa, hasGeography);
+    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography){
+        this(name, taxa, hasGeography, false);
+    }
+
+    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
+                            ArrayList<AbstractCase> cases){
+        this(name, taxa, hasGeography, hasLatentPeriods);
         this.cases.addAll(cases);
     }
 
-    public CategoryOutbreak(Taxa taxa, boolean hasGeography){
-        this(CATEGORY_OUTBREAK, taxa, hasGeography);
+    public CategoryOutbreak(Taxa taxa, boolean hasGeography, boolean hasLatentPeriods){
+        this(CATEGORY_OUTBREAK, taxa, hasGeography, hasLatentPeriods);
     }
 
-    public CategoryOutbreak(Taxa taxa, boolean hasGeography, ArrayList<AbstractCase> cases){
-        this(CATEGORY_OUTBREAK, taxa, hasGeography, cases);
+    public CategoryOutbreak(Taxa taxa, boolean hasGeography, boolean hasLatentPeriods, ArrayList<AbstractCase> cases){
+        this(CATEGORY_OUTBREAK, taxa, hasGeography, hasLatentPeriods, cases);
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel infectiousDist,
@@ -273,6 +278,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         //for the outbreak
 
         public static final String HAS_GEOGRAPHY = "hasGeography";
+        public static final String HAS_LATENT_PERIODS = "hasLatentPeriods";
         public static final String INFECTIOUS_PERIOD_DISTRIBUTIONS = "infectiousPeriodDistributions";
 
         //for the cases
@@ -282,13 +288,16 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String EXAMINATION_DAY = "examinationDay";
         public static final String COORDINATES = "spatialCoordinates";
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
+        public static final String INFECTIOUS_TIME_POSITION = "infectiousTimePosition";
         public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodDistribution";
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
+            final boolean hasLatentPeriods = xo.hasAttribute(HAS_LATENT_PERIODS)
+                    && xo.getBooleanAttribute(HAS_LATENT_PERIODS);
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
-            CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography);
+            CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography, hasLatentPeriods);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(CategoryCase.CATEGORY_CASE)){
@@ -344,6 +353,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
                         "distribution from which the infectious period of this case is drawn"),
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
                         " along which the infection of this case occurs that it actually does occur"),
+                new ElementRule(INFECTIOUS_TIME_POSITION, Parameter.class, "Parameter taking a value between 0 and" +
+                        "1, indicating when from infection (0) to first caused infection (or cull if the cases" +
+                        "causes no infections) (1) the case became infectious", true),
                 new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true)
         };
 

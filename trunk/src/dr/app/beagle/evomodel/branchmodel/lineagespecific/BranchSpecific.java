@@ -58,82 +58,58 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BranchSpecific
-        extends AbstractModel
-//extends AbstractBranchRateModel 
-        implements BranchModel {
+@SuppressWarnings("serial")
+public class BranchSpecific extends AbstractModel implements BranchModel {
 
-    private Parameter uParameter;
-
-    private Map<NodeRef, Mapping> nodeMap = new HashMap<NodeRef, Mapping>();
-    private SubstitutionModel substModel;
     private boolean setupMapping = true;
-
-    private CountableBranchCategoryProvider uCategories;
+	
+    private Map<NodeRef, Mapping> nodeMap = new HashMap<NodeRef, Mapping>();
+    private List<SubstitutionModel> substitutionModels;
+//    private SubstitutionModel substitutionModel;
     private TreeModel treeModel;
-    private FrequencyModel freqModel;
 
-    public BranchSpecific(TreeModel treeModel, SubstitutionModel substModel, CountableBranchCategoryProvider uCategories
-            , Parameter uParameter
-    ) {
+    private CountableBranchCategoryProvider uCategoriesProvider;
+    private Parameter uCategoriesParameter;
+
+	public BranchSpecific(TreeModel treeModel, //
+//			SubstitutionModel substitutionModel, //
+			List<SubstitutionModel> substitutionModels,
+			CountableBranchCategoryProvider uCategoriesProvider, //
+			Parameter uCategoriesParameter//
+	) {
 
         super("");
 
         this.treeModel = treeModel;
-        this.substModel = substModel;
-        this.uCategories = uCategories;
+        this.substitutionModels = substitutionModels;
+        this.uCategoriesProvider = uCategoriesProvider;
+        this.uCategoriesParameter = uCategoriesParameter;
 
+//        substitutionModels = new ArrayList<SubstitutionModel>();
+//        FrequencyModel freqModel = substitutionModel.getFrequencyModel();
+//        
+//		for (int i = 0; i < uParameter.getDimension(); i++) {
+//        	
+//			double uValue = uParameter.getParameterValue(i);
+//			
+//			double alphaValue = ((MG94CodonModel) substitutionModel).getAlpha();
+//			double betaValue = ((MG94CodonModel) substitutionModel).getBeta();
+//			
+//			Parameter alphaParameter = new Parameter.Default(1, alphaValue * uValue );
+//			Parameter betaParameter = new Parameter.Default(1, betaValue * uValue );
+//			MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alphaParameter, betaParameter,
+//					freqModel);
+//        	
+//			substitutionModels.add(mg94);
+//			
+//        }
 
-        this.uParameter = uParameter;
-
-        this.freqModel = substModel.getFrequencyModel();
-
-
-    }
-
-//	public BranchSpecific(TreeModel treeModel, SubstitutionModel codonModel,CountableBranchCategoryProvider rateCategories) {
-//		
-//		super("");
-//		
-//		this.treeModel = treeModel;
-//		this.codonModel = codonModel;
-//
-//		this.rateCategories = rateCategories;
-//		
-//	}
-//	
-//	@Override
-//	public double getBranchRate(Tree tree, NodeRef node) {
-//		
-//		//form product? or draw from binomial for alpha and beta?
-//		
-//		int rateCategory = rateCategories.getBranchCategory(treeModel, node);
-//        double value = rateParameter.getParameterValue(rateCategory);
-//		
-//		
-//		return value;
-//	}
-//
-//	@Override
-//	protected void handleModelChangedEvent(Model model, Object object, int index) {
-//	}
-//
-//	@Override
-//	protected void handleVariableChangedEvent(Variable variable, int index,
-//			ChangeType type) {
-//	}
-//
-//	@Override
-//	protected void storeState() {
-//	}
-//
-//	@Override
-//	protected void restoreState() {
-//	}
-//
-//	@Override
-//	protected void acceptState() {
-//	}
+		
+		
+		
+		
+		
+	}// END: Constructor
 
     @Override
     public Mapping getBranchModelMapping(NodeRef branch) {
@@ -148,25 +124,18 @@ public class BranchSpecific
 
     public void setupNodeMap(NodeRef branch) {
 
-        //form product? or draw from binomial for alpha and beta?
-
-        int uCategory = uCategories.getBranchCategory(treeModel, branch);
-        double uValue = uParameter.getParameterValue(uCategory);
-
-        Parameter alphaParameter = new Parameter.Default(1, ((MG94CodonModel) substModel).getAlpha() * uValue);
-        Parameter betaParameter = new Parameter.Default(1, ((MG94CodonModel) substModel).getBeta() * uValue);
-
-        // TODO Do NOT create new substitution models, painful
-        substModel = new MG94CodonModel(Codons.UNIVERSAL, alphaParameter, betaParameter, freqModel);
-
+         int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
+        final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
+        
+        System.out.println(uCategory);
+        
         // TODO How about: return new Mapping() that points to uCategory?
-
-        getSubstitutionModels();
+//        getSubstitutionModels();
 
         nodeMap.put(branch, new Mapping() {
             @Override
             public int[] getOrder() {
-                return new int[]{0};
+                return new int[]{uCategory};
             }
 
             @Override
@@ -178,16 +147,22 @@ public class BranchSpecific
 
     @Override
     public List<SubstitutionModel> getSubstitutionModels() {
-        List<SubstitutionModel> list = new ArrayList<SubstitutionModel>();
-        list.add(substModel);
-
-        return list;
+//    	ArrayList<SubstitutionModel> list = new ArrayList<SubstitutionModel>();
+//    	list.add(substitutionModel);
+//        return list;
+    	
+    	return substitutionModels;
     }
 
-    @Override
-    public SubstitutionModel getRootSubstitutionModel() {
-        return substModel;
-    }
+	@Override
+	public SubstitutionModel getRootSubstitutionModel() {
+//		 NodeRef root = treeModel.getRoot();
+//		 int rootCategory = uCategoriesProvider.getBranchCategory(treeModel, root);
+//		 rootCategory = (int) uCategoriesParameter.getParameterValue(rootCategory);
+		 
+		int rootCategory = 0;
+		return substitutionModels.get(rootCategory);
+	}
 
     @Override
     public FrequencyModel getRootFrequencyModel() {
@@ -293,10 +268,24 @@ public class BranchSpecific
             ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE,
                     GeneticCode.UNIVERSAL, alignment);
 
-            Parameter uParam = new Parameter.Default(1, 0.0001);
-            CountableBranchCategoryProvider uCateg = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uParam);
 
-            BranchSpecific branchSpecific = new BranchSpecific(tree, mg94, uCateg, uParam);
+			List<SubstitutionModel> substModels = new ArrayList<SubstitutionModel>();
+			for (int i = 0; i < 2; i++) {
+
+				alpha = new Parameter.Default(1, 10 );
+				beta = new Parameter.Default(1, 5 );
+				mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta,
+						freqModel);
+
+				substModels.add(mg94);
+			}
+            
+			Parameter uCategories = new Parameter.Default(2);
+            CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
+			
+			
+			
+            BranchSpecific branchSpecific = new BranchSpecific(tree, substModels, provider, uCategories);
 
             BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(convert, //
                     tree, //

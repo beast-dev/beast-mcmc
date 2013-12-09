@@ -271,23 +271,19 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
 			List<SubstitutionModel> substModels = new ArrayList<SubstitutionModel>();
 			for (int i = 0; i < 2; i++) {
-
-				alpha = new Parameter.Default(1, 10 );
-				beta = new Parameter.Default(1, 5 );
-				mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta,
-						freqModel);
-
+//				alpha = new Parameter.Default(1, 10 );
+//				beta = new Parameter.Default(1, 5 );
+//				mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta,
+//						freqModel);
 				substModels.add(mg94);
 			}
             
 			Parameter uCategories = new Parameter.Default(2);
             CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
 			
-			
-			
             BranchSpecific branchSpecific = new BranchSpecific(tree, substModels, provider, uCategories);
 
-            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(convert, //
+            BeagleTreeLikelihood like = new BeagleTreeLikelihood(convert, //
                     tree, //
                     branchSpecific, //
                     siteRateModel, //
@@ -296,8 +292,19 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
                     false, //
                     PartialsRescalingScheme.DEFAULT);
 
-            System.out.println("likelihood = " + nbtl.getLogLikelihood());
-
+            BeagleTreeLikelihood gold = new BeagleTreeLikelihood(convert, //
+                    tree, //
+                    substitutionModel, //
+                    siteRateModel, //
+                    branchRateModel, //
+                    null, //
+                    false, //
+                    PartialsRescalingScheme.DEFAULT);
+            
+            System.out.println("likelihood (gold) = " + gold.getLogLikelihood());
+            System.out.println("likelihood = " + like.getLogLikelihood());
+            
+            
         } catch (Exception e) {
             e.printStackTrace();
         }

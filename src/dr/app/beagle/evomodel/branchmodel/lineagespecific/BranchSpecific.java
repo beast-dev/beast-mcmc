@@ -65,17 +65,17 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 	
     private Map<NodeRef, Mapping> nodeMap = new HashMap<NodeRef, Mapping>();
     private List<SubstitutionModel> substitutionModels;
-//    private SubstitutionModel substitutionModel;
     private TreeModel treeModel;
-
+    private FrequencyModel rooFrequencyModel;
+    
     private CountableBranchCategoryProvider uCategoriesProvider;
     private Parameter uCategoriesParameter;
 
 	public BranchSpecific(TreeModel treeModel, //
-//			SubstitutionModel substitutionModel, //
-			List<SubstitutionModel> substitutionModels,
+			FrequencyModel rootFrequencyModel, //
+			List<SubstitutionModel> substitutionModels, //
 			CountableBranchCategoryProvider uCategoriesProvider, //
-			Parameter uCategoriesParameter//
+			Parameter uCategoriesParameter //
 	) {
 
         super("");
@@ -84,31 +84,8 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
         this.substitutionModels = substitutionModels;
         this.uCategoriesProvider = uCategoriesProvider;
         this.uCategoriesParameter = uCategoriesParameter;
-
-//        substitutionModels = new ArrayList<SubstitutionModel>();
-//        FrequencyModel freqModel = substitutionModel.getFrequencyModel();
-//        
-//		for (int i = 0; i < uParameter.getDimension(); i++) {
-//        	
-//			double uValue = uParameter.getParameterValue(i);
-//			
-//			double alphaValue = ((MG94CodonModel) substitutionModel).getAlpha();
-//			double betaValue = ((MG94CodonModel) substitutionModel).getBeta();
-//			
-//			Parameter alphaParameter = new Parameter.Default(1, alphaValue * uValue );
-//			Parameter betaParameter = new Parameter.Default(1, betaValue * uValue );
-//			MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alphaParameter, betaParameter,
-//					freqModel);
-//        	
-//			substitutionModels.add(mg94);
-//			
-//        }
-
-		
-		
-		
-		
-		
+        this.rooFrequencyModel = rootFrequencyModel;
+        
 	}// END: Constructor
 
     @Override
@@ -124,14 +101,13 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     public void setupNodeMap(NodeRef branch) {
 
+        // TODO How about: return new Mapping() that points to uCategory?
+    	
          int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
         final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
         
         System.out.println(uCategory);
         
-        // TODO How about: return new Mapping() that points to uCategory?
-//        getSubstitutionModels();
-
         nodeMap.put(branch, new Mapping() {
             @Override
             public int[] getOrder() {
@@ -156,17 +132,12 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
 	@Override
 	public SubstitutionModel getRootSubstitutionModel() {
-//		 NodeRef root = treeModel.getRoot();
-//		 int rootCategory = uCategoriesProvider.getBranchCategory(treeModel, root);
-//		 rootCategory = (int) uCategoriesParameter.getParameterValue(rootCategory);
-		 
-		int rootCategory = 0;
-		return substitutionModels.get(rootCategory);
+		throw new RuntimeException("This method should never be called!");
 	}
 
     @Override
     public FrequencyModel getRootFrequencyModel() {
-        return getRootSubstitutionModel().getFrequencyModel();
+        return rooFrequencyModel;
     }
 
     @Override
@@ -176,33 +147,23 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index,
                                               ChangeType type) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     protected void storeState() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     protected void restoreState() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     protected void acceptState() {
-        // TODO Auto-generated method stub
-
     }
 
     public static void main(String[] args) {
@@ -278,10 +239,10 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 				substModels.add(mg94);
 			}
             
-			Parameter uCategories = new Parameter.Default(2);
+			Parameter uCategories = new Parameter.Default(2, 0);
             CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
 			
-            BranchSpecific branchSpecific = new BranchSpecific(tree, substModels, provider, uCategories);
+            BranchSpecific branchSpecific = new BranchSpecific(tree, freqModel, substModels, provider, uCategories);
 
             BeagleTreeLikelihood like = new BeagleTreeLikelihood(convert, //
                     tree, //

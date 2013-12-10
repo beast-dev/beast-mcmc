@@ -203,6 +203,14 @@ public class Coalescent implements MultivariateFunction, Units {
         return demographicFunction.getUnits();
     }
 
+    public DemographicFunction getDemographicFunction(){
+        return demographicFunction;
+    }
+
+    public IntervalList getIntervals(){
+        return intervals;
+    }
+
     /** The demographic function. */
     DemographicFunction demographicFunction = null;
 

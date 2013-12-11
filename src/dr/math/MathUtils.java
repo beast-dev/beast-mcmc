@@ -57,7 +57,7 @@ public class MathUtils {
 	// Chooses one category if a cumulative probability distribution is given
 	public static int randomChoice(double[] cf) {
 
-		double U = random.nextDouble();
+		double U = MathUtils.nextDouble();
 
 		int s;
 		if (U <= cf[0]) {
@@ -80,7 +80,7 @@ public class MathUtils {
 	 */
 	public static int randomChoicePDF(double[] pdf) {
 
-		double U = random.nextDouble() * getTotal(pdf);
+		double U = MathUtils.nextDouble() * getTotal(pdf);
 		for (int i = 0; i < pdf.length; i++) {
 
 			U -= pdf[i];

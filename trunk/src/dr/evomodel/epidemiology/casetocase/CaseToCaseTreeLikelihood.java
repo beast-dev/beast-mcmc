@@ -42,7 +42,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     /* Mapping of cases to branches on the tree; old version is stored before operators are applied */
 
-    private AbstractCase[] branchMap;
+    protected AbstractCase[] branchMap;
     private AbstractCase[] storedBranchMap;
 
     /* Matches cases to external nodes */
@@ -60,7 +60,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     /**
      * The set of cases
      */
-    private AbstractOutbreak cases;
+    protected AbstractOutbreak cases;
     private CaseToCaseLikelihoodCore core;
 
     // The tree needs to be traversed twice, first for the probability and second for the normalisation value. We need
@@ -616,7 +616,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return child;
     }
 
-    private NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
+    protected NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
         return getEarliestNodeInPartition(thisCase, branchMap);
     }
 

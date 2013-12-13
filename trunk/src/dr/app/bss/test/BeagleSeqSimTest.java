@@ -497,7 +497,7 @@ public class BeagleSeqSimTest {
 
         	boolean calculateLikelihood = true;
         	
-            System.out.println("Test case 5: simulateAminoAcid");
+            System.out.println("Test case 6: simulate codons");
 
             MathUtils.setSeed(666);
 

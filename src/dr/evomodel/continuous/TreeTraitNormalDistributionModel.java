@@ -25,6 +25,7 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.Tree;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -55,10 +56,16 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
         dim = traitModel.getTreeModel().getExternalNodeCount() * traitModel.getDimTrait();
         addModel(traitModel);
         distributionKnown = false;
+        //System.err.println("trait vector: " + traitModel.getTreeTraits()[0].getTraitString(traitModel.treeModel, traitModel.treeModel.getExternalNode(2)));
+        //System.exit(0);
     }
 
     public TreeTraitNormalDistributionModel(FullyConjugateMultivariateTraitLikelihood traitModel, boolean conditionOnRoot) {
         this(traitModel, null, conditionOnRoot);
+    }
+
+    public Tree getTree() {
+        return traitModel.getTreeModel();
     }
 
     // *****************************************************************
@@ -131,7 +138,11 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
     }
 
     private double[] computeMean() {
-        return MultivariateTraitUtils.computeTreeTraitMean(traitModel, rootValue, conditionOnRoot);
+        if (traitModel.strengthOfSelection != null) {
+            return MultivariateTraitUtils.computeTreeTraitMeanOU(traitModel, rootValue, conditionOnRoot);
+        } else {
+            return MultivariateTraitUtils.computeTreeTraitMean(traitModel, rootValue, conditionOnRoot);
+        }
     }
 
     private double[][] computePrecision() {

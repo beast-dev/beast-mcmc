@@ -135,6 +135,58 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     }
 
+    public IntegratedMultivariateTraitLikelihood(String traitName,
+                                                 MultivariateTraitTree treeModel,
+                                                 MultivariateDiffusionModel diffusionModel,
+                                                 CompoundParameter traitParameter,
+                                                 Parameter deltaParameter,
+                                                 List<Integer> missingIndices,
+                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
+                                                 BranchRateModel rateModel,
+                                                 List<BranchRateModel> optimalValues,
+                                                 BranchRateModel strengthOfSelection,
+                                                 Model samplingDensity,
+                                                 boolean reportAsMultivariate,
+                                                 boolean reciprocalRates) {
+
+        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
+                useTreeLength, rateModel, optimalValues, strengthOfSelection, samplingDensity, reportAsMultivariate, reciprocalRates);
+
+        // Delegate caches to helper
+        meanCache = new double[dim * treeModel.getNodeCount()];
+
+        if (optimalValues != null) {
+            cacheHelper = new OUCacheHelper(dim * treeModel.getNodeCount(), cacheBranches); // new DriftCacheHelper ....
+        } else {
+            cacheHelper = new CacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
+        }
+
+
+        drawnStates = new double[dim * treeModel.getNodeCount()];
+        upperPrecisionCache = new double[treeModel.getNodeCount()];
+        lowerPrecisionCache = new double[treeModel.getNodeCount()];
+        logRemainderDensityCache = new double[treeModel.getNodeCount()];
+
+        if (cacheBranches) {
+            storedMeanCache = new double[dim * treeModel.getNodeCount()];
+            storedUpperPrecisionCache = new double[treeModel.getNodeCount()];
+            storedLowerPrecisionCache = new double[treeModel.getNodeCount()];
+            storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
+        }
+
+        // Set up reusable temporary storage
+        Ay = new double[dimTrait];
+        tmpM = new double[dimTrait][dimTrait];
+        tmp2 = new double[dimTrait];
+
+        zeroDimVector = new double[dim];
+
+        missingTraits = new MissingTraits.CompletelyMissing(treeModel, missingIndices, dim);
+        setTipDataValuesForAllNodes();
+
+    }
+
+
     private void setTipDataValuesForAllNodes() {
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
@@ -382,7 +434,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 upperPrecisionCache[thisNumber] = 0;
                 lowerPrecisionCache[thisNumber] = 0; // Needed in the pre-order traversal
             } else { // not missing tip trait
-                upperPrecisionCache[thisNumber] = 1.0 / getRescaledBranchLengthForPrecision(node);
+                upperPrecisionCache[thisNumber] = (1.0 / getRescaledBranchLengthForPrecision(node)) * Math.pow(cacheHelper.getOUFactor(node), 2);
                 lowerPrecisionCache[thisNumber] = Double.POSITIVE_INFINITY;
             }
             return;
@@ -430,7 +482,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             if (Double.isInfinite(thisPrecision)) {
                 upperPrecisionCache[thisNumber] = totalPrecision;
             } else {
-                upperPrecisionCache[thisNumber] = totalPrecision * thisPrecision / (totalPrecision + thisPrecision);
+                upperPrecisionCache[thisNumber] = (totalPrecision * thisPrecision / (totalPrecision + thisPrecision)) * Math.pow(cacheHelper.getOUFactor(node), 2);
             }
         }
 
@@ -447,6 +499,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                     meanOffset1,
                     precision0,
                     precision1,
+                    cacheHelper.getOUFactor(childNode0),
+                    cacheHelper.getOUFactor(childNode1),
                     cacheOuterProducts);
         }
     }
@@ -459,6 +513,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                              int childOffset1,
                                              double precision0,
                                              double precision1,
+                                             double OUFactor0,
+                                             double OUFactor1,
                                              boolean cacheOuterProducts) {
 
         final double remainderPrecision = precision0 * precision1 / (precision0 + precision1);
@@ -502,7 +558,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             logRemainderDensityCache[thisIndex] +=
                     -dimTrait * LOG_SQRT_2_PI
                             + 0.5 * (dimTrait * Math.log(remainderPrecision) + logDetPrecisionMatrix)
-                            - 0.5 * (childSS0 + childSS1 - crossSS);
+                            - 0.5 * (childSS0 + childSS1 - crossSS)
+                            - dimTrait * (Math.log(OUFactor0) + Math.log(OUFactor1));
         }
     }
 
@@ -699,6 +756,53 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
 
+    protected void computeCorrectedOUWeightedAverage(int offset0, double weight0, NodeRef childNode0,
+                                                     int offset1, double weight1, NodeRef childNode1,
+                                                     int offset2,
+                                                     int length, NodeRef thisNode) {
+
+        final double totalInverseWeight = 1.0 / (weight0 + weight1);
+
+        double[] optimal;
+        double selection;
+
+        if (!treeModel.isRoot(thisNode)) {
+            optimal = getOptimalValue(thisNode);
+            selection = getTimeScaledSelection(thisNode);
+        } else {
+            optimal = null;
+            selection = 1;
+        }
+        double[] optimalChild0 = getOptimalValue(childNode0);
+        double[] optimalChild1 = getOptimalValue(childNode1);
+        double selectionChild0 = getTimeScaledSelection(childNode0);
+        double selectionChild1 = getTimeScaledSelection(childNode1);
+
+        if (treeModel.isExternal(childNode0)) {
+            for (int i = 0; i < length; i++) {
+                correctedMeanCache[offset0 + i] = (meanCache[offset0 + i] - selectionChild0 * optimalChild0[i]) / (1 - selectionChild0);
+            }
+        }
+
+        if (treeModel.isExternal(childNode1)) {
+            for (int i = 0; i < length; i++) {
+                correctedMeanCache[offset1 + i] = (meanCache[offset1 + i] - selectionChild1 * optimalChild1[i]) / (1 - selectionChild1);
+            }
+        }
+
+        for (int i = 0; i < length; i++) {
+
+            // meanCache[offset2 + i] = ((meanCache[offset0 + i] -  shiftChild0[i]) * weight0 + (meanCache[offset1 + i] - shiftChild1[i]) * weight1) * totalInverseWeight;
+            meanCache[offset2 + i] = (correctedMeanCache[offset0 + i] * weight0 + correctedMeanCache[offset1 + i] * weight1) * totalInverseWeight;
+            if (!treeModel.isRoot(thisNode)) {
+                correctedMeanCache[offset2 + i] = (meanCache[offset2 + i] - selection * optimal[i]) / (1 - selection);
+            } else {
+                correctedMeanCache[offset2 + i] = meanCache[offset2 + i];
+            }
+        }
+    }
+
+
     protected abstract double[][] computeMarginalRootMeanAndVariance(double[] conditionalRootMean,
                                                                      double[][] treePrecisionMatrix,
                                                                      double[][] treeVarianceMatrix,
@@ -866,8 +970,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             // }
         }
 
-        public void doFunkyStuff(NodeRef node) {
-
+        public double getOUFactor(NodeRef node) {
+            return 1;
         }
 
         protected boolean cacheBranches;
@@ -928,8 +1032,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             return correctedMeanCache;
         }
 
-        public void doFunkyStuff(NodeRef node) {
-            getShiftForBranchLength(node);
+
+        public double getOUFactor(NodeRef node) {
+            return 1;
         }
 
         public void setTipMeans(double[] traitValue, int dim, int index, NodeRef node) {
@@ -960,6 +1065,44 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
 
         // private double[] correctedMeanCache;
+    }
+
+
+    class OUCacheHelper extends CacheHelper {
+
+        public OUCacheHelper(int cacheLength, boolean cacheBranches) {
+            super(cacheLength, cacheBranches);
+            correctedMeanCache = new double[cacheLength];
+        }
+
+        public double[] getCorrectedMeanCache() {
+            return correctedMeanCache;
+        }
+
+        public double getOUFactor(NodeRef node) {
+            return 1 - getTimeScaledSelection(node);
+        }
+
+        public void setTipMeans(double[] traitValue, int dim, int index, NodeRef node) {
+            System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
+        }
+
+
+        public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
+                                      double totalPrecision, double precision0, double precision1, MissingTraits missingTraits,
+                                      NodeRef thisNode, NodeRef node0, NodeRef node1) {
+            if (totalPrecision == 0) {
+                System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
+            } else {
+                // Delegate in case either child is partially missing
+                // computeCorrectedWeightedAverage
+                computeCorrectedOUWeightedAverage(
+                        meanOffset0, precision0, node0,
+                        meanOffset1, precision1, node1,
+                        meanThisOffset, dim, thisNode);
+            }
+        }
+
     }
 
 

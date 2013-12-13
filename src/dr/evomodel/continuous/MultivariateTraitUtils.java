@@ -49,7 +49,11 @@ public class MultivariateTraitUtils {
     }
 
     public static double[][] computeTreePrecision(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
-        return new SymmetricMatrix(computeTreeVariance(trait, conditionOnRoot)).inverse().toComponents();
+        if (trait.strengthOfSelection != null) {
+            return new SymmetricMatrix(computeTreeVarianceOU(trait, conditionOnRoot)).inverse().toComponents();
+        } else {
+            return new SymmetricMatrix(computeTreeVariance(trait, conditionOnRoot)).inverse().toComponents();
+        }
     }
 
     public static double[][] computeTreeTraitPrecision(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
@@ -71,6 +75,91 @@ public class MultivariateTraitUtils {
         }
         return A;
     }
+
+    private static double[][] productMatrices(double[][] A, double[][] B) {
+        double[][] C = new double[A.length][B[0].length];
+
+
+        for (int i = 0; i < A.length; i++) {
+            for (int k = 0; k < B[0].length; k++) {
+                for (int j = 0; j < A[0].length; j++) {
+                    C[i][k] = C[i][k] + A[i][j] * B[j][k];
+                }
+            }
+        }
+
+        return C;
+    }
+
+    private static double[][] transposeMatrix(double[][] A) {
+        double[][] B = new double[A[0].length][A.length];
+
+        for (int i = 0; i < A.length; i++) {
+            for (int j = 0; j < A[0].length; j++) {
+                B[j][i] = A[i][j];
+            }
+        }
+
+        return B;
+    }
+
+
+    private static double[][] computeLinCombMatrix(FullyConjugateMultivariateTraitLikelihood trait) {
+
+        MultivariateTraitTree treeModel = trait.getTreeModel();
+        final int tipCount = treeModel.getExternalNodeCount();
+        final int branchCount = 2 * tipCount - 2;
+        double[][] linCombMatrix = new double[tipCount][branchCount];
+
+        double tempScalar;
+        NodeRef tempNode;
+        int tempNodeIndex;
+
+        for (int k = 0; k < tipCount; k++) {
+            tempNode = treeModel.getExternalNode(k);
+            //check if treeModel.getExternalNode(k).getNumber() == k
+            tempScalar = 1;
+            tempNodeIndex = k;
+
+            for (int r = 0; r < branchCount; r++) {
+                if (r == tempNodeIndex) {
+                    linCombMatrix[k][r] = tempScalar;
+                    tempScalar = tempScalar * (1 - treeModel.getBranchLength(tempNode) * trait.getTimeScaledSelection(tempNode));
+                    tempNode = treeModel.getParent(tempNode);
+                    tempNodeIndex = tempNode.getNumber();
+                } else {
+                    linCombMatrix[k][r] = 0;
+                }
+
+            }
+        }
+
+        return linCombMatrix;
+
+    }
+
+
+    private static double[] computeRootMultipliers(FullyConjugateMultivariateTraitLikelihood trait) {
+        MultivariateTraitTree myTreeModel = trait.getTreeModel();
+        final int tipCount = myTreeModel.getExternalNodeCount();
+        double[] multiplierVect = new double[tipCount];
+        NodeRef tempNode;
+
+        for (int i = 0; i < tipCount; i++) {
+            tempNode = myTreeModel.getExternalNode(i);
+            multiplierVect[i] = 1 - myTreeModel.getBranchLength(tempNode) * trait.getTimeScaledSelection(tempNode);
+            tempNode = myTreeModel.getParent(tempNode);
+            while (!myTreeModel.isRoot(tempNode)) {
+                multiplierVect[i] = multiplierVect[i] * (1 - myTreeModel.getBranchLength(tempNode) * trait.getTimeScaledSelection(tempNode));
+                tempNode = myTreeModel.getParent(tempNode);
+            }
+        }
+
+
+        return multiplierVect;
+
+    }
+
 
     private static double[] getShiftContributionToMean(NodeRef node, FullyConjugateMultivariateTraitLikelihood trait) {
 
@@ -113,6 +202,55 @@ public class MultivariateTraitUtils {
 
         return mean;
     }
+
+    public static double[] computeTreeTraitMeanOU(FullyConjugateMultivariateTraitLikelihood trait, double[] rootValue, boolean conditionOnRoot) {
+
+        double[] root = trait.getPriorMean();
+        MultivariateTraitTree myTreeModel = trait.getTreeModel();
+        double[][] linCombMatrix = computeLinCombMatrix(trait);
+        double[] rootMultiplierVect = computeRootMultipliers(trait);
+
+        if (conditionOnRoot) {
+            root = rootValue;
+        }
+
+        final int nTaxa = myTreeModel.getExternalNodeCount();
+        final int branchCount = 2 * nTaxa - 2;
+        final int traitDim = trait.dimTrait;
+        double[] mean = new double[root.length * nTaxa];
+        double[] displacementMeans = new double[branchCount * traitDim];
+        double[] tempVect = new double[nTaxa * traitDim];
+        NodeRef tempNode;
+
+        for (int k = 0; k < branchCount; k++) {
+            tempNode = myTreeModel.getNode(k);
+            for (int t = 0; t < traitDim; t++) {
+                displacementMeans[k * traitDim + t] = trait.getTimeScaledSelection(tempNode) * myTreeModel.getBranchLength(tempNode) * trait.getOptimalValue(tempNode)[t];
+            }
+        }
+
+        //check this
+        for (int i = 0; i < nTaxa; i++) {
+            for (int j = 0; j < branchCount; j++) {
+                for (int k = 0; k < traitDim; k++) {
+                    tempVect[i * traitDim + k] = tempVect[i * traitDim + k] + linCombMatrix[i][j] * displacementMeans[j * traitDim + k];
+                }
+            }
+
+        }
+
+        for (int i = 0; i < nTaxa; ++i) {
+            System.arraycopy(root, 0, mean, i * root.length, root.length);
+
+            for (int j = 0; j < traitDim; ++j) {
+                mean[i * traitDim + j] = mean[i * traitDim + j] * rootMultiplierVect[i] + tempVect[i * traitDim + j];
+            }
+
+        }
+
+        return mean;
+    }
+
 
     public static double[][] computeTreeTraitVariance(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
         double[][] treeVariance = computeTreeVariance(trait, conditionOnRoot);
@@ -182,6 +320,53 @@ public class MultivariateTraitUtils {
         }
         return variance;
     }
+
+    public static double[][] computeTreeVarianceOU(FullyConjugateMultivariateTraitLikelihood trait, boolean conditionOnRoot) {
+        MultivariateTraitTree treeModel = trait.getTreeModel();
+        final int tipCount = treeModel.getExternalNodeCount();
+        final int branchCount = 2 * tipCount - 2;
+        double[][] variance = new double[tipCount][tipCount];
+        double[][] tempMatrix = new double[tipCount][branchCount];
+        double[][] diagMatrix = new double[branchCount][branchCount];
+
+
+        /*
+        double tempScalar;
+        NodeRef tempNode;
+        int tempNodeIndex;
+
+        for(int k = 0; k < tipCount; k++){
+           tempNode = treeModel.getExternalNode(k);
+            //check if treeModel.getExternalNode(k).getNumber() == k
+           tempScalar = 1;
+           tempNodeIndex = k;
+
+           for(int r = 0; r < branchCount; r++){
+               if(r == tempNodeIndex){
+                   tempMatrix[k][r] = tempScalar;
+                   tempScalar = tempScalar*(1-treeModel.getBranchLength(tempNode)*trait.getTimeScaledSelection(tempNode));
+                   tempNode = treeModel.getParent(tempNode);
+                   tempNodeIndex = tempNode.getNumber();
+               }else{
+                   tempMatrix[k][r]= 0;
+               }
+
+           }
+        }
+        */
+
+        tempMatrix = computeLinCombMatrix(trait);
+
+        for (int i = 0; i < branchCount; i++) {
+            diagMatrix[i][i] = treeModel.getBranchLength(treeModel.getNode(i));
+        }
+
+
+        variance = productMatrices(productMatrices(tempMatrix, diagMatrix), transposeMatrix(tempMatrix));
+
+        return variance;
+    }
+
 
     private static final boolean DEBUG = false;
 

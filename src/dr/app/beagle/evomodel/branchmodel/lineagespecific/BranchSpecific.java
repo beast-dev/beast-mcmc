@@ -103,10 +103,11 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
         // TODO How about: return new Mapping() that points to uCategory?
     	
-         int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
+        int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
         final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
         
-        System.out.println(uCategory);
+//        System.out.println("FUBAR1:" + branchCategory);
+//        System.out.println("FUBAR2:" + uCategory);
         
         nodeMap.put(branch, new Mapping() {
             @Override
@@ -123,10 +124,6 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     @Override
     public List<SubstitutionModel> getSubstitutionModels() {
-//    	ArrayList<SubstitutionModel> list = new ArrayList<SubstitutionModel>();
-//    	list.add(substitutionModel);
-//        return list;
-    	
     	return substitutionModels;
     }
 
@@ -147,23 +144,30 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+    	
+    	fireModelChanged();
+    	
     }
 
-    @Override
+	@Override
     protected void handleVariableChangedEvent(Variable variable, int index,
                                               ChangeType type) {
+    	fireModelChanged();
     }
 
     @Override
     protected void storeState() {
+    	// do nothing
     }
 
     @Override
     protected void restoreState() {
+    	// do nothing
     }
 
     @Override
     protected void acceptState() {
+    	setupMapping = true;
     }
 
     public static void main(String[] args) {

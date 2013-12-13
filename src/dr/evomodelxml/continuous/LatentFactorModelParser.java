@@ -26,10 +26,13 @@
 package dr.evomodelxml.continuous;
 
 import dr.evomodel.continuous.LatentFactorModel;
-import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.Matrix;
-import dr.xml.*;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
+import dr.xml.*;
+
+import java.util.List;
 
 /**
  * @author Max Tolkoff
@@ -42,6 +45,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public final static String FACTORS = "factors";
     public final static String DATA = "data";
     public final static String LOADINGS = "loadings";
+    public static final String PRECISION = "precision";
 
     public String getParserName() {
         return LATENT_FACTOR_MODEL;
@@ -49,24 +53,46 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 //        Parameter latent  = null;
-        MatrixParameter factors = (MatrixParameter) xo.getChild(FACTORS).getChild(MatrixParameter.class);
-        MatrixParameter data = (MatrixParameter) xo.getChild(DATA).getChild(MatrixParameter.class);
-        MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
+        CompoundParameter factors = (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class);
 
-//        int factors=xo.getAttribute(NUMBER_OF_FACTORS, 4);
-        return new LatentFactorModel(data, factors, loadings);
+        TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
+        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+
+        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+
+        TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
+                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
+        CompoundParameter dataParameter = returnValue.traitParameter;
+        List<Integer> missingIndices = returnValue.missingIndices;
+        traitName = returnValue.traitName;
+//
+//
+//
+//
+//        MatrixParameter data = (MatrixParameter) xo.getChild(DATA).getChild(MatrixParameter.class);
+        MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
+        MatrixParameter precision = (MatrixParameter) xo.getChild(PRECISION).getChild(MatrixParameter.class);
+        int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
+
+
+        return new LatentFactorModel(dataParameter, factors, loadings, precision, numFactors);
     }
 
     private static final XMLSyntaxRule[] rules = {
+            AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
+            new ElementRule(TreeModel.class),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameter.class),
+                    new ElementRule(CompoundParameter.class),
             }),
             new ElementRule(DATA, new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameter.class)
+                    new ElementRule(CompoundParameter.class)
             }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameter.class)
-            })
+            }),
+            new ElementRule(PRECISION, new XMLSyntaxRule[]{
+                    new ElementRule(MatrixParameter.class)
+            }),
     };
 
 //    <latentFactorModel>

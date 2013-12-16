@@ -152,8 +152,6 @@ public final class MarkovChain {
         pleaseStop = false;
         isStopped = false;
 
-        String diagnostic = "";
-
         //int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
         double[] logr = {0.0};
@@ -165,6 +163,8 @@ public final class MarkovChain {
         boolean fullEvaluationError = false;
 
         while (!pleaseStop && (currentState < (currentLength + length))) {
+
+            String diagnosticStart = "";
 
             // periodically log states
             fireCurrentModel(currentState, currentModel);
@@ -179,6 +179,10 @@ public final class MarkovChain {
             final MCMCOperator mcmcOperator = schedule.getOperator(op);
 
             double oldScore = currentScore;
+            if (usingFullEvaluation) {
+                diagnosticStart = likelihood instanceof CompoundLikelihood ?
+                        ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+            }
 
             // assert Profiler.startProfile("Store");
 
@@ -239,7 +243,11 @@ public final class MarkovChain {
                     mcmcOperator.addEvaluationTime(System.currentTimeMillis() - elapsedTime);
                 }
 
-                // assert Profiler.stopProfile("Evaluate");
+                String diagnosticOperator = "";
+                if (usingFullEvaluation) {
+                    diagnosticOperator = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                }
 
                 if (score == Double.POSITIVE_INFINITY || Double.isNaN(score)) {
                     if (likelihood instanceof CompoundLikelihood) {
@@ -262,13 +270,18 @@ public final class MarkovChain {
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 
+                    final String d2 = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         Logger.getLogger("error").severe(
                                 "State was not correctly calculated after an operator move.\n"
                                         + "Likelihood evaluation: " + score
                                         + "\nFull Likelihood evaluation: " + testScore
                                         + "\n" + "Operator: " + mcmcOperator
-                                        + " " + mcmcOperator.getOperatorName());
+                                        + " " + mcmcOperator.getOperatorName()
+                                        + (diagnosticOperator.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticOperator + "\nAfter: " + d2 : "")
+                                        + "\n\n");
                         fullEvaluationError = true;
                     }
                 }
@@ -302,11 +315,6 @@ public final class MarkovChain {
 //                    }
 //                }
 
-                if (usingFullEvaluation) {
-                    oldScore = score; // for the usingFullEvaluation test
-                    diagnostic = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
-                }
             } else {
                 if (DEBUG) {
                     System.out.println("** Move rejected: new score = " + score
@@ -341,8 +349,8 @@ public final class MarkovChain {
                             + " Likelihood after: " + testScore
                             + "\n" + "Operator: " + mcmcOperator
                             + " " + mcmcOperator.getOperatorName()
-                            + (diagnostic.length() > 0 ? "\n\nDetails\nBefore: " + diagnostic + "\nAfter: " + d2 : "")
-                    );
+                            + (diagnosticStart.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticStart + "\nAfter: " + d2 : "")
+                            + "\n\n");
                     fullEvaluationError = true;
                 }
             }

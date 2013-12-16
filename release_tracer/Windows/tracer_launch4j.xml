@@ -3,13 +3,13 @@
   <icon>icons/Tracer.ico</icon>
   <cmdLine/>
   <jre>
-    <minVersion>1.5.0</minVersion>
+    <minVersion>1.6.0</minVersion>
     <initialHeapSize>64</initialHeapSize>
-    <maxHeapSize>512</maxHeapSize>
+    <maxHeapSize>1024</maxHeapSize>
   </jre>    
   <versionInfo>
     <fileDescription>Tracer</fileDescription>
-    <copyright>2006-2009</copyright>
+    <copyright>2003-2013</copyright>
     <productName>Tracer</productName>
     <internalName>Tracer</internalName>
     <originalFilename>Tracer.exe</originalFilename>    

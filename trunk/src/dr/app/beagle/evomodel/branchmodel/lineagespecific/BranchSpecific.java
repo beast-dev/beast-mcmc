@@ -25,9 +25,13 @@
 
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.branchmodel.BranchModel.Mapping;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
@@ -54,14 +58,11 @@ import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 @SuppressWarnings("serial")
 public class BranchSpecific extends AbstractModel implements BranchModel {
 
+	private static final boolean DEBUG = false;
+	
     private boolean setupMapping = true;
 	
     private Map<NodeRef, Mapping> nodeMap; // = new HashMap<NodeRef, Mapping>();
@@ -115,9 +116,20 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
         int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
         final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
         
-//        System.out.println("FUBAR1:" + branchCategory);
-        System.out.println("FUBAR2:" + uCategory);
+        if(DEBUG){
+      System.out.println("FUBAR2:" + uCategory);
+	  System.out.println("branch length: " + treeModel.getBranchLength(branch));
+        }
+	  
+//		for (int i = 0; i < treeModel.getChildCount(branch); i++) {
+//
+//			NodeRef child = treeModel.getChild(branch, i);
+//
+//			System.out.println("child " + i + " length: " + treeModel.getBranchLength(child));
+//
+//		}
         
+       
         nodeMap.put(branch, new Mapping() {
         	
 			@Override

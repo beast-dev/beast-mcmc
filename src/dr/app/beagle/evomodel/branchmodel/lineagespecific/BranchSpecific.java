@@ -98,9 +98,9 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
         return nodeMap.get(branch);
     }//END: getBranchModelMapping
 
-
     public void setupNodeMap(NodeRef branch) {
 
+    	
         // TODO How about: return new Mapping() that points to uCategory?
     	
         int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
@@ -120,6 +120,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
                 return new double[]{1.0};
             }
         });
+        
     }// END: setupNodeMap
 
     @Override
@@ -157,17 +158,25 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     @Override
     protected void storeState() {
-    	// do nothing
+
+    	System.out.println("STORE");
+    	
     }
 
     @Override
     protected void restoreState() {
-    	// do nothing
+
+    	System.out.println("RESTORE");
+    	
+    	setupMapping = true;
+    	
     }
 
     @Override
     protected void acceptState() {
-    	setupMapping = true;
+    	
+    	System.out.println("ACCEPT");
+    	
     }
 
     public static void main(String[] args) {

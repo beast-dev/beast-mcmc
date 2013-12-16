@@ -27,6 +27,7 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.app.beagle.evomodel.branchmodel.BranchModel.Mapping;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
@@ -63,7 +64,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     private boolean setupMapping = true;
 	
-    private Map<NodeRef, Mapping> nodeMap = new HashMap<NodeRef, Mapping>();
+    private Map<NodeRef, Mapping> nodeMap; // = new HashMap<NodeRef, Mapping>();
     private List<SubstitutionModel> substitutionModels;
     private TreeModel treeModel;
     private FrequencyModel rooFrequencyModel;
@@ -78,13 +79,22 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 			Parameter uCategoriesParameter //
 	) {
 
-        super("");
+		super("");
 
-        this.treeModel = treeModel;
-        this.substitutionModels = substitutionModels;
-        this.uCategoriesProvider = uCategoriesProvider;
-        this.uCategoriesParameter = uCategoriesParameter;
-        this.rooFrequencyModel = rootFrequencyModel;
+		this.treeModel = treeModel;
+		this.substitutionModels = substitutionModels;
+		this.uCategoriesProvider = uCategoriesProvider;
+		this.uCategoriesParameter = uCategoriesParameter;
+		this.rooFrequencyModel = rootFrequencyModel;
+
+		this.nodeMap = new HashMap<NodeRef, Mapping>();
+
+		for (SubstitutionModel model : this.substitutionModels) {
+			addModel(model);
+		}
+
+		addModel(this.treeModel);
+		addVariable(this.uCategoriesParameter);
         
 	}// END: Constructor
 
@@ -99,7 +109,6 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
     }//END: getBranchModelMapping
 
     public void setupNodeMap(NodeRef branch) {
-
     	
         // TODO How about: return new Mapping() that points to uCategory?
     	
@@ -107,18 +116,20 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
         final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
         
 //        System.out.println("FUBAR1:" + branchCategory);
-//        System.out.println("FUBAR2:" + uCategory);
+        System.out.println("FUBAR2:" + uCategory);
         
         nodeMap.put(branch, new Mapping() {
-            @Override
-            public int[] getOrder() {
-                return new int[]{uCategory};
-            }
+        	
+			@Override
+			public int[] getOrder() {
+				return new int[] { uCategory };
+			}
 
-            @Override
-            public double[] getWeights() {
-                return new double[]{1.0};
+			@Override
+			public double[] getWeights() {
+				return new double[] { 1.0 };
             }
+            
         });
         
     }// END: setupNodeMap
@@ -159,14 +170,14 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
     @Override
     protected void storeState() {
 
-    	System.out.println("STORE");
+//    	System.err.println("STORE");
     	
     }
 
     @Override
     protected void restoreState() {
 
-    	System.out.println("RESTORE");
+//    	System.err.println("RESTORE");
     	
     	setupMapping = true;
     	
@@ -175,7 +186,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
     @Override
     protected void acceptState() {
     	
-    	System.out.println("ACCEPT");
+//    	System.err.println("ACCEPT");
     	
     }
 

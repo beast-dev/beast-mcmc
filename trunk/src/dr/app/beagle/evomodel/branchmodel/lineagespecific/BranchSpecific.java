@@ -58,6 +58,12 @@ import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
 
+/**
+ * @author Filip Bielejec
+ * @author Guy Baele
+ * @author Marc A. Suchard
+ * @version $Id$
+ */
 @SuppressWarnings("serial")
 public class BranchSpecific extends AbstractModel implements BranchModel {
 

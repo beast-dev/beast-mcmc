@@ -18,7 +18,6 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.xml.*;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 import java.io.*;
@@ -32,13 +31,13 @@ import java.util.*;
  * @version $Id: $
  */
 
-public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable, TreeTraitProvider {
+public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable, TreeTraitProvider {
 
-    private final static boolean DEBUG = false;
+    protected final static boolean DEBUG = false;
 
     /* The phylogenetic tree. */
 
-    private int noTips;
+    protected int noTips;
 
     /* Mapping of cases to branches on the tree; old version is stored before operators are applied */
 
@@ -49,79 +48,38 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     private HashMap<AbstractCase, Integer> tipMap;
     private double estimatedLastSampleTime;
-    boolean verbose;
     protected TreeTraitProvider.Helper treeTraits = new Helper();
-
-    /* the partitions that all descendant tips of a current node belong to */
-
-    private HashMap<Integer, HashSet<AbstractCase>> descendantTipPartitions;
-    private HashMap<Integer, HashSet<AbstractCase>> storedDescendantTipPartitions;
 
     /**
      * The set of cases
      */
     protected AbstractOutbreak cases;
-    private CaseToCaseLikelihoodCore core;
-
-    // The tree needs to be traversed twice, first for the probability and second for the normalisation value. We need
-    // a second array of flags for node updates, which corresponds to the former.
-
-    private boolean[] updateNodeForSingleTraverse;
-
-    // for individual partition calculations
-
-    private double[] branchLogProbs;
-    private double totalLogProb;
-    private double storedTotalLogProb;
-
-    // for normalisation
-
-    private double[] normRootPartials;
-    private double[] normProbs;
-    private double normTotalProb;
-    private double storedNormTotalProb;
-    private boolean renormalisationNeeded;
 
     // where along the relevant branches the infections happen. IMPORTANT: if extended=false then this should be
     // all 0s.
 
-    private Parameter infectionTimeBranchPositions;
+    protected Parameter infectionTimeBranchPositions;
 
     // where between infection and first child infection infectiousness happens
 
-    private Parameter infectiousTimePositions;
+    protected Parameter infectiousTimePositions;
 
-    private double[] infectionTimes;
+    protected double[] infectionTimes;
     private double[] storedInfectionTimes;
-    private double[] infectiousPeriods;
+    protected double[] infectiousPeriods;
     private double[] storedInfectiousPeriods;
-    private double[] infectiousTimes;
+    protected double[] infectiousTimes;
     private double[] storedInfectiousTimes;
-    private double[] latentPeriods;
+    protected double[] latentPeriods;
     private double[] storedLatentPeriods;
 
     //because of the way the former works, we need a maximum value of the time from first infection to root node.
 
-    private Parameter maxFirstInfToRoot;
-
-    // for extended version
-
-    private boolean extended;
-
-    // Jeffreys prior on infection times
-
-    private boolean jeffreys;
-
-    // no need to normalise if the tree is fixed
-
-    private boolean normalise;
+    protected Parameter maxFirstInfToRoot;
 
     // latent periods
 
-    private boolean hasLatentPeriods;
-
-    private boolean traversalProbKnown = false;
-    private boolean storedTraversalProbKnown = false;
+    protected boolean hasLatentPeriods;
 
 
     // PUBLIC STUFF
@@ -136,24 +94,19 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                     Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
-                                    Parameter maxFirstInfToRoot, boolean extended, boolean normalise, boolean jeffreys)
+                                    Parameter maxFirstInfToRoot)
             throws TaxonList.MissingTaxonException {
         this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions,
-                infectiousTimePositions, maxFirstInfToRoot, extended, normalise, jeffreys);
+                infectiousTimePositions, maxFirstInfToRoot);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData,
                                     String startingNetworkFileName, Parameter infectionTimeBranchPositions,
-                                    Parameter infectiousTimePositions, Parameter maxFirstInfToRoot, boolean extended,
-                                    boolean normalise, boolean jeffreys) {
+                                    Parameter infectiousTimePositions, Parameter maxFirstInfToRoot) {
         super(name, caseData, virusTree);
 
-        updateNodeForSingleTraverse = new boolean[nodeCount];
-        for (int i = 0; i < nodeCount; i++) {
-            updateNodeForSingleTraverse[i] = true;
-        }
 
         if(stateCount!=treeModel.getExternalNodeCount()){
             throw new RuntimeException("There are duplicate tip cases.");
@@ -162,14 +115,9 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         noTips = virusTree.getExternalNodeCount();
 
         cases = caseData;
-        this.extended = extended;
-
-        this.jeffreys = jeffreys;
 
         addModel(cases);
-        verbose = false;
 
-        this.normalise = normalise;
 
         Date lastSampleDate = getLatestTaxonDate();
         estimatedLastSampleTime = lastSampleDate.getTimeValue();
@@ -215,34 +163,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
         this.maxFirstInfToRoot = maxFirstInfToRoot;
 
-        core = new CaseToCaseLikelihoodCore();
-        core.initialize(nodeCount, 1, 1, false);
-
-        for (int i = 0; i < noTips; i++) {
-            // Find the id of tip i in the patternList
-            String id = treeModel.getTaxonId(i);
-            int index = patternList.getTaxonIndex(id);
-            setStates(core, patternList, index, i);
-        }
-        for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
-            core.createNodePartials(treeModel.getExternalNodeCount() + i);
-        }
-
-
-        branchLogProbs = new double[nodeCount];
-        totalLogProb = 0;
-        storedTotalLogProb = 0;
-
-        normTotalProb = 0;
-        storedTotalLogProb = 0;
-        renormalisationNeeded = true;
-
-        normRootPartials = new double[stateCount];
-        normProbs = new double[stateCount*stateCount];
-
-
-        descendantTipPartitions = new HashMap<Integer, HashSet<AbstractCase>>();
-        descendantTipPartitions(virusTree.getRoot(), descendantTipPartitions);
 
         //paint the starting network onto the tree
 
@@ -320,85 +240,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return children;
     }
 
-    /**
-     * Set update flag for a node and its children
-     */
-    protected void updateNode(NodeRef node){
-        updateNode(node, true);
-    }
 
-
-    protected void updateNode(NodeRef node, boolean forNormCalcToo) {
-
-        if(forNormCalcToo){
-            updateNode[node.getNumber()] = true;
-        }
-        updateNodeForSingleTraverse[node.getNumber()] = true;
-        likelihoodKnown = false;
-    }
-
-    /**
-     * Set update flag for a node and its direct children
-     */
-
-    protected void updateNodeAndChildren(NodeRef node){
-        updateNodeAndChildren(node, true);
-    }
-
-    protected void updateNodeAndChildren(NodeRef node, boolean forNormCalcToo) {
-        if(forNormCalcToo){
-            updateNode[node.getNumber()] = true;
-        }
-        updateNodeForSingleTraverse[node.getNumber()] = true;
-
-        for (int i = 0; i < treeModel.getChildCount(node); i++) {
-            NodeRef child = treeModel.getChild(node, i);
-            if(forNormCalcToo){
-                updateNode[child.getNumber()] = true;
-            }
-            updateNodeForSingleTraverse[child.getNumber()] = true;
-        }
-        likelihoodKnown = false;
-    }
-
-    /**
-     * Set update flag for a node and all its descendents
-     */
-
-    protected void updateNodeAndDescendents(NodeRef node){
-        updateNodeAndDescendents(node, true);
-    }
-
-    protected void updateNodeAndDescendents(NodeRef node, boolean forNormCalcToo) {
-        if(forNormCalcToo){
-            updateNode[node.getNumber()] = true;
-        }
-        updateNodeForSingleTraverse[node.getNumber()] = true;
-
-        for (int i = 0; i < treeModel.getChildCount(node); i++) {
-            NodeRef child = treeModel.getChild(node, i);
-            updateNodeAndDescendents(child, forNormCalcToo);
-        }
-
-        likelihoodKnown = false;
-    }
-
-    /**
-     * Set update flag for all nodes
-     */
-    protected void updateAllNodes() {
-        updateAllNodes(true);
-    }
-
-    protected void updateAllNodes(boolean forNormCalcToo) {
-        for (int i = 0; i < nodeCount; i++) {
-            if(forNormCalcToo){
-                updateNode[i] = true;
-            }
-            updateNodeForSingleTraverse[i] = true;
-        }
-        likelihoodKnown = false;
-    }
 
 
 
@@ -429,14 +271,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return false;
     }
 
-    public boolean isExtended(){
-        return extended;
-    }
-
-    public void recalculateDescTipPartitions(){
-        descendantTipPartitions.clear();
-        descendantTipPartitions(treeModel.getRoot(), descendantTipPartitions);
-    }
 
     //Counts the children of the current node which have the same painting as itself under the current map.
     //This will always be 1 if extended==false.
@@ -463,7 +297,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     }
 
 
-    private static NodeRef sibling(TreeModel tree, NodeRef node){
+    public static NodeRef sibling(TreeModel tree, NodeRef node){
         if(tree.isRoot(node)){
             return null;
         } else {
@@ -499,6 +333,24 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
     }
 
+    // change flags to indicate that something needs recalculation further down the tree
+
+    protected static void flagForDescendantRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
+        flags[node.getNumber()]=true;
+        for(int i=0; i<tree.getChildCount(node); i++){
+            flags[tree.getChild(node,i).getNumber()]=true;
+        }
+        NodeRef currentNode=node;
+        while(!tree.isRoot(currentNode) && !flags[currentNode.getNumber()]){
+            currentNode = tree.getParent(currentNode);
+            flags[currentNode.getNumber()]=true;
+        }
+    }
+
+    public void flagForDescendantRecalculation(TreeModel tree, NodeRef node){
+        flagForDescendantRecalculation(tree, node, updateNode);
+    }
+
     //Return a set of nodes that are not descendants of (or equal to) the current node and are in the same partition as
     // it. If flagForRecalc is true, then this also sets the flags for likelihood recalculation for all these nodes
     // to true
@@ -508,8 +360,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     }
 
     private HashSet<Integer> samePartitionDownTree(NodeRef node, AbstractCase[] map, boolean flagForRecalc){
-        if(!updateNodeForSingleTraverse[node.getNumber()] && flagForRecalc){
-            flagForDescendantRecalculation(treeModel, node, true);
+        if(flagForRecalc){
+            flagForDescendantRecalculation(treeModel, node);
         }
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = map[node.getNumber()];
@@ -517,12 +369,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         NodeRef parentNode = treeModel.getParent(node);
         while(parentNode!=null && map[parentNode.getNumber()]==painting){
             out.add(parentNode.getNumber());
-            if(extended){
-                if(countChildrenInSamePartition(parentNode)==2){
-                    NodeRef otherChild = sibling(treeModel, currentNode);
-                    out.add(otherChild.getNumber());
-                    out.addAll(samePartitionUpTree(otherChild, map, flagForRecalc));
-                }
+            if(countChildrenInSamePartition(parentNode)==2){
+                NodeRef otherChild = sibling(treeModel, currentNode);
+                out.add(otherChild.getNumber());
+                out.addAll(samePartitionUpTree(otherChild, map, flagForRecalc));
             }
             currentNode = parentNode;
             parentNode = treeModel.getParent(currentNode);
@@ -530,7 +380,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return out;
     }
 
-    //Return a set of nodes that are descendants (and not equal to) the current node and are in the same parition as it.
+    //Return a set of nodes that are descendants (and not equal to) the current node and are in the same partition as
+    // it.
 
     public HashSet<Integer> samePartitionUpTree(NodeRef node, boolean flagForRecalc){
         return samePartitionUpTree(node, branchMap, flagForRecalc);
@@ -548,12 +399,10 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             }
         }
         if(flagForRecalc && !creepsFurther){
-            flagForDescendantRecalculation(treeModel, node, true);
+            flagForDescendantRecalculation(treeModel, node);
         }
         return out;
     }
-
-    // Return the node numbers of the entire subtree in the same partition as this node (including itself)
 
     public Integer[] samePartition(NodeRef node, boolean flagForRecalc){
         return samePartition(node, branchMap, flagForRecalc);
@@ -565,16 +414,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         out.addAll(samePartitionDownTree(node, map, flagForRecalc));
         out.addAll(samePartitionUpTree(node, map, flagForRecalc));
         return out.toArray(new Integer[out.size()]);
-    }
-
-    private HashSet<NodeRef> getWholePartition(AbstractCase thisCase){
-        HashSet<NodeRef> out = new HashSet<NodeRef>();
-        NodeRef tip = treeModel.getNode(tipMap.get(thisCase));
-        Integer[] numbers = samePartition(tip, false);
-        for (Integer number : numbers) {
-            out.add(treeModel.getNode(number));
-        }
-        return out;
     }
 
     // returns all nodes that are the earliest nodes in the partitions corresponding to this cases' children in
@@ -624,8 +463,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     public void changeMap(int node, AbstractCase partition){
         branchMap[node]=partition;
         likelihoodKnown = false;
-        // @todo you could get efficiency savings here
-        Arrays.fill(updateNodeForSingleTraverse, true);
         fireModelChanged();
     }
 
@@ -661,65 +498,17 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return out;
     }
 
-    // change flags to indicate that something needs recalculation further down the tree
-
-    private static void flagForDescendantRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
-        flags[node.getNumber()]=true;
-        for(int i=0; i<tree.getChildCount(node); i++){
-            flags[tree.getChild(node,i).getNumber()]=true;
-        }
-        NodeRef currentNode=node;
-        while(!tree.isRoot(currentNode) && !flags[currentNode.getNumber()]){
-            currentNode = tree.getParent(currentNode);
-            flags[currentNode.getNumber()]=true;
-        }
-    }
-
-    public void flagForDescendantRecalculation(TreeModel tree, NodeRef node, boolean normCalcsToo){
-        flagForDescendantRecalculation(tree, node, updateNodeForSingleTraverse);
-        if(normCalcsToo){
-            flagForDescendantRecalculation(tree, node, updateNode);
-        }
-    }
-
     // **************************************************************
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
 
-    protected final void handleModelChangedEvent(Model model, Object object, int index) {
-
-        // @todo at the moment, nothing in the outbreak will ever change, but if it does, then that should not force recalculation of the order of infection
-
-        if(model == cases){
-            Arrays.fill(updateNode, true);
-            Arrays.fill(updateNodeForSingleTraverse, true);
-            renormalisationNeeded = true;
-        }
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (model == treeModel) {
-            if(!extended){
-                recalculateDescTipPartitions();
-            }
-            if (object instanceof TreeModel.TreeChangedEvent) {
 
-                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
-                    // If a node event occurs the node and its two child nodes
-                    // are flagged for updating (this will result in everything
-                    // above being updated as well. Node events occur when a node
-                    // is added to a branch, removed from a branch or its height or
-                    // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
-                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
-                    // Full tree events result in a complete updating of the tree likelihood
-                    updateAllNodes();
-                } else {
-                    // Other event types are ignored (probably trait changes).
-                    //System.err.println("Another tree event has occured (possibly a trait change).");
-                }
-            }
-            traversalProbKnown = false;
-            renormalisationNeeded = true;
+            // todo actually, most of these don't change
+
             infectionTimes = null;
             infectiousPeriods = null;
             if(hasLatentPeriods){
@@ -728,7 +517,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             }
         }
 
-        fireModelChanged(model);
+        fireModelChanged(object);
 
         likelihoodKnown = false;
     }
@@ -739,9 +528,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     // **************************************************************
 
 
-    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
-        updateAllNodes(variable != infectionTimeBranchPositions && variable !=infectiousTimePositions);
 
         if(variable == infectionTimeBranchPositions){
             infectionTimes = null;
@@ -750,14 +538,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 infectiousTimes = null;
                 latentPeriods = null;
             }
-            traversalProbKnown = false;
-            renormalisationNeeded = false;
+
         } else if(variable == infectiousTimePositions){
             infectiousPeriods = null;
             infectiousTimes = null;
             latentPeriods = null;
-            traversalProbKnown = false;
-            renormalisationNeeded = false;
         }
 
         fireModelChanged();
@@ -773,16 +558,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
      * Stores the precalculated state (in this case the node labels and subtree likelihoods)
      */
 
-    protected final void storeState() {
+    protected void storeState() {
         super.storeState();
-        core.storeState();
-        storedNormTotalProb = normTotalProb;
-        storedTotalLogProb = totalLogProb;
         storedBranchMap = Arrays.copyOf(branchMap, branchMap.length);
-        storedDescendantTipPartitions = new HashMap<Integer, HashSet<AbstractCase>>(descendantTipPartitions);
         storedInfectionTimes = infectionTimes;
         storedInfectiousPeriods = infectiousPeriods;
-        storedTraversalProbKnown = traversalProbKnown;
         if(hasLatentPeriods){
             storedInfectiousTimes = infectiousTimes;
             storedLatentPeriods = latentPeriods;
@@ -793,16 +573,11 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
      * Restores the precalculated state.
      */
 
-    protected final void restoreState() {
+    protected void restoreState() {
         super.restoreState();
-        core.restoreState();
-        normTotalProb = storedNormTotalProb;
-        totalLogProb = storedTotalLogProb;
         branchMap = storedBranchMap;
-        descendantTipPartitions = storedDescendantTipPartitions;
         infectionTimes = storedInfectionTimes;
         infectiousPeriods = storedInfectiousPeriods;
-        traversalProbKnown = storedTraversalProbKnown;
         if(hasLatentPeriods){
             infectiousTimes = storedInfectiousTimes;
             latentPeriods = storedLatentPeriods;
@@ -824,7 +599,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return treeModel;
     }
 
-    public final void setBranchMap(AbstractCase[] map){
+    public void setBranchMap(AbstractCase[] map){
         infectionTimes = null;
         infectiousPeriods = null;
         if(hasLatentPeriods){
@@ -833,40 +608,21 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
         branchMap = map;
         likelihoodKnown = false;
-        traversalProbKnown = false;
-        // @todo you could get efficiency savings here
-        Arrays.fill(updateNodeForSingleTraverse, true);
         fireModelChanged();
     }
 
-    public final TreeModel getTree(){
-        return treeModel;
-    }
-
-    public final void makeDirty() {
+    public void makeDirty() {
         likelihoodKnown = false;
-        traversalProbKnown = false;
-        Arrays.fill(updateNode, true);
-        Arrays.fill(updateNodeForSingleTraverse, true);
-        renormalisationNeeded = true;
         infectionTimes = null;
         infectiousPeriods = null;
         if(hasLatentPeriods){
             infectiousTimes = null;
             latentPeriods = null;
         }
-        if(!extended){
-            recalculateDescTipPartitions();
-        }
     }
 
 
-
-    /**
-     * Calculates the log likelihood of this set of node labels given the tree.
-     */
-    protected double calculateLogLikelihood() {
-
+    protected void prepareTimings(){
         if(infectionTimes==null){
             infectionTimes = getInfectionTimes(branchMap);
         }
@@ -886,90 +642,19 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 latentPeriods = getLatentPeriods(branchMap);
             }
         }
-
-
-
-        if(jeffreys){
-            // return isAllowed() ? -Math.pow(getInfectiousPeriodSD(),2) : Double.NEGATIVE_INFINITY;
-            if(!hasLatentPeriods){
-                return isAllowed() ? -Math.log(getLogInfectiousPeriodSD()) : Double.NEGATIVE_INFINITY;
-            } else {
-                double infL = -Math.log(getLogInfectiousPeriodSD());
-                double latL = -Math.log(getLogLatentPeriodSD());
-                return isAllowed() ? infL + latL : Double.NEGATIVE_INFINITY;
-            }
-        }
-
-        double treeLogL;
-
-        if(!traversalProbKnown){
-
-            if(DEBUG && !checkPartitions(branchMap, true)){
-                throw new RuntimeException("Partition rules are violated");
-            }
-
-            if(DEBUG){
-                debugOutputTree("treeTest.nex");
-            }
-
-            final NodeRef root = treeModel.getRoot();
-
-            // unnormalised probability
-
-            traverse(treeModel, root);
-
-            // normalisation value
-            if(normalise){
-                if(renormalisationNeeded){
-                    traverseForNormalisation(treeModel, root);
-                }
-            } else {
-                normTotalProb = 0;
-            }
-
-            treeLogL =  totalLogProb - normTotalProb;
-
-            if (renormalisationNeeded && normTotalProb == Double.NEGATIVE_INFINITY) {
-                //            Logger.getLogger("dr.evomodel").info("TreeLikelihood, " + this.getId() + ", turning on partial " +
-                //                    "likelihood scaling to avoid precision loss");
-
-                // We probably had an underflow... turn on scaling
-                core.setUseScaling(true);
-
-                // and try again...
-                updateAllNodes();
-                updateAllPatterns();
-                traverseForNormalisation(treeModel, root);
-
-                treeLogL = totalLogProb - (normTotalProb) * patternWeights[0];
-
-            }
-
-
-            for (int i = 0; i < nodeCount; i++) {
-                updateNode[i] = false;
-                updateNodeForSingleTraverse[i] = false;
-            }
-
-            renormalisationNeeded = false;
-
-            // If the normalisation value rounds to zero it is an almighty pain, but perhaps it can't be helped
-
-            if(treeLogL==Double.POSITIVE_INFINITY){
-                return Double.NEGATIVE_INFINITY;
-            }
-        } else {
-            treeLogL =  totalLogProb - normTotalProb;
-        }
-
-        return treeLogL;
-
     }
+
+    /**
+     * Calculates the log likelihood of this set of node labels given the tree.
+     */
+
+    protected abstract double calculateLogLikelihood();
+
 
     // if no infectious models, just need to check whether any infections occur after the infector was no
     // longer infectious
 
-    private boolean isAllowed(){
+    protected boolean isAllowed(){
         return isAllowed(treeModel.getRoot());
     }
 
@@ -989,202 +674,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         } else {
             return true;
         }
-    }
-
-    // unnormalised probability of this branchMap and corresponding infTimes
-
-    private boolean traverse(Tree tree, NodeRef node){
-
-        boolean update = false;
-
-        int nodeNum = node.getNumber();
-
-        NodeRef parent = tree.getParent(node);
-
-        if (updateNodeForSingleTraverse[nodeNum]) {
-            if(parent!=null){
-                AbstractCase nodeCase = branchMap[node.getNumber()];
-                AbstractCase parentCase = branchMap[parent.getNumber()];
-                if(nodeCase!=parentCase){
-                    double infectionTime = infectionTimes[cases.getCaseIndex(nodeCase)];
-                    branchLogProbs[node.getNumber()]
-                            = cases.logProbXInfectedByYAtTimeT(nodeCase, parentCase, infectionTime);
-                } else {
-                    branchLogProbs[node.getNumber()] = 0;
-                }
-            } else {
-                AbstractCase nodeCase = branchMap[node.getNumber()];
-                final double infectionTime = getRootInfectionTime();
-                branchLogProbs[node.getNumber()]
-                        = cases.logProbXInfectedAtTimeT(nodeCase, infectionTime);
-            }
-            update = true;
-        }
-        if (!tree.isExternal(node)) {
-            NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverse(tree, child1);
-            NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverse(tree, child2);
-            if (update1 || update2) {
-                if (parent == null) {
-                    totalLogProb = 0;
-                    for(int i=0; i<nodeCount; i++){
-                        totalLogProb += branchLogProbs[i];
-                    }
-                }
-                update = true;
-            }
-        }
-        return(update);
-    }
-
-
-
-    // normalisation value
-
-    private boolean traverseForNormalisation(Tree tree, NodeRef node){
-
-        boolean update = false;
-
-        int nodeNum = node.getNumber();
-
-        NodeRef parent = tree.getParent(node);
-
-        if (updateNode[nodeNum] && parent!=null) {
-
-            if(treeModel.isExternal(node)){
-                // vast majority of entries are zero in this case
-                Arrays.fill(normProbs, 0);
-                // kind of hacky to use branchMap here to be honest
-                AbstractCase destination = branchMap[node.getNumber()];
-                int j = cases.getCaseIndex(destination);
-                for(int i=0; i<stateCount; i++){
-                    AbstractCase origin = cases.getCase(i);
-                    // always compatible if non-extended
-                    boolean treeCompatibilityCheck = true;
-                    if(!extended){
-                        HashSet<AbstractCase> parentDescTips = descendantTipPartitions.get(parent.getNumber());
-                        treeCompatibilityCheck = parentDescTips.contains(origin);
-                    }
-                    if(!treeCompatibilityCheck){
-                        normProbs[stateCount*i + j]=0;
-                    } else if (origin==destination){
-                        normProbs[stateCount*i + j]=1;
-                    } else {
-                        if(!extended){
-                            normProbs[stateCount*i + j]=cases.probXInfectedByYAtTimeT(destination, origin,
-                                    getNodeTime(parent));
-                        } else {
-                            normProbs[stateCount*i + j]=cases.probXInfectedByYBetweenTandU(destination, origin,
-                                    getNodeTime(parent), getNodeTime(node));
-                        }
-                    }
-                }
-            } else {
-                HashSet<AbstractCase> nodeDescTips = descendantTipPartitions.get(node.getNumber());
-                HashSet<AbstractCase> parentDescTips = descendantTipPartitions.get(parent.getNumber());
-                for(int i=0; i<stateCount; i++){
-                    AbstractCase origin = cases.getCase(i);
-                    for(int j=0; j<stateCount; j++){
-                        AbstractCase destination = cases.getCase(j);
-
-                        // is the tip in parent's partition a descendant of this node? If so, the node must be in
-                        // this partition also
-                        boolean paintingForcedByParent = nodeDescTips.contains(origin);
-                        boolean treeCompatibilityCheck;
-                        if(!extended){
-                            // valid combinations:
-                            // 1) paintingForcedByParent = false
-                            // 2) paintingForcedByParent = true and both nodes in same partition
-                            treeCompatibilityCheck = nodeDescTips.contains(destination)
-                                    && parentDescTips.contains(origin)
-                                    && (!paintingForcedByParent || origin==destination);
-                        } else {
-                            boolean nodeCreep = !nodeDescTips.contains(destination);
-                            boolean parentCreep = !parentDescTips.contains(origin);
-                            // valid combinations:
-                            // 1) no creep in either case, paintingForcedByParent = false
-                            // 2) no creep in either case, paintingForcedByParent = true and both nodes in same
-                            // partition
-                            // 3) parent creep but no node creep
-                            // 4) node creep, parent and child in same partition
-                            treeCompatibilityCheck = ((!nodeCreep && !parentCreep
-                                    && (!paintingForcedByParent || origin == destination))
-                                    || (parentCreep && !nodeCreep) || (nodeCreep && (origin == destination)));
-                        }
-                        if(!treeCompatibilityCheck){
-                            normProbs[stateCount*i + j]=0;
-                        } else if(origin==destination) {
-                            normProbs[stateCount*i + j]=1;
-                        } else {
-                            if(!extended){
-                                normProbs[stateCount*i + j]=cases.probXInfectedByYAtTimeT(destination, origin,
-                                        getNodeTime(parent));
-                            } else {
-                                normProbs[stateCount*i + j]=cases.probXInfectedByYBetweenTandU(destination, origin,
-                                        getNodeTime(parent), getNodeTime(node));
-                            }
-                        }
-                    }
-
-                }
-            }
-            core.setNodeMatrix(nodeNum, 0, normProbs);
-            update = true;
-        }
-        if (!tree.isExternal(node)) {
-
-            // Traverse down the two child nodes
-            NodeRef child1 = tree.getChild(node, 0);
-            final boolean update1 = traverseForNormalisation(tree, child1);
-
-            NodeRef child2 = tree.getChild(node, 1);
-            final boolean update2 = traverseForNormalisation(tree, child2);
-
-            if (update1 || update2) {
-
-                final int childNum1 = child1.getNumber();
-                final int childNum2 = child2.getNumber();
-
-                core.setNodePartialsForUpdate(nodeNum);
-
-                core.calculatePartials(childNum1, childNum2, nodeNum);
-
-                if (parent == null) {
-                    // No parent so this is the root of the tree -
-                    // calculate the pattern likelihoods
-
-                    double[] partials = getRootPartials();
-
-                    core.calculateLogLikelihoods(partials);
-                }
-                update = true;
-            }
-        }
-        return update;
-    }
-
-
-    public final double[] getRootPartials() {
-        if (normRootPartials == null) {
-            normRootPartials = new double[stateCount];
-        }
-
-        int nodeNum = treeModel.getRoot().getNumber();
-
-        core.getPartials(nodeNum, normRootPartials);
-
-        // now need to deal with the root branch
-
-        for(int i=0; i<noTips; i++){
-
-            normRootPartials[i] *= cases.probXInfectedBetweenTandU
-                    (cases.getCase(i), getNodeTime(treeModel.getRoot()) - maxFirstInfToRoot.getParameterValue(0),
-                            getNodeTime(treeModel.getRoot()));
-        }
-
-
-        return normRootPartials;
     }
 
     /* Return the double time at which the given node occurred */
@@ -1448,40 +937,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return out;
     }
 
-    public double getInfectiousPeriodSD(){
-        DescriptiveStatistics stats = new DescriptiveStatistics(getInfectiousPeriods());
-        return stats.getStandardDeviation();
-    }
-
-    public double getLogInfectiousPeriodSD(){
-        if(infectiousPeriods==null){
-            infectiousPeriods = getInfectiousPeriods(branchMap);
-        }
-        DescriptiveStatistics stats = new DescriptiveStatistics();
-        for (double infectiousPeriod : infectiousPeriods) {
-            stats.addValue(Math.log(infectiousPeriod));
-        }
-        return stats.getStandardDeviation();
-    }
-
-    public double getLatentPeriodSD(){
-        if(latentPeriods==null){
-            latentPeriods = getLatentPeriods(branchMap);
-        }
-        DescriptiveStatistics stats = new DescriptiveStatistics(getLatentPeriods());
-        return stats.getStandardDeviation();
-    }
-
-    public double getLogLatentPeriodSD(){
-        if(latentPeriods==null){
-            latentPeriods = getLatentPeriods(branchMap);
-        }
-        DescriptiveStatistics stats = new DescriptiveStatistics();
-        for (double latentPeriod : latentPeriods) {
-            stats.addValue(Math.log(latentPeriod));
-        }
-        return stats.getStandardDeviation();
-    }
 
 
     private double getRootInfectionTime(AbstractCase[] branchMap){
@@ -1494,13 +949,13 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
 
     }
 
-    private double getRootInfectionTime(){
+    protected double getRootInfectionTime(){
         AbstractCase rootCase = branchMap[treeModel.getRoot().getNumber()];
         return getInfectionTime(rootCase);
     }
 
     public AbstractCase getInfector(NodeRef node, AbstractCase[] branchMap){
-        if(treeModel.isRoot(node) || node.getNumber()== treeModel.getRoot().getNumber()){
+        if(treeModel.isRoot(node) || node.getNumber() == treeModel.getRoot().getNumber()){
             return null;
         } else {
             AbstractCase nodeCase = branchMap[node.getNumber()];
@@ -1516,7 +971,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         return checkPartitions(branchMap, true);
     }
 
-    private boolean checkPartitions(AbstractCase[] map, boolean verbose){
+    protected boolean checkPartitions(AbstractCase[] map, boolean verbose){
         boolean foundProblem = false;
         for(int i=0; i<treeModel.getInternalNodeCount(); i++){
             boolean foundTip = false;
@@ -1715,8 +1170,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         while(!gotOne){
 
             likelihoodKnown = false;
-            traversalProbKnown = false;
-            renormalisationNeeded = true;
             boolean failed = false;
             System.out.print(tries + "...");
             branchMap = prepareExternalNodeMap(new AbstractCase[treeModel.getNodeCount()]);
@@ -1739,6 +1192,8 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
                 latentPeriods = getLatentPeriods(branchMap);
             }
 
+            makeDirty();
+
             if(!failed && calculateLogLikelihood()!=Double.NEGATIVE_INFINITY){
                 gotOne = true;
                 System.out.println("found.");
@@ -1760,8 +1215,7 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
     */
 
     private AbstractCase[] partitionAccordingToRandomTT(AbstractCase[] map, boolean checkNonZero){
-        Arrays.fill(updateNode, true);
-        Arrays.fill(updateNodeForSingleTraverse, true);
+        makeDirty();
         TreeModel.Node root = (TreeModel.Node) treeModel.getRoot();
         randomlyAssignNode(root, map, checkNonZero);
         return map;
@@ -1785,22 +1239,21 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             int randomSelection = MathUtils.nextInt(2);
             int decision;
             if(checkNonZero){
-                Double[] branchLogLs = new Double[2];
+                Boolean[] branchLogLs = new Boolean[2];
                 for(int i=0; i<2; i++){
                     double nodeTime = getNodeTime(node);
                     double branchLength = getNodeTime(treeModel.getChild(node, 1-i)) - getNodeTime(node);
                     AbstractCase infector = choices[i];
                     AbstractCase infectee = choices[1-i];
 
-                    branchLogLs[i]= cases.logProbXInfectedByYAtTimeT(infectee, infector,
-                            nodeTime + infectionTimeBranchPositions.getParameterValue(
-                                    cases.getCaseIndex(infectee))*branchLength);
+                    branchLogLs[i]= !infector.culledYet(nodeTime + infectionTimeBranchPositions.getParameterValue(
+                            cases.getCaseIndex(infectee))*branchLength);
                 }
-                if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
+                if(!branchLogLs[0] && !branchLogLs[1]){
                     throw new BadPartitionException("Both branch possibilities have zero likelihood: "
                             +node.toString()+", cases " + choices[0].getName() + " and " + choices[1].getName() + ".");
-                } else if(branchLogLs[0]==Double.NEGATIVE_INFINITY || branchLogLs[1]==Double.NEGATIVE_INFINITY){
-                    if(branchLogLs[0]==Double.NEGATIVE_INFINITY){
+                } else if(!branchLogLs[0] || !branchLogLs[1]){
+                    if(!branchLogLs[0]){
                         decision = 1;
                     } else {
                         decision = 0;
@@ -1835,97 +1288,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
             testTreesOut.exportTree(treeCopy);
         } catch (IOException ignored) {System.out.println("IOException");}
     }
-
-
-
-
-    //************************************************************************
-    // AbstractXMLObjectParser implementation
-    //************************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        public static final String STARTING_NETWORK = "startingNetwork";
-        public static final String INFECTION_TIMES = "infectionTimeBranchPositions";
-        public static final String INFECTIOUS_TIMES = "infectiousTimePositions";
-        public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
-        public static final String EXTENDED = "extended";
-        public static final String NORMALISE = "normalise";
-        public static final String JEFFREYS = "jeffreys";
-
-        public String getParserName() {
-            return CASE_TO_CASE_TREE_LIKELIHOOD;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            TreeModel virusTree = (TreeModel) xo.getChild(TreeModel.class);
-
-            String startingNetworkFileName=null;
-
-            if(xo.hasChildNamed(STARTING_NETWORK)){
-                startingNetworkFileName = (String) xo.getElementFirstChild(STARTING_NETWORK);
-            }
-
-
-            AbstractOutbreak caseSet = (AbstractOutbreak) xo.getChild(AbstractOutbreak.class);
-
-            CaseToCaseTreeLikelihood likelihood;
-
-
-            final boolean extended = xo.getBooleanAttribute(EXTENDED);
-
-            final boolean normalise = xo.getBooleanAttribute(NORMALISE);
-
-            final boolean jeffreys = xo.getBooleanAttribute(JEFFREYS);
-
-
-            Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
-
-            Parameter infectiousTimes = xo.hasChildNamed(INFECTIOUS_TIMES)
-                    ? (Parameter) xo.getElementFirstChild(INFECTIOUS_TIMES) : null;
-
-            Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
-
-            try {
-                likelihood = new CaseToCaseTreeLikelihood(virusTree, caseSet, startingNetworkFileName, infectionTimes,
-                        infectiousTimes, earliestFirstInfection, extended, normalise, jeffreys);
-            } catch (TaxonList.MissingTaxonException e) {
-                throw new XMLParseException(e.toString());
-            }
-
-            return likelihood;
-        }
-
-        public String getParserDescription() {
-            return "This element represents a probability distribution for the infection dates for cases of an outbreak"
-                    +"given a phylogenetic tree";
-        }
-
-        public Class getReturnType() {
-            return CaseToCaseTreeLikelihood.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule(EXTENDED),
-                AttributeRule.newBooleanRule(NORMALISE),
-                AttributeRule.newBooleanRule(JEFFREYS),
-                new ElementRule(TreeModel.class, "The tree"),
-                new ElementRule(AbstractOutbreak.class, "The set of cases"),
-                new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
-                        true),
-                new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
-                        "the root node"),
-                new ElementRule(INFECTION_TIMES, Parameter.class),
-                new ElementRule(INFECTIOUS_TIMES, Parameter.class, "For each case, proportions of the time between " +
-                        "infection and first event that requires infectiousness (further infection or cull)" +
-                        "that has elapsed before infectiousness", true)
-        };
-    };
-
 
     //************************************************************************
     // Loggable implementation
@@ -1978,25 +1340,6 @@ public class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements 
         }
         return branchMap[node.getNumber()].toString();
     }
-
-    public class CaseToCaseLikelihoodCore extends GeneralLikelihoodCore{
-
-        public CaseToCaseLikelihoodCore(){
-            super(cases.size());
-        }
-
-        public void calculateLogLikelihoods(double[] partials){
-
-            // this isn't a CTMC and doesn't have frequencies, and has only one pattern
-            double[] dummyFreqArray = new double[stateCount];
-            Arrays.fill(dummyFreqArray,1);
-            double[] outLLArray = new double[1];
-            calculateLogLikelihoods(partials, dummyFreqArray, outLLArray);
-            normTotalProb = outLLArray[0];
-        }
-
-    }
-
 }
 
 

@@ -27,15 +27,15 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
     public TransmissionWilsonBaldingB(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
-        tipCount = c2cLikelihood.getTree().getExternalNodeCount();
+        tipCount = c2cLikelihood.getTreeModel().getExternalNodeCount();
     }
 
     public double doOperation() throws OperatorFailedException {
 
         proposeTree();
 
-        if (c2cLikelihood.getTree().getExternalNodeCount() != tipCount) {
-            int newCount = c2cLikelihood.getTree().getExternalNodeCount();
+        if (c2cLikelihood.getTreeModel().getExternalNodeCount() != tipCount) {
+            int newCount = c2cLikelihood.getTreeModel().getExternalNodeCount();
             throw new RuntimeException("Lost some tips in modified SPR! (" +
                     tipCount + "-> " + newCount + ")");
         }
@@ -44,7 +44,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
     }
 
     public void proposeTree() throws OperatorFailedException {
-        TreeModel tree = c2cLikelihood.getTree();
+        TreeModel tree = c2cLikelihood.getTreeModel();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
@@ -173,7 +173,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
 
     @Override
     public String getOperatorName() {
-        return TRANSMISSION_WILSON_BALDING_B + " (" + c2cLikelihood.getTree().getId() +")";
+        return TRANSMISSION_WILSON_BALDING_B + " (" + c2cLikelihood.getTreeModel().getId() +")";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

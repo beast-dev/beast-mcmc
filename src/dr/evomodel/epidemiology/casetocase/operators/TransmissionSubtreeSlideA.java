@@ -38,7 +38,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     public TransmissionSubtreeSlideA(CaseToCaseTreeLikelihood c2cLikelihood, double weight, double size,
                                      boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode) {
         this.c2cLikelihood = c2cLikelihood;
-        tree = c2cLikelihood.getTree();
+        tree = c2cLikelihood.getTreeModel();
         setWeight(weight);
 
         if (size == 0.0) {
@@ -278,7 +278,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     }
 
     private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
-        // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
+        // to be eligible for this move, the node's parent and grandparent, or parent and sibling, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
 
         return  (tree.getParent(tree.getParent(node))!=null
@@ -367,7 +367,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
             if (Double.isInfinite(size) || size <= 0.0) {
                 throw new XMLParseException("size attribute must be positive and not infinite. was " + size +
-                        " for tree " + c2cL.getTree().getId() );
+                        " for tree " + c2cL.getTreeModel().getId() );
             }
 
             final boolean gaussian = xo.getBooleanAttribute("gaussian");

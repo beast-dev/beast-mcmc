@@ -34,10 +34,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
     public static final String SIMPLE_OUTBREAK = "simpleOutbreak";
 
     public SimpleOutbreak(String name, Taxa taxa, boolean hasGeography){
-        super(name, taxa);
+        super(name, taxa, false, hasGeography);
         cases = new ArrayList<AbstractCase>();
-        hasLatentPeriods = false;
-        this.hasGeography = hasGeography;
     }
 
     public SimpleOutbreak(String name, Taxa taxa, boolean hasGeography,
@@ -62,52 +60,42 @@ public class SimpleOutbreak extends AbstractOutbreak {
     // in all of the following infectiousness of the parent is assumed because there is no latent period, so Y is not
     // used
 
-    @Override
     public double probXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
         return probXInfectedAtTimeT(X, T);
     }
 
-    @Override
     public double logProbXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
         return logProbXInfectedAtTimeT(X, T);
     }
 
-    @Override
     public double probXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
         return probXInfectedBetweenTandU(X, T, U);
     }
 
-    @Override
     public double logProbXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
         return logProbXInfectedBetweenTandU(X, T, U);
     }
 
-    @Override
     public double probXInfectiousByTimeT(AbstractCase X, double T) {
         return ((SimpleCase)X).infectedBy(T);
     }
 
-    @Override
     public double logProbXInfectiousByTimeT(AbstractCase X, double T) {
         return Math.log(probXInfectiousByTimeT(X, T));
     }
 
-    @Override
     public double probXInfectedAtTimeT(AbstractCase X, double T) {
         return ((SimpleCase)X).infectedAt(T);
     }
 
-    @Override
     public double logProbXInfectedAtTimeT(AbstractCase X, double T) {
         return Math.log(probXInfectedAtTimeT(X,T));
     }
 
-    @Override
     public double probXInfectedBetweenTandU(AbstractCase X, double T, double U) {
         return ((SimpleCase)X).infectedBetween(T,U);
     }
 
-    @Override
     public double logProbXInfectedBetweenTandU(AbstractCase X, double T, double U) {
         return Math.log(probXInfectedBetweenTandU(X, T, U));
     }

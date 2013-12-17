@@ -9,7 +9,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.ProductStatistic;
 import dr.inference.model.Variable;
-import dr.math.RiemannApproximation;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -26,42 +25,41 @@ import java.util.ArrayList;
  * Date: 20/08/2013
  */
 
-public class CategoryOutbreak extends AbstractOutbreak {
+public class JeffreysCategoryOutbreak extends AbstractOutbreak {
 
-    public static final String CATEGORY_OUTBREAK = "categoryOutbreak";
+    public static final String JEFFREYS_CATEGORY_OUTBREAK = "jeffreysCategoryOutbreak";
     private double[][] distances;
 
-    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods){
-        super(name, taxa);
+    public JeffreysCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods){
+        super(name, taxa, hasLatentPeriods, hasGeography);
         cases = new ArrayList<AbstractCase>();
-        this.hasLatentPeriods = hasLatentPeriods;
-        this.hasGeography = hasGeography;
     }
 
-    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography){
-        this(name, taxa, hasGeography, false);
+    public JeffreysCategoryOutbreak(String name, Taxa taxa, boolean hasGeography){
+        this(name, taxa, false, hasGeography);
     }
 
-    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
-                            ArrayList<AbstractCase> cases){
+    public JeffreysCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
+                                    ArrayList<AbstractCase> cases){
         this(name, taxa, hasGeography, hasLatentPeriods);
         this.cases.addAll(cases);
     }
 
-    public CategoryOutbreak(Taxa taxa, boolean hasGeography, boolean hasLatentPeriods){
-        this(CATEGORY_OUTBREAK, taxa, hasGeography, hasLatentPeriods);
+    public JeffreysCategoryOutbreak(Taxa taxa, boolean hasGeography, boolean hasLatentPeriods){
+        this(JEFFREYS_CATEGORY_OUTBREAK, taxa, hasGeography, hasLatentPeriods);
     }
 
-    public CategoryOutbreak(Taxa taxa, boolean hasGeography, boolean hasLatentPeriods, ArrayList<AbstractCase> cases){
-        this(CATEGORY_OUTBREAK, taxa, hasGeography, hasLatentPeriods, cases);
+    public JeffreysCategoryOutbreak(Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
+                                    ArrayList<AbstractCase> cases){
+        this(JEFFREYS_CATEGORY_OUTBREAK, taxa, hasGeography, hasLatentPeriods, cases);
     }
 
-    private void addCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel infectiousDist,
-                         Parameter coords, Taxa associatedTaxa){
-        CategoryCase thisCase = new CategoryCase(caseID, examDate, cullDate, infectiousDist, coords, associatedTaxa);
+    private void addCase(String caseID, Date examDate, Date cullDate, Parameter coords, Taxa associatedTaxa){
+        JeffreysCategoryCase thisCase = new JeffreysCategoryCase(caseID, examDate, cullDate, coords, associatedTaxa);
         cases.add(thisCase);
         addModel(thisCase);
     }
+
 
     public double getDistance(AbstractCase a, AbstractCase b) {
         if(distances==null){
@@ -78,77 +76,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 distances[i][j]=SpatialKernel.EuclideanDistance(getCase(i).getCoords(),getCase(j).getCoords());
             }
         }
-    }
-
-    // in all of the following infectiousness of the parent is assumed because there is no latent period, so Y is only
-    // used to determine whether it was culled
-
-    @Override
-    public double probXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
-        if(Y.culledYet(T)){
-            return 0;
-        } else {
-            return probXInfectedAtTimeT(X, T);
-        }
-    }
-
-    @Override
-    public double logProbXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T) {
-        if(Y.culledYet(T)){
-            return Double.NEGATIVE_INFINITY;
-        } else {
-            return logProbXInfectedAtTimeT(X, T);
-        }
-    }
-
-    @Override
-    public double probXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
-        if(Y.culledYet(T)){
-            return 0;
-        } else {
-            double latestInfectionDate = Math.min(U, Y.getCullDate().getTimeValue());
-            return probXInfectedBetweenTandU(X, T, latestInfectionDate);
-        }
-    }
-
-    @Override
-    public double logProbXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U) {
-        if(Y.culledYet(T)){
-            return Double.NEGATIVE_INFINITY;
-        } else {
-            double latestInfectionDate = Math.min(U, Y.getCullDate().getTimeValue());
-            return logProbXInfectedBetweenTandU(X, T, latestInfectionDate);
-        }
-    }
-
-    @Override
-    public double probXInfectiousByTimeT(AbstractCase X, double T) {
-        return ((CategoryCase)X).infectedBy(T);
-    }
-
-    @Override
-    public double logProbXInfectiousByTimeT(AbstractCase X, double T) {
-        return Math.log(probXInfectiousByTimeT(X, T));
-    }
-
-    @Override
-    public double probXInfectedAtTimeT(AbstractCase X, double T) {
-        return ((CategoryCase)X).infectedAt(T);
-    }
-
-    @Override
-    public double logProbXInfectedAtTimeT(AbstractCase X, double T) {
-        return Math.log(probXInfectedAtTimeT(X,T));
-    }
-
-    @Override
-    public double probXInfectedBetweenTandU(AbstractCase X, double T, double U) {
-        return ((CategoryCase)X).infectedBetween(T,U);
-    }
-
-    @Override
-    public double logProbXInfectedBetweenTandU(AbstractCase X, double T, double U) {
-        return Math.log(probXInfectedBetweenTandU(X, T, U));
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -171,64 +98,30 @@ public class CategoryOutbreak extends AbstractOutbreak {
         fireModelChanged();
     }
 
-    private class CategoryCase extends AbstractCase{
+    protected class JeffreysCategoryCase extends AbstractCase{
 
-        public static final String CATEGORY_CASE = "categoryCase";
+        public static final String JEFFREYS_CATEGORY_CASE = "categoryCase";
         private final Parameter coords;
-        private ParametricDistributionModel infectiousPeriodDistribution;
 
-        private CategoryCase(String name, String caseID, Date examDate, Date cullDate,
-                             ParametricDistributionModel infectiousDist, Parameter coords, Taxa associatedTaxa){
+        protected JeffreysCategoryCase(String name, String caseID, Date examDate, Date cullDate,
+                                       Parameter coords, Taxa associatedTaxa){
             super(name);
             this.caseID = caseID;
             this.examDate = examDate;
             endOfInfectiousDate = cullDate;
             this.associatedTaxa = associatedTaxa;
             this.coords = coords;
-            infectiousPeriodDistribution = infectiousDist;
-            this.addModel(infectiousPeriodDistribution);
         }
 
-        private CategoryCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel infectiousDist,
-                             Parameter coords, Taxa associatedTaxa){
-            this(CATEGORY_CASE, caseID, examDate, cullDate, infectiousDist, coords, associatedTaxa);
+
+        private JeffreysCategoryCase(String caseID, Date examDate, Date cullDate, Parameter coords,
+                                     Taxa associatedTaxa){
+            this(JEFFREYS_CATEGORY_CASE, caseID, examDate, cullDate, coords, associatedTaxa);
         }
 
         public Date getLatestPossibleInfectionDate() {
             Double doubleDate = examDate.getTimeValue();
             return Date.createTimeSinceOrigin(doubleDate, Units.Type.DAYS, examDate.getOrigin());
-        }
-
-        public double infectedAt(double infected){
-            if(culledYet(infected)){
-                return 0;
-            } else {
-                return infectiousPeriodDistribution.pdf(endOfInfectiousDate.getTimeValue()-infected);
-            }
-        }
-
-        public double infectedBetween(double start, double end){
-            if(culledYet(start)){
-                return 0;
-            } else {
-                double endPoint = end<endOfInfectiousDate.getTimeValue() ? end : endOfInfectiousDate.getTimeValue();
-
-                return infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-start)
-                        - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-endPoint);
-            }
-
-        }
-
-        public double infectedBy(double time){
-            if(culledYet(time)){
-                return 1;
-            } else {
-                return 1 - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-time);
-            }
-        }
-
-        public double infectedAfter(double time){
-            return 1 - infectedBy(time);
         }
 
         public boolean culledYet(double time) {
@@ -244,7 +137,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         protected void handleModelChangedEvent(Model model, Object object, int index) {
-            // @todo to have all the cases listening seems excessive and I'm not sure it's necessary - maybe only the outbreak need listen
             fireModelChanged();
         }
 
@@ -268,9 +160,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
             return examDate;
         }
 
-        public ParametricDistributionModel getInfectiousPeriodDistribution(){
-            return infectiousPeriodDistribution;
-        }
+
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -279,7 +169,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         public static final String HAS_GEOGRAPHY = "hasGeography";
         public static final String HAS_LATENT_PERIODS = "hasLatentPeriods";
-        public static final String INFECTIOUS_PERIOD_DISTRIBUTIONS = "infectiousPeriodDistributions";
 
         //for the cases
 
@@ -289,18 +178,16 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String COORDINATES = "spatialCoordinates";
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
         public static final String INFECTIOUS_TIME_POSITION = "infectiousTimePosition";
-        public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodDistribution";
 
-        @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
             final boolean hasLatentPeriods = xo.hasAttribute(HAS_LATENT_PERIODS)
                     && xo.getBooleanAttribute(HAS_LATENT_PERIODS);
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
-            CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography, hasLatentPeriods);
+            JeffreysCategoryOutbreak cases = new JeffreysCategoryOutbreak(null, taxa, hasGeography, hasLatentPeriods);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
-                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(CategoryCase.CATEGORY_CASE)){
+                if(cxo instanceof XMLObject && ((XMLObject)cxo).getName().equals(JeffreysCategoryCase.JEFFREYS_CATEGORY_CASE)){
                     parseCase((XMLObject)cxo, cases);
                 }
             }
@@ -308,13 +195,11 @@ public class CategoryOutbreak extends AbstractOutbreak {
             return cases;
         }
 
-        public void parseCase(XMLObject xo, CategoryOutbreak outbreak)
+        public void parseCase(XMLObject xo, JeffreysCategoryOutbreak outbreak)
                 throws XMLParseException {
             String farmID = (String) xo.getAttribute(CASE_ID);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
-            final ParametricDistributionModel infectiousDist =
-                    (ParametricDistributionModel)xo.getElementFirstChild(INFECTIOUS_PERIOD_DISTRIBUTION);
             final Parameter coords = xo.hasChildNamed(COORDINATES) ?
                     (Parameter) xo.getElementFirstChild(COORDINATES) : null;
             Taxa taxa = new Taxa();
@@ -323,10 +208,8 @@ public class CategoryOutbreak extends AbstractOutbreak {
                     taxa.addTaxon((Taxon)xo.getChild(i));
                 }
             }
-            outbreak.addCase(farmID, examDate, cullDate, infectiousDist, coords, taxa);
+            outbreak.addCase(farmID, examDate, cullDate, coords, taxa);
         }
-
-
 
         public String getParserDescription(){
             return "Parses a set of 'category' farm cases and the information that they all share";
@@ -337,7 +220,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         public String getParserName(){
-            return CATEGORY_OUTBREAK;
+            return JEFFREYS_CATEGORY_OUTBREAK;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -349,8 +232,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
-                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability" +
-                        "distribution from which the infectious period of this case is drawn"),
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
                         " along which the infection of this case occurs that it actually does occur"),
                 new ElementRule(INFECTIOUS_TIME_POSITION, Parameter.class, "Parameter taking a value between 0 and" +
@@ -361,12 +242,10 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ProductStatistic.class, 0,2),
-                new ElementRule(CategoryCase.CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
+                new ElementRule(JeffreysCategoryCase.JEFFREYS_CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTIONS, ParametricDistributionModel.class,
-                        "One or more probability distributions for the infectious periods of cases in the oubreak", 1,
-                        Integer.MAX_VALUE),
-                AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
+                AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true),
+                AttributeRule.newBooleanRule(HAS_LATENT_PERIODS, true)
         };
     };
 

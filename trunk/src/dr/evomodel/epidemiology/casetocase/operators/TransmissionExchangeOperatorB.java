@@ -31,7 +31,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
 
     public double doOperation() throws OperatorFailedException {
 
-        TreeModel tree = c2cLikelihood.getTree();
+        TreeModel tree = c2cLikelihood.getTreeModel();
 
         double hr = exchange();
 
@@ -43,7 +43,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
     }
 
     public double exchange() throws OperatorFailedException{
-        TreeModel tree = c2cLikelihood.getTree();
+        TreeModel tree = c2cLikelihood.getTreeModel();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
 
         final int nodeCount = tree.getNodeCount();
@@ -132,7 +132,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
     }
 
     public String getOperatorName() {
-        return "Transmission tree exchange operator type B (" + c2cLikelihood.getTree().getId() +")";
+        return "Transmission tree exchange operator type B (" + c2cLikelihood.getTreeModel().getId() +")";
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -144,7 +144,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final CaseToCaseTreeLikelihood c2cL
                     = (CaseToCaseTreeLikelihood) xo.getChild(CaseToCaseTreeLikelihood.class);
-            if (c2cL.getTree().getExternalNodeCount() <= 2) {
+            if (c2cL.getTreeModel().getExternalNodeCount() <= 2) {
                 throw new XMLParseException("Tree with fewer than 3 taxa");
             }
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);

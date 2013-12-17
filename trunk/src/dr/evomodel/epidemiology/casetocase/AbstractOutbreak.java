@@ -6,6 +6,7 @@ import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.AbstractModel;
 
 import java.util.*;
@@ -22,16 +23,16 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     protected GeneralDataType caseDataType;
     protected TaxonList taxa;
-    protected boolean hasLatentPeriods = false;
-    protected boolean hasGeography;
+    protected final boolean hasLatentPeriods;
+    protected final boolean hasGeography;
     private final String CASE_NAME = "caseID";
     protected ArrayList<AbstractCase> cases;
 
     public AbstractOutbreak(String name, Taxa taxa){
-        this(name, taxa, false);
+        this(name, taxa, false, true);
     }
 
-    public AbstractOutbreak(String name, Taxa taxa, boolean hasLatentPeriods){
+    public AbstractOutbreak(String name, Taxa taxa, boolean hasLatentPeriods, boolean hasGeography){
         super(name);
         this.taxa = taxa;
         ArrayList<String> caseNames = new ArrayList<String>();
@@ -40,6 +41,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         }
         caseDataType = new GeneralDataType(caseNames);
         this.hasLatentPeriods = hasLatentPeriods;
+        this.hasGeography = hasGeography;
     }
 
     public ArrayList<AbstractCase> getCases(){
@@ -97,26 +99,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     public TaxonList getTaxa(){
         return taxa;
     }
-
-    public abstract double probXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T);
-
-    public abstract double logProbXInfectedByYAtTimeT(AbstractCase X, AbstractCase Y, double T);
-
-    public abstract double probXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U);
-
-    public abstract double logProbXInfectedByYBetweenTandU(AbstractCase X, AbstractCase Y, double T, double U);
-
-    public abstract double probXInfectiousByTimeT(AbstractCase X, double T);
-
-    public abstract double logProbXInfectiousByTimeT(AbstractCase X, double T);
-
-    public abstract double probXInfectedAtTimeT(AbstractCase X, double T);
-
-    public abstract double logProbXInfectedAtTimeT(AbstractCase X, double T);
-
-    public abstract double probXInfectedBetweenTandU(AbstractCase X, double T, double U);
-
-    public abstract double logProbXInfectedBetweenTandU(AbstractCase X, double T, double U);
 
 
     //************************************************************************

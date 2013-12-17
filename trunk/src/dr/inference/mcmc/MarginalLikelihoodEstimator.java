@@ -49,7 +49,7 @@ import java.util.List;
  */
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
-    public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps, double fixedRunValue,
+    public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps, double[] fixedRunValues,
 //                                       boolean linear, boolean lacing,
                                        PathScheme scheme,
                                        PathLikelihood pathLikelihood,
@@ -61,7 +61,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         this.pathSteps = pathSteps;
         this.scheme = scheme;
         this.schedule = schedule;
-        this.fixedRunValue = fixedRunValue;
+        this.fixedRunValues = fixedRunValues;
         // deprecated
         // this.linear = (scheme == PathScheme.LINEAR);
         // this.lacing = false; // Was not such a good idea
@@ -134,17 +134,17 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     }
 
     public class FixedThetaRun extends Integrator {
-        private double value;
+        private double[] value;
 
-        public FixedThetaRun(double value) {
-            super(1);
+        public FixedThetaRun(double[] value) {
+            super(value.length);
             this.value = value;
         }
 
         double nextPathParameter() {
-            if (step == 0) {
+            if (step < value.length) {
                 step++;
-                return value;
+                return value[step-1];
             } else {
                 return -1.0;
             }
@@ -335,7 +335,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
         switch (scheme) {
             case FIXED:
-                integrate(new FixedThetaRun(fixedRunValue));
+                integrate(new FixedThetaRun(fixedRunValues));
                 break;
             case LINEAR:
                 integrate(new LinearIntegrator(pathSteps));
@@ -456,7 +456,16 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 //            MCLogger logger = (MCLogger) xo.getChild(MCLogger.class);
 
             int chainLength = xo.getIntegerAttribute(CHAIN_LENGTH);
-            int pathSteps = xo.getIntegerAttribute(PATH_STEPS);
+            int pathSteps = -1;
+            double[] fixedRunValues = null;
+            if (xo.hasAttribute(PATH_STEPS)) {
+            	pathSteps = xo.getIntegerAttribute(PATH_STEPS);
+            } else if (xo.hasAttribute(FIXED_VALUE)) {
+                fixedRunValues = xo.getDoubleArrayAttribute(FIXED_VALUE);
+            } else {
+            	throw new RuntimeException("Either a number of path steps or predefined beta values need to be provided.");
+            }
+            
             int burninLength = -1;
             if (xo.hasAttribute(BURNIN)) {
                 burninLength = xo.getIntegerAttribute(BURNIN);
@@ -466,11 +475,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             if (xo.hasAttribute(PRERUN)) {
                 prerunLength = xo.getIntegerAttribute(PRERUN);
             }
-            double fixedRunValue = -1.0;
-            if (xo.hasAttribute(FIXED_VALUE)) {
-                fixedRunValue = xo.getDoubleAttribute(FIXED_VALUE);
-            }
-
+            
             // deprecated
             boolean linear = xo.getAttribute(LINEAR, true);
             // boolean lacing = xo.getAttribute(LACING,false);
@@ -518,7 +523,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             }
 
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
-                    burninLength, pathSteps, fixedRunValue, scheme, pathLikelihood, os, loggerList);
+                    burninLength, pathSteps, fixedRunValues, scheme, pathLikelihood, os, loggerList);
 
             if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
@@ -573,14 +578,14 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newIntegerRule(CHAIN_LENGTH),
-                AttributeRule.newIntegerRule(PATH_STEPS),
+                AttributeRule.newIntegerRule(PATH_STEPS, true),
                 AttributeRule.newIntegerRule(BURNIN, true),
                 AttributeRule.newIntegerRule(PRERUN, true),
                 AttributeRule.newBooleanRule(LINEAR, true),
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
                 AttributeRule.newStringRule(PATH_SCHEME, true),
-                AttributeRule.newDoubleRule(FIXED_VALUE, true),
+                AttributeRule.newDoubleArrayRule(FIXED_VALUE, true),
                 AttributeRule.newDoubleRule(ALPHA, true),
                 AttributeRule.newDoubleRule(BETA, true),
                 new ElementRule(MCMC,
@@ -650,7 +655,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     private final PathScheme scheme;
     private double alphaFactor = 0.5;
     private double betaFactor = 0.5;
-    private double fixedRunValue = -1.0;
+    private double[] fixedRunValues;
     private final double pathDelta;
     private double pathParameter;
 
@@ -668,7 +673,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String BURNIN = "burnin";
     public static final String MCMC = "samplers";
     public static final String PATH_SCHEME = "pathScheme";
-    public static final String FIXED_VALUE = "fixedValue";
+    public static final String FIXED_VALUE = "fixedValues";
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
     public static final String PRERUN = "prerun";

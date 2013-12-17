@@ -103,11 +103,20 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         if(model instanceof CaseToCaseTreeLikelihood){
             // @todo if you're going for maximum efficiency, some tree moves may not change the infection times, and most tree moves don't change MANY infection times
             treeProbKnown = false;
-            transProbKnown = false;
-            normalisationKnown = false;
-            sortedCases = null;
-            lastTimesToInfect = null;
+            if(!(object instanceof AbstractOutbreak)){
+                transProbKnown = false;
+                normalisationKnown = false;
+                sortedCases = null;
+                lastTimesToInfect = null;
+            }
         } else if(model instanceof SpatialKernel){
+            transProbKnown = false;
+        }
+        likelihoodKnown = false;
+    }
+
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if(variable==transmissionRate){
             transProbKnown = false;
         }
         likelihoodKnown = false;
@@ -149,13 +158,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     protected void acceptState() {
         // nothing to do
-    }
-
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if(variable==transmissionRate){
-            transProbKnown = false;
-        }
-        likelihoodKnown = false;
     }
 
     public Model getModel() {

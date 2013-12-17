@@ -36,7 +36,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     public double doOperation(){
 
-        TreeModel tree = c2cLikelihood.getTree();
+        TreeModel tree = c2cLikelihood.getTreeModel();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
         int externalNodeCount = tree.getExternalNodeCount();
         // find a case whose infection event we are going to move about
@@ -50,7 +50,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         while(branchMap[node.getNumber()]==branchMap[tree.getParent(node).getNumber()]){
             node = tree.getParent(node);
         }
-        double hr = adjustTree(tree, node, branchMap, c2cLikelihood.isExtended());
+        double hr = adjustTree(tree, node, branchMap, true);
 
         return hr;
     }
@@ -98,7 +98,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
         newMap[parent.getNumber()]=map[node.getNumber()];
         c2cLikelihood.setBranchMap(newMap);
-        // @todo sort this out
+        // todo sort this out
         // c2cLikelihood.flagForDescendantRecalculation(tree, node, false);
         return tree.isExternal(node) ? Math.log(0.5) : 0;
     }

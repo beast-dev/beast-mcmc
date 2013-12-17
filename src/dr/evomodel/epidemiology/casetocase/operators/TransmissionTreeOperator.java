@@ -37,9 +37,10 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
         this.c2cLikelihood = c2cLikelihood;
         this.innerOperator = operator;
         this.setWeight(innerOperator.getWeight());
-        if(c2cLikelihood.isExtended()){
-            throw new RuntimeException("TransmissionTreeOperator only works on non-extended tree paintings");
-        }
+
+        // this doesn't work at all right now - it awaits the restoration of the TT=TMRCA version
+
+        throw new RuntimeException("TransmissionTreeOperator only works on non-extended tree paintings");
     }
 
     public TransmissionTreeOperator(CaseToCaseTreeLikelihood c2cLikelihood, AbstractTreeOperator operator) {
@@ -47,7 +48,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
     }
 
     public double doOperation() throws OperatorFailedException {
-        TreeModel tree = c2cLikelihood.getTree();
+        TreeModel tree = c2cLikelihood.getTreeModel();
         AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
         AbstractCase[] newBranchMap = Arrays.copyOf(branchMap, branchMap.length);
         int[] oldParents = getParentsArray(tree);

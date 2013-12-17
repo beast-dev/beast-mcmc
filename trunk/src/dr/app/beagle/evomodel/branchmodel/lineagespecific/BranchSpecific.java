@@ -67,14 +67,14 @@ import dr.math.MathUtils;
 @SuppressWarnings("serial")
 public class BranchSpecific extends AbstractModel implements BranchModel {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	
     private boolean setupMapping = true;
 	
-    private Map<NodeRef, Mapping> nodeMap; // = new HashMap<NodeRef, Mapping>();
+    private Map<NodeRef, Mapping> nodeMap;
     private List<SubstitutionModel> substitutionModels;
     private TreeModel treeModel;
-    private FrequencyModel rooFrequencyModel;
+    private FrequencyModel rootFrequencyModel;
     
     private CountableBranchCategoryProvider uCategoriesProvider;
     private Parameter uCategoriesParameter;
@@ -92,7 +92,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 		this.substitutionModels = substitutionModels;
 		this.uCategoriesProvider = uCategoriesProvider;
 		this.uCategoriesParameter = uCategoriesParameter;
-		this.rooFrequencyModel = rootFrequencyModel;
+		this.rootFrequencyModel = rootFrequencyModel;
 
 		this.nodeMap = new HashMap<NodeRef, Mapping>();
 
@@ -103,6 +103,9 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 		addModel(this.treeModel);
 		addVariable(this.uCategoriesParameter);
         
+		addModel((Model)this.uCategoriesProvider);
+		addModel(this.rootFrequencyModel);
+		
 	}// END: Constructor
 
     @Override
@@ -122,20 +125,11 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
         int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
         final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
         
-        if(DEBUG){
-      System.out.println("FUBAR2:" + uCategory);
-	  System.out.println("branch length: " + treeModel.getBranchLength(branch));
-        }
+		if (DEBUG) {
+//			System.out.println("FUBAR2:" + uCategory);
+//			System.out.println("branch length: " + treeModel.getBranchLength(branch));
+		}
 	  
-//		for (int i = 0; i < treeModel.getChildCount(branch); i++) {
-//
-//			NodeRef child = treeModel.getChild(branch, i);
-//
-//			System.out.println("child " + i + " length: " + treeModel.getBranchLength(child));
-//
-//		}
-        
-       
         nodeMap.put(branch, new Mapping() {
         	
 			@Override
@@ -164,7 +158,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     @Override
     public FrequencyModel getRootFrequencyModel() {
-        return rooFrequencyModel;
+        return rootFrequencyModel;
     }
 
     @Override
@@ -185,28 +179,40 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
     	fireModelChanged();
     }
 
-    @Override
-    protected void storeState() {
+	@Override
+	protected void storeState() {
 
-//    	System.err.println("STORE");
-    	
-    }
+		if (DEBUG) {
 
-    @Override
-    protected void restoreState() {
+			System.err.println("STORE");
 
-//    	System.err.println("RESTORE");
-    	
-    	setupMapping = true;
-    	
-    }
+		}
 
-    @Override
-    protected void acceptState() {
-    	
-//    	System.err.println("ACCEPT");
-    	
-    }
+	}// END: storeState
+
+	@Override
+	protected void restoreState() {
+
+		if (DEBUG) {
+
+			System.err.println("RESTORE");
+
+		}
+
+		setupMapping = true;
+
+	}// END: restoreState
+
+	@Override
+	protected void acceptState() {
+
+		if (DEBUG) {
+
+			System.err.println("ACCEPT");
+
+		}
+
+	}// END: acceptState
 
     public static void main(String[] args) {
 

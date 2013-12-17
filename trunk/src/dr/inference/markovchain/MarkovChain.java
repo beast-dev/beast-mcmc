@@ -326,34 +326,35 @@ public final class MarkovChain {
                 // assert Profiler.startProfile("Restore");
 
                 currentModel.restoreModelState();
+
+                if (usingFullEvaluation) {
+                    // This is a test that the state is correctly restored. The
+                    // restored state is fully evaluated and the likelihood compared with
+                    // that before the operation was made.
+
+                    likelihood.makeDirty();
+                    final double testScore = evaluate(likelihood, prior);
+
+                    final String d2 = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+
+                    if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
+
+
+                        final Logger logger = Logger.getLogger("error");
+                        logger.severe("State was not correctly restored after reject step.\n"
+                                + "Likelihood before: " + oldScore
+                                + " Likelihood after: " + testScore
+                                + "\n" + "Operator: " + mcmcOperator
+                                + " " + mcmcOperator.getOperatorName()
+                                + (diagnosticStart.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticStart + "\nAfter: " + d2 : "")
+                                + "\n\n");
+                        fullEvaluationError = true;
+                    }
+                }
             }
             // assert Profiler.stopProfile("Restore");
 
-            if (usingFullEvaluation) {
-                // This is a test that the state is correctly restored. The
-                // restored state is fully evaluated and the likelihood compared with
-                // that before the operation was made.
-
-                likelihood.makeDirty();
-                final double testScore = evaluate(likelihood, prior);
-
-                final String d2 = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood) likelihood).getDiagnosis() : "";
-
-                if (Math.abs(testScore - oldScore) > evaluationTestThreshold) {
-
-
-                    final Logger logger = Logger.getLogger("error");
-                    logger.severe("State was not correctly restored after reject step.\n"
-                            + "Likelihood before: " + oldScore
-                            + " Likelihood after: " + testScore
-                            + "\n" + "Operator: " + mcmcOperator
-                            + " " + mcmcOperator.getOperatorName()
-                            + (diagnosticStart.length() > 0 ? "\n\nDetails\nBefore: " + diagnosticStart + "\nAfter: " + d2 : "")
-                            + "\n\n");
-                    fullEvaluationError = true;
-                }
-            }
 
             if (!disableCoerce && mcmcOperator instanceof CoercableMCMCOperator) {
                 coerceAcceptanceProbability((CoercableMCMCOperator) mcmcOperator, logr[0]);

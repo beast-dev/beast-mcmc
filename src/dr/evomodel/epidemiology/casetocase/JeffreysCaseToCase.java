@@ -1,10 +1,7 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
@@ -21,8 +18,10 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
     public JeffreysCaseToCase(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                     Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
                                     Parameter maxFirstInfToRoot) throws TaxonList.MissingTaxonException{
-        super(virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, infectiousTimePositions,
+        super(virusTree, caseData, infectionTimeBranchPositions, infectiousTimePositions,
                 maxFirstInfToRoot);
+
+        prepareTree(startingNetworkFileName);
     }
 
 

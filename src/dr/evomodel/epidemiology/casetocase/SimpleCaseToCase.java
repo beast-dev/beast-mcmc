@@ -2,12 +2,15 @@ package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
+import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,11 +55,10 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
     private boolean storedTraversalProbKnown = false;
 
 
-    public SimpleCaseToCase(String name, TreeModel virusTree, AbstractOutbreak caseData,
-                                    String startingNetworkFileName, Parameter infectionTimeBranchPositions,
-                                    Parameter maxFirstInfToRoot) {
-        super(name, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, null,
-                maxFirstInfToRoot);
+    public SimpleCaseToCase(TreeModel virusTree, AbstractOutbreak caseData,
+                            String startingNetworkFileName, Parameter infectionTimeBranchPositions,
+                            Parameter maxFirstInfToRoot) {
+        super(SIMPLE_CASE_TO_CASE, virusTree, caseData, infectionTimeBranchPositions, null, maxFirstInfToRoot);
         if(caseData.hasLatentPeriods()){
             throw new RuntimeException("Latent periods not currently implemeted for SimpleCaseToCase");
         }
@@ -95,6 +97,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
         descendantTipPartitions = new HashMap<Integer, HashSet<AbstractCase>>();
         descendantTipPartitions(virusTree.getRoot(), descendantTipPartitions);
 
+        prepareTree(startingNetworkFileName);
     }
 
     protected double calculateLogLikelihood() {
@@ -434,7 +437,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
     public final void setBranchMap(AbstractCase[] map){
         super.setBranchMap(map);
         traversalProbKnown = false;
-        // @todo you could get efficiency savings here
+        // todo you could get efficiency savings here
         Arrays.fill(updateNodeForSingleTraverse, true);
     }
 
@@ -531,5 +534,66 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
         }
 
     }
+
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        public static final String STARTING_NETWORK = "startingNetwork";
+        public static final String INFECTION_TIMES = "infectionTimeBranchPositions";
+        public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
+
+        public String getParserName() {
+            return SIMPLE_CASE_TO_CASE;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel virusTree = (TreeModel) xo.getChild(TreeModel.class);
+
+            String startingNetworkFileName=null;
+
+            if(xo.hasChildNamed(STARTING_NETWORK)){
+                startingNetworkFileName = (String) xo.getElementFirstChild(STARTING_NETWORK);
+            }
+
+            AbstractOutbreak caseSet = (AbstractOutbreak) xo.getChild(AbstractOutbreak.class);
+
+            CaseToCaseTreeLikelihood likelihood;
+
+            Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
+
+            Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
+
+            likelihood = new SimpleCaseToCase(virusTree, caseSet, startingNetworkFileName, infectionTimes,
+                    earliestFirstInfection);
+
+            return likelihood;
+        }
+
+        public String getParserDescription() {
+            return "This element provides a tree prior for a partitioned tree, with each partitioned tree generated" +
+                    "by a coalescent process";
+        }
+
+        public Class getReturnType() {
+            return WithinCaseCoalescent.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(TreeModel.class, "The tree"),
+                new ElementRule(WithinCaseCategoryOutbreak.class, "The set of cases"),
+                new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
+                        true),
+                new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
+                        "the root node"),
+                new ElementRule(INFECTION_TIMES, Parameter.class)
+        };
+    };
 
 }

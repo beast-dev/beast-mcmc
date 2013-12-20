@@ -7,7 +7,6 @@ import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
-import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.CompoundParameter;
@@ -92,19 +91,19 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     // Basic constructor.
 
-    public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
+    public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
                                     Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
                                     Parameter maxFirstInfToRoot)
             throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions,
-                infectiousTimePositions, maxFirstInfToRoot);
+        this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, infectionTimeBranchPositions, infectiousTimePositions,
+                maxFirstInfToRoot);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData,
-                                    String startingNetworkFileName, Parameter infectionTimeBranchPositions,
-                                    Parameter infectiousTimePositions, Parameter maxFirstInfToRoot) {
+                                    Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
+                                    Parameter maxFirstInfToRoot) {
         super(name, caseData, virusTree);
 
 
@@ -166,19 +165,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         //paint the starting network onto the tree
 
-        if(startingNetworkFileName==null){
-            partitionAccordingToRandomTT(true);
-        } else {
-            partitionAccordingToSpecificTT(startingNetworkFileName);
-        }
-
-        infectionTimes = getInfectionTimes(branchMap);
-        infectiousPeriods = getInfectiousPeriods(branchMap);
-
-        if(hasLatentPeriods){
-            infectiousTimes = getInfectiousTimes(branchMap);
-            latentPeriods = getLatentPeriods(branchMap);
-        }
 
         treeTraits.addTrait(PARTITIONS_KEY, new TreeTrait.S() {
             public String getTraitName() {
@@ -209,7 +195,22 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 }
             });
         }
+    }
 
+    protected void prepareTree(String startingNetworkFileName){
+        if(startingNetworkFileName==null){
+            partitionAccordingToRandomTT(true);
+        } else {
+            partitionAccordingToSpecificTT(startingNetworkFileName);
+        }
+
+        infectionTimes = getInfectionTimes(branchMap);
+        infectiousPeriods = getInfectiousPeriods(branchMap);
+
+        if(hasLatentPeriods){
+            infectiousTimes = getInfectiousTimes(branchMap);
+            latentPeriods = getLatentPeriods(branchMap);
+        }
     }
 
     public AbstractOutbreak getOutbreak(){
@@ -743,7 +744,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
     }
 
-    // @todo all these could be better
+    // todo all these could be better
 
 
     public double getInfectionTime(AbstractCase thisCase){

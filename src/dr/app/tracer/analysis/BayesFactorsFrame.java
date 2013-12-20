@@ -97,7 +97,8 @@ public class BayesFactorsFrame extends AuxilaryFrame {
         if (isAICM) {
             label = new JLabel("<html>AICM estimated using the method-of-moments estimator. Please cite: Baele, " +
                     "Lemey, Bedford, Rambaut, Suchard and Alekseyenko. Improving the accuracy of demographic and " +
-                    "molecular clock model comparison while accommodating phylogenetic uncertainty. In prep.</html>");
+                    "molecular clock model comparison while accommodating phylogenetic uncertainty. " + 
+                    "Mol. Biol. Evol. 29(9), 2157-2167.</html>");
              label.setFont(UIManager.getFont("SmallSystemFont"));
         }
         label.setFont(UIManager.getFont("SmallSystemFont"));

@@ -101,7 +101,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if(model instanceof CaseToCaseTreeLikelihood){
-            // @todo if you're going for maximum efficiency, some tree moves may not change the infection times, and most tree moves don't change MANY infection times
+            // todo if you're going for maximum efficiency, some tree moves may not change the infection times, and most tree moves don't change MANY infection times
             treeProbKnown = false;
             if(!(object instanceof AbstractOutbreak)){
                 transProbKnown = false;

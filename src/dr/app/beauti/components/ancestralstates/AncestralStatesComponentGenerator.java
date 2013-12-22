@@ -1,18 +1,37 @@
+/*
+ * AncestralStatesComponentGenerator.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.components.ancestralstates;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.generator.Generator;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
 
 /**
@@ -86,7 +105,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writeCodonPartitionedRobustCounting(writer, component);
                 break;
             case IN_TREE_LIKELIHOOD:
-                writeCountingParameter(writer, (AbstractPartitionData)item, prefix);
+                writeCountingParameter(writer, (AbstractPartitionData) item);
                 break;
             case IN_FILE_LOG_PARAMETERS:
                 writeLogs(writer, component);
@@ -108,7 +127,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     }// END: generate
 
-    private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition, String prefix) {
+    private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition) {
         AncestralStatesComponentOptions component = (AncestralStatesComponentOptions) options
                 .getComponentOptions(AncestralStatesComponentOptions.class);
         if (!component.isCountingStates(partition)) {
@@ -117,6 +136,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         StringBuilder matrix = new StringBuilder();
 
+        String prefix = partition.getName() + ".";
 
         DataType dataType = partition.getDataType();
         int stateCount = dataType.getStateCount();
@@ -136,9 +156,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             }
         }
         writer.writeTag("parameter",
-                new Attribute[] {
+                new Attribute[]{
                         new Attribute.Default<String>("id", prefix + "count"),
-                        new Attribute.Default<String>("value", matrix.toString()) },
+                        new Attribute.Default<String>("value", matrix.toString())},
                 true);
 
     }
@@ -174,13 +194,13 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         // S operator
         writer.writeOpenTag("codonPartitionedRobustCounting",
-                new Attribute[] {
+                new Attribute[]{
                         new Attribute.Default<String>("id", prefix + "robustCounting1"),
                         new Attribute.Default<String>("labeling", "S"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",
-                                "true") });
+                                "true")});
 
         writer.writeIDref("treeModel", "treeModel");
         writer.writeOpenTag("firstPosition");
@@ -201,13 +221,13 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         // N operator:
         writer.writeOpenTag("codonPartitionedRobustCounting",
-                new Attribute[] {
+                new Attribute[]{
                         new Attribute.Default<String>("id", prefix + "robustCounting2"),
                         new Attribute.Default<String>("labeling", "N"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",
-                                "true") });
+                                "true")});
 
         writer.writeIDref("treeModel", "treeModel");
         writer.writeOpenTag("firstPosition");
@@ -274,7 +294,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             }
 
             if (component.isCountingStates(partition)) {
-                if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
+                if (partition.getDataType().getType() == DataType.CONTINUOUS) {
                     throw new RuntimeException("Can't do counting on Continuous data partition");
                 }
 
@@ -299,17 +319,17 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     private void writeTrait(XMLWriter writer, AbstractPartitionData partition, String prefix, String tag, String name) {
         String traitName = prefix + tag;
 
-        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS) {
             traitName = partition.getName();
         }
 
         writer.writeOpenTag("trait",
-                new Attribute[] {
+                new Attribute[]{
                         new Attribute.Default<String>("name", traitName),
                         new Attribute.Default<String>("tag", name)
                 }
         );
-        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS) {
             writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
         } else {
             writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
@@ -335,10 +355,10 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeComment("Ancestral state reconstruction for: " + partition.getName());
 
-        writer.writeOpenTag("log", new Attribute[] {
+        writer.writeOpenTag("log", new Attribute[]{
                 new Attribute.Default<String>("id", "fileLog_" + partition.getName()),
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
-                new Attribute.Default<String>("fileName", partition.getName() + STATE_LOG_SUFFIX) });
+                new Attribute.Default<String>("fileName", partition.getName() + STATE_LOG_SUFFIX)});
 
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
@@ -362,7 +382,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     private void writeAncestralTrait(XMLWriter writer, AbstractPartitionData partition, String mrcaId, String prefix, String nameString) {
         String traitName = prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG;
-        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS) {
             traitName = partition.getName();
         }
 
@@ -374,7 +394,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         );
         writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
 
-        if (partition.getDataType().getType() == DataType.CONTINUOUS)  {
+        if (partition.getDataType().getType() == DataType.CONTINUOUS) {
             writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
         } else {
             writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
@@ -394,10 +414,10 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeComment("Robust counting for: " + partition.getName());
 
-        writer.writeOpenTag("log", new Attribute[] {
+        writer.writeOpenTag("log", new Attribute[]{
                 new Attribute.Default<String>("id", "fileLog_dNdS"),
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
-                new Attribute.Default<String>("fileName", partition.getName() + DNDS_LOG_SUFFIX) });
+                new Attribute.Default<String>("fileName", partition.getName() + DNDS_LOG_SUFFIX)});
 
         writer.writeOpenTag("dNdSLogger", new Attribute[]{new Attribute.Default<String>("id",
                 "dNdS")});

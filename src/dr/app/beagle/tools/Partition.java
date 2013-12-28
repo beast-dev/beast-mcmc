@@ -198,10 +198,14 @@ public class Partition {
 			// set ancestral sequence for partition if it exists
 			if (hasAncestralSequence) {
 
-				if (partitionSiteCount == ancestralSequence.getLength()) {
+				if (ancestralSequence.getLength() == partitionSiteCount) {
 
 					parentSequence = sequence2intArray(ancestralSequence);
 
+				} else if (dataType instanceof Codons && ancestralSequence.getLength() == 3 * partitionSiteCount) {	
+					
+					parentSequence = sequence2intArray(ancestralSequence);
+					
 				} else {
 
 					throw new RuntimeException("Ancestral sequence length of "

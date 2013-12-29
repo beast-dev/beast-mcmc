@@ -131,6 +131,28 @@ public interface Transform {
         }
     }
 
+    public static class FisherZTransform implements Transform {
+
+        public FisherZTransform() {
+        }
+
+        public double transform(double value) {
+            return 0.5 * (Math.log(1.0 + value) - Math.log(1.0 - value));
+        }
+
+        public double inverse(double value) {
+            return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
+        }
+
+        public String getTransformName() {
+            return "fisherz";
+        }
+
+        public double getLogJacobian(double value) {
+            throw new RuntimeException("Not yet implemented.");
+        }
+    }
+
     public static class NoTransform implements Transform {
 
         public NoTransform() {
@@ -218,8 +240,9 @@ public interface Transform {
     public static final LogTransform LOG = new LogTransform();
     public static final LogitTransform LOGIT = new LogitTransform();
     public static final NoTransform NONE = new NoTransform();
+    public static final FisherZTransform FISHER_Z = new FisherZTransform();
 
-    public static final Transform[] transformList = {LOG, LOGIT, NONE};
+    public static final Transform[] transformList = {LOG, LOGIT, NONE, FISHER_Z};
 
     public static final String TRANSFORM = "transform";
     public static final String TYPE = "type";

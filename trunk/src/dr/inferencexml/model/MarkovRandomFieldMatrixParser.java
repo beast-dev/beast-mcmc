@@ -1,7 +1,7 @@
 /*
  * MarkovRandomFieldMatrixParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,6 +27,7 @@ package dr.inferencexml.model;
 
 import dr.inference.model.MarkovRandomFieldMatrix;
 import dr.inference.model.Parameter;
+import dr.util.Transform;
 import dr.xml.*;
 
 /**
@@ -47,13 +48,18 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
 
         XMLObject cxo = xo.getChild(DIAGONAL);
         Parameter diagonalParameter = (Parameter) cxo.getChild(Parameter.class);
+        Transform.ParsedTransform tmp = (Transform.ParsedTransform) cxo.getChild(Transform.ParsedTransform.class);
+        Transform diagonalTransform = (tmp != null) ? tmp.transform : null;
 
         cxo = xo.getChild(OFF_DIAGONAL);
         Parameter offDiagonalParameter = (Parameter) cxo.getChild(Parameter.class);
+        tmp = (Transform.ParsedTransform) cxo.getChild(Transform.ParsedTransform.class);
+        Transform offDiagonalTransform = (tmp != null) ? tmp.transform : null;
 
         boolean asCorrelation = xo.getAttribute(AS_CORRELATION, false);
 
-        return new MarkovRandomFieldMatrix(diagonalParameter, offDiagonalParameter, asCorrelation);
+        return new MarkovRandomFieldMatrix(diagonalParameter, offDiagonalParameter, asCorrelation,
+                diagonalTransform, offDiagonalTransform);
     }
 
     //************************************************************************
@@ -70,9 +76,15 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(DIAGONAL,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                            new ElementRule(Transform.ParsedTransform.class, true),
+                    }),
             new ElementRule(OFF_DIAGONAL,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                            new ElementRule(Transform.ParsedTransform.class, true),
+                    }),
             AttributeRule.newBooleanRule(AS_CORRELATION, true)
     };
 

@@ -1,7 +1,7 @@
 /*
  * MarkovRandomFieldMatrix.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,8 @@
 
 package dr.inference.model;
 
+import dr.util.Transform;
+
 /**
  * @author Marc Suchard
  */
@@ -33,11 +35,19 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
     private Parameter diagonalParameter;
     private Parameter offDiagonalParameter;
 
+    private final Transform diagonalTransform;
+    private final Transform offDiagonalTransform;
+
     private boolean asCorrelation = false;
 
     private int dim;
 
     public MarkovRandomFieldMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
+        this(diagonals, offDiagonal, asCorrelation, null, null);
+    }
+
+    public MarkovRandomFieldMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation,
+                                   Transform diagonalTransform, Transform offDiagonalTransform) {
         super(MATRIX_PARAMETER);
         diagonalParameter = diagonals;
         offDiagonalParameter = offDiagonal;
@@ -45,6 +55,9 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
         addParameter(offDiagonalParameter);
         dim = diagonalParameter.getDimension();
         this.asCorrelation = asCorrelation;
+
+        this.diagonalTransform = (diagonalTransform != null) ? diagonalTransform : Transform.NONE;
+        this.offDiagonalTransform = (offDiagonalTransform != null) ? offDiagonalTransform : Transform.NONE;
     }
 
 //    public double[] getAttributeValue() {
@@ -63,6 +76,14 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 //        return dim * dim;
 //    }
 
+    private double getDiagonalParameterValue(int i) {
+        return diagonalTransform.inverse(diagonalParameter.getParameterValue(i));
+    }
+
+    private double getOffDiagonalParameterValue(int i) {
+        return offDiagonalTransform.inverse(offDiagonalParameter.getParameterValue(i));
+    }
+
     public double getParameterValue(int i) {
         int row = i / dim;
         int col = i % dim;
@@ -71,13 +92,13 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 
     public double getParameterValue(int row, int col) {
         if (row == col) {
-            return diagonalParameter.getParameterValue(row);
+            return getDiagonalParameterValue(row);
         } else if (row == (col - 1) || row == (col + 1)) {
             if (asCorrelation) {
-                return -offDiagonalParameter.getParameterValue(0) *
-                        Math.sqrt(diagonalParameter.getParameterValue(row) * diagonalParameter.getParameterValue(col));
+                return -getOffDiagonalParameterValue(0) *
+                        Math.sqrt(getDiagonalParameterValue(row) * getDiagonalParameterValue(col));
             }
-            return offDiagonalParameter.getParameterValue(0);
+            return getOffDiagonalParameterValue(0);
         }
         return 0.0;
     }

@@ -1,7 +1,7 @@
 /*
  * LocationScaleJeffreysPrior.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -39,18 +39,24 @@ import org.w3c.dom.Element;
 
 public class LocationScaleJeffreysPrior extends AbstractModelLikelihood {
 
-    public static final String BINOMIAL_LIKELIHOOD = "binomialLikelihood";
 
-    public LocationScaleJeffreysPrior(Parameter location, Parameter sigma, Parameter gamma, Type type) {
+    public LocationScaleJeffreysPrior(Parameter location, Parameter sigma, Parameter gamma,
+                                      Parameter alpha0, Parameter beta0, Type type) {
 
-        super(BINOMIAL_LIKELIHOOD);
+        super("RubioSteele");
 
         this.location = location;
         this.sigma = sigma;
         this.gamma = gamma;
+        this.alpha0 = alpha0;
+        this.beta0 = beta0;
+
         addVariable(location);
         addVariable(sigma);
         addVariable(gamma);
+
+        if (alpha0 != null) addVariable(alpha0);
+        if (beta0 != null) addVariable(beta0);
 
         this.type = type;
 
@@ -70,7 +76,10 @@ public class LocationScaleJeffreysPrior extends AbstractModelLikelihood {
      * @return the log likelihood.
      */
     public double getLogLikelihood() {
-        return type.logPdf(location.getParameterValue(0), sigma.getParameterValue(0), gamma.getParameterValue(0));
+        double a0 = alpha0 != null ? alpha0.getParameterValue(0) : 0.0;
+        double b0 = beta0 != null ? beta0.getParameterValue(0) : 0.0;
+        return type.logPdf(location.getParameterValue(0), sigma.getParameterValue(0), gamma.getParameterValue(0),
+                a0, b0);
     }
 
     public void makeDirty() {
@@ -107,43 +116,66 @@ public class LocationScaleJeffreysPrior extends AbstractModelLikelihood {
     private final Parameter location;
     private final Parameter sigma;
     private final Parameter gamma;
+    private final Parameter alpha0;
+    private final Parameter beta0;
 
     private final Type type;
 
     private interface Compute {
-        double logPdf(double mu, double sigma, double gamma);
+        double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0);
     }
 
     public enum Type implements Compute {
 
+        ISF_AG_BETA("inverseScaleFactorsAGBeta", new Compute() {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
+                return -Math.log(sigma) + (2 * alpha0 - 1) * Math.log(gamma) - (alpha0 + beta0) * Math.log(1.0 + gamma * gamma);
+            }
+        }),
+
+        EPSILON_SKEW_AG_BETA("epsilonSkewAGBeta", new Compute() {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
+                return -Math.log(sigma) + (beta0 - 1) * Math.log(1.0 - gamma) + (alpha0 - 1) * Math.log(1.0 + gamma);
+            }
+        }),
+
+        LOGISTIC_AG_BETA("logisticAGBeta", new Compute() {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
+                return -Math.log(sigma)
+                        + alpha0 * Math.log(1.0 + Math.exp(2.0 * gamma))
+                        + beta0 * Math.log(1.0 + Math.exp(-2.0 * gamma))
+                        - (alpha0 + beta0) * Math.log(1.0 + Math.cosh(2.0 * gamma));
+            }
+        }),
+
         TWO_SCALE("twoScale", new Compute() {
-            public double logPdf(double mu, double sigma, double gamma) {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
                 return -(Math.log(sigma) + Math.log(gamma) + Math.log(sigma + gamma));
             }
         }),
 
         TWO_SCALE_INDEPENDENT("twoScaleIndependent", new Compute() {
-            public double logPdf(double mu, double sigma, double gamma) {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
                 throw new RuntimeException("Not yet implemented");
             }
         }),
 
         EPSILON_SKEW("epsilonSkew", new Compute() {
             @Override
-            public double logPdf(double mu, double sigma, double gamma) {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
                 return -2.0 * Math.log(sigma) - Math.log(1.0 - gamma * gamma);
             }
         }),
 
         EPSILON_SKEW_INDEPENDENT("epsilonSkewIndependent", new Compute() {
             @Override
-            public double logPdf(double mu, double sigma, double gamma) {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
                 return -Math.log(sigma) - 0.5 * Math.log(1.0 - gamma * gamma);
             }
         }),
 
         TWO_SCALE2("twoScale", new Compute() {
-            public double logPdf(double mu, double sigma, double gamma) {
+            public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
                 return -(Math.log(sigma) + Math.log(gamma) + Math.log(sigma + gamma));
             }
         });
@@ -168,8 +200,8 @@ public class LocationScaleJeffreysPrior extends AbstractModelLikelihood {
             return text;
         }
 
-        public double logPdf(double mu, double sigma, double gamma) {
-            return compute.logPdf(mu, sigma, gamma);
+        public double logPdf(double mu, double sigma, double gamma, double alpha0, double beta0) {
+            return compute.logPdf(mu, sigma, gamma, alpha0, beta0);
         }
     }
 }

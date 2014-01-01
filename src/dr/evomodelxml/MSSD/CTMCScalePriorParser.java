@@ -1,5 +1,31 @@
+/*
+ * CTMCScalePriorParser.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodelxml.MSSD;
 
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.MSSD.CTMCScalePrior;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -13,7 +39,8 @@ import java.util.logging.Logger;
 public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     public static final String MODEL_NAME = "ctmcScalePrior";
     public static final String SCALEPARAMETER = "ctmcScale";
-    
+    public static final String RECIPROCAL = "reciprocal";
+
     public String getParserName() {
         return MODEL_NAME;
     }
@@ -22,12 +49,14 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         Parameter ctmcScale = (Parameter) xo.getElementFirstChild(SCALEPARAMETER);
+        boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
+        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
         Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ctmcScalePrior model.");
         Logger.getLogger("dr.evolution").info("\tIf you publish results using this prior, please reference:");
         Logger.getLogger("dr.evolution").info("\t\t 1. Ferreira and Suchard (2008) for the conditional reference prior on CTMC scale parameter prior;");
 
-        return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel);
+        return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel, reciprocal, substitutionModel);
     }
 
     //************************************************************************
@@ -49,5 +78,7 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
             new ElementRule(SCALEPARAMETER, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            AttributeRule.newBooleanRule(RECIPROCAL, true),
+            new ElementRule(SubstitutionModel.class, true),
     };
 }

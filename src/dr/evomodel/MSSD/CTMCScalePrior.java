@@ -25,6 +25,7 @@
 
 package dr.evomodel.MSSD;
 
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
@@ -46,14 +47,28 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
     private double treeLength;
     private boolean treeLengthKnown;
 
+    final private boolean reciprocal;
+    final private SubstitutionModel substitutionModel;
+
     private static final double logGammaOneHalf = GammaFunction.lnGamma(0.5);
 
     public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel) {
+        this(name, ctmcScale, treeModel, false);
+    }
+
+    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal) {
+        this(name, ctmcScale, treeModel, reciprocal, null);
+    }
+
+    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal,
+                          SubstitutionModel substitutionModel) {
         super(name);
         this.ctmcScale = ctmcScale;
         this.treeModel = treeModel;
         addModel(treeModel);
         treeLengthKnown = false;
+        this.reciprocal = reciprocal;
+        this.substitutionModel = substitutionModel;
     }
 
     private void updateTreeLength() {
@@ -91,6 +106,20 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
 //        }
 //        double totalTreeTime = treeLength;
         double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
+        if (reciprocal) {
+            totalTreeTime = 1.0 / totalTreeTime;
+        }
+        if (substitutionModel != null) {
+            double[] eigenValues = substitutionModel.getEigenDecomposition().getEigenValues();
+            // Find second largest
+            double lambda2 = Double.NEGATIVE_INFINITY;
+            for (double l : eigenValues) {
+                if (l > lambda2 && l < 0.0) {
+                    lambda2 = l;
+                }
+            }
+            totalTreeTime *= -lambda2; // TODO Should this be /=?
+        }
         double logNormalization = 0.5 * Math.log(totalTreeTime) - logGammaOneHalf;
         double logLike = 0;
         for (int i = 0; i < ctmcScale.getDimension(); ++i) {

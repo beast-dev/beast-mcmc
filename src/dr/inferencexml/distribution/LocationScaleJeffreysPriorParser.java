@@ -1,7 +1,7 @@
 /*
  * LocationScaleJeffreysPriorParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -41,6 +41,9 @@ public class LocationScaleJeffreysPriorParser extends AbstractXMLObjectParser {
     public static final String GAMMA = TwoPieceLocationScaleDistributionModelParser.GAMMA;
     public static final String PARAMETERIZATION = TwoPieceLocationScaleDistributionModelParser.PARAMETERIZATION;
 
+    public static final String ALPHA_0 = "alpha0";
+    public static final String BETA_0 = "beta0";
+
     public String getParserName() {
         return PARSER_NAME;
     }
@@ -51,6 +54,9 @@ public class LocationScaleJeffreysPriorParser extends AbstractXMLObjectParser {
         Parameter sigma = (Parameter) xo.getChild(SIGMA).getChild(Parameter.class);
         Parameter gamma = (Parameter) xo.getChild(GAMMA).getChild(Parameter.class);
 
+        Parameter alpha0 = (Parameter) xo.getChild(ALPHA_0).getChild(Parameter.class);
+        Parameter beta0 = (Parameter) xo.getChild(BETA_0).getChild(Parameter.class);
+
         String typeString = xo.getStringAttribute(PARAMETERIZATION);
         LocationScaleJeffreysPrior.Type type = LocationScaleJeffreysPrior.Type.parseFromString(
                 typeString
@@ -59,7 +65,7 @@ public class LocationScaleJeffreysPriorParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Unable to parse location-scale Jeffrey priors type " + typeString);
         }
 
-        return new LocationScaleJeffreysPrior(location, sigma, gamma, type);
+        return new LocationScaleJeffreysPrior(location, sigma, gamma, alpha0, beta0, type);
     }
 
     //************************************************************************
@@ -84,6 +90,15 @@ public class LocationScaleJeffreysPriorParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
                     }),
+            new ElementRule(ALPHA_0,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
+
+            new ElementRule(BETA_0,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class),
+                    }, true),
     };
 
     public String getParserDescription() {

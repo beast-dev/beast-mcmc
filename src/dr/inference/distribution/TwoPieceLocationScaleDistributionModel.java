@@ -1,7 +1,7 @@
 /*
  * TwoPieceLocationScaleDistributionModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -201,6 +201,16 @@ public class TwoPieceLocationScaleDistributionModel extends AbstractModel implem
 
             public double getUpperScale(double sigma, double gamma) {
                 return sigma * (1.0 + gamma);
+            }
+        }),
+
+        LOGISTIC_AG("logisticAG", new Scale() {
+            public double getLowerScale(double sigma, double gamma) {
+                return sigma * (1.0 + Math.exp(-2.0 * gamma));
+            }
+
+            public double getUpperScale(double sigma, double gamma) {
+                return sigma * (1.0 + Math.exp(2.0 * gamma));
             }
         });
 

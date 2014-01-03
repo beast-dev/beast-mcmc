@@ -7,8 +7,11 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.distributions.WishartDistribution;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
 
@@ -32,6 +35,12 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	    public NPAntigenicLikelihood modelLikelihood;
 	    private Parameter links = null;
 	    private Parameter assignments = null;
+      //  double[][] x;
+        double k0;
+        double v0;
+        double[] m;
+        double[][] T0Inv;
+        double logDetT0;
 	    
 	    
 	    public DistanceDependentCRPGibbsOperator(Parameter links, Parameter assignments,
@@ -52,9 +61,32 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	        
 	        setWeight(weight);
 
-	       double[][] x=modelLikelihood.getData();
-	       modelLikelihood.printInformtion(x[0][0]);
-	        
+	      // double[][] x=modelLikelihood.getData();
+	      // modelLikelihood.printInformtion(x[0][0]);
+
+           this.m = new double[2];
+            m[0]= modelLikelihood.priorMean.getParameterValue(0);
+            m[1]= modelLikelihood.priorMean.getParameterValue(1);
+
+
+            this.v0 = 2;
+
+            this.k0= modelLikelihood.priorPrec.getParameterValue(0)/modelLikelihood.clusterPrec.getParameterValue(0);
+
+
+            this.T0Inv= new double[2][2];
+            T0Inv[0][0]= v0/modelLikelihood.clusterPrec.getParameterValue(0);
+            T0Inv[1][1]= v0/modelLikelihood.clusterPrec.getParameterValue(0);
+            T0Inv[1][0]= 0.0;
+            T0Inv[0][1]= 0.0;
+
+
+            this.logDetT0= -Math.log(T0Inv[0][0]*T0Inv[1][1]);
+
+
+
+
+
 	    }
 	   
 	      
@@ -97,7 +129,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	        }
 	        
 	        
-	        int maxFull = maxFull( modelLikelihood.getLogLikelihoodsVector());
+
 	      
 	       
 	        /*
@@ -108,15 +140,18 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	       modelLikelihood.setLogLikelihoodsVector(oldGroup,getLogLikGroup(oldGroup) );
 
 	       modelLikelihood.setLogLikelihoodsVector(minEmp,getLogLikGroup(minEmp) );
-	         
+
+
+           int maxFull = maxFull( modelLikelihood.getLogLikelihoodsVector());
+
 	       double[] liks = modelLikelihood.getLogLikelihoodsVector();
 	       /*
 	        * computing likelihoods of joint groups
 	        */
 	       
-	       double[] crossedLiks = new double[maxFull];
+	       double[] crossedLiks = new double[maxFull+1];
 	       
-	       for (int ll=0;ll<maxFull;ll++ ){
+	       for (int ll=0;ll<maxFull+1;ll++ ){
 	    	   if (ll!=minEmp){
 	    		   crossedLiks[ll]=getLogLik2Group(ll,minEmp);
 	    	   }
@@ -147,7 +182,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	        
 	        
 	        /*
-	         * Fazer o Gibbs sampling
+	         *  Gibbs sampling
 	         */
 	        
 	        
@@ -175,7 +210,9 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	        	 modelLikelihood.setLogLikelihoodsVector(minEmp, 0);
 	  	       
 	        }
-	        
+
+            sampleMeans(maxFull);
+
 	        return 0.0;
 	
 	    }
@@ -217,10 +254,10 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 		    	isEmpty=0;}
 		    else {i--;}
 		    	}
-		    return i+1;
+		    return i;
 		    }
 	 /*
-	  * find customers conected to i   
+	  * find customers connected to i
 	  */
 	    
 	    public int[] connected(int i, Parameter clusteringParameter){
@@ -239,14 +276,16 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	  	    	int forward = (int) clusteringParameter.getParameterValue(curr);
 	  	    	visited[tv] = forward+1;
 	  	    	tv++;
-	  	    	
+	  	    	    // Check to see if is isn't already on the list
+
 	  	    	for(int ii=0; ii<tv-1; ii++){
 	  	    	if(visited[ii]==forward+1){
-	  	    		tv=tv-1;
+	  	    		tv--;
 	  	    		visited[tv]=0;
 	  	    	}
 	  	    	}
-	  	    	
+
+
 	  	    	/*look back
 	  	    	*/
 	  	    	for (int jj=0; jj<n;jj++){
@@ -295,149 +334,408 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 				  
 				  
 				  if (ngroup != 0){
-				  double[] group = new double[2*ngroup];
-				  
+				  double[][] group = new double[ngroup][2];
+
+
+                      double mean[]=new double[2];
+
 				  int count = 0;
 				  for (int i=0;i<assignments.getDimension(); i++){
 					  if((int) assignments.getParameterValue(i) == groupNumber){
-						  group[count] = modelLikelihood.getData()[i][0];
-						  group[ngroup+count] = modelLikelihood.getData()[i][1];
-						  count+=1;}}
-					  
-				  
-				  double[][] var = new double[2*ngroup][2*ngroup];
-				  double[] mean = new double[2*ngroup];
-				  
-				  double m0 = modelLikelihood.getPriorMean().getParameterValue(0);
-				  double m1 = modelLikelihood.getPriorMean().getParameterValue(1);
-				  double vp = modelLikelihood.getPriorVar().getParameterValue(0);
-				  double vc = modelLikelihood.getClusterVar().getParameterValue(0);
-					 
-				  
-				  for (int i=0; i<ngroup; i++){
-					  mean[i]=m0;
-					  mean[ngroup+i]=m1;
-					  
-				  
-					  for (int l=0;l<ngroup;l++){
-						  var[i][ngroup+l]=0;
-						  var[ngroup+i][l]=0;
-						  
-					  if (l==i){var[i][l]= vp+ vc;
-					  			var[ngroup+i][ngroup+l]= vp+ vc;}
-					  
-					  else { var[i][l] = vp;
-					  		var[ngroup+i][ngroup+l]= vp;}
-					  	}
-				  }
-				  
-				  
-				  
-				  
-				  double[][] precision = new SymmetricMatrix(var).inverse().toComponents(); 
-				   L = new MultivariateNormalDistribution(mean, precision).logPdf(group);
-				  
-				  }			  
-				  
-				 
+						  group[count][0] = modelLikelihood.getData()[i][0];
+						  group[count][1] = modelLikelihood.getData()[i][1];
+						  mean[0]+=group[count][0];
+                          mean[1]+=group[count][1];
+                          count++;}}
+
+                  mean[0]/=ngroup;
+                  mean[1]/=ngroup;
+
+
+
+                  double kn= k0+ngroup;
+                  double vn= v0+ngroup;
+
+
+                       double[][] sumdif=new double[2][2];
+
+                      for(int i=0;i<ngroup;i++){
+                          sumdif[0][0]+= (group[i][0]-mean[0])*(group[i][0]-mean[0]);
+                          sumdif[0][1]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+                          sumdif[1][0]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+                          sumdif[1][1]+= (group[i][1]-mean[1])*(group[i][1]-mean[1]);
+                      }
+
+
+
+                      double[][] TnInv = new double[2][2];
+                          TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(mean[0]-m[0])*(mean[0]-m[0])+sumdif[0][0];
+                          TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(mean[1]-m[1])*(mean[0]-m[0])+sumdif[0][1];
+                          TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (mean[0]-m[0])*(mean[1]-m[1])+sumdif[1][0];
+                          TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (mean[1]-m[1])*(mean[1]-m[1])+sumdif[1][1];
+
+
+                          double logDetTn=-Math.log(TnInv[0][0]*TnInv[1][1]-TnInv[0][1]*TnInv[1][0]);
+
+
+                          L+= -(ngroup)*Math.log(Math.PI);
+                          L+= Math.log(k0) - Math.log(kn);
+                          L+= (vn/2)*logDetTn - (v0/2)*logDetT0;
+                          L+= GammaFunction.lnGamma(vn/2)+ GammaFunction.lnGamma((vn/2)-0.5);
+                          L+=-GammaFunction.lnGamma(v0/2)- GammaFunction.lnGamma((v0/2)-0.5);
+
+
+
+
+
+
+                  }
+				    return L;
 		    
-		    return L;
-		    
-		 }   
-		    
-		    
-		    
-		 
-		   
-		 public double getLogLik2Group(int group1, int group2){   
-		    double L =0.0;
-			 
-		    
-				  int ngroup1=0;
-				  for (int i=0;i<assignments.getDimension(); i++){
-				  if((int) assignments.getParameterValue(i) == group1 ){
-				  ngroup1++;}}
-				  
-				  int ngroup2=0;
-				  for (int i=0;i<assignments.getDimension(); i++){
-				  if((int) assignments.getParameterValue(i) == group2 ){
-				  ngroup2++;}}
-				  
-				  int ngroup = (ngroup1+ngroup2);
-				  
-				  if (ngroup != 0){
-				  double[] group = new double[2*ngroup];
-				  
-				  int count = 0;
-				  for (int i=0;i<assignments.getDimension(); i++){
-					  if((int) assignments.getParameterValue(i) == group1 ){
-						  group[count] = modelLikelihood.getData()[i][0];
-						  group[count+ngroup] = modelLikelihood.getData()[i][1];
-						  count+=1;}}
-				
-				  for (int i=0;i<assignments.getDimension(); i++){
-					  if((int) assignments.getParameterValue(i) == group2 ){
-						  group[count] = modelLikelihood.getData()[i][0];
-						  group[count+ngroup] = modelLikelihood.getData()[i][1];
-						  count+=1;}}
-				
-				  
-				  
-				  
-				  double[][] var = new double[2*ngroup][2*ngroup];
-				  double[] mean = new double[2*ngroup];
-				  
-				  double m0 = modelLikelihood.getPriorMean().getParameterValue(0);
-				  double m1 = modelLikelihood.getPriorMean().getParameterValue(1);
-				  double vp = modelLikelihood.getPriorVar().getParameterValue(0);
-				  double vc = modelLikelihood.getClusterVar().getParameterValue(0);
-					 
-				  
-				  for (int i=0; i<ngroup; i++){
-					  mean[i]=m0;
-					  mean[i+ngroup]=m1;
-					  
-				  for (int l=0;l<ngroup;l++){
-					  var[i][ngroup+l]=0;
-					  var[ngroup+i][l]=0;
-					  
-				  if (l==i){var[i][l]= vp+ vc;
-				  			var[ngroup+i][ngroup+l]= vp+ vc;}
-				  
-				  else { var[i][l] = vp;
-				  		var[ngroup+i][ngroup+l]= vp;}
-				  	}
-			  }
-				  
-				  
-				  double[][] precision = new SymmetricMatrix(var).inverse().toComponents(); 
-				   L = new MultivariateNormalDistribution(mean, precision).logPdf(group);
-				  
-				  }	
-			 
-	    
-	    return L;
-	    
-	 }  
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	 
-	    
-	    
-	    private void exp(double[] logX) {
+		 }
+
+  /*  OLD
+
+  public double getLogLikGroup(int groupNumber){
+        double L =0.0;
+
+
+        int ngroup=0;
+        for (int i=0;i<assignments.getDimension(); i++){
+            if((int) assignments.getParameterValue(i) == groupNumber){
+                ngroup++;}}
+
+
+        if (ngroup != 0){
+            double[] group = new double[2*ngroup];
+
+            int count = 0;
+            for (int i=0;i<assignments.getDimension(); i++){
+                if((int) assignments.getParameterValue(i) == groupNumber){
+                    group[count] = modelLikelihood.getData()[i][0];
+                    group[ngroup+count] = modelLikelihood.getData()[i][1];
+                    count+=1;}}
+
+
+            double[][] var = new double[2*ngroup][2*ngroup];
+            double[] mean = new double[2*ngroup];
+
+            double m0 = modelLikelihood.getPriorMean().getParameterValue(0);
+            double m1 = modelLikelihood.getPriorMean().getParameterValue(1);
+            double vp = modelLikelihood.getPriorPrec().getParameterValue(0);
+            double vc = modelLikelihood.getClusterPrec().getParameterValue(0);
+
+
+            for (int i=0; i<ngroup; i++){
+                mean[i]=m0;
+                mean[ngroup+i]=m1;
+
+
+                for (int l=0;l<ngroup;l++){
+                    var[i][ngroup+l]=0;
+                    var[ngroup+i][l]=0;
+
+                    if (l==i){var[i][l]= vp+ vc;
+                        var[ngroup+i][ngroup+l]= vp+ vc;}
+
+                    else { var[i][l] = vp;
+                        var[ngroup+i][ngroup+l]= vp;}
+                }
+            }
+
+
+
+
+            double[][] precision = new SymmetricMatrix(var).inverse().toComponents();
+            L = new MultivariateNormalDistribution(mean, precision).logPdf(group);
+
+        }
+
+
+
+        return L;
+
+    }
+
+
+   */
+
+    public double getLogLik2Group(int group1, int group2){
+        double L =0.0;
+
+
+        int ngroup1=0;
+        for (int i=0;i<assignments.getDimension(); i++){
+            if((int) assignments.getParameterValue(i) == group1 ){
+                ngroup1++;}}
+
+        int ngroup2=0;
+        for (int i=0;i<assignments.getDimension(); i++){
+            if((int) assignments.getParameterValue(i) == group2 ){
+                ngroup2++;}}
+
+        int ngroup = (ngroup1+ngroup2);
+
+        if (ngroup != 0){
+            double[][] group = new double[ngroup][2];
+
+            double mean[]=new double[2];
+
+
+            int count = 0;
+            for (int i=0;i<assignments.getDimension(); i++){
+                if((int) assignments.getParameterValue(i) == group1 ){
+                    group[count][0] = modelLikelihood.getData()[i][0];
+                    group[count][1] = modelLikelihood.getData()[i][1];
+                    mean[0]+=group[count][0];
+                    mean[1]+=group[count][1];
+                    count+=1;}}
+
+            for (int i=0;i<assignments.getDimension(); i++){
+                if((int) assignments.getParameterValue(i) == group2 ){
+                    group[count][0] = modelLikelihood.getData()[i][0];
+                    group[count][1] = modelLikelihood.getData()[i][1];
+                    mean[0]+=group[count][0];
+                    mean[1]+=group[count][1];
+                    count+=1;}}
+
+
+
+            mean[0]/=ngroup;
+            mean[1]/=ngroup;
+
+
+
+            double kn= k0+ngroup;
+            double vn= v0+ngroup;
+
+
+            double[][] sumdif=new double[2][2];
+
+            for(int i=0;i<ngroup;i++){
+                sumdif[0][0]+= (group[i][0]-mean[0])*(group[i][0]-mean[0]);
+                sumdif[0][1]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+                sumdif[1][0]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+                sumdif[1][1]+= (group[i][1]-mean[1])*(group[i][1]-mean[1]);
+            }
+
+
+
+            double[][] TnInv = new double[2][2];
+            TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(mean[0]-m[0])*(mean[0]-m[0])+sumdif[0][0];
+            TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(mean[1]-m[1])*(mean[0]-m[0])+sumdif[0][1];
+            TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (mean[0]-m[0])*(mean[1]-m[1])+sumdif[1][0];
+            TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (mean[1]-m[1])*(mean[1]-m[1])+sumdif[1][1];
+
+
+            double logDetTn=-Math.log(TnInv[0][0]*TnInv[1][1]-TnInv[0][1]*TnInv[1][0]);
+
+
+            L+= -(ngroup)*Math.log(Math.PI);
+            L+= Math.log(k0) - Math.log(kn);
+            L+= (vn/2)*logDetTn - (v0/2)*logDetT0;
+            L+= GammaFunction.lnGamma(vn/2)+ GammaFunction.lnGamma((vn/2)-0.5);
+            L+=-GammaFunction.lnGamma(v0/2)- GammaFunction.lnGamma((v0/2)-0.5);
+
+
+
+
+
+
+
+
+        }
+
+        return L;
+
+    }
+
+
+
+    /*public double getLogLik2Group(int group1, int group2){
+        double L =0.0;
+
+
+        int ngroup1=0;
+        for (int i=0;i<assignments.getDimension(); i++){
+            if((int) assignments.getParameterValue(i) == group1 ){
+                ngroup1++;}}
+
+        int ngroup2=0;
+        for (int i=0;i<assignments.getDimension(); i++){
+            if((int) assignments.getParameterValue(i) == group2 ){
+                ngroup2++;}}
+
+        int ngroup = (ngroup1+ngroup2);
+
+        if (ngroup != 0){
+            double[] group = new double[2*ngroup];
+
+            int count = 0;
+            for (int i=0;i<assignments.getDimension(); i++){
+                if((int) assignments.getParameterValue(i) == group1 ){
+                    group[count] = modelLikelihood.getData()[i][0];
+                    group[count+ngroup] = modelLikelihood.getData()[i][1];
+                    count+=1;}}
+
+            for (int i=0;i<assignments.getDimension(); i++){
+                if((int) assignments.getParameterValue(i) == group2 ){
+                    group[count] = modelLikelihood.getData()[i][0];
+                    group[count+ngroup] = modelLikelihood.getData()[i][1];
+                    count+=1;}}
+
+
+
+
+            double[][] var = new double[2*ngroup][2*ngroup];
+            double[] mean = new double[2*ngroup];
+
+            double m0 = modelLikelihood.getPriorMean().getParameterValue(0);
+            double m1 = modelLikelihood.getPriorMean().getParameterValue(1);
+            double vp = modelLikelihood.getPriorPrec().getParameterValue(0);
+            double vc = modelLikelihood.getClusterPrec().getParameterValue(0);
+
+
+            for (int i=0; i<ngroup; i++){
+                mean[i]=m0;
+                mean[i+ngroup]=m1;
+
+                for (int l=0;l<ngroup;l++){
+                    var[i][ngroup+l]=0;
+                    var[ngroup+i][l]=0;
+
+                    if (l==i){var[i][l]= vp+ vc;
+                        var[ngroup+i][ngroup+l]= vp+ vc;}
+
+                    else { var[i][l] = vp;
+                        var[ngroup+i][ngroup+l]= vp;}
+                }
+            }
+
+
+            double[][] precision = new SymmetricMatrix(var).inverse().toComponents();
+            L = new MultivariateNormalDistribution(mean, precision).logPdf(group);
+
+        }
+
+
+        return L;
+
+    }
+*/
+
+
+
+  public void sampleMeans(int maxFull){
+
+      double[][] means=new double[maxFull+2][2];
+
+      //sample mean vector for each cluster
+
+      for (int i=0; i<maxFull+1; i++){
+
+          // Find all elements in cluster
+
+          int ngroup=0;
+          for (int ii=0;ii<assignments.getDimension(); ii++){
+              if((int) assignments.getParameterValue(ii) == i ){
+                  ngroup++;}}
+
+
+          if (ngroup != 0){
+              double[][] group = new double[ngroup][2];
+              double[] groupMean=new double[2];
+
+              int count = 0;
+              for (int ii=0;ii<assignments.getDimension(); ii++){
+                  if((int) assignments.getParameterValue(ii) == i ){
+                      group[count][0] = modelLikelihood.getData()[ii][0];
+                      group[count][1] = modelLikelihood.getData()[ii][1];
+                      groupMean[0]+=group[count][0];
+                      groupMean[1]+=group[count][1];
+                      count+=1;}}
+
+              groupMean[0]/=ngroup;
+              groupMean[1]/=ngroup;
+
+
+
+              double kn= k0+ngroup;
+              double vn= v0+ngroup;
+
+
+              double[][] sumdif=new double[2][2];
+
+              for(int jj=0;jj<ngroup;jj++){
+                  sumdif[0][0]+= (group[jj][0]-groupMean[0])*(group[jj][0]-groupMean[0]);
+                  sumdif[0][1]+= (group[jj][0]-groupMean[0])*(group[jj][1]-groupMean[1]);
+                  sumdif[1][0]+= (group[jj][0]-groupMean[0])*(group[jj][1]-groupMean[1]);
+                  sumdif[1][1]+= (group[jj][1]-groupMean[1])*(group[jj][1]-groupMean[1]);
+              }
+
+
+
+              double[][] TnInv = new double[2][2];
+              TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(groupMean[0]-m[0])*(groupMean[0]-m[0])+sumdif[0][0];
+              TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(groupMean[1]-m[1])*(groupMean[0]-m[0])+sumdif[0][1];
+              TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (groupMean[0]-m[0])*(groupMean[1]-m[1])+sumdif[1][0];
+              TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (groupMean[1]-m[1])*(groupMean[1]-m[1])+sumdif[1][1];
+
+             Matrix Tn = new SymmetricMatrix(TnInv).inverse();
+
+
+              double[] posteriorMean=new double[2];
+          // compute posterior mean
+
+              posteriorMean[0]= (k0*m[0] +ngroup*groupMean[0])/(k0+ngroup);
+              posteriorMean[1]= (k0*m[1] +ngroup*groupMean[1])/(k0+ngroup);
+
+
+
+        //compute posterior Precision
+              double[][] posteriorPrecision=new WishartDistribution(vn,Tn.toComponents()).nextWishart();
+              posteriorPrecision[0][0]*= kn;
+              posteriorPrecision[1][0]*= kn;
+              posteriorPrecision[0][1]*= kn;
+              posteriorPrecision[1][1]*= kn;
+
+
+
+
+          double[] sample= new MultivariateNormalDistribution(posteriorMean,posteriorPrecision).nextMultivariateNormal();
+          means[i][0]=sample[0];
+          means[i][1]=sample[1];
+          }
+      }
+
+      //Fill in cluster means for each observation
+
+        for (int j=0; j<assignments.getDimension();j++){
+            double[] group=new double[2];
+            group[0]=means[(int)assignments.getParameterValue(j)][0];
+            group[1]=means[(int)assignments.getParameterValue(j)][1];
+
+            modelLikelihood.setMeans(j, group);
+        }
+
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    private void exp(double[] logX) {
 	        for (int i = 0; i < logX.length; ++i) {
 	            logX[i] = Math.exp(logX[i]);
 	          //  if(logX[i]<1E-5){logX[i]=0;}

@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
@@ -45,7 +46,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
 
     public void proposeTree() throws OperatorFailedException {
         TreeModel tree = c2cLikelihood.getTreeModel();
-        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
+        BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
         // choose a random node avoiding root, and nodes that are ineligible for this move because they have nowhere to
@@ -84,11 +85,11 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
 
         // need to account for the random repainting of iP
 
-        if(branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
+        if(branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
             q *= 0.5;
         }
 
-        if(branchMap[k.getNumber()]!=branchMap[j.getNumber()]){
+        if(branchMap.get(k.getNumber())!=branchMap.get(j.getNumber())){
             q *= 2;
         }
 
@@ -143,9 +144,9 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         // repaint the parent to match either its new parent or its new child (50% chance of each).
 
         if(MathUtils.nextInt(2)==0){
-            c2cLikelihood.changeMap(iP.getNumber(), branchMap[k.getNumber()]);
+            branchMap.set(iP.getNumber(), branchMap.get(k.getNumber()));
         } else {
-            c2cLikelihood.changeMap(iP.getNumber(), branchMap[j.getNumber()]);
+            branchMap.set(iP.getNumber(), branchMap.get(j.getNumber()));
         }
 
         if(debug){
@@ -158,17 +159,17 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         return "Not implemented";
     }
 
-    private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
+    private boolean eligibleForMove(NodeRef node, TreeModel tree, BranchMapModel branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and other child,
         // must be in the same partition (so removing the parent has no effect on the remaining links of the TT),
         // and the node and its parent must be in different partitions (such that the move does not disconnect anything)
 
         return ((tree.getParent(tree.getParent(node))!=null
-                && branchMap[tree.getParent(node).getNumber()]
-                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
-                || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
-                tree.getParent(node), node).getNumber()])
-                && branchMap[tree.getParent(node).getNumber()]!=branchMap[node.getNumber()];
+                && branchMap.get(tree.getParent(node).getNumber())
+                ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
+                || branchMap.get(tree.getParent(node).getNumber())==branchMap.get(getOtherChild(tree,
+                tree.getParent(node), node).getNumber()))
+                && branchMap.get(tree.getParent(node).getNumber())!=branchMap.get(node.getNumber());
     }
 
     @Override

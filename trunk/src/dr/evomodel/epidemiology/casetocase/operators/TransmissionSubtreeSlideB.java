@@ -3,6 +3,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
@@ -63,7 +64,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
      */
     public double doOperation() throws OperatorFailedException {
 
-        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
+        BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
         double logq;
 
@@ -152,19 +153,19 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
                 // appropriately
 
-                if(branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
+                if(branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
                     logq += Math.log(0.5);
                 }
 
-                if(newParent != null && branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
+                if(newParent != null && branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
                     if(MathUtils.nextInt(2)==0){
-                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newParent.getNumber()]);
+                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()));
                     } else {
-                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
+                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
                     }
                     logq += Math.log(2);
                 } else {
-                    c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
+                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
                 }
 
             } else {
@@ -245,19 +246,19 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
                 // appropriately
 
-                if(PiP!=null && branchMap[PiP.getNumber()]!=branchMap[CiP.getNumber()]){
+                if(PiP!=null && branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
                     logq += Math.log(0.5);
                 }
 
-                if(newParent!=null && branchMap[newParent.getNumber()]!=branchMap[newChild.getNumber()]){
+                if(newParent!=null && branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
                     if(MathUtils.nextInt(2)==0){
-                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newParent.getNumber()]);
+                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()));
                     } else {
-                        c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
+                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
                     }
                     logq += Math.log(2);
                 } else {
-                    c2cLikelihood.changeMap(iP.getNumber(), branchMap[newChild.getNumber()]);
+                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
                 }
 
             } else {
@@ -304,17 +305,17 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         }
     }
 
-    private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
+    private boolean eligibleForMove(NodeRef node, TreeModel tree, BranchMapModel branchMap){
         // to be eligible for this move, the node's parent and grandparent (if it has one), or parent and sibling,
         // must be in the same partition (so removing the parent has no effect on the remaining links of the TT), and
         // the node and its parent must be in different partitions (so the move does not disconnect anything)
 
         return ((tree.getParent(tree.getParent(node))!=null
-                && branchMap[tree.getParent(node).getNumber()]
-                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
-                || branchMap[tree.getParent(node).getNumber()]
-                ==branchMap[getOtherChild(tree,tree.getParent(node), node).getNumber()])
-                && branchMap[tree.getParent(node).getNumber()]!=branchMap[node.getNumber()];
+                && branchMap.get(tree.getParent(node).getNumber())
+                ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
+                || branchMap.get(tree.getParent(node).getNumber())
+                ==branchMap.get(getOtherChild(tree,tree.getParent(node), node).getNumber()))
+                && branchMap.get(tree.getParent(node).getNumber())!=branchMap.get(node.getNumber());
     }
 
     //intersectingEdges is the same as in normal STS, since there's no additional restriction in this case on where

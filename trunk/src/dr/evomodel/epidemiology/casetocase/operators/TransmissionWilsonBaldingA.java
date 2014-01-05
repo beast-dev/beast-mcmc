@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
@@ -46,7 +47,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
 
     public void proposeTree() throws OperatorFailedException {
         TreeModel tree = c2cLikelihood.getTreeModel();
-        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
+        BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
         // choose a random node avoiding root, and nodes that are ineligible for this move because they have nowhere to
@@ -147,15 +148,15 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         return "Not implemented";
     }
 
-    private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
+    private boolean eligibleForMove(NodeRef node, TreeModel tree, BranchMapModel branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
 
         return  (tree.getParent(tree.getParent(node))!=null
-                && branchMap[tree.getParent(node).getNumber()]
-                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
-                || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
-                tree.getParent(node), node).getNumber()];
+                && branchMap.get(tree.getParent(node).getNumber())
+                ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
+                || branchMap.get(tree.getParent(node).getNumber())==branchMap.get(getOtherChild(tree,
+                tree.getParent(node), node).getNumber());
     }
 
     @Override

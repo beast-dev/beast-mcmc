@@ -3,6 +3,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
@@ -64,7 +65,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
      */
     public double doOperation() throws OperatorFailedException {
 
-        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
+        BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
         double logq;
 
@@ -102,7 +103,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 }
 
                 // if the parent has slid out of its partition
-                if(branchMap[newChild.getNumber()]!=branchMap[iP.getNumber()]){
+                if(branchMap.get(newChild.getNumber())!=branchMap.get(iP.getNumber())){
                     throw new OperatorFailedException("invalid slide");
                 }
 
@@ -152,7 +153,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
                 // 3.1.3 count the hypothetical sources of this destination.
                 final int possibleSources = intersectingEdges(tree, newChild, oldHeight, branchMap,
-                        branchMap[iP.getNumber()], null);
+                        branchMap.get(iP.getNumber()), null);
                 //System.out.println("possible sources = " + possibleSources);
 
                 logq = -Math.log(possibleSources);
@@ -176,7 +177,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
                 List<NodeRef> newChildren = new ArrayList<NodeRef>();
                 final int possibleDestinations = intersectingEdges(tree, CiP, newHeight, branchMap,
-                        branchMap[iP.getNumber()], newChildren);
+                        branchMap.get(iP.getNumber()), newChildren);
 
                 // if no valid destinations then return a failure
                 if (newChildren.size() == 0) {
@@ -277,26 +278,26 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         }
     }
 
-    private boolean eligibleForMove(NodeRef node, TreeModel tree, AbstractCase[] branchMap){
+    private boolean eligibleForMove(NodeRef node, TreeModel tree, BranchMapModel branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and sibling, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
 
         return  (tree.getParent(tree.getParent(node))!=null
-                && branchMap[tree.getParent(node).getNumber()]
-                ==branchMap[tree.getParent(tree.getParent(node)).getNumber()])
-                || branchMap[tree.getParent(node).getNumber()]==branchMap[getOtherChild(tree,
-                tree.getParent(node), node).getNumber()];
+                && branchMap.get(tree.getParent(node).getNumber())
+                ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
+                || branchMap.get(tree.getParent(node).getNumber())==branchMap.get(getOtherChild(tree,
+                tree.getParent(node), node).getNumber());
     }
 
     //intersectingEdges here is modified to count only possible sources for this special case of the operator - i.e.
     //only branches which have one end in the relevant partition
 
-    private int intersectingEdges(Tree tree, NodeRef node, double height, AbstractCase[] branchMap,
+    private int intersectingEdges(Tree tree, NodeRef node, double height, BranchMapModel branchMap,
                                   AbstractCase partition, List<NodeRef> directChildren) {
 
         final NodeRef parent = tree.getParent(node);
 
-        if (tree.getNodeHeight(parent) < height || branchMap[parent.getNumber()]!=partition) return 0;
+        if (tree.getNodeHeight(parent) < height || branchMap.get(parent.getNumber())!=partition) return 0;
 
         if (tree.getNodeHeight(node) < height) {
             if (directChildren != null) directChildren.add(node);

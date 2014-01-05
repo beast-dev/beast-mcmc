@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.operators.ExchangeOperator;
@@ -49,8 +50,8 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
 
     public double doOperation() throws OperatorFailedException {
         TreeModel tree = c2cLikelihood.getTreeModel();
-        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
-        AbstractCase[] newBranchMap = Arrays.copyOf(branchMap, branchMap.length);
+        BranchMapModel branchMap = c2cLikelihood.getBranchMap();
+        AbstractCase[] newBranchMap = branchMap.getArrayCopy();
         int[] oldParents = getParentsArray(tree);
         double[] oldHeights = getHeightsArray(tree);
         double hr = innerOperator.doOperation();
@@ -67,8 +68,8 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                 AbstractCase[] nodePaintings = new AbstractCase[2];
                 AbstractCase[] parentPaintings = new AbstractCase[2];
                 for(int i=0; i<2; i++){
-                    nodePaintings[i] = branchMap[changedNodes.get(i)];
-                    parentPaintings[i] = branchMap[oldParents[changedNodes.get(i)]];
+                    nodePaintings[i] = branchMap.get(changedNodes.get(i));
+                    parentPaintings[i] = branchMap.get(oldParents[changedNodes.get(i)]);
                 }
                 if(nodePaintings[0]==parentPaintings[0] || nodePaintings[1]==parentPaintings[1]){
                     //If this is not true there is nothing to do - the result is already a valid painting
@@ -118,18 +119,20 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                 }
 
                 //If the child of the moved node is the earliest node with its painting:
-                if(branchMap[otherChild]!=branchMap[movedNode]){
-                    newBranchMap[movedNode]=branchMap[newChild];
+                if(branchMap.get(otherChild)!=branchMap.get(movedNode)){
+                    newBranchMap[movedNode]=branchMap.get(newChild);
                 } else {
                     //Change all paintings up the tree from the old child that used to match the moved node to match
                     //the old child
-                    paintUp(tree, branchMap[movedNode],branchMap[oldChild],branchMap,newBranchMap,oldChild,oldParents);
+                    paintUp(tree, branchMap.get(movedNode),branchMap.get(oldChild),branchMap,newBranchMap,oldChild,
+                            oldParents);
                     //This may have resulted in the moved node being recoloured wrong.
-                    newBranchMap[movedNode]=branchMap[movedNode];
-                    branchMap = newBranchMap;
+                    newBranchMap[movedNode]=branchMap.get(movedNode);
+                    branchMap.setAll(newBranchMap);
                     //Change all paintings up the tree from the moved node that used to match the new child to match
                     //the moved node
-                    paintUp(tree, branchMap[newChild],branchMap[movedNode],branchMap,newBranchMap,movedNode,newParents);
+                    paintUp(tree, branchMap.get(newChild), branchMap.get(movedNode), branchMap, newBranchMap, movedNode,
+                            newParents);
                 }
             } else {
                 //I don't know what this is
@@ -137,18 +140,18 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                         "supported");
             }
         }
-        c2cLikelihood.setBranchMap(newBranchMap);
+        branchMap.setAll(newBranchMap);
         c2cLikelihood.makeDirty();
         return hr;
     }
 
-    private void paintUp(TreeModel tree, AbstractCase oldCase, AbstractCase newCase, AbstractCase[] oldbranchMap,
+    private void paintUp(TreeModel tree, AbstractCase oldCase, AbstractCase newCase, BranchMapModel oldbranchMap,
                          AbstractCase[] newBranchMap, int nodeNo, int[] parents){
         if(parents[nodeNo]==-1){
             return;
         }
         NodeRef newParent = tree.getNode(parents[nodeNo]);
-        while(newParent!=null && oldbranchMap[newParent.getNumber()]==oldCase){
+        while(newParent!=null && oldbranchMap.get(newParent.getNumber())==oldCase){
             newBranchMap[newParent.getNumber()]=newCase;
             newParent = parents[newParent.getNumber()]== -1 ? null : tree.getNode(parents[newParent.getNumber()]);
         }

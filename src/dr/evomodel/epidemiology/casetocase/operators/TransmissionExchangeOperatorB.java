@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
@@ -44,7 +45,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
 
     public double exchange() throws OperatorFailedException{
         TreeModel tree = c2cLikelihood.getTreeModel();
-        AbstractCase[] branchMap = c2cLikelihood.getBranchMap();
+        BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
         final int nodeCount = tree.getNodeCount();
         final NodeRef root = tree.getRoot();
@@ -58,7 +59,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         while(root == i || partitionsMatch){
             i = tree.getNode(MathUtils.nextInt(nodeCount));
             iP = tree.getParent(i);
-            partitionsMatch = i == root || branchMap[i.getNumber()] == branchMap[iP.getNumber()];
+            partitionsMatch = i == root || branchMap.get(i.getNumber()) == branchMap.get(iP.getNumber());
         }
 
         ArrayList<NodeRef> candidates = getPossibleExchanges(tree, i);
@@ -73,7 +74,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
 
         int jFirstCandidateCount = getPossibleExchanges(tree, j).size();
 
-        double HRDenom = (1/candidateCount) + (1/jFirstCandidateCount);
+        double HRDenom = (1/((double)candidateCount)) + (1/((double)jFirstCandidateCount));
 
         NodeRef jP = tree.getParent(j);
 
@@ -86,7 +87,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         ArrayList<NodeRef> reverseCandidatesIfirst = getPossibleExchanges(tree, i);
         ArrayList<NodeRef> reverseCandidatesJfirst = getPossibleExchanges(tree, j);
 
-        double HRNum = (1/reverseCandidatesIfirst.size()) + (1/reverseCandidatesJfirst.size());
+        double HRNum = (1/((double)reverseCandidatesIfirst.size())) + (1/((double)reverseCandidatesJfirst.size()));
 
         return Math.log(HRNum/HRDenom);
 
@@ -96,13 +97,13 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
     // the check for a failed move will be if this set is of size 0
 
     public ArrayList<NodeRef> getPossibleExchanges(TreeModel tree, NodeRef node){
-        AbstractCase[] map = c2cLikelihood.getBranchMap();
+        BranchMapModel map = c2cLikelihood.getBranchMap();
         ArrayList<NodeRef> out = new ArrayList<NodeRef>();
         NodeRef parent = tree.getParent(node);
         if(parent==null){
             throw new RuntimeException("Can't exchange the root node");
         }
-        if(map[parent.getNumber()]==map[node.getNumber()]){
+        if(map.get(parent.getNumber())==map.get(node.getNumber())){
             throw new RuntimeException("This node is not exchangeable by this operator");
         }
         for(NodeRef candidate: tree.getNodes()){
@@ -112,7 +113,7 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
                         && node != newParent
                         && tree.getNodeHeight(candidate) < tree.getNodeHeight(parent)
                         && tree.getNodeHeight(node) < tree.getNodeHeight(newParent)
-                        && map[newParent.getNumber()]!=map[candidate.getNumber()]){
+                        && map.get(newParent.getNumber())!=map.get(candidate.getNumber())){
                     if(out.contains(candidate) || candidate==node){
                         throw new RuntimeException("Adding a candidate that already exists in the list or" +
                                 " the node itself");

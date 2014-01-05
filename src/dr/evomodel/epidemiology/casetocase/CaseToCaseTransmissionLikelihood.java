@@ -6,6 +6,7 @@ import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.RiemannApproximation;
 import dr.xml.*;
+import org.netlib.util.doubleW;
 
 import java.util.*;
 
@@ -226,6 +227,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         transProbKnown = false;
         treeProbKnown = false;
         normalisationKnown = false;
+        lastTimesToInfect = null;
         treeLikelihood.makeDirty();
     }
 

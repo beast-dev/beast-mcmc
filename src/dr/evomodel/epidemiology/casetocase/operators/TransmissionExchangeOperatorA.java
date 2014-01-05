@@ -67,7 +67,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         int jFirstCandidateCount = getPossibleExchanges(tree, j).size();
 
-        double HRDenom = (1/candidateCount) + (1/jFirstCandidateCount);
+        double HRDenom = (1/((double)candidateCount)) + (1/((double)jFirstCandidateCount));
 
         NodeRef iP = tree.getParent(i);
         NodeRef jP = tree.getParent(j);

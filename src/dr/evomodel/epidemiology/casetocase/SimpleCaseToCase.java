@@ -177,8 +177,8 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
 
         if (updateNodeForSingleTraverse[nodeNum]) {
             if(parent!=null){
-                AbstractCase nodeCase = branchMap[node.getNumber()];
-                AbstractCase parentCase = branchMap[parent.getNumber()];
+                AbstractCase nodeCase = branchMap.get(node.getNumber());
+                AbstractCase parentCase = branchMap.get(parent.getNumber());
                 if(nodeCase!=parentCase){
                     double infectionTime = infectionTimes[cases.getCaseIndex(nodeCase)];
                     branchLogProbs[node.getNumber()]
@@ -187,7 +187,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                     branchLogProbs[node.getNumber()] = 0;
                 }
             } else {
-                AbstractCase nodeCase = branchMap[node.getNumber()];
+                AbstractCase nodeCase = branchMap.get(node.getNumber());
                 final double infectionTime = getRootInfectionTime();
                 branchLogProbs[node.getNumber()]
                         = ((SimpleOutbreak)cases).logProbXInfectedAtTimeT(nodeCase, infectionTime);
@@ -228,7 +228,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                 // vast majority of entries are zero in this case
                 Arrays.fill(normProbs, 0);
                 // kind of hacky to use branchMap here to be honest
-                AbstractCase destination = branchMap[node.getNumber()];
+                AbstractCase destination = branchMap.get(node.getNumber());
                 int j = cases.getCaseIndex(destination);
                 for(int i=0; i<stateCount; i++){
                     AbstractCase origin = cases.getCase(i);
@@ -429,20 +429,6 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
         descendantTipPartitions(treeModel.getRoot(), descendantTipPartitions);
     }
 
-    public void changeMap(int node, AbstractCase partition){
-        super.changeMap(node, partition);
-        Arrays.fill(updateNodeForSingleTraverse, true);
-    }
-
-    public final void setBranchMap(AbstractCase[] map){
-        super.setBranchMap(map);
-        traversalProbKnown = false;
-        // todo you could get efficiency savings here
-        Arrays.fill(updateNodeForSingleTraverse, true);
-    }
-
-
-
     public void flagForDescendantRecalculation(TreeModel tree, NodeRef node){
         // todo Single traversals only? Watch this.
         flagForDescendantRecalculation(tree, node, updateNodeForSingleTraverse);
@@ -472,6 +458,11 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
 
             traversalProbKnown = false;
             renormalisationNeeded = true;
+        }
+
+        if(model==branchMap){
+            Arrays.fill(updateNodeForSingleTraverse, true);
+            traversalProbKnown = false;
         }
     }
 

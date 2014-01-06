@@ -5,14 +5,12 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.ProductStatistic;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.Integral;
 import dr.math.RiemannApproximation;
 import dr.math.UnivariateFunction;
+import dr.math.distributions.NormalGammaDistribution;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -36,92 +34,77 @@ import java.util.HashSet;
 public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
     public static final String WITHIN_CASE_CATEGORY_OUTBREAK = "withinCaseCategoryOutbreak";
-    private HashSet<String> latentCategories;
-    private HashSet<String> infectiousCategories;
-    private HashMap<String, LogNormalDistributionModel> latentMap;
-    private HashMap<String, LogNormalDistributionModel> infectiousMap;
+    private final ArrayList<String> latentCategories;
+    private final ArrayList<String> infectiousCategories;
+    private final HashMap<String, NormalGammaDistribution> latentMap;
+    private final HashMap<String, NormalGammaDistribution> infectiousMap;
     private double[][] distances;
 
-    public WithinCaseCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods){
+    public WithinCaseCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
+                                      HashMap<String, NormalGammaDistribution> infectiousMap,
+                                      HashMap<String, NormalGammaDistribution> latentMap){
         super(name, taxa, hasLatentPeriods, hasGeography);
         cases = new ArrayList<AbstractCase>();
-        latentCategories = new HashSet<String>();
-        infectiousCategories = new HashSet<String>();
-        latentMap = new HashMap<String, LogNormalDistributionModel>();
-        infectiousMap = new HashMap<String, LogNormalDistributionModel>();
+        latentCategories = new ArrayList<String>(latentMap.keySet());
+        infectiousCategories = new ArrayList<String>(infectiousMap.keySet());
+        this.latentMap = latentMap;
+        this.infectiousMap = infectiousMap;
     }
 
-
-    public WithinCaseCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
-                                      ArrayList<AbstractCase> cases){
-        this(name, taxa, hasGeography, hasLatentPeriods);
-        this.cases.addAll(cases);
-        for(AbstractCase aCase : cases){
-            addModel(aCase);
-        }
-        setupCategories();
-    }
-
-
-    private void addCase(String caseID, String infectiousCategory, String latentCategory, Date examDate, Date cullDate,
-                         LogNormalDistributionModel infectiousDist, LogNormalDistributionModel latentDist,
-                         Parameter coords, Taxa associatedTaxa){
+    private void addCase(String caseID, Date examDate, Date cullDate, Parameter coords, Taxa associatedTaxa,
+                         String infectiousCategory, String latentCategory){
         WithinCaseCategoryCase thisCase;
 
-        if(latentDist==null){
-            thisCase =  new WithinCaseCategoryCase(caseID, infectiousCategory, examDate, cullDate, infectiousDist,
-                    coords, associatedTaxa);
+        if(latentCategory==null){
+            thisCase =  new WithinCaseCategoryCase(caseID, examDate, cullDate, coords, associatedTaxa,
+                    infectiousCategory);
         } else {
             thisCase =
-                    new WithinCaseCategoryCase(caseID, infectiousCategory, latentCategory, examDate, cullDate,
-                            infectiousDist, latentDist, coords, associatedTaxa);
+                    new WithinCaseCategoryCase(caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory,
+                            latentCategory);
         }
         cases.add(thisCase);
-        infectiousCategories.add(infectiousCategory);
-        infectiousMap.put(infectiousCategory, infectiousDist);
-        if(latentCategory!=null){
-            latentCategories.add(latentCategory);
-            latentMap.put(latentCategory, latentDist);
-        }
         addModel(thisCase);
     }
 
-    private void setupCategories(){
-        for(AbstractCase aCase : cases){
-            infectiousCategories.add(((WithinCaseCategoryCase) aCase).getInfectiousCategory());
-            infectiousMap.put(((WithinCaseCategoryCase)aCase).getInfectiousCategory(),
-                    ((WithinCaseCategoryCase)aCase).getInfectiousPeriodDistribution());
-            if(((WithinCaseCategoryCase) aCase).getLatentCategory()!=null){
-                latentCategories.add(((WithinCaseCategoryCase) aCase).getLatentCategory());
-                latentMap.put(((WithinCaseCategoryCase)aCase).getLatentCategory(),
-                        ((WithinCaseCategoryCase)aCase).getLatentPeriodDistribution());
-            }
-
-        }
+    public ArrayList<String> getLatentCategories(){
+        return latentCategories;
     }
 
-    public HashMap<String, LogNormalDistributionModel> getLatentMap(){
+    public ArrayList<String> getInfectiousCategories(){
+        return infectiousCategories;
+    }
+
+    public int getLatentCategoryCount(){
+        return latentCategories.size();
+    }
+
+    public int getInfectiousCategoryCount(){
+        return infectiousCategories.size();
+    }
+
+    public HashMap<String, NormalGammaDistribution> getLatentMap(){
         return latentMap;
     }
 
-    public HashMap<String, LogNormalDistributionModel> getInfectiousMap(){
+    public HashMap<String, NormalGammaDistribution> getInfectiousMap(){
         return latentMap;
     }
 
-    public LogNormalDistributionModel getInfectiousDist(){
-        if(infectiousCategories.size()!=1){
-            throw new RuntimeException("Multiple categories not implemented");
-        } else {
-            return ((WithinCaseCategoryCase)cases.get(0)).getInfectiousPeriodDistribution();
-        }
+    public NormalGammaDistribution getLatentCategoryPrior(String category){
+        return latentMap.get(category);
     }
 
-    public LogNormalDistributionModel getLatentDist(){
-        if(latentCategories.size()!=1){
-            throw new RuntimeException("Multiple categories not implemented");
-        } else {
-            return ((WithinCaseCategoryCase)cases.get(0)).getLatentPeriodDistribution();
-        }
+    public NormalGammaDistribution getInfectiousCategoryPrior(String category){
+        return infectiousMap.get(category);
+    }
+
+    public String getInfectiousCategory(AbstractCase aCase){
+        return ((WithinCaseCategoryCase)aCase).getInfectiousCategory();
+    }
+
+    public String getLatentCategory(AbstractCase aCase){
+        return ((WithinCaseCategoryCase)aCase).getLatentCategory();
     }
 
     public double getDistance(AbstractCase a, AbstractCase b) {
@@ -139,19 +122,6 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                 distances[i][j]=SpatialKernel.EuclideanDistance(getCase(i).getCoords(),getCase(j).getCoords());
             }
         }
-    }
-
-    public double logInfectedAtGivenBefore(int caseIndex, double infected, double before){
-        WithinCaseCategoryCase thisCase = (WithinCaseCategoryCase)cases.get(caseIndex);
-        return thisCase.logInfectedAtGivenBefore(infected, before);
-    }
-
-    public double logInfectedAtGivenBeforeInfectiousAtGivenBefore(int caseIndex, double infected,
-                                                                  double infectedBefore, double infectious,
-                                                                  double infectiousBefore){
-        WithinCaseCategoryCase thisCase = (WithinCaseCategoryCase)cases.get(caseIndex);
-        return thisCase.logInfectedAtGivenBeforeInfectiousAtGivenBefore(infected, infectedBefore, infectious,
-                infectiousBefore);
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -177,15 +147,12 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
     private class WithinCaseCategoryCase extends AbstractCase{
 
         public static final String WITHIN_CASE_CATEGORY_CASE = "withinCaseCategoryCase";
-        private LogNormalDistributionModel infectiousPeriodDistribution;
-        private LogNormalDistributionModel latentPeriodDistribution;
         private String infectiousCategory;
         private String latentCategory;
         private Parameter coords;
 
-        private WithinCaseCategoryCase(String name, String caseID, String infectiousCategory, Date examDate,
-                                       Date cullDate, LogNormalDistributionModel infectiousDist, Parameter coords,
-                                       Taxa associatedTaxa){
+        private WithinCaseCategoryCase(String name, String caseID, Date examDate, Date cullDate, Parameter coords,
+                                       Taxa associatedTaxa, String infectiousCategory){
             super(name);
             this.caseID = caseID;
             this.infectiousCategory = infectiousCategory;
@@ -193,45 +160,27 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             endOfInfectiousDate = cullDate;
             this.associatedTaxa = associatedTaxa;
             this.coords = coords;
-            infectiousPeriodDistribution = infectiousDist;
-            this.addModel(infectiousPeriodDistribution);
-            latentPeriodDistribution = null;
             latentCategory = null;
         }
 
 
-        private WithinCaseCategoryCase(String name, String caseID, String infectiousCategory, String latentCategory,
-                                       Date examDate, Date cullDate, LogNormalDistributionModel infectiousDist,
-                                       LogNormalDistributionModel latentDist, Parameter coords,
-                                       Taxa associatedTaxa){
-            this(name, caseID, infectiousCategory, examDate, cullDate, infectiousDist, coords, associatedTaxa);
+        private WithinCaseCategoryCase(String name, String caseID, Date examDate, Date cullDate, Parameter coords,
+                                       Taxa associatedTaxa, String infectiousCategory, String latentCategory){
+            this(name, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory);
             this.latentCategory = latentCategory;
-            this.latentPeriodDistribution = latentDist;
-            this.addModel(latentPeriodDistribution);
         }
 
 
-        private WithinCaseCategoryCase(String caseID, String infectiousCategory, Date examDate, Date cullDate,
-                                       LogNormalDistributionModel infectiousDist, Parameter coords,
-                                       Taxa associatedTaxa){
-            this(WITHIN_CASE_CATEGORY_CASE, caseID, infectiousCategory, examDate, cullDate, infectiousDist, coords,
-                    associatedTaxa);
+        private WithinCaseCategoryCase(String caseID, Date examDate, Date cullDate, Parameter coords,
+                                       Taxa associatedTaxa, String infectiousCategory){
+            this(WITHIN_CASE_CATEGORY_CASE, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory);
         }
 
 
-        private WithinCaseCategoryCase(String caseID, String infectiousCategory, String latentCategory, Date examDate,
-                                       Date cullDate, LogNormalDistributionModel infectiousDist,
-                                       LogNormalDistributionModel latentDist, Parameter coords, Taxa associatedTaxa){
-            this(WITHIN_CASE_CATEGORY_CASE, caseID, infectiousCategory, latentCategory, examDate, cullDate,
-                    infectiousDist, latentDist, coords, associatedTaxa);
-        }
-
-        public double infectedAt(double infected){
-            if(culledYet(infected)){
-                return 0;
-            } else {
-                return infectiousPeriodDistribution.pdf(endOfInfectiousDate.getTimeValue()-infected);
-            }
+        private WithinCaseCategoryCase(String caseID, Date examDate, Date cullDate, Parameter coords,
+                                       Taxa associatedTaxa, String infectiousCategory, String latentCategory){
+            this(WITHIN_CASE_CATEGORY_CASE, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory,
+                    latentCategory);
         }
 
         public String getLatentCategory(){
@@ -242,13 +191,6 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             return infectiousCategory;
         }
 
-        public LogNormalDistributionModel getInfectiousPeriodDistribution(){
-            return infectiousPeriodDistribution;
-        }
-
-        public LogNormalDistributionModel getLatentPeriodDistribution(){
-            return latentPeriodDistribution;
-        }
 
         public boolean culledYet(double time) {
             return time>endOfInfectiousDate.getTimeValue();
@@ -256,72 +198,6 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
         public boolean examinedYet(double time) {
             return time>examDate.getTimeValue();
-        }
-
-
-        //probability that this case was infected at "infected" given that it was infected before "after" and
-        // there are no latent periods
-
-        public double logInfectedAtGivenBefore(double infected, double before){
-            if(infected>before){
-                return 0;
-            } else {
-                if(latentPeriodDistribution == null){
-                    return infectedAt(infected)
-                            /(1-infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-before));
-                } else {
-                    throw new RuntimeException("Calling the probability function for a model without latent" +
-                            "periods, but there is one");
-                }
-            }
-        }
-
-        //probability that this case was infected at "infected" given that it was infected after "infectedAfter" and
-        // became infectious at "infectious" given that it was infectious after "infectiousAfter"
-
-        public double logInfectedAtGivenBeforeInfectiousAtGivenBefore(double infected, double infectedBefore,
-                                                                      double infectious, double infectiousBefore){
-            if(infected>infectedBefore || infectious>infectiousBefore || infectious<infected){
-                return 0;
-            } else {
-                if(latentPeriodDistribution != null){
-                    // probability of infection date given known infectious date & cull date of known parent
-                    double eoi = getCullTime();
-                    double latentPeriod = infectious-infected;
-                    double minLatentPeriod = Math.max(infectious - infectedBefore, 0);
-                    double latLogProb = latentPeriodDistribution.logPdf(latentPeriod)
-                            - Math.log(1 - latentPeriodDistribution.cdf(minLatentPeriod));
-
-                    if(latLogProb==Double.POSITIVE_INFINITY){
-                        // if the CDF is rounding to one using the standard BEAST method, replace it with the
-                        // asymptote of the CDF
-                        double mean = latentPeriodDistribution.getM();
-                        double stdev = latentPeriodDistribution.getS();
-                        double x = (Math.log(minLatentPeriod)-mean)/stdev;
-                        double log1MinusCDFx = Math.log(Math.exp(-Math.pow(x,2)/2)/x*Math.sqrt(2*Math.PI));
-                        latLogProb = latentPeriodDistribution.logPdf(latentPeriod) - log1MinusCDFx;
-                    }
-
-                    // probability of infectious date given known cull date & known infection dates of known
-                    // children
-                    double infectiousPeriod = eoi - infectious;
-                    double minInfectiousPeriod = Math.max(eoi - infectiousBefore, 0);
-                    double infLogProb = infectiousPeriodDistribution.logPdf(infectiousPeriod)
-                            - Math.log(1 - infectiousPeriodDistribution.cdf(minInfectiousPeriod));
-
-                    if(infLogProb==Double.POSITIVE_INFINITY){
-                        double mean = infectiousPeriodDistribution.getM();
-                        double stdev = infectiousPeriodDistribution.getS();
-                        double x = (Math.log(minInfectiousPeriod)-mean)/stdev;
-                        double log1MinusCDFx = Math.log(Math.exp(-Math.pow(x,2)/2)/x*Math.sqrt(2*Math.PI));
-                        infLogProb = infectiousPeriodDistribution.logPdf(infectiousPeriod) - log1MinusCDFx;
-                    }
-                    return latLogProb + infLogProb;
-                } else {
-                    throw new RuntimeException("Calling the probability function for a model with latent" +
-                            "periods, but we have none");
-                }
-            }
         }
 
         protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -489,8 +365,8 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         //for the outbreak
 
         public static final String HAS_GEOGRAPHY = "hasGeography";
-        public static final String INFECTIOUS_PERIOD_DISTRIBUTIONS = "infectiousPeriodDistributions";
-        public static final String LATENT_PERIOD_DISTRIBUTIONS = "latentPeriodDistributions";
+        public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodPriors";
+        public static final String LATENT_PERIOD_DISTRIBUTION = "latentPeriodPriors";
 
         //for the cases
 
@@ -500,17 +376,41 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         public static final String COORDINATES = "spatialCoordinates";
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
         public static final String INFECTIOUS_TIME_POSITION = "infectiousTimePosition";
-        public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodDistribution";
-        public static final String LATENT_PERIOD_DISTRIBUTION = "latentPeriodDistribution";
         public static final String LATENT_CATEGORY = "latentCategory";
         public static final String INFECTIOUS_CATEGORY = "infectiousCategory";
 
+        //for the normal-gamma priors
+
+        public static final String CATEGORY_NAME = "categoryName";
+        public static final String MU = "mu";
+        public static final String LAMBDA = "lambda";
+        public static final String ALPHA = "alpha";
+        public static final String BETA = "beta";
+
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
-            final boolean hasLatentPeriods = xo.hasChildNamed(LATENT_PERIOD_DISTRIBUTIONS);
+            final boolean hasLatentPeriods = xo.hasChildNamed(LATENT_PERIOD_DISTRIBUTION);
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
+
+            HashMap<String, NormalGammaDistribution> infMap = new HashMap<String, NormalGammaDistribution>();
+
+            HashMap<String, NormalGammaDistribution> latMap = new HashMap<String, NormalGammaDistribution>();
+
+            for(int i=0; i<xo.getChildCount(); i++){
+                Object cxo = xo.getChild(i);
+                if(cxo instanceof XMLObject){
+                    if (((XMLObject)cxo).getName().equals(INFECTIOUS_PERIOD_DISTRIBUTION)){
+                        NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
+                        infMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
+                    } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIOD_DISTRIBUTION))){
+                        NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
+                        latMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
+                    }
+                }
+            }
+
             WithinCaseCategoryOutbreak cases = new WithinCaseCategoryOutbreak(null, taxa, hasGeography,
-                    hasLatentPeriods);
+                    hasLatentPeriods, infMap, latMap);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName()
@@ -528,12 +428,8 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             String infectiousCategory = (String) xo.getAttribute(INFECTIOUS_CATEGORY);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
-            final LogNormalDistributionModel infectiousDist =
-                    (LogNormalDistributionModel)xo.getElementFirstChild(INFECTIOUS_PERIOD_DISTRIBUTION);
-            LogNormalDistributionModel latentDist = null;
             String latentCategory = null;
-            if(xo.hasChildNamed(LATENT_PERIOD_DISTRIBUTION)){
-                latentDist = (LogNormalDistributionModel)xo.getElementFirstChild(LATENT_PERIOD_DISTRIBUTION);
+            if(xo.hasChildNamed(LATENT_CATEGORY)){
                 latentCategory = (String) xo.getAttribute(LATENT_CATEGORY);
             } else if(expectLatentPeriods){
                 throw new XMLParseException("Case "+farmID+" not assigned a latent periods distribution");
@@ -551,8 +447,15 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                     taxa.addTaxon((Taxon)xo.getChild(i));
                 }
             }
-            outbreak.addCase(farmID, infectiousCategory, latentCategory, examDate, cullDate, infectiousDist, latentDist,
-                    coords, taxa);
+            outbreak.addCase(farmID, examDate, cullDate, coords, taxa, infectiousCategory, latentCategory);
+        }
+
+        public NormalGammaDistribution parseDistribution(XMLObject xo) throws XMLParseException{
+            double mu = (Double)xo.getElementFirstChild(MU);
+            double lambda = (Double)xo.getElementFirstChild(LAMBDA);
+            double alpha = (Double)xo.getElementFirstChild(ALPHA);
+            double beta = (Double)xo.getElementFirstChild(BETA);
+            return new NormalGammaDistribution(mu, lambda, alpha, beta);
         }
 
 
@@ -578,10 +481,6 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
-                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, LogNormalDistributionModel.class,
-                        "The probability distribution from which the infectious period of this case is drawn"),
-                new ElementRule(LATENT_PERIOD_DISTRIBUTION, LogNormalDistributionModel.class,
-                        "The probability distribution from which the latent period of this case is drawn", true),
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
                         " along which the infection of this case occurs that it actually does occur"),
                 new ElementRule(INFECTIOUS_TIME_POSITION, Parameter.class, "Parameter taking a value between 0 and" +
@@ -592,18 +491,25 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                 new StringAttributeRule(INFECTIOUS_CATEGORY, "The category of infectious period")
         };
 
+        private final XMLSyntaxRule[] distributionRules = {
+                new StringAttributeRule(CATEGORY_NAME, "The identifier of this category"),
+                new ElementRule(MU, double.class),
+                new ElementRule(LAMBDA, double.class),
+                new ElementRule(ALPHA, double.class),
+                new ElementRule(BETA, double.class)
+        };
+
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(WithinCaseCategoryCase.WITHIN_CASE_CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTIONS, LogNormalDistributionModel.class,
-                        "One or more probability distributions for the infectious periods of cases in the oubreak", 1,
+                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, distributionRules, 1,
                         Integer.MAX_VALUE),
-                new ElementRule(LATENT_PERIOD_DISTRIBUTIONS, LogNormalDistributionModel.class,
-                        "Zero or more probability distributions for the latent periods of cases in the oubreak", 0,
+                new ElementRule(LATENT_PERIOD_DISTRIBUTION, distributionRules, 0,
                         Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
         };
+
     };
 
 

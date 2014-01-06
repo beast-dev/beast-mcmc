@@ -10,14 +10,19 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.*;
+import dr.math.distributions.NormalGammaDistribution;
 import dr.xml.*;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.TDistributionImpl;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 
@@ -42,8 +47,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
 
     public WithinCaseCoalescent(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
-                                     Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
-                                     DemographicModel demoModel, Parameter startingNe)
+                                Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
+                                DemographicModel demoModel, Parameter startingNe)
             throws TaxonList.MissingTaxonException {
         this(virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, null,
                 maxFirstInfToRoot, demoModel, startingNe);
@@ -68,6 +73,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         prepareTree(startingNetworkFileName);
 
+        prepareTimings();
     }
 
     protected double calculateLogLikelihood(){
@@ -84,50 +90,188 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         double logL = -Math.log(Math.pow(noTips, noTips-1));
 
-        for(int i=0; i<noTips; i++){
-            // the terms for infectious (and latent, if present) periods come from the parent class, without normalisation
-            AbstractCase aCase = cases.getCase(i);
-            AbstractCase parent = getInfector(aCase);
-            HashSet<AbstractCase> children = getInfectees(aCase);
-            if(timingLogLikelihoods[i]==null){
+        ArrayList<AbstractCase> caseOrdering = postOrderTransmissionTreeTraversal();
 
-                double latestInfectiousTime = aCase.getCullTime();
+        // set up arrays
+
+        int noInfectiousCategories = ((WithinCaseCategoryOutbreak)getOutbreak()).getInfectiousCategoryCount();
+
+        int noLatentCategories = ((WithinCaseCategoryOutbreak)getOutbreak()).getLatentCategoryCount();
+
+        double[][][] infPredictiveDistributionParameters
+                = new double[noInfectiousCategories][getOutbreak().size()+1][4];
+
+        double[][][] latPredictiveDistributionParameters = hasLatentPeriods ?
+                new double[noLatentCategories][getOutbreak().size()+1][4] :  null;
+
+        for(int i=0; i<noInfectiousCategories; i++){
+            NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak)cases)
+                    .getInfectiousCategoryPrior(((WithinCaseCategoryOutbreak)cases).getInfectiousCategories().get(i));
+
+            infPredictiveDistributionParameters[i][0]=prior.getParameters();
+        }
+
+        if(hasLatentPeriods){
+            for(int i=0; i<noLatentCategories; i++){
+                NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak)cases)
+                        .getLatentCategoryPrior(((WithinCaseCategoryOutbreak) cases).getLatentCategories().get(i));
+
+                latPredictiveDistributionParameters[i][0]=prior.getParameters();
+            }
+        }
+
+        int[] infCounts = new int[noInfectiousCategories];
+        double[] infRunningSums = new double[noInfectiousCategories];
+
+        int[] latCounts = hasLatentPeriods ? new int[noLatentCategories] : null;
+        double[] latRunningSums = hasLatentPeriods ? new double[noLatentCategories] : null;
+
+        for(AbstractCase aCase : caseOrdering){
+            int number = cases.getCaseIndex(aCase);
+
+            HashSet<AbstractCase> children = getInfectees(aCase);
+
+            if(timingLogLikelihoods[number]!=null){
+                AbstractCase parent = getInfector(aCase);
+
+
+                int intCategoryNo = ((WithinCaseCategoryOutbreak)cases).getInfectiousCategories()
+                        .indexOf(((WithinCaseCategoryOutbreak)cases).getInfectiousCategory(aCase));
+
+                int latCategoryNo = hasLatentPeriods ?
+                        ((WithinCaseCategoryOutbreak)cases).getLatentCategories()
+                                .indexOf(((WithinCaseCategoryOutbreak)cases).getLatentCategory(aCase)) : 0;
+
+                double cullTime = aCase.getCullTime();
+                double infectiousTime = getInfectiousTime(aCase);
                 double infectionTime = getInfectionTime(aCase);
+
+                double infectiousPeriod = cullTime - infectiousTime;
+                double latentPeriod = infectionTime - infectionTime;
+
+                double latestInfectiousTime = cullTime;
+
                 for(AbstractCase child : children){
                     double childInfTime = getInfectionTime(child);
                     if(childInfTime<latestInfectiousTime){
                         latestInfectiousTime = childInfTime;
                     }
                 }
+
+                double firstInfMu = infPredictiveDistributionParameters[intCategoryNo][0][0];
+                double firstInfLambda = infPredictiveDistributionParameters[intCategoryNo][0][1];
+
+                double currentInfMu = infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][0];
+                double currentInfLambda = infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][1];
+                double currentInfAlpha = infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][2];
+                double currentInfBeta = infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][3];
+
+                double firstLatMu = hasLatentPeriods ? latPredictiveDistributionParameters[intCategoryNo][0][0] : 0;
+                double firstLatLambda = hasLatentPeriods ? latPredictiveDistributionParameters[intCategoryNo][0][1] : 0;
+
+                double currentLatMu = hasLatentPeriods ?
+                        latPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][0] : 0;
+                double currentLatLambda = hasLatentPeriods ?
+                        infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][1] : 0;
+                double currentLatAlpha = hasLatentPeriods ?
+                        infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][2] : 0;
+                double currentLatBeta = hasLatentPeriods ?
+                        infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]][3] : 0;
+
+
                 if(parent!=null){
                     double latestInfectionTime = parent.getCullTime();
-                    if(!hasLatentPeriods){
-                        timingLogLikelihoods[i] = ((WithinCaseCategoryOutbreak) cases).logInfectedAtGivenBefore
-                                (i, infectionTime, Math.min(latestInfectionTime, latestInfectiousTime));
-                    } else {
-                        double infectiousTime = getInfectiousTime(aCase);
-                        timingLogLikelihoods[i] = ((WithinCaseCategoryOutbreak) cases)
-                                .logInfectedAtGivenBeforeInfectiousAtGivenBefore(i, infectionTime, latestInfectionTime,
-                                        infectiousTime, latestInfectiousTime);
+                    infRunningSums[intCategoryNo] += Math.log(infectiousPeriod);
+                    if(hasLatentPeriods){
+                        latRunningSums[latCategoryNo] += Math.log(latentPeriod);
                     }
-                } else {
-                    if(!hasLatentPeriods){
-                        timingLogLikelihoods[i] = ((WithinCaseCategoryOutbreak)cases).logInfectedAtGivenBefore
-                                (i, infectionTime, latestInfectiousTime);
+                    double minimumInfectiousPeriod = hasLatentPeriods
+                            ? Math.min(cullTime - latestInfectiousTime,0) : Math.min(cullTime - latestInfectionTime,0);
+                    if(infectiousPeriod < minimumInfectiousPeriod){
+                        timingLogLikelihoods[number]=Double.NEGATIVE_INFINITY;
                     } else {
-                        double infectiousTime = getInfectiousTime(aCase);
-                        timingLogLikelihoods[i] = ((WithinCaseCategoryOutbreak)cases)
-                                .logInfectedAtGivenBeforeInfectiousAtGivenBefore(i, infectionTime, infectiousTime,
-                                        infectiousTime, latestInfectiousTime);
+                        double sigma = Math.sqrt(currentInfBeta*(currentInfLambda+1)/(currentInfAlpha*currentInfLambda));
+                        double probability = tDistributionPDF(
+                                Math.log(infectiousPeriod),currentInfMu,sigma,2*currentInfAlpha);
+                        double normalisation = 1;
+                        if(minimumInfectiousPeriod>0){
+                            try{
+                                normalisation = 1-tDistributionCDF(Math.log(minimumInfectiousPeriod),currentInfMu,sigma,
+                                        2*currentInfAlpha);
+                            } catch(MathException e){
+                                throw new RuntimeException("t-distribution CDF calculation failed");
+                                // (or return zero likelihood?)
+                            }
+                        }
+                        timingLogLikelihoods[number] = Math.log(probability)-Math.log(normalisation);
                     }
+
+                    if(hasLatentPeriods){
+                        double minimumLatentPeriod = Math.min(infectiousTime - latestInfectionTime, 0);
+
+                        if(latentPeriod < minimumLatentPeriod){
+                            timingLogLikelihoods[number]=Double.NEGATIVE_INFINITY;
+                        } else {
+
+
+                            double sigma = Math.sqrt(currentLatBeta*(currentLatLambda+1)/(currentLatAlpha*currentLatLambda));
+                            double probability = tDistributionPDF(
+                                    Math.log(latentPeriod),currentLatMu,sigma,2*currentLatAlpha);
+                            double normalisation = 1;
+                            if(minimumLatentPeriod>0){
+                                try{
+                                    normalisation = 1-tDistributionCDF(Math.log(minimumLatentPeriod),currentLatMu,sigma,
+                                            2*currentLatAlpha);
+                                } catch (MathException e){
+                                    throw new RuntimeException("t-distribution CDF calculation failed");
+                                    // (or return zero likelihood?)
+                                }
+                            }
+                            timingLogLikelihoods[number]
+                                    += Math.log(probability)-Math.log(normalisation);
+                        }
+                    }
+
+                    int n = infCounts[intCategoryNo]++;
+                    double newInfMu = (firstInfLambda*firstInfMu + infRunningSums[intCategoryNo])/(firstInfLambda + n);
+                    double newInfLambda = currentInfLambda + 1;
+                    double newInfAlpha = currentInfAlpha + 0.5;
+
+                    double mean = infRunningSums[intCategoryNo]/n;
+
+                    double newInfBeta = infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]-1][3]
+                            +0.5*Math.pow(Math.log(infectiousPeriod)-mean,2)
+                            +currentInfLambda*Math.pow(mean-currentInfMu,2)/(2*(currentInfLambda+1));
+
+                    infPredictiveDistributionParameters[intCategoryNo][infCounts[intCategoryNo]] =
+                            new double[]{newInfMu, newInfLambda, newInfAlpha, newInfBeta};
+
+                    if(hasLatentPeriods){
+                        n = latCounts[intCategoryNo]++;
+                        double newLatMu = (firstLatLambda*firstLatMu + latRunningSums[latCategoryNo])/(firstLatLambda + n);
+                        double newLatLambda = currentLatLambda + 1;
+                        double newLatAlpha = currentLatAlpha + 0.5;
+
+                        mean = latRunningSums[latCategoryNo]/n;
+
+                        double newLatBeta
+                                = latPredictiveDistributionParameters[latCategoryNo][latCounts[latCategoryNo]-1][3]
+                                +0.5*Math.pow(Math.log(latentPeriod)-mean,2)
+                                +currentLatLambda*Math.pow(mean-currentLatMu,2)/(2*(currentLatLambda+1));
+
+                        latPredictiveDistributionParameters[latCategoryNo][infCounts[intCategoryNo]] =
+                                new double[]{newLatMu, newLatLambda, newLatAlpha, newLatBeta};
+
+                    }
+
                 }
-                logL += timingLogLikelihoods[i];
             }
+
 
             // and then the little tree calculations
 
-            if(partitionTreeLogLikelihoods[i]==null){
-                TreePlusRootBranchLength treePlus = partitionsAsTrees[i];
+            if(partitionTreeLogLikelihoods[number]==null){
+                TreePlusRootBranchLength treePlus = partitionsAsTrees[number];
 
                 if(DEBUG && treePlus.getNodeCount()>1){
                     debugTreelet(treePlus, aCase+"_partition.nex");
@@ -135,17 +279,30 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 if(children.size()!=0){
                     MaxTMRCACoalescent coalescent = new MaxTMRCACoalescent(treePlus, demoModel,
-                        treePlus.getRootHeight()+treePlus.getRootBranchLength());
-                    partitionTreeLogLikelihoods[i] = coalescent.calculateLogLikelihood();
-                    logL += partitionTreeLogLikelihoods[i];
+                            treePlus.getRootHeight()+treePlus.getRootBranchLength());
+                    partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
+                    logL += partitionTreeLogLikelihoods[number];
+                    if(partitionTreeLogLikelihoods[number]==Double.POSITIVE_INFINITY){
+                        debugOutputTree("infCoalescent.nex");
+                    }
                 } else {
-                    partitionTreeLogLikelihoods[i] = 0.0;
+                    partitionTreeLogLikelihoods[number] = 0.0;
                 }
             } else {
-                logL += partitionTreeLogLikelihoods[i];
+                logL += partitionTreeLogLikelihoods[number];
             }
         }
         return logL;
+    }
+
+    private double tDistributionPDF(double x, double mu, double sigma, double df){
+        TDistributionImpl distribution = new TDistributionImpl(df);
+        return distribution.density((x-mu)/sigma);
+    }
+
+    private double tDistributionCDF(double x, double mu, double sigma, double df) throws MathException{
+        TDistributionImpl distribution = new TDistributionImpl(df);
+        return distribution.cumulativeProbability((x-mu)/sigma);
     }
 
     public void storeState(){
@@ -232,6 +389,24 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 partitionsAsTrees[i] = new TreePlusRootBranchLength(littleTree, rootTime - infectionTime);
             }
         }
+    }
+
+    public ArrayList<AbstractCase> postOrderTransmissionTreeTraversal(){
+        return traverseTransmissionTree(branchMap.get(treeModel.getRoot().getNumber()));
+    }
+
+    private ArrayList<AbstractCase> traverseTransmissionTree(AbstractCase aCase){
+        ArrayList<AbstractCase> out = new ArrayList<AbstractCase>();
+        HashSet<AbstractCase> children = getInfectees(aCase);
+        for(int i=0; i<getOutbreak().size(); i++){
+            AbstractCase possibleChild = getOutbreak().getCase(i);
+            // easiest way to maintain the set ordering of the cases?
+            if(children.contains(possibleChild)){
+                out.addAll(traverseTransmissionTree(possibleChild));
+            }
+        }
+        out.add(aCase);
+        return out;
     }
 
     private void copyPartitionToLittleTree(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,

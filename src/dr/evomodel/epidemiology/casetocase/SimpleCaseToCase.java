@@ -110,7 +110,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
             }
 
             if(DEBUG){
-                debugOutputTree("treeTest.nex");
+                debugOutputTree("treeTest.nex", false);
             }
 
             final NodeRef root = treeModel.getRoot();

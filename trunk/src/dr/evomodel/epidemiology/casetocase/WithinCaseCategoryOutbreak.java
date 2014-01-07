@@ -3,7 +3,6 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
@@ -15,7 +14,6 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * Outbreak class for within-case coalescent.
@@ -365,8 +363,8 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         //for the outbreak
 
         public static final String HAS_GEOGRAPHY = "hasGeography";
-        public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "infectiousPeriodPriors";
-        public static final String LATENT_PERIOD_DISTRIBUTION = "latentPeriodPriors";
+        public static final String INFECTIOUS_PERIOD_PRIOR = "infectiousPeriodPrior";
+        public static final String LATENT_PERIOD_PRIOR = "latentPeriodPrior";
 
         //for the cases
 
@@ -389,7 +387,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
-            final boolean hasLatentPeriods = xo.hasChildNamed(LATENT_PERIOD_DISTRIBUTION);
+            final boolean hasLatentPeriods = xo.hasChildNamed(LATENT_PERIOD_PRIOR);
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
 
             HashMap<String, NormalGammaDistribution> infMap = new HashMap<String, NormalGammaDistribution>();
@@ -399,10 +397,10 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject){
-                    if (((XMLObject)cxo).getName().equals(INFECTIOUS_PERIOD_DISTRIBUTION)){
+                    if (((XMLObject)cxo).getName().equals(INFECTIOUS_PERIOD_PRIOR)){
                         NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
                         infMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
-                    } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIOD_DISTRIBUTION))){
+                    } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIOD_PRIOR))){
                         NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
                         latMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
                     }
@@ -429,7 +427,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
             String latentCategory = null;
-            if(xo.hasChildNamed(LATENT_CATEGORY)){
+            if(xo.hasAttribute(LATENT_CATEGORY)){
                 latentCategory = (String) xo.getAttribute(LATENT_CATEGORY);
             } else if(expectLatentPeriods){
                 throw new XMLParseException("Case "+farmID+" not assigned a latent periods distribution");
@@ -451,10 +449,10 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         }
 
         public NormalGammaDistribution parseDistribution(XMLObject xo) throws XMLParseException{
-            double mu = (Double)xo.getElementFirstChild(MU);
-            double lambda = (Double)xo.getElementFirstChild(LAMBDA);
-            double alpha = (Double)xo.getElementFirstChild(ALPHA);
-            double beta = (Double)xo.getElementFirstChild(BETA);
+            double mu = Double.parseDouble((String)xo.getAttribute(MU));
+            double lambda = Double.parseDouble((String)xo.getAttribute(LAMBDA));
+            double alpha = Double.parseDouble((String)xo.getAttribute(ALPHA));
+            double beta = Double.parseDouble((String)xo.getAttribute(BETA));
             return new NormalGammaDistribution(mu, lambda, alpha, beta);
         }
 
@@ -493,19 +491,19 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
         private final XMLSyntaxRule[] distributionRules = {
                 new StringAttributeRule(CATEGORY_NAME, "The identifier of this category"),
-                new ElementRule(MU, double.class),
-                new ElementRule(LAMBDA, double.class),
-                new ElementRule(ALPHA, double.class),
-                new ElementRule(BETA, double.class)
+                AttributeRule.newDoubleRule(MU),
+                AttributeRule.newDoubleRule(LAMBDA),
+                AttributeRule.newDoubleRule(ALPHA),
+                AttributeRule.newDoubleRule(BETA)
         };
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(WithinCaseCategoryCase.WITHIN_CASE_CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, distributionRules, 1,
+                new ElementRule(INFECTIOUS_PERIOD_PRIOR, distributionRules, 1,
                         Integer.MAX_VALUE),
-                new ElementRule(LATENT_PERIOD_DISTRIBUTION, distributionRules, 0,
+                new ElementRule(LATENT_PERIOD_PRIOR, distributionRules, 0,
                         Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
         };

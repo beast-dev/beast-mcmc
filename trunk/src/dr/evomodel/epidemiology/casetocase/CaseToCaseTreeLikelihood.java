@@ -31,7 +31,8 @@ import java.util.*;
  * @version $Id: $
  */
 
-public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable, TreeTraitProvider {
+public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable,
+        TreeTraitProvider {
 
     protected final static boolean DEBUG = false;
 
@@ -161,9 +162,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
 
         this.maxFirstInfToRoot = maxFirstInfToRoot;
-
-
-        //paint the starting network onto the tree
 
 
         treeTraits.addTrait(PARTITIONS_KEY, new TreeTrait.S() {
@@ -988,7 +986,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         }
         if(foundProblem){
-            debugOutputTree(map, "checkPartitionProblem");
+            debugOutputTree(map, "checkPartitionProblem", false);
         }
         return !foundProblem;
     }
@@ -1269,23 +1267,81 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
     }
 
-    public void debugOutputTree(String fileName){
-        debugOutputTree(branchMap, fileName);
+    public void debugOutputTree(String fileName, boolean rewire){
+        debugOutputTree(branchMap, fileName, rewire);
     }
 
 
-    public void debugOutputTree(BranchMapModel map, String fileName){
+    public void debugOutputTree(BranchMapModel map, String fileName, boolean rewire){
         try{
-            FlexibleTree treeCopy = new FlexibleTree(treeModel);
-            for(int j=0; j<treeCopy.getNodeCount(); j++){
-                FlexibleNode node = (FlexibleNode)treeCopy.getNode(j);
-                node.setAttribute("Number", node.getNumber());
-                node.setAttribute("Time", heightToTime(node.getHeight()));
-                node.setAttribute("Partition", map.get(node.getNumber()));
+            FlexibleTree treeCopy;
+            if(!rewire){
+                treeCopy = new FlexibleTree(treeModel);
+                for(int j=0; j<treeCopy.getNodeCount(); j++){
+                    FlexibleNode node = (FlexibleNode)treeCopy.getNode(j);
+                    node.setAttribute("Number", node.getNumber());
+                    node.setAttribute("Time", heightToTime(node.getHeight()));
+                    node.setAttribute(PARTITIONS_KEY, map.get(node.getNumber()));
+                }
+            } else {
+                treeCopy = rewireTree(treeModel);
             }
             NexusExporter testTreesOut = new NexusExporter(new PrintStream(fileName));
             testTreesOut.exportTree(treeCopy);
         } catch (IOException ignored) {System.out.println("IOException");}
+    }
+
+    public FlexibleTree rewireTree(Tree tree){
+        prepareTimings();
+
+        FlexibleTree outTree = new FlexibleTree(tree, true);
+
+        for(int j=0; j<outTree.getNodeCount(); j++){
+            FlexibleNode node = (FlexibleNode)outTree.getNode(j);
+            node.setAttribute("Number", node.getNumber());
+            node.setAttribute("Time", heightToTime(node.getHeight()));
+            node.setAttribute(PARTITIONS_KEY, branchMap.get(node.getNumber()));
+        }
+
+        for(AbstractCase aCase : cases.getCases()){
+            NodeRef originalNode = getEarliestNodeInPartition(aCase);
+            int infectionNodeNo = originalNode.getNumber();
+            if(!treeModel.isRoot(originalNode)){
+                NodeRef originalParent = treeModel.getParent(originalNode);
+                double nodeTime = getNodeTime(originalNode);
+                double infectionTime = getInfectionTime(aCase);
+                double heightToBreakBranch = getHeight(originalNode) +  (nodeTime - infectionTime);
+                FlexibleNode newNode = (FlexibleNode)outTree.getNode(infectionNodeNo);
+                FlexibleNode oldParent = (FlexibleNode)outTree.getParent(newNode);
+
+                outTree.beginTreeEdit();
+                outTree.removeChild(oldParent, newNode);
+                FlexibleNode infectionNode = new FlexibleNode();
+                infectionNode.setHeight(heightToBreakBranch);
+                infectionNode.setLength(oldParent.getHeight() - heightToBreakBranch);
+                infectionNode.setAttribute(PARTITIONS_KEY, getNodePartition(treeModel, originalParent));
+                outTree.addChild(oldParent, infectionNode);
+                outTree.addChild(infectionNode, newNode);
+                outTree.endTreeEdit();
+            } else {
+                double nodeTime = getNodeTime(originalNode);
+                double infectionTime = getInfectionTime(aCase);
+                double heightToInstallRoot = getHeight(originalNode) +  (nodeTime - infectionTime);
+                FlexibleNode newNode = (FlexibleNode)outTree.getNode(infectionNodeNo);
+                outTree.beginTreeEdit();
+                FlexibleNode infectionNode = new FlexibleNode();
+                infectionNode.setHeight(heightToInstallRoot);
+                infectionNode.setAttribute(PARTITIONS_KEY, "The_Ether");
+                outTree.addChild(infectionNode, newNode);
+                newNode.setLength(heightToInstallRoot - getHeight(originalNode));
+                outTree.setRoot(infectionNode);
+                outTree.endTreeEdit();
+            }
+        }
+
+        outTree = new FlexibleTree((FlexibleNode)outTree.getRoot());
+
+        return outTree;
     }
 
     //************************************************************************
@@ -1331,13 +1387,34 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public String getNodePartition(Tree tree, NodeRef node) {
         if (tree != treeModel) {
-            throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
+            // we're trying to annotate a partitioned tree, we hope
+            try{
+                NodeRef oldNode = treeModel.getNode((Integer)tree.getNodeAttribute(node,"Number"));
+                if(treeModel.getNodeHeight(oldNode)!=tree.getNodeHeight(node)){
+                    throw new RuntimeException("Can only reconstruct states on treeModel given to constructor or a " +
+                            "partitioned tree derived from it");
+                } else {
+                    return branchMap.get(oldNode.getNumber()).toString();
+                }
+            } catch(NullPointerException e){
+                if(tree.isRoot(node)){
+                    return "The_Ether";
+                } else {
+                    NodeRef parent = tree.getParent(node);
+                    int originalParentNumber = (Integer)tree.getNodeAttribute(parent,"Number");
+                    return branchMap.get(originalParentNumber).toString();
+                }
+            }
+
+
+
+        } else {
+            if (!likelihoodKnown) {
+                calculateLogLikelihood();
+                likelihoodKnown = true;
+            }
+            return branchMap.get(node.getNumber()).toString();
         }
-        if (!likelihoodKnown) {
-            calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
-        return branchMap.get(node.getNumber()).toString();
     }
 }
 

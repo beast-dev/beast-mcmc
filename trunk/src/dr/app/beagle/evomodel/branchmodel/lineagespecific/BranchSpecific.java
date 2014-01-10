@@ -47,6 +47,10 @@ import dr.evolution.datatype.GeneticCode;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTrait.Intent;
+import dr.evolution.tree.TreeTraitProvider.Helper;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -76,9 +80,13 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
     private TreeModel treeModel;
     private FrequencyModel rootFrequencyModel;
     
+    // for discrete categories
     private CountableBranchCategoryProvider uCategoriesProvider;
     private Parameter uCategoriesParameter;
 
+    // for annotating the tree
+    private final Helper helper = new Helper();
+    
 	public BranchSpecific(TreeModel treeModel, //
 			FrequencyModel rootFrequencyModel, //
 			List<SubstitutionModel> substitutionModels, //
@@ -101,13 +109,59 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 		}
 
 		addModel(this.treeModel);
-		addVariable(this.uCategoriesParameter);
-        
-		addModel((Model)this.uCategoriesProvider);
 		addModel(this.rootFrequencyModel);
+		addModel((Model)this.uCategoriesProvider);
+		addVariable(this.uCategoriesParameter);
+		
+		
+
+		//TODO create and add treeTrait
+		
+		TreeTrait<Integer> uTrait = new TreeTrait.I() {
+
+			@Override
+			public String getTraitName() {
+				return "uCategory";
+			}
+
+			@Override
+			public dr.evolution.tree.TreeTrait.Intent getIntent() {
+				return Intent.BRANCH;
+			}
+
+			
+			// TODO
+			@Override
+			public Integer getTrait(Tree tree, NodeRef branch) {
+				
+		        if (setupMapping) {
+		            setupNodeMap(branch);
+		        }
+				
+				int[] uCats = nodeMap.get(branch).getOrder();
+				
+				return uCats[0];
+				
+			}};
+
+		
+		helper.addTrait(uTrait);		
+		
+		
 		
 	}// END: Constructor
 
+    public TreeTrait[] getTreeTraits() {
+        return helper.getTreeTraits();
+    }
+
+    public TreeTrait getTreeTrait(String key) {
+    	
+    	System.out.println("FUBAR");
+    	
+        return helper.getTreeTrait(key);
+    }
+	
     @Override
     public Mapping getBranchModelMapping(NodeRef branch) {
 
@@ -120,27 +174,25 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
     public void setupNodeMap(NodeRef branch) {
     	
-        // TODO How about: return new Mapping() that points to uCategory?
-    	
         int branchCategory = uCategoriesProvider.getBranchCategory(treeModel, branch);
         final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
         
 		if (DEBUG) {
-//			System.out.println("FUBAR2:" + uCategory);
-//			System.out.println("branch length: " + treeModel.getBranchLength(branch));
-		}
+			System.out.println("category:" + uCategory);
+			System.out.println("branch length: " + treeModel.getBranchLength(branch));
+		}//END: DEBUG
 	  
         nodeMap.put(branch, new Mapping() {
         	
 			@Override
 			public int[] getOrder() {
 				return new int[] { uCategory };
-			}
+			}//END: getOrder
 
 			@Override
 			public double[] getWeights() {
 				return new double[] { 1.0 };
-            }
+            }//END: getWeights
             
         });
         
@@ -184,7 +236,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
 		if (DEBUG) {
 
-			System.err.println("STORE");
+//			System.err.println("STORE");
 
 		}
 
@@ -195,7 +247,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
 		if (DEBUG) {
 
-			System.err.println("RESTORE");
+//			System.err.println("RESTORE");
 
 		}
 
@@ -208,7 +260,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel {
 
 		if (DEBUG) {
 
-			System.err.println("ACCEPT");
+//			System.err.println("ACCEPT");
 
 		}
 

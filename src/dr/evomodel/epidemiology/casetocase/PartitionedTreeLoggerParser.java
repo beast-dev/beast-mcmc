@@ -1,7 +1,5 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.evomodel.tree.HiddenLinkageModel;
-import dr.evomodel.tree.HiddenLinkageTreeLogger;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;
@@ -10,7 +8,7 @@ import dr.xml.XMLSyntaxRule;
 
 
 /**
- * @author Matthew Hall (koadman)
+ * @author Matthew Hall
  */
 public class PartitionedTreeLoggerParser extends TreeLoggerParser {
 
@@ -43,8 +41,7 @@ public class PartitionedTreeLoggerParser extends TreeLoggerParser {
 
         PartitionedTreeLogger logger = new PartitionedTreeLogger(c2cTL, tree, branchRates,
                 treeAttributeProviders, treeTraitProviders,
-                formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition/*,
-                normaliseMeanRateTo*/);
+                formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition);
 
         if (title != null) {
             logger.setTitle(title);

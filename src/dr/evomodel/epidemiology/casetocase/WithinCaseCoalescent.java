@@ -10,13 +10,11 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.distribution.LogNormalDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.*;
 import dr.math.distributions.NormalGammaDistribution;
-import dr.math.functionEval.*;
 import dr.math.functionEval.GammaFunction;
 import dr.xml.*;
 import org.apache.commons.math.MathException;
@@ -638,10 +636,22 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             super(tree, demographicModel.getDemographicFunction());
             ConstantPopulation demFunct = (ConstantPopulation)demographicModel.getDemographicFunction();
 
-            double oldN0 = demFunct.getN0();
-            double growthTerm = demFunct.getDemographic(maxHeight)/oldN0;
-            demFunct.setN0(startingNe.getParameterValue(0)/growthTerm);
+            if(demographicModel instanceof LogisticGrowthN0N50Model){
+
+                demFunct.setArgument(2, maxHeight);
+
+            } else {
+
+            // want to set this so the population size is 1 at the point of infection
+
+                double oldN0 = demFunct.getN0();
+                double growthTerm = demFunct.getDemographic(maxHeight)/oldN0;
+                demFunct.setN0(startingNe.getParameterValue(0)/growthTerm);
+
+            }
+
             this.maxHeight = maxHeight;
+
         }
 
         public double calculateLogLikelihood() {
@@ -698,9 +708,9 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 // normalisation
 
-                double denominator = 1-Math.exp(-kChoose2 * normalisationArea);
+                // double denominator = 1-Math.exp(-kChoose2 * normalisationArea);
 
-                logL -= Math.log(denominator);
+                logL -= Math.log1p(-Math.exp(-kChoose2 * normalisationArea));
 
             }
 

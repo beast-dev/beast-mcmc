@@ -33,12 +33,18 @@ public class LogisticGrowthN0N50 extends LogisticGrowthN0 {
         double t50 = getT50();
         double n0 = getN0();
 
-        return 2*(n0 - n50)/(1+Math.exp(-r*(t50-t))) - (n0 - 2*n50);
+        double answer = 2*(n0 - n50)/(1+Math.exp(-r*(t50-t))) - (n0 - 2*n50);
+
+        return answer;
     }
 
 
     public double getLogDemographic(double t) {
-        return Math.log(getDemographic(t));
+        double r = getGrowthRate();
+        double t50 = getT50();
+        double n0 = getN0();
+
+        return Math.log(n0+(n0-2*n50)*(1+Math.exp(-r*(t50-t)))) - Math.log(1+Math.exp(-r*(t50-t)));
     }
 
     // warning: these are likely to give numerical errors if (N0-2N50)*exp(-r*T50) + N0 <= 0. The model class is

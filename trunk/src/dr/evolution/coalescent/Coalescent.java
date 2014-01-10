@@ -102,8 +102,8 @@ public class Coalescent implements MultivariateFunction, Units {
                 final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
 
                 // if value at end is many orders of magnitude different than mean over interval reject the interval
-                // This is protection against cases where ridiculous infitisimal
-                // population size at the end of a linear interval drive coalescent values to infinity.
+                // This is protection against cases where ridiculous infinitesimal population size at the end of a
+                // linear interval drive coalescent values to infinity.
 
                     if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
     //                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {

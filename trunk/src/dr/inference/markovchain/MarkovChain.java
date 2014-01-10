@@ -164,10 +164,6 @@ public final class MarkovChain {
 
         while (!pleaseStop && (currentState < (currentLength + length))) {
 
-            if(currentState==17297){
-                System.out.println("LOOK at ME");
-            }
-
             String diagnosticStart = "";
 
             // periodically log states

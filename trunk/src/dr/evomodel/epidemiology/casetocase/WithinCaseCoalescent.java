@@ -283,7 +283,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     }
                 }
                 if(possibleParents>1){
-                    timingLogLikelihoods[number] = Math.log(possibleParents);
+                    timingLogLikelihoods[number] = -Math.log(possibleParents);
                 } else {
                     timingLogLikelihoods[number] = 0.0;
                 }
@@ -708,9 +708,9 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 // normalisation
 
-                // double denominator = 1-Math.exp(-kChoose2 * normalisationArea);
+                double logDenominator = Math.log1p(-Math.exp(-kChoose2 * normalisationArea));
 
-                logL -= Math.log1p(-Math.exp(-kChoose2 * normalisationArea));
+                logL -= logDenominator;
 
             }
 

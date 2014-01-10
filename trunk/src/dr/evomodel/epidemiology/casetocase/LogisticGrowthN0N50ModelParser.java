@@ -65,7 +65,7 @@ public class LogisticGrowthN0N50ModelParser extends AbstractXMLObjectParser {
             new ElementRule(EXCESS_CARRYING_CAPACITY,
                     new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
                     "The minimum carrying capacity in this model is twice the starting population size. This " +
-                            "parameter represents how much larger it is than this"),
+                            "parameter represents how much larger the carrying capacity is than this"),
     };
 
 }

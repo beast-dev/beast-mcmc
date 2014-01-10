@@ -1398,7 +1398,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 }
             } catch(NullPointerException e){
                 if(tree.isRoot(node)){
-                    return "The_Ether";
+                    return "Start";
                 } else {
                     NodeRef parent = tree.getParent(node);
                     int originalParentNumber = (Integer)tree.getNodeAttribute(parent,"Number");

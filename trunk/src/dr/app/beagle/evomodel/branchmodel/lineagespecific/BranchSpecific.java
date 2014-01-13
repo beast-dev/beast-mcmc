@@ -136,6 +136,11 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 				
 				int[] uCats = nodeMap.get(branch).getOrder();
 				
+				
+				if(DEBUG) {
+					System.out.println("uCat:" + uCats[0]);
+				}
+				
 				return uCats[0];
 				
 			}};
@@ -233,35 +238,15 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 	@Override
 	protected void storeState() {
 
-		if (DEBUG) {
-
-//			System.err.println("STORE");
-
-		}
-
 	}// END: storeState
 
 	@Override
 	protected void restoreState() {
-
-		if (DEBUG) {
-
-//			System.err.println("RESTORE");
-
-		}
-
 		setupMapping = true;
-
 	}// END: restoreState
 
 	@Override
 	protected void acceptState() {
-
-		if (DEBUG) {
-
-//			System.err.println("ACCEPT");
-
-		}
 
 	}// END: acceptState
 

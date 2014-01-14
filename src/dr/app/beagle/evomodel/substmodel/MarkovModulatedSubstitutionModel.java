@@ -1,7 +1,7 @@
 /*
  * MarkovModulatedSubstitutionModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,7 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -58,12 +59,14 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     private boolean birthDeathModel;
     private boolean geometricRates;
 
+    private final SiteRateModel gammaRateModel;
+
     public MarkovModulatedSubstitutionModel(String name,
                                             List<SubstitutionModel> baseModels,
                                             Parameter switchingRates,
                                             DataType dataType,
                                             EigenSystem eigenSystem) {
-        this(name, baseModels, switchingRates, dataType, eigenSystem, null, false);
+        this(name, baseModels, switchingRates, dataType, eigenSystem, null, false, null);
     }
 
     public MarkovModulatedSubstitutionModel(String name,
@@ -72,7 +75,8 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                                             DataType dataType,
                                             EigenSystem eigenSystem,
                                             Parameter rateScalar,
-                                            boolean geometricRates) {
+                                            boolean geometricRates,
+                                            SiteRateModel gammaRateModel) {
 //        super(name, dataType, null, eigenSystem);
         super(name, dataType, null, null);
 
@@ -117,6 +121,9 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             }
         }
 
+        if (gammaRateModel != null) addModel(gammaRateModel);
+        this.gammaRateModel = gammaRateModel;
+
         if (rateScalar != null) addVariable(rateScalar);
         this.rateScalar = rateScalar;
 
@@ -129,6 +136,10 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     }
 
     private double getModelRateScalar(int model) {
+        if (gammaRateModel != null) {
+//            System.err.println("M" + model + " = " + gammaRateModel.getRateForCategory(model));
+            return gammaRateModel.getRateForCategory(model);
+        }
         if (rateScalar == null) {
             return 1.0;
         } else {

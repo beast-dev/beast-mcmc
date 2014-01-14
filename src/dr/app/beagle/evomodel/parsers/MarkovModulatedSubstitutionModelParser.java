@@ -1,7 +1,7 @@
 /*
  * MarkovModulatedSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,7 @@
 
 package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.MarkovModulatedSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
@@ -91,8 +92,16 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
         Parameter rateScalar = xo.hasChildNamed(RATE_SCALAR) ?
                 (Parameter) xo.getChild(RATE_SCALAR).getChild(Parameter.class) : null;
 
+        SiteRateModel siteRateModel = (SiteRateModel) xo.getChild(SiteRateModel.class);
+        if (siteRateModel != null) {
+            if (siteRateModel.getCategoryCount() != substModels.size()) {
+                throw new XMLParseException(
+                        "Number of gamma categories must equal number of substitution models in " + xo.getId());
+            }
+        }
+
         return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null,
-                rateScalar, geometricRates);
+                rateScalar, geometricRates, siteRateModel);
     }
 
     public String getParserDescription() {
@@ -123,5 +132,7 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
             AttributeRule.newBooleanRule(GEOMETRIC_RATES, true),
             new ElementRule(RATE_SCALAR,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+
+            new ElementRule(SiteRateModel.class, true),
     };
 }

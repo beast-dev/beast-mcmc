@@ -4,55 +4,24 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evolution.tree.TreeTrait.Intent;
-import dr.evolution.tree.TreeTraitProvider.Helper;
 import dr.inference.model.CompoundParameter;
 
 public class BranchSpecificTrait implements  TreeTraitProvider {
 
-	private CompoundParameter parameter;
-	private BranchSpecific branchSpecific;
+//	private CompoundParameter parameter;
+//	private BranchSpecific branchSpecific;
 	private Helper helper;
-	
-	/*
-	
-	<fancyNewTreeTraitProvider id=“omegaPerBranch”>  <!— returns parameter(i) per branch —>
-	<branchCategoryModel idref=“filipModel”/>  <!— returns 0, 1, 2, etc per branch —>
-	<compoundParameter>
-		<parameter idref=“omega1”/>
-		<parameter idref=“omega2”/>   <!— implicit contract that parameters are listed in correct order,  could make explicit in XML at some point with an attribute —>
-	</compoundParameter>
-< fancyNewTreeTraitProvider>
-
-<fancyNewTreeTraitProvider id=“kappaPerBranch”>  <!— returns parameter(i) per branch —>
-	<branchCategoryModel idref=“filipModel”/>  <!— returns 0, 1, 2, etc per branch —>
-	<compoundParameter>
-		<parameter idref=“kappa1”/>
-		<parameter idref=“kaapa2”/>   <!— implicit contract that parameters are listed in correct order,  could make explicit in XML at some point with an attribute —>
-	</compoundParameter>
-< fancyNewTreeTraitProvider>
-
-<treeLog>  <!— automagically exports trees for FigTree or TreeAnnonator.
-	<fancyNewTreeTraitProvider idref=“omegaPerBranch”/>
-	<fancyNewTreeTraitProvider idref=“kappaPerBranch”/>
-</treeLog>
-	
-	*/
 	
 	public BranchSpecificTrait(final BranchSpecific branchSpecific, final CompoundParameter parameter ) {
 		
-		this.parameter = parameter;
-		this.branchSpecific = branchSpecific;
+//		this.parameter = parameter;
+//		this.branchSpecific = branchSpecific;
 		helper = new Helper();
 		
 		TreeTrait<Double> uTrait = new TreeTrait.D() {
 
 			@Override
 			public String getTraitName() {
-				
-				
-//				System.err.println(parameter.getParameterName());
-				
 				return parameter.getId();
 			}
 

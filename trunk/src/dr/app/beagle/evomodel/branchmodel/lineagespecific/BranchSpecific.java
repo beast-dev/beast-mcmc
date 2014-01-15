@@ -34,6 +34,7 @@ import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
@@ -90,7 +91,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
     
 	public BranchSpecific(TreeModel treeModel, //
 			FrequencyModel rootFrequencyModel, //
-			List<SubstitutionModel> substitutionModels, //
+			final List<SubstitutionModel> substitutionModels, //
 			CountableBranchCategoryProvider uCategoriesProvider, //
 			Parameter uCategoriesParameter //
 	) {
@@ -111,9 +112,9 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 
 		addModel(this.treeModel);
 		addModel(this.rootFrequencyModel);
-		addModel((Model)this.uCategoriesProvider);
+		addModel((Model) this.uCategoriesProvider);
 		addVariable(this.uCategoriesParameter);
-		
+
 		TreeTrait<Integer> uTrait = new TreeTrait.I() {
 
 			@Override
@@ -126,32 +127,90 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 				return Intent.BRANCH;
 			}
 
-			// TODO
 			@Override
 			public Integer getTrait(Tree tree, NodeRef branch) {
-				
-		        if (setupMapping) {
-		            setupNodeMap(branch);
-		        }
+
+//				if (setupMapping) {
+//					setupNodeMap(branch);
+				getBranchModelMapping(branch);
+//				}
+
 				
 				int[] uCats = nodeMap.get(branch).getOrder();
-				
-				
-				if(DEBUG) {
-					System.out.println("uCat:" + uCats[0]);
+
+				if (DEBUG) {
+					System.out.println("uCategory:" + uCats[0]);
 				}
 				
 				return uCats[0];
-				
-			}};
 
+			}
+		};
+
+		helper.addTrait(uTrait);
 		
-		helper.addTrait(uTrait);		
+//		for (int i = 0; i < substitutionModels.size(); i++) {
+//			for (int j = 0; j < substitutionModels.get(i).getVariableCount(); j++) {
+//			
+//			TreeTrait<Double> trait = getBranchTrait(i, j);
+//			helper.addTrait(trait);
+//				
+//				
+//			}//END: j loop
+//		}//END: i loop
+		
+		
+//		System.err.println(substitutionModels.get(0));
 		
 		
 		
+
 	}// END: Constructor
 
+	
+//	private TreeTrait<Double> getBranchTrait(final int modelIndex, final int variableIndex) {
+//		
+//		
+//		
+//		
+//		TreeTrait<Double> uTrait = new TreeTrait.D() {
+//
+//			@Override
+//			public String getTraitName() {
+//				
+//				String name = substitutionModels.get(modelIndex).getVariable(variableIndex).getVariableName();
+//				
+////				System.out.println(name);
+//				
+//				return name;
+//			}
+//
+//			@Override
+//			public dr.evolution.tree.TreeTrait.Intent getIntent() {
+//				return Intent.BRANCH;
+//			}
+//
+//			@Override
+//			public Double getTrait(Tree tree, NodeRef branch) {
+//
+//				if (setupMapping) {
+//					setupNodeMap(branch);
+//				}
+//
+//				int[] uCats = nodeMap.get(branch).getOrder();
+//
+//				double value = (Double) substitutionModels.get(uCats[0]).getVariable(variableIndex).getValue(0);
+//				
+////				System.out.println(value);
+//				
+//				return value;
+//
+//			}
+//		};
+//
+//		return uTrait;
+//	}//END: getBranchTrait
+	
     public TreeTrait[] getTreeTraits() {
         return helper.getTreeTraits();
     }
@@ -170,7 +229,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
         return nodeMap.get(branch);
     }//END: getBranchModelMapping
 
-	public void setupNodeMap(NodeRef branch) {
+	private void setupNodeMap(NodeRef branch) {
 
 		if (branch != treeModel.getRoot()) {//TODO: neccessary?
 
@@ -180,9 +239,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 					.getParameterValue(branchCategory);
 
 			if (DEBUG) {
-				System.out.println("category:" + uCategory);
-				System.out.println("branch length: "
-						+ treeModel.getBranchLength(branch));
+				System.out.println("branch length: " + treeModel.getBranchLength(branch) + ", " + "category:" + uCategory);
 			}// END: DEBUG
 
 			nodeMap.put(branch, new Mapping() {
@@ -200,6 +257,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 			});
 
 		}//END: root check
+		
 	}// END: setupNodeMap
 
     @Override
@@ -237,7 +295,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 
 	@Override
 	protected void storeState() {
-
+		//
 	}// END: storeState
 
 	@Override
@@ -247,7 +305,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, TreeT
 
 	@Override
 	protected void acceptState() {
-
+		//
 	}// END: acceptState
 
     public static void main(String[] args) {

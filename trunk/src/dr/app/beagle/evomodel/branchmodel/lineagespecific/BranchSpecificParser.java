@@ -44,7 +44,16 @@ public class BranchSpecificParser extends AbstractXMLObjectParser {
 		
 			Parameter categories = (Parameter) xo.getElementFirstChild(CATEGORIES);
 			
-			CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, categories);
+//			CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, categories);
+			
+		// TODO: parse fixed branch categories
+			CountableBranchCategoryProvider.CladeBranchCategoryModel provider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categories);
+			
+//			provider.setClade(taxonList, rateCategory, includeStem, excludeClade, trunk);
+			
+			
+			
+			
 			
 		return new BranchSpecific(treeModel, rootFrequencyModel, substitutionModels, provider, categories);
 	}

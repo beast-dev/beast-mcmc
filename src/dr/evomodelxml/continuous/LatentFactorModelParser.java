@@ -84,9 +84,6 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
                     new ElementRule(CompoundParameter.class),
             }),
-            new ElementRule(DATA, new XMLSyntaxRule[]{
-                    new ElementRule(CompoundParameter.class)
-            }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameter.class)
             }),

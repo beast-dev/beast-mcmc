@@ -117,7 +117,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
         for(int i=0; i<cases.size(); i++){
             for(int j=0; j<cases.size(); j++){
-                distances[i][j]=SpatialKernel.EuclideanDistance(getCase(i).getCoords(),getCase(j).getCoords());
+                distances[i][j]= SpatialKernel.EuclideanDistance(getCase(i).getCoords(), getCase(j).getCoords());
             }
         }
     }

@@ -165,6 +165,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return this;
     }
 
+    public CaseToCaseTreeLikelihood getTreeLikelihood(){
+        return treeLikelihood;
+    }
+
     private double getInfectionTime(int index){
         return infectionTimes.get(index);
     }
@@ -194,7 +198,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
             if(!normalisationKnown){
                 if(hasGeography){
-                    // @todo The casts here are ugly as hell, and the integrals should be their own abstract class
+                    // todo The casts here are ugly as hell, and the integrals should be their own abstract class
                     if(integrateToInfinity){
                         normalisation =  Math.log(probFunct.evaluateIntegral(1, 0));
                         normalisation -= -N*Math.log(((InnerIntegralTransformed)probFunct).getScalingFactor());
@@ -219,6 +223,18 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             likelihoodKnown = true;
         }
         return logLikelihood;
+    }
+
+    // Gibbs operator needs this
+
+    public double calculateTempLogLikelihood(AbstractCase[] map){
+        BranchMapModel branchMap = treeLikelihood.getBranchMap();
+
+        AbstractCase[] trueMap = branchMap.getArrayCopy();
+        branchMap.setAll(map);
+        double out = getLogLikelihood();
+        branchMap.setAll(trueMap);
+        return out;
     }
 
 
@@ -353,7 +369,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             return scalingFactor;
         }
 
-        // @todo this really is horrible and should be fixed
+        // todo this really is horrible and should be fixed
 
         public void setScalingFactor(double factor){
             scalingFactor = factor;

@@ -2,17 +2,13 @@ package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
-import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.xml.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;

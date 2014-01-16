@@ -49,6 +49,10 @@ public class BranchMapModel extends AbstractModel {
         // nothing to do
     }
 
+    public int size(){
+        return map.length;
+    }
+
     protected void storeState() {
         storedMap = Arrays.copyOf(map, map.length);
     }

@@ -46,6 +46,6 @@ public class NormalGammaDistribution implements MultivariateDistribution {
     }
 
     public double[] getParameters() {
-        return new double[]{mu,lambda,alpha,beta};
+        return new double[]{mu, lambda, alpha, beta};
     }
 }

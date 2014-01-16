@@ -46,7 +46,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     /* Matches cases to external nodes */
 
-    private HashMap<AbstractCase, Integer> tipMap;
+    protected HashMap<AbstractCase, Integer> tipMap;
     private double estimatedLastSampleTime;
     protected TreeTraitProvider.Helper treeTraits = new Helper();
 
@@ -310,7 +310,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return null;
     }
 
-    // find all paritions of the descendent tips of the current node. If map is specified then it makes a map of node
+    // find all partitions of the descendant tips of the current node. If map is specified then it makes a map of node
     // number to possible partitions; map can be null.
 
     public HashSet<AbstractCase> descendantTipPartitions(NodeRef node, HashMap<Integer, HashSet<AbstractCase>> map){
@@ -436,7 +436,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return out.toArray(new Integer[out.size()]);
     }
 
-    private NodeRef getEarliestNodeInPartition(AbstractCase thisCase, BranchMapModel branchMap){
+    public NodeRef getTip(AbstractCase thisCase){
+        return treeModel.getNode(tipMap.get(thisCase));
+    }
+
+    public NodeRef getEarliestNodeInPartition(AbstractCase thisCase, BranchMapModel branchMap){
         NodeRef child = treeModel.getNode(tipMap.get(thisCase));
         NodeRef parent = treeModel.getParent(child);
         boolean transmissionFound = false;
@@ -456,6 +460,14 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     protected NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
         return getEarliestNodeInPartition(thisCase, branchMap);
+    }
+
+    public HashSet<AbstractCase> getDescendants(AbstractCase thisCase){
+        HashSet<AbstractCase> out = new HashSet<AbstractCase>(getInfectees(thisCase));
+        for(AbstractCase child : out){
+            out.addAll(getDescendants(child));
+        }
+        return out;
     }
 
 
@@ -642,6 +654,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     protected abstract double calculateLogLikelihood();
 
 
+
     // if no infectious models, just need to check whether any infections occur after the infector was no
     // longer infectious
 
@@ -752,10 +765,9 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 AbstractCase parentCase = branchMap.get(parent.getNumber());
                 double min = heightToTime(treeModel.getNodeHeight(parent));
 
-                // the infection must have taken place on this branch, and before the cull of the parent case
+                // Let the likelihood evaluate to zero due to culling dates if it must...
 
-                double max = Math.min(heightToTime(treeModel.getNodeHeight(child)),
-                        parentCase.getCullDate().getTimeValue());
+                double max = heightToTime(treeModel.getNodeHeight(child));
 
 
                 return getInfectionTime(min, max, thisCase);
@@ -767,7 +779,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     private double getInfectionTime(double min, double max, AbstractCase infected){
         final double branchLength = max-min;
-        return max - branchLength* infectionTimeBranchPositions.getParameterValue(cases.getCaseIndex(infected));
+        return max - branchLength*infectionTimeBranchPositions.getParameterValue(cases.getCaseIndex(infected));
     }
 
     public double[] getInfectionTimes(){
@@ -987,6 +999,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
         if(foundProblem){
             debugOutputTree(map, "checkPartitionProblem", false);
+            throw new RuntimeException("Tree is not partitioned properly");
         }
         return !foundProblem;
     }
@@ -1340,6 +1353,17 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
 
         outTree = new FlexibleTree((FlexibleNode)outTree.getRoot());
+
+
+        for(int i=0; i<outTree.getNodeCount(); i++){
+            NodeRef node = outTree.getNode(i);
+            NodeRef parent = outTree.getParent(node);
+            if(parent!=null && outTree.getNodeHeight(node)>outTree.getNodeHeight(parent)){
+                throw new RuntimeException("Rewiring messed up; investigate");
+            }
+
+        }
+
 
         return outTree;
     }

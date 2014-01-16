@@ -101,11 +101,11 @@ public class XMLGenerator {
 					
 						throw new RuntimeException("Data and demographic model incompatible for partition " + suffix);
 						
-					} else if( (data.demographicModelIndex > 0 && data.demographicModelIndex <= 3) && data.record.isTreeSet()) {
+					} else if( (data.demographicModelIndex > 0 && data.demographicModelIndex <= PartitionData.lastImplementedIndex) && data.record.isTreeSet()) {
 						
 						taxa = new Taxa(data.record.getTree().asList()); 
 						
-					} else if((data.demographicModelIndex > 0 && data.demographicModelIndex <= 3) && data.record.isTaxaSet()) {
+					} else if((data.demographicModelIndex > 0 && data.demographicModelIndex <= PartitionData.lastImplementedIndex) && data.record.isTaxaSet()) {
 						
 						 taxa = data.record.getTaxa();
 						
@@ -180,7 +180,7 @@ public class XMLGenerator {
 
 					}// END: list check
 				
-				} else if(data.demographicModelIndex > 0 && data.demographicModelIndex <= 3){
+				} else if(data.demographicModelIndex > 0 && data.demographicModelIndex <= PartitionData.lastImplementedIndex){
 					
 						data.demographicModelIdref += suffix;
 						data.treeModelIdref += suffix;
@@ -744,6 +744,9 @@ public class XMLGenerator {
 			
 			break;
 
+			
+//		case 4: // Logistic Growth (Growth Rate)
+			
 		}// END: switch
 
 	}// END: writeDemographicModel

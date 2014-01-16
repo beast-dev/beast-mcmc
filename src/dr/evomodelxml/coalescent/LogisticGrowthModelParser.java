@@ -67,22 +67,22 @@ public class LogisticGrowthModelParser extends AbstractXMLObjectParser {
             XMLUnits.SYNTAX_RULES[0],
             new ElementRule(POPULATION_SIZE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                    "This parameter represents the carrying capacity (maximum population size). " +
-                            "If the shape is very large then the current day population size will be very close to the carrying capacity."),
+                    "This parameter represents the population size at time 0 (the time of the last tip of the tree)"),
             new XORRule(
 
                     new ElementRule(GROWTH_RATE,
                             new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                            "This parameter determines the rate of growth during the exponential phase. See exponentialGrowth for details."),
+                            "This parameter determines the rate of growth during the exponential phase. See " +
+                                    "exponentialGrowth for details."),
                     new ElementRule(DOUBLING_TIME,
                             new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                             "This parameter determines the doubling time at peak growth rate.")
             ),
             new ElementRule(TIME_50,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                    "This parameter represents the time in the past when the population had half of the carrying capacity (population size). " +
-                            "It is therefore a positive number with the same units as divergence times. " +
-                            "A scale operator is recommended with a starting value near zero. " +
-                            "A lower bound of zero should be employed and an upper bound is required!")
+                    "This parameter represents the time in the past when the population was half of that which it is" +
+                            "at time zero (not half it's carrying capacity). It is therefore a positive number with " +
+                            "the same units as divergence times. A scale operator is recommended with a starting value " +
+                            "near zero. A lower bound of zero should be employed and an upper bound is recommended.")
     };
 }

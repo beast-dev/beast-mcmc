@@ -60,12 +60,12 @@ public class LogisticGrowthN0ModelParser extends AbstractXMLObjectParser
 	XMLUnits.SYNTAX_RULES[0],
 	new ElementRule(POPULATION_SIZE, 
 					new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-					"This parameter represents the present day population size. It provides an alternative " +
-					"parameterization to the carrying capacity (max population size)."),
+					"This parameter represents the present day population size."),
 	new XORRule(
 				new ElementRule(GROWTH_RATE, 
 								new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
-								"This parameter determines the rate of growth during the exponential phase. See exponentialGrowth for details."),
+								"This parameter determines the rate of growth during the exponential phase. " +
+                                        "See exponentialGrowth for details."),
 				new ElementRule(DOUBLING_TIME, 
 								new XMLSyntaxRule[] { new ElementRule(Parameter.class) },
 								"This parameter determines the doubling time at peak growth rate.")

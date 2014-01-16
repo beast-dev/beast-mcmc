@@ -17,8 +17,6 @@ import dr.math.*;
 import dr.math.distributions.NormalGammaDistribution;
 import dr.math.functionEval.GammaFunction;
 import dr.xml.*;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.TDistributionImpl;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -43,26 +41,24 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private TreePlusRootBranchLength[] partitionsAsTrees;
     private TreePlusRootBranchLength[] storedPartitionsAsTrees;
     private DemographicModel demoModel;
-    private Parameter startingNe;
 
 
     public WithinCaseCoalescent(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                 Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
-                                DemographicModel demoModel, Parameter startingNe)
+                                DemographicModel demoModel)
             throws TaxonList.MissingTaxonException {
         this(virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, null,
-                maxFirstInfToRoot, demoModel, startingNe);
+                maxFirstInfToRoot, demoModel);
     }
 
     public WithinCaseCoalescent(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                 Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
-                                Parameter maxFirstInfToRoot, DemographicModel demoModel, Parameter startingNe)
+                                Parameter maxFirstInfToRoot, DemographicModel demoModel)
             throws TaxonList.MissingTaxonException {
         super(WITHIN_CASE_COALESCENT, virusTree, caseData, infectionTimeBranchPositions, infectiousTimePositions,
                 maxFirstInfToRoot);
         this.demoModel = demoModel;
         addModel(demoModel);
-        this.startingNe = startingNe;
         partitionTreeLogLikelihoods = new Double[noTips];
         storedPartitionTreeLogLikelihoods = new Double[noTips];
         timingLogLikelihoods = new Double[noTips];
@@ -274,18 +270,25 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             if(timingLogLikelihoods[number]==null){
                 double infectionTime = infectionTimes[number];
-                int possibleParents = 0;
-                for(int i=0; i<cases.size(); i++){
-                    AbstractCase parentCandidate = cases.getCase(i);
-
-                    if(i!=number && infectiousTimes[i]<infectionTime && !parentCandidate.culledYet(infectionTime)){
-                        possibleParents++;
-                    }
-                }
-                if(possibleParents>1){
-                    timingLogLikelihoods[number] = -Math.log(possibleParents);
+                AbstractCase parent = getInfector(aCase);
+                if(parent!=null &&
+                        (infectiousTimes[cases.getCaseIndex(parent)]>infectionTime
+                                || parent.culledYet(infectionTime))) {
+                    timingLogLikelihoods[number] = Double.NEGATIVE_INFINITY;
                 } else {
-                    timingLogLikelihoods[number] = 0.0;
+                    int possibleParents = 0;
+                    for(int i=0; i<cases.size(); i++){
+                        AbstractCase parentCandidate = cases.getCase(i);
+
+                        if(i!=number && infectiousTimes[i]<infectionTime && !parentCandidate.culledYet(infectionTime)){
+                            possibleParents++;
+                        }
+                    }
+                    if(possibleParents>1){
+                        timingLogLikelihoods[number] = -Math.log(possibleParents);
+                    } else {
+                        timingLogLikelihoods[number] = 0.0;
+                    }
                 }
             }
 
@@ -432,10 +435,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             HashSet<AbstractCase> children = getInfectees(aCase);
 
-            if(timingLogLikelihoods[number]!=null){
-                AbstractCase parent = getInfector(aCase);
-            }
-
             if(partitionTreeLogLikelihoods[number]==null){
                 TreePlusRootBranchLength treelet = partitionsAsTrees[number];
 
@@ -461,22 +460,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         likelihoodKnown = true;
 
         if(DEBUG){
-            debugOutputTree("out.nex", true);
+            debugOutputTree("outstandard.nex", false);
+            debugOutputTree("outfancy.nex", true);
         }
 
         return logL;
 
 
-    }
-
-    private double tDistributionPDF(double x, double mu, double sigma, double df){
-        TDistributionImpl distribution = new TDistributionImpl(df);
-        return distribution.density((x-mu)/sigma);
-    }
-
-    private double tDistributionCDF(double x, double mu, double sigma, double df) throws MathException{
-        TDistributionImpl distribution = new TDistributionImpl(df);
-        return distribution.cumulativeProbability((x-mu)/sigma);
     }
 
     public void storeState(){
@@ -601,7 +591,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         } else {
             // we need a new tip
             NodeRef transmissionTip = new FlexibleNode(
-                    new Taxon("Transmission_"+branchMap.get(oldNode.getNumber()).caseID));
+                    new Taxon("Transmission_"+branchMap.get(oldNode.getNumber()).getName()));
             double parentTime = getNodeTime(treeModel.getParent(oldNode));
             double childTime = getInfectionTime(branchMap.get(oldNode.getNumber()));
             littleTree.addChild(newParent, transmissionTip);
@@ -634,21 +624,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         private MaxTMRCACoalescent(Tree tree, DemographicModel demographicModel, double maxHeight){
             super(tree, demographicModel.getDemographicFunction());
-            ConstantPopulation demFunct = (ConstantPopulation)demographicModel.getDemographicFunction();
-
-            if(demographicModel instanceof LogisticGrowthN0N50Model){
-
-                demFunct.setArgument(2, maxHeight);
-
-            } else {
-
-            // want to set this so the population size is 1 at the point of infection
-
-                double oldN0 = demFunct.getN0();
-                double growthTerm = demFunct.getDemographic(maxHeight)/oldN0;
-                demFunct.setN0(startingNe.getParameterValue(0)/growthTerm);
-
-            }
 
             this.maxHeight = maxHeight;
 
@@ -666,18 +641,20 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         double logL = 0.0;
 
-        double startTime = 0.0;
+        double startTime = -maxHeight;
         final int n = intervals.getIntervalCount();
 
         //TreeIntervals sets up a first zero-length interval with a lineage count of zero - skip this one
 
         for (int i = 0; i < n; i++) {
 
+            // time zero corresponds to the date of first infection
+
             final double duration = intervals.getInterval(i);
             final double finishTime = startTime + duration;
 
             final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
-            double normalisationArea = demographicFunction.getIntegral(startTime, maxHeight);
+            double normalisationArea = demographicFunction.getIntegral(startTime, 0);
 
             if( intervalArea == 0 && duration != 0 ) {
                 return Double.NEGATIVE_INFINITY;
@@ -743,7 +720,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         public static final String INFECTIOUS_TIMES = "infectiousTimePositions";
         public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
         public static final String DEMOGRAPHIC_MODEL = "demographicModel";
-        public static final String STARTING_NE = "startingNe";
 
         public String getParserName() {
             return WITHIN_CASE_COALESCENT;
@@ -770,13 +746,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
-            Parameter startingNe = (Parameter) xo.getElementFirstChild(STARTING_NE);
-
             DemographicModel demoModel = (DemographicModel) xo.getElementFirstChild(DEMOGRAPHIC_MODEL);
 
             try {
                 likelihood = new WithinCaseCoalescent(virusTree, caseSet, startingNetworkFileName, infectionTimes,
-                        infectiousTimes, earliestFirstInfection, demoModel, startingNe);
+                        infectiousTimes, earliestFirstInfection, demoModel);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -809,9 +783,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                         "infection and first event that requires infectiousness (further infection or cull)" +
                         "that has elapsed before infectiousness", true),
                 new ElementRule(DEMOGRAPHIC_MODEL, DemographicModel.class, "The demographic model for within-case" +
-                        "evolution"),
-                new ElementRule(STARTING_NE, Parameter.class, "The effective population size in a given case at the " +
-                        "point of infection")
+                        "evolution")
         };
     };
 }

@@ -6,8 +6,6 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
-import java.util.ArrayList;
-
 /**
  * Created by mhall on 17/12/2013.
  */

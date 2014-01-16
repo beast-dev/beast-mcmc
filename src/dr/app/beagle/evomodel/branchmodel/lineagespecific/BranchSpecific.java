@@ -111,49 +111,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel
 		addModel((Model) this.uCategoriesProvider);
 		addVariable(this.uCategoriesParameter);
 
-//		TreeTrait<Integer> uTrait = new TreeTrait.I() {
-//
-//			@Override
-//			public String getTraitName() {
-//				return "uCategory";
-//			}
-//
-//			@Override
-//			public dr.evolution.tree.TreeTrait.Intent getIntent() {
-//				return Intent.BRANCH;
-//			}
-//
-//			@Override
-//			public Integer getTrait(Tree tree, NodeRef branch) {
-//
-////				if (setupMapping) {
-////					setupNodeMap(branch);
-//				getBranchModelMapping(branch);
-////				}
-//
-//				
-//				int[] uCats = nodeMap.get(branch).getOrder();
-//
-//				if (DEBUG) {
-//					System.out.println("uCategory:" + uCats[0]);
-//				}
-//				
-//				return uCats[0];
-//
-//			}
-//		};
-//
-//		helper.addTrait(uTrait);
-		
 	}// END: Constructor
-	
-//    public TreeTrait[] getTreeTraits() {
-//        return helper.getTreeTraits();
-//    }
-//
-//    public TreeTrait getTreeTrait(String key) {
-//        return helper.getTreeTrait(key);
-//    }
 	
     @Override
     public Mapping getBranchModelMapping(NodeRef branch) {

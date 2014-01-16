@@ -57,7 +57,8 @@ public class CoalescentSimulator {
      * @param preserveSubtreesHeights true if heights of subtrees should be preserved
      * @return a simulated coalescent tree
      */
-    public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight, boolean preserveSubtreesHeights) {
+    public SimpleTree simulateTree(Tree[] subtrees, DemographicModel model, double rootHeight,
+                                   boolean preserveSubtreesHeights) {
 
         SimpleNode[] roots = new SimpleNode[subtrees.length];
         SimpleTree tree;

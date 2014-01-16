@@ -15,6 +15,7 @@ import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
+import dr.evolution.coalescent.LogisticGrowth;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
@@ -77,6 +78,9 @@ public class PartitionData implements Serializable {
 	// ---DEMOGRAPHIC MODEL---//
 	// /////////////////////////
 
+	//TODO: LogisticGrowth.getInverseIntensity
+	public static final int lastImplementedIndex = 3;
+	
 	public int demographicModelIndex = 0;
 	
 	public String demographicModelIdref = Utils.DEMOGRAPHIC_MODEL;
@@ -89,8 +93,8 @@ public class PartitionData implements Serializable {
     	"No Model (user-specified tree)",
     	"Constant Population",
         "Exponential Growth (Growth Rate)",
-        "Exponential Growth (Doubling Time)"
-//        "Logistic Growth (Growth Rate)",
+        "Exponential Growth (Doubling Time)",
+        "Logistic Growth (Growth Rate)",
 //        "Logistic Growth (Doubling Time)",
 //        "Expansion (Growth Rate)",
 //        "Expansion (Doubling Time)",
@@ -98,19 +102,25 @@ public class PartitionData implements Serializable {
 	
 	public static String[] demographicParameterNames = new String[] {
 	        "Population Size", // Constant Population
-			"Population Size", // Exponential Growth (Growth Rate)
+			
+	        "Population Size", // Exponential Growth (Growth Rate)
 			"Growth Rate", // Exponential Growth (Growth Rate)
+			
 			"Population Size", // Exponential Growth (Doubling Time)
-			"Doubling Time" // Exponential Growth (Doubling Time)
+			"Doubling Time", // Exponential Growth (Doubling Time)
+			
 //			"Population Size", // Logistic Growth (Growth Rate)
 //			"Growth Rate", // Logistic Growth (Growth Rate)
 //			"Logistic Shape (Half-life)", // Logistic Growth (Growth Rate)
+			
 //			"Population Size", // Logistic Growth (Doubling Time)
 //			"Doubling Time", // Logistic Growth (Doubling Time)
 //			"Logistic Shape (Half-life)", // Logistic Growth (Doubling Time)
+			
 //			"Population Size", // Expansion (Growth Rate)
 //			"Ancestral Proportion", // Expansion (Growth Rate)
 //			"Growth Rate", // Expansion (Growth Rate)
+			
 //			"Population Size", // Expansion (Doubling Time)
 //			"Ancestral Proportion", // Expansion (Doubling Time)
 //			"Doubling Time", // Expansion (Doubling Time)
@@ -120,7 +130,7 @@ public class PartitionData implements Serializable {
 		    {  }, // No model
 			{ 0 }, // Constant Population
 			{ 1, 2 }, // Exponential Growth (Growth Rate)
-			{ 3, 4 }// Exponential Growth (Doubling Time)
+			{ 3, 4 }, // Exponential Growth (Doubling Time)
 //			{ 5, 6, 7 }, // Logistic Growth (Growth Rate)
 //			{ 8, 9, 10 }, // Logistic Growth (Doubling Time)
 //			{ 11, 12, 13 }, // Expansion (Growth Rate)
@@ -139,11 +149,13 @@ public class PartitionData implements Serializable {
 			
 			/*Exponential Growth (Doubling Time)*/
 			1000.0, // Population Size
-			10.0 // Doubling Time
+			10.0, // Doubling Time
 			
+//			/*Logistic Growth (Growth Rate)*/
 //			1000.0, // Population Size
 //			0.5, // Growth Rate
 //			50.0, // Logistic Shape (Half-life)
+			
 //			1000.0, // Population Size
 //			10.0, // Doubling Time
 //			50.0, // Logistic Shape (Half-life)
@@ -247,13 +259,13 @@ public class PartitionData implements Serializable {
 			
 			treeModel = new TreeModel(this.record.getTree());
 			
-		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.isTreeSet()) {
+		} else if( (this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTreeSet()) {
 			
 			Taxa taxa = new Taxa(this.record.getTree().asList()); 
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();
 			treeModel = new TreeModel(topologySimulator.simulateTree(taxa, createDemographicFunction()));			
 			
-		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= 3) && this.record.isTaxaSet()) {
+		} else if((this.demographicModelIndex > 0 && this.demographicModelIndex <= lastImplementedIndex) && this.record.isTaxaSet()) {
 			
 			Taxa taxa = this.record.getTaxa();
 			CoalescentSimulator topologySimulator = new CoalescentSimulator();

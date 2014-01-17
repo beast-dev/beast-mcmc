@@ -48,7 +48,7 @@ public class BeagleSequenceSimulatorConsoleApp {
     private boolean VERBOSE = true;
 
     private Arguments arguments;
-    private PartitionData data;
+//    private PartitionData data;
     private PartitionDataList dataList;
 
     private static final String SPLIT_PARTITION = ":";
@@ -106,7 +106,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 
     public BeagleSequenceSimulatorConsoleApp() {
 
-        data = new PartitionData();
+//        data = new PartitionData();
         dataList = new PartitionDataList();
 
         // //////////////////
@@ -239,6 +239,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                 // ---INTERROGATE---//
                 // ///////////////////
 
+                PartitionData data = new PartitionData();
                 String option = null;
                 double[] values = null;
 
@@ -287,7 +288,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 
                             values = arguments
                                     .getRealArrayOption(CONSTANT_POPULATION_PARAMETER_VALUES);
-                            parseDemographicValues(index, values);
+                            parseDemographicValues(index, values, data);
 
                         }
 
@@ -301,7 +302,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 
                             values = arguments
                                     .getRealArrayOption(EXPONENTIAL_GROWTH_RATE_PARAMETER_VALUES);
-                            parseDemographicValues(index, values);
+                            parseDemographicValues(index, values, data);
 
                         }
 
@@ -316,7 +317,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 
                             values = arguments
                                     .getRealArrayOption(EXPONENTIAL_GROWTH_DOUBLING_TIME_PARAMETER_VALUES);
-                            parseDemographicValues(index, values);
+                            parseDemographicValues(index, values, data);
 
                         }
 
@@ -341,7 +342,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(HKY_SUBSTITUTION_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(HKY_SUBSTITUTION_PARAMETER_VALUES);
-                            parseSubstitutionValues(index, values);
+                            parseSubstitutionValues(index, values, data);
                         }
 
                     } else if (option.equalsIgnoreCase(GTR)) {
@@ -353,7 +354,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(GTR_SUBSTITUTION_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(GTR_SUBSTITUTION_PARAMETER_VALUES);
-                            parseSubstitutionValues(index, values);
+                            parseSubstitutionValues(index, values, data);
                         }
 
                     } else if (option.equalsIgnoreCase(TN93)) {
@@ -365,7 +366,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(TN93_SUBSTITUTION_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(TN93_SUBSTITUTION_PARAMETER_VALUES);
-                            parseSubstitutionValues(index, values);
+                            parseSubstitutionValues(index, values, data);
                         }
 
                     } else if (option.equalsIgnoreCase(GY94_CODON_MODEL)) {
@@ -377,7 +378,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(GY94_SUBSTITUTION_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(GY94_SUBSTITUTION_PARAMETER_VALUES);
-                            parseSubstitutionValues(index, values);
+                            parseSubstitutionValues(index, values, data);
                         }
 
                     } else {
@@ -405,7 +406,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(GAMMA_SITE_RATE_MODEL_PARAMETER_VALUES);
-                            parseSiteRateValues(index, values);
+                            parseSiteRateValues(index, values, data);
                         }
 
                     } else {
@@ -426,7 +427,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                         if (arguments.hasOption(STRICT_CLOCK_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(STRICT_CLOCK_PARAMETER_VALUES);
-                            parseClockValues(index, values);
+                            parseClockValues(index, values, data);
                         }
 
                     } else if (option.equalsIgnoreCase(LOGNORMAL_RELAXED_CLOCK)) {
@@ -437,7 +438,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES);
-                            parseClockValues(index, values);
+                            parseClockValues(index, values, data);
                         }
 
                     } else if (option
@@ -449,7 +450,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES);
-                            parseClockValues(index, values);
+                            parseClockValues(index, values, data);
                         }
 
                     } else if (option
@@ -461,7 +462,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES);
-                            parseClockValues(index, values);
+                            parseClockValues(index, values, data);
                         }
 
                     } else {
@@ -483,7 +484,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES);
-                            parseFrequencyValues(index, values);
+                            parseFrequencyValues(index, values, data);
                         }
 
                     } else if (option.equalsIgnoreCase(CODON_FREQUENCIES)) {
@@ -494,7 +495,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                                 .hasOption(CODON_FREQUENCY_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES);
-                            parseFrequencyValues(index, values);
+                            parseFrequencyValues(index, values, data);
                         }
 
                     } else {
@@ -541,6 +542,9 @@ public class BeagleSequenceSimulatorConsoleApp {
                 }// END: ANCESTRAL_SEQUENCE option check
 
                 partitionsList.add(partition);
+                
+//                System.err.println(data.from);
+                
                 dataList.add(data);
 
             }// END: partitionArgs loop
@@ -550,6 +554,9 @@ public class BeagleSequenceSimulatorConsoleApp {
             // ////////////////
 
             if (this.VERBOSE) {
+            	
+//        		System.out.println(dataList.get(0).from + " " + dataList.get(1).from);
+            	
                 Utils.printPartitionDataList(dataList);
                 System.out.println();
             }
@@ -626,7 +633,8 @@ public class BeagleSequenceSimulatorConsoleApp {
     }// END: simulate
 
     private void parseDemographicValues(int demographicModelIndex,
-                                        double[] values) {
+                                        double[] values, 
+                                        PartitionData data) {
         for (int i = 0; i < PartitionData.demographicParameterIndices[demographicModelIndex].length; i++) {
 
             int k = PartitionData.demographicParameterIndices[demographicModelIndex][i];
@@ -636,7 +644,8 @@ public class BeagleSequenceSimulatorConsoleApp {
     }// END: parseDemographicValues
 
     private void parseSubstitutionValues(int substitutionModelIndex,
-                                         double[] values) {
+                                         double[] values,
+                                         PartitionData data) {
         for (int i = 0; i < PartitionData.substitutionParameterIndices[substitutionModelIndex].length; i++) {
 
             int k = PartitionData.substitutionParameterIndices[substitutionModelIndex][i];
@@ -646,7 +655,8 @@ public class BeagleSequenceSimulatorConsoleApp {
     }// END: parseSubstitutionValues
 
     private void parseSiteRateValues(int siteRateModelIndex,
-                                     double[] values) {
+                                     double[] values,
+                                     PartitionData data) {
         for (int i = 0; i < PartitionData.siteRateModelParameterIndices[siteRateModelIndex].length; i++) {
 
             int k = PartitionData.siteRateModelParameterIndices[siteRateModelIndex][i];
@@ -656,7 +666,8 @@ public class BeagleSequenceSimulatorConsoleApp {
     }// END: parseSiteRateModelParameterValues
 
     private void parseClockValues(int clockModelIndex,
-                                  double[] values) {
+                                  double[] values,
+                                  PartitionData data) {
         for (int i = 0; i < PartitionData.clockParameterIndices[clockModelIndex].length; i++) {
 
             int k = PartitionData.clockParameterIndices[clockModelIndex][i];
@@ -666,7 +677,8 @@ public class BeagleSequenceSimulatorConsoleApp {
     }// END: parseClockValues
 
     private void parseFrequencyValues(int frequencyModelIndex,
-                                      double[] values) {
+                                      double[] values,
+                                      PartitionData data) {
         for (int i = 0; i < data.frequencyParameterIndices[frequencyModelIndex].length; i++) {
 
             int k = data.frequencyParameterIndices[frequencyModelIndex][i];

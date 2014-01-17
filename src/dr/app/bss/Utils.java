@@ -878,6 +878,8 @@ public class Utils {
 
 	public static void printPartitionDataList(PartitionDataList dataList) {
 
+//		System.out.println(dataList.get(0).from + " " + dataList.get(1).from);
+		
 		if (BeagleSequenceSimulatorApp.DEBUG) {
 			System.out.println("Possible records: ");
 			printRecords(dataList);

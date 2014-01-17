@@ -92,7 +92,8 @@ public class MathUtils {
 		for (int i = 0; i < pdf.length; i++) {
 			System.out.println(i + "\t" + pdf[i]);
 		}
-		throw new Error("randomChoiceUnnormalized falls through -- negative components in input distribution?");
+		throw new Error("randomChoicePDF falls through -- negative, infinite or NaN components in input " +
+                "distribution?");
 	}
 
 

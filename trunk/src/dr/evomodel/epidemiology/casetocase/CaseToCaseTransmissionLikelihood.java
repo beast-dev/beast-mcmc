@@ -24,7 +24,7 @@ import java.util.*;
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
 
-    private final static boolean DEBUG = true;
+    private final static boolean DEBUG = false;
 
     private AbstractOutbreak outbreak;
     private CaseToCaseTreeLikelihood treeLikelihood;
@@ -201,6 +201,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     // todo The casts here are ugly as hell, and the integrals should be their own abstract class
                     if(integrateToInfinity){
                         normalisation =  Math.log(probFunct.evaluateIntegral(1, 0));
+                        if(normalisation==Double.NaN || normalisation == Double.NEGATIVE_INFINITY){
+                            throw new RuntimeException("Infinite or NaN normalisation");
+                        }
                         normalisation -= -N*Math.log(((InnerIntegralTransformed)probFunct).getScalingFactor());
                     } else {
                         normalisation = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
@@ -302,7 +305,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     total += (endOfWindow - getInfectiousTime(possibleInfectorIndex))
                             * outbreak.getKernelValue(infected, possibleInfector, spatialKernel, alpha);
 
-                }             }
+                }
+            }
         }
         return total;
     }
@@ -347,11 +351,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(!needToRescale){
                 double numerator = aAlpha(argument);
                 double b = bAlpha(argument)/scalingFactor;
+
                 double denominator = Math.pow(b, outbreak.size());
                 if(denominator==Double.POSITIVE_INFINITY){
                     needToRescale = true;
                 }
-                return numerator/denominator;
+
+                return Math.exp(Math.log(numerator)-outbreak.size()*Math.log(b));
             } else {
                 return 0;
             }
@@ -391,7 +397,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         RiemannApproximation integrator;
         InnerIntegral originalFunction;
-        boolean needToRescale = false;
 
         private InnerIntegralTransformed(InnerIntegral inner, int steps){
             this.originalFunction = inner;

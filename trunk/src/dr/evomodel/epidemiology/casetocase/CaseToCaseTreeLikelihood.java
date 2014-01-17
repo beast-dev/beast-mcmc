@@ -668,16 +668,14 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             AbstractCase parentCase = branchMap.get(treeModel.getParent(node).getNumber());
             if(childCase!=parentCase){
                 double infectionTime = infectionTimes[cases.getCaseIndex(childCase)];
-                if(infectionTime>=parentCase.getCullDate().getTimeValue()){
+                if(infectionTime>parentCase.getCullDate().getTimeValue()
+                        || hasLatentPeriods && infectionTime<infectiousTimes[cases.getCaseIndex(parentCase)]){
                     return false;
                 }
             }
         }
-        if(!treeModel.isExternal(node)){
-            return isAllowed(treeModel.getChild(node,0)) && isAllowed(treeModel.getChild(node,1));
-        } else {
-            return true;
-        }
+        return treeModel.isExternal(node) ||
+                (isAllowed(treeModel.getChild(node, 0)) && isAllowed(treeModel.getChild(node, 1)));
     }
 
     /* Return the double time at which the given node occurred */

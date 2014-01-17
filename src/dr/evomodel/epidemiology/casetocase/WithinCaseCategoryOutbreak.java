@@ -363,6 +363,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         //for the outbreak
 
         public static final String HAS_GEOGRAPHY = "hasGeography";
+        public static final String HAS_LATENT_PERIODS = "hasLatentPeriods";
         public static final String INFECTIOUS_PERIOD_PRIOR = "infectiousPeriodPrior";
         public static final String LATENT_PERIOD_PRIOR = "latentPeriodPrior";
 
@@ -387,7 +388,12 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
-            final boolean hasLatentPeriods = xo.hasChildNamed(LATENT_PERIOD_PRIOR);
+            final boolean hasLatentPeriods = xo.hasAttribute(HAS_LATENT_PERIODS);
+
+            if(xo.hasAttribute(HAS_LATENT_PERIODS) != xo.hasChildNamed(LATENT_PERIOD_PRIOR)){
+                throw new XMLParseException("Do you want latent periods or not?");
+            }
+
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
 
             HashMap<String, NormalGammaDistribution> infMap = new HashMap<String, NormalGammaDistribution>();

@@ -137,7 +137,7 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(TreeModel.class, "The tree"),
-                new ElementRule(WithinCaseCategoryOutbreak.class, "The set of cases"),
+                new ElementRule(JeffreysCategoryOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +

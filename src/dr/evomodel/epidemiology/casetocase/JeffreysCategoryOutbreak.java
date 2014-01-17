@@ -100,7 +100,7 @@ public class JeffreysCategoryOutbreak extends AbstractOutbreak {
 
     protected class JeffreysCategoryCase extends AbstractCase{
 
-        public static final String JEFFREYS_CATEGORY_CASE = "categoryCase";
+        public static final String JEFFREYS_CATEGORY_CASE = "jeffreysCategoryCase";
         private final Parameter coords;
 
         protected JeffreysCategoryCase(String name, String caseID, Date examDate, Date cullDate,

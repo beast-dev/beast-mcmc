@@ -24,7 +24,7 @@ public class BeagleSequenceSimulatorApp {
 	// Share those if neccessary
 	public static final String SHORT_NAME = "\u03C0BUSS";
 	public static final String LONG_NAME = "Parallel BEAST/BEAGLE Utility for Sequence Simulation";
-	public static final String VERSION = "1.3.2rc";
+	public static final String VERSION = "1.3.3rc";
 	public static final String DATE = "2013";
 
 	// Icons

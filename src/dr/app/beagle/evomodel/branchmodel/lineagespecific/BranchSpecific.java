@@ -57,6 +57,9 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
 /**
  * @author Filip Bielejec
@@ -65,7 +68,7 @@ import dr.math.MathUtils;
  * @version $Id$
  */
 @SuppressWarnings("serial")
-public class BranchSpecific extends AbstractModel  implements BranchModel
+public class BranchSpecific extends AbstractModel  implements BranchModel, Citable
 //, TreeTraitProvider 
 {
 
@@ -82,9 +85,6 @@ public class BranchSpecific extends AbstractModel  implements BranchModel
     private CountableBranchCategoryProvider uCategoriesProvider;
     private Parameter uCategoriesParameter;
 
-    // for annotating the tree
-//    private Helper helper = new Helper();
-    
 	public BranchSpecific(TreeModel treeModel, //
 			FrequencyModel rootFrequencyModel, //
 			final List<SubstitutionModel> substitutionModels, //
@@ -129,8 +129,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel
 
 			int branchCategory = uCategoriesProvider.getBranchCategory(
 					treeModel, branch);
-			final int uCategory = (int) uCategoriesParameter
-					.getParameterValue(branchCategory);
+			final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
 
 			if (DEBUG) {
 				System.out.println("branch length: " + treeModel.getBranchLength(branch) + ", " + "category:" + uCategory);
@@ -306,5 +305,15 @@ public class BranchSpecific extends AbstractModel  implements BranchModel
         }
 
     }// END: main
+
+	@Override
+	public List<Citation> getCitations() {
+		
+		List<Citation> citations = new ArrayList<Citation>();
+		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
+				new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
+				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
+		return citations;
+	}// END: getCitations
 
 }// END: class

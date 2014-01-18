@@ -73,7 +73,14 @@ public interface CountableBranchCategoryProvider {
             this.treeModel = tree;
         }
 
-        public void setCategoryCount(final int count) {
+        public BranchCategoryModel(TreeModel tree, Parameter parameter, boolean resetCategories) {
+            super(tree, parameter, false, Intent.BRANCH);
+
+            this.categoryParameter = parameter;
+            this.treeModel = tree;
+        }
+
+		public void setCategoryCount(final int count) {
 
             categoryCount = count;
             Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, categoryParameter.getDimension());
@@ -145,7 +152,12 @@ public interface CountableBranchCategoryProvider {
             super(tree, parameter);
         }
 
-        public void handleModelChangedEvent(Model model, Object object, int index) {
+        public CladeBranchCategoryModel(TreeModel treeModel,
+				Parameter categories, boolean resetCategories) {
+        	super(treeModel, categories, resetCategories);
+		}
+
+		public void handleModelChangedEvent(Model model, Object object, int index) {
             if (model == treeModel) {
                 cladesChanged = true;
                 fireModelChanged();

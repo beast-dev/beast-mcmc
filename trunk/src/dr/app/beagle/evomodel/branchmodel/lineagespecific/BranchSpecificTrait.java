@@ -33,7 +33,7 @@ public class BranchSpecificTrait implements  TreeTraitProvider {
 			@Override
 			public Double getTrait(Tree tree, NodeRef branch) {
 
-				branchSpecific.getBranchModelMapping(branch);
+//				branchSpecific.getBranchModelMapping(branch);
 				
 				int[] uCats = branchSpecific.getBranchModelMapping(branch).getOrder();
 				int branchParameterIndex = uCats[0];

@@ -45,7 +45,7 @@ public class BranchSpecificParser extends AbstractXMLObjectParser {
 			// TODO: check if categories numbering starts from zero
 			Parameter categories = (Parameter) xo.getElementFirstChild(CATEGORIES); 
 			
-			CountableBranchCategoryProvider.CladeBranchCategoryModel provider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categories, false);
+			CountableBranchCategoryProvider.CladeBranchCategoryModel provider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categories);// false);
 			
 		return new BranchSpecific(treeModel, rootFrequencyModel, substitutionModels, provider, categories);
 	}

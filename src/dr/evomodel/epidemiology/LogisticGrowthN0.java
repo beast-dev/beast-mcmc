@@ -69,9 +69,43 @@ public class LogisticGrowthN0 extends ExponentialGrowth {
 
     /**
      * Returns the inverse function of getIntensity
+     *
+     * If exp(-qt) = a(x-k) then t = k + (1/q) * W(q*exp(-q*k)/a) where W(x) is the Lambert W function.
+     *
+     * for our purposes:
+     *
+     * q = -r
+     * a = (q/exp(q*T50))
+     * k = N0*(1+exp(q*T50))*x - (1/q)exp(q*T50)
+     *
+     * For large x, W0(x) is approximately equal to ln(x) - ln(ln(x)); if q*exp(-q*k)/a rounds to infinity, we log it
+     * and use this instead
      */
     public double getInverseIntensity(double x) {
-        throw new RuntimeException("Not implemented!");
+
+        double q = -getGrowthRate();
+        double T50 = getT50();
+        double N0 = getN0();
+        double a = (q/Math.exp(q*T50));
+        double k = N0*(1+Math.exp(q*T50))*x - (1/q)*Math.exp(q*T50);
+
+        double lambertInput = q*Math.exp(-q*k)/a;
+
+        double lambertResult;
+
+        if(lambertInput==Double.POSITIVE_INFINITY){
+
+            //use the asymptote
+
+            double logInput = Math.log(-q)-Math.log(-a)-q*k;
+            lambertResult = logInput - Math.log(logInput);
+
+        } else {
+            lambertResult = LambertW.branch0(lambertInput);
+        }
+
+        return k + (1/q)*lambertResult;
+
     }
 
     public double getIntegral(double start, double finish) {

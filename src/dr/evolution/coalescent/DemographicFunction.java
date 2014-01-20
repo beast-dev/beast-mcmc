@@ -298,6 +298,22 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
             return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
         }
 
+        private static double getInterval(double U, DemographicFunction demographicFunction, int lineageCount,
+                                          double timeOfLastCoalescent, double earliestTimeOfFirstCoalescent){
+            if(timeOfLastCoalescent>earliestTimeOfFirstCoalescent){
+                throw new IllegalArgumentException("Given maximum height is smaller than given last coalescent time");
+            }
+            final double fullIntegral = demographicFunction.getIntegral(timeOfLastCoalescent,
+                    earliestTimeOfFirstCoalescent);
+            final double normalisation = 1-Math.exp(-fullIntegral);
+            final double intensity = demographicFunction.getIntensity(timeOfLastCoalescent);
+
+            double tmp = -Math.log(1-U*normalisation)/Binomial.choose2(lineageCount) + intensity;
+
+            return demographicFunction.getInverseIntensity(tmp) - timeOfLastCoalescent;
+
+        }
+
         /**
          * @return a random interval size selected from the Kingman prior of the demographic model.
          */
@@ -307,6 +323,13 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 			final double U = MathUtils.nextDouble(); // create unit uniform random variate
             return getInterval(U, demographicFunction, lineageCount, timeOfLastCoalescent);
 		}
+
+        public static double getSimulatedInterval(DemographicFunction demographicFunction, int lineageCount,
+                                                  double timeOfLastCoalescent, double earliestTimeOfFirstCoalescent){
+            final double U = MathUtils.nextDouble();
+            return getInterval(U, demographicFunction, lineageCount, timeOfLastCoalescent,
+                    earliestTimeOfFirstCoalescent);
+        }
 
 		public static double getMedianInterval(DemographicFunction demographicFunction,
                                                int lineageCount, double timeOfLastCoalescent)

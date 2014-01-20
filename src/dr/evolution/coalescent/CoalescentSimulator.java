@@ -102,7 +102,16 @@ public class CoalescentSimulator {
         throw new RuntimeException("failed to merge trees after 1000 tries.");
 	}
 
-    public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight, double maxHeight) {
+    public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight,
+                                           double maxHeight){
+        return simulateCoalescent(nodes, demographic, currentHeight, maxHeight, false);
+    }
+
+    // if enforceMaxHeight is true, all heights will be drawn from a normalised distribution such that maxHeight really
+    // is the maximum height
+
+    public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight,
+                                           double maxHeight, boolean enforceMaxHeight) {
         // If only one node, return it
         // continuing results in an infinite loop
         if( nodes.length == 1 ) return nodes;
@@ -128,8 +137,16 @@ public class CoalescentSimulator {
 			setCurrentHeight(currentHeight);
 		}
 
+        double nextCoalescentHeight;
+
 		// simulate coalescent events
-		double nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic, getActiveNodeCount(), currentHeight);
+        if(!enforceMaxHeight){
+		    nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic,
+                    getActiveNodeCount(), currentHeight);
+        } else {
+            nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic,
+                    getActiveNodeCount(), currentHeight, maxHeight);
+        }
 
 		while (nextCoalescentHeight < maxHeight && (getNodeCount() > 1)) {
 
@@ -148,8 +165,14 @@ public class CoalescentSimulator {
 					setCurrentHeight(currentHeight);
 				}
 
+                if(!enforceMaxHeight){
 	//			nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getMedianInterval(demographic, getActiveNodeCount(), currentHeight);
-				nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic, getActiveNodeCount(), currentHeight);
+				    nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic,
+                            getActiveNodeCount(), currentHeight);
+                } else {
+                    nextCoalescentHeight = currentHeight + DemographicFunction.Utils.getSimulatedInterval(demographic,
+                            getActiveNodeCount(), currentHeight, maxHeight);
+                }
 			}
 		}
 

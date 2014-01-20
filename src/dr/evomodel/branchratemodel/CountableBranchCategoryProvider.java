@@ -67,18 +67,18 @@ public interface CountableBranchCategoryProvider {
             super(tree, parameter, false, Intent.BRANCH);
 
             this.categoryParameter = parameter;
-            for (int i = 0; i < parameter.getDimension(); ++i) {
-                categoryParameter.setParameterValue(i, 0.0);
-            }
+//            for (int i = 0; i < parameter.getDimension(); ++i) {
+//                categoryParameter.setParameterValue(i, 0.0);
+//            }
             this.treeModel = tree;
         }
 
-        public BranchCategoryModel(TreeModel tree, Parameter parameter, boolean resetCategories) {
-            super(tree, parameter, false, Intent.BRANCH);
-
-            this.categoryParameter = parameter;
-            this.treeModel = tree;
-        }
+//        public BranchCategoryModel(TreeModel tree, Parameter parameter, boolean resetCategories) {
+//            super(tree, parameter, false, Intent.BRANCH);
+//
+//            this.categoryParameter = parameter;
+//            this.treeModel = tree;
+//        }
 
 		public void setCategoryCount(final int count) {
 
@@ -152,10 +152,10 @@ public interface CountableBranchCategoryProvider {
             super(tree, parameter);
         }
 
-        public CladeBranchCategoryModel(TreeModel treeModel,
-				Parameter categories, boolean resetCategories) {
-        	super(treeModel, categories, resetCategories);
-		}
+//        public CladeBranchCategoryModel(TreeModel treeModel,
+//				Parameter categories, boolean resetCategories) {
+//        	super(treeModel, categories, resetCategories);
+//		}
 
 		public void handleModelChangedEvent(Model model, Object object, int index) {
             if (model == treeModel) {

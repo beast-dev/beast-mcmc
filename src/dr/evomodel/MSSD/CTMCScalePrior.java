@@ -1,7 +1,7 @@
 /*
  * CTMCScalePrior.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -49,6 +49,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
 
     final private boolean reciprocal;
     final private SubstitutionModel substitutionModel;
+    final private boolean trial;
 
     private static final double logGammaOneHalf = GammaFunction.lnGamma(0.5);
 
@@ -62,6 +63,11 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
 
     public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal,
                           SubstitutionModel substitutionModel) {
+        this(name, ctmcScale, treeModel, reciprocal, substitutionModel, false);
+    }
+
+    public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel, boolean reciprocal,
+                          SubstitutionModel substitutionModel, boolean trial) {
         super(name);
         this.ctmcScale = ctmcScale;
         this.treeModel = treeModel;
@@ -69,6 +75,7 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
         treeLengthKnown = false;
         this.reciprocal = reciprocal;
         this.substitutionModel = substitutionModel;
+        this.trial = trial;
     }
 
     private void updateTreeLength() {
@@ -98,6 +105,29 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
         return this;
     }
 
+    private double calculateTrialLikelihood() {
+        double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
+
+        double[] eigenValues = substitutionModel.getEigenDecomposition().getEigenValues();
+        // Find second largest
+        double lambda2 = Double.NEGATIVE_INFINITY;
+        for (double l : eigenValues) {
+            if (l > lambda2 && l < 0.0) {
+                lambda2 = l;
+            }
+        }
+        lambda2 = -lambda2;
+
+        double logNormalization = 0.5 * Math.log(lambda2) - logGammaOneHalf;
+
+        double logLike = 0;
+        for (int i = 0; i < ctmcScale.getDimension(); ++i) {
+            double ab = ctmcScale.getParameterValue(i) * totalTreeTime;
+            logLike += logNormalization - 0.5 * Math.log(ab) - ab * lambda2;
+        }
+        return logLike;
+    }
+
     public double getLogLikelihood() {
 
 //        if (!treeLengthKnown) {
@@ -105,6 +135,9 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
 //            treeLengthKnown = true;
 //        }
 //        double totalTreeTime = treeLength;
+
+        if (trial) return calculateTrialLikelihood();
+
         double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
         if (reciprocal) {
             totalTreeTime = 1.0 / totalTreeTime;

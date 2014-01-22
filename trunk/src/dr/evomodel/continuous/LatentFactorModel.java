@@ -117,7 +117,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         Matrix tData = copy(data, nTaxa, dimData);
         Matrix tFactors = copy(factors, nTaxa, dimFactors);
         try {
-            residual = tData.subtract(tLoadings.product(tFactors));
+            residual = tData.subtract(tFactors.product(tLoadings));
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

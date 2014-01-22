@@ -28,6 +28,7 @@ package dr.evomodelxml.continuous;
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.Parameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
 import dr.xml.*;
@@ -60,6 +61,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
+
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
         CompoundParameter dataParameter = returnValue.traitParameter;
@@ -81,6 +83,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     private static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
             new ElementRule(TreeModel.class),
+            new ElementRule("traitParameter", new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
                     new ElementRule(CompoundParameter.class),
             }),

@@ -59,6 +59,18 @@ public class TransposedMatrixParameter extends MatrixParameter {
         return getColumnDimension();
     }
 
+    public double[][] getParameterAsMatrix() {
+        final int I = getColumnDimension();
+        final int J = getRowDimension();
+        double[][] parameterAsMatrix = new double[J][I];
+        for (int i = 0; i < I; i++) {
+            for (int j = 0; j < J; j++)
+                parameterAsMatrix[j][i] = getParameterValue(i, j);
+
+        }
+        return parameterAsMatrix;
+    }
+
     public double getParameterValue(int dim) {
         // TODO Map to transposed dimension
         int transposedDim = dim;

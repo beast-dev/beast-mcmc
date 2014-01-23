@@ -83,6 +83,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         computeResiduals();
         System.out.print(residual.toComponents()[0][0]);
+        System.out.print(calculateLogLikelihood());
     }
 
 //    public Matrix getData(){
@@ -122,6 +123,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
     }
+
+
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -209,6 +212,15 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private double calculateLogLikelihood() {
-        return -2.0;
+
+        Matrix tPrecision= new Matrix(precision.getParameterAsMatrix());
+        computeResiduals();
+        Matrix ans = null;
+        try{
+        ans = residual.product(tPrecision.product(residual.transpose()));
+        } catch (IllegalDimension illegalDimension) {
+        illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    }
+        return ans.toComponents()[0][0];
     }
 }

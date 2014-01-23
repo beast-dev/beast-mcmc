@@ -1,0 +1,198 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id: testMCMC.xml,v 1.2 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- Tests the MCMC engine -->
+
+<beast>
+
+	<parameter id="data" value="1 2 3 4 5 6 7 8 9"/>
+
+<!-- DEFINE RANDOM WALK MODEL -->
+
+	<normalDistributionModel id="normalDistribution">
+		<mean>
+   			<parameter id="mu" value="0"/>
+ 		</mean>
+ 		<precision>
+   			<parameter id="tau" value="2"/>
+		</precision>
+	</normalDistributionModel>
+
+	<distributionLikelihood id="hierarchicalModel">
+		<distribution>
+			<logNormalDistributionModel idref="normalDistribution"/>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+ 		</data>
+	</distributionLikelihood>
+
+    <normalPrior id="normalMeanPrior" mean="0" stdev="31.62278"> <!-- precision of 0.001 -->
+        <parameter idref="mu"/>
+    </normalPrior>
+
+    <logNormalPrior id="logNormalPrecisionPrior" mean="0" stdev="31.62278" meanInRealSpace="false">
+        <parameter idref="tau"/>
+    </logNormalPrior>
+    
+	<operators id="operators">
+
+        <randomWalkOperator windowSize="0.75" weight="1">
+            <parameter idref="mu"/>
+        </randomWalkOperator>
+
+        <scaleOperator scaleFactor="0.75" weight="1">
+            <parameter idref="tau"/>
+        </scaleOperator>
+
+	</operators>    
+    
+<!-- DEFINE GAUSSIAN PROCESS MODEL -->    
+    
+    <parameter id="theta" value="0.0 0.0"/>
+    
+    <maskedParameter id="mu.es">
+    	<parameter idref="theta"/>
+    	<mask>
+    		<parameter value="1.0 0.0"/>
+    	</mask>
+    </maskedParameter>
+    
+    <transformedParameter id="tau.es" inverse="true">
+    	<maskedParameter>
+    		<parameter idref="theta"/>
+	    	<mask>
+    			<parameter value="0.0 1.0"/>
+	    	</mask>
+	    </maskedParameter>
+	    <transform type="log"/>
+    </transformedParameter>
+    
+	<normalDistributionModel id="normalDistribution.es">
+		<mean>
+   			<parameter idref="mu.es"/>
+ 		</mean>
+ 		<precision>
+   			<parameter idref="tau.es"/>
+		</precision>
+	</normalDistributionModel>
+
+	<distributionLikelihood id="hierarchicalModel.es">
+		<distribution>
+			<logNormalDistributionModel idref="normalDistribution.es"/>
+		</distribution>
+		<data>
+			<parameter idref="data"/>
+ 		</data>
+	</distributionLikelihood>
+	
+	<multivariateNormalPrior id="multivariateNormalPrior">
+		<meanParameter>
+			<parameter value="0.0 0.0"/>
+		</meanParameter>
+		<precisionParameter>
+			<matrixParameter>
+				<parameter value="0.001 0.0"/>
+				<parameter value="0.0 0.001"/>
+			</matrixParameter>
+		</precisionParameter>
+		<data>
+			<parameter idref="theta"/>
+		</data>	
+	</multivariateNormalPrior>
+    
+	<operators id="operators.es">
+
+		<ellipticalSliceSampler weight="1">
+			<parameter idref="theta"/>
+			<multivariateNormalPrior idref="multivariateNormalPrior"/>
+		</ellipticalSliceSampler>
+
+	</operators>
+
+	<mcmc id="mcmc.es" chainLength="1000000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood.es">
+                <distributionLikelihood idref="hierarchicalModel.es"/>
+            </likelihood>
+            <prior id="prior.es">
+                <multivariateNormalPrior idref="multivariateNormalPrior"/>
+            </prior>
+        </posterior>
+        <operators idref="operators.es"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood.es"/>
+                <prior idref="prior.es"/>
+			</column>
+			<column label="Mean" sf="6" width="12">
+				<parameter idref="mu.es"/>
+			</column>
+			<column label="Precision" sf="6" width="12">
+				<parameter idref="tau.es"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testEllipticalSlice.log">
+			<likelihood idref="likelihood.es"/>
+            <prior idref="prior.es"/>
+			<parameter idref="mu.es"/>
+			<parameter idref="tau.es"/>           
+		</log>
+	</mcmc>
+	
+
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood">
+                <distributionLikelihood idref="hierarchicalModel"/>
+            </likelihood>
+            <prior id="prior">
+                <normalPrior idref="normalMeanPrior"/>
+                <gammaPrior idref="logNormalPrecisionPrior"/>
+            </prior>
+        </posterior>
+        <operators idref="operators"/>
+		<log logEvery="10000">
+			<column label="posterior" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+                <prior idref="prior"/>
+			</column>
+			<column label="Mean" sf="6" width="12">
+				<parameter idref="mu"/>
+			</column>
+			<column label="Precision" sf="6" width="12">
+				<parameter idref="tau"/>
+			</column>
+		</log>
+		<log logEvery="1000" fileName="testEllipticalRandomWalk.log">
+			<likelihood idref="likelihood"/>
+            <prior idref="prior"/>
+			<parameter idref="mu"/>
+			<parameter idref="tau"/>           
+		</log>
+	</mcmc>
+
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+
+	<traceAnalysis fileName="testEllipticalRandomWalk.log" stdError="true"/>		
+	<traceAnalysis fileName="testEllipticalSlice.log" stdError="true"/>
+	
+</beast>
+
+<!--
+Operator analysis
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept) 
+mu                                                6.456   494583     598      0.0      0.2508      
+scale(tau)                                        0.179   495417     556      0.0      0.2703      
+
+2.555 seconds 
+burnIn   <= 100000,   maxState  = 1000000
+statistic	mean	stdErr	median	hpdLower	hpdUpper	ESS	50hpdLower	50hpdUpper
+likelihood	-22.382	1.109	-22.0312	-24.602	-21.3076	901	-22.0312	-21.3076	
+prior	-6.6226	0.5306	-6.6813	-7.6061	-5.5765	901	-7.073	-6.415	
+mu	4.9632	1.0329	4.9234	3.0199	6.968	901	4.2903	5.5004	
+tau	0.134	0.0658	0.125	0.0261	0.2684	895.7196	0.0719	0.1486	
+-->

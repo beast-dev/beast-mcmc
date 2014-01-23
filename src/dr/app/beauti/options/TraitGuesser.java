@@ -55,6 +55,8 @@ public class TraitGuesser implements Serializable {
     private String delimiter;
     private String regex;
 
+    private static final String REGEX_CHARACTERS = "|[].*()-^$";
+
     ////////////////////////////////////////////////////////////////
 
     public TraitData getTraitData() {
@@ -121,11 +123,21 @@ public class TraitGuesser implements Serializable {
     }
 
     private String guessTraitByDelimiter(String label, String delimiter) throws GuessTraitException {
-        if (delimiter.length() < 1) {
+
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < delimiter.length(); i++) {
+            if (REGEX_CHARACTERS.contains("" + delimiter.charAt(i))) {
+                sb.append("\\").append(delimiter.charAt(i));
+            } else {
+                sb.append(delimiter.charAt(i));
+            }
+        }
+
+        if (sb.toString().length() < 1) {
             throw new IllegalArgumentException("No delimiter");
         }
 
-        String[] tokens = label.split(delimiter);
+        String[] tokens = label.split(sb.toString());
 
         if (tokens.length < 2) {
             throw new IllegalArgumentException("Can not find delimiter in taxon label (" + label + ")\n or invalid delimiter (" + delimiter + ").");

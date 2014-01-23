@@ -123,8 +123,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
         double newValue = value;
 
-        if (!Double.isInfinite(lower) && lower > Double.MIN_VALUE && value < lower) {
-            if (Double.isInfinite(upper) || upper == Double.MAX_VALUE) {
+        if (value < lower) {
+            if (Double.isInfinite(upper)) {
                 // we are only going to reflect once as the upper bound is at infinity...
                 newValue = lower + (lower - value);
             } else {
@@ -141,8 +141,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
                     newValue = upper - remainder;
                 }
             }
-        } else if (!Double.isInfinite(upper) && upper < Double.MAX_VALUE && value > upper) {
-            if (Double.isInfinite(lower) || lower == Double.MIN_VALUE) {
+        } else if (value > upper) {
+            if (Double.isInfinite(lower)) {
                 // we are only going to reflect once as the lower bound is at -infinity...
                 newValue = upper - (newValue - upper);
             } else {

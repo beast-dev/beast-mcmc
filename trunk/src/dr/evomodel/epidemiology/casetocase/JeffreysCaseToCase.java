@@ -40,13 +40,13 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
 
     public double getInfectiousPeriodSD(){
-        DescriptiveStatistics stats = new DescriptiveStatistics(getInfectiousPeriods());
+        DescriptiveStatistics stats = new DescriptiveStatistics(convertArray(getInfectiousPeriods(true)));
         return stats.getStandardDeviation();
     }
 
     public double getLogInfectiousPeriodSD(){
         if(infectiousPeriods==null){
-            infectiousPeriods = getInfectiousPeriods(branchMap);
+            infectiousPeriods = getInfectiousPeriods(true);
         }
         DescriptiveStatistics stats = new DescriptiveStatistics();
         for (double infectiousPeriod : infectiousPeriods) {
@@ -57,15 +57,15 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
     public double getLatentPeriodSD(){
         if(latentPeriods==null){
-            latentPeriods = getLatentPeriods(branchMap);
+            latentPeriods = getLatentPeriods(true);
         }
-        DescriptiveStatistics stats = new DescriptiveStatistics(getLatentPeriods());
+        DescriptiveStatistics stats = new DescriptiveStatistics(convertArray(getLatentPeriods(true)));
         return stats.getStandardDeviation();
     }
 
     public double getLogLatentPeriodSD(){
         if(latentPeriods==null){
-            latentPeriods = getLatentPeriods(branchMap);
+            latentPeriods = getLatentPeriods(true);
         }
         DescriptiveStatistics stats = new DescriptiveStatistics();
         for (double latentPeriod : latentPeriods) {

@@ -474,7 +474,6 @@ public class BeastMain {
             beagleFlags |= BeagleFlag.FRAMEWORK_OPENCL.getMask();
         }
         if (arguments.hasOption("beagle_SSE")) {
-            beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
         }
         if (arguments.hasOption("beagle_double")) {

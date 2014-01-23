@@ -327,6 +327,21 @@ public class CompoundLikelihood implements Likelihood, Reportable {
     public int getThreadCount() {
         return threadCount;
     }
+    
+    public long[] getEvaluationTimes() {
+    	return evaluationTimes;
+    }
+    
+    public int[] getEvaluationCounts() {
+    	return evaluationCounts;
+    }
+    
+    public void resetEvaluationTimes() {
+    	for (int i = 0; i < evaluationTimes.length; i++) {
+    		evaluationTimes[i] = 0;
+    		evaluationCounts[i] = 0;
+    	}
+    }
 
 
     // **************************************************************
@@ -362,7 +377,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
     public String getReport(int indent) {
         if (EVALUATION_TIMERS) {
-            String message = "";
+            String message = "\n";
             boolean first = true;
 
             final NumberFormatter nf = new NumberFormatter(6);

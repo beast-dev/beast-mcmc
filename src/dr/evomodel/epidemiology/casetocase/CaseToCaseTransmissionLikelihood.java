@@ -6,6 +6,7 @@ import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.RiemannApproximation;
 import dr.xml.*;
+import org.apache.commons.math.util.MathUtils;
 import org.netlib.util.doubleW;
 
 import java.util.*;
@@ -32,10 +33,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private Parameter kernelAlpha;
     private Parameter transmissionRate;
     private boolean hasLatentPeriods;
-    private HashMap<Integer, Double> infectionTimes;
-    private HashMap<Integer, Double> storedInfectionTimes;
-    private HashMap<Integer, Double> infectiousTimes;
-    private HashMap<Integer, Double> storedInfectiousTimes;
     private IntegrableUnivariateFunction probFunct;
     private boolean likelihoodKnown;
     private boolean storedLikelihoodKnown;
@@ -81,12 +78,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.transmissionRate = transmissionRate;
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
-        infectionTimes = treeLikelihood.getInfTimesMap();
-        if(treeLikelihood.hasLatentPeriods()){
-            infectiousTimes = treeLikelihood.getInfnsTimesMap();
-        } else {
-            infectiousTimes = infectionTimes;
-        }
         if(spatialKernal!=null && integrateToInfinity){
             probFunct = new InnerIntegralTransformed(new InnerIntegral(steps), steps);
         } else {
@@ -132,10 +123,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         storedTransProbKnown = transProbKnown;
         storedTreeLogProb = treeLogProb;
         storedTreeProbKnown = treeProbKnown;
-        storedInfectionTimes = new HashMap<Integer, Double>(infectionTimes);
-        if(hasLatentPeriods){
-            storedInfectiousTimes = new HashMap<Integer, Double>(infectiousTimes);
-        }
         storedSortedCases = sortedCases;
         storedLastTimesToInfect = lastTimesToInfect;
     }
@@ -149,10 +136,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         treeProbKnown = storedTreeProbKnown;
         normalisation = storedNormalisation;
         normalisationKnown = storedNormalisationKnown;
-        infectionTimes = storedInfectionTimes;
-        if(hasLatentPeriods){
-            infectiousTimes = storedInfectiousTimes;
-        }
         sortedCases = storedSortedCases;
         lastTimesToInfect = storedLastTimesToInfect;
     }
@@ -169,27 +152,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return treeLikelihood;
     }
 
-    private double getInfectionTime(int index){
-        return infectionTimes.get(index);
-    }
-
-    private double getInfectiousTime(int index){
-        if(hasLatentPeriods){
-            return infectiousTimes.get(index);
-        } else {
-            return infectionTimes.get(index);
-        }
-    }
 
     public double getLogLikelihood() {
         if(!likelihoodKnown){
             int N = outbreak.size();
             double lambda = transmissionRate.getParameterValue(0);
             if(!treeProbKnown){
-                infectionTimes = treeLikelihood.getInfTimesMap();
-                if(hasLatentPeriods){
-                    infectiousTimes = treeLikelihood.getInfnsTimesMap();
-                }
+                treeLikelihood.prepareTimings();
             }
             if(!transProbKnown){
                 transLogProb = (N-1)*Math.log(lambda) + Math.log(aAlpha(kernelAlpha.getParameterValue(0)))
@@ -213,8 +182,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     normalisation = Math.log(aAlpha(kernelAlpha.getParameterValue(0))
                             /Math.pow(bAlpha(kernelAlpha.getParameterValue(0)), N));
                 }
-                // not necessary because it is constant
-                // normalisation += Math.log(MathUtils.factorial(N-1));
+
+                normalisation += MathUtils.factorialLog(N-1);
+
                 normalisationKnown = true;
 
             }
@@ -247,30 +217,28 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         treeProbKnown = false;
         normalisationKnown = false;
         lastTimesToInfect = null;
+        sortedCases = null;
         treeLikelihood.makeDirty();
     }
 
     private class CaseInfectionComparator implements Comparator<AbstractCase> {
         public int compare(AbstractCase abstractCase, AbstractCase abstractCase2) {
-            return Double.compare(getInfectionTime(outbreak.getCaseIndex(abstractCase)),
-                    getInfectionTime(outbreak.getCaseIndex(abstractCase2)));
+            return Double.compare(treeLikelihood.getInfectionTime(abstractCase),
+                    treeLikelihood.getInfectionTime(abstractCase2));
         }
     }
 
-    private class CaseNoInfectionComparator implements Comparator<Integer> {
-        public int compare(Integer integer, Integer integer2) {
-            return Double.compare(getInfectionTime(integer), getInfectionTime(integer2));
-        }
-    }
 
     private void makeLastTimesToInfectMatrix(){
         lastTimesToInfect = new double[outbreak.size()][outbreak.size()];
         for(int i=0; i<outbreak.size(); i++){
             for(int j=0; j<outbreak.size(); j++){
-                if (getInfectiousTime(i) > getInfectionTime(j)){
+                if (treeLikelihood.getInfectiousTime(outbreak.getCase(i))
+                        > treeLikelihood.getInfectiousTime(outbreak.getCase(j))){
                     lastTimesToInfect[i][j] = Double.NEGATIVE_INFINITY;
                 } else {
-                    lastTimesToInfect[i][j] = Math.min(getInfectionTime(j), outbreak.getCase(i).getCullTime());
+                    lastTimesToInfect[i][j] = Math.min(
+                            treeLikelihood.getInfectionTime(outbreak.getCase(j)), outbreak.getCase(i).getCullTime());
                 }
             }
         }
@@ -296,13 +264,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 AbstractCase possibleInfector = sortedCases.get(j);
                 int possibleInfectorIndex = outbreak.getCaseIndex(possibleInfector);
                 if(!hasLatentPeriods ||
-                        getInfectiousTime(possibleInfectorIndex)<getInfectionTime(infectedIndex)){
+                        treeLikelihood.getInfectiousTime(possibleInfector)<treeLikelihood.getInfectionTime(infected)){
                     double endOfWindow = lastTimesToInfect[possibleInfectorIndex][infectedIndex];
                     if(DEBUG && endOfWindow==Double.NEGATIVE_INFINITY){
                         throw new RuntimeException("Something's gone wrong with case sorting");
                     }
 
-                    total += (endOfWindow - getInfectiousTime(possibleInfectorIndex))
+                    total += (endOfWindow - treeLikelihood.getInfectiousTime(possibleInfector))
                             * outbreak.getKernelValue(infected, possibleInfector, spatialKernel, alpha);
 
                 }
@@ -521,63 +489,75 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
         columns.add(new LogColumn.Abstract("infectious_period.mean"){
             protected String getFormattedValue() {
-                return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectiousPeriods())[0]);
+                return String.valueOf(CaseToCaseTreeLikelihood
+                        .getSummaryStatistics(treeLikelihood.getInfectiousPeriods(false))[0]);
             }
         });
         columns.add(new LogColumn.Abstract("infectious_period.median"){
             protected String getFormattedValue() {
-                return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectiousPeriods())[1]);
+                return String.valueOf(CaseToCaseTreeLikelihood
+                        .getSummaryStatistics(treeLikelihood.getInfectiousPeriods(false))[1]);
             }
         });
         columns.add(new LogColumn.Abstract("infectious_period.var") {
             protected String getFormattedValue() {
-                return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectiousPeriods())[2]);
+                return String.valueOf(CaseToCaseTreeLikelihood
+                        .getSummaryStatistics(treeLikelihood.getInfectiousPeriods(false))[2]);
             }
         });
         columns.add(new LogColumn.Abstract("infectious_period.stdev"){
             protected String getFormattedValue() {
-                return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectiousPeriods())[3]);
+                return String.valueOf(CaseToCaseTreeLikelihood
+                        .getSummaryStatistics(treeLikelihood.getInfectiousPeriods(false))[3]);
             }
         });
         if(hasLatentPeriods){
             columns.add(new LogColumn.Abstract("latent_period.mean"){
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getLatentPeriods())[0]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getLatentPeriods(false))[0]);
                 }
             });
             columns.add(new LogColumn.Abstract("latent_period.median"){
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getLatentPeriods())[1]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getLatentPeriods(false))[1]);
                 }
             });
             columns.add(new LogColumn.Abstract("latent_period.var") {
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getLatentPeriods())[2]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getLatentPeriods(false))[2]);
                 }
             });
             columns.add(new LogColumn.Abstract("latent_period.stdev"){
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getLatentPeriods())[3]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getLatentPeriods(false))[3]);
                 }
             });
             columns.add(new LogColumn.Abstract("infected_period.mean"){
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectedPeriods())[0]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getInfectedPeriods(false))[0]);
                 }
             });
             columns.add(new LogColumn.Abstract("infected_period.median"){
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectedPeriods())[1]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getInfectedPeriods(false))[1]);
                 }
             });
             columns.add(new LogColumn.Abstract("infected_period.var") {
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectedPeriods())[2]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getInfectedPeriods(false))[2]);
                 }
             });
             columns.add(new LogColumn.Abstract("infected_period.stdev"){
                 protected String getFormattedValue() {
-                    return String.valueOf(CaseToCaseTreeLikelihood.getSummaryStatistics(treeLikelihood.getInfectedPeriods())[3]);
+                    return String.valueOf(CaseToCaseTreeLikelihood
+                            .getSummaryStatistics(treeLikelihood.getInfectedPeriods(false))[3]);
                 }
             });
         }

@@ -221,6 +221,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         } catch (IllegalDimension illegalDimension) {
         illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
     }
-        return ans.toComponents()[0][0];
+        return -.5*ans.toComponents()[0][0];
     }
 }

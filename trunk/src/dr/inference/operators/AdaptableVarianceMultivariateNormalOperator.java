@@ -39,7 +39,7 @@ import dr.xml.*;
 
 /**
  * @author Guy Baele
- * @author Marc Suchard
+ * @author Marc A. Suchard
  */
 public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercableOperator {
 
@@ -47,11 +47,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String BETA = "beta";
     public static final String INITIAL = "initial";
+    public static final String BURNIN = "burnin";
     public static final String FORM_XTX = "formXtXInverse";
+    public static final String COEFFICIENT = "coefficient";
 
     private double scaleFactor;
     private double beta;
-    private int iterations, initial;
+    private int iterations, initial, burnin;
     private final Parameter parameter;
     private final Transform[] transformations;
     private final int dim;
@@ -67,7 +69,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[][] proposal;
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor, double[][] inMatrix,
-                                                       double weight, double beta, int initial, CoercionMode mode, boolean isVarianceMatrix) {
+                                                       double weight, double beta, int initial, int burnin, CoercionMode mode, boolean isVarianceMatrix) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
@@ -79,6 +81,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         dim = parameter.getDimension();
         // constantFactor = Math.pow(2.38, 2) / ((double) dim); // not necessary because scaleFactor is auto-tuned
         this.initial = initial;
+        this.burnin = burnin;
         this.empirical = new double[dim][dim];
         this.oldMeans = new double[dim];
         this.newMeans = new double[dim];
@@ -113,8 +116,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     }
 
     public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor,
-                                                       MatrixParameter varMatrix, double weight, double beta, int initial, CoercionMode mode, boolean isVariance) {
-        this(parameter, transformations, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, mode, isVariance);
+                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, CoercionMode mode, boolean isVariance) {
+        this(parameter, transformations, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, mode, isVariance);
     }
 
     private double[][] formXtXInverse(double[][] X) {
@@ -169,35 +172,63 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         //store MH-ratio in logq
         double logJacobian = 0.0;
 
-        if (iterations > 1) {
+        //change this: make a rule for when iterations == burnin
+        if (iterations > 1 && iterations > burnin) {
 
-            //first recalculate the means using recursion
-            for (int i = 0; i < dim; i++) {
-                newMeans[i] = ((oldMeans[i] * (iterations - 1)) + transformedX[i]) / iterations;
-            }
-
-            //here we can simply use the double[][] matrix
-            for (int i = 0; i < dim; i++) {
-                for (int j = i; j < dim; j++) {
-                    empirical[i][j] = calculateCovariance(iterations, empirical[i][j], transformedX, i, j);
-                    empirical[j][i] = empirical[i][j];
+        	if (iterations > (burnin+1)) {
+        		
+        		//first recalculate the means using recursion
+                for (int i = 0; i < dim; i++) {
+                    newMeans[i] = ((oldMeans[i] * (iterations - 1)) + transformedX[i]) / iterations;
                 }
-            }
 
-            /*System.err.println("Empirical covariance matrix:");
-               for (int i = 0; i < dim; i++) {
-                   for (int j = 0; j < dim; j++) {
-                       System.err.print(empirical[i][j] + " ");
-                   }
-                   System.err.println();
-               }*/
+                //here we can simply use the double[][] matrix
+                for (int i = 0; i < dim; i++) {
+                    for (int j = i; j < dim; j++) {
+                        empirical[i][j] = calculateCovariance(iterations, empirical[i][j], transformedX, i, j);
+                        empirical[j][i] = empirical[i][j];
+                    }
+                }
 
-        } else {
+                /*System.err.println("Empirical covariance matrix:");
+                   for (int i = 0; i < dim; i++) {
+                       for (int j = 0; j < dim; j++) {
+                           System.err.print(empirical[i][j] + " ");
+                       }
+                       System.err.println();
+                   }*/
+        		
+        	} else {
+        		
+        		//System.err.println("Iteration: " + iterations);
+        		
+        		//i.e. iterations == burnin+1, i.e. first sample for C_t
+        		//this will not be reached when burnin is set to 0
+        		for (int i = 0; i < dim; i++) {
+                    oldMeans[i] = transformedX[i];
+                    newMeans[i] = transformedX[i];
+                    //System.err.println("oldMean " + i + ": " + oldMeans[i]);
+                    //System.err.println("newMean " + i + ": " + oldMeans[i]);
+                }
+        		
+        		for (int i = 0; i < dim; i++) {
+                    for (int j = 0; j < dim; j++) {
+                        empirical[i][j] = 0.0;
+                    }
+                }
+        		
+        	}
+        	
+        } else if (iterations == 1) {
 
+        	//System.err.println("Iteration: " + iterations);
+        	
             //iterations == 1
             for (int i = 0; i < dim; i++) {
                 oldMeans[i] = transformedX[i];
                 newMeans[i] = transformedX[i];
+                //System.err.println("oldMean " + i + ": " + oldMeans[i]);
+                //System.err.println("newMean " + i + ": " + oldMeans[i]);
             }
 
             for (int i = 0; i < dim; i++) {
@@ -214,7 +245,8 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         if (iterations > initial) {
 
             // TODO: For speed, it may not be necessary to update decomposition each and every iteration
-
+        	//double start = System.nanoTime();
+        	
             // double[][] proposal = new double[dim][dim];
             for (int i = 0; i < dim; i++) {
                 for (int j = i; j < dim; j++) { // symmetric matrix
@@ -229,6 +261,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             } catch (IllegalDimension illegalDimension) {
                 throw new RuntimeException("Unable to decompose matrix in AdaptableVarianceMultivariateNormalOperator");
             }
+            
+            //double end = System.nanoTime();
+            //double baseResult = end - start;
+            //System.err.println("Cholesky decomposition took: " + baseResult);
 
         }
         
@@ -242,7 +278,6 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             } else {
                 parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
             }
-
 
             logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
                     - transformations[i].getLogJacobian(x[i]);
@@ -347,6 +382,15 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             double beta = xo.getDoubleAttribute(BETA);
             int initial = xo.getIntegerAttribute(INITIAL);
             double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+            double coefficient = xo.getDoubleAttribute(COEFFICIENT);
+            
+            int burnin = 0;
+            if (xo.hasAttribute(BURNIN)) {
+            	burnin = xo.getIntegerAttribute(BURNIN);
+            }
+            if (burnin > initial) {
+            	throw new XMLParseException("burnin must be smaller than the initial period");
+            }
 
             if (scaleFactor <= 0.0) {
                 throw new XMLParseException("scaleFactor must be greater than 0.0");
@@ -369,7 +413,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 init[i] = new Parameter.Default(dim, 0.0);
             }
             for (int i = 0; i < dim; i++) {
-                init[i].setParameterValue(i, Math.pow(0.1, 2) / ((double) dim));
+                init[i].setParameterValue(i, Math.pow(coefficient, 2) / ((double) dim));
             }
             MatrixParameter varMatrix = new MatrixParameter(null, init);
 
@@ -414,7 +458,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             if (varMatrix.getColumnDimension() != parameter.getDimension())
                 throw new XMLParseException("The parameter and variance matrix have differing dimensions");
 
-            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, scaleFactor, varMatrix, weight, beta, initial, mode, !formXtXInverse);
+            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, scaleFactor, varMatrix, weight, beta, initial, burnin, mode, !formXtXInverse);
         }
 
         //************************************************************************
@@ -437,7 +481,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newDoubleRule(BETA),
-                AttributeRule.newDoubleRule(INITIAL),
+                AttributeRule.newDoubleRule(COEFFICIENT),
+                AttributeRule.newIntegerRule(INITIAL),
+                AttributeRule.newIntegerRule(BURNIN),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
                 AttributeRule.newBooleanRule(FORM_XTX, true),
                 new ElementRule(Parameter.class),

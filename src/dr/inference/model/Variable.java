@@ -265,7 +265,7 @@ public interface Variable<V> extends Identifiable {
                     }
 
                     public Double getLowerLimit(int dimension) {
-                        return Double.MIN_VALUE;
+                        return -Double.MAX_VALUE;
                     }
 
                     public int getBoundsDimension() {
@@ -340,7 +340,7 @@ public interface Variable<V> extends Identifiable {
             values = new double[v.length][v[0].length];
             for (int i = 0; i < v.length; i++) {
                 System.arraycopy(v[i], 0, values[i], 0, v[i].length);
-                lower[i] = Double.MIN_VALUE;
+                lower[i] = -Double.MAX_VALUE;
                 upper[i] = Double.MAX_VALUE;
             }
             storedValues = new double[values.length][values[0].length];

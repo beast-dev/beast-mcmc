@@ -55,7 +55,7 @@ public class LeafTraitExtractorParser extends AbstractXMLObjectParser {
         boolean setBounds = xo.getAttribute(SET_BOUNDS, true);
         if (setBounds) {
 
-            Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, Double.MIN_VALUE,
+            Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE,
                     leafTrait.getDimension());
             leafTrait.addBounds(bound);
         }

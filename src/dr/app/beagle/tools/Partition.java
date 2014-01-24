@@ -311,7 +311,6 @@ public class Partition {
 
 	private double[][] getTransitionProbabilities(NodeRef node, //
 			int categoryCount //
-//			int stateCount //
 	) {
 
 		double[][] probabilities = new double[categoryCount][stateCount
@@ -414,7 +413,6 @@ public class Partition {
 	// ---END: EXPERIMENTAL---//
 	// /////////////////////////
 	
-	
 	private int[] sequence2intArray(Sequence sequence) {
 
 		int array[] = new int[partitionSiteCount];
@@ -439,46 +437,23 @@ public class Partition {
 		return array;
 	}// END: sequence2intArray
 
-	private double getTotal(double[] array, int start, int end) {
-		double total = 0.0;
-		for (int i = start; i < end; i++) {
-			total += array[i];
-		}
-		return total;
-	}// END: getTotal
-
 	private int randomChoicePDF(double[] pdf, int partitionNumber, String error) {
 
-		double U = random.nextDouble() * getTotal(pdf, 0, pdf.length);
+		int samplePos = -Integer.MAX_VALUE;
+		double cumProb = 0.0;
+		double u = random.nextDouble();
+		
 		for (int i = 0; i < pdf.length; i++) {
-
-			U -= pdf[i];
-			if (U < 0.0) {
-				return i;
+			
+			cumProb += pdf[i];
+			
+			if (u < cumProb) {
+				samplePos = i;
+				break;
 			}
-
 		}
 
-		for (int i = 0; i < pdf.length; i++) {
-			System.out.println(i + "\t" + pdf[i]);
-		}
-
-		System.out.println(error);
-		System.exit(-1);
-		throw new RuntimeException(
-				"randomChoiceUnnormalized falls through -- negative components in input distribution?");
-
-//		samplePos = 0;
-//		cumProb = 0.0;
-//		for (i = 0; i < N; i++) {
-//			cumProb += gsl_vector_get(prob, i);//prob.at(i);
-//			if (u < cumProb) {
-//				samplePos = i;
-//				break;
-//			}
-//		}
-//
-//		return (samplePos);
+		return samplePos;
 		
 	}// END: randomChoicePDF
 

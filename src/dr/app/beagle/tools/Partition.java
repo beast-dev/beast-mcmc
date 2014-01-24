@@ -52,7 +52,7 @@ import java.util.Map;
  */
 public class Partition {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	// Constructor fields
 	public int from;
@@ -237,8 +237,7 @@ public class Partition {
 
 			substitutionModelDelegate.updateSubstitutionModels(beagle);
 
-			int categoryCount = siteModel.getCategoryCount();
-			traverse(root, parentSequence, category, categoryCount);
+			traverse(root, parentSequence, category);
 
 			if (DEBUG) {
 				synchronized (this) {
@@ -261,8 +260,7 @@ public class Partition {
 
 	private void traverse(NodeRef node, //
 			int[] parentSequence, //
-			int[] category, //
-			int categoryCount //
+			int[] category //
 	) {
 
 		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
@@ -271,8 +269,9 @@ public class Partition {
 			int[] partitionSequence = new int[partitionSiteCount];
 			double[] cProb = new double[stateCount];
 
+			//TODO: make global, write for all categories
 			double[][] probabilities = getTransitionProbabilities(child,
-					categoryCount, stateCount);
+					categoryCount);
 
 			if (DEBUG) {
 				synchronized (this) {
@@ -304,12 +303,118 @@ public class Partition {
 			} // END: tip node check
 
 			traverse(treeModel.getChild(node, iChild), partitionSequence,
-					category, categoryCount);
+					category);
 
 		}// END: child nodes loop
 
 	}// END: traverse
 
+	private double[][] getTransitionProbabilities(NodeRef node, //
+			int categoryCount //
+//			int stateCount //
+	) {
+
+		double[][] probabilities = new double[categoryCount][stateCount
+				* stateCount];
+
+		int nodeNum = node.getNumber();
+		matrixBufferHelper.flipOffset(nodeNum);
+		int branchIndex = nodeNum;
+
+		double branchRate = branchRateModel.getBranchRate(treeModel, node);
+		double branchTime = branchRate * treeModel.getBranchLength(node);//
+		
+		if (branchTime < 0.0) {
+			throw new RuntimeException("Negative branch length: " + branchTime);
+		}
+
+		
+//		double branchLength = siteModel.getRateForCategory(rateCategory) * branchTime;
+		
+		int count = 1;
+		substitutionModelDelegate.updateTransitionMatrices(beagle,
+				new int[] { branchIndex }, new double[] { branchTime }, count);
+
+		double transitionMatrix[] = new double[categoryCount * stateCount
+				* stateCount];
+
+		beagle.getTransitionMatrix(branchIndex, //
+				transitionMatrix //
+		);
+
+		for (int i = 0; i < categoryCount; i++) {
+
+			System.arraycopy(transitionMatrix, i * stateCount,
+					probabilities[i], 0, stateCount * stateCount);
+
+		}
+
+		return probabilities;
+	}// END: getTransitionProbabilities
+	
+	// ///////////////////////////
+	// ---START: EXPERIMENTAL---//
+	// ///////////////////////////
+	
+//	void traverse(NodeRef node, //
+//			int [] parentSequence, // 
+//			int [] category //
+//			) {
+//		
+//		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
+//			
+//			NodeRef child = treeModel.getChild(node, iChild);
+//			
+//            for (int i = 0; i < categoryCount; i++) {
+//            	getTransitionProbabilities(child, i, probabilities[i]);
+//            }
+//
+////            if(DEBUG){
+////            Utils.print2DArray(probabilities);
+////            }
+//            
+//        	int [] seq = new int[partitionSiteCount];
+//    		double [] cProb = new double[stateCount];
+//    		
+//        	for (int i  = 0; i < partitionSiteCount; i++) {
+//        		System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
+//            	seq[i] = MathUtils.randomChoicePDF(cProb);
+//        	}
+//
+//            if (treeModel.getChildCount(child) == 0) {
+//            	Taxon taxon = treeModel.getNodeTaxon(child);
+//            	sequenceList.put(taxon, seq);
+//            }
+//            
+//			traverse(treeModel.getChild(node, iChild), seq, category);
+//		
+//		}//END: child loop
+//	} // traverse
+//	
+//    void getTransitionProbabilities(
+//NodeRef node, int rateCategory, double[] probs) {
+//
+//        NodeRef parent = treeModel.getParent(node);
+//
+//         double branchRate = branchRateModel.getBranchRate(treeModel, node);
+//
+//        // Get the operational time of the branch
+//         double branchTime = branchRate * (treeModel.getNodeHeight(parent) - treeModel.getNodeHeight(node));
+//
+//        if (branchTime < 0.0) {
+//            throw new RuntimeException("Negative branch length: " + branchTime);
+//        }
+//
+//        double branchLength = siteModel.getRateForCategory(rateCategory) * branchTime;
+//
+//        siteModel.getSubstitutionModel().getTransitionProbabilities(branchLength, probs);
+//    } // getTransitionProbabilities
+	
+	// /////////////////////////
+	// ---END: EXPERIMENTAL---//
+	// /////////////////////////
+	
+	
 	private int[] sequence2intArray(Sequence sequence) {
 
 		int array[] = new int[partitionSiteCount];
@@ -333,51 +438,6 @@ public class Partition {
 
 		return array;
 	}// END: sequence2intArray
-
-	private double[][] getTransitionProbabilities(NodeRef node, //
-			int categoryCount, //
-			int stateCount //
-	) {
-
-		double[][] probabilities = new double[categoryCount][stateCount
-				* stateCount];
-
-		int nodeNum = node.getNumber();
-		matrixBufferHelper.flipOffset(nodeNum);
-		int branchIndex = nodeNum;
-
-		double branchRate = branchRateModel.getBranchRate(treeModel, node);
-		double branchLength = treeModel.getBranchLength(node);// * branchRate;
-		double branchTime = branchLength * branchRate;//
-		
-//		System.err.println(branchRate);
-//		System.err.println(branchTime);
-//		System.err.println(rt);
-		
-		if (branchTime < 0.0) {
-			throw new RuntimeException("Negative branch length: " + branchTime);
-		}
-
-		int count = 1;
-		substitutionModelDelegate.updateTransitionMatrices(beagle,
-				new int[] { branchIndex }, new double[] { branchTime }, count);
-
-		double transitionMatrix[] = new double[categoryCount * stateCount
-				* stateCount];
-
-		beagle.getTransitionMatrix(branchIndex, //
-				transitionMatrix //
-		);
-
-		for (int i = 0; i < categoryCount; i++) {
-
-			System.arraycopy(transitionMatrix, i * stateCount,
-					probabilities[i], 0, stateCount * stateCount);
-
-		}
-
-		return probabilities;
-	}// END: getTransitionProbabilities
 
 	private double getTotal(double[] array, int start, int end) {
 		double total = 0.0;
@@ -408,6 +468,18 @@ public class Partition {
 		throw new RuntimeException(
 				"randomChoiceUnnormalized falls through -- negative components in input distribution?");
 
+//		samplePos = 0;
+//		cumProb = 0.0;
+//		for (i = 0; i < N; i++) {
+//			cumProb += gsl_vector_get(prob, i);//prob.at(i);
+//			if (u < cumProb) {
+//				samplePos = i;
+//				break;
+//			}
+//		}
+//
+//		return (samplePos);
+		
 	}// END: randomChoicePDF
 
 	// /////////////

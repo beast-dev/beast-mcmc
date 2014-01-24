@@ -55,7 +55,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         SpatialKernel makeKernelFunction(Parameter a) throws IllegalAccessException, InstantiationException,
                 InvocationTargetException {
             Constructor[] construct = kernelClass.getConstructors();
-            return (SpatialKernel)construct[0].newInstance(null, xmlName, a);
+            return (SpatialKernel)construct[1].newInstance(null, xmlName, a);
         }
 
         Type(String xmlName, Class kernelClass){
@@ -200,8 +200,6 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         public double evaluateIntegral(double a, double b){
             return integrator.integrate(this, a, b);
         }
-
-
 
     }
 

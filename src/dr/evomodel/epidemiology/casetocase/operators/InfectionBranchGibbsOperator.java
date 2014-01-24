@@ -1,10 +1,7 @@
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.BranchMapModel;
-import dr.evomodel.epidemiology.casetocase.CaseToCaseTransmissionLikelihood;
-import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
+import dr.evomodel.epidemiology.casetocase.*;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
@@ -35,7 +32,6 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
         this.c2cTransLikelihood = c2cTransLikelihood;
         c2cTreeLikelihood = c2cTransLikelihood.getTreeLikelihood();
         setWeight(weight);
-
     }
 
     public int getStepCount() {
@@ -81,7 +77,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
             return;
         }
 
-        TreeModel tree = c2cTreeLikelihood.getTreeModel();
+        PartitionedTreeModel tree = c2cTreeLikelihood.getTreeModel();
 
         BranchMapModel originalBranchMap = c2cTreeLikelihood.getBranchMap();
 

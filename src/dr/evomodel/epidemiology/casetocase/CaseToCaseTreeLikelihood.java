@@ -92,7 +92,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     // Basic constructor.
 
-    public CaseToCaseTreeLikelihood(TreeModel virusTree, AbstractOutbreak caseData,
+    public CaseToCaseTreeLikelihood(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
                                     Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
                                     Parameter maxFirstInfToRoot)
             throws TaxonList.MissingTaxonException {
@@ -102,7 +102,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     // Constructor for an instance with a non-default name
 
-    public CaseToCaseTreeLikelihood(String name, TreeModel virusTree, AbstractOutbreak caseData,
+    public CaseToCaseTreeLikelihood(String name, PartitionedTreeModel virusTree, AbstractOutbreak caseData,
                                     Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
                                     Parameter maxFirstInfToRoot) {
         super(name, caseData, virusTree);
@@ -124,9 +124,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         //map cases to tips
 
-        branchMap = new BranchMapModel(virusTree);
-
-        addModel(branchMap);
+        branchMap = virusTree.getBranchMap();
 
         tipMap = new HashMap<AbstractCase, Integer>();
 
@@ -465,7 +463,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return child;
     }
 
-    protected NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
+    public NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
         return getEarliestNodeInPartition(thisCase, branchMap);
     }
 
@@ -496,27 +494,27 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         if (model == treeModel) {
 
-            // todo actually, most of these don't change
+            if(object instanceof PartitionedTreeModel.PartitionsChangedEvent){
+                HashSet<AbstractCase> changedPartitions =
+                        ((PartitionedTreeModel.PartitionsChangedEvent)object).getCasesToRecalculate();
+                for(AbstractCase aCase : changedPartitions){
+                    int number = cases.getCaseIndex(aCase);
+                    infectionTimes[number] = null;
+                    infectiousPeriods[number] = null;
+                    if(hasLatentPeriods){
+                        infectiousTimes[number] = null;
+                        latentPeriods[number] = null;
+                    }
+                }
+            } else {
 
-            Arrays.fill(infectionTimes, null);
-            Arrays.fill(infectiousPeriods, null);
-            if(hasLatentPeriods){
-                Arrays.fill(infectiousTimes, null);
-                Arrays.fill(latentPeriods, null);
-            }
-        }
+                // todo actually, most of these don't change
 
-        if (model == branchMap){
-            ArrayList<AbstractCase> changedPartitions =
-                    ((BranchMapModel.BranchMapChangedEvent)object).getCasesToRecalculate();
-
-            for(AbstractCase aCase : changedPartitions){
-                int number = cases.getCaseIndex(aCase);
-                infectionTimes[number] = null;
-                infectiousPeriods[number] = null;
+                Arrays.fill(infectionTimes, null);
+                Arrays.fill(infectiousPeriods, null);
                 if(hasLatentPeriods){
-                    infectiousTimes[number] = null;
-                    latentPeriods[number] = null;
+                    Arrays.fill(infectiousTimes, null);
+                    Arrays.fill(latentPeriods, null);
                 }
             }
         }
@@ -527,9 +525,9 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
 
-    // **************************************************************
-    // VariableListener IMPLEMENTATION
-    // **************************************************************
+        // **************************************************************
+        // VariableListener IMPLEMENTATION
+        // **************************************************************
 
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -603,8 +601,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return branchMap;
     }
 
-    public final TreeModel getTreeModel(){
-        return treeModel;
+    public final PartitionedTreeModel getTreeModel(){
+        return (PartitionedTreeModel)treeModel;
     }
 
 
@@ -624,13 +622,13 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         infectionTimes = getInfectionTimes(true);
 
         if(hasLatentPeriods){
-                infectiousTimes = getInfectiousTimes(true);
+            infectiousTimes = getInfectiousTimes(true);
         }
 
-            infectiousPeriods = getInfectiousPeriods(true);
+        infectiousPeriods = getInfectiousPeriods(true);
 
         if(hasLatentPeriods){
-                latentPeriods = getLatentPeriods(true);
+            latentPeriods = getLatentPeriods(true);
         }
     }
 

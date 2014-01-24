@@ -13,7 +13,7 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
     public static final String JEFFREYS_CASE_TO_CASE = "jeffreysCaseToCase";
 
-    public JeffreysCaseToCase(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
+    public JeffreysCaseToCase(PartitionedTreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                     Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
                                     Parameter maxFirstInfToRoot) throws TaxonList.MissingTaxonException{
         super(virusTree, caseData, infectionTimeBranchPositions, infectiousTimePositions,
@@ -92,7 +92,7 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel virusTree = (TreeModel) xo.getChild(TreeModel.class);
+            PartitionedTreeModel virusTree = (PartitionedTreeModel) xo.getChild(TreeModel.class);
 
             String startingNetworkFileName=null;
 
@@ -136,7 +136,7 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(TreeModel.class, "The tree"),
+                new ElementRule(PartitionedTreeModel.class, "The tree"),
                 new ElementRule(JeffreysCategoryOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),

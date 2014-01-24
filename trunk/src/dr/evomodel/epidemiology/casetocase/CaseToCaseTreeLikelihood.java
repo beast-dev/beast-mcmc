@@ -34,7 +34,7 @@ import java.util.*;
 public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable,
         TreeTraitProvider {
 
-    protected final static boolean DEBUG = false;
+    protected final static boolean DEBUG = true;
 
     /* The phylogenetic tree. */
 
@@ -534,14 +534,19 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
-        // todo PLEASE check that these appear in the right order!!!
-
         if(variable == infectionTimeBranchPositions){
             infectionTimes[index] = null;
             infectiousPeriods[index] = null;
             if(hasLatentPeriods){
                 infectiousTimes[index] = null;
                 latentPeriods[index] = null;
+                AbstractCase parent = getInfector(cases.getCase(index));
+                if(parent!=null){
+                    int parentIndex = cases.getCaseIndex(parent);
+                    infectiousTimes[parentIndex] = null;
+                    infectiousPeriods[parentIndex] = null;
+                    latentPeriods[parentIndex] = null;
+                }
             }
 
         } else if(variable == infectiousTimePositions){
@@ -1374,9 +1379,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     return branchMap.get(originalParentNumber).toString();
                 }
             }
-
-
-
         } else {
             if (!likelihoodKnown) {
                 calculateLogLikelihood();

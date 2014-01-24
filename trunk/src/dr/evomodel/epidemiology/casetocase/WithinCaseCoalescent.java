@@ -83,6 +83,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     protected double calculateLogLikelihood(){
 
+        if(DEBUG){
+            super.debugOutputTree("bleh.nex", false);
+        }
+
         double logL = 0;
 
         super.prepareTimings();
@@ -239,7 +243,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     for(int i=0; i<cases.size(); i++){
                         AbstractCase parentCandidate = cases.getCase(i);
 
-                        if(i!=number && getInfectiousTime(aCase)<infectionTime
+                        if(i!=number && getInfectiousTime(parentCandidate)<infectionTime
                                 && !parentCandidate.culledYet(infectionTime)){
                             possibleParents++;
                         }
@@ -318,7 +322,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             Arrays.fill(partitionsAsTrees, null);
             Arrays.fill(partitionTreeLogLikelihoods, null);
-            Arrays.fill(timingLogLikelihoods, null);
 
         } else if(model == branchMap){
             ArrayList<AbstractCase> changedPartitions =
@@ -326,11 +329,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             for(AbstractCase aCase : changedPartitions){
                 partitionsAsTrees[cases.getCaseIndex(aCase)] = null;
                 partitionTreeLogLikelihoods[cases.getCaseIndex(aCase)] = null;
-                timingLogLikelihoods[cases.getCaseIndex(aCase)] = null;
             }
         } else if(model == demoModel){
             Arrays.fill(partitionTreeLogLikelihoods, null);
         }
+        Arrays.fill(timingLogLikelihoods, null);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -341,10 +344,18 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         if(variable == infectionTimeBranchPositions){
             partitionTreeLogLikelihoods[index]=null;
             partitionsAsTrees[index]=null;
+            if(hasLatentPeriods){
+                AbstractCase parent = getInfector(cases.getCase(index));
+                if(parent!=null){
+                    int parentIndex = cases.getCaseIndex(parent);
+                    partitionTreeLogLikelihoods[parentIndex] = null;
+                    partitionsAsTrees[parentIndex] = null;
+                }
+            }
         }
 
         if(variable == infectionTimeBranchPositions || variable == infectiousTimePositions){
-            timingLogLikelihoods[index]=null;
+            Arrays.fill(timingLogLikelihoods, null);
         }
     }
 

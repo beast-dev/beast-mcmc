@@ -274,19 +274,23 @@ public class Partition {
 			double[][] probabilities = getTransitionProbabilities(child,
 					categoryCount, stateCount);
 
-			// synchronized (this) {
-			// Utils.print2DArray(probabilities);
-			// }
-
+			if (DEBUG) {
+				synchronized (this) {
+					Utils.print2DArray(probabilities);
+				}
+			}// END: if DEBUG
+			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
 				System.arraycopy(probabilities[category[i]], parentSequence[i]
 						* stateCount, cProb, 0, stateCount);
 
-				// synchronized (this) {
-				// Utils.printArray(cProb);
-				// }
-
+//				if (DEBUG) {
+//					synchronized (this) {
+//						Utils.printArray(cProb);
+//					}
+//				}// END: if DEBUG
+				
 				partitionSequence[i] = randomChoicePDF(cProb, partitionNumber,
 						"seq");
 
@@ -343,8 +347,13 @@ public class Partition {
 		int branchIndex = nodeNum;
 
 		double branchRate = branchRateModel.getBranchRate(treeModel, node);
-		double branchTime = treeModel.getBranchLength(node) * branchRate;
-
+		double branchLength = treeModel.getBranchLength(node);// * branchRate;
+		double branchTime = branchLength * branchRate;//
+		
+//		System.err.println(branchRate);
+//		System.err.println(branchTime);
+//		System.err.println(rt);
+		
 		if (branchTime < 0.0) {
 			throw new RuntimeException("Negative branch length: " + branchTime);
 		}

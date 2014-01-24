@@ -1,6 +1,7 @@
 
 package dr.app.seqgen;
 
+import dr.app.bss.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
@@ -27,6 +28,9 @@ import dr.xml.*;
  */
 
 public class SequenceSimulator {
+	
+	private static final boolean DEBUG = false;
+	
 	/** nr of samples to generate **/
 	protected int m_sequenceLength;
 	/** tree used for generating samples **/
@@ -156,6 +160,10 @@ public class SequenceSimulator {
             	getTransitionProbabilities(m_tree, child, i, m_probabilities[i]);
             }
 
+            if(DEBUG){
+            Utils.print2DArray(m_probabilities);
+            }
+            
         	int [] seq = new int[m_sequenceLength];
     		double [] cProb = new double[m_stateCount];
         	for (int i  = 0; i < m_sequenceLength; i++) {

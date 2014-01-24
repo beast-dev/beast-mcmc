@@ -43,14 +43,14 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
     private Double[] storedTimingLogLikelihoods;
 
 
-    public GeneralCaseToCase(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
+    public GeneralCaseToCase(PartitionedTreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                              Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot)
             throws TaxonList.MissingTaxonException {
         this(virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, null,
                 maxFirstInfToRoot);
     }
 
-    public GeneralCaseToCase(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
+    public GeneralCaseToCase(PartitionedTreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                              Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
                              Parameter maxFirstInfToRoot)
             throws TaxonList.MissingTaxonException {
@@ -507,7 +507,7 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel virusTree = (TreeModel) xo.getChild(TreeModel.class);
+            PartitionedTreeModel virusTree = (PartitionedTreeModel) xo.getChild(TreeModel.class);
 
             String startingNetworkFileName=null;
 
@@ -551,7 +551,7 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(TreeModel.class, "The tree"),
+                new ElementRule(PartitionedTreeModel.class, "The tree"),
                 new ElementRule(WithinCaseCategoryOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),

@@ -38,22 +38,23 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private Double[] storedPartitionTreeLogLikelihoods;
     private Double[] timingLogLikelihoods;
     private Double[] storedTimingLogLikelihoods;
-    private TreePlusRootBranchLength[] partitionsAsTrees;
-    private TreePlusRootBranchLength[] storedPartitionsAsTrees;
+    private Treelet[] partitionsAsTrees;
+    private Treelet[] storedPartitionsAsTrees;
     private DemographicModel demoModel;
 
 
-    public WithinCaseCoalescent(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
-                                Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot,
-                                DemographicModel demoModel)
+    public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
+                                String startingNetworkFileName, Parameter infectionTimeBranchPositions,
+                                Parameter maxFirstInfToRoot, DemographicModel demoModel)
             throws TaxonList.MissingTaxonException {
         this(virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, null,
                 maxFirstInfToRoot, demoModel);
     }
 
-    public WithinCaseCoalescent(TreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
-                                Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
-                                Parameter maxFirstInfToRoot, DemographicModel demoModel)
+    public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
+                                String startingNetworkFileName, Parameter infectionTimeBranchPositions,
+                                Parameter infectiousTimePositions, Parameter maxFirstInfToRoot,
+                                DemographicModel demoModel)
             throws TaxonList.MissingTaxonException {
         super(WITHIN_CASE_COALESCENT, virusTree, caseData, infectionTimeBranchPositions, infectiousTimePositions,
                 maxFirstInfToRoot);
@@ -64,8 +65,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         timingLogLikelihoods = new Double[noTips];
         storedTimingLogLikelihoods = new Double[noTips];
 
-        partitionsAsTrees = new TreePlusRootBranchLength[caseData.size()];
-        storedPartitionsAsTrees = new TreePlusRootBranchLength[caseData.size()];
+        partitionsAsTrees = new Treelet[caseData.size()];
+        storedPartitionsAsTrees = new Treelet[caseData.size()];
 
         prepareTree(startingNetworkFileName);
 
@@ -264,7 +265,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             HashSet<AbstractCase> children = getInfectees(aCase);
 
             if(partitionTreeLogLikelihoods[number]==null){
-                TreePlusRootBranchLength treelet = partitionsAsTrees[number];
+                Treelet treelet = partitionsAsTrees[number];
 
                 if(DEBUG && treelet.getNodeCount()>1){
                     debugTreelet(treelet, aCase+"_partition.nex");
@@ -318,17 +319,14 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         super.handleModelChangedEvent(model, object, index);
 
         if(model == treeModel){
-            // todo this is still not there
 
-            Arrays.fill(partitionsAsTrees, null);
-            Arrays.fill(partitionTreeLogLikelihoods, null);
-
-        } else if(model == branchMap){
-            ArrayList<AbstractCase> changedPartitions =
-                    ((BranchMapModel.BranchMapChangedEvent)object).getCasesToRecalculate();
-            for(AbstractCase aCase : changedPartitions){
-                partitionsAsTrees[cases.getCaseIndex(aCase)] = null;
-                partitionTreeLogLikelihoods[cases.getCaseIndex(aCase)] = null;
+            if(object instanceof PartitionedTreeModel.PartitionsChangedEvent){
+                HashSet<AbstractCase> changedPartitions =
+                        ((PartitionedTreeModel.PartitionsChangedEvent)object).getCasesToRecalculate();
+                for(AbstractCase aCase : changedPartitions){
+                    partitionsAsTrees[cases.getCaseIndex(aCase)] = null;
+                    partitionTreeLogLikelihoods[cases.getCaseIndex(aCase)] = null;
+                }
             }
         } else if(model == demoModel){
             Arrays.fill(partitionTreeLogLikelihoods, null);
@@ -398,7 +396,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 littleTree.resolveTree();
 
-                partitionsAsTrees[i] = new TreePlusRootBranchLength(littleTree, rootTime - infectionTime);
+                partitionsAsTrees[i] = new Treelet(littleTree, rootTime - infectionTime);
             }
         }
     }
@@ -448,11 +446,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         }
     }
 
-    private class TreePlusRootBranchLength extends FlexibleTree {
+    private class Treelet extends FlexibleTree {
 
         private double rootBranchLength;
 
-        private TreePlusRootBranchLength(FlexibleTree tree, double rootBranchLength){
+        private Treelet(FlexibleTree tree, double rootBranchLength){
             super(tree);
             this.rootBranchLength = rootBranchLength;
         }
@@ -575,7 +573,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel virusTree = (TreeModel) xo.getChild(TreeModel.class);
+            PartitionedTreeModel virusTree = (PartitionedTreeModel) xo.getChild(TreeModel.class);
 
             String startingNetworkFileName=null;
 
@@ -620,7 +618,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(TreeModel.class, "The tree"),
+                new ElementRule(PartitionedTreeModel.class, "The tree"),
                 new ElementRule(WithinCaseCategoryOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),

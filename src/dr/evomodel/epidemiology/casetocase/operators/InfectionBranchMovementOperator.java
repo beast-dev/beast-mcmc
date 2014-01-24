@@ -4,12 +4,12 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
-import dr.evomodel.tree.TreeModel;
+import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
-import java.util.Arrays;
+import java.util.HashSet;
 
 /**
  * This operator finds a branch that corresponds to a transmission event, and moves that event up one branch or down
@@ -21,7 +21,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     public static final String INFECTION_BRANCH_MOVEMENT_OPERATOR = "infectionBranchMovementOperator";
     private CaseToCaseTreeLikelihood c2cLikelihood;
-    boolean DEBUG = true;
+    static final boolean DEBUG = false;
 
     public InfectionBranchMovementOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight){
         this.c2cLikelihood = c2cLikelihood;
@@ -41,7 +41,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             c2cLikelihood.debugOutputTree("before.nex", false);
         }
 
-        TreeModel tree = c2cLikelihood.getTreeModel();
+        PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         int externalNodeCount = tree.getExternalNodeCount();
         // find a case whose infection event we are going to move about
@@ -65,7 +65,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
     }
 
 
-    private double adjustTree(TreeModel tree, NodeRef node, BranchMapModel map, boolean extended){
+    private double adjustTree(PartitionedTreeModel tree, NodeRef node, BranchMapModel map, boolean extended){
         // are we going up or down? If we're not extended then all moves are down. External nodes have to move down.
         double out;
         if(!extended || tree.isExternal(node) || MathUtils.nextBoolean()){
@@ -79,13 +79,17 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         return out;
     }
 
-    private double moveDown(TreeModel tree, NodeRef node, BranchMapModel map, boolean extended){
+    private double moveDown(PartitionedTreeModel tree, NodeRef node, BranchMapModel map, boolean extended){
+
         AbstractCase[] newMap = map.getArrayCopy();
+
         NodeRef parent = tree.getParent(node);
+
         assert map.get(parent.getNumber())==map.get(node.getNumber()) : "Partition problem";
         if(!extended || c2cLikelihood.tipLinked(parent)){
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map.get(grandparent.getNumber())==map.get(parent.getNumber())){
+
                 for(Integer ancestor: c2cLikelihood.samePartitionDownTree(parent, true)){
                     newMap[ancestor]=map.get(node.getNumber());
                 }
@@ -107,15 +111,18 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
         newMap[parent.getNumber()]=map.get(node.getNumber());
         map.setAll(newMap);
-        // todo sort this out
-        // c2cLikelihood.flagForDescendantRecalculation(tree, node, false);
+
         return tree.isExternal(node) ? Math.log(0.5) : 0;
     }
 
-    private double moveUp(TreeModel tree, NodeRef node, BranchMapModel map){
+    private double moveUp(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
+
         AbstractCase[] newMap = map.getArrayCopy();
+
         double out = 0;
+
         NodeRef parent = tree.getParent(node);
+
         assert map.get(parent.getNumber())==map.get(node.getNumber()) : "Partition problem";
         // check if either child is not tip-linked (at most one is not, and if so it must have been in the same
         // partition as both the other child and 'node')
@@ -134,6 +141,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
         newMap[node.getNumber()]=map.get(parent.getNumber());
         map.setAll(newMap);
+
         return out;
     }
 

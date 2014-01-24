@@ -201,6 +201,10 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
         return hasRates;
     }
 
+    public boolean inTreeEdit() {
+        return inEdit;
+    }
+
     public class TreeChangedEvent {
         static final int CHANGE_IN_ALL_INTERNAL_NODES = -2;
 

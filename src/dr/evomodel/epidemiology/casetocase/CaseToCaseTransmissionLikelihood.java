@@ -175,7 +175,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                         }
                         normalisation -= -N*Math.log(((InnerIntegralTransformed)probFunct).getScalingFactor());
                     } else {
-                        normalisation = Math.log(probFunct.evaluateIntegral(0, kernelAlpha.getBounds().getUpperLimit(0)));
+                        normalisation = Math.log(probFunct.evaluateIntegral(0,
+                                kernelAlpha.getBounds().getUpperLimit(0)));
                         normalisation -= -N*Math.log(((InnerIntegral)probFunct).getScalingFactor());
                     }
                 } else {
@@ -201,6 +202,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // Gibbs operator needs this
 
     public double calculateTempLogLikelihood(AbstractCase[] map){
+
+        // todo probably this should tell PartitionedTreeModel what needs recalculating
+
         BranchMapModel branchMap = treeLikelihood.getBranchMap();
 
         AbstractCase[] trueMap = branchMap.getArrayCopy();

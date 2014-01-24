@@ -51,7 +51,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
     private boolean storedTraversalProbKnown = false;
 
 
-    public SimpleCaseToCase(TreeModel virusTree, AbstractOutbreak caseData,
+    public SimpleCaseToCase(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
                             String startingNetworkFileName, Parameter infectionTimeBranchPositions,
                             Parameter maxFirstInfToRoot) {
         super(SIMPLE_CASE_TO_CASE, virusTree, caseData, infectionTimeBranchPositions, null, maxFirstInfToRoot);
@@ -537,7 +537,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel virusTree = (TreeModel) xo.getChild(TreeModel.class);
+            PartitionedTreeModel virusTree = (PartitionedTreeModel) xo.getChild(TreeModel.class);
 
             String startingNetworkFileName=null;
 
@@ -573,7 +573,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(TreeModel.class, "The tree"),
+                new ElementRule(PartitionedTreeModel.class, "The tree"),
                 new ElementRule(WithinCaseCategoryOutbreak.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),

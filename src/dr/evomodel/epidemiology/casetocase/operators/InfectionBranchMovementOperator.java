@@ -21,7 +21,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     public static final String INFECTION_BRANCH_MOVEMENT_OPERATOR = "infectionBranchMovementOperator";
     private CaseToCaseTreeLikelihood c2cLikelihood;
-    boolean debug = false;
+    boolean DEBUG = true;
 
     public InfectionBranchMovementOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight){
         this.c2cLikelihood = c2cLikelihood;
@@ -36,6 +36,10 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
     * painting of the other, and adjust the rest of the tree to ensure the result still obeys partition rules.*/
 
     public double doOperation(){
+
+        if(DEBUG){
+            c2cLikelihood.debugOutputTree("before.nex", false);
+        }
 
         TreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
@@ -53,6 +57,10 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
         double hr = adjustTree(tree, node, branchMap, true);
 
+        if(DEBUG){
+            c2cLikelihood.debugOutputTree("after.nex", false);
+        }
+
         return hr;
     }
 
@@ -65,7 +73,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         } else {
             out = moveUp(tree, node, map);
         }
-        if(debug){
+        if(DEBUG){
             c2cLikelihood.checkPartitions();
         }
         return out;

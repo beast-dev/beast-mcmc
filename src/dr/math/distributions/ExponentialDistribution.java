@@ -104,7 +104,7 @@ public class ExponentialDistribution implements Distribution {
      * @return pdf value
      */
     public static double pdf(double x, double lambda) {
-    	if (x < 0) return 0;
+    	if (x <= 0) return 0;
     	
         return lambda * Math.exp(-lambda * x);
     }
@@ -118,7 +118,7 @@ public class ExponentialDistribution implements Distribution {
      * @return log pdf value
      */
     public static double logPdf(double x, double lambda) {
-    	if (x < 0) return Double.NEGATIVE_INFINITY;
+    	if (x <= 0) return Double.NEGATIVE_INFINITY;
     	
         return Math.log(lambda) - (lambda * x);
     }

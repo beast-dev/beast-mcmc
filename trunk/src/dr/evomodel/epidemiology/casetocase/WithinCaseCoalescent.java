@@ -315,7 +315,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-
         super.handleModelChangedEvent(model, object, index);
 
         if(model == treeModel){
@@ -324,9 +323,28 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 HashSet<AbstractCase> changedPartitions =
                         ((PartitionedTreeModel.PartitionsChangedEvent)object).getCasesToRecalculate();
                 for(AbstractCase aCase : changedPartitions){
-                    partitionsAsTrees[cases.getCaseIndex(aCase)] = null;
-                    partitionTreeLogLikelihoods[cases.getCaseIndex(aCase)] = null;
+                    recalculateCaseWCC(aCase);
                 }
+            }
+        } else if(model == branchMap){
+            if(object instanceof ArrayList){
+
+                for(int i=0; i<((ArrayList) object).size(); i++){
+                    BranchMapModel.BranchMapChangedEvent event
+                            =  (BranchMapModel.BranchMapChangedEvent)((ArrayList) object).get(i);
+
+                    recalculateCaseWCC(event.getOldCase());
+                    recalculateCaseWCC(event.getNewCase());
+
+                    NodeRef node = treeModel.getNode(event.getNodeToRecalculate());
+                    NodeRef parent = treeModel.getParent(node);
+
+                    if(parent!=null){
+                        recalculateCaseWCC(branchMap.get(parent.getNumber()));
+                    }
+                }
+            } else {
+                throw new RuntimeException("Unanticipated model changed event from BranchMapModel");
             }
         } else if(model == demoModel){
             Arrays.fill(partitionTreeLogLikelihoods, null);
@@ -340,14 +358,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         super.handleVariableChangedEvent(variable, index, type);
 
         if(variable == infectionTimeBranchPositions){
-            partitionTreeLogLikelihoods[index]=null;
-            partitionsAsTrees[index]=null;
+            recalculateCaseWCC(index);
             if(hasLatentPeriods){
                 AbstractCase parent = getInfector(cases.getCase(index));
                 if(parent!=null){
-                    int parentIndex = cases.getCaseIndex(parent);
-                    partitionTreeLogLikelihoods[parentIndex] = null;
-                    partitionsAsTrees[parentIndex] = null;
+                    recalculateCaseWCC(parent);
                 }
             }
         }
@@ -356,6 +371,16 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             Arrays.fill(timingLogLikelihoods, null);
         }
     }
+
+    protected void recalculateCaseWCC(int index){
+        partitionsAsTrees[index] = null;
+        partitionTreeLogLikelihoods[index] = null;
+    }
+
+    protected void recalculateCaseWCC(AbstractCase aCase){
+        recalculateCaseWCC(cases.getCaseIndex(aCase));
+    }
+
 
     public void makeDirty(){
         super.makeDirty();

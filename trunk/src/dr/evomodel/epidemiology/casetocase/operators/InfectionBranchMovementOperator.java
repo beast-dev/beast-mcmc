@@ -110,7 +110,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             }
         }
         newMap[parent.getNumber()]=map.get(node.getNumber());
-        map.setAll(newMap);
+        map.setAll(newMap, false);
 
         return tree.isExternal(node) ? Math.log(0.5) : 0;
     }
@@ -140,7 +140,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             }
         }
         newMap[node.getNumber()]=map.get(parent.getNumber());
-        map.setAll(newMap);
+        map.setAll(newMap, false);
 
         return out;
     }

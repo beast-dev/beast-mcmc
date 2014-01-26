@@ -14,24 +14,25 @@ import java.util.HashSet;
  */
 public class BranchMapModel extends AbstractModel {
 
-    private PartitionedTreeModel tree;
     private AbstractCase[] map;
     private AbstractCase[] storedMap;
     public final static String BRANCH_MAP_MODEL = "branchMapModel";
 
     public BranchMapModel(PartitionedTreeModel tree){
         super(BRANCH_MAP_MODEL);
-        this.tree = tree;
         map = new AbstractCase[tree.getNodeCount()];
         storedMap = new AbstractCase[tree.getNodeCount()];
     }
 
-    public void set(int index, AbstractCase aCase){
+    public void set(int index, AbstractCase aCase, boolean silent){
 
         AbstractCase oldCase = map[index];
 
         map[index] = aCase;
-        pushMapChangedEvent(new BranchMapChangedEvent(index, oldCase, aCase));
+
+        if(!silent){
+            pushMapChangedEvent(new BranchMapChangedEvent(index, oldCase, aCase));
+        }
 
     }
 
@@ -52,15 +53,11 @@ public class BranchMapModel extends AbstractModel {
 
     // WARNING WARNING WARNING This is to be called ONLY at the start of the run
 
-    public void setupMap(AbstractCase[] map){
-        this.map = map;
-    }
-
     public AbstractCase[] getArray(){
         return map;
     }
 
-    public void setAll(AbstractCase[] newMap){
+    public void setAll(AbstractCase[] newMap, boolean silent){
         ArrayList<BranchMapChangedEvent> changes = new ArrayList<BranchMapChangedEvent>();
 
         for(int i=0; i<map.length; i++){
@@ -69,7 +66,9 @@ public class BranchMapModel extends AbstractModel {
             }
         }
 
-        pushMapChangedEvents(changes);
+        if(!silent){
+            pushMapChangedEvents(changes);
+        }
 
         map = newMap;
     }

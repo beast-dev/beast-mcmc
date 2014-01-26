@@ -128,7 +128,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                             oldParents);
                     //This may have resulted in the moved node being recoloured wrong.
                     newBranchMap[movedNode]=branchMap.get(movedNode);
-                    branchMap.setAll(newBranchMap);
+                    branchMap.setAll(newBranchMap, true);
                     //Change all paintings up the tree from the moved node that used to match the new child to match
                     //the moved node
                     paintUp(tree, branchMap.get(newChild), branchMap.get(movedNode), branchMap, newBranchMap, movedNode,
@@ -140,7 +140,7 @@ public class TransmissionTreeOperator extends AbstractCoercableOperator {
                         "supported");
             }
         }
-        branchMap.setAll(newBranchMap);
+        branchMap.setAll(newBranchMap, true);
         c2cLikelihood.makeDirty();
         return hr;
     }

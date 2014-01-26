@@ -264,9 +264,12 @@ public final class MarkovChain {
 
                 if (usingFullEvaluation) {
 
-                    // This is a test that the state is correctly restored. The
-                    // restored state is fully evaluated and the likelihood compared with
-                    // that before the operation was made.
+                    // This is a test that the state was correctly evaluated. The
+                    // likelihood of all components of the model are flagged as
+                    // needing recalculation, then the full likelihood is calculated
+                    // again and compared to the first result. This checks that the
+                    // BEAST is aware of all changes that the operator induced.
+
                     likelihood.makeDirty();
                     final double testScore = evaluate(likelihood, prior);
 

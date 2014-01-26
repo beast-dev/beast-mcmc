@@ -52,7 +52,7 @@ import java.util.Map;
  */
 public class Partition {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	// Constructor fields
 	public int from;
@@ -82,7 +82,7 @@ public class Partition {
 	private int stateCount;
 	private int compactPartialsCount;
 	private int patternCount;
-	private int categoryCount;
+	private int siteRateCategoryCount;
 
 	// Sequence fields
 	private Map<Taxon, int[]> sequenceList;
@@ -147,7 +147,7 @@ public class Partition {
 		compactPartialsCount = tipCount;
 		stateCount = dataType.getStateCount();
 		patternCount = partitionSiteCount;
-		categoryCount = siteModel.getCategoryCount();
+		siteRateCategoryCount = siteModel.getCategoryCount();
 
 		int[] resourceList = new int[] { 0 };
 		long preferenceFlags = 0;
@@ -160,7 +160,7 @@ public class Partition {
 				patternCount, //
 				substitutionModelDelegate.getEigenBufferCount(), //
 				substitutionModelDelegate.getMatrixBufferCount(), //
-				categoryCount, //
+				siteRateCategoryCount, //
 				scaleBufferHelper.getBufferCount(), //
 				resourceList, //
 				preferenceFlags, //
@@ -270,8 +270,7 @@ public class Partition {
 			double[] cProb = new double[stateCount];
 
 			//TODO: make global, write for all categories
-			double[][] probabilities = getTransitionProbabilities(child,
-					categoryCount);
+			double[][] probabilities = getTransitionProbabilities(child);
 
 			if (DEBUG) {
 				synchronized (this) {
@@ -309,11 +308,10 @@ public class Partition {
 
 	}// END: traverse
 
-	private double[][] getTransitionProbabilities(NodeRef node, //
-			int categoryCount //
+	private double[][] getTransitionProbabilities(NodeRef node //
 	) {
 
-		double[][] probabilities = new double[categoryCount][stateCount
+		double[][] probabilities = new double[siteRateCategoryCount][stateCount
 				* stateCount];
 
 		int nodeNum = node.getNumber();
@@ -321,32 +319,32 @@ public class Partition {
 		int branchIndex = nodeNum;
 
 		double branchRate = branchRateModel.getBranchRate(treeModel, node);
-		double branchTime = branchRate * treeModel.getBranchLength(node);//
-		
-		if (branchTime < 0.0) {
-			throw new RuntimeException("Negative branch length: " + branchTime);
-		}
+		double branchLength = treeModel.getBranchLength(node);
 
-		
-//		double branchLength = siteModel.getRateForCategory(rateCategory) * branchTime;
-		
-		int count = 1;
-		substitutionModelDelegate.updateTransitionMatrices(beagle,
-				new int[] { branchIndex }, new double[] { branchTime }, count);
+//		if (branchLength * branchRate < 0.0) {
+//			throw new RuntimeException("Negative branch length: " + branchLength * branchRate);
+//		}
 
-		double transitionMatrix[] = new double[categoryCount * stateCount
-				* stateCount];
+		for (int siteRateCat = 0; siteRateCat < siteRateCategoryCount; siteRateCat++) {
 
-		beagle.getTransitionMatrix(branchIndex, //
-				transitionMatrix //
-		);
+			double siteRate = siteModel.getRateForCategory(siteRateCat);
+            double branchTime = branchLength * branchRate * siteRate;			
+			
+			int count = 1;
+			substitutionModelDelegate.updateTransitionMatrices(beagle,
+					new int[] { branchIndex }, new double[] { branchTime },
+					count);
 
-		for (int i = 0; i < categoryCount; i++) {
+			double transitionMatrix[] = new double[siteRateCategoryCount * stateCount * stateCount];
 
-			System.arraycopy(transitionMatrix, i * stateCount,
-					probabilities[i], 0, stateCount * stateCount);
+			beagle.getTransitionMatrix(branchIndex, //
+					transitionMatrix //
+			);
 
-		}
+			System.arraycopy(transitionMatrix, siteRateCat * stateCount,
+					probabilities[siteRateCat], 0, stateCount * stateCount);
+
+		}// END: i loop
 
 		return probabilities;
 	}// END: getTransitionProbabilities
@@ -454,7 +452,6 @@ public class Partition {
 		}
 
 		return samplePos;
-		
 	}// END: randomChoicePDF
 
 	// /////////////

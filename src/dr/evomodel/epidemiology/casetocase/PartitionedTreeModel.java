@@ -28,13 +28,11 @@ public class PartitionedTreeModel extends TreeModel {
     public PartitionedTreeModel(String id, Tree tree, BranchMapModel branchMap){
         super(id, tree);
         this.branchMap = branchMap;
-        addModel(branchMap);
     }
 
     public PartitionedTreeModel(String id, Tree tree){
         super(id, tree);
         branchMap = new BranchMapModel(this);
-        addModel(branchMap);
     }
 
     public PartitionedTreeModel(TreeModel treeModel, BranchMapModel branchMap){
@@ -46,6 +44,7 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
     public void partitionsChangingAlert(HashSet<AbstractCase> casesToRecalculate){
+        // TreeLikelihood and TreeParameter listeners are irrelevant
         listenerHelper.fireModelChanged(this, new PartitionsChangedEvent(casesToRecalculate));
     }
 
@@ -67,31 +66,7 @@ public class PartitionedTreeModel extends TreeModel {
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-        // should only happen when the branch map changes
-
-        if(object instanceof ArrayList){
-            HashSet<AbstractCase> changedPartitions = new HashSet<AbstractCase>();
-
-            for(int i=0; i<((ArrayList) object).size(); i++){
-                BranchMapModel.BranchMapChangedEvent event
-                        =  (BranchMapModel.BranchMapChangedEvent)((ArrayList) object).get(i);
-
-                changedPartitions.add(event.getOldCase());
-                changedPartitions.add(event.getNewCase());
-
-                NodeRef node = getNode(event.getNodeToRecalculate());
-                NodeRef parent = getParent(node);
-
-                changedPartitions.add(branchMap.get(parent.getNumber()));
-
-
-            }
-            partitionsChangingAlert(changedPartitions);
-
-
-        } else {
-            throw new RuntimeException("Unanticipated model changed event from BranchMapModel");
-        }
+        // shouldn't be any
 
     }
 
@@ -144,14 +119,16 @@ public class PartitionedTreeModel extends TreeModel {
         affectedNodes.add(getChild(node, 1));
 
         for(NodeRef aNode : affectedNodes){
-            changedCases.add(branchMap.get(aNode.getNumber()));
+            if(aNode!=null){
+                changedCases.add(branchMap.get(aNode.getNumber()));
+            }
         }
 
         return changedCases;
     }
 
     private void flushQueue(){
-        if(!inTreeEdit()){
+        if(inTreeEdit()){
             throw new RuntimeException("Wait until you've finished editing the tree before flushing the partition" +
                     "queue");
         }
@@ -171,16 +148,16 @@ public class PartitionedTreeModel extends TreeModel {
 
     public void addChild(NodeRef p, NodeRef c) {
 
-        partitionChangingAlert(branchMap.get(p.getNumber()));
-        partitionChangingAlert(branchMap.get(c.getNumber()));
+        pushNodePartitionsChangedEvent(p);
+        pushNodePartitionsChangedEvent(c);
 
         super.addChild(p, c);
     }
 
     public void removeChild(NodeRef p, NodeRef c) {
 
-        partitionChangingAlert(branchMap.get(p.getNumber()));
-        partitionChangingAlert(branchMap.get(c.getNumber()));
+        pushNodePartitionsChangedEvent(p);
+        pushNodePartitionsChangedEvent(c);
 
         super.removeChild(p, c);
 

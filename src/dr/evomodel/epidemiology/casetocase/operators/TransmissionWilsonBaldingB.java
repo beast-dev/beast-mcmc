@@ -144,9 +144,9 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         // repaint the parent to match either its new parent or its new child (50% chance of each).
 
         if(MathUtils.nextInt(2)==0){
-            branchMap.set(iP.getNumber(), branchMap.get(k.getNumber()));
+            branchMap.set(iP.getNumber(), branchMap.get(k.getNumber()), true);
         } else {
-            branchMap.set(iP.getNumber(), branchMap.get(j.getNumber()));
+            branchMap.set(iP.getNumber(), branchMap.get(j.getNumber()), true);
         }
 
         if(debug){

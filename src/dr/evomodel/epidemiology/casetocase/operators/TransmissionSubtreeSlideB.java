@@ -159,13 +159,13 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
                 if(newParent != null && branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
                     if(MathUtils.nextInt(2)==0){
-                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()));
+                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()), true);
                     } else {
-                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
+                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
                     }
                     logq += Math.log(2);
                 } else {
-                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
+                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
                 }
 
             } else {
@@ -252,13 +252,13 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
                 if(newParent!=null && branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
                     if(MathUtils.nextInt(2)==0){
-                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()));
+                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()), true);
                     } else {
-                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
+                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
                     }
                     logq += Math.log(2);
                 } else {
-                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()));
+                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
                 }
 
             } else {

@@ -123,8 +123,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         storedTransProbKnown = transProbKnown;
         storedTreeLogProb = treeLogProb;
         storedTreeProbKnown = treeProbKnown;
-        storedSortedCases = sortedCases;
-        storedLastTimesToInfect = lastTimesToInfect;
+        storedSortedCases = new ArrayList<AbstractCase>(sortedCases);
+
+        storedLastTimesToInfect = new double[outbreak.size()][];
+        for(int i = 0; i < outbreak.size(); i++){
+            double[] aMatrix = lastTimesToInfect[i];
+            int aLength = aMatrix.length;
+            storedLastTimesToInfect[i] = Arrays.copyOf(aMatrix, aLength);
+        }
+
     }
 
     protected void restoreState() {
@@ -208,9 +215,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         BranchMapModel branchMap = treeLikelihood.getBranchMap();
 
         AbstractCase[] trueMap = branchMap.getArrayCopy();
-        branchMap.setAll(map);
+        branchMap.setAll(map, false);
         double out = getLogLikelihood();
-        branchMap.setAll(trueMap);
+        branchMap.setAll(trueMap, false);
         return out;
     }
 

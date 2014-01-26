@@ -26,7 +26,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
     public static final String INFECTION_BRANCH_GIBBS_OPERATOR = "infectionBranchGibbsOperator";
     private CaseToCaseTransmissionLikelihood c2cTransLikelihood;
     private CaseToCaseTreeLikelihood c2cTreeLikelihood;
-    private boolean DEBUG = false;
+    private static final boolean DEBUG = false;
 
     public InfectionBranchGibbsOperator(CaseToCaseTransmissionLikelihood c2cTransLikelihood, double weight){
         this.c2cTransLikelihood = c2cTransLikelihood;
@@ -134,7 +134,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
 
         int choice = MathUtils.randomChoicePDF(probabilities);
 
-        originalBranchMap.setAll(branchMaps[choice]);
+        originalBranchMap.setAll(branchMaps[choice], false);
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){

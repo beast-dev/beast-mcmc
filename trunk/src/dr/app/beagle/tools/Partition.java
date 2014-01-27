@@ -284,18 +284,14 @@ public class Partition {
 				synchronized (this) {
 					System.out.println("Going to child " + iChild + ": " + child.toString());
 					System.out.println("Child finite transition probs matrix:");
-					Utils.print2DArray(probabilities, 4);
+					Utils.print2DArray(probabilities, stateCount);
 					System.out.println();
 				}
 			}// END: if DEBUG
 			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
-				System.out.println("seqChar " + parentSequence[i]);
-				
 				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
-//				System.arraycopy(m_probabilities[category[i]], parentSequence[i]*m_stateCount, cProb, 0, m_stateCount);
-				
 				
 				if (DEBUG) {
 					synchronized (this) {
@@ -326,7 +322,7 @@ public class Partition {
 				if (DEBUG) {
 					synchronized (this) {
 						System.out.println("Simulated sequence (translated):");
-				System.out.println(intArray2Sequence(taxon, partitionSequence, BeagleSequenceSimulator.gapFlag).getSequenceString());
+				        System.out.println(Utils.intArray2Sequence(taxon, partitionSequence, BeagleSequenceSimulator.gapFlag, dataType).getSequenceString());
 					}
 				}// END: if DEBUG
 				
@@ -539,41 +535,4 @@ public class Partition {
 		Utils.printMap(sequenceList);
 	}// END: printSequences
 
-	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag) {
-
-		StringBuilder sSeq = new StringBuilder();
-
-		if (dataType instanceof Codons) {
-
-			for (int i = 0; i < partitionSiteCount; i++) {
-
-				int state = seq[i];
-
-				if (state == gapFlag) {
-					sSeq.append(dataType.getTriplet(dataType.getGapState()));
-				} else {
-					sSeq.append(dataType.getTriplet(seq[i]));
-				}// END: gap check
-
-			}// END: replications loop
-
-		} else {
-
-			for (int i = 0; i < partitionSiteCount; i++) {
-
-				int state = seq[i];
-
-				if (state == gapFlag) {
-					sSeq.append(dataType.getCode(dataType.getGapState()));
-				} else {
-					sSeq.append(dataType.getCode(seq[i]));
-				}// END: gap check
-
-			}// END: replications loop
-
-		}// END: dataType check
-
-		return new Sequence(taxon, sSeq.toString());
-	}// END: intArray2Sequence
-	
 }// END: class

@@ -29,7 +29,7 @@ import dr.xml.*;
 
 public class SequenceSimulator {
 	
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	
 	/** nr of samples to generate **/
 	protected int m_sequenceLength;
@@ -136,6 +136,14 @@ public class SequenceSimulator {
 
 		}
 
+		if (DEBUG) {
+			synchronized (this) {
+				System.out.println();
+				System.out.println("root Sequence:");
+				Utils.printArray(seq);
+			}
+		}
+		
 		SimpleAlignment alignment = new SimpleAlignment();
 		alignment.setReportCountStatistics(false);
 		alignment.setDataType(m_siteModel.getFrequencyModel().getDataType());
@@ -154,28 +162,66 @@ public class SequenceSimulator {
 	 * @param alignment
 	 */
 	void traverse(NodeRef node, int [] parentSequence, int [] category, SimpleAlignment alignment) {
+		
+		if (DEBUG) {
+			System.out.println();
+			    System.out.println("I'm at: " + node.toString());
+				System.out.println();
+		}
+		
 		for (int iChild = 0; iChild < m_tree.getChildCount(node); iChild++) {
+			
 			NodeRef child = m_tree.getChild(node, iChild);
+			
             for (int i = 0; i < m_categoryCount; i++) {
             	getTransitionProbabilities(m_tree, child, i, m_probabilities[i]);
             }
 
-            if(DEBUG){
-            Utils.print2DArray(m_probabilities);
-            }
+			if (DEBUG) {
+			     	System.out.println("Going to child " + iChild + ": " + child.toString());
+					System.out.println("Child finite transition probs matrix:");
+					Utils.print2DArray(m_probabilities, 4);
+					System.out.println();
+			}// END: if DEBUG
             
         	int [] seq = new int[m_sequenceLength];
     		double [] cProb = new double[m_stateCount];
+    		
         	for (int i  = 0; i < m_sequenceLength; i++) {
-        		System.arraycopy(m_probabilities[category[i]], parentSequence[i]*m_stateCount, cProb, 0, m_stateCount);
-            	seq[i] = MathUtils.randomChoicePDF(cProb);
+        		
+        		System.out.println("seqChar " + parentSequence[i]);
+        		
+        		System.arraycopy(m_probabilities[category[i]], parentSequence[i] * m_stateCount, cProb, 0, m_stateCount);
+        		
+				if (DEBUG) {
+						System.out.println("site:" + i);
+						System.out.println("site probs:");
+						Utils.printArray(cProb);
+				}// END: if DEBUG
+
+				seq[i] = MathUtils.randomChoicePDF(cProb);
+
         	}
 
+			if (DEBUG) {
+//        	    seq = new int[]{1, 3, 2, 3, 0, 1, 0, 1, 0, 2, 2, 0, 1, 3, 3, 3, 0, 1, 2, 1, 3, 1, 1, 1, 1, 3, 0, 0, 3, 2, 3, 2, 3, 2, 1, 2, 1, 3, 2, 3, 3, 0, 2, 2, 3, 2, 3, 2, 3, 1, 2, 0, 2, 1, 3, 2, 3, 1, 1, 1, 1, 0, 2, 3, 1, 0, 2, 1, 2, 1, 3, 0, 0, 0, 0, 0, 2, 0, 2, 3, 1, 0, 1, 3, 0, 2, 1, 2, 1, 3, 0, 0, 3, 2, 2, 0, 1, 0, 0, 3  };
+				System.out.println("Simulated sequence:");
+				Utils.printArray(seq);
+			}
+        	
             if (m_tree.getChildCount(child) == 0) {
+            	
+            	if (DEBUG) {
+            		System.out.println("Simulated sequence (translated):");
+                    System.out.println(intArray2Sequence(seq, child).getSequenceString());
+            	}
+        
             	alignment.addSequence(intArray2Sequence(seq, child));
             }
+            
 			traverse(m_tree.getChild(node, iChild), seq, category, alignment);
-		}
+		}//END: child nodes loop
+		
 	} // traverse
 
     void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double[] probs) {
@@ -193,7 +239,6 @@ public class SequenceSimulator {
 
         double branchLength = m_siteModel.getRateForCategory(rateCategory) * branchTime;
 
-        // TODO Hack until SiteRateModel issue is resolved
         if (m_siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
             ((SubstitutionEpochModel)m_siteModel.getSubstitutionModel()).getTransitionProbabilities(tree.getNodeHeight(node),
                     tree.getNodeHeight(parent),branchLength, probs);

@@ -788,6 +788,25 @@ public class Utils {
 			System.out.print("\n");
 		}
 	}// END: print2DArray
+	
+	
+	public static void print2DArray(double[][] array, int formatEvery) {
+		
+		int i = 0;
+		for (int row = 0; row < array.length; row++) {
+			for (int col = 0; col < array[row].length; col++) {
+				
+				if(i == formatEvery) {
+					System.out.print("\n");
+					i=0;
+				}
+				
+				System.out.print(array[row][col] + " ");
+			i++;
+			}
+			System.out.print("\n");
+		}
+	}// END: print2DArray
 
 	public static void printBranchSubstitutionModel(PartitionData data) {
 		System.out.print("\tBranch Substitution model: ");

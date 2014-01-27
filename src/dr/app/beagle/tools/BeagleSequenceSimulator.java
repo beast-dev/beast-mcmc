@@ -55,7 +55,7 @@ public class BeagleSequenceSimulator {
 	private int siteCount;
 
 	// Alignment fields
-	private final int gapFlag = Integer.MAX_VALUE;
+	public static final int gapFlag = Integer.MAX_VALUE;
 	private SimpleAlignment alignment;
 	private DataType dataType;
 	private boolean fieldsSet = false;

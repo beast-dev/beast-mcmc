@@ -41,6 +41,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
+
 import org.apache.commons.math.random.MersenneTwister;
 
 import java.util.HashMap;
@@ -52,7 +53,7 @@ import java.util.Map;
  */
 public class Partition {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	// Constructor fields
 	public int from;
@@ -92,6 +93,9 @@ public class Partition {
 
 	private MersenneTwister random;
 
+	
+//	private double[][] probabilities;
+	
 	public Partition(TreeModel treeModel, //
 			BranchModel branchModel, //
 			GammaSiteRateModel siteModel, //
@@ -121,7 +125,8 @@ public class Partition {
 
 		sequenceList = new HashMap<Taxon, int[]>();
 		random = new MersenneTwister(MathUtils.nextLong());
-
+//		random = new MersenneTwister();
+		
 	}// END: Constructor
 
 	private void setSubstitutionModelDelegate() {
@@ -229,9 +234,9 @@ public class Partition {
 
 			if (DEBUG) {
 				synchronized (this) {
-
-					System.out.println("parent Sequence:");
+					System.out.println("root Sequence:");
 					Utils.printArray(parentSequence);
+					System.out.println();
 				}
 			}
 
@@ -241,6 +246,7 @@ public class Partition {
 
 			if (DEBUG) {
 				synchronized (this) {
+					System.out.println("Simulated alignment:");
 					printSequences();
 				}
 
@@ -263,42 +269,68 @@ public class Partition {
 			int[] category //
 	) {
 
+		if (DEBUG) {
+			synchronized (this) {
+				System.out.println();
+				System.out.println("I'm at: " + node.toString());
+				System.out.println();
+			}
+		}
+		
 		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
 
 			NodeRef child = treeModel.getChild(node, iChild);
 			int[] partitionSequence = new int[partitionSiteCount];
 			double[] cProb = new double[stateCount];
 
-			//TODO: make global, write for all categories
 			double[][] probabilities = getTransitionProbabilities(child);
-
+			
 			if (DEBUG) {
 				synchronized (this) {
+					System.out.println("Going to child " + iChild + ": " + child.toString());
+					System.out.println("Child finite transition probs matrix:");
 					Utils.print2DArray(probabilities);
+					System.out.println();
 				}
 			}// END: if DEBUG
 			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
-				System.arraycopy(probabilities[category[i]], parentSequence[i]
-						* stateCount, cProb, 0, stateCount);
+				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
 
-//				if (DEBUG) {
-//					synchronized (this) {
-//						Utils.printArray(cProb);
-//					}
-//				}// END: if DEBUG
-				
+				if (DEBUG) {
+					synchronized (this) {
+						System.out.println("site:" + i);
+						System.out.println("site probs:");
+						Utils.printArray(cProb);
+					}
+				}// END: if DEBUG
+
 				partitionSequence[i] = randomChoicePDF(cProb, partitionNumber,
 						"seq");
 
-			}
-
+			}// END: i loop
+			
+			if (DEBUG) {
+				synchronized (this) {
+//					partitionSequence = new int[]{1, 3, 2, 3, 0, 1, 0, 1, 0, 2, 2, 0, 1, 3, 3, 3, 0, 1, 2, 1, 3, 1, 1, 1, 1, 3, 0, 0, 3, 2, 3, 2, 3, 2, 1, 2, 1, 3, 2, 3, 3, 0, 2, 2, 3, 2, 3, 2, 3, 1, 2, 0, 2, 1, 3, 2, 3, 1, 1, 1, 1, 0, 2, 3, 1, 0, 2, 1, 2, 1, 3, 0, 0, 0, 0, 0, 2, 0, 2, 3, 1, 0, 1, 3, 0, 2, 1, 2, 1, 3, 0, 0, 3, 2, 2, 0, 1, 0, 0, 3  };
+					System.out.println("Simulated sequence:");
+					Utils.printArray(partitionSequence);
+				}
+			}// END: if DEBUG
+			
 			if (treeModel.getChildCount(child) == 0) {
 
 				Taxon taxon = treeModel.getNodeTaxon(child);
 				sequenceList.put(taxon, partitionSequence);
-
+				
+				if (DEBUG) {
+					synchronized (this) {
+						System.out.println("Simulated sequence (translated):");
+				System.out.println(intArray2Sequence(taxon, partitionSequence, BeagleSequenceSimulator.gapFlag).getSequenceString());
+					}
+				}// END: if DEBUG
+				
 			} // END: tip node check
 
 			traverse(treeModel.getChild(node, iChild), partitionSequence,
@@ -320,10 +352,6 @@ public class Partition {
 
 		double branchRate = branchRateModel.getBranchRate(treeModel, node);
 		double branchLength = treeModel.getBranchLength(node);
-
-//		if (branchLength * branchRate < 0.0) {
-//			throw new RuntimeException("Negative branch length: " + branchLength * branchRate);
-//		}
 
 		for (int siteRateCat = 0; siteRateCat < siteRateCategoryCount; siteRateCat++) {
 
@@ -512,4 +540,41 @@ public class Partition {
 		Utils.printMap(sequenceList);
 	}// END: printSequences
 
+	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag) {
+
+		StringBuilder sSeq = new StringBuilder();
+
+		if (dataType instanceof Codons) {
+
+			for (int i = 0; i < partitionSiteCount; i++) {
+
+				int state = seq[i];
+
+				if (state == gapFlag) {
+					sSeq.append(dataType.getTriplet(dataType.getGapState()));
+				} else {
+					sSeq.append(dataType.getTriplet(seq[i]));
+				}// END: gap check
+
+			}// END: replications loop
+
+		} else {
+
+			for (int i = 0; i < partitionSiteCount; i++) {
+
+				int state = seq[i];
+
+				if (state == gapFlag) {
+					sSeq.append(dataType.getCode(dataType.getGapState()));
+				} else {
+					sSeq.append(dataType.getCode(seq[i]));
+				}// END: gap check
+
+			}// END: replications loop
+
+		}// END: dataType check
+
+		return new Sequence(taxon, sSeq.toString());
+	}// END: intArray2Sequence
+	
 }// END: class

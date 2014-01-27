@@ -24,9 +24,12 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
+import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.MutableTaxonList;
@@ -927,6 +930,44 @@ public class Utils {
 		System.out.println(taxaToString(dataList.allTaxa, true));
 	}// END: printTaxonList
 
+	public static Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag, DataType dataType) {
+
+		StringBuilder sSeq = new StringBuilder();
+        int partitionSiteCount = seq.length;
+		
+		if (dataType instanceof Codons) {
+
+			for (int i = 0; i < partitionSiteCount; i++) {
+
+				int state = seq[i];
+
+				if (state == gapFlag) {
+					sSeq.append(dataType.getTriplet(dataType.getGapState()));
+				} else {
+					sSeq.append(dataType.getTriplet(seq[i]));
+				}// END: gap check
+
+			}// END: replications loop
+
+		} else {
+
+			for (int i = 0; i < partitionSiteCount; i++) {
+
+				int state = seq[i];
+
+				if (state == gapFlag) {
+					sSeq.append(dataType.getCode(dataType.getGapState()));
+				} else {
+					sSeq.append(dataType.getCode(seq[i]));
+				}// END: gap check
+
+			}// END: replications loop
+
+		}// END: dataType check
+
+		return new Sequence(taxon, sSeq.toString());
+	}// END: intArray2Sequence
+	
 	// //////////////////////
 	// ---TOSTRING UTILS---//
 	// //////////////////////

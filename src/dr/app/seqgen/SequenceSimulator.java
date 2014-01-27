@@ -29,7 +29,7 @@ import dr.xml.*;
 
 public class SequenceSimulator {
 	
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	
 	/** nr of samples to generate **/
 	protected int m_sequenceLength;

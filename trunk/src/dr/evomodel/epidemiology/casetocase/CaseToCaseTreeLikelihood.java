@@ -114,10 +114,9 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         noTips = virusTree.getExternalNodeCount();
 
+        //subclasses should add cases as a model if it contains any information that ever changes
+
         cases = caseData;
-
-        addModel(cases);
-
 
         Date lastSampleDate = getLatestTaxonDate();
         estimatedLastSampleTime = lastSampleDate.getTimeValue();

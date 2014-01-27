@@ -215,12 +215,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         Matrix tPrecision= new Matrix(precision.getParameterAsMatrix());
         computeResiduals();
-        Matrix ans = null;
+        Matrix expPart=null;
+        double logdet=0;
         try{
-        ans = residual.product(tPrecision.product(residual.transpose()));
+        expPart = residual.product(tPrecision.product(residual.transpose()));
+            logdet=tPrecision.logDeterminant();
         } catch (IllegalDimension illegalDimension) {
         illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-    }
-        return -.5*ans.toComponents()[0][0];
+        }
+       return -.5*expPart.toComponents()[0][0] - .5*logdet;
     }
 }

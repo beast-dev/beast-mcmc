@@ -25,6 +25,11 @@
 
 package dr.app.beagle.tools;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.apache.commons.math.random.MersenneTwister;
+
 import beagle.Beagle;
 import beagle.BeagleFactory;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
@@ -42,18 +47,13 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
 
-import org.apache.commons.math.random.MersenneTwister;
-
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * @author Filip Bielejec
  * @version $Id$
  */
 public class Partition {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	// Constructor fields
 	public int from;
@@ -86,15 +86,12 @@ public class Partition {
 	private int siteRateCategoryCount;
 
 	// Sequence fields
-	private Map<Taxon, int[]> sequenceList;
+	private LinkedHashMap<Taxon, int[]> sequenceList;
 	private DataType dataType;
 	private boolean hasAncestralSequence = false;
 	private Sequence ancestralSequence = null;
 
 	private MersenneTwister random;
-
-	
-//	private double[][] probabilities;
 	
 	public Partition(TreeModel treeModel, //
 			BranchModel branchModel, //
@@ -123,9 +120,8 @@ public class Partition {
 		setSubstitutionModelDelegate();
 		loadBeagleInstance();
 
-		sequenceList = new HashMap<Taxon, int[]>();
+		sequenceList = new LinkedHashMap<Taxon, int[]>();
 		random = new MersenneTwister(MathUtils.nextLong());
-//		random = new MersenneTwister();
 		
 	}// END: Constructor
 
@@ -234,9 +230,9 @@ public class Partition {
 
 			if (DEBUG) {
 				synchronized (this) {
+					System.out.println();
 					System.out.println("root Sequence:");
 					Utils.printArray(parentSequence);
-					System.out.println();
 				}
 			}
 
@@ -253,7 +249,6 @@ public class Partition {
 			}
 
 			beagle.finalize();
-//			System.gc();
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -289,15 +284,19 @@ public class Partition {
 				synchronized (this) {
 					System.out.println("Going to child " + iChild + ": " + child.toString());
 					System.out.println("Child finite transition probs matrix:");
-					Utils.print2DArray(probabilities);
+					Utils.print2DArray(probabilities, 4);
 					System.out.println();
 				}
 			}// END: if DEBUG
 			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
+				System.out.println("seqChar " + parentSequence[i]);
+				
 				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
-
+//				System.arraycopy(m_probabilities[category[i]], parentSequence[i]*m_stateCount, cProb, 0, m_stateCount);
+				
+				
 				if (DEBUG) {
 					synchronized (this) {
 						System.out.println("site:" + i);

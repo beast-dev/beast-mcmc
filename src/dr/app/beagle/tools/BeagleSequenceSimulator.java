@@ -27,8 +27,8 @@ package dr.app.beagle.tools;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -164,7 +164,7 @@ public class BeagleSequenceSimulator {
 		simpleAlignment.setReportCountStatistics(false);
 		simpleAlignment.setDataType(dataType);
 		
-		Map<Taxon, int[]> alignmentMap = new HashMap<Taxon, int[]>();
+		LinkedHashMap<Taxon, int[]> alignmentMap = new LinkedHashMap<Taxon, int[]>();
 
 		// compile the alignment
 		for (Partition partition : partitions) {

@@ -34,7 +34,7 @@ import java.util.*;
 public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable,
         TreeTraitProvider {
 
-    protected final static boolean DEBUG = false;
+    protected static final boolean DEBUG = false;
 
     /* The phylogenetic tree. */
 

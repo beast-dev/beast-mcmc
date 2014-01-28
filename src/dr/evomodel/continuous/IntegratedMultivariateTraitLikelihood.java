@@ -1,7 +1,7 @@
 /*
  * IntegratedMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -377,7 +377,14 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             if (index > dimTrait * treeModel.getExternalNodeCount()) {
                 throw new RuntimeException("Attempting to update an invalid index");
             }
-            cacheHelper.setMeanCache(index, traitParameter.getValue(index));
+
+            if (index != -1) {
+                cacheHelper.setMeanCache(index, traitParameter.getValue(index));
+            } else {
+                for (int idx = 0; idx < traitParameter.getDimension(); ++idx) {
+                    cacheHelper.setMeanCache(idx, traitParameter.getValue(idx));
+                }
+            }
             // meanCache[index] = traitParameter.getValue(index);
             likelihoodKnown = false;
 //            if (!cacheBranches) {

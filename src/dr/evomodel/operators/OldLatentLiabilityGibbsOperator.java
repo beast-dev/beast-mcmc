@@ -1,7 +1,7 @@
 /*
- * LatentLiabilityGibbsOperator.java
+ * OldLatentLiabilityGibbsOperator.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -45,9 +45,9 @@ import java.util.logging.Logger;
  * @author Marc A. Suchard
  * @author Joe Felsenstein
  */
-public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class OldLatentLiabilityGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
-    public static final String GIBBS_OPERATOR = "latentLiabilityGibbsOperator";
+    public static final String GIBBS_OPERATOR = "oldLatentLiabilityGibbsOperator";
 //    public static final String INTERNAL_ONLY = "onlyInternalNodes";
 //    public static final String TIP_WITH_PRIORS_ONLY = "onlyTipsWithPriors";
 //    public static final String NODE_PRIOR = "nodePrior";
@@ -74,8 +74,8 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
 
     private final int maxTries = 10000;
 
-    public LatentLiabilityGibbsOperator(IntegratedMultivariateTraitLikelihood traitModel,
-                                        BinaryLatentLiabilityLikelihood liabilityLikelihood) {
+    public OldLatentLiabilityGibbsOperator(IntegratedMultivariateTraitLikelihood traitModel,
+                                           BinaryLatentLiabilityLikelihood liabilityLikelihood) {
         super();
         this.traitModel = traitModel;
         this.liabilityLikelihood = liabilityLikelihood;
@@ -322,7 +322,7 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
             BinaryLatentLiabilityLikelihood liabilityLikelihood = (BinaryLatentLiabilityLikelihood)
                     xo.getChild(BinaryLatentLiabilityLikelihood.class);
 
-            LatentLiabilityGibbsOperator operator = new LatentLiabilityGibbsOperator(traitModel, liabilityLikelihood);
+            OldLatentLiabilityGibbsOperator operator = new OldLatentLiabilityGibbsOperator(traitModel, liabilityLikelihood);
             operator.setWeight(weight);
 
             return operator;

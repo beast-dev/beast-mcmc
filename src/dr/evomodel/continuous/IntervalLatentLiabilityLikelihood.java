@@ -1,7 +1,7 @@
 /*
  * IntervalLatentLiabilityLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -185,6 +185,20 @@ public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood i
             // TODO Handle missing values
         }
 //        System.err.println("valid = " + valid);
+
+        // check
+        boolean valid2 = true;
+        for (int tip = 0; tip < treeModel.getExternalNodeCount() && valid2; ++tip) {
+            if (!validTraitForTip(tip)) {
+                valid2 = false;
+            }
+        }
+
+//        System.err.println(valid + " " + valid2);
+        if (valid != valid2) {
+            throw new RuntimeException("Error in computing validity of tips values");
+        }
+
         if (valid) {
             return 0.0;
         } else {
@@ -193,18 +207,17 @@ public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood i
         }
     }
 
-//    public boolean validTraitForTip(int tip) {
-//        boolean valid = true;
-//        Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
-////        int[] data = tipData[tip];
-//        for (int index = 0; index < tipData.length && valid; ++index) {
-////            int datum = data[index];
-////            double trait = oneTipTraitParameter.getParameterValue(index);
-//            double trait = tipTraitParameter.getParameterValue(index);
-//            valid = Math.round(trait) == tipData[index];
-//        }
-//        return valid;
-//    }
+    public boolean validTraitForTip(int tip) {
+        boolean valid = true;
+        Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
+        final int offset = oneTipTraitParameter.getDimension() * tip;
+        for (int index = 0; index < oneTipTraitParameter.getDimension() && valid; ++index) {
+            double raw = oneTipTraitParameter.getParameterValue(index);
+            long round = Math.round(raw);
+            valid = round == tipData[index + offset];
+        }
+        return valid;
+    }
 
     // **************************************************************
     // XMLObjectParser

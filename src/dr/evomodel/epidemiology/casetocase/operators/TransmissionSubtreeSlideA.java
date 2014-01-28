@@ -29,7 +29,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     private final boolean swapInRandomRate;
     private final boolean swapInRandomTrait;
     private CoercionMode mode = CoercionMode.DEFAULT;
-    private boolean debug = true;
+    private final static boolean DEBUG = true;
     public static final String TRANSMISSION_SUBTREE_SLIDE_A = "transmissionSubtreeSlideA";
     public static final String SWAP_RATES = "swapInRandomRate";
     public static final String SWAP_TRAITS = "swapInRandomTrait";
@@ -64,6 +64,10 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
      * @return the log-transformed hastings ratio
      */
     public double doOperation() throws OperatorFailedException {
+
+        if(DEBUG){
+            c2cLikelihood.debugOutputTree("beforeTSSA.nex", false);
+        }
 
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
@@ -265,7 +269,11 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
         if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
-        if (debug) c2cLikelihood.checkPartitions();
+        if (DEBUG) c2cLikelihood.checkPartitions();
+
+        if(DEBUG){
+            c2cLikelihood.debugOutputTree("afterTSSA.nex", false);
+        }
 
         return logq;
     }

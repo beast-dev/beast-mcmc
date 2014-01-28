@@ -301,8 +301,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     public void storeState(){
         super.storeState();
         storedPartitionsAsTrees = Arrays.copyOf(partitionsAsTrees, partitionsAsTrees.length);
-        storedPartitionTreeLogLikelihoods = Arrays.copyOf(storedPartitionTreeLogLikelihoods,
-                storedPartitionTreeLogLikelihoods.length);
+        storedPartitionTreeLogLikelihoods = Arrays.copyOf(partitionTreeLogLikelihoods,
+                partitionTreeLogLikelihoods.length);
         storedTimingLogLikelihoods = Arrays.copyOf(timingLogLikelihoods, timingLogLikelihoods.length);
     }
 

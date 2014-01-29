@@ -93,11 +93,44 @@ public class MathUtils {
 			System.out.println(i + "\t" + pdf[i]);
 		}
 		throw new Error("randomChoicePDF falls through -- negative, infinite or NaN components in input " +
-                "distribution?");
+                "distribution, or all zeroes?");
 	}
 
+    /**
+     * @param logpdf array of unnormalized logprobabilities
+     * @return a sample according to an unnormalized probability distribution
+     *
+     * Use this if probabilities are rounding to zero when converted to real space
+     */
+    public static int randomChoiceLogPDF(double[] logpdf) {
 
-	/**
+        double scalingFactor;
+        int i=0;
+
+        do{
+            scalingFactor = logpdf[i];
+            i++;
+        } while(scalingFactor==Double.NEGATIVE_INFINITY && i<logpdf.length);
+
+        if(scalingFactor == Double.NEGATIVE_INFINITY){
+            throw new Error("randomChoiceLogPDF falls through -- all -INF components in input distribution");
+        }
+
+        for(int j=0; j<logpdf.length; j++){
+            logpdf[j] = logpdf[j] - scalingFactor;
+        }
+
+        double[] pdf = new double[logpdf.length];
+
+        for(int j=0; j<logpdf.length; j++){
+            pdf[j] = Math.exp(logpdf[j]);
+        }
+
+        return randomChoicePDF(pdf);
+
+    }
+
+    /**
 	 * @param array to normalize
 	 * @return a new double array where all the values sum to 1.
 	 *         Relative ratios are preserved.

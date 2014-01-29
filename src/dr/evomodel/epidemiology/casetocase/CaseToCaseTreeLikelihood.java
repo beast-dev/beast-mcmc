@@ -555,12 +555,12 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         if(variable == infectionTimeBranchPositions){
             recalculateCase(index);
-            if(hasLatentPeriods){
-                AbstractCase parent = getInfector(cases.getCase(index));
-                if(parent!=null){
-                    recalculateCase(parent);
-                }
+
+            AbstractCase parent = getInfector(cases.getCase(index));
+            if(parent!=null){
+                recalculateCase(parent);
             }
+
 
         } else if(variable == infectiousTimePositions){
             infectiousPeriods[index] = null;

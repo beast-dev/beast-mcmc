@@ -90,7 +90,9 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         double logL = 0;
 
-        super.prepareTimings();
+        // you shouldn't need to do this, because C2CTransL will already have done it
+
+        // super.prepareTimings();
 
         int noInfectiousCategories = ((WithinCaseCategoryOutbreak)cases).getInfectiousCategoryCount();
 
@@ -267,9 +269,9 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             if(partitionTreeLogLikelihoods[number]==null){
                 Treelet treelet = partitionsAsTrees[number];
 
-                if(DEBUG && treelet.getNodeCount()>1){
-                    debugTreelet(treelet, aCase+"_partition.nex");
-                }
+//                if(DEBUG && treelet.getNodeCount()>1){
+//                    debugTreelet(treelet, aCase+"_partition.nex");
+//                }
 
                 if(children.size()!=0){
                     MaxTMRCACoalescent coalescent = new MaxTMRCACoalescent(treelet, demoModel,
@@ -359,11 +361,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         if(variable == infectionTimeBranchPositions){
             recalculateCaseWCC(index);
-            if(hasLatentPeriods){
-                AbstractCase parent = getInfector(cases.getCase(index));
-                if(parent!=null){
-                    recalculateCaseWCC(parent);
-                }
+
+            AbstractCase parent = getInfector(cases.getCase(index));
+            if(parent!=null){
+                recalculateCaseWCC(parent);
+
             }
         }
 

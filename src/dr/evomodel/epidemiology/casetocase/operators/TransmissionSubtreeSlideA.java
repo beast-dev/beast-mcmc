@@ -29,7 +29,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     private final boolean swapInRandomRate;
     private final boolean swapInRandomTrait;
     private CoercionMode mode = CoercionMode.DEFAULT;
-    private final static boolean DEBUG = true;
+    private final static boolean DEBUG = false;
     public static final String TRANSMISSION_SUBTREE_SLIDE_A = "transmissionSubtreeSlideA";
     public static final String SWAP_RATES = "swapInRandomRate";
     public static final String SWAP_TRAITS = "swapInRandomTrait";

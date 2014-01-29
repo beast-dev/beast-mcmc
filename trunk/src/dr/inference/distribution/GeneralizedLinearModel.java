@@ -1,3 +1,28 @@
+/*
+ * GeneralizedLinearModel.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.distribution;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
@@ -22,9 +47,9 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     protected Parameter dependentParam;
     protected List<Parameter> independentParam;
     protected List<Parameter> indParamDelta;
-    protected List<double[][]> designMatrix; // fixed constants, access as double[][] to save overhead
+    protected List<DesignMatrix> designMatrix; // fixed constants, access as double[][] to save overhead
 
-//    protected double[][] scaleDesignMatrix;
+    //    protected double[][] scaleDesignMatrix;
     protected int[] scaleDesign;
     protected Parameter scaleParameter;
 
@@ -45,8 +70,10 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             N = 0;
     }
 
-//    public double[][] getScaleDesignMatrix() { return scaleDesignMatrix; }
-    public int[] getScaleDesign() { return scaleDesign; }
+    //    public double[][] getScaleDesignMatrix() { return scaleDesignMatrix; }
+    public int[] getScaleDesign() {
+        return scaleDesign;
+    }
 
     public void addRandomEffectsParameter(Parameter effect) {
         if (randomEffects == null) {
@@ -62,7 +89,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {
         if (designMatrix == null)
-            designMatrix = new ArrayList<double[][]>();
+            designMatrix = new ArrayList<DesignMatrix>();
         if (independentParam == null)
             independentParam = new ArrayList<Parameter>();
         if (indParamDelta == null)
@@ -71,7 +98,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         if (N == 0) {
             N = matrix.getRowDimension();
         }
-        designMatrix.add(matrix.getParameterAsMatrix());
+        designMatrix.add(matrix);
         independentParam.add(effect);
         indParamDelta.add(delta);
 
@@ -79,7 +106,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             throw new RuntimeException("Independent variables and their design matrices are out of sync");
         addVariable(effect);
         addVariable(matrix);
-        if(delta != null)
+        if (delta != null)
             addVariable(delta);
         numIndependentVariables++;
         Logger.getLogger("dr.inference").info("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
@@ -88,18 +115,18 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     public boolean getAllIndependentVariablesIdentifiable() {
 
         int totalColDim = 0;
-        for (double[][] mat : designMatrix) {
-            totalColDim += mat[0].length;
+        for (DesignMatrix mat : designMatrix) {
+            totalColDim += mat.getColumnDimension();
         }
 
         double[][] grandDesignMatrix = new double[N][totalColDim];
 
         int offset = 0;
-        for (double[][] mat: designMatrix) {
-            final int length = mat[0].length;
+        for (DesignMatrix mat : designMatrix) {
+            final int length = mat.getColumnDimension();
             for (int i = 0; i < N; ++i) {
                 for (int j = 0; j < length; ++j) {
-                    grandDesignMatrix[i][offset + j] = mat[i][j];
+                    grandDesignMatrix[i][offset + j] = mat.getParameterValue(i, j);
                 }
             }
             offset += length;
@@ -110,7 +137,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
         int rank = svd.rank();
         boolean isFullRank = (totalColDim == rank);
-        Logger.getLogger("dr.inference").info("\tTotal # of predictors = " + totalColDim + " and rank = " + rank);        
+        Logger.getLogger("dr.inference").info("\tTotal # of predictors = " + totalColDim + " and rank = " + rank);
         return isFullRank;
     }
 
@@ -129,20 +156,20 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         for (int j = 0; j < numIndependentVariables; j++) {
             Parameter beta = independentParam.get(j);
             Parameter delta = indParamDelta.get(j);
-            double[][] X = designMatrix.get(j);
+            DesignMatrix X = designMatrix.get(j);
             final int K = beta.getDimension();
             for (int k = 0; k < K; k++) {
                 double betaK = beta.getParameterValue(k);
                 if (delta != null)
                     betaK *= delta.getParameterValue(k);
                 for (int i = 0; i < N; i++)
-                    xBeta[i] += X[i][k] * betaK;
+                    xBeta[i] += X.getParameterValue(i, k) * betaK;
             }
         }
 
-        for (int j=0; j<numRandomEffects; j++) {
+        for (int j = 0; j < numRandomEffects; j++) {
             Parameter effect = randomEffects.get(j);
-            for (int i=0; i<N; i++) {
+            for (int i = 0; i < N; i++) {
                 xBeta[i] += effect.getParameterValue(i);
             }
         }
@@ -168,14 +195,14 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
         Parameter beta = independentParam.get(j);
         Parameter delta = indParamDelta.get(j);
-        double[][] X = designMatrix.get(j);
+        DesignMatrix X = designMatrix.get(j);
         final int K = beta.getDimension();
         for (int k = 0; k < K; k++) {
             double betaK = beta.getParameterValue(k);
             if (delta != null)
                 betaK *= delta.getParameterValue(k);
             for (int i = 0; i < N; i++)
-                xBeta[i] += X[i][k] * betaK;
+                xBeta[i] += X.getParameterValue(i, k) * betaK;
         }
 
         if (numRandomEffects != 0)
@@ -204,7 +231,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 //	}
 
     public double[][] getX(int j) {
-        return designMatrix.get(j);
+        return designMatrix.get(j).getParameterAsMatrix();
     }
 
 
@@ -218,7 +245,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 //            for (int i = 0; i < N; i++)
 //                scale[i] += scaleDesignMatrix[i][k] * scaleK;
 //        }
-        for(int k=0; k<N; k++)
+        for (int k = 0; k < N; k++)
             scale[k] = scaleParameter.getParameterValue(scaleDesign[k]);
 
         return scale;
@@ -247,13 +274,13 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         this.scaleParameter = scaleParameter;
 //        this.scaleDesignMatrix = matrix.getParameterAsMatrix();
         scaleDesign = new int[design.getDimension()];
-        for(int i=0; i<scaleDesign.length; i++)
+        for (int i = 0; i < scaleDesign.length; i++)
             scaleDesign[i] = (int) design.getParameterValue(i);
         addVariable(scaleParameter);
     }
 
 /*	// **************************************************************
-	// RealFunctionOfSeveralVariablesWithGradient IMPLEMENTATION
+          // RealFunctionOfSeveralVariablesWithGradient IMPLEMENTATION
 	// **************************************************************
 
 
@@ -368,8 +395,8 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 
     public LogColumn[] getColumns() {
         LogColumn[] output = new LogColumn[N];
-        for(int i=0; i<N; i++)
-            output[i] = new NumberArrayColumn(getId()+i,i);
+        for (int i = 0; i < N; i++)
+            output[i] = new NumberArrayColumn(getId() + i, i);
         return output;
     }
 

@@ -1,3 +1,28 @@
+/*
+ * DesignMatrix.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.model;
 
 import dr.stats.DiscreteStatistics;
@@ -16,13 +41,75 @@ public class DesignMatrix extends MatrixParameter {
     public static final String COL_DIMENSION = "colDimension";
     public static final String CHECK_IDENTIFABILITY = "checkIdentifiability";
     public static final String STANDARDIZE = "standardize";
+    public static final String DYNAMIC_STANDARDIZATION = "dynamicStandardization";
 
-    public DesignMatrix(String name) {
+    public static final String INTERCEPT = "Intercept";
+
+    public DesignMatrix(String name, boolean dynamicStandardization) {
         super(name);
+        this.dynamicStandardization = dynamicStandardization;
+        init();
     }
 
-    public DesignMatrix(String name, Parameter[] parameters) {
+    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        super.variableChangedEvent(variable, index, type);
+        standardizationKnown = false;
+    }
+
+    public double getParameterValue(int row, int col) {
+        double value = super.getParameterValue(row, col);
+        if (dynamicStandardization) {
+            if (!standardizationKnown) {
+                computeStandarization();
+                standardizationKnown = true;
+            }
+            value = (value - standardizationMean[col]) / standardizationStDev[col];
+        }
+        return value;
+    }
+
+    public void addParameter(Parameter param) {
+        super.addParameter(param);
+        clearCache();     // Changed size
+    }
+
+    public void removeParameter(Parameter param) {
+        super.removeParameter(param);
+        clearCache();     // Changed size
+    }
+
+    private void clearCache() {
+        standardizationMean = null;
+        standardizationStDev = null;
+    }
+
+    private void computeStandarization() {
+        if (standardizationMean == null) {
+            standardizationMean = new double[getColumnDimension()];
+        }
+        if (standardizationStDev == null) {
+            standardizationStDev = new double[getColumnDimension()];
+        }
+        for (int col = 0; col < getColumnDimension(); col++) {
+            if (getParameter(col).getId().equalsIgnoreCase(INTERCEPT)) {
+                standardizationMean[col] = 0.0;
+                standardizationStDev[col] = 1.0;
+            } else {
+                double[] vector = getParameter(col).getParameterValues();
+                standardizationMean[col] = DiscreteStatistics.mean(vector);
+                standardizationStDev[col] = Math.sqrt(DiscreteStatistics.variance(vector, standardizationMean[col]));
+            }
+        }
+    }
+
+    public DesignMatrix(String name, Parameter[] parameters, boolean dynamicStandardization) {
         super(name, parameters);
+        this.dynamicStandardization = dynamicStandardization;
+        init();
+    }
+
+    private void init() {
+        standardizationKnown = false;
     }
 
     // **************************************************************
@@ -50,7 +137,9 @@ public class DesignMatrix extends MatrixParameter {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            DesignMatrix designMatrix = new DesignMatrix(DESIGN_MATRIX);
+            boolean dynamicStandardization = xo.getAttribute(DYNAMIC_STANDARDIZATION, false);
+
+            DesignMatrix designMatrix = new DesignMatrix(DESIGN_MATRIX, dynamicStandardization);
             boolean addIntercept = xo.getAttribute(ADD_INTERCEPT, false);
             boolean standardize = xo.getAttribute(STANDARDIZE, false);
 
@@ -95,7 +184,7 @@ public class DesignMatrix extends MatrixParameter {
 
             if (addIntercept) {
                 Parameter intercept = new Parameter.Default(dim);
-                intercept.setId("Intercept");
+                intercept.setId(INTERCEPT);
                 designMatrix.addParameter(intercept);
             }
 
@@ -128,4 +217,10 @@ public class DesignMatrix extends MatrixParameter {
             return DesignMatrix.class;
         }
     };
+
+    private final boolean dynamicStandardization;
+    private boolean standardizationKnown = false;
+
+    private double[] standardizationMean;
+    private double[] standardizationStDev;
 }

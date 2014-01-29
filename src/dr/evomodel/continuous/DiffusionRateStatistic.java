@@ -404,7 +404,7 @@ public class DiffusionRateStatistic extends Statistic.Abstract {
 
             String name = xo.getAttribute(NAME, xo.getId());
 
-            boolean option = xo.getAttribute(BOOLEAN_DIS_OPTION, true); // Default value is false
+            boolean option = xo.getAttribute(BOOLEAN_DIS_OPTION, true); // Default value is true
             Mode averageMode;
             String mode = xo.getAttribute(MODE, WEIGHTED_AVERAGE);
 

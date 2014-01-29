@@ -101,7 +101,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
             return;
         }
 
-        double[] probabilities = new double[positionsPlease.size()];
+        double[] logProbabilities = new double[positionsPlease.size()];
 
         HashSet<Integer> nodesToChange = c2cTreeLikelihood.samePartitionDownTree(tip, false);
 
@@ -114,7 +114,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
         }
 
         branchMaps[0] = tempBranchMap;
-        probabilities[0] = Math.exp(c2cTransLikelihood.calculateTempLogLikelihood(tempBranchMap));
+        logProbabilities[0] = c2cTransLikelihood.calculateTempLogLikelihood(tempBranchMap);
 
         // at this point only the tip is in its partition
 
@@ -129,10 +129,12 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
                 }
             }
             branchMaps[i] = newBranchMap;
-            probabilities[i] = Math.exp(c2cTransLikelihood.calculateTempLogLikelihood(newBranchMap));
+            logProbabilities[i] = c2cTransLikelihood.calculateTempLogLikelihood(newBranchMap);
         }
 
-        int choice = MathUtils.randomChoicePDF(probabilities);
+        // this prevents underflow
+
+        int choice = MathUtils.randomChoiceLogPDF(logProbabilities);
 
         originalBranchMap.setAll(branchMaps[choice], false);
     }

@@ -388,9 +388,9 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
-            final boolean hasLatentPeriods = xo.hasAttribute(HAS_LATENT_PERIODS);
+            final boolean hasLatentPeriods = Boolean.parseBoolean((String)xo.getAttribute(HAS_LATENT_PERIODS));
 
-            if(xo.hasAttribute(HAS_LATENT_PERIODS) != xo.hasChildNamed(LATENT_PERIOD_PRIOR)){
+            if(hasLatentPeriods != xo.hasChildNamed(LATENT_PERIOD_PRIOR)){
                 throw new XMLParseException("Do you want latent periods or not?");
             }
 
@@ -504,6 +504,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         };
 
         private final XMLSyntaxRule[] rules = {
+                new StringAttributeRule(HAS_LATENT_PERIODS, "Whether to include a latent period in the model"),
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(WithinCaseCategoryCase.WITHIN_CASE_CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),

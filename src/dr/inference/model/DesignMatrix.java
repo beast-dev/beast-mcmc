@@ -43,7 +43,7 @@ public class DesignMatrix extends MatrixParameter {
     public static final String STANDARDIZE = "standardize";
     public static final String DYNAMIC_STANDARDIZATION = "dynamicStandardization";
 
-    public static final String INTERCEPT = "Intercept";
+    public static final String INTERCEPT = "intercept";
 
     public DesignMatrix(String name, boolean dynamicStandardization) {
         super(name);
@@ -68,6 +68,10 @@ public class DesignMatrix extends MatrixParameter {
         return value;
     }
 
+    public double getParameterValue(int index) {
+        throw new RuntimeException("Univariate value from a design matrix");
+    }
+
     public void addParameter(Parameter param) {
         super.addParameter(param);
         clearCache();     // Changed size
@@ -81,6 +85,9 @@ public class DesignMatrix extends MatrixParameter {
     private void clearCache() {
         standardizationMean = null;
         standardizationStDev = null;
+
+        storedStandardizationMean = null;
+        storedStandardizationStDev = null;
     }
 
     private void computeStandarization() {
@@ -91,7 +98,7 @@ public class DesignMatrix extends MatrixParameter {
             standardizationStDev = new double[getColumnDimension()];
         }
         for (int col = 0; col < getColumnDimension(); col++) {
-            if (getParameter(col).getId().equalsIgnoreCase(INTERCEPT)) {
+            if ((getParameter(col).getId()).toLowerCase().indexOf(INTERCEPT) >= 0) {
                 standardizationMean[col] = 0.0;
                 standardizationStDev[col] = 1.0;
             } else {
@@ -99,6 +106,36 @@ public class DesignMatrix extends MatrixParameter {
                 standardizationMean[col] = DiscreteStatistics.mean(vector);
                 standardizationStDev[col] = Math.sqrt(DiscreteStatistics.variance(vector, standardizationMean[col]));
             }
+        }
+    }
+
+    protected void storeValues() {
+        super.storeValues();
+
+        if (dynamicStandardization) {
+            if (storedStandardizationMean == null) {
+                storedStandardizationMean = new double[standardizationMean.length];
+            }
+            System.arraycopy(standardizationMean, 0, storedStandardizationMean, 0, standardizationMean.length);
+
+            if (storedStandardizationStDev == null) {
+                storedStandardizationStDev = new double[standardizationStDev.length];
+            }
+            System.arraycopy(standardizationStDev, 0, storedStandardizationStDev, 0, standardizationStDev.length);
+        }
+    }
+
+    protected void restoreValues() {
+        super.restoreValues();
+
+        if (dynamicStandardization) {
+            double[] tmp = standardizationMean;
+            standardizationMean = storedStandardizationMean;
+            storedStandardizationMean = tmp;
+
+            tmp = standardizationStDev;
+            standardizationStDev = storedStandardizationStDev;
+            storedStandardizationStDev = tmp;
         }
     }
 
@@ -179,7 +216,6 @@ public class DesignMatrix extends MatrixParameter {
                     }
                     columnParameter.setParameterValueNotifyChangedAll(0, columnParameter.getParameterValue(0));
                 }
-//                System.exit(-1);
             }
 
             if (addIntercept) {
@@ -221,6 +257,8 @@ public class DesignMatrix extends MatrixParameter {
     private final boolean dynamicStandardization;
     private boolean standardizationKnown = false;
 
-    private double[] standardizationMean;
-    private double[] standardizationStDev;
+    private double[] standardizationMean = null;
+    private double[] standardizationStDev = null;
+    private double[] storedStandardizationMean = null;
+    private double[] storedStandardizationStDev = null;
 }

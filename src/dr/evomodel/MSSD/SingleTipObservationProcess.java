@@ -1,8 +1,7 @@
 /*
  * SingleTipObservationProcess.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond,
- * Andrew Rambaut, Marc Suchard and Alexander V. Alekseyenko
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -13,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -29,7 +28,7 @@ package dr.evomodel.MSSD;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.MSSD.SingleTipObservationProcessParser;
 import dr.inference.model.Parameter;
@@ -47,7 +46,7 @@ import dr.inference.model.Parameter;
 public class SingleTipObservationProcess extends AnyTipObservationProcess {
     protected Taxon sourceTaxon;
 
-    public SingleTipObservationProcess(TreeModel treeModel, PatternList patterns, SiteModel siteModel,
+    public SingleTipObservationProcess(TreeModel treeModel, PatternList patterns, SiteRateModel siteModel,
                                        BranchRateModel branchRateModel, Parameter mu, Parameter lam, Taxon sourceTaxon) {
         super(SingleTipObservationProcessParser.MODEL_NAME, treeModel, patterns, siteModel, branchRateModel, mu, lam);
         this.sourceTaxon = sourceTaxon;

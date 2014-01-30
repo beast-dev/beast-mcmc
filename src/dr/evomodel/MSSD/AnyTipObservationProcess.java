@@ -1,10 +1,35 @@
+/*
+ * AnyTipObservationProcess.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.MSSD;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 
@@ -22,7 +47,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
     protected double[] u0;
     protected double[] p;
 
-    public AnyTipObservationProcess(String modelName, TreeModel treeModel, PatternList patterns, SiteModel siteModel,
+    public AnyTipObservationProcess(String modelName, TreeModel treeModel, PatternList patterns, SiteRateModel siteModel,
                                     BranchRateModel branchRateModel, Parameter mu, Parameter lam) {
         super(modelName, treeModel, patterns, siteModel, branchRateModel, mu, lam);
     }
@@ -55,7 +80,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
             } else { // Is internal node or root
                 u0[i] = 1.0;
                 node = treeModel.getNode(i);
-                for (j = 0; j < treeModel.getChildCount(node); ++j) {                   
+                for (j = 0; j < treeModel.getChildCount(node); ++j) {
                     childNumber = treeModel.getChild(node, j).getNumber();
                     u0[i] *= 1.0 - p[childNumber] * (1.0 - u0[childNumber]);
                 }
@@ -88,7 +113,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
                 nodePatternInclusion[i * patternCount + patternIndex] =
-                        (extantInTipsBelow[i * patternCount +patternIndex] >= extantInTips[patternIndex]);
+                        (extantInTipsBelow[i * patternCount + patternIndex] >= extantInTips[patternIndex]);
             }
         }
     }
@@ -96,9 +121,9 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
     void setNodePatternInclusion() {
 
         if (postOrderNodeList == null) {
-            postOrderNodeList = new int[nodeCount];         
+            postOrderNodeList = new int[nodeCount];
         }
-        
+
         if (nodePatternInclusion == null) {
             nodePatternInclusion = new boolean[nodeCount * patternCount];
             storedNodePatternInclusion = new boolean[nodeCount * patternCount];
@@ -122,7 +147,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
                 for (int patternIndex = 0; patternIndex < patternCount; patternIndex++) {
                     extantInTipsBelow[nodeNumber * patternCount + patternIndex] = 0;
                     for (int j = 0; j < nChildren; j++) {
-                        final int childIndex = treeModel.getChild(node,j).getNumber();
+                        final int childIndex = treeModel.getChild(node, j).getNumber();
                         extantInTipsBelow[nodeNumber * patternCount + patternIndex] +=
                                 extantInTipsBelow[childIndex * patternCount + patternIndex];
                     }
@@ -136,7 +161,7 @@ public class AnyTipObservationProcess extends AbstractObservationProcess {
                         (extantInTipsBelow[i * patternCount + patternIndex] >= extantInTips[patternIndex]);
             }
         }
-        
+
         nodePatternInclusionKnown = true;
     }
 

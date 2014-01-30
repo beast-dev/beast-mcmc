@@ -1,7 +1,7 @@
 /*
  * LatentFactorModelParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,9 +28,10 @@ package dr.evomodelxml.continuous;
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.Parameter;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 import java.util.List;
@@ -57,10 +58,12 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         CompoundParameter factors = (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class);
 
         TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+//        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
+        String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
+        System.err.println("TN: " + traitName);
+//        System.exit(-1);
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
@@ -76,10 +79,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         MatrixParameter precision = (MatrixParameter) xo.getChild(PRECISION).getChild(MatrixParameter.class);
         int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
         //TODO instead of loadings column dimensions, use number of taxa
-        int colDim=loadings.getColumnDimension();
-        for(int j=0; j<colDim; j=j+1)
-        {System.out.print(dataParameter.inspectParametersValues()[j]);
-            System.out.print("\n");}
+        int colDim = loadings.getColumnDimension();
+
+        System.err.println(new Vector(dataParameter.getParameterValues()));
 
         return new LatentFactorModel(dataParameter, factors, loadings, precision, numFactors);
     }
@@ -87,7 +89,8 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     private static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
             new ElementRule(TreeModel.class),
-            new ElementRule("traitParameter", new XMLSyntaxRule[]{
+            AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
+            new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{

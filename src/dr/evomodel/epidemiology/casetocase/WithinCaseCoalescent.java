@@ -20,6 +20,7 @@ import dr.xml.*;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -34,10 +35,11 @@ import java.util.HashSet;
 public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public static final String WITHIN_CASE_COALESCENT = "withinCaseCoalescent";
-    private Double[] partitionTreeLogLikelihoods;
-    private Double[] storedPartitionTreeLogLikelihoods;
-    private Double[] timingLogLikelihoods;
-    private Double[] storedTimingLogLikelihoods;
+    private double[] partitionTreeLogLikelihoods;
+    private double[] storedPartitionTreeLogLikelihoods;
+    private double[] timingLogLikelihoods;
+    private double[] storedTimingLogLikelihoods;
+    private boolean[] recalculateCoalescentFlags;
     private Treelet[] partitionsAsTrees;
     private Treelet[] storedPartitionsAsTrees;
     private DemographicModel demoModel;
@@ -60,10 +62,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 maxFirstInfToRoot);
         this.demoModel = demoModel;
         addModel(demoModel);
-        partitionTreeLogLikelihoods = new Double[noTips];
-        storedPartitionTreeLogLikelihoods = new Double[noTips];
-        timingLogLikelihoods = new Double[noTips];
-        storedTimingLogLikelihoods = new Double[noTips];
+        partitionTreeLogLikelihoods = new double[noTips];
+        storedPartitionTreeLogLikelihoods = new double[noTips];
+        timingLogLikelihoods = new double[noTips];
+        storedTimingLogLikelihoods = new double[noTips];
+        recalculateCoalescentFlags = new boolean[noTips];
 
         partitionsAsTrees = new Treelet[caseData.size()];
         storedPartitionsAsTrees = new Treelet[caseData.size()];
@@ -228,13 +231,20 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         explodeTree();
 
+        boolean recalculateTimings = false;
+
+        if(timingLogLikelihoods==null){
+            timingLogLikelihoods = new double[noTips];
+            recalculateTimings = true;
+        }
+
         for(AbstractCase aCase : cases.getCases()){
 
             //todo weights (and remember if a weight is zero then the return value should be -INF)
 
             int number = cases.getCaseIndex(aCase);
 
-            if(timingLogLikelihoods[number]==null){
+            if(recalculateTimings){
                 double infectionTime = getInfectionTime(aCase);
                 AbstractCase parent = getInfector(aCase);
                 if(parent!=null &&
@@ -266,20 +276,18 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             HashSet<AbstractCase> children = getInfectees(aCase);
 
-            if(partitionTreeLogLikelihoods[number]==null){
+            if(recalculateCoalescentFlags[number]){
                 Treelet treelet = partitionsAsTrees[number];
-
-//                if(DEBUG && treelet.getNodeCount()>1){
-//                    debugTreelet(treelet, aCase+"_partition.nex");
-//                }
 
                 if(children.size()!=0){
                     MaxTMRCACoalescent coalescent = new MaxTMRCACoalescent(treelet, demoModel,
                             treelet.getRootHeight()+treelet.getRootBranchLength());
                     partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
+                    recalculateCoalescentFlags[number] = false;
                     logL += partitionTreeLogLikelihoods[number];
-                    if(partitionTreeLogLikelihoods[number]==Double.POSITIVE_INFINITY && DEBUG){
+                    if(partitionTreeLogLikelihoods[number]==Double.POSITIVE_INFINITY){
                         debugOutputTree("infCoalescent.nex", false);
+                        debugTreelet(treelet, aCase+"_partition.nex");
                     }
                 } else {
                     partitionTreeLogLikelihoods[number] = 0.0;
@@ -349,9 +357,9 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 throw new RuntimeException("Unanticipated model changed event from BranchMapModel");
             }
         } else if(model == demoModel){
-            Arrays.fill(partitionTreeLogLikelihoods, null);
+            Arrays.fill(recalculateCoalescentFlags, true);
         }
-        Arrays.fill(timingLogLikelihoods, null);
+        timingLogLikelihoods=null;
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -370,13 +378,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         }
 
         if(variable == infectionTimeBranchPositions || variable == infectiousTimePositions){
-            Arrays.fill(timingLogLikelihoods, null);
+            timingLogLikelihoods=null;
         }
     }
 
     protected void recalculateCaseWCC(int index){
         partitionsAsTrees[index] = null;
-        partitionTreeLogLikelihoods[index] = null;
+        recalculateCoalescentFlags[index] = true;
     }
 
     protected void recalculateCaseWCC(AbstractCase aCase){
@@ -386,14 +394,12 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public void makeDirty(){
         super.makeDirty();
-        Arrays.fill(partitionTreeLogLikelihoods, null);
-        Arrays.fill(timingLogLikelihoods, null);
+        Arrays.fill(recalculateCoalescentFlags, true);
+        timingLogLikelihoods=null;
         Arrays.fill(partitionsAsTrees, null);
-
     }
 
     // Tears the tree into small pieces. Indexes correspond to indexes in the outbreak.
-    // todo Work out when components of this are unchanged after PT or TT moves
 
     private void explodeTree(){
         if(DEBUG){
@@ -558,7 +564,18 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 // normalisation
 
-                double logDenominator = Math.log1p(-Math.exp(-kChoose2 * normalisationArea));
+                double normExp = Math.exp(-kChoose2 * normalisationArea);
+
+                double logDenominator;
+
+                // the denominator has an irritating tendency to round to zero
+
+                if(normExp!=1){
+                    logDenominator = Math.log1p(-normExp);
+                } else {
+                    logDenominator = handleDenominatorUnderflow(-kChoose2 * normalisationArea);
+                }
+
 
                 logL -= logDenominator;
 
@@ -568,6 +585,16 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         }
 
         return logL;
+    }
+
+
+    private static double handleDenominatorUnderflow(double input){
+        BigDecimal bigDec = new BigDecimal(input);
+        BigDecimal expBigDec = BigDecimalUtils.exp(bigDec, bigDec.scale());
+        BigDecimal one = new BigDecimal(1.0);
+        BigDecimal oneMinusExpBigDec = one.subtract(expBigDec);
+        BigDecimal logOneMinusExpBigDec = BigDecimalUtils.ln(oneMinusExpBigDec, oneMinusExpBigDec.scale());
+        return logOneMinusExpBigDec.doubleValue();
     }
 
     public void debugTreelet(Tree treelet, String fileName){

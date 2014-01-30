@@ -1,7 +1,6 @@
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
@@ -22,7 +21,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
     private final CaseToCaseTreeLikelihood c2cLikelihood;
     public static final String TRANSMISSION_WILSON_BALDING_B = "transmissionWilsonBaldingB";
     private double logq;
-    boolean debug = true;
+    private static final boolean DEBUG = false;
     private final int tipCount;
 
     public TransmissionWilsonBaldingB(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
@@ -33,12 +32,20 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
 
     public double doOperation() throws OperatorFailedException {
 
+        if(DEBUG){
+            c2cLikelihood.debugOutputTree("BeforeTWWB.nex", false);
+        }
+
         proposeTree();
 
         if (c2cLikelihood.getTreeModel().getExternalNodeCount() != tipCount) {
             int newCount = c2cLikelihood.getTreeModel().getExternalNodeCount();
             throw new RuntimeException("Lost some tips in modified SPR! (" +
                     tipCount + "-> " + newCount + ")");
+        }
+
+        if(DEBUG){
+            c2cLikelihood.debugOutputTree("AfterTWWB.nex", false);
         }
 
         return logq;
@@ -149,7 +156,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
             branchMap.set(iP.getNumber(), branchMap.get(j.getNumber()), true);
         }
 
-        if(debug){
+        if(DEBUG){
             c2cLikelihood.checkPartitions();
         }
 

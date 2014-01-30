@@ -45,6 +45,9 @@ import org.w3c.dom.Element;
 
 public class LogNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
+
+
+    //if mean is not in real space then exponentiate to get value in the lognormal space
     boolean isMeanInRealSpace;
     boolean isStdevInRealSpace;
     boolean usesStDev = true;

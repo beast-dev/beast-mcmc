@@ -1,7 +1,7 @@
 /*
  * AbstractObservationProcess.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,7 +32,7 @@ import dr.evolution.datatype.MutationDeathType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.inference.model.AbstractModel;
@@ -74,12 +74,12 @@ abstract public class AbstractObservationProcess extends AbstractModel {
     private double totalPatterns;
     protected MutationDeathType dataType;
     protected int deathState;
-    protected SiteModel siteModel;
+    protected SiteRateModel siteModel;
     private double logN;
     protected boolean nodePatternInclusionKnown = false;
     BranchRateModel branchRateModel;
 
-    public AbstractObservationProcess(String Name, TreeModel treeModel, PatternList patterns, SiteModel siteModel,
+    public AbstractObservationProcess(String Name, TreeModel treeModel, PatternList patterns, SiteRateModel siteModel,
                                       BranchRateModel branchRateModel, Parameter mu, Parameter lam) {
         super(Name);
         this.treeModel = treeModel;
@@ -138,24 +138,24 @@ abstract public class AbstractObservationProcess extends AbstractModel {
 
 
     private void calculateNodePatternLikelihood(int nodeIndex,
-                                                      double[] freqs,
-                                                      LikelihoodCore likelihoodCore,
-                                                      double averageRate,
-                                                      double[] cumLike) {
-                    // get partials for node nodeIndex
-            likelihoodCore.getPartials(nodeIndex, nodePartials); // MAS
+                                                double[] freqs,
+                                                LikelihoodCore likelihoodCore,
+                                                double averageRate,
+                                                double[] cumLike) {
+        // get partials for node nodeIndex
+        likelihoodCore.getPartials(nodeIndex, nodePartials); // MAS
             /*
                 multiply the partials by equilibrium probs
                     this part could be optimized by first summing
                     and then multiplying by equilibrium probs
             */
-            double prob = Math.log(getNodeSurvivalProbability(nodeIndex, averageRate));
+        double prob = Math.log(getNodeSurvivalProbability(nodeIndex, averageRate));
 
-            for (int j = 0; j < patternCount; ++j) {
-                if (nodePatternInclusion[nodeIndex * patternCount + j]) {
-                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs) + prob);
-                }
+        for (int j = 0; j < patternCount; ++j) {
+            if (nodePatternInclusion[nodeIndex * patternCount + j]) {
+                cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs) + prob);
             }
+        }
     }
 
     private double accumulateCorrectedLikelihoods(double[] cumLike, double ascertainmentCorrection,
@@ -199,7 +199,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
                 if (nodePatternInclusion[i * patternCount + j]) {
 //                    cumLike[j] += Math.exp(nodeLikelihoods[j] + logProb);  // MAS Replaced with line below
                     cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs)
-                                    + logProb);
+                            + logProb);
                 }
             }
         }
@@ -254,7 +254,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
                 if (nodePatternInclusion[i * patternCount + j]) {
 //                    cumLike[j] += Math.exp(nodeLikelihoods[j] + logProb);  // MAS Replaced with line below
                     cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs)
-                                    + logProb);
+                            + logProb);
                 }
             }
         }

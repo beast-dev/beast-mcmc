@@ -1,7 +1,7 @@
 /*
  * ALSTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,116 +25,171 @@
 
 package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.MutationDeathModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.treelikelihood.ALSBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.evomodel.MSSD.AbstractObservationProcess;
+import dr.evomodel.MSSD.AnyTipObservationProcess;
+import dr.evomodel.MSSD.SingleTipObservationProcess;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
+import dr.inference.model.Parameter;
+import dr.xml.*;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
+
 /**
-* @author Marc Suchard
-* @author Andrew Rambaut
-*/
+ * @author Marc Suchard
+ * @author Andrew Rambaut
+ */
 
 public class ALSTreeLikelihoodParser extends BeagleTreeLikelihoodParser {
 
-//    public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
-//    public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
-//    public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
-//    public static final String MAP_RECONSTRUCTION = "useMAP";
-//    public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
+    //    public static final String LIKE_NAME = "alsTreeLikelihood";
+//    public static final String INTEGRATE_GAIN_RATE = "integrateGainRate";
+//    public static final String OBSERVATION_PROCESS = "observationProcess";
+//    public static final String OBSERVATION_TYPE = "type";
+//    public static final String OBSERVATION_TAXON = "taxon";
+    public static final String ANY_TIP = "anyTip";
+    //    public final static String IMMIGRATION_RATE = "immigrationRate";
 //
-//    public static final String INTEGRATE_GAIN_RATE = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.INTEGRATE_GAIN_RATE;
-//    public static final String OBSERVATION_TYPE = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.OBSERVATION_TYPE;
-//    public static final String OBSERVATION_PROCESS = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.OBSERVATION_PROCESS;
-//    public static final String OBSERVATION_TAXON =           dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.OBSERVATION_TAXON;
-//    public static final String IMMIGRATION_RATE = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.IMMIGRATION_RATE;
+    public static final String RECONSTRUCTING_TREE_LIKELIHOOD = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.LIKE_NAME;
+    //    public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
+    public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
+    public static final String MAP_RECONSTRUCTION = "useMAP";
+    public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
+
+    public static final String INTEGRATE_GAIN_RATE = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.INTEGRATE_GAIN_RATE;
+    public static final String OBSERVATION_TYPE = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.OBSERVATION_TYPE;
+    public static final String OBSERVATION_PROCESS = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.OBSERVATION_PROCESS;
+    public static final String OBSERVATION_TAXON = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.OBSERVATION_TAXON;
+    public static final String IMMIGRATION_RATE = dr.evomodelxml.MSSD.ALSTreeLikelihoodParser.IMMIGRATION_RATE;
+
+
+    public String getParserName() {
+        return RECONSTRUCTING_TREE_LIKELIHOOD;
+    }
+
+    protected BeagleTreeLikelihood createTreeLikelihood(
+            PatternList patternList, //
+            TreeModel treeModel, //
+            BranchModel branchModel, //
+            GammaSiteRateModel siteRateModel, //
+            BranchRateModel branchRateModel, //
+            TipStatesModel tipStatesModel, //
+            boolean useAmbiguities, //
+            PartialsRescalingScheme scalingScheme, //
+            Map<Set<String>, //
+                    Parameter> partialsRestrictions, //
+            XMLObject xo //
+    ) throws XMLParseException {
+
+        boolean integrateGainRate = xo.getBooleanAttribute(INTEGRATE_GAIN_RATE);
+
+        useAmbiguities = true; // TODO No effect
+
+        //AbstractObservationProcess observationProcess = (AbstractObservationProcess) xo.getChild(AbstractObservationProcess.class);
+
+
+//        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+//        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+//        SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+//        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+        Parameter mu = ((MutationDeathModel) siteRateModel.getSubstitutionModel()).getDeathParameter();
+        Parameter lam;
+        if (!integrateGainRate) {
+            lam = (Parameter) xo.getElementFirstChild(IMMIGRATION_RATE);
+        } else {
+            lam = new Parameter.Default("gainRate", 1.0, 0.001, 1.999);
+        }
+        AbstractObservationProcess observationProcess = null;
+
+        Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ALSTreeLikelihood model.");
+        for (int i = 0; i < xo.getChildCount(); ++i) {
+            Object cxo = xo.getChild(i);
+            if (cxo instanceof XMLObject && ((XMLObject) cxo).getName().equals(OBSERVATION_PROCESS)) {
+                if (((XMLObject) cxo).getStringAttribute(OBSERVATION_TYPE).equals("singleTip")) {
+                    String taxonName = ((XMLObject) cxo).getStringAttribute(OBSERVATION_TAXON);
+                    Taxon taxon = treeModel.getTaxon(treeModel.getTaxonIndex(taxonName));
+                    observationProcess = new SingleTipObservationProcess(treeModel, patternList, siteRateModel,
+                            branchRateModel, mu, lam, taxon);
+                    Logger.getLogger("dr.evolution").info("All traits are assumed extant in " + taxonName);
+                } else {  // "anyTip" observation process
+                    observationProcess = new AnyTipObservationProcess(ANY_TIP, treeModel, patternList,
+                            siteRateModel, branchRateModel, mu, lam);
+                    Logger.getLogger("dr.evolution").info("Observed traits are assumed to be extant in at least one tip node.");
+                }
+
+                observationProcess.setIntegrateGainRate(integrateGainRate);
+            }
+        }
+        Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutation (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (2008) Syst. Biol 57: 772-784.\n---------------------------------\n");
+
+        return new ALSBeagleTreeLikelihood(
+                observationProcess,
+                patternList,
+                treeModel,
+                branchModel,
+                siteRateModel,
+                branchRateModel,
+                tipStatesModel,
+                useAmbiguities,
+                scalingScheme,
+                partialsRestrictions
+        );
+    }
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return new XMLSyntaxRule[]{
+                AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
+
+                AttributeRule.newBooleanRule(INTEGRATE_GAIN_RATE),
+                new ElementRule(IMMIGRATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+
+                new ElementRule(PatternList.class),
+                new ElementRule(TreeModel.class),
+                new ElementRule(GammaSiteRateModel.class),
+                new ElementRule(BranchModel.class, true),
+                new ElementRule(BranchRateModel.class, true),
+                new ElementRule(TipStatesModel.class, true),
+                new ElementRule(SubstitutionModel.class, true),
+                AttributeRule.newStringRule(BeagleTreeLikelihoodParser.SCALING_SCHEME, true),
+                new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[]{
+                        new ElementRule(TaxonList.class),
+                        new ElementRule(Parameter.class),
+                }, true),
+
+                new ElementRule(OBSERVATION_PROCESS,
+                        new XMLSyntaxRule[]{AttributeRule.newStringRule(OBSERVATION_TYPE, false),
+                                AttributeRule.newStringRule(OBSERVATION_TAXON, true)})
+
+        };
+    }
+
+//    private final XMLSyntaxRule[] rules = {
+//            AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+//            AttributeRule.newBooleanRule(TreeLikelihoodParser.STORE_PARTIALS, true),
+//            AttributeRule.newBooleanRule(INTEGRATE_GAIN_RATE),
+//            new ElementRule(IMMIGRATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+//            new ElementRule(PatternList.class),
+//            new ElementRule(TreeModel.class),
+//            new ElementRule(SiteModel.class),
+//            new ElementRule(BranchRateModel.class, true),
+//            new ElementRule(OBSERVATION_PROCESS,
+//                    new XMLSyntaxRule[]{AttributeRule.newStringRule(OBSERVATION_TYPE, false),
+//                            AttributeRule.newStringRule(OBSERVATION_TAXON, true)})
+//            //new ElementRule(AbstractObservationProcess.class)
+//    };
 //
-//
-//    public String getParserName() {
-//        return RECONSTRUCTING_TREE_LIKELIHOOD;
-//    }
-//
-//    protected BeagleTreeLikelihood createTreeLikelihood(
-//            PatternList patternList, //
-//            TreeModel treeModel, //
-//            BranchModel branchModel, //
-//            GammaSiteRateModel siteRateModel, //
-//            BranchRateModel branchRateModel, //
-//            TipStatesModel tipStatesModel, //
-//            boolean useAmbiguities, //
-//            PartialsRescalingScheme scalingScheme, //
-//            Map<Set<String>, //
-//                    Parameter> partialsRestrictions, //
-//            XMLObject xo //
-//    ) throws XMLParseException {
-//
-//
-//        boolean integrateGainRate = xo.getBooleanAttribute(INTEGRATE_GAIN_RATE);
-//
-//        //AbstractObservationProcess observationProcess = (AbstractObservationProcess) xo.getChild(AbstractObservationProcess.class);
-//
-//
-////        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-////        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-////        SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
-////        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-//        Parameter mu = ((MutationDeathModel) siteRateModel.getSubstitutionModel()).getDeathParameter();
-//        Parameter lam;
-//        if (!integrateGainRate) {
-//            lam = (Parameter) xo.getElementFirstChild(IMMIGRATION_RATE);
-//        } else {
-//            lam = new Parameter.Default("gainRate", 1.0, 0.001, 1.999);
-//        }
-//        AbstractObservationProcess observationProcess = null;
-//
-//        Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ALSTreeLikelihood model.");
-//        for (int i = 0; i < xo.getChildCount(); ++i) {
-//            Object cxo = xo.getChild(i);
-//            if (cxo instanceof XMLObject && ((XMLObject) cxo).getName().equals(OBSERVATION_PROCESS)) {
-//                if (((XMLObject) cxo).getStringAttribute(OBSERVATION_TYPE).equals("singleTip")) {
-//                    String taxonName = ((XMLObject) cxo).getStringAttribute(OBSERVATION_TAXON);
-//                    Taxon taxon = treeModel.getTaxon(treeModel.getTaxonIndex(taxonName));
-//                    observationProcess = new SingleTipObservationProcess(treeModel, patternList, siteRateModel,
-//                            branchRateModel, mu, lam, taxon);
-//                    Logger.getLogger("dr.evolution").info("All traits are assumed extant in " + taxonName);
-//                } else {  // "anyTip" observation process
-//                    observationProcess = new AnyTipObservationProcess(ANY_TIP, treeModel, patternList,
-//                            siteModel, branchRateModel, mu, lam);
-//                    Logger.getLogger("dr.evolution").info("Observed traits are assumed to be extant in at least one tip node.");
-//                }
-//
-//                observationProcess.setIntegrateGainRate(integrateGainRate);
-//            }
-//        }
-//        Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutation (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (2008) Syst. Biol 57: 772-784.\n---------------------------------\n");
-//
-//
-//        AbstractObservationProcess observationProcess = null;
-//        return new ALSBeagleTreeLikelihood(
-//                observationProcess,
-//                patternList,
-//                treeModel,
-//                branchModel,
-//                siteRateModel,
-//                branchRateModel,
-//                tipStatesModel,
-//                useAmbiguities,
-//                scalingScheme,
-//                partialsRestrictions
-//        );
-//    }
-//
-//    public XMLSyntaxRule[] getSyntaxRules() {
-//        return new XMLSyntaxRule[]{
-//                AttributeRule.newBooleanRule(OldTreeLikelihoodParser.USE_AMBIGUITIES, true),
-//                AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
-//                new ElementRule(PatternList.class),
-//                new ElementRule(TreeModel.class),
-//                new ElementRule(GammaSiteRateModel.class),
-//                new ElementRule(BranchModel.class, true),
-//                new ElementRule(BranchRateModel.class, true),
-//                new ElementRule(TipStatesModel.class, true),
-//                new ElementRule(SubstitutionModel.class, true),
-//                AttributeRule.newStringRule(OldTreeLikelihoodParser.SCALING_SCHEME, true),
-//                new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[]{
-//                        new ElementRule(TaxonList.class),
-//                        new ElementRule(Parameter.class),
-//                }, true),
-//        };
-//    }
 }

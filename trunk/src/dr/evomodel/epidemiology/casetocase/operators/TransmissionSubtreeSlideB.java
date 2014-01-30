@@ -28,7 +28,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
     private final boolean swapInRandomRate;
     private final boolean swapInRandomTrait;
     private CoercionMode mode = CoercionMode.DEFAULT;
-    private boolean debug = true;
+    private static final boolean DEBUG = false;
     public static final String TRANSMISSION_SUBTREE_SLIDE_B = "transmissionSubtreeSlideB";
     public static final String SWAP_RATES = "swapInRandomRate";
     public static final String SWAP_TRAITS = "swapInRandomTrait";
@@ -291,7 +291,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
         if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
-        if (debug) c2cLikelihood.checkPartitions();
+        if (DEBUG) c2cLikelihood.checkPartitions();
 
         return logq;
     }

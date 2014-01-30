@@ -64,14 +64,15 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     protected Parameter infectiousTimePositions;
 
-    protected Double[] infectionTimes;
-    private Double[] storedInfectionTimes;
-    protected Double[] infectiousPeriods;
-    private Double[] storedInfectiousPeriods;
-    protected Double[] infectiousTimes;
-    private Double[] storedInfectiousTimes;
-    protected Double[] latentPeriods;
-    private Double[] storedLatentPeriods;
+    protected double[] infectionTimes;
+    private double[] storedInfectionTimes;
+    protected double[] infectiousPeriods;
+    private double[] storedInfectiousPeriods;
+    protected double[] infectiousTimes;
+    private double[] storedInfectiousTimes;
+    protected double[] latentPeriods;
+    private double[] storedLatentPeriods;
+    protected boolean[] recalculateCaseFlags;
 
     //because of the way the former works, we need a maximum value of the time from first infection to root node.
 
@@ -151,12 +152,15 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         this.infectionTimeBranchPositions = infectionTimeBranchPositions;
         addVariable(infectionTimeBranchPositions);
 
-        infectionTimes = new Double[cases.size()];
-        infectiousPeriods = new Double[cases.size()];
+        infectionTimes = new double[cases.size()];
+        infectiousPeriods = new double[cases.size()];
         if(hasLatentPeriods){
-            infectiousTimes = new Double[cases.size()];
-            latentPeriods = new Double[cases.size()];
+            infectiousTimes = new double[cases.size()];
+            latentPeriods = new double[cases.size()];
         }
+
+        recalculateCaseFlags = new boolean[cases.size()];
+        Arrays.fill(recalculateCaseFlags, true);
 
         if(DEBUG){
             for(int i=0; i<cases.size(); i++){
@@ -208,13 +212,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             partitionAccordingToSpecificTT(startingNetworkFileName);
         }
 
-        infectionTimes = getInfectionTimes(true);
-        infectiousPeriods = getInfectiousPeriods(true);
-
-        if(hasLatentPeriods){
-            infectiousTimes = getInfectiousTimes(true);
-            latentPeriods = getLatentPeriods(true);
-        }
+        prepareTimings();
     }
 
     public AbstractOutbreak getOutbreak(){
@@ -533,12 +531,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
     protected void recalculateCase(int index){
-        infectionTimes[index] = null;
-        infectiousPeriods[index] = null;
-        if(hasLatentPeriods){
-            infectiousTimes[index] = null;
-            latentPeriods[index] = null;
-        }
+        recalculateCaseFlags[index] = true;
     }
 
     protected void recalculateCase(AbstractCase aCase){
@@ -563,9 +556,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
 
         } else if(variable == infectiousTimePositions){
-            infectiousPeriods[index] = null;
-            infectiousTimes[index] = null;
-            latentPeriods[index] = null;
+
+            // todo if you're being pedantic, you shouldn't need to recalculate the infection time
+
+            recalculateCase(index);
         }
 
         fireModelChanged();
@@ -623,12 +617,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public void makeDirty() {
         likelihoodKnown = false;
-        Arrays.fill(infectionTimes, null);
-        Arrays.fill(infectiousPeriods, null);
-        if(hasLatentPeriods){
-            Arrays.fill(infectiousTimes, null);
-            Arrays.fill(latentPeriods, null);
-        }
+        Arrays.fill(recalculateCaseFlags, true);
     }
 
 
@@ -645,6 +634,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         if(hasLatentPeriods){
             latentPeriods = getLatentPeriods(true);
         }
+
+        Arrays.fill(recalculateCaseFlags, false);
     }
 
     /**
@@ -747,7 +738,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public double getInfectionTime(AbstractCase thisCase){
 
-        if(infectionTimes[cases.getCaseIndex(thisCase)]!=null){
+        if(!recalculateCaseFlags[cases.getCaseIndex(thisCase)]){
             return infectionTimes[cases.getCaseIndex(thisCase)];
         } else {
             NodeRef child = getEarliestNodeInPartition(thisCase);
@@ -775,10 +766,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
 
-    public Double[] getInfectionTimes(boolean recalculate){
+    public double[] getInfectionTimes(boolean recalculate){
         if(recalculate) {
             for(int i=0; i<noTips; i++){
-                if(infectionTimes[i]==null){
+                if(recalculateCaseFlags[i]){
                     infectionTimes[i] = getInfectionTime(cases.getCase(i));
                 }
             }
@@ -786,11 +777,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return infectionTimes;
     }
 
-    public Double getInfectiousTime(AbstractCase thisCase){
+    public double getInfectiousTime(AbstractCase thisCase){
         if(!hasLatentPeriods){
             return getInfectionTime(thisCase);
         }
-        if(infectiousTimes[cases.getCaseIndex(thisCase)]==null){
+        if(recalculateCaseFlags[cases.getCaseIndex(thisCase)]){
 
             HashSet<AbstractCase> infectees = getInfectees(thisCase);
             // needn't assume infectious at time of sampling, so upper limit on infectious time is cull time
@@ -808,10 +799,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return infectiousTimes[cases.getCaseIndex(thisCase)];
     }
 
-    public Double[] getInfectiousTimes(boolean recalculate){
+    public double[] getInfectiousTimes(boolean recalculate){
         if(recalculate){
             for(int i=0; i<noTips; i++){
-                if(infectiousTimes[i]==null){
+                if(recalculateCaseFlags[i]){
                     infectiousTimes[i] = getInfectiousTime(cases.getCase(i));
                 }
             }
@@ -820,8 +811,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
 
-    public Double getInfectiousPeriod(AbstractCase thisCase){
-        if(infectiousPeriods[cases.getCaseIndex(thisCase)]==null){
+    public double getInfectiousPeriod(AbstractCase thisCase){
+        if(recalculateCaseFlags[cases.getCaseIndex(thisCase)]){
             if(!hasLatentPeriods){
                 double infectionTime = getInfectionTime(thisCase);
                 double cullTime = thisCase.getCullTime();
@@ -835,10 +826,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return infectiousPeriods[cases.getCaseIndex(thisCase)];
     }
 
-    public Double[] getInfectiousPeriods(boolean recalculate){
+    public double[] getInfectiousPeriods(boolean recalculate){
         if(recalculate){
             for(int i=0; i<noTips; i++){
-                if(infectiousPeriods[i]==null){
+                if(recalculateCaseFlags[i]){
                     infectiousPeriods[i] = getInfectiousPeriod(cases.getCase(i));
                 }
             }
@@ -847,20 +838,20 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
 
-    public Double getLatentPeriod(AbstractCase thisCase){
+    public double getLatentPeriod(AbstractCase thisCase){
         if(!hasLatentPeriods){
             return 0.0;
         }
-        if(latentPeriods[cases.getCaseIndex(thisCase)]==null){
+        if(recalculateCaseFlags[cases.getCaseIndex(thisCase)]){
             latentPeriods[cases.getCaseIndex(thisCase)] = getInfectiousTime(thisCase) - getInfectionTime(thisCase);
         }
         return latentPeriods[cases.getCaseIndex(thisCase)];
     }
 
-    public Double[] getLatentPeriods(boolean recalculate){
+    public double[] getLatentPeriods(boolean recalculate){
         if(recalculate){
             for(int i=0; i<noTips; i++){
-                if(latentPeriods[i]==null){
+                if(recalculateCaseFlags[i]){
                     latentPeriods[i] = getLatentPeriod(cases.getCase(i));
                 }
             }
@@ -869,11 +860,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
 
-    public Double[] getInfectedPeriods(boolean recalculate){
+    public double[] getInfectedPeriods(boolean recalculate){
         if(!hasLatentPeriods){
             return getInfectiousPeriods(recalculate);
         } else {
-            Double[] out = new Double[noTips];
+            double[] out = new double[noTips];
             for(int i=0; i<noTips; i++){
                 out[i] = getInfectedPeriod(cases.getCase(i));
             }
@@ -890,23 +881,14 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     // return an array of the mean, median, variance and standard deviation of the given array
     // @todo this is pretty wasteful since it gets called so many times per log entry
 
-    public static Double[] getSummaryStatistics(Double[] variable){
-        double[] conversion = convertArray(variable);
+    public static Double[] getSummaryStatistics(double[] variable){
 
-        DescriptiveStatistics stats = new DescriptiveStatistics(conversion);
+        DescriptiveStatistics stats = new DescriptiveStatistics(variable);
         Double[] out = new Double[4];
         out[0] = stats.getMean();
         out[1] = stats.getPercentile(50);
         out[2] = stats.getVariance();
         out[3] = stats.getStandardDeviation();
-        return out;
-    }
-
-    protected static double[] convertArray(Double[] array){
-        double[] out = new double[array.length];
-        for(int i=0; i<array.length; i++){
-            out[i] = array[i];
-        }
         return out;
     }
 

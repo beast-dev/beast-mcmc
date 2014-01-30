@@ -1,7 +1,7 @@
 /*
  * LikelihoodCore.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,7 +32,7 @@ package dr.evomodel.treelikelihood;
  * @version $Id: LikelihoodCore.java,v 1.15 2006/08/29 18:07:23 rambaut Exp $
  */
 
-public interface LikelihoodCore {
+public interface LikelihoodCore extends LikelihoodPartialsProvider {
 
     /**
      * initializes partial likelihood arrays.

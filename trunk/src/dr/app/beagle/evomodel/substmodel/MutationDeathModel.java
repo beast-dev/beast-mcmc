@@ -1,7 +1,7 @@
 /*
  * MutationDeathModel.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -41,7 +41,9 @@ import dr.evomodelxml.substmodel.MutationDeathModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
-public class MutationDeathModel extends BaseSubstitutionModel {
+import java.util.Arrays;
+
+public class MutationDeathModel extends ComplexSubstitutionModel { //BaseSubstitutionModel {
     private SubstitutionModel CTMCModel;
     private Parameter delParameter = null;
     protected double[] trMatrix;
@@ -49,10 +51,13 @@ public class MutationDeathModel extends BaseSubstitutionModel {
     private Parameter thisSubModelFreq;
     private Parameter mutationRate;
 
+    private double[] baseModelMatrix;
+
 
     public MutationDeathModel(Parameter delParameter, DataType dT, SubstitutionModel evoModel,
                               FrequencyModel freqModel, Parameter mutationRate) {
-        super(MutationDeathModelParser.MD_MODEL, dT, freqModel);
+        super(MutationDeathModelParser.MD_MODEL, dT, freqModel, null);
+
         CTMCModel = evoModel;
         stateCount = freqModel.getFrequencyCount();
         this.delParameter = delParameter;
@@ -94,6 +99,15 @@ public class MutationDeathModel extends BaseSubstitutionModel {
 
         frequenciesChanged();
         ratesChanged();
+
+        if (CTMCModel != null) {
+            final int baseStateCount = CTMCModel.getDataType().getStateCount();
+            baseModelMatrix = new double[baseStateCount * baseStateCount];
+        } else {
+            baseModelMatrix = new double[1];
+        }
+        setDoNormalization(false);
+
 //        setupRelativeRates();
     }
 
@@ -132,45 +146,35 @@ public class MutationDeathModel extends BaseSubstitutionModel {
     }
 
     @Override
-    protected void setupRelativeRates(double[] rates) {
-    }
+    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
 
-    public void getTransitionProbabilities(double distance, double[] matrix) {
-        int i, j;
-        // assuming that expected number of changes in CTMCModel is 1 per unit time
-        // we are contributing s*deathRate number of changes per unit of time
-        double deathProb = Math.exp(-distance * delParameter.getParameterValue(0));
-        double mutationR = 2 * mutationRate.getParameterValue(0);
-        double freqs[] = freqModel.getFrequencyParameter().getParameterValues();
-
-        for (i = 0; i < freqs.length - 1; ++i) {
-            mutationR *= freqs[i];
+        // Zero matrix
+        for (int i = 0; i < matrix.length; ++i) {
+            Arrays.fill(matrix[i], 0.0);
         }
+
+        int baseStateCount = 1;
         if (CTMCModel != null) {
-            CTMCModel.getTransitionProbabilities(mutationR * distance, trMatrix);
-        } else {
-            trMatrix[0] = 1.0;
+            CTMCModel.getInfinitesimalMatrix(baseModelMatrix);
+            baseStateCount = CTMCModel.getDataType().getStateCount();
         }
 
-        for (i = 0; i < stateCount - 1; ++i) {
-            for (j = 0; j < stateCount - 1; j++) {
-                matrix[i * (stateCount) + j] = trMatrix[i * (stateCount - 1) + j] * deathProb;
+        double deathR = delParameter.getParameterValue(0);
+        double mutationR = 2 * mutationRate.getParameterValue(0); // TODO Double-check
+
+        int k = 0;
+        for (int i = 0; i < baseStateCount; ++i) {
+            for (int j = 0; j < baseStateCount; ++j) {
+                matrix[i][j] = baseModelMatrix[k] - deathR;
+                k++;
             }
-            matrix[i * (stateCount) + j] = (1.0 - deathProb);
+            matrix[i][baseStateCount] = deathR;
         }
-
-        for (j = 0; j < stateCount - 1; ++j) {
-            matrix[stateCount * (stateCount - 1) + j] = 0.0;
-        }
-
-        matrix[stateCount * stateCount - 1] = 1.0;
-/*        System.err.println("Transition matrix t = "+distance);
-        for(i=0;i<stateCount;++i){
-            System.err.print("[");
-            for(j=0;j<stateCount; ++j){
-                System.err.print(" "+matrix[i*stateCount+j]);
-            }
-            System.err.println(" ]");
-        }*/
     }
+
+    @Override
+    protected void setupRelativeRates(double[] rates) {
+
+    }
+
 }

@@ -1,7 +1,7 @@
 /*
  * BeagleSeqSimTest.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,8 +26,6 @@
 package dr.app.bss.test;
 
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.newtreelikelihood.NewBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.newtreelikelihood.SiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
@@ -78,8 +76,8 @@ public class BeagleSeqSimTest {
 //			simulateTwoPartitions();
 //			simulateThreePartitions(i, N);
 //			simulateAminoAcid();
-        	simulateCodon();
-        	
+            simulateCodon();
+
         }
         long toc = System.currentTimeMillis();
 
@@ -237,7 +235,7 @@ public class BeagleSeqSimTest {
             );
 
             SimpleAlignment alignment = simulator.simulate(simulateInPar);
-            
+
 //			alignment.setOutputType(SimpleAlignment.OutputType.NEXUS);
             alignment.setOutputType(SimpleAlignment.OutputType.XML);
 
@@ -332,7 +330,7 @@ public class BeagleSeqSimTest {
 
         try {
 
-        	MathUtils.setSeed(666);
+            MathUtils.setSeed(666);
 
             System.out.println("Test case 3: simulateThreePartitions");
 
@@ -418,7 +416,7 @@ public class BeagleSeqSimTest {
 
     }// END: simulateThreePartitions
 
-    
+
     static void simulateAminoAcid() {
 
         try {
@@ -490,13 +488,13 @@ public class BeagleSeqSimTest {
 
     }// END: simulateAminoAcid
 
-    
+
     static void simulateCodon() {
-    	
+
         try {
 
-        	boolean calculateLikelihood = true;
-        	
+            boolean calculateLikelihood = true;
+
             System.out.println("Test case 6: simulate codons");
 
             MathUtils.setSeed(666);
@@ -518,14 +516,14 @@ public class BeagleSeqSimTest {
             BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
             // create Frequency Model
-          Parameter freqs = new Parameter.Default(new double[]{
-        	0.0163936, // 
-        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-            0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
-        	0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344 //
-        	});
+            Parameter freqs = new Parameter.Default(new double[]{
+                    0.0163936, //
+                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, //
+                    0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344 //
+            });
             FrequencyModel freqModel = new FrequencyModel(Codons.UNIVERSAL,
                     freqs);
 
@@ -533,7 +531,7 @@ public class BeagleSeqSimTest {
             Parameter alpha = new Parameter.Default(1, 10);
             Parameter beta = new Parameter.Default(1, 5);
             MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel);
-            
+
             HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
 
             // create partition
@@ -554,32 +552,32 @@ public class BeagleSeqSimTest {
                     partitionsList);
 
             Alignment alignment = simulator.simulate(simulateInPar);
-            
+
             System.out.println(alignment.toString());
 
-			if (calculateLikelihood) {
+            if (calculateLikelihood) {
 
-				// NewBeagleTreeLikelihood nbtl = new
-				// NewBeagleTreeLikelihood(alignment, treeModel,
-				// substitutionModel, (SiteModel) siteRateModel,
-				// branchRateModel, null, false,
-				// PartialsRescalingScheme.DEFAULT);
+                // NewBeagleTreeLikelihood nbtl = new
+                // NewBeagleTreeLikelihood(alignment, treeModel,
+                // substitutionModel, (SiteModel) siteRateModel,
+                // branchRateModel, null, false,
+                // PartialsRescalingScheme.DEFAULT);
 
-				
-				ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE, GeneticCode.UNIVERSAL, alignment);
-				BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(convert, //
-						treeModel, //
-						substitutionModel, //
-						siteRateModel, //
-						branchRateModel, //
-						null, //
-						false, //
-						PartialsRescalingScheme.DEFAULT);
 
-				System.out.println("likelihood = " + nbtl.getLogLikelihood());
+                ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE, GeneticCode.UNIVERSAL, alignment);
+                BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(convert, //
+                        treeModel, //
+                        substitutionModel, //
+                        siteRateModel, //
+                        branchRateModel, //
+                        null, //
+                        false, //
+                        PartialsRescalingScheme.DEFAULT);
 
-			}
-            
+                System.out.println("likelihood = " + nbtl.getLogLikelihood());
+
+            }
+
         } catch (Exception e) {
 
             e.printStackTrace();
@@ -587,9 +585,8 @@ public class BeagleSeqSimTest {
 
         } // END: try-catch
 
-   	
-   }//END: simulateCodon
-    
-    
-    
+
+    }//END: simulateCodon
+
+
 }// END: class

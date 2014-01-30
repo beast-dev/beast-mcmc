@@ -23,7 +23,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
     private final CaseToCaseTreeLikelihood c2cLikelihood;
     public static final String TRANSMISSION_WILSON_BALDING_A = "transmissionWilsonBaldingA";
     private double logq;
-    boolean debug = true;
+    private static final boolean DEBUG = false;
     private final int tipCount;
 
     public TransmissionWilsonBaldingA(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
@@ -136,7 +136,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
 
         tree.endTreeEdit();
 
-        if(debug){
+        if(DEBUG){
             c2cLikelihood.checkPartitions();
         }
         logq = Math.log(q);

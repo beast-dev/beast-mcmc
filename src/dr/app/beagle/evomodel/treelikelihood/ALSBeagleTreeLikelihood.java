@@ -1,7 +1,7 @@
 /*
  * ALSBeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,6 +31,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evomodel.MSSD.AbstractObservationProcess;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.LikelihoodPartialsProvider;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -48,22 +49,22 @@ import java.util.Set;
  * Date: Feb 13, 2008
  * Time: 10:13:07 AM
  */
-public class ALSBeagleTreeLikelihood extends BeagleTreeLikelihood {
+public class ALSBeagleTreeLikelihood extends BeagleTreeLikelihood implements LikelihoodPartialsProvider {
 
     protected AbstractObservationProcess observationProcess;
 
 
     public ALSBeagleTreeLikelihood(AbstractObservationProcess observationProcess, PatternList patternList, TreeModel treeModel,
-                                              BranchModel branchModel,
-                                              SiteRateModel siteRateModel,
-                                              BranchRateModel branchRateModel,
-                                              TipStatesModel tipStatesModel,
-                                              boolean useAmbiguities,
-                                              PartialsRescalingScheme scalingScheme,
-                                              Map<Set<String>, Parameter> partialsRestrictions) {
+                                   BranchModel branchModel,
+                                   SiteRateModel siteRateModel,
+                                   BranchRateModel branchRateModel,
+                                   TipStatesModel tipStatesModel,
+                                   boolean useAmbiguities,
+                                   PartialsRescalingScheme scalingScheme,
+                                   Map<Set<String>, Parameter> partialsRestrictions) {
 
         super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme,
-              partialsRestrictions);
+                partialsRestrictions);
 //    }
 //
 //
@@ -110,7 +111,7 @@ public class ALSBeagleTreeLikelihood extends BeagleTreeLikelihood {
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == observationProcess) {
-            likelihoodKnown = false;            
+            likelihoodKnown = false;
         } else
             super.handleModelChangedEvent(model, object, index);
     }

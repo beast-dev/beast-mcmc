@@ -1,7 +1,7 @@
 /*
- * GammaSiteRateModel.java
+ * NewGammaSiteModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -34,40 +34,40 @@ import dr.inference.model.Variable;
 import dr.math.distributions.GammaDistribution;
 
 /**
- * GammaSiteModel - A SiteModel that has a gamma distributed rates across sites.
+ * NewGammaSiteModel - A SiteModel that has a gamma distributed rates across sites.
  *
  * @author Andrew Rambaut
- * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
+ * @version $Id: NewGammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
-public class GammaSiteModel extends AbstractModel implements SiteRateModel {
+public class NewGammaSiteModel extends AbstractModel implements SiteRateModel {
 
-    public GammaSiteModel(String name) {
-        this(   name,
+    public NewGammaSiteModel(String name) {
+        this(name,
                 null,
                 null,
                 0,
                 null);
     }
 
-    public GammaSiteModel(String name, double alpha, int categoryCount) {
-        this(   name,
+    public NewGammaSiteModel(String name, double alpha, int categoryCount) {
+        this(name,
                 null,
                 new Parameter.Default(alpha),
                 categoryCount,
                 null);
     }
 
-    public GammaSiteModel(String name, double pInvar) {
-        this(   name,
+    public NewGammaSiteModel(String name, double pInvar) {
+        this(name,
                 null,
                 null,
                 0,
                 new Parameter.Default(pInvar));
     }
 
-    public GammaSiteModel(String name, double alpha, int categoryCount, double pInvar) {
-        this(   name,
+    public NewGammaSiteModel(String name, double alpha, int categoryCount, double pInvar) {
+        this(name,
                 null,
                 new Parameter.Default(alpha),
                 categoryCount,
@@ -78,7 +78,7 @@ public class GammaSiteModel extends AbstractModel implements SiteRateModel {
      * Constructor for gamma+invar distributed sites. Either shapeParameter or
      * invarParameter (or both) can be null to turn off that feature.
      */
-    public GammaSiteModel(
+    public NewGammaSiteModel(
             String name,
             Parameter muParameter,
             Parameter shapeParameter, int gammaCategoryCount,
@@ -266,9 +266,9 @@ public class GammaSiteModel extends AbstractModel implements SiteRateModel {
         }
 
         if (muParameter != null) { // Moved multiplication by mu to here; it also
-                                   // needed by double[] getCategoryRates() -- previously ignored
+            // needed by double[] getCategoryRates() -- previously ignored
             double mu = muParameter.getParameterValue(0);
-             for (int i=0; i < categoryCount; i++)
+            for (int i = 0; i < categoryCount; i++)
                 categoryRates[i] *= mu;
         }
 
@@ -292,7 +292,7 @@ public class GammaSiteModel extends AbstractModel implements SiteRateModel {
         } else if (variable == muParameter) {
             ratesKnown = false; // MAS: I changed this because the rate parameter can affect the categories if the parameter is in siteModel and not clockModel
         } else {
-        	throw new RuntimeException("Unknown variable in GammaSiteRateModel.handleVariableChangedEvent");
+            throw new RuntimeException("Unknown variable in GammaSiteRateModel.handleVariableChangedEvent");
         }
         listenerHelper.fireModelChanged(this, variable, index);
     }
@@ -329,7 +329,6 @@ public class GammaSiteModel extends AbstractModel implements SiteRateModel {
     private double[] categoryRates;
 
     private double[] categoryProportions;
-
 
 
     // This is here solely to allow the GammaSiteModelParser to pass on the substitution model to the

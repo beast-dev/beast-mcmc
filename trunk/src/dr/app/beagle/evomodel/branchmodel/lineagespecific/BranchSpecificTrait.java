@@ -6,6 +6,11 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.inference.model.CompoundParameter;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ * 
+ */
 public class BranchSpecificTrait implements  TreeTraitProvider {
 
 //	private CompoundParameter parameter;
@@ -33,8 +38,6 @@ public class BranchSpecificTrait implements  TreeTraitProvider {
 			@Override
 			public Double getTrait(Tree tree, NodeRef branch) {
 
-//				branchSpecific.getBranchModelMapping(branch);
-				
 				int[] uCats = branchSpecific.getBranchModelMapping(branch).getOrder();
 				int branchParameterIndex = uCats[0];
 				

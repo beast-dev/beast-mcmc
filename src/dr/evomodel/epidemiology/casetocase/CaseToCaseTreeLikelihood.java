@@ -874,7 +874,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
 
     public double getInfectedPeriod(AbstractCase thisCase){
-        return thisCase.getCullTime() - getInfectiousTime(thisCase);
+        return thisCase.getCullTime() - getInfectionTime(thisCase);
     }
 
 

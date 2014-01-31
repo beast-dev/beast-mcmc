@@ -7,6 +7,11 @@ import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ * 
+ */
 public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 
 	public static final String BRANCH_SPECIFIC_TRAIT = "branchSpecificTrait";

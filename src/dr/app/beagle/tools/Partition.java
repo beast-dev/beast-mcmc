@@ -179,14 +179,14 @@ public class Partition {
 			double[] categoryRates = siteModel.getCategoryRates();
 			beagle.setCategoryRates(categoryRates);
 
-			// weights for gamma category rates
-			double[] categoryWeights = siteModel.getCategoryProportions();
-			beagle.setCategoryWeights(0, categoryWeights);
-
-			// proportion of sites in each category
+			// probabilities for gamma category rates
 			double[] categoryProbs = siteModel.getCategoryProportions();
-			int[] category = new int[partitionSiteCount];
+//			beagle.setCategoryWeights(0, categoryProbs);
 
+//			Utils.printArray(categoryRates);
+//			Utils.printArray(categoryProbs);
+			
+			int[] category = new int[partitionSiteCount];
 			for (int i = 0; i < partitionSiteCount; i++) {
 
 				category[i] = randomChoicePDF(categoryProbs, partitionNumber,
@@ -194,6 +194,13 @@ public class Partition {
 
 			}
 
+//			category = new int[] {1, 0, 0, 0, 0, 1, 0, 1, 0, 0 };
+			
+			if(DEBUG){
+				System.out.println("category for each site:");
+				Utils.printArray(category);
+			}//END: DEBUG
+			
 			int[] parentSequence = new int[partitionSiteCount];
 
 			// set ancestral sequence for partition if it exists
@@ -234,7 +241,7 @@ public class Partition {
 					System.out.println("root Sequence:");
 					Utils.printArray(parentSequence);
 				}
-			}
+			}//END: DEBUG
 
 			substitutionModelDelegate.updateSubstitutionModels(beagle);
 
@@ -245,8 +252,7 @@ public class Partition {
 					System.out.println("Simulated alignment:");
 					printSequences();
 				}
-
-			}
+			}//END: DEBUG
 
 			beagle.finalize();
 			
@@ -270,7 +276,7 @@ public class Partition {
 				System.out.println("I'm at: " + node.toString());
 				System.out.println();
 			}
-		}
+		}//END: DEBUG
 		
 		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
 
@@ -286,8 +292,12 @@ public class Partition {
 					System.out.println("Child finite transition probs matrix:");
 					Utils.print2DArray(probabilities, stateCount);
 					System.out.println();
+					
+					//TODO
+//					System.exit(0);
+					
 				}
-			}// END: if DEBUG
+			}// END: DEBUG
 			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
@@ -299,7 +309,7 @@ public class Partition {
 						System.out.println("site probs:");
 						Utils.printArray(cProb);
 					}
-				}// END: if DEBUG
+				}// END: DEBUG
 
 				partitionSequence[i] = randomChoicePDF(cProb, partitionNumber,
 						"seq");
@@ -324,7 +334,13 @@ public class Partition {
 						System.out.println("Simulated sequence (translated):");
 				        System.out.println(Utils.intArray2Sequence(taxon, partitionSequence, BeagleSequenceSimulator.gapFlag, dataType).getSequenceString());
 					}
-				}// END: if DEBUG
+				}// END: DEBUG
+				
+			} else {
+				
+				//TODO: put inner nodes as well, for annotating the tree
+//				Taxon taxon = treeModel.getNodeTaxon(child);
+//				System.out.println(taxon.getId());
 				
 			} // END: tip node check
 
@@ -347,11 +363,15 @@ public class Partition {
 
 		double branchRate = branchRateModel.getBranchRate(treeModel, node);
 		double branchLength = treeModel.getBranchLength(node);
-
-		for (int siteRateCat = 0; siteRateCat < siteRateCategoryCount; siteRateCat++) {
-
-			double siteRate = siteModel.getRateForCategory(siteRateCat);
-            double branchTime = branchLength * branchRate * siteRate;			
+		
+	        if(DEBUG){
+	        	synchronized (this) {
+	        	System.out.println("Branch length: " + branchLength + " branch rate: " + branchRate);// + " site rate: " + siteRate);
+	        	}
+	        }//END: DEBUG
+	        
+//			double siteRate = 1;//siteModel.getRateForCategory(siteRateCat);
+            double branchTime = branchLength * branchRate;// * siteRate;			
 			
 			int count = 1;
 			substitutionModelDelegate.updateTransitionMatrices(beagle,
@@ -364,7 +384,11 @@ public class Partition {
 					transitionMatrix //
 			);
 
-			System.arraycopy(transitionMatrix, siteRateCat * stateCount,
+//			Utils.printArray(transitionMatrix);
+			
+		for (int siteRateCat = 0; siteRateCat < siteRateCategoryCount; siteRateCat++) {
+			
+			System.arraycopy(transitionMatrix, siteRateCat * stateCount * stateCount,
 					probabilities[siteRateCat], 0, stateCount * stateCount);
 
 		}// END: i loop

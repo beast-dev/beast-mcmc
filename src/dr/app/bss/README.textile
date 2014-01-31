@@ -33,11 +33,9 @@ h1. CITING
    
 h1. TODO
 
+* annotate output tree (internal) nodes (separate trait element). Both newick and coalescent.
 * output type not updated after loading bussdata
 * tree/taxa not set in Partitions table after loading bussdata
-* output tree with inner nodes annoted with trait values (annotate with rate as well)
-* simulation / inference in one XML
 * command line interface
   - complex argument for partitions 
 * simulating indels  
-* simulate coalescent with heights, check if taxa heights are correctly reconstructed

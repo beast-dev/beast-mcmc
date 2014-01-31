@@ -453,7 +453,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 }
             }
 
-//            MCLogger logger = (MCLogger) xo.getChild(MCLogger.class);
+            //MCLogger logger = (MCLogger) xo.getChild(MCLogger.class);
 
             int chainLength = xo.getIntegerAttribute(CHAIN_LENGTH);
             int pathSteps = -1;
@@ -464,6 +464,10 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 fixedRunValues = xo.getDoubleArrayAttribute(FIXED_VALUE);
             } else {
             	throw new RuntimeException("Either a number of path steps or predefined beta values need to be provided.");
+            }
+            
+            if (xo.hasAttribute(PRINT_OPERATOR_ANALYSIS)) {
+            	SHOW_OPERATOR_ANALYSIS = xo.getBooleanAttribute(PRINT_OPERATOR_ANALYSIS);
             }
             
             int burninLength = -1;
@@ -584,6 +588,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 AttributeRule.newBooleanRule(LINEAR, true),
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
+                AttributeRule.newBooleanRule(PRINT_OPERATOR_ANALYSIS, true),
                 AttributeRule.newStringRule(PATH_SCHEME, true),
                 AttributeRule.newDoubleArrayRule(FIXED_VALUE, true),
                 AttributeRule.newDoubleRule(ALPHA, true),
@@ -677,6 +682,7 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
     public static final String PRERUN = "prerun";
+    public static final String PRINT_OPERATOR_ANALYSIS = "printOperatorAnalysis";
     
-    public static final boolean SHOW_OPERATOR_ANALYSIS = false;
+    private static boolean SHOW_OPERATOR_ANALYSIS = false;
 }

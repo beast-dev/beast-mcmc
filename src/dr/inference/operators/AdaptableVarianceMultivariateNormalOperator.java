@@ -43,64 +43,69 @@ import dr.xml.*;
  */
 public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercableOperator {
 
-    public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
-    public static final String SCALE_FACTOR = "scaleFactor";
-    public static final String BETA = "beta";
-    public static final String INITIAL = "initial";
-    public static final String BURNIN = "burnin";
-    public static final String FORM_XTX = "formXtXInverse";
-    public static final String COEFFICIENT = "coefficient";
+	public static final String AVMVN_OPERATOR = "adaptableVarianceMultivariateNormalOperator";
+	public static final String SCALE_FACTOR = "scaleFactor";
+	public static final String BETA = "beta";
+	public static final String INITIAL = "initial";
+	public static final String BURNIN = "burnin";
+	public static final String UPDATE_EVERY = "updateEvery";
+	public static final String FORM_XTX = "formXtXInverse";
+	public static final String COEFFICIENT = "coefficient";
 
-    private double scaleFactor;
-    private double beta;
-    private int iterations, initial, burnin;
-    private final Parameter parameter;
-    private final Transform[] transformations;
-    private final int dim;
-    // private final double constantFactor;
-    private double[] oldMeans, newMeans;
+	public static final boolean DEBUG = false;
 
-    final double[][] matrix;
-    private double[][] empirical;
-    private double[][] cholesky;
+	private double scaleFactor;
+	private double beta;
+	private int iterations, updates, initial, burnin, every;
+	private final Parameter parameter;
+	private final Transform[] transformations;
+	private final int dim;
+	// private final double constantFactor;
+	private double[] oldMeans, newMeans;
 
-    // temporary storage, allocated once.
-    private double[] epsilon;
-    private double[][] proposal;
+	final double[][] matrix;
+	private double[][] empirical;
+	private double[][] cholesky;
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor, double[][] inMatrix,
-                                                       double weight, double beta, int initial, int burnin, CoercionMode mode, boolean isVarianceMatrix) {
+	// temporary storage, allocated once.
+	private double[] epsilon;
+	private double[][] proposal;
 
-        super(mode);
-        this.scaleFactor = scaleFactor;
-        this.parameter = parameter;
-        this.transformations = transformations;
-        this.beta = beta;
-        this.iterations = 0;
-        setWeight(weight);
-        dim = parameter.getDimension();
-        // constantFactor = Math.pow(2.38, 2) / ((double) dim); // not necessary because scaleFactor is auto-tuned
-        this.initial = initial;
-        this.burnin = burnin;
-        this.empirical = new double[dim][dim];
-        this.oldMeans = new double[dim];
-        this.newMeans = new double[dim];
+	public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor, double[][] inMatrix,
+			double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix) {
 
-        this.epsilon = new double[dim];
-        this.proposal = new double[dim][dim];
+		super(mode);
+		this.scaleFactor = scaleFactor;
+		this.parameter = parameter;
+		this.transformations = transformations;
+		this.beta = beta;
+		this.iterations = 0;
+		this.updates = 0;
+		setWeight(weight);
+		dim = parameter.getDimension();
+		// constantFactor = Math.pow(2.38, 2) / ((double) dim); // not necessary because scaleFactor is auto-tuned
+		this.initial = initial;
+		this.burnin = burnin;
+		this.every = every;
+		this.empirical = new double[dim][dim];
+		this.oldMeans = new double[dim];
+		this.newMeans = new double[dim];
 
-        SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(inMatrix));
-        if (inMatrix[0].length != svd.rank()) {
-            throw new RuntimeException("Variance matrix in AdaptableVarianceMultivariateNormalOperator is not of full rank");
-        }
+		this.epsilon = new double[dim];
+		this.proposal = new double[dim][dim];
 
-        if (isVarianceMatrix) {
-            matrix = inMatrix;
-        } else {
-            matrix = formXtXInverse(inMatrix);
-        }
+		SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(inMatrix));
+		if (inMatrix[0].length != svd.rank()) {
+			throw new RuntimeException("Variance matrix in AdaptableVarianceMultivariateNormalOperator is not of full rank");
+		}
 
-        /*System.err.println("matrix initialization: ");
+		if (isVarianceMatrix) {
+			matrix = inMatrix;
+		} else {
+			matrix = formXtXInverse(inMatrix);
+		}
+
+		/*System.err.println("matrix initialization: ");
         for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix.length; j++) {
                 System.err.print(matrix[i][j] + " ");
@@ -108,316 +113,358 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             System.err.println();
         }*/
 
-        try {
-            cholesky = (new CholeskyDecomposition(matrix)).getL();
-        } catch (IllegalDimension illegalDimension) {
-            throw new RuntimeException("Unable to decompose matrix in AdaptableVarianceMultivariateNormalOperator");
-        }
-    }
+		try {
+			cholesky = (new CholeskyDecomposition(matrix)).getL();
+		} catch (IllegalDimension illegalDimension) {
+			throw new RuntimeException("Unable to decompose matrix in AdaptableVarianceMultivariateNormalOperator");
+		}
+	}
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor,
-                                                       MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, CoercionMode mode, boolean isVariance) {
-        this(parameter, transformations, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, mode, isVariance);
-    }
+	public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor,
+			MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance) {
+		this(parameter, transformations, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance);
+	}
 
-    private double[][] formXtXInverse(double[][] X) {
-        int N = X.length;
-        int P = X[0].length;
+	private double[][] formXtXInverse(double[][] X) {
+		int N = X.length;
+		int P = X[0].length;
 
-        double[][] matrix = new double[P][P];
-        for (int i = 0; i < P; i++) {
-            for (int j = 0; j < P; j++) {
-                int total = 0;
-                for (int k = 0; k < N; k++) {
-                    total += X[k][i] * X[k][j];
-                }
-                matrix[i][j] = total;
-            }
-        }
+		double[][] matrix = new double[P][P];
+		for (int i = 0; i < P; i++) {
+			for (int j = 0; j < P; j++) {
+				int total = 0;
+				for (int k = 0; k < N; k++) {
+					total += X[k][i] * X[k][j];
+				}
+				matrix[i][j] = total;
+			}
+		}
 
-        // Take inverse
-        matrix = new SymmetricMatrix(matrix).inverse().toComponents();
-        return matrix;
-    }
+		// Take inverse
+		matrix = new SymmetricMatrix(matrix).inverse().toComponents();
+		return matrix;
+	}
 
-    private double calculateCovariance(int number, double currentMatrixEntry, double[] values, int firstIndex, int secondIndex) {
+	private double calculateCovariance(int number, double currentMatrixEntry, double[] values, int firstIndex, int secondIndex) {
 
-        // number will always be > 1 here
-        double result = currentMatrixEntry * (number - 1);
-        result += (values[firstIndex] * values[secondIndex]);
-        result += ((number - 1) * oldMeans[firstIndex] * oldMeans[secondIndex] - number * newMeans[firstIndex] * newMeans[secondIndex]);
-        result /= ((double) number);
+		// number will always be > 1 here
+		double result = currentMatrixEntry * (number - 1);
+		result += (values[firstIndex] * values[secondIndex]);
+		result += ((number - 1) * oldMeans[firstIndex] * oldMeans[secondIndex] - number * newMeans[firstIndex] * newMeans[secondIndex]);
+		result /= ((double) number);
 
-        return result;
+		return result;
 
-    }
+	}
 
-    public double doOperation() throws OperatorFailedException {
+	public double doOperation() throws OperatorFailedException {
 
-        iterations++;
-        //System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());
-        /*System.err.println("Old parameter values:");
+		iterations++;
+
+		if (DEBUG) {
+			System.err.println("\nIteration: " + iterations);
+		}
+		//System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());
+		/*System.err.println("Old parameter values:");
         for (int i = 0; i < dim; i++) {
-        	System.err.println(parameter.getParameterValue(i));
+                System.err.println(parameter.getParameterValue(i));
         }*/
 
-        double[] x = parameter.getParameterValues();
+		double[] x = parameter.getParameterValues();
 
-        //transform to the appropriate scale
-        double[] transformedX = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            transformedX[i] = transformations[i].transform(x[i]);
-        }
+		//transform to the appropriate scale
+		double[] transformedX = new double[dim];
+		for (int i = 0; i < dim; i++) {
+			transformedX[i] = transformations[i].transform(x[i]);
+		}
 
-        //store MH-ratio in logq
-        double logJacobian = 0.0;
+		//store MH-ratio in logq
+		double logJacobian = 0.0;
 
-        //change this: make a rule for when iterations == burnin
-        if (iterations > 1 && iterations > burnin) {
+		//change this: make a rule for when iterations == burnin
+		if (iterations > 1 && iterations > burnin) {
 
-        	if (iterations > (burnin+1)) {
-        		
-        		//first recalculate the means using recursion
-                for (int i = 0; i < dim; i++) {
-                    newMeans[i] = ((oldMeans[i] * (iterations - 1)) + transformedX[i]) / iterations;
-                }
+			if (DEBUG) {
+				System.err.println("  iterations > burnin");
+			}
 
-                //here we can simply use the double[][] matrix
-                for (int i = 0; i < dim; i++) {
-                    for (int j = i; j < dim; j++) {
-                        empirical[i][j] = calculateCovariance(iterations, empirical[i][j], transformedX, i, j);
-                        empirical[j][i] = empirical[i][j];
-                    }
-                }
+			if (iterations > (burnin+1)) {
 
-                /*System.err.println("Empirical covariance matrix:");
+				if (iterations % every == 0) {
+
+					updates++;
+
+					//first recalculate the means using recursion
+					for (int i = 0; i < dim; i++) {
+						newMeans[i] = ((oldMeans[i] * (updates - 1)) + transformedX[i]) / updates;
+					}
+
+					//here we can simply use the double[][] matrix
+					for (int i = 0; i < dim; i++) {
+						for (int j = i; j < dim; j++) {
+							empirical[i][j] = calculateCovariance(updates, empirical[i][j], transformedX, i, j);
+							empirical[j][i] = empirical[i][j];
+						}
+					}
+
+					/*System.err.println("Empirical covariance matrix:");
                    for (int i = 0; i < dim; i++) {
                        for (int j = 0; j < dim; j++) {
                            System.err.print(empirical[i][j] + " ");
                        }
                        System.err.println();
                    }*/
-        		
-        	} else {
-        		
-        		//System.err.println("Iteration: " + iterations);
-        		
-        		//i.e. iterations == burnin+1, i.e. first sample for C_t
-        		//this will not be reached when burnin is set to 0
-        		for (int i = 0; i < dim; i++) {
-                    oldMeans[i] = transformedX[i];
-                    newMeans[i] = transformedX[i];
-                    //System.err.println("oldMean " + i + ": " + oldMeans[i]);
-                    //System.err.println("newMean " + i + ": " + oldMeans[i]);
-                }
-        		
-        		for (int i = 0; i < dim; i++) {
-                    for (int j = 0; j < dim; j++) {
-                        empirical[i][j] = 0.0;
-                    }
-                }
-        		
-        	}
-        	
-        } else if (iterations == 1) {
+				}
 
-        	//System.err.println("Iteration: " + iterations);
-        	
-            //iterations == 1
-            for (int i = 0; i < dim; i++) {
-                oldMeans[i] = transformedX[i];
-                newMeans[i] = transformedX[i];
-                //System.err.println("oldMean " + i + ": " + oldMeans[i]);
-                //System.err.println("newMean " + i + ": " + oldMeans[i]);
-            }
+			} else if (iterations == (burnin+1)) {
 
-            for (int i = 0; i < dim; i++) {
-                for (int j = 0; j < dim; j++) {
-                    empirical[i][j] = 0.0;
-                }
-            }
-        }
-        
-        for (int i = 0; i < dim; i++) {
-            epsilon[i] = scaleFactor * MathUtils.nextGaussian();
-        }
+				updates++;
+				//System.err.println("Iteration: " + iterations);
 
-        if (iterations > initial) {
+				//i.e. iterations == burnin+1, i.e. first sample for C_t
+				//this will not be reached when burnin is set to 0
+				for (int i = 0; i < dim; i++) {
+					oldMeans[i] = transformedX[i];
+					newMeans[i] = transformedX[i];
+					//System.err.println("oldMean " + i + ": " + oldMeans[i]);
+					//System.err.println("newMean " + i + ": " + oldMeans[i]);
+				}
 
-            // TODO: For speed, it may not be necessary to update decomposition each and every iteration
-        	//double start = System.nanoTime();
-        	
-            // double[][] proposal = new double[dim][dim];
-            for (int i = 0; i < dim; i++) {
-                for (int j = i; j < dim; j++) { // symmetric matrix
-                    proposal[j][i] = proposal[i][j] = (1 - beta) * // constantFactor *  /* auto-tuning using scaleFactor */
-                            empirical[i][j] + beta * matrix[i][j];
-                }
-            }
+				for (int i = 0; i < dim; i++) {
+					for (int j = 0; j < dim; j++) {
+						empirical[i][j] = 0.0;
+					}
+				}
 
-            // not necessary for first test phase, but will need to be performed when covariance matrix is being updated
-            try {
-                cholesky = (new CholeskyDecomposition(proposal)).getL();
-            } catch (IllegalDimension illegalDimension) {
-                throw new RuntimeException("Unable to decompose matrix in AdaptableVarianceMultivariateNormalOperator");
-            }
-            
-            //double end = System.nanoTime();
-            //double baseResult = end - start;
-            //System.err.println("Cholesky decomposition took: " + baseResult);
+			}
 
-        }
-        
-        for (int i = 0; i < dim; i++) {
-            for (int j = i; j < dim; j++) {
-                transformedX[i] += cholesky[j][i] * epsilon[j];
-                // caution: decomposition returns lower triangular
-            }
-            if (MULTI) {
-                parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
-            } else {
-                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-            }
+		} else if (iterations == 1) {
 
-            logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
-                    - transformations[i].getLogJacobian(x[i]);
-        }
-        
-        /*for (int i = 0; i < dim; i++) {
-        	System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-    	}*/
-        
-        if (MULTI) {
-            parameter.fireParameterChangedEvent(); // Signal once.
-        }
+			if (DEBUG) {
+				System.err.println("  iterations == 1");
+			}
+			//System.err.println("Iteration: " + iterations);
 
-        //copy new means to old means for next update iteration
-//        System.arraycopy(newMeans, 0, oldMeans, 0, dim);
-        double[] tmp = oldMeans;
-        oldMeans = newMeans;
-        newMeans = tmp; // faster to swap pointers
+			//iterations == 1
+			for (int i = 0; i < dim; i++) {
+				oldMeans[i] = transformedX[i];
+				newMeans[i] = transformedX[i];
+				//System.err.println("oldMean " + i + ": " + oldMeans[i]);
+				//System.err.println("newMean " + i + ": " + oldMeans[i]);
+			}
 
-        //System.err.println("scale factor: " + scaleFactor);
-        /*System.err.println("New parameter values:");
-        for (int i = 0; i < dim; i++) {
-        	System.err.println(parameter.getParameterValue(i));
+			for (int i = 0; i < dim; i++) {
+				for (int j = 0; j < dim; j++) {
+					empirical[i][j] = 0.0;
+				}
+			}
+		}
+
+		for (int i = 0; i < dim; i++) {
+			epsilon[i] = scaleFactor * MathUtils.nextGaussian();
+		}
+
+		if (iterations > initial) {
+
+			if (DEBUG) {
+				System.err.println("  iterations > initial");
+			}
+
+			if (iterations % every == 0) {
+				// TODO: For speed, it may not be necessary to update decomposition each and every iteration
+				//double start = System.nanoTime();
+
+				// double[][] proposal = new double[dim][dim];
+				for (int i = 0; i < dim; i++) {
+					for (int j = i; j < dim; j++) { // symmetric matrix
+						proposal[j][i] = proposal[i][j] = (1 - beta) * // constantFactor *  /* auto-tuning using scaleFactor */
+						empirical[i][j] + beta * matrix[i][j];
+					}
+				}
+
+				// not necessary for first test phase, but will need to be performed when covariance matrix is being updated
+				try {
+					cholesky = (new CholeskyDecomposition(proposal)).getL();
+				} catch (IllegalDimension illegalDimension) {
+					throw new RuntimeException("Unable to decompose matrix in AdaptableVarianceMultivariateNormalOperator");
+				}
+
+				//double end = System.nanoTime();
+				//double baseResult = end - start;
+				//System.err.println("Cholesky decomposition took: " + baseResult);
+			}
+
+		}
+
+		if (DEBUG) {
+			System.err.println("  Drawing new values");
+		}
+
+		for (int i = 0; i < dim; i++) {
+			for (int j = i; j < dim; j++) {
+				transformedX[i] += cholesky[j][i] * epsilon[j];
+				// caution: decomposition returns lower triangular
+			}
+			if (MULTI) {
+				parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
+			} else {
+				parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+			}
+
+			logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i))
+			- transformations[i].getLogJacobian(x[i]);
+		}
+
+		/*for (int i = 0; i < dim; i++) {
+                System.err.println(oldX[i] + " -> " + parameter.getValue(i));
         }*/
-        //System.err.println("log(Jacobian): " + logJacobian);
 
-        //return 0.0;
-        return logJacobian;
-    }
+		if (MULTI) {
+			parameter.fireParameterChangedEvent(); // Signal once.
+		}
+
+		if (iterations % every == 0) {
+			if (DEBUG) {
+				System.err.println("  Copying means");
+			}
+			//copy new means to old means for next update iteration
+			//System.arraycopy(newMeans, 0, oldMeans, 0, dim);
+			double[] tmp = oldMeans;
+			oldMeans = newMeans;
+			newMeans = tmp; // faster to swap pointers
+		}
+
+		//System.err.println("scale factor: " + scaleFactor);
+		/*System.err.println("New parameter values:");
+        for (int i = 0; i < dim; i++) {
+                System.err.println(parameter.getParameterValue(i));
+        }*/
+		//System.err.println("log(Jacobian): " + logJacobian);
+
+		//return 0.0;
+		return logJacobian;
+
+	}
 
 
-    public static final boolean MULTI = true;
+	public static final boolean MULTI = true;
 
-    //MCMCOperator INTERFACE
-    public final String getOperatorName() {
-        return "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
-    }
+	//MCMCOperator INTERFACE
+	public final String getOperatorName() {
+		return "adaptableVarianceMultivariateNormal(" + parameter.getParameterName() + ")";
+	}
 
-    public double getCoercableParameter() {
-        return Math.log(scaleFactor);
-    }
+	public double getCoercableParameter() {
+		return Math.log(scaleFactor);
+	}
 
-    public void setCoercableParameter(double value) {
-        scaleFactor = Math.exp(value);
-    }
+	public void setCoercableParameter(double value) {
+		scaleFactor = Math.exp(value);
+	}
 
-    public double getRawParameter() {
-        return scaleFactor;
-    }
+	public double getRawParameter() {
+		return scaleFactor;
+	}
 
-    public double getScaleFactor() {
-        return scaleFactor;
-    }
+	public double getScaleFactor() {
+		return scaleFactor;
+	}
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
+	public double getTargetAcceptanceProbability() {
+		return 0.234;
+	}
 
-    public double getMinimumAcceptanceLevel() {
-        return 0.1;
-    }
+	public double getMinimumAcceptanceLevel() {
+		return 0.1;
+	}
 
-    public double getMaximumAcceptanceLevel() {
-        return 0.4;
-    }
+	public double getMaximumAcceptanceLevel() {
+		return 0.4;
+	}
 
-    public double getMinimumGoodAcceptanceLevel() {
-        return 0.20;
-    }
+	public double getMinimumGoodAcceptanceLevel() {
+		return 0.20;
+	}
 
-    public double getMaximumGoodAcceptanceLevel() {
-        return 0.30;
-    }
+	public double getMaximumGoodAcceptanceLevel() {
+		return 0.30;
+	}
 
-    public final String getPerformanceSuggestion() {
+	public final String getPerformanceSuggestion() {
 
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
-        dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
-        double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try setting scaleFactor to about " + formatter.format(sf);
-        } else return "";
+		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+		double targetProb = getTargetAcceptanceProbability();
+		dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
+		double sf = OperatorUtils.optimizeWindowSize(scaleFactor, prob, targetProb);
+		if (prob < getMinimumGoodAcceptanceLevel()) {
+			return "Try setting scaleFactor to about " + formatter.format(sf);
+		} else if (prob > getMaximumGoodAcceptanceLevel()) {
+			return "Try setting scaleFactor to about " + formatter.format(sf);
+		} else return "";
 
-    }
+	}
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+	public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public String getParserName() {
-            return AVMVN_OPERATOR;
-        }
+		public String getParserName() {
+			return AVMVN_OPERATOR;
+		}
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+		public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            //System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
+			//System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
 
-            CoercionMode mode = CoercionMode.parseMode(xo);
+			CoercionMode mode = CoercionMode.parseMode(xo);
 
-            double weight = xo.getDoubleAttribute(WEIGHT);
-            double beta = xo.getDoubleAttribute(BETA);
-            int initial = xo.getIntegerAttribute(INITIAL);
-            double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
-            double coefficient = xo.getDoubleAttribute(COEFFICIENT);
-            
-            int burnin = 0;
-            if (xo.hasAttribute(BURNIN)) {
-            	burnin = xo.getIntegerAttribute(BURNIN);
-            }
-            if (burnin > initial) {
-            	throw new XMLParseException("burnin must be smaller than the initial period");
-            }
+			double weight = xo.getDoubleAttribute(WEIGHT);
+			double beta = xo.getDoubleAttribute(BETA);
+			int initial = xo.getIntegerAttribute(INITIAL);
+			double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+			double coefficient = xo.getDoubleAttribute(COEFFICIENT);
 
-            if (scaleFactor <= 0.0) {
-                throw new XMLParseException("scaleFactor must be greater than 0.0");
-            }
+			int burnin = 0;
+			int every = 1;
+			if (xo.hasAttribute(BURNIN)) {
+				burnin = xo.getIntegerAttribute(BURNIN);
+			}
+			if (burnin > initial || burnin < 0) {
+				throw new XMLParseException("burnin must be smaller than the initial period");
+			}
 
-            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+			if (xo.hasAttribute(UPDATE_EVERY)) {
+				every = xo.getIntegerAttribute(UPDATE_EVERY);
+			}
 
-            boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
+			if (every <= 0) {
+				throw new XMLParseException("sample needs to be taken at least every single iteration");
+			}
 
-            //varMatrix needs to be initialized
-            int dim = parameter.getDimension();
-            System.err.println("Dimension: " + dim);
+			if (scaleFactor <= 0.0) {
+				throw new XMLParseException("scaleFactor must be greater than 0.0");
+			}
 
-            if (initial <= 2 * dim) {
-                initial = 2 * dim;
-            }
+			Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
-            Parameter[] init = new Parameter[dim];
-            for (int i = 0; i < dim; i++) {
-                init[i] = new Parameter.Default(dim, 0.0);
-            }
-            for (int i = 0; i < dim; i++) {
-                init[i].setParameterValue(i, Math.pow(coefficient, 2) / ((double) dim));
-            }
-            MatrixParameter varMatrix = new MatrixParameter(null, init);
+			boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
-            /*double[][] test = varMatrix.getParameterAsMatrix();
+			//varMatrix needs to be initialized
+			int dim = parameter.getDimension();
+			System.err.println("Dimension: " + dim);
+
+			if (initial <= 2 * dim) {
+				initial = 2 * dim;
+			}
+
+			Parameter[] init = new Parameter[dim];
+			for (int i = 0; i < dim; i++) {
+				init[i] = new Parameter.Default(dim, 0.0);
+			}
+			for (int i = 0; i < dim; i++) {
+				init[i].setParameterValue(i, Math.pow(coefficient, 2) / ((double) dim));
+			}
+			MatrixParameter varMatrix = new MatrixParameter(null, init);
+
+			/*double[][] test = varMatrix.getParameterAsMatrix();
             for (int i = 0; i < dim; i++) {
             	for (int j = 0; j < dim; j++) {
             		System.err.print(test[i][j] + " ");
@@ -425,70 +472,76 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             	System.err.println();
             }*/
 
-            Transform[] transformations = new Transform[dim];
-            for (int i = 0; i < dim; i++) {
-                transformations[i] = Transform.NONE;
-            }
+			Transform[] transformations = new Transform[dim];
+			for (int i = 0; i < dim; i++) {
+				transformations[i] = Transform.NONE;
+			}
 
-            for (int i = 0; i < xo.getChildCount(); i++) {
-                Object child = xo.getChild(i);
-                if (child instanceof Transform.ParsedTransform) {
-                    Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
+			for (int i = 0; i < xo.getChildCount(); i++) {
+				Object child = xo.getChild(i);
+				if (child instanceof Transform.ParsedTransform) {
+					Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
 
-                    System.err.println("Transformations:");
-                    for (int j = thisObject.start; j < thisObject.end; ++j) {
-                        transformations[j] = thisObject.transform;
-                        System.err.print(transformations[j].getTransformName() + " ");
-                    }
-                    System.err.println();
-                }
-            }
+					System.err.println("Transformations:");
+					for (int j = thisObject.start; j < thisObject.end; ++j) {
+						transformations[j] = thisObject.transform;
+						System.err.print(transformations[j].getTransformName() + " ");
+					}
+					System.err.println();
+				}
+			}
 
-            /*for (int i = 0; i < dim; i++) {
+			/*for (int i = 0; i < dim; i++) {
                 System.err.println(transformations[i]);
             }*/
 
-            // Make sure varMatrix is square and dim(varMatrix) = dim(parameter)
+			// Make sure varMatrix is square and dim(varMatrix) = dim(parameter)
 
-            if (!formXtXInverse) {
-                if (varMatrix.getColumnDimension() != varMatrix.getRowDimension())
-                    throw new XMLParseException("The variance matrix is not square");
-            }
+			if (!formXtXInverse) {
+				if (varMatrix.getColumnDimension() != varMatrix.getRowDimension())
+					throw new XMLParseException("The variance matrix is not square");
+			}
 
-            if (varMatrix.getColumnDimension() != parameter.getDimension())
-                throw new XMLParseException("The parameter and variance matrix have differing dimensions");
+			if (varMatrix.getColumnDimension() != parameter.getDimension())
+				throw new XMLParseException("The parameter and variance matrix have differing dimensions");
 
-            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, scaleFactor, varMatrix, weight, beta, initial, burnin, mode, !formXtXInverse);
-        }
+			/*java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the adaptable variance multivariate normal operator:" +
+					"\n beta = " + beta + "\n initial = " + initial + "\n burnin = " + burnin + "\n every = " + every +
+					"\n If you use this operator, please cite: " + 
+			"   Guy Baele, Philippe Lemey, Marc A. Suchard. 2014. In preparation.");*/
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+			return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, scaleFactor, varMatrix, weight, beta, initial, burnin, every, mode, !formXtXInverse);
+		}
 
-        public String getParserDescription() {
-            return "This element returns an adaptable variance multivariate normal operator on a given parameter.";
-        }
+		//************************************************************************
+		// AbstractXMLObjectParser implementation
+		//************************************************************************
 
-        public Class getReturnType() {
-            return MCMCOperator.class;
-        }
+		public String getParserDescription() {
+			return "This element returns an adaptable variance multivariate normal operator on a given parameter.";
+		}
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+		public Class getReturnType() {
+			return MCMCOperator.class;
+		}
 
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(SCALE_FACTOR),
-                AttributeRule.newDoubleRule(WEIGHT),
-                AttributeRule.newDoubleRule(BETA),
-                AttributeRule.newDoubleRule(COEFFICIENT),
-                AttributeRule.newIntegerRule(INITIAL),
-                AttributeRule.newIntegerRule(BURNIN),
-                AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
-                AttributeRule.newBooleanRule(FORM_XTX, true),
-                new ElementRule(Parameter.class),
-                new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
-        };
+		public XMLSyntaxRule[] getSyntaxRules() {
+			return rules;
+		}
 
-    };
+		private final XMLSyntaxRule[] rules = {
+				AttributeRule.newDoubleRule(SCALE_FACTOR),
+				AttributeRule.newDoubleRule(WEIGHT),
+				AttributeRule.newDoubleRule(BETA),
+				AttributeRule.newDoubleRule(COEFFICIENT),
+				AttributeRule.newIntegerRule(INITIAL),
+				AttributeRule.newIntegerRule(BURNIN, true),
+				AttributeRule.newIntegerRule(UPDATE_EVERY, true),
+				AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+				AttributeRule.newBooleanRule(FORM_XTX, true),
+				new ElementRule(Parameter.class),
+				new ElementRule(Transform.ParsedTransform.class, 0, Integer.MAX_VALUE)
+		};
+
+	};
 }

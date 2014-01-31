@@ -251,10 +251,10 @@ public final class MarkovChain {
 
                 if (score == Double.POSITIVE_INFINITY || Double.isNaN(score)) {
                     if (likelihood instanceof CompoundLikelihood) {
-                        Logger.getLogger("error").severe("A likelihood returned with a numerical error:\n" +
+                        Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error:\n" +
                                 ((CompoundLikelihood)likelihood).getDiagnosis());
                     } else {
-                        Logger.getLogger("error").severe("A likelihood returned with a numerical error.");
+                        Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error.");
                     }
 
                     // If the user has chosen to ignore this error then we transform it
@@ -278,7 +278,7 @@ public final class MarkovChain {
 
                     if (Math.abs(testScore - score) > evaluationTestThreshold) {
                         Logger.getLogger("error").severe(
-                                "State was not correctly calculated after an operator move.\n"
+                                "State "+currentState+": State was not correctly calculated after an operator move.\n"
                                         + "Likelihood evaluation: " + score
                                         + "\nFull Likelihood evaluation: " + testScore
                                         + "\n" + "Operator: " + mcmcOperator
@@ -345,7 +345,7 @@ public final class MarkovChain {
 
 
                         final Logger logger = Logger.getLogger("error");
-                        logger.severe("State was not correctly restored after reject step.\n"
+                        logger.severe("State "+currentState+": State was not correctly restored after reject step.\n"
                                 + "Likelihood before: " + oldScore
                                 + " Likelihood after: " + testScore
                                 + "\n" + "Operator: " + mcmcOperator

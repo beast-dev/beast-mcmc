@@ -175,8 +175,9 @@ public class DesignMatrix extends MatrixParameter {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean dynamicStandardization = xo.getAttribute(DYNAMIC_STANDARDIZATION, false);
+            String name = (xo.hasId() ? xo.getId() : DESIGN_MATRIX);
 
-            DesignMatrix designMatrix = new DesignMatrix(DESIGN_MATRIX, dynamicStandardization);
+            DesignMatrix designMatrix = new DesignMatrix(name, dynamicStandardization);
             boolean addIntercept = xo.getAttribute(ADD_INTERCEPT, false);
             boolean standardize = xo.getAttribute(STANDARDIZE, false);
 

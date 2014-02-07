@@ -129,9 +129,10 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
                 x[i] += cholesky[j][i] * epsilon[j];
                 // caution: decomposition returns lower triangular
             }
-            parameter.setParameterValue(i, x[i]);
+            parameter.setParameterValueQuietly(i, x[i]);
 //            System.out.println(i+" : "+x[i]);
         }
+        parameter.fireParameterChangedEvent();
 //                    System.exit(-1);
         return 0;
     }

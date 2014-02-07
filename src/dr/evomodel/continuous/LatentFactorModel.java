@@ -46,7 +46,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private Matrix residual;
 
-    private final CompoundParameter data;
+    private final MatrixParameter data;
     private final CompoundParameter factors;
     private final MatrixParameter loadings;
     private final MatrixParameter precision;
@@ -58,7 +58,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
-    public LatentFactorModel(CompoundParameter data, CompoundParameter factors, MatrixParameter loadings,
+    public LatentFactorModel(MatrixParameter data, CompoundParameter factors, MatrixParameter loadings,
                              MatrixParameter precision,
                              int numFactors) {
         super("");
@@ -75,14 +75,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         addVariable(loadings);
 
         dimFactors = numFactors;
-        nTaxa = factors.getDimension() / dimFactors;
-        dimData = data.getDimension() / nTaxa;
+        nTaxa = data.getColumnDimension();
+        dimData = data.getRowDimension();
 
         // TODO Check dimensions of loadings (dimFactors x dimData)
         // TODO dimData >= dimFactors
 
         computeResiduals();
-        System.out.print(residual.toComponents()[0][0]);
+        System.out.print(new Matrix(residual.toComponents()));
         System.out.print(calculateLogLikelihood());
     }
 
@@ -113,12 +113,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private void computeResiduals() {
 
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
-
-
-        Matrix tData = copy(data, nTaxa, dimData);
+        Matrix tData = new Matrix(data.getParameterAsMatrix());
         Matrix tFactors = copy(factors, nTaxa, dimFactors);
         try {
-            residual = tData.subtract(tFactors.product(tLoadings));
+            residual = tData.subtract(tFactors.product(tLoadings).transpose());
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -212,7 +210,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private double calculateLogLikelihood() {
-
+        //TODO return correct answer
         Matrix tPrecision= new Matrix(precision.getParameterAsMatrix());
         computeResiduals();
         Matrix expPart=null;

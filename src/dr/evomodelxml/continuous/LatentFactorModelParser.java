@@ -31,6 +31,7 @@ import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
@@ -63,7 +64,6 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         System.err.println("TN: " + traitName);
-//        System.exit(-1);
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
@@ -75,15 +75,26 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //
 //
 //        MatrixParameter data = (MatrixParameter) xo.getChild(DATA).getChild(MatrixParameter.class);
+        int colDim=treeModel.getTaxonCount();
+        int rowDim=dataParameter.getDimension()/treeModel.getTaxonCount();
+        Parameter[] dataTemp=new Parameter[colDim];
+        for(int i=0; i<colDim; i++)
+        {
+            dataTemp[i] = new Parameter.Default(rowDim);
+            for(int j=0; j<rowDim; j++)
+            {
+                dataTemp[i].setParameterValue(j, dataParameter.getParameterValue(i*rowDim+j));
+            }
+
+        }
+        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
+        System.err.print(new Matrix(dataMatrix.getParameterAsMatrix()));
+        System.err.print(dataMatrix.getRowDimension());
         MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         MatrixParameter precision = (MatrixParameter) xo.getChild(PRECISION).getChild(MatrixParameter.class);
         int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
-        //TODO instead of loadings column dimensions, use number of taxa
-        int colDim = loadings.getColumnDimension();
 
-        System.err.println(new Vector(dataParameter.getParameterValues()));
-
-        return new LatentFactorModel(dataParameter, factors, loadings, precision, numFactors);
+        return new LatentFactorModel(dataMatrix, factors, loadings, precision, numFactors);
     }
 
     private static final XMLSyntaxRule[] rules = {

@@ -43,6 +43,12 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
     public ThreadedCompoundLikelihood() {
     }
+    
+    public ThreadedCompoundLikelihood(List<Likelihood> likelihoods) {
+    	for (Likelihood likelihood : likelihoods) {
+    		addLikelihood(likelihood);
+    	}
+    }
 
     public void addLikelihood(Likelihood likelihood) {
 

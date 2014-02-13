@@ -1,7 +1,7 @@
 /*
  * BaseSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -97,7 +97,9 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             this.freqModel = freqModel;
             addModel(freqModel);
 
-            checkFrequencies();
+            if (!(freqModel instanceof CovarionFrequencyModel)) {
+                checkFrequencies();
+            }
         }
 
         q = new double[stateCount][stateCount];
@@ -202,7 +204,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         EigenDecomposition eigen = getEigenDecomposition();
 
         if (eigen == null) {
-            Arrays.fill(matrix,0.0);
+            Arrays.fill(matrix, 0.0);
             return;
         }
 
@@ -308,7 +310,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         for (int i = 0; i < stateCount; i++)
             subst += -matrix[i][i] * pi[i];
 
-       return subst;
+        return subst;
     }
 
     static String format = "%2.1e";
@@ -389,9 +391,13 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         return false;
     }
 
-    protected double getMINFDIFF() { return 1.0E-10; }
+    protected double getMINFDIFF() {
+        return 1.0E-10;
+    }
 
-    protected double getMINFREQ()  { return 1.0E-10; }
+    protected double getMINFREQ() {
+        return 1.0E-10;
+    }
 
     private final double q[][];
     protected EigenDecomposition eigenDecomposition;

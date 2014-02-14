@@ -3,8 +3,7 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
-import dr.math.IntegrableUnivariateFunction;
-import dr.math.RiemannApproximation;
+import dr.math.*;
 import dr.xml.*;
 import org.apache.commons.math.util.MathUtils;
 import org.netlib.util.doubleW;
@@ -33,7 +32,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private Parameter kernelAlpha;
     private Parameter transmissionRate;
     private boolean hasLatentPeriods;
-    private IntegrableUnivariateFunction probFunct;
     private boolean likelihoodKnown;
     private boolean storedLikelihoodKnown;
     private boolean transProbKnown;
@@ -50,10 +48,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double storedNormalisation;
     private double treeLogProb;
     private double storedTreeLogProb;
-    private boolean hasGeography;
-    private boolean integrateToInfinity;
+    private final boolean hasGeography;
+    private final MultivariateIntegral integrator;
     private ArrayList<AbstractCase> sortedCases;
     private ArrayList<AbstractCase> storedSortedCases;
+    private totalLogProbability totalLogProbability;
 
     // the last time that the case corresponding to the first index could have infected the case corresponding to
     // the second
@@ -73,22 +72,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         if(spatialKernal!=null){
             kernelAlpha = spatialKernal.geta();
             this.addModel(spatialKernal);
-            integrateToInfinity =  kernelAlpha.getBounds().getUpperLimit(0)==Double.POSITIVE_INFINITY;
         }
         this.transmissionRate = transmissionRate;
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
-        if(spatialKernal!=null && integrateToInfinity){
-            probFunct = new InnerIntegralTransformed(new InnerIntegral(steps), steps);
-        } else {
-            probFunct = new InnerIntegral(steps);
-        }
         likelihoodKnown = false;
+        integrator = new MultivariateMonteCarloIntegral(steps);
         hasGeography = spatialKernal!=null;
+        totalLogProbability = new totalLogProbability(hasGeography);
         hasLatentPeriods = treeLikelihood.hasLatentPeriods();
         // todo use BEAST classes for this, which means turning the infectious and latent period objects into Parameters
         sortCases();
-        makeLastTimesToInfectMatrix();
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -168,30 +162,27 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 treeLikelihood.prepareTimings();
             }
             if(!transProbKnown){
-                transLogProb = (N-1)*Math.log(lambda) + Math.log(aAlpha(kernelAlpha.getParameterValue(0)))
-                        - lambda*bAlpha(kernelAlpha.getParameterValue(0));
+                if(hasGeography){
+                    transLogProb = totalLogProbability.evaluate(new double[]{transmissionRate.getParameterValue(0),
+                            spatialKernel.geta().getParameterValue(0)});
+                } else {
+                    transLogProb = totalLogProbability.evaluate(new double[]{transmissionRate.getParameterValue(0)});
+                }
                 transProbKnown = true;
             }
             if(!normalisationKnown){
                 if(hasGeography){
-                    // todo The casts here are ugly as hell, and the integrals should be their own abstract class
-                    if(integrateToInfinity){
-                        normalisation =  Math.log(probFunct.evaluateIntegral(1, 0));
-                        if(normalisation==Double.NaN || normalisation == Double.NEGATIVE_INFINITY){
-                            throw new RuntimeException("Infinite or NaN normalisation");
-                        }
-                        normalisation -= -N*Math.log(((InnerIntegralTransformed)probFunct).getScalingFactor());
-                    } else {
-                        normalisation = Math.log(probFunct.evaluateIntegral(0,
-                                kernelAlpha.getBounds().getUpperLimit(0)));
-                        normalisation -= -N*Math.log(((InnerIntegral)probFunct).getScalingFactor());
-                    }
-                } else {
-                    normalisation = Math.log(aAlpha(kernelAlpha.getParameterValue(0))
-                            /Math.pow(bAlpha(kernelAlpha.getParameterValue(0)), N));
-                }
+                    normalisation = integrator.integrate(totalLogProbability,
+                            new double[]{transmissionRate.getBounds().getLowerLimit(0),
+                                    spatialKernel.geta().getBounds().getLowerLimit(0)},
+                            new double[]{transmissionRate.getBounds().getUpperLimit(0),
+                                    spatialKernel.geta().getBounds().getUpperLimit(0)});
 
-                normalisation += MathUtils.factorialLog(N-1);
+                } else {
+                    normalisation = integrator.integrate(totalLogProbability,
+                            new double[]{transmissionRate.getBounds().getLowerLimit(0)},
+                            new double[]{spatialKernel.geta().getBounds().getLowerLimit(0)});
+                }
 
                 normalisationKnown = true;
 
@@ -240,177 +231,127 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
 
-    private void makeLastTimesToInfectMatrix(){
-        lastTimesToInfect = new double[outbreak.size()][outbreak.size()];
-        for(int i=0; i<outbreak.size(); i++){
-            for(int j=0; j<outbreak.size(); j++){
-                if (treeLikelihood.getInfectiousTime(outbreak.getCase(i))
-                        > treeLikelihood.getInfectiousTime(outbreak.getCase(j))){
-                    lastTimesToInfect[i][j] = Double.NEGATIVE_INFINITY;
-                } else {
-                    lastTimesToInfect[i][j] = Math.min(
-                            treeLikelihood.getInfectionTime(outbreak.getCase(j)), outbreak.getCase(i).getCullTime());
-                }
-            }
-        }
-    }
-
     private void sortCases(){
         sortedCases = new ArrayList<AbstractCase>(outbreak.getCases());
         Collections.sort(sortedCases, new CaseInfectionComparator());
     }
 
-    private double bAlpha(double alpha){
-        double total = 0;
-        if(sortedCases==null){
+    private double caseLogProbability(AbstractCase infectee, double[] argument){
+        double logP = 0;
+
+        if(sortedCases == null){
             sortCases();
         }
-        if(lastTimesToInfect == null){
-            makeLastTimesToInfectMatrix();
+        if(treeLikelihood.getInfector(infectee)==null){
+            return -Math.log(outbreak.size());
         }
-        for(int i=1; i<outbreak.size(); i++){
-            AbstractCase infected = sortedCases.get(i);
-            int infectedIndex = outbreak.getCaseIndex(infected);
-            for(int j=0; j<i; j++){
-                AbstractCase possibleInfector = sortedCases.get(j);
-                int possibleInfectorIndex = outbreak.getCaseIndex(possibleInfector);
-                if(!hasLatentPeriods ||
-                        treeLikelihood.getInfectiousTime(possibleInfector)<treeLikelihood.getInfectionTime(infected)){
-                    double endOfWindow = lastTimesToInfect[possibleInfectorIndex][infectedIndex];
-                    if(DEBUG && endOfWindow==Double.NEGATIVE_INFINITY){
-                        throw new RuntimeException("Something's gone wrong with case sorting");
-                    }
+        AbstractCase infector = treeLikelihood.getInfector(infectee);
 
-                    total += (endOfWindow - treeLikelihood.getInfectiousTime(possibleInfector))
-                            * outbreak.getKernelValue(infected, possibleInfector, spatialKernel, alpha);
+        // probability that the infector infected this case at this time
 
-                }
+        double r = argument[0];
+
+        if(argument.length>1){
+            double kernelValue = outbreak.getKernelValue(infectee, infector, spatialKernel, argument[1]);
+            r *= kernelValue;
+        }
+
+        double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
+        double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
+        double infecteeNoninfectious = infectee.getCullTime();
+
+        if(infecteeInfected > infectorInfectious){
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        logP += Math.log(r);
+
+        // probability that nothing infected this case sooner
+
+        for(AbstractCase nonInfector : sortedCases){
+            if(nonInfector == infectee){
+                // no need to consider any infections happening after this one
+                break;
+            }
+
+            r = argument[0];
+            if(argument.length>1){
+                double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel, argument[1]);
+                r *= kernelValue;
+            }
+            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
+            if(nonInfectorInfectious <= infecteeInfected){
+                logP += -r*(infecteeInfected - nonInfectorInfectious);
             }
         }
-        return total;
+
+        // probability that _something_ infected this case before it became noninfectious
+
+        double logProduct = 0;
+
+        for(AbstractCase nonInfector : sortedCases){
+            double nonInfectorInfected = treeLikelihood.getInfectionTime(nonInfector);
+
+            if(nonInfectorInfected > infecteeNoninfectious){
+                // no need to consider any infections happening after this one
+                break;
+            }
+
+            r = argument[0];
+            if(argument.length>1){
+                double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel, argument[1]);
+                r *= kernelValue;
+            }
+            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
+            if(nonInfectorInfectious <= infecteeNoninfectious){
+                logProduct += -r*(infecteeNoninfectious - nonInfectorInfectious);
+            }
+        }
+
+        double product = Math.exp(logProduct);
+
+        logP -= Math.log1p(-product);
+
+        return logP;
     }
 
-    private double aAlpha(double alpha){
-        double product = 1;
-        for(int i=0; i<outbreak.size(); i++){
-            AbstractCase infector = treeLikelihood.getInfector(i);
 
-            if(infector!=null){
-                product *= outbreak.getKernelValue(outbreak.getCase(i), infector, spatialKernel, alpha);
+
+    private class totalLogProbability implements MultivariateFunction {
+
+        final boolean hasGeography;
+
+        private totalLogProbability(boolean hasGeography){
+            this.hasGeography = hasGeography;
+        }
+
+        // index 0 is lambda, index 1 if present is alpha
+
+        public double evaluate(double[] argument) {
+            if(sortedCases == null){
+                sortCases();
             }
-        }
-        return product;
-    }
+            double logProb = 0;
 
-    // the integral in terms of only alpha
-
-    private class InnerIntegral implements IntegrableUnivariateFunction {
-
-        RiemannApproximation integrator;
-        double scalingFactor = 1;
-        boolean needToRescale = false;
-
-        private InnerIntegral(int steps){
-            integrator = new RiemannApproximation(steps);
-        }
-
-        public double evaluateIntegral(double a, double b) {
-            double result;
-            do{
-                needToRescale = false;
-                result = integrator.integrate(this, a, b);
-                if(needToRescale){
-                    scalingFactor *=10;
-                }
-            } while(needToRescale);
-            return result;
-        }
-
-        public double evaluate(double argument) {
-            if(!needToRescale){
-                double numerator = aAlpha(argument);
-                double b = bAlpha(argument)/scalingFactor;
-
-                double denominator = Math.pow(b, outbreak.size());
-                if(denominator==Double.POSITIVE_INFINITY){
-                    needToRescale = true;
-                }
-
-                return Math.exp(Math.log(numerator)-outbreak.size()*Math.log(b));
-            } else {
-                return 0;
+            for(AbstractCase aCase : outbreak.getCases()){
+                logProb += caseLogProbability(aCase, argument);
             }
+
+            return Math.exp(logProb);
+
         }
 
-        public double getLowerBound() {
+        public int getNumArguments() {
+            return 2;
+        }
+
+        public double getLowerBound(int n) {
             return 0;
         }
 
-        public double getUpperBound() {
-            return Double.POSITIVE_INFINITY;
+        public double getUpperBound(int n) {
+            return n==0 ? kernelAlpha.getBounds().getUpperLimit(0) : transmissionRate.getBounds().getUpperLimit(0);
         }
-
-        public double getScalingFactor() {
-            return scalingFactor;
-        }
-
-        // todo this really is horrible and should be fixed
-
-        public void setScalingFactor(double factor){
-            scalingFactor = factor;
-        }
-
-        public boolean needsRescaling(){
-            return needToRescale;
-        }
-
-        public void setRescaling(boolean value){
-            needToRescale = value;
-        }
-
-    }
-
-    // integral of the former from 0 to +Infinity
-
-    private class InnerIntegralTransformed implements IntegrableUnivariateFunction {
-
-        RiemannApproximation integrator;
-        InnerIntegral originalFunction;
-
-        private InnerIntegralTransformed(InnerIntegral inner, int steps){
-            this.originalFunction = inner;
-            integrator = new RiemannApproximation(steps);
-        }
-
-        public double evaluateIntegral(double a, double b) {
-            double result;
-            do{
-                originalFunction.setRescaling(false);
-                result = integrator.integrate(this, a, b);
-                if(originalFunction.needsRescaling()){
-                    originalFunction.setScalingFactor(originalFunction.getScalingFactor()*10);
-                }
-            } while(originalFunction.needsRescaling());
-            return result;
-        }
-
-        public double evaluate(double argument) {
-            return -originalFunction.evaluate((1/argument)-1)/Math.pow(argument,2);
-        }
-
-        public double getLowerBound() {
-            return 0;
-        }
-
-        public double getUpperBound() {
-            return 1;
-        }
-
-        public double getScalingFactor() {
-            return originalFunction.getScalingFactor();
-        }
-
-
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

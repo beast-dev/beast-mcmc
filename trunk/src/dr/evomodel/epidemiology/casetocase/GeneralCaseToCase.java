@@ -31,10 +31,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * General category model
- *
- * @author Matthew Hall
- */
+* General category model
+*
+* @author Matthew Hall
+*/
 
 public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 
@@ -83,7 +83,7 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 
         int noInfectiousCategories = ((WithinCaseCategoryOutbreak)cases).getInfectiousCategoryCount();
 
-        ArrayList<String> infectiousCategories = ((WithinCaseCategoryOutbreak)cases).getInfectiousCategories();
+        HashSet<String> infectiousCategories = ((WithinCaseCategoryOutbreak)cases).getInfectiousCategories();
 
         HashMap<String, NormalGammaDistribution> infectiousMap = ((WithinCaseCategoryOutbreak)cases).getInfectiousMap();
 
@@ -206,30 +206,30 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
         if(hasLatentPeriods){
             int noLatentCategories = ((WithinCaseCategoryOutbreak)cases).getLatentCategoryCount();
 
-            ArrayList<String> latentCategories = ((WithinCaseCategoryOutbreak)cases).getLatentCategories();
+            HashSet<String> latentCategories = ((WithinCaseCategoryOutbreak)cases).getLatentCategories();
 
-            ArrayList<ArrayList<Double>> latentPeriodsByCategory = new ArrayList<ArrayList<Double>>();
+            HashMap<String, ArrayList<Double>> latentPeriodsByCategory = new HashMap<String, ArrayList<Double>>();
 
-            for(int i=0; i<noLatentCategories; i++){
-                latentPeriodsByCategory.add(new ArrayList<Double>());
+            for(String latentCategory : ((WithinCaseCategoryOutbreak) cases).getLatentCategories()){
+                latentPeriodsByCategory.put(latentCategory, new ArrayList<Double>());
             }
 
             for(AbstractCase aCase : cases.getCases()){
                 String category = ((WithinCaseCategoryOutbreak)cases).getLatentCategory(aCase);
 
                 ArrayList<Double> correspondingList
-                        = latentPeriodsByCategory.get(latentCategories.indexOf(category));
+                        = latentPeriodsByCategory.get(category);
 
                 correspondingList.add(latentPeriods[cases.getCaseIndex(aCase)]);
             }
 
-            for(int i=0; i<noLatentCategories; i++){
-                ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(i);
+            for(String category: ((WithinCaseCategoryOutbreak) cases).getInfectiousCategories()){
+                ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
 
                 double count = (double)latPeriodsInThisCategory.size();
 
                 NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak)cases)
-                        .getLatentCategoryPrior(((WithinCaseCategoryOutbreak) cases).getLatentCategories().get(i));
+                        .getLatentCategoryPrior(category);
 
                 double[] latPredictiveDistributionParameters=prior.getParameters();
 

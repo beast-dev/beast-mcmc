@@ -14,6 +14,7 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Outbreak class for within-case coalescent.
@@ -32,21 +33,38 @@ import java.util.HashMap;
 public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
     public static final String WITHIN_CASE_CATEGORY_OUTBREAK = "withinCaseCategoryOutbreak";
-    private final ArrayList<String> latentCategories;
-    private final ArrayList<String> infectiousCategories;
+    private final HashSet<String> latentCategories;
+    private final HashSet<String> infectiousCategories;
     private final HashMap<String, NormalGammaDistribution> latentMap;
     private final HashMap<String, NormalGammaDistribution> infectiousMap;
+    private final PriorType infPriorType;
+    private final PriorType latPriorType;
     private double[][] distances;
+
+    public enum PriorType {
+        JEFFREYS, LOG_JEFFREYS, NORMAL_GAMMA, LOMAX, GENERALISED_BETA_PRIME
+    }
 
     public WithinCaseCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
                                       HashMap<String, NormalGammaDistribution> infectiousMap,
-                                      HashMap<String, NormalGammaDistribution> latentMap){
+                                      HashMap<String, NormalGammaDistribution> latentMap, PriorType infPriorType,
+                                      PriorType latPriorType){
         super(name, taxa, hasLatentPeriods, hasGeography);
         cases = new ArrayList<AbstractCase>();
-        latentCategories = new ArrayList<String>(latentMap.keySet());
-        infectiousCategories = new ArrayList<String>(infectiousMap.keySet());
+        latentCategories = new HashSet<String>();
+        infectiousCategories = new HashSet<String>();
         this.latentMap = latentMap;
         this.infectiousMap = infectiousMap;
+        this.infPriorType = infPriorType;
+        this.latPriorType = latPriorType;
+    }
+
+    public PriorType getInfPriorType(){
+        return infPriorType;
+    }
+
+    public PriorType getLatPriorType(){
+        return latPriorType;
     }
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter coords, Taxa associatedTaxa,
@@ -60,16 +78,18 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             thisCase =
                     new WithinCaseCategoryCase(caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory,
                             latentCategory);
+            latentCategories.add(latentCategory);
         }
+        infectiousCategories.add(infectiousCategory);
         cases.add(thisCase);
         addModel(thisCase);
     }
 
-    public ArrayList<String> getLatentCategories(){
+    public HashSet<String> getLatentCategories(){
         return latentCategories;
     }
 
-    public ArrayList<String> getInfectiousCategories(){
+    public HashSet<String> getInfectiousCategories(){
         return infectiousCategories;
     }
 
@@ -390,15 +410,14 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
             final boolean hasLatentPeriods = Boolean.parseBoolean((String)xo.getAttribute(HAS_LATENT_PERIODS));
 
-            if(hasLatentPeriods != xo.hasChildNamed(LATENT_PERIOD_PRIOR)){
-                throw new XMLParseException("Do you want latent periods or not?");
-            }
-
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
 
             HashMap<String, NormalGammaDistribution> infMap = new HashMap<String, NormalGammaDistribution>();
 
             HashMap<String, NormalGammaDistribution> latMap = new HashMap<String, NormalGammaDistribution>();
+
+            boolean foundInfectiousPrior = false;
+            boolean foundLatentPrior = false;
 
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
@@ -406,15 +425,23 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                     if (((XMLObject)cxo).getName().equals(INFECTIOUS_PERIOD_PRIOR)){
                         NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
                         infMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
+                        foundInfectiousPrior = true;
                     } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIOD_PRIOR))){
                         NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
                         latMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
+                        foundLatentPrior = true;
                     }
                 }
             }
 
+            PriorType infectiousPriorType = foundInfectiousPrior ? PriorType.NORMAL_GAMMA : PriorType.JEFFREYS;
+            PriorType latentPriorType = null;
+            if(hasLatentPeriods){
+                latentPriorType = foundLatentPrior ? PriorType.NORMAL_GAMMA : PriorType.JEFFREYS;
+            }
+
             WithinCaseCategoryOutbreak cases = new WithinCaseCategoryOutbreak(null, taxa, hasGeography,
-                    hasLatentPeriods, infMap, latMap);
+                    hasLatentPeriods, infMap, latMap, infectiousPriorType, latentPriorType);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName()
@@ -508,7 +535,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(WithinCaseCategoryCase.WITHIN_CASE_CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_PRIOR, distributionRules, 1,
+                new ElementRule(INFECTIOUS_PERIOD_PRIOR, distributionRules, 0,
                         Integer.MAX_VALUE),
                 new ElementRule(LATENT_PERIOD_PRIOR, distributionRules, 0,
                         Integer.MAX_VALUE),
@@ -516,6 +543,5 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         };
 
     };
-
 
 }

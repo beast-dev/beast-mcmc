@@ -1,5 +1,5 @@
 /*
- * MonteCarloIntegral.java
+ * Integral.java
  *
  * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
@@ -26,36 +26,20 @@
 package dr.math;
 
 /**
- * Approximates the integral of a given function using Monte Carlo integration
+ * An interface for integration of univariate functions.
  *
  * @author Alexei Drummond
  *
- * @version $Id: MonteCarloIntegral.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
+ * @version $Id: Integral.java,v 1.3 2005/05/24 20:26:01 rambaut Exp $
  */
-public class MonteCarloIntegral implements Integral {
+public interface MultivariateIntegral {
 
-	public MonteCarloIntegral(int sampleSize) {
-		this.sampleSize = sampleSize;
-	}
-
-	/**
-	 * @return the approximate integral of the given function
-	 * within the given range using simple monte carlo integration.
-	 * @param f the function whose integral is of interest
-	 * @param min the minimum value of the function
-	 * @param max the  upper limit of the function
-	 */
-	public double integrate(UnivariateFunction f, double min, double max) {
-	
-		double integral = 0.0;
-		
-		double range = (max - min);
-		for (int i =1; i <= sampleSize; i++) {
-			integral += f.evaluate((MathUtils.nextDouble() * range) + min);
-		}
-		integral *= range/(double)sampleSize;
-		return integral;
-	}
-	
-	private int sampleSize;
+    /**
+     * @return the approximate integral of the given function
+     * within the given range.
+     * @param f the function whose integral is of interest
+     * @param mins the minimum values of the function in each dimension
+     * @param maxes the upper limit of the function in each dimension
+     */
+    public double integrate(MultivariateFunction f, double[] mins, double[] maxes);
 }

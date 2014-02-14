@@ -1,7 +1,7 @@
 /*
  * BeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -79,6 +79,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final String SCALING_PROPERTY = "beagle.scaling";
     private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
+    private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -238,7 +239,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     preferenceFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
 
-            if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && stateCount != 4) {
+            boolean forceVectorization = false;
+            String vectorizationString = System.getProperty(FORCE_VECTORIZATION);
+            if (vectorizationString != null) {
+                forceVectorization = true;
+            }
+
+            if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && (stateCount != 4)
+                    && !forceVectorization
+                    ) {
                 // @todo SSE doesn't seem to work for larger state spaces so for now we override the
                 // SSE option.
                 preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
@@ -428,21 +437,21 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
         return order;
     }
-    
+
     public TipStatesModel getTipStatesModel() {
-    	return tipStatesModel;
+        return tipStatesModel;
     }
-    
+
     public PatternList getPatternsList() {
-    	return patternList;
+        return patternList;
     }
 
     public TreeModel getTreeModel() {
         return treeModel;
     }
-    
+
     public BranchModel getBranchModel() {
-    	return branchModel;
+        return branchModel;
     }
 
     public SiteRateModel getSiteRateModel() {
@@ -452,17 +461,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     public BranchRateModel getBranchRateModel() {
         return branchRateModel;
     }
-    
+
     public PartialsRescalingScheme getRescalingScheme() {
-    	return rescalingScheme;
+        return rescalingScheme;
     }
-    
+
     public Map<Set<String>, Parameter> getPartialsRestrictions() {
-    	return partialsRestrictions;
+        return partialsRestrictions;
     }
-    
+
     public boolean useAmbiguities() {
-    	return useAmbiguities;
+        return useAmbiguities;
     }
 
     protected int getScaleBufferCount() {
@@ -930,6 +939,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
     }
 
+    public void getRescaledPartials(int number, double[] outPartials) {
+        int cumulativeBufferIndex = Beagle.NONE;
+
+        if (useScaleFactors && number >= tipCount) {
+            cumulativeBufferIndex = scaleBufferIndices[number - tipCount];
+        }
+        beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
+    }
+
     protected void setPartials(int number, double[] partials) {
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }
@@ -1222,7 +1240,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private boolean ascertainedSitePatterns = false;
 
 
-    /***
+    /**
      * Flag to specify if ambiguity codes are in use
      */
     protected final boolean useAmbiguities;
@@ -1245,8 +1263,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             TreeModel treeModel = new TreeModel(tree);
 
             // create Frequency Model
-            Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-                    0.25, 0.25 });
+            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
+                    0.25, 0.25});
             FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
                     freqs);
 
@@ -1266,7 +1284,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
             freqModels.add(freqModel);
 
-            Parameter epochTimes = new Parameter.Default(1,20);
+            Parameter epochTimes = new Parameter.Default(1, 20);
 
             // create branch rate model
             Parameter rate = new Parameter.Default(1, 0.001);
@@ -1282,7 +1300,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             // create partition
             Partition partition1 = new Partition(treeModel, //
-            		homogenousBranchSubstitutionModel,//
+                    homogenousBranchSubstitutionModel,//
                     siteRateModel, //
                     branchRateModel, //
                     freqModel, //
@@ -1296,14 +1314,14 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // feed to sequence simulator and generate data
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
 //            		, sequenceLength
-            		);
+            );
             Alignment alignment = simulator.simulate(false);
 
             BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
 
-             nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
 
@@ -1312,20 +1330,24 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             System.exit(-1);
         } // END: try-catch block
     }
-    
-	public Double getUpdateTimer() {
-		return Double.valueOf(substitutionModelDelegate.updateTime);
-	}
-    
-	public Double getConvolveTimer() {
-		return Double.valueOf(substitutionModelDelegate.convolveTime);
-	}
 
-	public double[] getSiteLogLikelihoods() {
-		getLogLikelihood();
-		double[] siteLogLikelihoods = new double[patternCount];
-		beagle.getSiteLogLikelihoods(siteLogLikelihoods);
-		return siteLogLikelihoods;
-	}
-	
+    public Double getUpdateTimer() {
+        return Double.valueOf(substitutionModelDelegate.updateTime);
+    }
+
+    public Double getConvolveTimer() {
+        return Double.valueOf(substitutionModelDelegate.convolveTime);
+    }
+
+    public double getLogScalingFactor(int pattern) {
+        throw new RuntimeException("Not yet implemented.");
+    }
+
+    public double[] getSiteLogLikelihoods() {
+        getLogLikelihood();
+        double[] siteLogLikelihoods = new double[patternCount];
+        beagle.getSiteLogLikelihoods(siteLogLikelihoods);
+        return siteLogLikelihoods;
+    }
+
 }//END: class

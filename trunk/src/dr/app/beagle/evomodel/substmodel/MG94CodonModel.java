@@ -1,7 +1,7 @@
 /*
  * MG94CodonModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -63,6 +63,14 @@ public class MG94CodonModel extends AbstractCodonModel {
 
     }
 
+    protected double getNormalizationValue(double[][] matrix, double[] pi) {
+        double norm = 1.0;
+        if (doNormalization) {
+            norm = super.getNormalizationValue(matrix, pi);
+        }
+        return norm;
+    }
+
     public double getAlpha() {
         return alphaParameter.getParameterValue(0);
     }
@@ -95,4 +103,10 @@ public class MG94CodonModel extends AbstractCodonModel {
             }
         }
     }
+
+    public void setNormalization(boolean normalize) {
+        this.doNormalization = normalize;
+    }
+
+    private boolean doNormalization = true;
 }

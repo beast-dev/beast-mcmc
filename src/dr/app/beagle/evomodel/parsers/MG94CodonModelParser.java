@@ -1,7 +1,7 @@
 /*
  * MG94CodonModelParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,6 +32,8 @@ import dr.evolution.datatype.GeneticCode;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.logging.Logger;
+
 /**
  * @author Marc A. Suchard
  * @author Guy Baele
@@ -41,6 +43,7 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
     public static final String MUSE_CODON_MODEL = "museGautCodonModel";
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
+    public static final String NORMALIZED = ComplexSubstitutionModelParser.NORMALIZED;
 
 
     public String getParserName() {
@@ -59,6 +62,11 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
         Parameter betaParam = (Parameter) xo.getElementFirstChild(BETA);
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
         MG94CodonModel codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+
+        if (!xo.getAttribute(NORMALIZED, true)) {
+            codonModel.setNormalization(false);
+            Logger.getLogger("dr.app.beagle.evomodel").info("MG94CodonModel normalization: false");
+        }
 
         return codonModel;
     }
@@ -87,7 +95,8 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(BETA,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(FrequencyModel.class)
+            new ElementRule(FrequencyModel.class),
+            AttributeRule.newBooleanRule(NORMALIZED, true),
     };
 
 }

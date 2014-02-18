@@ -97,8 +97,8 @@ public class MathUtils {
 	}
 
     /**
-     * @param logpdf array of unnormalized logprobabilities
-     * @return a sample according to an unnormalized probability distribution
+     * @param logpdf array of unnormalised log probabilities
+     * @return a sample according to an unnormalised probability distribution
      *
      * Use this if probabilities are rounding to zero when converted to real space
      */

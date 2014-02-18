@@ -25,8 +25,11 @@
 
 package dr.math;
 
+import java.util.Arrays;
+import java.util.HashMap;
+
 /**
- * Approximates the integral of a given function using Monte Carlo integration
+ * Approximates the integral of a given function using Monte Carlo integration; possibly stratified
  *
  * @author Alexei Drummond
  *
@@ -34,8 +37,17 @@ package dr.math;
  */
 public class MultivariateMonteCarloIntegral implements MultivariateIntegral {
 
-    public MultivariateMonteCarloIntegral(int sampleSize) {
+    // bins is the number of divisions that each axis it split into (so the full number of bins is this to the
+    // power of the dimension of the function
+    // sampleSize is the number of samples PER BIN
+
+    public MultivariateMonteCarloIntegral(int sampleSize, int bins) {
         this.sampleSize = sampleSize;
+        this.bins = bins;
+    }
+
+    public MultivariateMonteCarloIntegral(int sampleSize) {
+        this(sampleSize, 1);
     }
 
     /**
@@ -47,26 +59,61 @@ public class MultivariateMonteCarloIntegral implements MultivariateIntegral {
      */
     public double integrate(MultivariateFunction f, double[] mins, double[] maxes) {
 
+        int dim = f.getNumArguments();
+        int totalBins = bins*dim;
+        double[] steps = new double[dim];
+        double totalArea=1;
+
+
+        for(int i=0; i<dim; i++){
+            totalArea *= (maxes[i]-mins[i]);
+        }
+
+        HashMap<Integer, double[]> binCorners = new HashMap<Integer, double[]>();
+        double[] currentCorner = new double[dim];
+
+
+        for(int index=0; index<totalBins; index++){
+            binCorners.put(index, Arrays.copyOf(currentCorner, dim));
+
+            int dimToCheck = 0;
+            while(dimToCheck<dim){
+                if(currentCorner[dimToCheck]+steps[dimToCheck]<maxes[dimToCheck]){
+                    currentCorner[dimToCheck] += steps[dimToCheck];
+                    break;
+                } else {
+                    currentCorner[dimToCheck] = mins[dimToCheck];
+                }
+                dimToCheck++;
+            }
+        }
+
         double integral = 0.0;
 
-        double area = 1;
+        for(int i=0; i<totalBins; i++){
 
-        for(int i=0; i<f.getNumArguments(); i++){
-            area *= maxes[i]-mins[i];
-        }
+            for (int j=1; j <= sampleSize; j++) {
 
-        for (int i=1; i <= sampleSize; i++) {
+                double[] sample = new double[dim];
+                for(int k=0; k<sample.length; k++){
+                    sample[k] = binCorners.get(i)[k] + MathUtils.nextDouble()*(steps[k]);
+                }
 
-            double[] sample = new double[f.getNumArguments()];
-            for(int j=0; j<sample.length; j++){
-                sample[j] = MathUtils.nextDouble()*(maxes[j]-mins[j]);
+                integral += f.evaluate(sample);
             }
 
-            integral += f.evaluate(sample);
         }
-        integral *= area/(double)sampleSize;
+        integral *= totalArea/((double)sampleSize*totalBins);
         return integral;
     }
 
+    protected int getSampleSize(){
+        return sampleSize;
+    }
+    protected int getBins(){
+        return bins;
+    }
+
     private int sampleSize;
+    private int bins;
 }

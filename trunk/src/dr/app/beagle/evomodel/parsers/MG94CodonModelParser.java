@@ -37,12 +37,14 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  * @author Guy Baele
+ * @author Philippe Lemey
  */
 public class MG94CodonModelParser extends AbstractXMLObjectParser {
 
     public static final String MUSE_CODON_MODEL = "museGautCodonModel";
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
+    public static final String KAPPA = GY94CodonModelParser.KAPPA;
     public static final String NORMALIZED = ComplexSubstitutionModelParser.NORMALIZED;
 
 
@@ -60,8 +62,9 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
 
         Parameter alphaParam = (Parameter) xo.getElementFirstChild(ALPHA);
         Parameter betaParam = (Parameter) xo.getElementFirstChild(BETA);
+        Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-        MG94CodonModel codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+        MG94CodonModel codonModel = new MG94CodonModel(codons, alphaParam, betaParam, kappaParam, freqModel);
 
         if (!xo.getAttribute(NORMALIZED, true)) {
             codonModel.setNormalization(false);
@@ -95,6 +98,8 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(BETA,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(KAPPA,
+                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
             new ElementRule(FrequencyModel.class),
             AttributeRule.newBooleanRule(NORMALIZED, true),
     };

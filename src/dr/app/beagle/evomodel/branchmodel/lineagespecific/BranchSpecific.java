@@ -236,7 +236,8 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, Citab
             // create substitution model
             Parameter alpha = new Parameter.Default(1, 10);
             Parameter beta = new Parameter.Default(1, 5);
-            MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel);
+            Parameter kappa = new Parameter.Default(1, 1);
+            MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta, kappa, freqModel);
 
             HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
 

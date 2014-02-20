@@ -85,6 +85,8 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         NodeRef parent = tree.getParent(node);
 
+        double hr = 0;
+
         assert map.get(parent.getNumber())==map.get(node.getNumber()) : "Partition problem";
         if(!extended || c2cLikelihood.tipLinked(parent)){
             NodeRef grandparent = tree.getParent(parent);
@@ -95,6 +97,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
                 }
                 newMap[grandparent.getNumber()]=map.get(node.getNumber());
             }
+            hr += tree.isExternal(node) ? Math.log(0.5) : 0;
         } else {
             NodeRef sibling = node;
             for(int i=0; i<tree.getChildCount(parent); i++){
@@ -108,11 +111,13 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
                 }
                 newMap[sibling.getNumber()]=map.get(node.getNumber());
             }
+            hr += tree.isExternal(sibling) ? Math.log(2) : 0;
+            hr += tree.isExternal(node) ? Math.log(0.5) : 0;
         }
         newMap[parent.getNumber()]=map.get(node.getNumber());
         map.setAll(newMap, false);
 
-        return tree.isExternal(node) ? Math.log(0.5) : 0;
+        return hr;
     }
 
     private double moveUp(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){

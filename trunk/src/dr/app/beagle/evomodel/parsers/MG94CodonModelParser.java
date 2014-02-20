@@ -27,9 +27,11 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
+import dr.app.beagle.evomodel.substmodel.MG94HKYCodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.logging.Logger;
@@ -47,6 +49,15 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
     public static final String KAPPA = GY94CodonModelParser.KAPPA;
     public static final String NORMALIZED = ComplexSubstitutionModelParser.NORMALIZED;
 
+    //for GTR extension
+    public static final String GTR_MODEL = GTRParser.GTR_MODEL;
+    public static final String A_TO_C = GTRParser.A_TO_C;
+    public static final String A_TO_G = GTRParser.A_TO_G;
+    public static final String A_TO_T = GTRParser.A_TO_T;
+    public static final String C_TO_G = GTRParser.C_TO_G;
+    public static final String C_TO_T = GTRParser.C_TO_T;
+    public static final String G_TO_T = GTRParser.G_TO_T;
+
 
     public String getParserName() {
         return MUSE_CODON_MODEL;
@@ -62,9 +73,63 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
 
         Parameter alphaParam = (Parameter) xo.getElementFirstChild(ALPHA);
         Parameter betaParam = (Parameter) xo.getElementFirstChild(BETA);
-        Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-        MG94CodonModel codonModel = new MG94CodonModel(codons, alphaParam, betaParam, kappaParam, freqModel);
+
+        MG94CodonModel codonModel;
+        if (xo.hasChildNamed(GTR_MODEL)) {
+            //TODO: change this into constructing a MG94CodonModel (needs to be written), which is started underneath
+            codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+
+            Parameter rateACValue = null;
+            if (xo.hasChildNamed(A_TO_C)) {
+                rateACValue = (Parameter) xo.getElementFirstChild(A_TO_C);
+            }
+            Parameter rateAGValue = null;
+            if (xo.hasChildNamed(A_TO_G)) {
+                rateAGValue = (Parameter) xo.getElementFirstChild(A_TO_G);
+            }
+            Parameter rateATValue = null;
+            if (xo.hasChildNamed(A_TO_T)) {
+                rateATValue = (Parameter) xo.getElementFirstChild(A_TO_T);
+            }
+            Parameter rateCGValue = null;
+            if (xo.hasChildNamed(C_TO_G)) {
+                rateCGValue = (Parameter) xo.getElementFirstChild(C_TO_G);
+            }
+            Parameter rateCTValue = null;
+            if (xo.hasChildNamed(C_TO_T)) {
+                rateCTValue = (Parameter) xo.getElementFirstChild(C_TO_T);
+            }
+            Parameter rateGTValue = null;
+            if (xo.hasChildNamed(G_TO_T)) {
+                rateGTValue = (Parameter) xo.getElementFirstChild(G_TO_T);
+            }
+            int countNull = 0;
+            if (rateACValue == null) countNull++;
+            if (rateAGValue == null) countNull++;
+            if (rateATValue == null) countNull++;
+            if (rateCGValue == null) countNull++;
+            if (rateCTValue == null) countNull++;
+            if (rateGTValue == null) countNull++;
+
+            if (countNull != 1)
+                throw new XMLParseException("Only five parameters may be specified in GTR, leave exactly one out, the others will be specifed relative to the one left out.");
+            //TODO: turn this on below on and delete kappa.
+            //return new new MG94GTRCodonModel(codons, alphaParam, betaParam, rateACValue, rateAGValue, rateATValue, rateCGValue, rateCTValue, rateGTValue, freqModel);
+
+            if (xo.hasAttribute(KAPPA)){
+                System.err.print("using GTR rates -- overrides KAPPA");
+            }
+
+        }  else if (xo.hasChildNamed(KAPPA)) {
+            Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
+            codonModel = new MG94HKYCodonModel(codons, alphaParam, betaParam, kappaParam, freqModel);
+//            System.err.println("setting up MG94HKYCodonModel");
+        }  else {
+            //resort to standard MG94 without nucleotide rate bias
+            codonModel = new MG94CodonModel(codons, alphaParam, betaParam, freqModel);
+        }
+
 
         if (!xo.getAttribute(NORMALIZED, true)) {
             codonModel.setNormalization(false);
@@ -99,7 +164,20 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
             new ElementRule(BETA,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(KAPPA,
-                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) }),
+                    new XMLSyntaxRule[] { new ElementRule(Parameter.class) }, true),
+            new ElementRule(A_TO_C,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(A_TO_G,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(A_TO_T,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(C_TO_G,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(C_TO_T,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(G_TO_T,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+
             new ElementRule(FrequencyModel.class),
             AttributeRule.newBooleanRule(NORMALIZED, true),
     };

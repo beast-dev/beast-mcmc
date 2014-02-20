@@ -531,7 +531,7 @@ public class BeagleSeqSimTest {
             Parameter alpha = new Parameter.Default(1, 10);
             Parameter beta = new Parameter.Default(1, 5);
             Parameter kappa = new Parameter.Default(1, 1);
-            MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta, kappa, freqModel);
+            MG94CodonModel mg94 = new MG94CodonModel(Codons.UNIVERSAL, alpha, beta, freqModel);
 
             HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(mg94);
 

@@ -36,6 +36,8 @@ import java.util.HashSet;
 public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public static final String WITHIN_CASE_COALESCENT = "withinCaseCoalescent";
+    private WithinCaseCategoryOutbreak.PriorType infectiousPriorType;
+    private WithinCaseCategoryOutbreak.PriorType latentPriorType;
     private double[] partitionTreeLogLikelihoods;
     private double[] storedPartitionTreeLogLikelihoods;
     private double[] timingLogLikelihoods;
@@ -68,6 +70,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         timingLogLikelihoods = new double[noTips];
         storedTimingLogLikelihoods = new double[noTips];
         recalculateCoalescentFlags = new boolean[noTips];
+        infectiousPriorType = ((WithinCaseCategoryOutbreak) cases).getInfPriorType();
+        if(hasLatentPeriods){
+            latentPriorType = ((WithinCaseCategoryOutbreak) cases).getLatPriorType();
+        }
 
         partitionsAsTrees = new Treelet[caseData.size()];
         storedPartitionsAsTrees = new Treelet[caseData.size()];
@@ -89,6 +95,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     protected double calculateLogLikelihood(){
 
         if(DEBUG){
+            checkPartitions();
             super.debugOutputTree("bleh.nex", false);
         }
 
@@ -118,9 +125,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             correspondingList.add(getInfectiousPeriod(aCase));
         }
 
-        WithinCaseCategoryOutbreak.PriorType infPriorType = ((WithinCaseCategoryOutbreak) cases).getInfPriorType();
-
-        switch(infPriorType){
+        switch(infectiousPriorType){
             case NORMAL_GAMMA:
                 for(String category : ((WithinCaseCategoryOutbreak) cases).getInfectiousCategories()){
                     ArrayList<Double> infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category);
@@ -166,6 +171,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                     //todo log the parameters of the "posterior"
                 }
+                break;
             case LOG_JEFFREYS:
                 for(String category : ((WithinCaseCategoryOutbreak) cases).getInfectiousCategories()){
                     ArrayList<Double> infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category);
@@ -180,6 +186,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                     logL += -Math.log(stdev);
                 }
+                break;
             case JEFFREYS:
                 for(String category : ((WithinCaseCategoryOutbreak) cases).getInfectiousCategories()){
                     ArrayList<Double> infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category);
@@ -194,11 +201,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                     logL += -Math.log(stdev);
                 }
-
+                break;
         }
 
         if(hasLatentPeriods){
-            WithinCaseCategoryOutbreak.PriorType latPriorType = ((WithinCaseCategoryOutbreak) cases).getLatPriorType();
 
             HashMap<String, ArrayList<Double>> latentPeriodsByCategory
                     = new HashMap<String, ArrayList<Double>>();
@@ -219,7 +225,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             }
 
 
-            switch(latPriorType){
+            switch(latentPriorType){
                 case NORMAL_GAMMA:
 
                     for(String category : ((WithinCaseCategoryOutbreak) cases).getLatentCategories()){
@@ -267,6 +273,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                         //todo log the parameters of the "posterior"
                     }
+                    break;
                 case LOG_JEFFREYS:
                     for(String category : ((WithinCaseCategoryOutbreak) cases).getLatentCategories()){
                         ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
@@ -281,6 +288,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                         logL += -Math.log(stdev);
                     }
+                    break;
                 case JEFFREYS:
                     for(String category : ((WithinCaseCategoryOutbreak) cases).getLatentCategories()){
                         ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
@@ -295,10 +303,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                         logL += -Math.log(stdev);
                     }
+                    break;
             }
-
-
-
         }
 
         explodeTree();

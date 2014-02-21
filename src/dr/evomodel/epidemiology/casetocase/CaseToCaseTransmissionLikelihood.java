@@ -273,12 +273,20 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 treeLikelihood.prepareTimings();
             }
             if(!transProbKnown){
-                if(hasGeography){
-                    transLogProb = Math.log(totalProbability.evaluate(new double[]
-                            {transmissionRate.getParameterValue(0),spatialKernel.geta().getParameterValue(0)}));
-                } else {
-                    transLogProb = Math.log(totalProbability.evaluate(new double[]
-                            {transmissionRate.getParameterValue(0)}));
+                try{
+                    if(hasGeography){
+                        transLogProb = Math.log(totalProbability.evaluate(new double[]
+                                {transmissionRate.getParameterValue(0),spatialKernel.geta().getParameterValue(0)}));
+                    } else {
+                        transLogProb = Math.log(totalProbability.evaluate(new double[]
+                                {transmissionRate.getParameterValue(0)}));
+                    }
+                } catch(BadPartitionException e){
+                    transLogProb = Double.NEGATIVE_INFINITY;
+                    logLikelihood = Double.NEGATIVE_INFINITY;
+                    transProbKnown = true;
+                    likelihoodKnown = true;
+                    return logLikelihood;
                 }
                 transProbKnown = true;
             }
@@ -299,13 +307,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                         }
                     }
 
-                    double expnormalisation = integrator.integrate(totalProbability,
+                    double expNormalisation = integrator.integrate(totalProbability,
                             new double[]{transmissionRate.getBounds().getLowerLimit(0),
                                     spatialKernel.geta().getBounds().getLowerLimit(0)},
                             new double[]{transmissionRate.getBounds().getUpperLimit(0),
                                     spatialKernel.geta().getBounds().getUpperLimit(0)});
 
-                    normalisation = Math.log(expnormalisation);
+                    normalisation = Math.log(expNormalisation);
 
                 } else {
                     if(randomDoubleQueue == null){
@@ -315,11 +323,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                         }
                     }
 
-                    double expnormalisation = integrator.integrate(totalProbability,
+                    double expNormalisation = integrator.integrate(totalProbability,
                             new double[]{transmissionRate.getBounds().getLowerLimit(0)},
                             new double[]{transmissionRate.getBounds().getUpperLimit(0)});
 
-                    normalisation = Math.log(expnormalisation);
+                    normalisation = Math.log(expNormalisation);
                 }
 
                 normalisationKnown = true;
@@ -396,9 +404,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
         double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
         double infecteeNoninfectious = infectee.getCullTime();
+        double infectorNoninfectious = infector.getCullTime();
 
-        if(infecteeInfected < infectorInfectious){
-            return Double.NEGATIVE_INFINITY;
+        // need to differentiate between an actual zero probability and a rounding error. This is a zero probability.
+
+        if(infecteeInfected < infectorInfectious || infecteeInfected > infectorNoninfectious){
+            throw new BadPartitionException("Illegal partition given known timings");
         }
 
         logP += Math.log(r);
@@ -672,7 +683,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     private class QueuedMultivariateMonteCarloIntegral extends MultivariateMonteCarloIntegral{
 
-        private HashMap<Integer, double[]> corners;
+        private double[][] corners;
 
         public QueuedMultivariateMonteCarloIntegral(int sampleSize) {
             super(sampleSize);
@@ -697,20 +708,25 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
             if(corners==null){
 
-                corners = new HashMap<Integer, double[]>();
-                double[] currentCorner = new double[dim];
+                corners = new double[totalBins][dim];
+                int[] currentGridPosition = new int[dim];
 
 
                 for(int index=0; index<totalBins; index++){
-                    corners.put(index, Arrays.copyOf(currentCorner, dim));
+                    double[] currentCorner = new double[dim];
+                    for(int i=0; i<dim; i++){
+                        currentCorner[i] = mins[i] + currentGridPosition[i]*steps[i];
+                    }
+
+                    corners[index]=currentCorner;
 
                     int dimToCheck = 0;
                     while(dimToCheck<dim){
-                        if(currentCorner[dimToCheck]+steps[dimToCheck]<maxes[dimToCheck]){
-                            currentCorner[dimToCheck] += steps[dimToCheck];
+                        if(currentGridPosition[dimToCheck]+1<getBins()){
+                            currentGridPosition[dimToCheck]++;
                             break;
                         } else {
-                            currentCorner[dimToCheck] = mins[dimToCheck];
+                            currentGridPosition[dimToCheck] = 0;
                         }
                         dimToCheck++;
                     }
@@ -727,7 +743,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
                     double[] sample = new double[dim];
                     for(int k=0; k<sample.length; k++){
-                        sample[k] = corners.get(i)[k] + randomDoubleQueue[queuePosition]*(steps[k]);
+                        sample[k] = corners[i][k] + randomDoubleQueue[queuePosition]*(steps[k]);
                         queuePosition++;
                     }
 

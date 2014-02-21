@@ -1,8 +1,8 @@
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.*;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -11,7 +11,6 @@ import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 
 /**
@@ -48,7 +47,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
 
     public double doOperation() throws OperatorFailedException {
 
-        ArrayList<AbstractCase> caseList = c2cTreeLikelihood.getOutbreak().getCases();
+        ArrayList<AbstractCase> caseList = new ArrayList<AbstractCase>(c2cTreeLikelihood.getOutbreak().getCases());
 
         int[] shuffledOrder = MathUtils.shuffled(caseList.size());
 
@@ -71,7 +70,9 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
 
     private void pickBranch(AbstractCase aCase){
 
-        if(c2cTreeLikelihood.getInfector(aCase)==null){
+        AbstractCase anInfector = c2cTreeLikelihood.getInfector(aCase);
+
+        if(anInfector==null){
             // can't move the root case - there must be one and if all the other cases' infection branches are known
             // then this must be it
             return;
@@ -81,56 +82,91 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
 
         BranchMapModel originalBranchMap = c2cTreeLikelihood.getBranchMap();
 
-        NodeRef tip = c2cTreeLikelihood.getTip(aCase);
+        NodeRef tip1 = c2cTreeLikelihood.getTip(aCase);
+        NodeRef tip2 = c2cTreeLikelihood.getTip(anInfector);
 
-        ArrayList<NodeRef> positionsPlease = new ArrayList<NodeRef>();
-        NodeRef currentNode = tip;
+        NodeRef mrca = Tree.Utils.getCommonAncestor(tree, tip1, tip2);
 
-        // the parent is a candidate branch unless the current branch map has a different case there and it is an
-        // ancestor of the tip corresponding to that case
+        ArrayList<NodeRef> leftBridge = new ArrayList<NodeRef>();
+        NodeRef currentNode = tip1;
 
-        while(originalBranchMap.get(currentNode.getNumber())==aCase || !c2cTreeLikelihood.tipLinked(currentNode)){
-            positionsPlease.add(currentNode);
+        while(currentNode!=mrca){
+            leftBridge.add(currentNode);
             currentNode = c2cTreeLikelihood.getTreeModel().getParent(currentNode);
         }
 
-        AbstractCase infector = originalBranchMap.get(currentNode.getNumber());
+        ArrayList<NodeRef> rightBridge = new ArrayList<NodeRef>();
+        currentNode = tip2;
 
-        if(positionsPlease.size()==1){
-            //nowhere to go
-            return;
+        while(currentNode!=mrca){
+            rightBridge.add(currentNode);
+            currentNode = c2cTreeLikelihood.getTreeModel().getParent(currentNode);
         }
 
-        double[] logProbabilities = new double[positionsPlease.size()];
+        double[] logProbabilities = new double[leftBridge.size()+rightBridge.size()];
 
-        HashSet<Integer> nodesToChange = c2cTreeLikelihood.samePartitionDownTree(tip, false);
+        AbstractCase[][] branchMaps = new AbstractCase[leftBridge.size()+rightBridge.size()][];
 
-        AbstractCase[][] branchMaps = new AbstractCase[positionsPlease.size()][];
+        // left bridge
+
+        HashSet<Integer> nodesToChange = c2cTreeLikelihood.samePartitionDownTree(tip1, false);
 
         AbstractCase[] tempBranchMap = Arrays.copyOf(originalBranchMap.getArrayCopy(), tree.getNodeCount());
 
         for(Integer number : nodesToChange){
-            tempBranchMap[number] = infector;
+            if(!tree.isExternal(tree.getNode(number))){
+                tempBranchMap[number] = anInfector;
+            }
         }
 
-        branchMaps[0] = tempBranchMap;
-        logProbabilities[0] = c2cTransLikelihood.calculateTempLogLikelihood(tempBranchMap);
+        // at this point only the tip is in its partition. Step-by-step, add the left bridge.
 
-        // at this point only the tip is in its partition
+        for(int i=0; i<leftBridge.size(); i++){
+            NodeRef node = leftBridge.get(i);
 
-        for(int i=1; i<positionsPlease.size(); i++){
-            NodeRef node = positionsPlease.get(i);
-            AbstractCase[] newBranchMap = Arrays.copyOf(branchMaps[i-1], tempBranchMap.length);
-            newBranchMap[node.getNumber()]=aCase;
-            HashSet<Integer> nodesToChangeUp = c2cTreeLikelihood.samePartitionUpTree(node, false);
-            for(Integer number : nodesToChangeUp){
-                if(!tree.isExternal(tree.getNode(number))){
-                    newBranchMap[number]=aCase;
+            if(i>0){
+                tempBranchMap[node.getNumber()]=aCase;
+                HashSet<Integer> nodesToChangeUp = c2cTreeLikelihood.samePartitionUpTree(node, false);
+                for(Integer number : nodesToChangeUp){
+                    tempBranchMap[number]=aCase;
                 }
             }
-            branchMaps[i] = newBranchMap;
-            logProbabilities[i] = c2cTransLikelihood.calculateTempLogLikelihood(newBranchMap);
+
+            branchMaps[i] = Arrays.copyOf(tempBranchMap, tempBranchMap.length);
+
+            logProbabilities[i] = c2cTransLikelihood.calculateTempLogLikelihood(tempBranchMap);
+
         }
+
+        // right bridge
+
+        nodesToChange = c2cTreeLikelihood.samePartitionDownTree(tip2, false);
+
+        tempBranchMap = Arrays.copyOf(originalBranchMap.getArrayCopy(), tree.getNodeCount());
+
+        for(Integer number : nodesToChange){
+            if(!tree.isExternal(tree.getNode(number))){
+                tempBranchMap[number] = aCase;
+            }
+        }
+
+        for(int i=0; i<rightBridge.size(); i++){
+            NodeRef node = rightBridge.get(i);
+
+            if(i>0){
+                tempBranchMap[node.getNumber()]=anInfector;
+                HashSet<Integer> nodesToChangeUp = c2cTreeLikelihood.samePartitionUpTree(node, false);
+                for(Integer number : nodesToChangeUp){
+                    tempBranchMap[number]=anInfector;
+                }
+            }
+
+            branchMaps[branchMaps.length-1-i] = Arrays.copyOf(tempBranchMap, tempBranchMap.length);
+
+            logProbabilities[branchMaps.length-1-i] = c2cTransLikelihood.calculateTempLogLikelihood(tempBranchMap);
+
+        }
+
 
         // this prevents underflow
 

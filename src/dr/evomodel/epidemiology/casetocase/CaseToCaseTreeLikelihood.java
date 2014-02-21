@@ -362,7 +362,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return samePartitionDownTree(node, branchMap, flagForRecalc);
     }
 
-    private HashSet<Integer> samePartitionDownTree(NodeRef node, BranchMapModel map, boolean flagForRecalc){
+    public HashSet<Integer> samePartitionDownTree(NodeRef node, BranchMapModel map, boolean flagForRecalc){
         if(flagForRecalc){
             flagForDescendantRecalculation(treeModel, node);
         }
@@ -390,7 +390,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return samePartitionUpTree(node, branchMap, flagForRecalc);
     }
 
-    private HashSet<Integer> samePartitionUpTree(NodeRef node, BranchMapModel map, boolean flagForRecalc){
+    public HashSet<Integer> samePartitionUpTree(NodeRef node, BranchMapModel map, boolean flagForRecalc){
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = map.get(node.getNumber());
         boolean creepsFurther = false;

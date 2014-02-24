@@ -25,7 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;

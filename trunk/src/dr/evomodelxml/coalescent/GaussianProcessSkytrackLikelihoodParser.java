@@ -27,6 +27,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evolution.tree.Tree;
 //import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.GaussianProcessMultilocusSkytrackLikelihood;
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
 import dr.evomodel.tree.TreeModel;
 //import dr.inference.model.MatrixParameter;
@@ -294,11 +295,14 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 //        Logger.getLogger("dr.evomodel").info("The " + SKYTRACK_LIKELIHOOD + " has " +
 //                (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
-
+           if (treeList.size()==1) {
              return new GaussianProcessSkytrackLikelihood(treeList, precParameter,
                  rescaleByRootHeight, lambda_bound, lambda_parameter, popParameter,alpha_parameter,beta_parameter, change_points,
                      GPtype, GPcounts, coalfactor, CoalCounts, numPoints,Tmrca);
-
+           } else {
+             return new GaussianProcessMultilocusSkytrackLikelihood(treeList, precParameter, rescaleByRootHeight, lambda_bound,
+                     lambda_parameter, popParameter, alpha_parameter, beta_parameter, change_points, GPtype,GPcounts,coalfactor, CoalCounts, numPoints,Tmrca);
+           }
     }
 
     //************************************************************************

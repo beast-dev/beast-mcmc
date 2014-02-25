@@ -25,7 +25,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
     public static final String INFECTION_BRANCH_GIBBS_OPERATOR = "infectionBranchGibbsOperator";
     private CaseToCaseTransmissionLikelihood c2cTransLikelihood;
     private CaseToCaseTreeLikelihood c2cTreeLikelihood;
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     public InfectionBranchGibbsOperator(CaseToCaseTransmissionLikelihood c2cTransLikelihood, double weight){
         this.c2cTransLikelihood = c2cTransLikelihood;
@@ -73,7 +73,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
         AbstractCase anInfector = c2cTreeLikelihood.getInfector(aCase);
 
         if(anInfector==null){
-            // can't move the root case - there must be one and if all the other cases' infection branches are known
+            // can't move the root case - there must be one and if all the other outbreak' infection branches are known
             // then this must be it
             return;
         }

@@ -176,9 +176,9 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                 AbstractCase nodeCase = branchMap.get(node.getNumber());
                 AbstractCase parentCase = branchMap.get(parent.getNumber());
                 if(nodeCase!=parentCase){
-                    double infectionTime = infectionTimes[cases.getCaseIndex(nodeCase)];
+                    double infectionTime = infectionTimes[outbreak.getCaseIndex(nodeCase)];
                     branchLogProbs[node.getNumber()]
-                            = ((SimpleOutbreak)cases).logProbXInfectedByYAtTimeT(nodeCase, parentCase, infectionTime);
+                            = ((SimpleOutbreak) outbreak).logProbXInfectedByYAtTimeT(nodeCase, parentCase, infectionTime);
                 } else {
                     branchLogProbs[node.getNumber()] = 0;
                 }
@@ -186,7 +186,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                 AbstractCase nodeCase = branchMap.get(node.getNumber());
                 final double infectionTime = getRootInfectionTime();
                 branchLogProbs[node.getNumber()]
-                        = ((SimpleOutbreak)cases).logProbXInfectedAtTimeT(nodeCase, infectionTime);
+                        = ((SimpleOutbreak) outbreak).logProbXInfectedAtTimeT(nodeCase, infectionTime);
             }
             update = true;
         }
@@ -225,9 +225,9 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                 Arrays.fill(normProbs, 0);
                 // kind of hacky to use branchMap here to be honest
                 AbstractCase destination = branchMap.get(node.getNumber());
-                int j = cases.getCaseIndex(destination);
+                int j = outbreak.getCaseIndex(destination);
                 for(int i=0; i<stateCount; i++){
-                    AbstractCase origin = cases.getCase(i);
+                    AbstractCase origin = outbreak.getCase(i);
                     // always compatible if non-extended
                     boolean treeCompatibilityCheck = true;
                     if(!treeCompatibilityCheck){
@@ -236,7 +236,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                         normProbs[stateCount*i + j]=1;
                     } else {
                         normProbs[stateCount*i + j]=
-                                ((SimpleOutbreak)cases).probXInfectedByYBetweenTandU(destination, origin,
+                                ((SimpleOutbreak) outbreak).probXInfectedByYBetweenTandU(destination, origin,
                                         getNodeTime(parent), getNodeTime(node));
                     }
                 }
@@ -244,9 +244,9 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                 HashSet<AbstractCase> nodeDescTips = descendantTipPartitions.get(node.getNumber());
                 HashSet<AbstractCase> parentDescTips = descendantTipPartitions.get(parent.getNumber());
                 for(int i=0; i<stateCount; i++){
-                    AbstractCase origin = cases.getCase(i);
+                    AbstractCase origin = outbreak.getCase(i);
                     for(int j=0; j<stateCount; j++){
-                        AbstractCase destination = cases.getCase(j);
+                        AbstractCase destination = outbreak.getCase(j);
 
                         // is the tip in parent's partition a descendant of this node? If so, the node must be in
                         // this partition also
@@ -271,7 +271,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
                             normProbs[stateCount*i + j]=1;
                         } else {
                             normProbs[stateCount*i + j]=
-                                    ((SimpleOutbreak)cases).probXInfectedByYBetweenTandU(destination, origin,
+                                    ((SimpleOutbreak) outbreak).probXInfectedByYBetweenTandU(destination, origin,
                                             getNodeTime(parent), getNodeTime(node));
                         }
                     }
@@ -327,8 +327,8 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
 
         for(int i=0; i<noTips; i++){
 
-            normRootPartials[i] *= ((SimpleOutbreak)cases).probXInfectedBetweenTandU
-                    (cases.getCase(i), getNodeTime(treeModel.getRoot()) - maxFirstInfToRoot.getParameterValue(0),
+            normRootPartials[i] *= ((SimpleOutbreak) outbreak).probXInfectedBetweenTandU
+                    (outbreak.getCase(i), getNodeTime(treeModel.getRoot()) - maxFirstInfToRoot.getParameterValue(0),
                             getNodeTime(treeModel.getRoot()));
         }
 
@@ -507,7 +507,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
     public class CaseToCaseLikelihoodCore extends GeneralLikelihoodCore {
 
         public CaseToCaseLikelihoodCore(){
-            super(cases.size());
+            super(outbreak.size());
         }
 
         public void calculateLogLikelihoods(double[] partials){
@@ -574,7 +574,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(PartitionedTreeModel.class, "The tree"),
-                new ElementRule(WithinCaseCategoryOutbreak.class, "The set of cases"),
+                new ElementRule(WithinCaseCategoryOutbreak.class, "The set of outbreak"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +

@@ -17,7 +17,7 @@ import java.util.ArrayList;
  * Each case will belong to an infectious category (and in future could have a latent category as well) which
  * corresponds to one of a list of probability distributions (most likely gamma or exponential) for the length of the
  * infectious period. The XML rules for the outbreak class ask for at least one ParametricDistributionModel.
- * Assignment of cases to distributions should be handled in whatever script or GUI writes the XML.
+ * Assignment of outbreak to distributions should be handled in whatever script or GUI writes the XML.
  *
  * Intended for situations where no data on infection times exists.
  *
@@ -170,7 +170,7 @@ public class JeffreysCategoryOutbreak extends AbstractOutbreak {
         public static final String HAS_GEOGRAPHY = "hasGeography";
         public static final String HAS_LATENT_PERIODS = "hasLatentPeriods";
 
-        //for the cases
+        //for the outbreak
 
         public static final String CASE_ID = "caseID";
         public static final String CULL_DAY = "cullDay";
@@ -212,7 +212,7 @@ public class JeffreysCategoryOutbreak extends AbstractOutbreak {
         }
 
         public String getParserDescription(){
-            return "Parses a set of 'category' farm cases and the information that they all share";
+            return "Parses a set of 'category' farm outbreak and the information that they all share";
         }
 
         public Class getReturnType(){
@@ -235,7 +235,7 @@ public class JeffreysCategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
                         " along which the infection of this case occurs that it actually does occur"),
                 new ElementRule(INFECTIOUS_TIME_POSITION, Parameter.class, "Parameter taking a value between 0 and" +
-                        "1, indicating when from infection (0) to first caused infection (or cull if the cases" +
+                        "1, indicating when from infection (0) to first caused infection (or cull if the outbreak" +
                         "causes no infections) (1) the case became infectious", true),
                 new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true)
         };

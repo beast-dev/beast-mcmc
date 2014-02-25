@@ -115,12 +115,6 @@ public class MutationDeathModel extends ComplexSubstitutionModel { //BaseSubstit
         return this.delParameter;
     }
 
-    protected void storeState() {
-    }
-
-    protected void restoreState() {
-    }
-
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (object == baseSubModelFreq) {

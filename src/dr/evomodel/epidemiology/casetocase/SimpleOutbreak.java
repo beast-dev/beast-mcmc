@@ -226,7 +226,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
 
         public static final String HAS_GEOGRAPHY = "hasGeography";
 
-        //for the cases
+        //for the outbreak
 
         public static final String CASE_ID = "caseID";
         public static final String CULL_DAY = "cullDay";
@@ -267,7 +267,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
         }
 
         public String getParserDescription(){
-            return "Parses a set of 'simple' farm cases and the information that they all share";
+            return "Parses a set of 'simple' farm outbreak and the information that they all share";
         }
 
         public Class getReturnType(){

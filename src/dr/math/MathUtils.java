@@ -104,13 +104,13 @@ public class MathUtils {
      */
     public static int randomChoiceLogPDF(double[] logpdf) {
 
-        double scalingFactor;
-        int i=0;
+        double scalingFactor=Double.NEGATIVE_INFINITY;
 
-        do{
-            scalingFactor = logpdf[i];
-            i++;
-        } while(scalingFactor==Double.NEGATIVE_INFINITY && i<logpdf.length);
+        for (double aLogpdf : logpdf) {
+            if (aLogpdf > scalingFactor) {
+                scalingFactor = aLogpdf;
+            }
+        }
 
         if(scalingFactor == Double.NEGATIVE_INFINITY){
             throw new Error("randomChoiceLogPDF falls through -- all -INF components in input distribution");

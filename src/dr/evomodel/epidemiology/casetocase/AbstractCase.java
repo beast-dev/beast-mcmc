@@ -5,7 +5,7 @@ import dr.evolution.util.Taxa;
 import dr.inference.model.AbstractModel;
 
 /**
- * Abstract class for cases; best implemented as an inner class in implementations of AbstractOutbreak
+ * Abstract class for outbreak; best implemented as an inner class in implementations of AbstractOutbreak
  *
  * User: Matthew Hall
  * Date: 15/04/13

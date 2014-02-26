@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import dr.app.beagle.evomodel.parsers.MG94CodonModelParser;
 import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
 import dr.app.beagle.tools.parsers.PartitionParser;
 import dr.app.beauti.util.XMLWriter;
@@ -1000,55 +1001,61 @@ public class XMLGenerator {
 					data.substitutionModelIdref);
 			break;
 
-		case 3: // Yang Codon Model
+		case 3: // GY94CodonModel
 
 			writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL,
 					data.substitutionModelIdref);
 			break;
+			
+		case 4: // MG94CodonModel
 
-		case 4: // Blosum62
+			writer.writeIDref(MG94CodonModelParser.MUSE_CODON_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
+		case 5: // Blosum62
 
 			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
 					data.substitutionModelIdref);
 			break;	
 			
-		case 5: // CPREV
+		case 6: // CPREV
 
 			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
 					data.substitutionModelIdref);
 			break;
 
-		case 6: // Dayhoff
-
-			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
-					data.substitutionModelIdref);
-			break;
-			
-		case 7: // FLU
+		case 7: // Dayhoff
 
 			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
 					data.substitutionModelIdref);
 			break;
 			
-		case 8: // JTT
+		case 8: // FLU
 
 			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
 					data.substitutionModelIdref);
 			break;
 			
-		case 9: // LG
+		case 9: // JTT
 
 			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
 					data.substitutionModelIdref);
 			break;
 			
-		case 10: // MTREV
+		case 10: // LG
 
 			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
 					data.substitutionModelIdref);
 			break;
 			
-		case 11: // WAG
+		case 11: // MTREV
+
+			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
+					data.substitutionModelIdref);
+			break;
+			
+		case 12: // WAG
 
 			writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
 					data.substitutionModelIdref);
@@ -1196,7 +1203,34 @@ public class XMLGenerator {
 
 			break;
 
-		case 4: // Blosum62
+		case 4: // 		
+			
+			writer.writeOpenTag(MG94CodonModelParser.MUSE_CODON_MODEL,
+					new Attribute[] { new Attribute.Default<String>(
+							XMLParser.ID, data.substitutionModelIdref) });
+			
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL,
+					data.frequencyModelIdref);
+			
+			
+			writeParameter(MG94CodonModelParser.ALPHA,
+					MG94CodonModelParser.ALPHA + suffix, 1,
+					String.valueOf(data.substitutionParameterValues[11]), writer);
+
+			
+			writeParameter(MG94CodonModelParser.BETA,
+					MG94CodonModelParser.BETA + suffix, 1,
+					String.valueOf(data.substitutionParameterValues[12]), writer);
+			
+			writeParameter(MG94CodonModelParser.KAPPA,
+					MG94CodonModelParser.KAPPA + suffix, 1,
+					String.valueOf(data.substitutionParameterValues[13]), writer);
+			
+			writer.writeCloseTag(MG94CodonModelParser.MUSE_CODON_MODEL);
+			
+			break;
+			
+		case 5: // Blosum62
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
@@ -1219,7 +1253,7 @@ public class XMLGenerator {
 			
 			break;
 
-		case 5: // CPREV
+		case 6: // CPREV
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
@@ -1242,7 +1276,7 @@ public class XMLGenerator {
 			
 			break;
 
-		case 6: // Dayhoff
+		case 7: // Dayhoff
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
@@ -1265,7 +1299,7 @@ public class XMLGenerator {
 			
 			break;
 
-		case 7: // FLU
+		case 8: // FLU
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
@@ -1288,7 +1322,7 @@ public class XMLGenerator {
 			
 			break;
 
-		case 8: // JTT
+		case 9: // JTT
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
@@ -1311,7 +1345,7 @@ public class XMLGenerator {
 			
 			break;
 
-		case 9: // LG
+		case 10: // LG
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
@@ -1334,7 +1368,7 @@ public class XMLGenerator {
 			
 			break;
 
-		case 10: // MTREV
+		case 11: // MTREV
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,
@@ -1357,7 +1391,7 @@ public class XMLGenerator {
 			
 			break;
 			
-		case 11: // WAG
+		case 12: // WAG
 
 			writer.writeOpenTag(
 					EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL,

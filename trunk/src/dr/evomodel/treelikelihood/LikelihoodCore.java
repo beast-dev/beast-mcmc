@@ -140,6 +140,10 @@ public interface LikelihoodCore extends LikelihoodPartialsProvider {
 
     double getLogScalingFactor(int pattern);
 
+    boolean arePartialsRescaled();
+
+    void getLogScalingFactors(int nodeIndex, double[] buffer);
+
     /**
      * Store current state
      */

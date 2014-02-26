@@ -35,6 +35,7 @@ import dr.evomodel.sitemodel.SiteRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.evomodel.treelikelihood.LikelihoodPartialsProvider;
+import dr.evomodel.treelikelihood.ScaleFactorsHelper;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -167,7 +168,8 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         return logL;
     }
 
-    public final double nodePatternLikelihood(double[] freqs, LikelihoodPartialsProvider likelihoodCore) {
+    public final double nodePatternLikelihood(double[] freqs, LikelihoodPartialsProvider likelihoodCore,
+                                              ScaleFactorsHelper scaleFactorsHelper) {
         int i, j;
         double logL = gammaNorm;
 
@@ -186,6 +188,7 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         for (i = 0; i < nodeCount; ++i) {
             // get partials for node i
             likelihoodCore.getPartials(i, nodePartials);
+            scaleFactorsHelper.rescalePartials(i, nodePartials);
             /*
                 multiply the partials by equilibrium probs
                     this part could be optimized by first summing

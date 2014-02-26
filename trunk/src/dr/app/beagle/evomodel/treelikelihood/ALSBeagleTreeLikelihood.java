@@ -32,6 +32,7 @@ import dr.evomodel.MSSD.AbstractObservationProcess;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.LikelihoodPartialsProvider;
+import dr.evomodel.treelikelihood.ScaleFactorsHelper;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -97,7 +98,8 @@ public class ALSBeagleTreeLikelihood extends BeagleTreeLikelihood implements Lik
         }
         System.err.println("TotalTime: "+totalTime);
         System.err.println("RealTime: "+realTime);*/
-
+        scaleFactorsHelper = new ScaleFactorsHelper(this, this,
+                treeModel, stateCount, patternCount, categoryCount);
     }
 
     protected double calculateLogLikelihood() {
@@ -106,13 +108,17 @@ public class ALSBeagleTreeLikelihood extends BeagleTreeLikelihood implements Lik
         // get the frequency model
         double[] freqs = substitutionModelDelegate.getRootStateFrequencies();
         // let the observationProcess handle the rest
-        return observationProcess.nodePatternLikelihood(freqs, this);
+        scaleFactorsHelper.resetScaleFactors();
+        return observationProcess.nodePatternLikelihood(freqs, this, scaleFactorsHelper);
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == observationProcess) {
             likelihoodKnown = false;
-        } else
+        } else {
             super.handleModelChangedEvent(model, object, index);
+        }
     }
+
+    final private ScaleFactorsHelper scaleFactorsHelper;
 }

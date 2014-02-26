@@ -79,6 +79,7 @@ public class BeagleSequenceSimulator {
 				
 				dataType = partition.getDataType();
 				fieldsSet = true;
+//				System.err.println(dataType);
 				
 			} else {
 

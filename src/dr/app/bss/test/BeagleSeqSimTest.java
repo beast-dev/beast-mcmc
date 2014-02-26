@@ -566,6 +566,7 @@ public class BeagleSeqSimTest {
 
 
                 ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE, GeneticCode.UNIVERSAL, alignment);
+                
                 BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(convert, //
                         treeModel, //
                         substitutionModel, //

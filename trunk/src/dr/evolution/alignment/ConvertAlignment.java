@@ -84,28 +84,36 @@ public class ConvertAlignment extends WrappedAlignment implements dr.util.XHTMLa
      * Sets the contained.
      */
     public void setAlignment(Alignment alignment) {
-        if (dataType == null)
+        if (dataType == null) {
             dataType = alignment.getDataType();
-
+        }
+            
         this.alignment = alignment;
 
         int newType = dataType.getType();
         int originalType = alignment.getDataType().getType();
 
+      //TODO: this logic does not work for pibuss
         if (originalType == DataType.NUCLEOTIDES) {
+        	
             if (newType != DataType.CODONS && newType != DataType.AMINO_ACIDS) {
                 throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
             }
+            
         } else if (originalType == DataType.CODONS) {
+        	
             if (!(newType == DataType.AMINO_ACIDS || newType == DataType.NUCLEOTIDES)) {
 
                 System.err.println("originalType = " + originalType);
                 System.err.println("newType = " + newType);
                 throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
             }
+            
         } else {
+        	
             throw new RuntimeException("Incompatible alignment DataType for ConversionAlignment");
-        }
+            
+        }//END: original type check
     }
 
     /**

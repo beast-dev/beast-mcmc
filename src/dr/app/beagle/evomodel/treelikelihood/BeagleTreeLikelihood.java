@@ -939,6 +939,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
     }
 
+    public boolean arePartialsRescaled() {
+        return useScaleFactors;
+    }
+
     protected void setPartials(int number, double[] partials) {
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }

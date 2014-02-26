@@ -49,10 +49,8 @@ public class ConvertAlignmentParser extends AbstractXMLObjectParser {
 
         Alignment alignment = (Alignment)xo.getChild(Alignment.class);
 
-
 	    // Old parser always returned UNIVERSAL type for codon conversion
 	    DataType dataType = DataTypeUtils.getDataType(xo);
-
 
 	    GeneticCode geneticCode = GeneticCode.UNIVERSAL;
 	    if (dataType instanceof Codons) {

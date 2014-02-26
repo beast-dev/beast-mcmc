@@ -1,7 +1,7 @@
 /*
  * AbstractLikelihoodCore.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -24,6 +24,8 @@
  */
 
 package dr.evomodel.treelikelihood;
+
+import java.util.Arrays;
 
 /**
  * AbstractLikelihoodCore - An abstract base class for LikelihoodCores
@@ -116,7 +118,7 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
     /**
      * cleans up and deallocates arrays.
      */
-    public void finalize() throws java.lang.Throwable  {
+    public void finalize() throws java.lang.Throwable {
         super.finalize();
 
         nodeCount = 0;
@@ -452,6 +454,19 @@ public abstract class AbstractLikelihoodCore implements LikelihoodCore {
             }
         }
         return logScalingFactor;
+    }
+
+    public void getLogScalingFactors(int nodeIndex, double[] buffer) {
+        if (useScaling) {
+            System.arraycopy(scalingFactors[currentPartialsIndices[nodeIndex]][nodeIndex], 0,
+                    buffer, 0, patternCount);
+        } else {
+            Arrays.fill(buffer, 0.0);
+        }
+    }
+
+    public boolean arePartialsRescaled() {
+        return useScaling;
     }
 
     /**

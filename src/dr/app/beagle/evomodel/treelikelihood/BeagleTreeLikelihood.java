@@ -939,15 +939,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
     }
 
-    public void getRescaledPartials(int number, double[] outPartials) {
-        int cumulativeBufferIndex = Beagle.NONE;
-
-        if (useScaleFactors && number >= tipCount) {
-            cumulativeBufferIndex = scaleBufferIndices[number - tipCount];
-        }
-        beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
-    }
-
     protected void setPartials(int number, double[] partials) {
         beagle.setPartials(partialBufferHelper.getOffsetIndex(number), partials);
     }
@@ -1339,8 +1330,14 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         return Double.valueOf(substitutionModelDelegate.convolveTime);
     }
 
-    public double getLogScalingFactor(int pattern) {
-        throw new RuntimeException("Not yet implemented.");
+    public void getLogScalingFactors(int nodeIndex, double[] buffer) {
+        if (nodeIndex < tipCount) {
+            Arrays.fill(buffer, 0.0);
+        } else {
+//            final int scaleIndex = scaleBufferHelper.getOffsetIndex(nodeIndex - tipCount);
+            final int scaleIndex = scaleBufferIndices[nodeIndex - tipCount];
+            beagle.getLogScaleFactors(scaleIndex, buffer);
+        }
     }
 
     public double[] getSiteLogLikelihoods() {

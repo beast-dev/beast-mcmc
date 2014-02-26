@@ -1,5 +1,5 @@
 /*
- * LikelihoodPartialsProvider.java
+ * LikelihoodScalingProvider.java
  *
  * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -29,8 +29,10 @@ package dr.evomodel.treelikelihood;
  * @author Marc A. Suchard
  */
 
-public interface LikelihoodPartialsProvider extends LikelihoodScalingProvider {
+public interface LikelihoodScalingProvider {
 
-    void getPartials(int nodeNumber, double[] partialsVector);
+    void getLogScalingFactors(int nodeNumber, double[] buffer);
+
+    boolean arePartialsRescaled();
 
 }

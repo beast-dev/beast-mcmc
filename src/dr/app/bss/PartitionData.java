@@ -10,12 +10,12 @@ import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.MG94HKYCodonModel;
 import dr.app.beagle.evomodel.substmodel.TN93;
 import dr.evolution.coalescent.CoalescentSimulator;
 import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
-import dr.evolution.coalescent.LogisticGrowth;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
@@ -335,6 +335,7 @@ public class PartitionData implements Serializable {
 			"GTR", //
 			"TN93", //
 			"GY94CodonModel", //
+			"MG94CodonModel",
             "Blosum62", //	
 			"CPREV", //
 			"Dayhoff", //
@@ -349,6 +350,7 @@ public class PartitionData implements Serializable {
 			0, // GTR
 			0, // TN93
 			1, // GY94CodonModel
+			1, // MG94CodonModel
 			2, // Blosum62
 			2, // CPREV
 			2, // Dayhoff
@@ -369,14 +371,19 @@ public class PartitionData implements Serializable {
 			"GT", // GTR
 			"Kappa 1 (A-G)", // TN93
 			"Kappa 2 (C-T)", // TN93
-			"Omega value", // Yang Codon Model
-			"Kappa value" // Yang Codon Model
+			"Omega value", // GY94CodonModel
+			"Kappa value", // GY94CodonModel
+			"Alpha value", // MG94CodonModel
+			"Beta value", // MG94CodonModel
+			"Kappa value" // MG94CodonModel
+			
 	};
 
 	public static int[][] substitutionParameterIndices = { { 0 }, // HKY
 			{ 1, 2, 3, 4, 5, 6 }, // GTR
 			{ 7, 8 }, // TN93
-			{ 9, 10 }, // Yang Codon Model
+			{ 9, 10 }, // GY94CodonModel
+			{11, 12, 13}, // MG94CodonModel
 			{}, // Blosum62
 			{}, // CPREV
 			{}, // Dayhoff
@@ -397,7 +404,10 @@ public class PartitionData implements Serializable {
 			1.0, // Kappa 1
 			1.0, // Kappa 2
 			0.1, // Omega value
-			1.0 // Kappa value
+			1.0, // Kappa value
+			10.0, // Alpha value
+			1.0, // Beta value
+			1.0 // kappa value
 	};
 
 	public BranchModel createBranchModel() {
@@ -462,7 +472,21 @@ public class PartitionData implements Serializable {
 
 			branchModel = new HomogeneousBranchModel(yangCodonModel);
 
-		} else if (this.substitutionModelIndex == 4) { // Blosum62
+			
+		} else if(this.substitutionModelIndex == 4) { // MG94CodonModel
+			
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+
+			Parameter alpha = new Parameter.Default(1, substitutionParameterValues[11]);
+			Parameter beta = new Parameter.Default(1, substitutionParameterValues[12]);
+			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[13]);
+			
+			MG94HKYCodonModel mg94 = new MG94HKYCodonModel(Codons.UNIVERSAL, alpha, beta, kappa, frequencyModel);
+
+			branchModel = new HomogeneousBranchModel(mg94);
+			
+		} else if (this.substitutionModelIndex == 5) { // Blosum62
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 			
@@ -474,7 +498,7 @@ public class PartitionData implements Serializable {
 			branchModel = new HomogeneousBranchModel(
 					empiricalAminoAcidModel);
 			
-        } else if (this.substitutionModelIndex == 5) { // CPREV
+        } else if (this.substitutionModelIndex == 6) { // CPREV
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 			
@@ -486,7 +510,7 @@ public class PartitionData implements Serializable {
 			branchModel = new HomogeneousBranchModel(
 					empiricalAminoAcidModel);
 			
-        } else if (this.substitutionModelIndex == 6) { // Dayhoff
+        } else if (this.substitutionModelIndex == 7) { // Dayhoff
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 			
@@ -498,7 +522,7 @@ public class PartitionData implements Serializable {
 			branchModel = new HomogeneousBranchModel(
 					empiricalAminoAcidModel);
 		
-        } else if (this.substitutionModelIndex == 7) { // JTT
+        } else if (this.substitutionModelIndex == 8) { // JTT
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 			
@@ -510,7 +534,7 @@ public class PartitionData implements Serializable {
 			branchModel = new HomogeneousBranchModel(
 					empiricalAminoAcidModel);
 		
-        } else if (this.substitutionModelIndex == 8) { // LG
+        } else if (this.substitutionModelIndex == 9) { // LG
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 			
@@ -522,7 +546,7 @@ public class PartitionData implements Serializable {
 			branchModel = new HomogeneousBranchModel(
 					empiricalAminoAcidModel);
 			
-        } else if (this.substitutionModelIndex == 9) { // MTREV
+        } else if (this.substitutionModelIndex == 10) { // MTREV
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 			
@@ -534,7 +558,7 @@ public class PartitionData implements Serializable {
 			branchModel = new HomogeneousBranchModel(
 					empiricalAminoAcidModel);	
 			
-        } else if (this.substitutionModelIndex == 10) { // WAG
+        } else if (this.substitutionModelIndex == 11) { // WAG
 			
 			FrequencyModel frequencyModel = this.createFrequencyModel();
 			

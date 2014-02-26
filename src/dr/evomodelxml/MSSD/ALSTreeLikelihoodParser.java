@@ -1,7 +1,7 @@
 /*
  * ALSTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -52,6 +52,7 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String OBSERVATION_TAXON = "taxon";
     public static final String ANY_TIP = "anyTip";
     public final static String IMMIGRATION_RATE = "immigrationRate";
+    public static final String FORCE_RESCALING = TreeLikelihoodParser.FORCE_RESCALING;
 
     public String getParserName() {
         return LIKE_NAME;
@@ -107,7 +108,12 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
         }
         Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutation (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (2008) Syst. Biol 57: 772-784.\n---------------------------------\n");
 
-        return new ALSTreeLikelihood(observationProcess, patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials);
+        boolean forceRescaling = xo.getAttribute(FORCE_RESCALING, false);
+
+//        forceRescaling = true;
+
+        return new ALSTreeLikelihood(observationProcess, patternList, treeModel, siteModel, branchRateModel,
+                useAmbiguities, storePartials, forceRescaling);
     }
 
     //************************************************************************
@@ -130,6 +136,7 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
             AttributeRule.newBooleanRule(TreeLikelihoodParser.STORE_PARTIALS, true),
             AttributeRule.newBooleanRule(INTEGRATE_GAIN_RATE),
+            AttributeRule.newBooleanRule(FORCE_RESCALING, true),
             new ElementRule(IMMIGRATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),

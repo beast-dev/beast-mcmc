@@ -1,7 +1,7 @@
 /*
- * GeneralLikelihoodCore.java
+ * ArbitraryPrecisionLikelihoodCore.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,9 +31,8 @@ import java.math.MathContext;
 /**
  * GeneralLikelihoodCore - An implementation of LikelihoodCore for any data
  *
- * @version $Id: GeneralLikelihoodCore.java,v 1.28 2006/08/31 14:57:24 rambaut Exp $
- *
  * @author Andrew Rambaut
+ * @version $Id: GeneralLikelihoodCore.java,v 1.28 2006/08/31 14:57:24 rambaut Exp $
  */
 
 public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
@@ -61,12 +60,12 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
     private int[] storedPartialsIndices;
 
 
-	/**
-	 * Constructor
-	 *
-	 * @param stateCount number of states
-	 */
-	public ArbitraryPrecisionLikelihoodCore(int stateCount, int precision) {
+    /**
+     * Constructor
+     *
+     * @param stateCount number of states
+     */
+    public ArbitraryPrecisionLikelihoodCore(int stateCount, int precision) {
         this.stateCount = stateCount;
         this.precision = new MathContext(precision);
     }
@@ -118,7 +117,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
     /**
      * cleans up and deallocates arrays.
      */
-    public void finalize() throws java.lang.Throwable  {
+    public void finalize() throws java.lang.Throwable {
         super.finalize();
 
         nodeCount = 0;
@@ -261,161 +260,158 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
         }
     }
 
-	/**
-	 * Calculates partial likelihoods at a node when both children have states.
-	 */
-	private void calculateStatesStatesPruning(int[] states1, BigDecimal[] matrices1,
-												int[] states2, BigDecimal[] matrices2,
-												BigDecimal[] partials3)
-	{
-		int v = 0;
+    /**
+     * Calculates partial likelihoods at a node when both children have states.
+     */
+    private void calculateStatesStatesPruning(int[] states1, BigDecimal[] matrices1,
+                                              int[] states2, BigDecimal[] matrices2,
+                                              BigDecimal[] partials3) {
+        int v = 0;
 
-		for (int l = 0; l < matrixCount; l++) {
+        for (int l = 0; l < matrixCount; l++) {
 
-			for (int k = 0; k < patternCount; k++) {
+            for (int k = 0; k < patternCount; k++) {
 
-				int state1 = states1[k];
-				int state2 = states2[k];
+                int state1 = states1[k];
+                int state2 = states2[k];
 
-				int w = l * matrixSize;
+                int w = l * matrixSize;
 
                 if (state1 < stateCount && state2 < stateCount) {
 
-					for (int i = 0; i < stateCount; i++) {
+                    for (int i = 0; i < stateCount; i++) {
 
-						partials3[v] = matrices1[w + state1].multiply(matrices2[w + state2], precision);
+                        partials3[v] = matrices1[w + state1].multiply(matrices2[w + state2], precision);
 
-						v++;
-						w += stateCount;
-					}
+                        v++;
+                        w += stateCount;
+                    }
 
-				} else if (state1 < stateCount) {
-					// child 2 has a gap or unknown state so treat it as unknown
+                } else if (state1 < stateCount) {
+                    // child 2 has a gap or unknown state so treat it as unknown
 
-					for (int i = 0; i < stateCount; i++) {
+                    for (int i = 0; i < stateCount; i++) {
 
-						partials3[v] = matrices1[w + state1];
+                        partials3[v] = matrices1[w + state1];
 
-						v++;
-						w += stateCount;
-					}
-				} else if (state2 < stateCount) {
-					// child 2 has a gap or unknown state so treat it as unknown
+                        v++;
+                        w += stateCount;
+                    }
+                } else if (state2 < stateCount) {
+                    // child 2 has a gap or unknown state so treat it as unknown
 
-					for (int i = 0; i < stateCount; i++) {
+                    for (int i = 0; i < stateCount; i++) {
 
-						partials3[v] = matrices2[w + state2];
+                        partials3[v] = matrices2[w + state2];
 
-						v++;
-						w += stateCount;
-					}
-				} else {
-					// both children have a gap or unknown state so set partials to 1
+                        v++;
+                        w += stateCount;
+                    }
+                } else {
+                    // both children have a gap or unknown state so set partials to 1
 
-					for (int j = 0; j < stateCount; j++) {
-						partials3[v] = BigDecimal.ONE;
-						v++;
-					}
-				}
-			}
-		}
-	}
+                    for (int j = 0; j < stateCount; j++) {
+                        partials3[v] = BigDecimal.ONE;
+                        v++;
+                    }
+                }
+            }
+        }
+    }
 
-	/**
-	 * Calculates partial likelihoods at a node when one child has states and one has partials.
-	 */
-	private void calculateStatesPartialsPruning(	int[] states1, BigDecimal[] matrices1,
-													BigDecimal[] partials2, BigDecimal[] matrices2,
-													BigDecimal[] partials3)
-	{
+    /**
+     * Calculates partial likelihoods at a node when one child has states and one has partials.
+     */
+    private void calculateStatesPartialsPruning(int[] states1, BigDecimal[] matrices1,
+                                                BigDecimal[] partials2, BigDecimal[] matrices2,
+                                                BigDecimal[] partials3) {
 
-		BigDecimal sum, tmp;
+        BigDecimal sum, tmp;
 
-		int u = 0;
-		int v = 0;
+        int u = 0;
+        int v = 0;
 
-		for (int l = 0; l < matrixCount; l++) {
-			for (int k = 0; k < patternCount; k++) {
+        for (int l = 0; l < matrixCount; l++) {
+            for (int k = 0; k < patternCount; k++) {
 
-				int state1 = states1[k];
+                int state1 = states1[k];
 
                 int w = l * matrixSize;
 
-				if (state1 < stateCount) {
+                if (state1 < stateCount) {
 
 
-					for (int i = 0; i < stateCount; i++) {
+                    for (int i = 0; i < stateCount; i++) {
 
-						tmp = matrices1[w + state1];
-
-						sum = BigDecimal.ZERO;
-						for (int j = 0; j < stateCount; j++) {
-							sum = sum.add(matrices2[w].multiply(partials2[v + j], precision), precision);
-							w++;
-						}
-
-						partials3[u] = tmp.multiply(sum, precision);
-						u++;
-					}
-
-					v += stateCount;
-				} else {
-					// Child 1 has a gap or unknown state so don't use it
-
-					for (int i = 0; i < stateCount; i++) {
+                        tmp = matrices1[w + state1];
 
                         sum = BigDecimal.ZERO;
-						for (int j = 0; j < stateCount; j++) {
-							sum = sum.add(matrices2[w].multiply(partials2[v + j], precision), precision);
-							w++;
-						}
+                        for (int j = 0; j < stateCount; j++) {
+                            sum = sum.add(matrices2[w].multiply(partials2[v + j], precision), precision);
+                            w++;
+                        }
 
-						partials3[u] = sum;
-						u++;
-					}
+                        partials3[u] = tmp.multiply(sum, precision);
+                        u++;
+                    }
 
-					v += stateCount;
-				}
-			}
-		}
-	}
+                    v += stateCount;
+                } else {
+                    // Child 1 has a gap or unknown state so don't use it
 
-	/**
-	 * Calculates partial likelihoods at a node when both children have partials.
-	 */
-	private void calculatePartialsPartialsPruning(BigDecimal[] partials1, BigDecimal[] matrices1,
-													BigDecimal[] partials2, BigDecimal[] matrices2,
-													BigDecimal[] partials3)
-	{
-		BigDecimal sum1, sum2;
+                    for (int i = 0; i < stateCount; i++) {
 
-		int u = 0;
-		int v = 0;
+                        sum = BigDecimal.ZERO;
+                        for (int j = 0; j < stateCount; j++) {
+                            sum = sum.add(matrices2[w].multiply(partials2[v + j], precision), precision);
+                            w++;
+                        }
 
-		for (int l = 0; l < matrixCount; l++) {
+                        partials3[u] = sum;
+                        u++;
+                    }
 
-			for (int k = 0; k < patternCount; k++) {
+                    v += stateCount;
+                }
+            }
+        }
+    }
+
+    /**
+     * Calculates partial likelihoods at a node when both children have partials.
+     */
+    private void calculatePartialsPartialsPruning(BigDecimal[] partials1, BigDecimal[] matrices1,
+                                                  BigDecimal[] partials2, BigDecimal[] matrices2,
+                                                  BigDecimal[] partials3) {
+        BigDecimal sum1, sum2;
+
+        int u = 0;
+        int v = 0;
+
+        for (int l = 0; l < matrixCount; l++) {
+
+            for (int k = 0; k < patternCount; k++) {
 
                 int w = l * matrixSize;
 
-				for (int i = 0; i < stateCount; i++) {
+                for (int i = 0; i < stateCount; i++) {
 
-					sum1 = sum2 = BigDecimal.ZERO;
+                    sum1 = sum2 = BigDecimal.ZERO;
 
-					for (int j = 0; j < stateCount; j++) {
-						sum1 = sum1.add(matrices1[w].multiply(partials1[v + j], precision), precision);
-						sum2 = sum2.add(matrices2[w].multiply(partials2[v + j], precision), precision);
+                    for (int j = 0; j < stateCount; j++) {
+                        sum1 = sum1.add(matrices1[w].multiply(partials1[v + j], precision), precision);
+                        sum2 = sum2.add(matrices2[w].multiply(partials2[v + j], precision), precision);
 
-						w++;
-					}
+                        w++;
+                    }
 
-					partials3[u] = sum1.multiply(sum2, precision);
-					u++;
-				}
-				v += stateCount;
-			}
-		}
-	}
+                    partials3[u] = sum1.multiply(sum2, precision);
+                    u++;
+                }
+                v += stateCount;
+            }
+        }
+    }
 
     /**
      * Calculates partial likelihoods at a node.
@@ -426,7 +422,7 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
      * @param matrixMap  a map of which matrix to use for each pattern (can be null if integrating over categories)
      */
     public void calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) {
-         throw new UnsupportedOperationException("calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) is not implemented in this likelihood core");
+        throw new UnsupportedOperationException("calculatePartials(int nodeIndex1, int nodeIndex2, int nodeIndex3, int[] matrixMap) is not implemented in this likelihood core");
     }
 
 
@@ -442,51 +438,51 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
         calculateIntegratePartials(partials[currentPartialsIndices[nodeIndex]][nodeIndex], prop, outPartials);
     }
 
-	/**
-	 * Integrates partials across categories.
-     * @param inPartials the array of partials to be integrated
-	 * @param proportions the proportions of sites in each category
-	 * @param outPartials an array into which the partials will go
-	 */
-	private void calculateIntegratePartials(BigDecimal[] inPartials, BigDecimal[] proportions, BigDecimal[] outPartials)
-	{
+    /**
+     * Integrates partials across categories.
+     *
+     * @param inPartials  the array of partials to be integrated
+     * @param proportions the proportions of sites in each category
+     * @param outPartials an array into which the partials will go
+     */
+    private void calculateIntegratePartials(BigDecimal[] inPartials, BigDecimal[] proportions, BigDecimal[] outPartials) {
 
-		int u = 0;
-		int v = 0;
-		for (int k = 0; k < patternCount; k++) {
+        int u = 0;
+        int v = 0;
+        for (int k = 0; k < patternCount; k++) {
 
-			for (int i = 0; i < stateCount; i++) {
+            for (int i = 0; i < stateCount; i++) {
 
-				outPartials[u] = inPartials[v].multiply(proportions[0], precision);
-				u++;
-				v++;
-			}
-		}
+                outPartials[u] = inPartials[v].multiply(proportions[0], precision);
+                u++;
+                v++;
+            }
+        }
 
 
-		for (int l = 1; l < matrixCount; l++) {
-			u = 0;
+        for (int l = 1; l < matrixCount; l++) {
+            u = 0;
 
-			for (int k = 0; k < patternCount; k++) {
+            for (int k = 0; k < patternCount; k++) {
 
-				for (int i = 0; i < stateCount; i++) {
+                for (int i = 0; i < stateCount; i++) {
 
-					outPartials[u] = outPartials[u].add(inPartials[v].multiply(proportions[l], precision), precision);
-					u++;
-					v++;
-				}
-			}
-		}
-	}
+                    outPartials[u] = outPartials[u].add(inPartials[v].multiply(proportions[l], precision), precision);
+                    u++;
+                    v++;
+                }
+            }
+        }
+    }
 
     /**
      * Calculates patten log likelihoods at a node.
-     * @param partials the partials used to calculate the likelihoods
-     * @param frequencies an array of state frequencies
+     *
+     * @param partials          the partials used to calculate the likelihoods
+     * @param frequencies       an array of state frequencies
      * @param outLogLikelihoods an array into which the likelihoods will go
      */
-    public void calculateLogLikelihoods(BigDecimal[] partials, double[] frequencies, double[] outLogLikelihoods)
-    {
+    public void calculateLogLikelihoods(BigDecimal[] partials, double[] frequencies, double[] outLogLikelihoods) {
         BigDecimal[] freqs = new BigDecimal[frequencies.length];
         for (int i = 0; i < freqs.length; i++) {
             freqs[i] = new BigDecimal(frequencies[i], precision);
@@ -518,6 +514,14 @@ public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
     public double getLogScalingFactor(int pattern) {
         return 0;
+    }
+
+    public boolean arePartialsRescaled() {
+        return false;
+    }
+
+    public void getLogScalingFactors(int nodeIndex, double[] buffer) {
+        throw new RuntimeException("Not yet implemented.");
     }
 
     /**

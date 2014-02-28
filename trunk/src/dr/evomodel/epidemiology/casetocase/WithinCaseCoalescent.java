@@ -52,9 +52,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private double latPeriodPosteriorVariance;
 
     private double infectiousPeriodsLogLikelihood;
+    private double storedInfectiousPeriodsLogLikelihood;
     private double latentPeriodsLogLikelihood;
+    private double storedLatentPeriodsLogLikelihood;
     private double totalTimingsLogLikelihood;
+    private double storedTotalTimingsLogLikelihood;
     private double coalescencesLogLikelihood;
+    private double storedCoalescencesLogLikelihood;
 
     public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
                                 String startingNetworkFileName, Parameter infectionTimeBranchPositions,
@@ -289,6 +293,14 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         storedPartitionTreeLogLikelihoods = Arrays.copyOf(partitionTreeLogLikelihoods,
                 partitionTreeLogLikelihoods.length);
         storedTimingLogLikelihoods = Arrays.copyOf(timingLogLikelihoods, timingLogLikelihoods.length);
+
+        storedCoalescencesLogLikelihood = coalescencesLogLikelihood;
+        storedInfectiousPeriodsLogLikelihood = infectiousPeriodsLogLikelihood;
+        storedTotalTimingsLogLikelihood = totalTimingsLogLikelihood;
+
+        if(hasLatentPeriods){
+            storedLatentPeriodsLogLikelihood = latentPeriodsLogLikelihood;
+        }
     }
 
     public void restoreState(){
@@ -296,6 +308,14 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         partitionsAsTrees = storedPartitionsAsTrees;
         partitionTreeLogLikelihoods = storedPartitionTreeLogLikelihoods;
         timingLogLikelihoods = storedTimingLogLikelihoods;
+
+        coalescencesLogLikelihood = storedCoalescencesLogLikelihood;
+        infectiousPeriodsLogLikelihood = storedInfectiousPeriodsLogLikelihood;
+        totalTimingsLogLikelihood = storedTotalTimingsLogLikelihood;
+
+        if(hasLatentPeriods){
+            latentPeriodsLogLikelihood = storedLatentPeriodsLogLikelihood;
+        }
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {

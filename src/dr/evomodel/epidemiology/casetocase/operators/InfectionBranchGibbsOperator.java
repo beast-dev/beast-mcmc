@@ -25,7 +25,7 @@ public class InfectionBranchGibbsOperator extends SimpleMCMCOperator implements 
     public static final String INFECTION_BRANCH_GIBBS_OPERATOR = "infectionBranchGibbsOperator";
     private CaseToCaseTransmissionLikelihood c2cTransLikelihood;
     private CaseToCaseTreeLikelihood c2cTreeLikelihood;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public InfectionBranchGibbsOperator(CaseToCaseTransmissionLikelihood c2cTransLikelihood, double weight){
         this.c2cTransLikelihood = c2cTransLikelihood;

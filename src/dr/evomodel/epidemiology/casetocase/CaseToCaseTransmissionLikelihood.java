@@ -264,9 +264,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public double getLogLikelihood() {
 
-        if(DEBUG){
-            treeLikelihood.debugOutputTree("test.nex", false);
-        }
+//        if(DEBUG){
+//            treeLikelihood.debugOutputTree("test.nex", false);
+//        }
 
         if(!likelihoodKnown){
             if(!treeProbKnown){
@@ -301,10 +301,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 //                    }
 //                }
                 if(hasGeography){
-
-                    if(integrator.steps>MAX_STEPS || integrator.steps<MIN_STEPS){
-                        System.out.println("LOOK at ME");
-                    }
 
                     double[] point;
                     point = new double[]{transmissionRate.getParameterValue(0),

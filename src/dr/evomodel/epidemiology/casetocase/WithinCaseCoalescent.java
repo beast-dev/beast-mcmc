@@ -9,6 +9,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.epidemiology.casetocase.PeriodPriors.InfectiousOrLatentPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
@@ -34,8 +35,7 @@ import java.util.*;
 public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public static final String WITHIN_CASE_COALESCENT = "withinCaseCoalescent";
-    private WithinCaseCategoryOutbreak.PriorType infectiousPriorType;
-    private WithinCaseCategoryOutbreak.PriorType latentPriorType;
+
     private double[] partitionTreeLogLikelihoods;
     private double[] storedPartitionTreeLogLikelihoods;
     private double[] timingLogLikelihoods;
@@ -78,10 +78,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         timingLogLikelihoods = new double[noTips];
         storedTimingLogLikelihoods = new double[noTips];
         recalculateCoalescentFlags = new boolean[noTips];
-        infectiousPriorType = ((WithinCaseCategoryOutbreak) outbreak).getInfPriorType();
-        if(hasLatentPeriods){
-            latentPriorType = ((WithinCaseCategoryOutbreak) outbreak).getLatPriorType();
-        }
 
         partitionsAsTrees = new Treelet[caseData.size()];
         storedPartitionsAsTrees = new Treelet[caseData.size()];
@@ -121,6 +117,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         HashMap<String, ArrayList<Double>> infectiousPeriodsByCategory
                 = new HashMap<String, ArrayList<Double>>();
 
+        // todo do this only once? Using indexes?
 
         for(AbstractCase aCase : outbreak.getCases()){
 
@@ -138,94 +135,31 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         infectiousPeriodsLogLikelihood = 0;
 
-        switch(infectiousPriorType){
-            case NORMAL_GAMMA:
-                for(String category : ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories()){
-                    ArrayList<Double> infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category);
+        for(String category : ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories()){
 
-                    double count = (double)infPeriodsInThisCategory.size();
+            Double[] infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category)
+                    .toArray(new Double[infectiousPeriodsByCategory.size()]);
 
-                    NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak) outbreak)
+            InfectiousOrLatentPeriodPriorDistribution hyperprior = ((WithinCaseCategoryOutbreak) outbreak)
                             .getInfectiousCategoryPrior(category);
 
-                    double[] infPredictiveDistributionParameters=prior.getParameters();
+            double[] values = new double[infPeriodsInThisCategory.length];
 
-                    double mu_0 = infPredictiveDistributionParameters[0];
-                    double lambda_0 = infPredictiveDistributionParameters[1];
-                    double alpha_0 = infPredictiveDistributionParameters[2];
-                    double beta_0 = infPredictiveDistributionParameters[3];
+            for(int i=0; i<infPeriodsInThisCategory.length; i++){
+                values[i] = infPeriodsInThisCategory[i];
+            }
 
-                    double lambda_n = lambda_0 + count;
-                    double alpha_n = alpha_0 + count/2;
-                    double sum = 0;
-                    for (Double infPeriod : infPeriodsInThisCategory) {
-                        sum += infPeriod;
-                    }
-                    double mean = sum/count;
+            infectiousPeriodsLogLikelihood += hyperprior.calculateLogLikelihood(values);
 
-                    double sumOfDifferences = 0;
-                    for (Double infPeriod : infPeriodsInThisCategory) {
-                        sumOfDifferences += Math.pow(infPeriod-mean,2);
-                    }
-
-                    infPeriodPosteriorMean = (lambda_0*mu_0 + sum)/(lambda_0 + count);
-
-                    double beta_n = beta_0 + 0.5*sumOfDifferences
-                            + lambda_0*count*Math.pow(mean-mu_0, 2)/(2*(lambda_0+count));
-
-                    infPeriodPosteriorVariance = beta_n/(alpha_n - 0.5);
-
-                    infectiousPeriodsLogLikelihood
-                            = GammaFunction.logGamma(alpha_n)
-                            - GammaFunction.logGamma(alpha_0)
-                            + alpha_0*Math.log(beta_0)
-                            - alpha_n*Math.log(beta_n)
-                            + 0.5*Math.log(lambda_0)
-                            - 0.5*Math.log(lambda_n)
-                            - (count/2)*Math.log(2*Math.PI);
-
-                    logL += infectiousPeriodsLogLikelihood;
-                }
-                break;
-            case LOG_JEFFREYS:
-                for(String category : ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories()){
-                    ArrayList<Double> infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category);
-
-                    double[] logInfPeriods = new double[infPeriodsInThisCategory.size()];
-
-                    for(int j=0; j<infPeriodsInThisCategory.size(); j++){
-                        logInfPeriods[j] = Math.log(infPeriodsInThisCategory.get(j));
-                    }
-
-                    double stdev = getSummaryStatistics(logInfPeriods)[3];
-
-                    logL += -Math.log(stdev);
-                }
-                break;
-            case JEFFREYS:
-                for(String category : ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories()){
-                    ArrayList<Double> infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category);
-
-                    double[] infPeriods = new double[infPeriodsInThisCategory.size()];
-
-                    for(int j=0; j<infPeriodsInThisCategory.size(); j++){
-                        infPeriods[j] = infPeriodsInThisCategory.get(j);
-                    }
-
-                    double stdev = getSummaryStatistics(infPeriods)[3];
-
-                    logL += -Math.log(stdev);
-                }
-                break;
         }
 
-        if(hasLatentPeriods){
 
-            latentPeriodsLogLikelihood = 0;
+        if(hasLatentPeriods){
 
             HashMap<String, ArrayList<Double>> latentPeriodsByCategory
                     = new HashMap<String, ArrayList<Double>>();
 
+            // todo do this only once?
 
             for(AbstractCase aCase : outbreak.getCases()){
 
@@ -242,87 +176,26 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             }
 
 
-            switch(latentPriorType){
-                case NORMAL_GAMMA:
+            latentPeriodsLogLikelihood = 0;
 
-                    for(String category : ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories()){
-                        ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
+            for(String category : ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories()){
 
-                        double count = (double)latPeriodsInThisCategory.size();
+                Double[] latPeriodsInThisCategory = latentPeriodsByCategory.get(category)
+                        .toArray(new Double[latentPeriodsByCategory.size()]);
 
-                        NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak) outbreak)
-                                .getLatentCategoryPrior(category);
+                InfectiousOrLatentPeriodPriorDistribution hyperprior = ((WithinCaseCategoryOutbreak) outbreak)
+                        .getLatentCategoryPrior(category);
 
-                        double[] latPredictiveDistributionParameters=prior.getParameters();
+                double[] values = new double[latPeriodsInThisCategory.length];
 
-                        double mu_0 = latPredictiveDistributionParameters[0];
-                        double lambda_0 = latPredictiveDistributionParameters[1];
-                        double alpha_0 = latPredictiveDistributionParameters[2];
-                        double beta_0 = latPredictiveDistributionParameters[3];
+                for(int i=0; i<latPeriodsInThisCategory.length; i++){
+                    values[i] = latPeriodsInThisCategory[i];
+                }
 
-                        double lambda_n = lambda_0 + count;
-                        double alpha_n = alpha_0 + count/2;
-                        double sum = 0;
-                        for (Double latPeriod : latPeriodsInThisCategory) {
-                            sum += latPeriod;
-                        }
-                        double mean = sum/count;
+                latentPeriodsLogLikelihood += hyperprior.calculateLogLikelihood(values);
 
-                        double sumOfDifferences = 0;
-                        for (Double latPeriod : latPeriodsInThisCategory) {
-                            sumOfDifferences += Math.pow(latPeriod-mean,2);
-                        }
-
-                        latPeriodPosteriorMean = (lambda_0*mu_0 + sum)/(lambda_0 + count);
-
-                        double beta_n = beta_0 + 0.5*sumOfDifferences
-                                + lambda_0*count*Math.pow(mean-mu_0, 2)/(2*(lambda_0+count));
-
-                        latPeriodPosteriorVariance = beta_n/(alpha_n - 0.5);
-
-                        latentPeriodsLogLikelihood
-                                = GammaFunction.logGamma(alpha_n)
-                                - GammaFunction.logGamma(alpha_0)
-                                + alpha_0*Math.log(beta_0)
-                                - alpha_n*Math.log(beta_n)
-                                + 0.5*Math.log(lambda_0)
-                                - 0.5*Math.log(lambda_n)
-                                - (count/2)*Math.log(2*Math.PI);
-
-                        logL += latentPeriodsLogLikelihood;
-                    }
-                    break;
-                case LOG_JEFFREYS:
-                    for(String category : ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories()){
-                        ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
-
-                        double[] logLatPeriods = new double[latPeriodsInThisCategory.size()];
-
-                        for(int j=0; j<latPeriodsInThisCategory.size(); j++){
-                            logLatPeriods[j] = Math.log(latPeriodsInThisCategory.get(j));
-                        }
-
-                        double stdev = getSummaryStatistics(logLatPeriods)[3];
-
-                        logL += -Math.log(stdev);
-                    }
-                    break;
-                case JEFFREYS:
-                    for(String category : ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories()){
-                        ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
-
-                        double[] latPeriods = new double[latPeriodsInThisCategory.size()];
-
-                        for(int j=0; j<latPeriodsInThisCategory.size(); j++){
-                            latPeriods[j] = latPeriodsInThisCategory.get(j);
-                        }
-
-                        double stdev = getSummaryStatistics(latPeriods)[3];
-
-                        logL += -Math.log(stdev);
-                    }
-                    break;
             }
+
         }
 
         explodeTree();
@@ -770,6 +643,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         }
         columns.add(new LogColumn.Abstract("total_coal_LL"){
             protected String getFormattedValue() {
+                if(coalescencesLogLikelihood==Double.NEGATIVE_INFINITY){
+                    System.out.println("LOOK at ME");
+                }
+
                 return String.valueOf(coalescencesLogLikelihood);
             }
         });

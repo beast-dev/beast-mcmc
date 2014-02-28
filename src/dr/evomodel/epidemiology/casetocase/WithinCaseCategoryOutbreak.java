@@ -3,6 +3,7 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.evomodel.epidemiology.casetocase.PeriodPriors.InfectiousOrLatentPeriodPriorDistribution;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.*;
 import dr.math.IntegrableUnivariateFunction;
@@ -35,37 +36,22 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
     public static final String WITHIN_CASE_CATEGORY_OUTBREAK = "withinCaseCategoryOutbreak";
     private final HashSet<String> latentCategories;
     private final HashSet<String> infectiousCategories;
-    private final HashMap<String, NormalGammaDistribution> latentMap;
-    private final HashMap<String, NormalGammaDistribution> infectiousMap;
-    private final PriorType infPriorType;
-    private final PriorType latPriorType;
+    private final HashMap<String, InfectiousOrLatentPeriodPriorDistribution> latentMap;
+    private final HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infectiousMap;
     private double[][] distances;
 
-    public enum PriorType {
-        JEFFREYS, LOG_JEFFREYS, NORMAL_GAMMA, LOMAX, GENERALISED_BETA_PRIME
-    }
 
     public WithinCaseCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
-                                      HashMap<String, NormalGammaDistribution> infectiousMap,
-                                      HashMap<String, NormalGammaDistribution> latentMap, PriorType infPriorType,
-                                      PriorType latPriorType){
+                                      HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infectiousMap,
+                                      HashMap<String, InfectiousOrLatentPeriodPriorDistribution> latentMap){
         super(name, taxa, hasLatentPeriods, hasGeography);
         cases = new ArrayList<AbstractCase>();
         latentCategories = new HashSet<String>();
         infectiousCategories = new HashSet<String>();
         this.latentMap = latentMap;
         this.infectiousMap = infectiousMap;
-        this.infPriorType = infPriorType;
-        this.latPriorType = latPriorType;
     }
 
-    public PriorType getInfPriorType(){
-        return infPriorType;
-    }
-
-    public PriorType getLatPriorType(){
-        return latPriorType;
-    }
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter coords, Taxa associatedTaxa,
                          String infectiousCategory, String latentCategory){
@@ -101,19 +87,19 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         return infectiousCategories.size();
     }
 
-    public HashMap<String, NormalGammaDistribution> getLatentMap(){
+    public HashMap<String, InfectiousOrLatentPeriodPriorDistribution> getLatentMap(){
         return latentMap;
     }
 
-    public HashMap<String, NormalGammaDistribution> getInfectiousMap(){
+    public HashMap<String, InfectiousOrLatentPeriodPriorDistribution> getInfectiousMap(){
         return latentMap;
     }
 
-    public NormalGammaDistribution getLatentCategoryPrior(String category){
+    public InfectiousOrLatentPeriodPriorDistribution getLatentCategoryPrior(String category){
         return latentMap.get(category);
     }
 
-    public NormalGammaDistribution getInfectiousCategoryPrior(String category){
+    public InfectiousOrLatentPeriodPriorDistribution getInfectiousCategoryPrior(String category){
         return infectiousMap.get(category);
     }
 
@@ -412,9 +398,11 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
 
-            HashMap<String, NormalGammaDistribution> infMap = new HashMap<String, NormalGammaDistribution>();
+            HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infMap
+                    = new HashMap<String, InfectiousOrLatentPeriodPriorDistribution>();
 
-            HashMap<String, NormalGammaDistribution> latMap = new HashMap<String, NormalGammaDistribution>();
+            HashMap<String, InfectiousOrLatentPeriodPriorDistribution> latMap
+                    = new HashMap<String, InfectiousOrLatentPeriodPriorDistribution>();
 
             boolean foundInfectiousPrior = false;
             boolean foundLatentPrior = false;
@@ -423,25 +411,23 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject){
                     if (((XMLObject)cxo).getName().equals(INFECTIOUS_PERIOD_PRIOR)){
-                        NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
-                        infMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
+                        InfectiousOrLatentPeriodPriorDistribution hyperprior
+                                = (InfectiousOrLatentPeriodPriorDistribution)
+                                ((XMLObject)cxo).getChild(InfectiousOrLatentPeriodPriorDistribution.class);
+                        infMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), hyperprior);
                         foundInfectiousPrior = true;
                     } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIOD_PRIOR))){
-                        NormalGammaDistribution ngd = parseDistribution((XMLObject) cxo);
-                        latMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), ngd);
+                        InfectiousOrLatentPeriodPriorDistribution hyperprior
+                                = (InfectiousOrLatentPeriodPriorDistribution)
+                                ((XMLObject)cxo).getChild(InfectiousOrLatentPeriodPriorDistribution.class);
+                        latMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), hyperprior);
                         foundLatentPrior = true;
                     }
                 }
             }
 
-            PriorType infectiousPriorType = foundInfectiousPrior ? PriorType.NORMAL_GAMMA : PriorType.JEFFREYS;
-            PriorType latentPriorType = null;
-            if(hasLatentPeriods){
-                latentPriorType = foundLatentPrior ? PriorType.NORMAL_GAMMA : PriorType.JEFFREYS;
-            }
-
             WithinCaseCategoryOutbreak cases = new WithinCaseCategoryOutbreak(null, taxa, hasGeography,
-                    hasLatentPeriods, infMap, latMap, infectiousPriorType, latentPriorType);
+                    hasLatentPeriods, infMap, latMap);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName()
@@ -522,26 +508,18 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
                 new StringAttributeRule(INFECTIOUS_CATEGORY, "The category of infectious period")
         };
 
-        private final XMLSyntaxRule[] distributionRules = {
-                new StringAttributeRule(CATEGORY_NAME, "The identifier of this category"),
-                AttributeRule.newDoubleRule(MU),
-                AttributeRule.newDoubleRule(LAMBDA),
-                AttributeRule.newDoubleRule(ALPHA),
-                AttributeRule.newDoubleRule(BETA)
-        };
 
         private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(HAS_LATENT_PERIODS, "Whether to include a latent period in the model"),
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(WithinCaseCategoryCase.WITHIN_CASE_CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_PRIOR, distributionRules, 0,
+                new ElementRule(INFECTIOUS_PERIOD_PRIOR, InfectiousOrLatentPeriodPriorDistribution.class, "blah", 1,
                         Integer.MAX_VALUE),
-                new ElementRule(LATENT_PERIOD_PRIOR, distributionRules, 0,
+                new ElementRule(LATENT_PERIOD_PRIOR, InfectiousOrLatentPeriodPriorDistribution.class, "blah", 0,
                         Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
         };
-
     };
 
 }

@@ -12,6 +12,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.epidemiology.casetocase.PeriodPriors.InfectiousOrLatentPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -79,204 +80,204 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 
         double logL = 0;
 
-        super.prepareTimings();
-
-        int noInfectiousCategories = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategoryCount();
-
-        HashSet<String> infectiousCategories = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories();
-
-        HashMap<String, NormalGammaDistribution> infectiousMap = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousMap();
-
-        HashMap<String, double[]> infectiousPriorParameters =
-                new HashMap<String, double[]>();
-
-        HashMap<String, Double> runningTotals = new HashMap<String, Double>();
-
-        HashMap<String, Integer> counts = new HashMap<String, Integer>();
-
-        for(String category: infectiousCategories){
-            infectiousPriorParameters.put(category, Arrays.copyOf(infectiousMap.get(category).getParameters(), 4));
-            runningTotals.put(category, 0.0);
-            counts.put(category, 0);
-        }
-
-        boolean rootDone = false;
-        HashSet<AbstractCase> remainingPossibleFirstInfections = new HashSet<AbstractCase>(outbreak.getCases());
-        HashSet<AbstractCase> doneCases = new HashSet<AbstractCase>();
-
-
-
-
-        // todo you really need to test whether order matters, if this thing ever works
-
-        for(int i=0; i< outbreak.size(); i++){
-
-            AbstractCase thisCase = outbreak.getCase(i);
-
-            String category = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategory(thisCase);
-
-            double[] parameters = infectiousPriorParameters.get(category);
-
-            Double runningTotal = runningTotals.get(category);
-            Integer count = counts.get(category);
-
-            double mu0 = infectiousMap.get(category).getParameters()[0];
-            double lambda0 = infectiousMap.get(category).getParameters()[1];
-
-            double oldMu = parameters[0];
-            double oldLambda = parameters[1];
-            double oldAlpha = parameters[2];
-            double oldBeta = parameters[3];
-
-            double infectiousPeriod = infectiousPeriods[i];
-
-            NodeRef tip = treeModel.getNode(tipMap.get(thisCase));
-
-            double startHeight = treeModel.getNodeHeight(tip);
-
-            boolean maxFound = false;
-            NodeRef currentNode = tip;
-            double earliestInfectionHeight = startHeight;
-
-            while(!maxFound){
-                NodeRef parent = treeModel.getParent(currentNode);
-                if(parent!=null){
-                    AbstractCase parentCase = branchMap.get(parent.getNumber());
-                    if(parentCase!=thisCase && doneCases.contains(parentCase)){
-                        maxFound = true;
-                        earliestInfectionHeight = treeModel.getNodeHeight(parent);
-                    } else {
-                        currentNode = parent;
-                    }
-                } else {
-                    earliestInfectionHeight = treeModel.getNodeHeight(treeModel.getRoot()) +
-                            maxFirstInfToRoot.getParameterValue(0);
-                }
-            }
-
-            double maxInfPeriod = earliestInfectionHeight - startHeight;
-
-            double minInfPeriod = 0;
-            if(remainingPossibleFirstInfections.contains(thisCase) && remainingPossibleFirstInfections.size()==1){
-                minInfPeriod = treeModel.getNodeHeight(treeModel.getRoot());
-            }
-
-            double numerator = tDistributionPDF(infectiousPeriod, oldMu, oldBeta*(oldLambda+1)/(oldAlpha*oldLambda),
-                    2*oldAlpha);
-            double denominator = 0;
-            try{
-                // watch this fall flat on its back...
-
-                denominator = tDistributionCDF(maxInfPeriod, oldMu, oldBeta*(oldLambda+1)/(oldAlpha*oldLambda),
-                        2*oldAlpha);
-                if(minInfPeriod>0){
-                    denominator -= tDistributionCDF(minInfPeriod, oldMu, oldBeta*(oldLambda+1)/(oldAlpha*oldLambda),
-                            2*oldAlpha);
-                }
-            } catch (MathException e){
-                throw new RuntimeException("Mathematical failure calculating the CDF of the T distribution");
-            }
-
-            logL += Math.log(numerator) - Math.log(denominator);
-
-            runningTotal += infectiousPeriod;
-            count += 1;
-
-            double mean = runningTotal/count;
-
-
-            double newMu = (mu0*lambda0 + runningTotal)/(lambda0 + count);
-            double newLambda = oldLambda + 1;
-            double newAlpha = oldAlpha + 0.5;
-            double newBeta = oldBeta + oldLambda*Math.pow(mean-oldMu,2)/(2*(oldLambda+1));
-
-            double[] newParameters = {newMu, newLambda, newAlpha, newBeta};
-            infectiousPriorParameters.put(category, newParameters);
-            doneCases.add(thisCase);
-            remainingPossibleFirstInfections.remove(thisCase);
-            for(AbstractCase descendant : getDescendants(thisCase)){
-                remainingPossibleFirstInfections.remove(descendant);
-            }
-
-
-
-        }
-
-
-        if(hasLatentPeriods){
-            int noLatentCategories = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategoryCount();
-
-            HashSet<String> latentCategories = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories();
-
-            HashMap<String, ArrayList<Double>> latentPeriodsByCategory = new HashMap<String, ArrayList<Double>>();
-
-            for(String latentCategory : ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories()){
-                latentPeriodsByCategory.put(latentCategory, new ArrayList<Double>());
-            }
-
-            for(AbstractCase aCase : outbreak.getCases()){
-                String category = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategory(aCase);
-
-                ArrayList<Double> correspondingList
-                        = latentPeriodsByCategory.get(category);
-
-                correspondingList.add(latentPeriods[outbreak.getCaseIndex(aCase)]);
-            }
-
-            for(String category: ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories()){
-                ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
-
-                double count = (double)latPeriodsInThisCategory.size();
-
-                NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak) outbreak)
-                        .getLatentCategoryPrior(category);
-
-                double[] latPredictiveDistributionParameters=prior.getParameters();
-
-                double mu_0 = latPredictiveDistributionParameters[0];
-                double lambda_0 = latPredictiveDistributionParameters[1];
-                double alpha_0 = latPredictiveDistributionParameters[2];
-                double beta_0 = latPredictiveDistributionParameters[3];
-
-                double lambda_n = lambda_0 + count;
-                double alpha_n = alpha_0 + count/2;
-                double sum = 0;
-                for (Double latPeriod : latPeriodsInThisCategory) {
-                    sum += latPeriod;
-                }
-                double mean = sum/count;
-
-                double sumOfDifferences = 0;
-                for (Double latPeriod : latPeriodsInThisCategory) {
-                    sumOfDifferences += Math.pow(latPeriod-mean,2);
-                }
-
-                double mu_n = (lambda_0*mu_0 + sum)/(lambda_0 + count);
-                double beta_n = beta_0 + 0.5*sumOfDifferences + lambda_0*count*Math.pow(mean-mu_0, 2)
-                        /(2*(lambda_0+count));
-
-                double priorPredictiveProbability
-                        = GammaFunction.logGamma(alpha_n)
-                        - GammaFunction.logGamma(alpha_0)
-                        + alpha_0*Math.log(beta_0)
-                        - alpha_n*Math.log(beta_n)
-                        + 0.5*Math.log(lambda_0)
-                        - 0.5*Math.log(lambda_n)
-                        - (count/2)*Math.log(2*Math.PI);
-
-                logL += priorPredictiveProbability;
-
-                //todo log the parameters of the "posterior"
-            }
-
-        }
-
-
-        likelihoodKnown = true;
-
-        if(DEBUG){
-            debugOutputTree("out.nex", true);
-        }
+//        super.prepareTimings();
+//
+//        int noInfectiousCategories = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategoryCount();
+//
+//        HashSet<String> infectiousCategories = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories();
+//
+//        HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infectiousMap = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousMap();
+//
+//        HashMap<String, double[]> infectiousPriorParameters =
+//                new HashMap<String, double[]>();
+//
+//        HashMap<String, Double> runningTotals = new HashMap<String, Double>();
+//
+//        HashMap<String, Integer> counts = new HashMap<String, Integer>();
+//
+//        for(String category: infectiousCategories){
+//            infectiousPriorParameters.put(category, Arrays.copyOf(infectiousMap.get(category).getParameters(), 4));
+//            runningTotals.put(category, 0.0);
+//            counts.put(category, 0);
+//        }
+//
+//        boolean rootDone = false;
+//        HashSet<AbstractCase> remainingPossibleFirstInfections = new HashSet<AbstractCase>(outbreak.getCases());
+//        HashSet<AbstractCase> doneCases = new HashSet<AbstractCase>();
+//
+//
+//
+//
+//        // todo you really need to test whether order matters, if this thing ever works
+//
+//        for(int i=0; i< outbreak.size(); i++){
+//
+//            AbstractCase thisCase = outbreak.getCase(i);
+//
+//            String category = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategory(thisCase);
+//
+//            double[] parameters = infectiousPriorParameters.get(category);
+//
+//            Double runningTotal = runningTotals.get(category);
+//            Integer count = counts.get(category);
+//
+//            double mu0 = infectiousMap.get(category).getParameters()[0];
+//            double lambda0 = infectiousMap.get(category).getParameters()[1];
+//
+//            double oldMu = parameters[0];
+//            double oldLambda = parameters[1];
+//            double oldAlpha = parameters[2];
+//            double oldBeta = parameters[3];
+//
+//            double infectiousPeriod = infectiousPeriods[i];
+//
+//            NodeRef tip = treeModel.getNode(tipMap.get(thisCase));
+//
+//            double startHeight = treeModel.getNodeHeight(tip);
+//
+//            boolean maxFound = false;
+//            NodeRef currentNode = tip;
+//            double earliestInfectionHeight = startHeight;
+//
+//            while(!maxFound){
+//                NodeRef parent = treeModel.getParent(currentNode);
+//                if(parent!=null){
+//                    AbstractCase parentCase = branchMap.get(parent.getNumber());
+//                    if(parentCase!=thisCase && doneCases.contains(parentCase)){
+//                        maxFound = true;
+//                        earliestInfectionHeight = treeModel.getNodeHeight(parent);
+//                    } else {
+//                        currentNode = parent;
+//                    }
+//                } else {
+//                    earliestInfectionHeight = treeModel.getNodeHeight(treeModel.getRoot()) +
+//                            maxFirstInfToRoot.getParameterValue(0);
+//                }
+//            }
+//
+//            double maxInfPeriod = earliestInfectionHeight - startHeight;
+//
+//            double minInfPeriod = 0;
+//            if(remainingPossibleFirstInfections.contains(thisCase) && remainingPossibleFirstInfections.size()==1){
+//                minInfPeriod = treeModel.getNodeHeight(treeModel.getRoot());
+//            }
+//
+//            double numerator = tDistributionPDF(infectiousPeriod, oldMu, oldBeta*(oldLambda+1)/(oldAlpha*oldLambda),
+//                    2*oldAlpha);
+//            double denominator = 0;
+//            try{
+//                // watch this fall flat on its back...
+//
+//                denominator = tDistributionCDF(maxInfPeriod, oldMu, oldBeta*(oldLambda+1)/(oldAlpha*oldLambda),
+//                        2*oldAlpha);
+//                if(minInfPeriod>0){
+//                    denominator -= tDistributionCDF(minInfPeriod, oldMu, oldBeta*(oldLambda+1)/(oldAlpha*oldLambda),
+//                            2*oldAlpha);
+//                }
+//            } catch (MathException e){
+//                throw new RuntimeException("Mathematical failure calculating the CDF of the T distribution");
+//            }
+//
+//            logL += Math.log(numerator) - Math.log(denominator);
+//
+//            runningTotal += infectiousPeriod;
+//            count += 1;
+//
+//            double mean = runningTotal/count;
+//
+//
+//            double newMu = (mu0*lambda0 + runningTotal)/(lambda0 + count);
+//            double newLambda = oldLambda + 1;
+//            double newAlpha = oldAlpha + 0.5;
+//            double newBeta = oldBeta + oldLambda*Math.pow(mean-oldMu,2)/(2*(oldLambda+1));
+//
+//            double[] newParameters = {newMu, newLambda, newAlpha, newBeta};
+//            infectiousPriorParameters.put(category, newParameters);
+//            doneCases.add(thisCase);
+//            remainingPossibleFirstInfections.remove(thisCase);
+//            for(AbstractCase descendant : getDescendants(thisCase)){
+//                remainingPossibleFirstInfections.remove(descendant);
+//            }
+//
+//
+//
+//        }
+//
+//
+//        if(hasLatentPeriods){
+//            int noLatentCategories = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategoryCount();
+//
+//            HashSet<String> latentCategories = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories();
+//
+//            HashMap<String, ArrayList<Double>> latentPeriodsByCategory = new HashMap<String, ArrayList<Double>>();
+//
+//            for(String latentCategory : ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories()){
+//                latentPeriodsByCategory.put(latentCategory, new ArrayList<Double>());
+//            }
+//
+//            for(AbstractCase aCase : outbreak.getCases()){
+//                String category = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategory(aCase);
+//
+//                ArrayList<Double> correspondingList
+//                        = latentPeriodsByCategory.get(category);
+//
+//                correspondingList.add(latentPeriods[outbreak.getCaseIndex(aCase)]);
+//            }
+//
+//            for(String category: ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories()){
+//                ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
+//
+//                double count = (double)latPeriodsInThisCategory.size();
+//
+//                NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak) outbreak)
+//                        .getLatentCategoryPrior(category);
+//
+//                double[] latPredictiveDistributionParameters=prior.getParameters();
+//
+//                double mu_0 = latPredictiveDistributionParameters[0];
+//                double lambda_0 = latPredictiveDistributionParameters[1];
+//                double alpha_0 = latPredictiveDistributionParameters[2];
+//                double beta_0 = latPredictiveDistributionParameters[3];
+//
+//                double lambda_n = lambda_0 + count;
+//                double alpha_n = alpha_0 + count/2;
+//                double sum = 0;
+//                for (Double latPeriod : latPeriodsInThisCategory) {
+//                    sum += latPeriod;
+//                }
+//                double mean = sum/count;
+//
+//                double sumOfDifferences = 0;
+//                for (Double latPeriod : latPeriodsInThisCategory) {
+//                    sumOfDifferences += Math.pow(latPeriod-mean,2);
+//                }
+//
+//                double mu_n = (lambda_0*mu_0 + sum)/(lambda_0 + count);
+//                double beta_n = beta_0 + 0.5*sumOfDifferences + lambda_0*count*Math.pow(mean-mu_0, 2)
+//                        /(2*(lambda_0+count));
+//
+//                double priorPredictiveProbability
+//                        = GammaFunction.logGamma(alpha_n)
+//                        - GammaFunction.logGamma(alpha_0)
+//                        + alpha_0*Math.log(beta_0)
+//                        - alpha_n*Math.log(beta_n)
+//                        + 0.5*Math.log(lambda_0)
+//                        - 0.5*Math.log(lambda_n)
+//                        - (count/2)*Math.log(2*Math.PI);
+//
+//                logL += priorPredictiveProbability;
+//
+//                //todo log the parameters of the "posterior"
+//            }
+//
+//        }
+//
+//
+//        likelihoodKnown = true;
+//
+//        if(DEBUG){
+//            debugOutputTree("out.nex", true);
+//        }
 
         return logL;
 

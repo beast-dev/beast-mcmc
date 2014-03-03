@@ -5,6 +5,7 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.CompoundParameter;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.xml.*;
 
 /**
@@ -24,8 +25,8 @@ public class MultivariateNormalGibbsOperatorParser extends AbstractXMLObjectPars
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
        MultivariateDistributionLikelihood prior= (MultivariateDistributionLikelihood) xo.getChild(PRIOR).getChild(MultivariateDistributionLikelihood.class);
-       MultivariateNormalDistributionModel likelihood= (MultivariateNormalDistributionModel) xo.getChild(LIKELIHOOD).getChild(MultivariateNormalDistributionModel.class);
-       CompoundParameter data = (CompoundParameter) xo.getChild(CompoundParameter.class);
+       MultivariateDistributionLikelihood likelihood= (MultivariateDistributionLikelihood) xo.getChild(LIKELIHOOD).getChild(MultivariateDistributionLikelihood.class);
+//       CompoundParameter data = (CompoundParameter) xo.getChild(CompoundParameter.class);
        String weightTemp= (String) xo.getAttribute(WEIGHT);
        Double weight=Double.parseDouble(weightTemp);
 
@@ -40,9 +41,12 @@ public class MultivariateNormalGibbsOperatorParser extends AbstractXMLObjectPars
 //       }
 
 
-
-
-       return new MultivariateNormalGibbsOperator(data, likelihood, prior, weight);  //To change body of implemented methods use File | Settings | File Templates.
+        try {
+            return new MultivariateNormalGibbsOperator(likelihood, prior, weight);  //To change body of implemented methods use File | Settings | File Templates.
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+        return null;
     }
 
     @Override
@@ -52,8 +56,8 @@ public class MultivariateNormalGibbsOperatorParser extends AbstractXMLObjectPars
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(PRIOR, new XMLSyntaxRule[]{new ElementRule(MultivariateDistributionLikelihood.class)}),
-            new ElementRule(LIKELIHOOD, new XMLSyntaxRule[]{new ElementRule(MultivariateNormalDistributionModel.class)}),
-            new ElementRule(CompoundParameter.class),
+            new ElementRule(LIKELIHOOD, new XMLSyntaxRule[]{new ElementRule(MultivariateDistributionLikelihood.class)}),
+//            new ElementRule(CompoundParameter.class),
             AttributeRule.newDoubleRule(WEIGHT),
     };
 

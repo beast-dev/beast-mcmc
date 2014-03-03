@@ -25,7 +25,7 @@ import java.util.*;
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
     private static final double INTEGRAL_APPROXIMATION_TOLERANCE = 1;
     private static final int RETEST_INTEGRAL = 1000;
     private static final int FULL_EVALUATION = 10000;

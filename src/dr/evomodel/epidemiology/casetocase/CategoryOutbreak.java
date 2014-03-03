@@ -3,14 +3,8 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evomodel.epidemiology.casetocase.PeriodPriors.InfectiousOrLatentPeriodPriorDistribution;
-import dr.inference.distribution.ParametricDistributionModel;
+import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.model.*;
-import dr.math.IntegrableUnivariateFunction;
-import dr.math.Integral;
-import dr.math.RiemannApproximation;
-import dr.math.UnivariateFunction;
-import dr.math.distributions.NormalGammaDistribution;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -31,19 +25,19 @@ import java.util.HashSet;
  * Date: 17/12/2013
  */
 
-public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
+public class CategoryOutbreak extends AbstractOutbreak {
 
-    public static final String WITHIN_CASE_CATEGORY_OUTBREAK = "withinCaseCategoryOutbreak";
+    public static final String CATEGORY_OUTBREAK = "categoryOutbreak";
     private final HashSet<String> latentCategories;
     private final HashSet<String> infectiousCategories;
-    private final HashMap<String, InfectiousOrLatentPeriodPriorDistribution> latentMap;
-    private final HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infectiousMap;
+    private final HashMap<String, AbstractPeriodPriorDistribution> latentMap;
+    private final HashMap<String, AbstractPeriodPriorDistribution> infectiousMap;
     private double[][] distances;
 
 
-    public WithinCaseCategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
-                                      HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infectiousMap,
-                                      HashMap<String, InfectiousOrLatentPeriodPriorDistribution> latentMap){
+    public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
+                            HashMap<String, AbstractPeriodPriorDistribution> infectiousMap,
+                            HashMap<String, AbstractPeriodPriorDistribution> latentMap){
         super(name, taxa, hasLatentPeriods, hasGeography);
         cases = new ArrayList<AbstractCase>();
         latentCategories = new HashSet<String>();
@@ -55,14 +49,14 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
     private void addCase(String caseID, Date examDate, Date cullDate, Parameter coords, Taxa associatedTaxa,
                          String infectiousCategory, String latentCategory){
-        WithinCaseCategoryCase thisCase;
+        CategoryCase thisCase;
 
         if(latentCategory==null){
-            thisCase =  new WithinCaseCategoryCase(caseID, examDate, cullDate, coords, associatedTaxa,
+            thisCase =  new CategoryCase(caseID, examDate, cullDate, coords, associatedTaxa,
                     infectiousCategory);
         } else {
             thisCase =
-                    new WithinCaseCategoryCase(caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory,
+                    new CategoryCase(caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory,
                             latentCategory);
             latentCategories.add(latentCategory);
         }
@@ -87,28 +81,28 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         return infectiousCategories.size();
     }
 
-    public HashMap<String, InfectiousOrLatentPeriodPriorDistribution> getLatentMap(){
+    public HashMap<String, AbstractPeriodPriorDistribution> getLatentMap(){
         return latentMap;
     }
 
-    public HashMap<String, InfectiousOrLatentPeriodPriorDistribution> getInfectiousMap(){
+    public HashMap<String, AbstractPeriodPriorDistribution> getInfectiousMap(){
         return latentMap;
     }
 
-    public InfectiousOrLatentPeriodPriorDistribution getLatentCategoryPrior(String category){
+    public AbstractPeriodPriorDistribution getLatentCategoryPrior(String category){
         return latentMap.get(category);
     }
 
-    public InfectiousOrLatentPeriodPriorDistribution getInfectiousCategoryPrior(String category){
+    public AbstractPeriodPriorDistribution getInfectiousCategoryPrior(String category){
         return infectiousMap.get(category);
     }
 
     public String getInfectiousCategory(AbstractCase aCase){
-        return ((WithinCaseCategoryCase)aCase).getInfectiousCategory();
+        return ((CategoryCase)aCase).getInfectiousCategory();
     }
 
     public String getLatentCategory(AbstractCase aCase){
-        return ((WithinCaseCategoryCase)aCase).getLatentCategory();
+        return ((CategoryCase)aCase).getLatentCategory();
     }
 
     public double getDistance(AbstractCase a, AbstractCase b) {
@@ -148,15 +142,15 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         //nothing to do
     }
 
-    private class WithinCaseCategoryCase extends AbstractCase{
+    private class CategoryCase extends AbstractCase{
 
-        public static final String WITHIN_CASE_CATEGORY_CASE = "withinCaseCategoryCase";
+        public static final String CATEGORY_CASE = "categoryCase";
         private String infectiousCategory;
         private String latentCategory;
         private Parameter coords;
 
-        private WithinCaseCategoryCase(String name, String caseID, Date examDate, Date cullDate, Parameter coords,
-                                       Taxa associatedTaxa, String infectiousCategory){
+        private CategoryCase(String name, String caseID, Date examDate, Date cullDate, Parameter coords,
+                             Taxa associatedTaxa, String infectiousCategory){
             super(name);
             this.caseID = caseID;
             this.infectiousCategory = infectiousCategory;
@@ -168,22 +162,22 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         }
 
 
-        private WithinCaseCategoryCase(String name, String caseID, Date examDate, Date cullDate, Parameter coords,
-                                       Taxa associatedTaxa, String infectiousCategory, String latentCategory){
+        private CategoryCase(String name, String caseID, Date examDate, Date cullDate, Parameter coords,
+                             Taxa associatedTaxa, String infectiousCategory, String latentCategory){
             this(name, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory);
             this.latentCategory = latentCategory;
         }
 
 
-        private WithinCaseCategoryCase(String caseID, Date examDate, Date cullDate, Parameter coords,
-                                       Taxa associatedTaxa, String infectiousCategory){
-            this(WITHIN_CASE_CATEGORY_CASE, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory);
+        private CategoryCase(String caseID, Date examDate, Date cullDate, Parameter coords,
+                             Taxa associatedTaxa, String infectiousCategory){
+            this(CATEGORY_CASE, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory);
         }
 
 
-        private WithinCaseCategoryCase(String caseID, Date examDate, Date cullDate, Parameter coords,
-                                       Taxa associatedTaxa, String infectiousCategory, String latentCategory){
-            this(WITHIN_CASE_CATEGORY_CASE, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory,
+        private CategoryCase(String caseID, Date examDate, Date cullDate, Parameter coords,
+                             Taxa associatedTaxa, String infectiousCategory, String latentCategory){
+            this(CATEGORY_CASE, caseID, examDate, cullDate, coords, associatedTaxa, infectiousCategory,
                     latentCategory);
         }
 
@@ -232,137 +226,137 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
 // for integrating out infectiousness dates, if this is preferred:
 
-    private class CombinedPeriodFunction implements IntegrableUnivariateFunction {
-
-        private ParametricDistributionModel infectious;
-        private ParametricDistributionModel latent;
-        private Integral numIntergrator;
-        private PdfByPdf pdfByPdf;
-        private CdfByPdf cdfByPdf;
-
-        private CombinedPeriodFunction(ParametricDistributionModel infectious, ParametricDistributionModel latent,
-                                       int numSteps){
-            this.infectious = infectious;
-            this.latent = latent;
-            this.numIntergrator = new RiemannApproximation(numSteps);
-            cdfByPdf = new CdfByPdf(1);
-            pdfByPdf = new PdfByPdf(1);
-        }
-
-        public double evaluateIntegral(double a, double b) {
-            cdfByPdf.setTotal(b);
-            double out = numIntergrator.integrate(cdfByPdf, 0, b);
-            if(a>0){
-                cdfByPdf.setTotal(a);
-                out -= numIntergrator.integrate(cdfByPdf, 0, a);
-            }
-            return out;
-        }
-
-        public double evaluateIntegral(double a, double b, double maxLatent){
-            double out;
-            cdfByPdf.setTotal(b);
-            if(maxLatent > b){
-                out = numIntergrator.integrate(cdfByPdf, 0, b);
-                out /= latent.cdf(maxLatent);
-            } else {
-                out = numIntergrator.integrate(cdfByPdf, 0, maxLatent);
-                out /= latent.cdf(maxLatent);
-            }
-            if(a>0){
-                cdfByPdf.setTotal(a);
-                if(maxLatent > a){
-                    out -= numIntergrator.integrate(cdfByPdf, 0, a)/latent.cdf(maxLatent);
-                } else {
-                    out -= numIntergrator.integrate(cdfByPdf, 0, maxLatent)/latent.cdf(maxLatent);
-                }
-
-            }
-            return out;
-        }
-
-        public double evaluate(double argument) {
-            pdfByPdf.setTotal(argument);
-            return numIntergrator.integrate(pdfByPdf, 0, argument);
-        }
-
-        public double evaluate(double argument, double maxLatent){
-            if(maxLatent>argument){
-                return evaluate(argument)/latent.cdf(maxLatent);
-            }
-            pdfByPdf.setTotal(argument);
-            return numIntergrator.integrate(pdfByPdf, 0, maxLatent)/latent.cdf(maxLatent);
-        }
-
-
-        public double getLowerBound() {
-            return 0;
-        }
-
-        public double getUpperBound() {
-            return Double.POSITIVE_INFINITY;
-        }
-
-        private class PdfByPdf implements UnivariateFunction {
-
-            double total;
-
-            private PdfByPdf(double total){
-                this.total = total;
-            }
-
-            public double evaluate(double argument) {
-                return infectious.pdf(total-argument)*latent.pdf(argument);
-            }
-
-            public double getLowerBound() {
-                return 0;
-            }
-
-            public double getUpperBound() {
-                return Double.POSITIVE_INFINITY;
-            }
-
-            public void setTotal(double total){
-                this.total = total;
-            }
-
-            public double getTotal(){
-                return total;
-            }
-
-        }
-
-        private class CdfByPdf implements UnivariateFunction{
-
-            double total;
-
-            private CdfByPdf(double total){
-                this.total = total;
-            }
-
-            public double evaluate(double argument) {
-                return infectious.cdf(total-argument)*latent.pdf(argument);
-            }
-
-            public double getLowerBound() {
-                return 0;
-            }
-
-            public double getUpperBound() {
-                return Double.POSITIVE_INFINITY;
-            }
-
-            public void setTotal(double total){
-                this.total = total;
-            }
-
-            public double getTotal(){
-                return total;
-            }
-
-        }
-    }
+//    private class CombinedPeriodFunction implements IntegrableUnivariateFunction {
+//
+//        private ParametricDistributionModel infectious;
+//        private ParametricDistributionModel latent;
+//        private Integral numIntergrator;
+//        private PdfByPdf pdfByPdf;
+//        private CdfByPdf cdfByPdf;
+//
+//        private CombinedPeriodFunction(ParametricDistributionModel infectious, ParametricDistributionModel latent,
+//                                       int numSteps){
+//            this.infectious = infectious;
+//            this.latent = latent;
+//            this.numIntergrator = new RiemannApproximation(numSteps);
+//            cdfByPdf = new CdfByPdf(1);
+//            pdfByPdf = new PdfByPdf(1);
+//        }
+//
+//        public double evaluateIntegral(double a, double b) {
+//            cdfByPdf.setTotal(b);
+//            double out = numIntergrator.integrate(cdfByPdf, 0, b);
+//            if(a>0){
+//                cdfByPdf.setTotal(a);
+//                out -= numIntergrator.integrate(cdfByPdf, 0, a);
+//            }
+//            return out;
+//        }
+//
+//        public double evaluateIntegral(double a, double b, double maxLatent){
+//            double out;
+//            cdfByPdf.setTotal(b);
+//            if(maxLatent > b){
+//                out = numIntergrator.integrate(cdfByPdf, 0, b);
+//                out /= latent.cdf(maxLatent);
+//            } else {
+//                out = numIntergrator.integrate(cdfByPdf, 0, maxLatent);
+//                out /= latent.cdf(maxLatent);
+//            }
+//            if(a>0){
+//                cdfByPdf.setTotal(a);
+//                if(maxLatent > a){
+//                    out -= numIntergrator.integrate(cdfByPdf, 0, a)/latent.cdf(maxLatent);
+//                } else {
+//                    out -= numIntergrator.integrate(cdfByPdf, 0, maxLatent)/latent.cdf(maxLatent);
+//                }
+//
+//            }
+//            return out;
+//        }
+//
+//        public double evaluate(double argument) {
+//            pdfByPdf.setTotal(argument);
+//            return numIntergrator.integrate(pdfByPdf, 0, argument);
+//        }
+//
+//        public double evaluate(double argument, double maxLatent){
+//            if(maxLatent>argument){
+//                return evaluate(argument)/latent.cdf(maxLatent);
+//            }
+//            pdfByPdf.setTotal(argument);
+//            return numIntergrator.integrate(pdfByPdf, 0, maxLatent)/latent.cdf(maxLatent);
+//        }
+//
+//
+//        public double getLowerBound() {
+//            return 0;
+//        }
+//
+//        public double getUpperBound() {
+//            return Double.POSITIVE_INFINITY;
+//        }
+//
+//        private class PdfByPdf implements UnivariateFunction {
+//
+//            double total;
+//
+//            private PdfByPdf(double total){
+//                this.total = total;
+//            }
+//
+//            public double evaluate(double argument) {
+//                return infectious.pdf(total-argument)*latent.pdf(argument);
+//            }
+//
+//            public double getLowerBound() {
+//                return 0;
+//            }
+//
+//            public double getUpperBound() {
+//                return Double.POSITIVE_INFINITY;
+//            }
+//
+//            public void setTotal(double total){
+//                this.total = total;
+//            }
+//
+//            public double getTotal(){
+//                return total;
+//            }
+//
+//        }
+//
+//        private class CdfByPdf implements UnivariateFunction{
+//
+//            double total;
+//
+//            private CdfByPdf(double total){
+//                this.total = total;
+//            }
+//
+//            public double evaluate(double argument) {
+//                return infectious.cdf(total-argument)*latent.pdf(argument);
+//            }
+//
+//            public double getLowerBound() {
+//                return 0;
+//            }
+//
+//            public double getUpperBound() {
+//                return Double.POSITIVE_INFINITY;
+//            }
+//
+//            public void setTotal(double total){
+//                this.total = total;
+//            }
+//
+//            public double getTotal(){
+//                return total;
+//            }
+//
+//        }
+//    }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -386,52 +380,41 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
 
         //for the normal-gamma priors
 
-        public static final String CATEGORY_NAME = "categoryName";
-        public static final String MU = "mu";
-        public static final String LAMBDA = "lambda";
-        public static final String ALPHA = "alpha";
-        public static final String BETA = "beta";
-
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             final boolean hasGeography = xo.hasAttribute(HAS_GEOGRAPHY) && xo.getBooleanAttribute(HAS_GEOGRAPHY);
             final boolean hasLatentPeriods = Boolean.parseBoolean((String)xo.getAttribute(HAS_LATENT_PERIODS));
 
             final Taxa taxa = (Taxa) xo.getChild(Taxa.class);
 
-            HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infMap
-                    = new HashMap<String, InfectiousOrLatentPeriodPriorDistribution>();
+            HashMap<String, AbstractPeriodPriorDistribution> infMap
+                    = new HashMap<String, AbstractPeriodPriorDistribution>();
 
-            HashMap<String, InfectiousOrLatentPeriodPriorDistribution> latMap
-                    = new HashMap<String, InfectiousOrLatentPeriodPriorDistribution>();
-
-            boolean foundInfectiousPrior = false;
-            boolean foundLatentPrior = false;
+            HashMap<String, AbstractPeriodPriorDistribution> latMap
+                    = new HashMap<String, AbstractPeriodPriorDistribution>();
 
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject){
                     if (((XMLObject)cxo).getName().equals(INFECTIOUS_PERIOD_PRIOR)){
-                        InfectiousOrLatentPeriodPriorDistribution hyperprior
-                                = (InfectiousOrLatentPeriodPriorDistribution)
-                                ((XMLObject)cxo).getChild(InfectiousOrLatentPeriodPriorDistribution.class);
-                        infMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), hyperprior);
-                        foundInfectiousPrior = true;
+                        AbstractPeriodPriorDistribution hyperprior
+                                = (AbstractPeriodPriorDistribution)
+                                ((XMLObject)cxo).getChild(AbstractPeriodPriorDistribution.class);
+                        infMap.put(hyperprior.getModelName(), hyperprior);
                     } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIOD_PRIOR))){
-                        InfectiousOrLatentPeriodPriorDistribution hyperprior
-                                = (InfectiousOrLatentPeriodPriorDistribution)
-                                ((XMLObject)cxo).getChild(InfectiousOrLatentPeriodPriorDistribution.class);
-                        latMap.put((String)((XMLObject) cxo).getAttribute(CATEGORY_NAME), hyperprior);
-                        foundLatentPrior = true;
+                        AbstractPeriodPriorDistribution hyperprior
+                                = (AbstractPeriodPriorDistribution)
+                                ((XMLObject)cxo).getChild(AbstractPeriodPriorDistribution.class);
+                        latMap.put(hyperprior.getModelName(), hyperprior);
                     }
                 }
             }
 
-            WithinCaseCategoryOutbreak cases = new WithinCaseCategoryOutbreak(null, taxa, hasGeography,
+            CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography,
                     hasLatentPeriods, infMap, latMap);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName()
-                        .equals(WithinCaseCategoryCase.WITHIN_CASE_CATEGORY_CASE)){
+                        .equals(CategoryCase.CATEGORY_CASE)){
                     parseCase((XMLObject)cxo, cases, hasLatentPeriods);
                 }
             }
@@ -439,7 +422,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             return cases;
         }
 
-        public void parseCase(XMLObject xo, WithinCaseCategoryOutbreak outbreak, boolean expectLatentPeriods)
+        public void parseCase(XMLObject xo, CategoryOutbreak outbreak, boolean expectLatentPeriods)
                 throws XMLParseException {
             String farmID = (String) xo.getAttribute(CASE_ID);
             String infectiousCategory = (String) xo.getAttribute(INFECTIOUS_CATEGORY);
@@ -467,15 +450,6 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
             outbreak.addCase(farmID, examDate, cullDate, coords, taxa, infectiousCategory, latentCategory);
         }
 
-        public NormalGammaDistribution parseDistribution(XMLObject xo) throws XMLParseException{
-            double mu = Double.parseDouble((String)xo.getAttribute(MU));
-            double lambda = Double.parseDouble((String)xo.getAttribute(LAMBDA));
-            double alpha = Double.parseDouble((String)xo.getAttribute(ALPHA));
-            double beta = Double.parseDouble((String)xo.getAttribute(BETA));
-            return new NormalGammaDistribution(mu, lambda, alpha, beta);
-        }
-
-
 
         public String getParserDescription(){
             return "Parses a set of 'category' farm outbreak and the information that they all share";
@@ -486,7 +460,7 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         }
 
         public String getParserName(){
-            return WITHIN_CASE_CATEGORY_OUTBREAK;
+            return CATEGORY_OUTBREAK;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -512,11 +486,11 @@ public class WithinCaseCategoryOutbreak extends AbstractOutbreak {
         private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(HAS_LATENT_PERIODS, "Whether to include a latent period in the model"),
                 new ElementRule(ProductStatistic.class, 0,2),
-                new ElementRule(WithinCaseCategoryCase.WITHIN_CASE_CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
+                new ElementRule(CategoryCase.CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_PRIOR, InfectiousOrLatentPeriodPriorDistribution.class, "blah", 1,
+                new ElementRule(INFECTIOUS_PERIOD_PRIOR, AbstractPeriodPriorDistribution.class, "blah", 1,
                         Integer.MAX_VALUE),
-                new ElementRule(LATENT_PERIOD_PRIOR, InfectiousOrLatentPeriodPriorDistribution.class, "blah", 0,
+                new ElementRule(LATENT_PERIOD_PRIOR, AbstractPeriodPriorDistribution.class, "blah", 0,
                         Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
         };

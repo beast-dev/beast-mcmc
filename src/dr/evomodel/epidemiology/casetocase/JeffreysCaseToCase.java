@@ -1,21 +1,32 @@
 package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.util.TaxonList;
+import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by mhall on 17/12/2013.
+ *
+ * todo there's a better OO structure out there - WCC could be an extension of this class
  */
 public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
+
+    private double infectiousPeriodsLogLikelihood;
+    private double storedInfectiousPeriodsLogLikelihood;
+    private double latentPeriodsLogLikelihood;
+    private double storedLatentPeriodsLogLikelihood;
 
     public static final String JEFFREYS_CASE_TO_CASE = "jeffreysCaseToCase";
 
     public JeffreysCaseToCase(PartitionedTreeModel virusTree, AbstractOutbreak caseData, String startingNetworkFileName,
                                     Parameter infectionTimeBranchPositions, Parameter infectiousTimePositions,
-                                    Parameter maxFirstInfToRoot) throws TaxonList.MissingTaxonException{
+                                    Parameter maxFirstInfToRoot)
+            throws TaxonList.MissingTaxonException{
         super(virusTree, caseData, infectionTimeBranchPositions, infectiousTimePositions,
                 maxFirstInfToRoot);
 
@@ -25,56 +36,115 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
     protected double calculateLogLikelihood() {
 
-        // todo implement categories
+        // you shouldn't need to do this, because C2CTransL will already have done it
 
-        super.prepareTimings();
+        // super.prepareTimings();
 
-        if(!hasLatentPeriods){
-            return isAllowed() ? -Math.log(getLogInfectiousPeriodSD()) : Double.NEGATIVE_INFINITY;
-        } else {
-            double infL = -Math.log(getLogInfectiousPeriodSD());
-            double latL = -Math.log(getLogLatentPeriodSD());
-            return isAllowed() ? infL + latL : Double.NEGATIVE_INFINITY;
+        HashMap<String, ArrayList<Double>> infectiousPeriodsByCategory
+                = new HashMap<String, ArrayList<Double>>();
+
+        // todo do this only once? Using indexes?
+
+        for(AbstractCase aCase : outbreak.getCases()){
+
+            String category = ((CategoryOutbreak) outbreak).getInfectiousCategory(aCase);
+
+            if(!infectiousPeriodsByCategory.keySet().contains(category)){
+                infectiousPeriodsByCategory.put(category, new ArrayList<Double>());
+            }
+
+            ArrayList<Double> correspondingList
+                    = infectiousPeriodsByCategory.get(category);
+
+            correspondingList.add(getInfectiousPeriod(aCase));
+        }
+
+        infectiousPeriodsLogLikelihood = 0;
+
+        for(String category : ((CategoryOutbreak) outbreak).getInfectiousCategories()){
+
+            // todo this inevitably should be an improper distribution, and a warning if it isn't is in order
+
+            Double[] infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category)
+                    .toArray(new Double[infectiousPeriodsByCategory.size()]);
+
+            AbstractPeriodPriorDistribution hyperprior = ((CategoryOutbreak) outbreak)
+                    .getInfectiousCategoryPrior(category);
+
+            double[] values = new double[infPeriodsInThisCategory.length];
+
+            for(int i=0; i<infPeriodsInThisCategory.length; i++){
+                values[i] = infPeriodsInThisCategory[i];
+            }
+
+            infectiousPeriodsLogLikelihood += hyperprior.getLogLikelihood(values);
+
+        }
+
+
+        if(hasLatentPeriods){
+
+            HashMap<String, ArrayList<Double>> latentPeriodsByCategory
+                    = new HashMap<String, ArrayList<Double>>();
+
+            // todo do this only once?
+
+            for(AbstractCase aCase : outbreak.getCases()){
+
+                String category = ((CategoryOutbreak) outbreak).getLatentCategory(aCase);
+
+                if(!latentPeriodsByCategory.keySet().contains(category)){
+                    latentPeriodsByCategory.put(category, new ArrayList<Double>());
+                }
+
+                ArrayList<Double> correspondingList
+                        = latentPeriodsByCategory.get(category);
+
+                correspondingList.add(getLatentPeriod(aCase));
+            }
+
+
+            latentPeriodsLogLikelihood = 0;
+
+            for(String category : ((CategoryOutbreak) outbreak).getLatentCategories()){
+
+                Double[] latPeriodsInThisCategory = latentPeriodsByCategory.get(category)
+                        .toArray(new Double[latentPeriodsByCategory.size()]);
+
+                AbstractPeriodPriorDistribution hyperprior = ((CategoryOutbreak) outbreak)
+                        .getLatentCategoryPrior(category);
+
+                double[] values = new double[latPeriodsInThisCategory.length];
+
+                for(int i=0; i<latPeriodsInThisCategory.length; i++){
+                    values[i] = latPeriodsInThisCategory[i];
+                }
+
+                latentPeriodsLogLikelihood += hyperprior.getLogLikelihood(values);
+
+            }
+
+        }
+
+        return infectiousPeriodsLogLikelihood + latentPeriodsLogLikelihood;
+
+    }
+
+    public void storeState(){
+        super.storeState();
+        storedInfectiousPeriodsLogLikelihood = infectiousPeriodsLogLikelihood;
+        if(hasLatentPeriods){
+            storedLatentPeriodsLogLikelihood = latentPeriodsLogLikelihood;
         }
     }
 
-
-    public double getInfectiousPeriodSD(){
-        DescriptiveStatistics stats = new DescriptiveStatistics(getInfectiousPeriods(true));
-        return stats.getStandardDeviation();
+    public void restoreState(){
+        super.restoreState();
+        infectiousPeriodsLogLikelihood = storedInfectiousPeriodsLogLikelihood;
+        if(hasLatentPeriods){
+            latentPeriodsLogLikelihood = storedLatentPeriodsLogLikelihood;
+        }
     }
-
-    public double getLogInfectiousPeriodSD(){
-        if(infectiousPeriods==null){
-            infectiousPeriods = getInfectiousPeriods(true);
-        }
-        DescriptiveStatistics stats = new DescriptiveStatistics();
-        for (double infectiousPeriod : infectiousPeriods) {
-            stats.addValue(Math.log(infectiousPeriod));
-        }
-        return stats.getStandardDeviation();
-    }
-
-    public double getLatentPeriodSD(){
-        if(latentPeriods==null){
-            latentPeriods = getLatentPeriods(true);
-        }
-        DescriptiveStatistics stats = new DescriptiveStatistics(getLatentPeriods(true));
-        return stats.getStandardDeviation();
-    }
-
-    public double getLogLatentPeriodSD(){
-        if(latentPeriods==null){
-            latentPeriods = getLatentPeriods(true);
-        }
-        DescriptiveStatistics stats = new DescriptiveStatistics();
-        for (double latentPeriod : latentPeriods) {
-            stats.addValue(Math.log(latentPeriod));
-        }
-        return stats.getStandardDeviation();
-    }
-
-    // todo This is already pretty fast, but changeMap could be overriden.
 
     //************************************************************************
     // AbstractXMLObjectParser implementation
@@ -94,7 +164,7 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
             PartitionedTreeModel virusTree = (PartitionedTreeModel) xo.getChild(TreeModel.class);
 
-            String startingNetworkFileName=null;
+            String startingNetworkFileName = null;
 
             if(xo.hasChildNamed(STARTING_NETWORK)){
                 startingNetworkFileName = (String) xo.getElementFirstChild(STARTING_NETWORK);
@@ -111,7 +181,6 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
-
             try {
                 likelihood = new JeffreysCaseToCase(virusTree, caseSet, startingNetworkFileName, infectionTimes,
                         infectiousTimes, earliestFirstInfection);
@@ -123,8 +192,7 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
         }
 
         public String getParserDescription() {
-            return "This element provides a tree prior for a partitioned tree, with each partitioned tree generated" +
-                    "by a coalescent process";
+            return "This element provides the likelihood of a partitioned tree.";
         }
 
         public Class getReturnType() {
@@ -137,7 +205,7 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(PartitionedTreeModel.class, "The tree"),
-                new ElementRule(JeffreysCategoryOutbreak.class, "The set of cases"),
+                new ElementRule(CategoryOutbreak.class, "The set of outbreak"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
@@ -148,7 +216,8 @@ public class JeffreysCaseToCase extends CaseToCaseTreeLikelihood  {
                         "that has elapsed before infectiousness", true)
         };
     };
-
-
-
 }
+
+
+
+

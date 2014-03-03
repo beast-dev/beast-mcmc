@@ -12,14 +12,11 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodel.epidemiology.casetocase.PeriodPriors.InfectiousOrLatentPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.Binomial;
-import dr.math.distributions.NormalGammaDistribution;
-import dr.math.functionEval.GammaFunction;
 import dr.xml.*;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.TDistributionImpl;
@@ -28,7 +25,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -82,11 +78,11 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 
 //        super.prepareTimings();
 //
-//        int noInfectiousCategories = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategoryCount();
+//        int noInfectiousCategories = ((CategoryOutbreak) outbreak).getInfectiousCategoryCount();
 //
-//        HashSet<String> infectiousCategories = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories();
+//        HashSet<String> infectiousCategories = ((CategoryOutbreak) outbreak).getInfectiousCategories();
 //
-//        HashMap<String, InfectiousOrLatentPeriodPriorDistribution> infectiousMap = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousMap();
+//        HashMap<String, AbstractPeriodPriorDistribution> infectiousMap = ((CategoryOutbreak) outbreak).getInfectiousMap();
 //
 //        HashMap<String, double[]> infectiousPriorParameters =
 //                new HashMap<String, double[]>();
@@ -114,7 +110,7 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 //
 //            AbstractCase thisCase = outbreak.getCase(i);
 //
-//            String category = ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategory(thisCase);
+//            String category = ((CategoryOutbreak) outbreak).getInfectiousCategory(thisCase);
 //
 //            double[] parameters = infectiousPriorParameters.get(category);
 //
@@ -205,18 +201,18 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 //
 //
 //        if(hasLatentPeriods){
-//            int noLatentCategories = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategoryCount();
+//            int noLatentCategories = ((CategoryOutbreak) outbreak).getLatentCategoryCount();
 //
-//            HashSet<String> latentCategories = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories();
+//            HashSet<String> latentCategories = ((CategoryOutbreak) outbreak).getLatentCategories();
 //
 //            HashMap<String, ArrayList<Double>> latentPeriodsByCategory = new HashMap<String, ArrayList<Double>>();
 //
-//            for(String latentCategory : ((WithinCaseCategoryOutbreak) outbreak).getLatentCategories()){
+//            for(String latentCategory : ((CategoryOutbreak) outbreak).getLatentCategories()){
 //                latentPeriodsByCategory.put(latentCategory, new ArrayList<Double>());
 //            }
 //
 //            for(AbstractCase aCase : outbreak.getCases()){
-//                String category = ((WithinCaseCategoryOutbreak) outbreak).getLatentCategory(aCase);
+//                String category = ((CategoryOutbreak) outbreak).getLatentCategory(aCase);
 //
 //                ArrayList<Double> correspondingList
 //                        = latentPeriodsByCategory.get(category);
@@ -224,12 +220,12 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 //                correspondingList.add(latentPeriods[outbreak.getCaseIndex(aCase)]);
 //            }
 //
-//            for(String category: ((WithinCaseCategoryOutbreak) outbreak).getInfectiousCategories()){
+//            for(String category: ((CategoryOutbreak) outbreak).getInfectiousCategories()){
 //                ArrayList<Double> latPeriodsInThisCategory = latentPeriodsByCategory.get(category);
 //
 //                double count = (double)latPeriodsInThisCategory.size();
 //
-//                NormalGammaDistribution prior = ((WithinCaseCategoryOutbreak) outbreak)
+//                NormalGammaDistribution prior = ((CategoryOutbreak) outbreak)
 //                        .getLatentCategoryPrior(category);
 //
 //                double[] latPredictiveDistributionParameters=prior.getParameters();
@@ -553,7 +549,7 @@ public class GeneralCaseToCase extends CaseToCaseTreeLikelihood {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(PartitionedTreeModel.class, "The tree"),
-                new ElementRule(WithinCaseCategoryOutbreak.class, "The set of outbreak"),
+                new ElementRule(CategoryOutbreak.class, "The set of outbreak"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +

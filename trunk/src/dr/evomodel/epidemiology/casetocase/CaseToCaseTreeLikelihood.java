@@ -202,6 +202,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 }
             });
         }
+
+        likelihoodKnown = false;
     }
 
     protected void prepareTree(String startingNetworkFileName){
@@ -212,6 +214,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
 
         prepareTimings();
+        likelihoodKnown = false;
     }
 
     public AbstractOutbreak getOutbreak(){

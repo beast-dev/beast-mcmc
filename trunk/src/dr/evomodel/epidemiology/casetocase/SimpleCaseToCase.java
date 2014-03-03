@@ -574,7 +574,7 @@ public class SimpleCaseToCase extends CaseToCaseTreeLikelihood {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(PartitionedTreeModel.class, "The tree"),
-                new ElementRule(WithinCaseCategoryOutbreak.class, "The set of outbreak"),
+                new ElementRule(CategoryOutbreak.class, "The set of outbreak"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +

@@ -3,7 +3,6 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.model.*;
 import dr.xml.*;
 

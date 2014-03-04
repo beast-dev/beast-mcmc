@@ -141,11 +141,13 @@ public class BEASTGen {
         if (arguments.hasOption("date_prefix")) {
             guesser.guessDates = true;
             guesser.prefix = arguments.getStringOption("date_prefix");
+            guesser.guessType = DateGuesser.GuessType.PREFIX;
         }
 
         if (arguments.hasOption("date_regex")) {
             guesser.guessDates = true;
             guesser.regex = arguments.getStringOption("date_regex");
+            guesser.guessType = DateGuesser.GuessType.REGEX;
         }
 
         if (arguments.hasOption("date_format")) {

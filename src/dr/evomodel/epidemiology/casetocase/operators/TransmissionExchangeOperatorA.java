@@ -65,10 +65,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         NodeRef j = candidates.get(MathUtils.nextInt(candidates.size()));
 
-        int jFirstCandidateCount = getPossibleExchanges(tree, j).size();
-
-        double HRDenom = (1/((double)candidateCount)) + (1/((double)jFirstCandidateCount));
-
         NodeRef iP = tree.getParent(i);
         NodeRef jP = tree.getParent(j);
 
@@ -81,12 +77,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         exchangeNodes(tree, i, j, iP, jP);
 
-        ArrayList<NodeRef> reverseCandidatesIfirst = getPossibleExchanges(tree, i);
-        ArrayList<NodeRef> reverseCandidatesJfirst = getPossibleExchanges(tree, j);
-
-        double HRNum = (1/reverseCandidatesIfirst.size()) + (1/reverseCandidatesJfirst.size());
-
-        return Math.log(HRNum/HRDenom);
+        return 0;
     }
 
     // get a set of candidates for an exchange of a given node. Does not include the node itself or its sibling, so

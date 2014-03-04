@@ -32,7 +32,6 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         tipCount = c2cLikelihood.getTreeModel().getExternalNodeCount();
     }
 
-    @Override
     public double doOperation() throws OperatorFailedException {
         proposeTree();
         if (c2cLikelihood.getTreeModel().getExternalNodeCount() != tipCount) {

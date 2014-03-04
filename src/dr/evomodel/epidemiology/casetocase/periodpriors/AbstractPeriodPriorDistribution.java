@@ -49,6 +49,7 @@ public abstract class AbstractPeriodPriorDistribution extends AbstractModel impl
 
     protected void storeState() {
         storedLogL = logL;
+
     }
 
     protected void restoreState() {

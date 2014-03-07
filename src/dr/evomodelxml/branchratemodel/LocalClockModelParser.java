@@ -85,7 +85,10 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
 
                     boolean relative = xoc.getAttribute(RELATIVE, false);
 
-                    Parameter indexParameter = (Parameter) xoc.getElementFirstChild(INDEX);
+                    Parameter indexParameter = null;
+                    if (xoc.hasChildNamed(INDEX)) {
+                        indexParameter = (Parameter) xoc.getElementFirstChild(INDEX);
+                    }
                     Parameter rateParameter = (Parameter) xoc.getChild(Parameter.class);
                     TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
 

@@ -1,3 +1,20 @@
+/*
+        This file is part of BEAST.
+
+        BEAST is free software: you can redistribute it and/or modify
+        it under the terms of the GNU General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
+
+        BEAST is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU General Public License for more details.
+
+        You should have received a copy of the GNU General Public License
+        along with DISSECT.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 package dr.evomodel.speciation;
 
 
@@ -138,15 +155,16 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
 
         citations.add(new Citation(
                 new Author[]{
-                        new Author("Graham", "Jones")
+                        new Author("Graham", "Jones"),
+                        new Author("Bengt", "Oxelman")
                 },
-                "Multilocus species delimitation in BEAST",
-                2013,
-                "",
+                "DISSECT: an assignment-free Bayesian discovery method for species delimitation under the multispecies coalescent",
+                2014,
+                "BIORXIV/2014/003178",
                 -1,
                 -1,
                 -1,
-                Citation.Status.IN_PREPARATION
+                Citation.Status.IN_SUBMISSION
         ));
 
         return citations;

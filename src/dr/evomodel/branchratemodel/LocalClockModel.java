@@ -219,7 +219,7 @@ public class LocalClockModel extends AbstractBranchRateModel {
                 if (trunkClock.tipList.get((int) trunkClock.indexParameter.getParameterValue(0)) == node.getNumber()) {
                     clock = trunkClock;
                 }
-            } else if (trunkClock.tips.contains(node.getNumber())) {
+            } else if (trunkClock.tipList.contains(node.getNumber())) {
                 clock = trunkClock;
             }
         } else {

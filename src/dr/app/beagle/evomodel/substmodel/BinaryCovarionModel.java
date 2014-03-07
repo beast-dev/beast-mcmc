@@ -62,7 +62,8 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
                                Parameter frequencies,
                                Parameter hiddenFrequencies,
                                Parameter alphaParameter,
-                               Parameter switchingParameter) {
+                               Parameter switchingParameter,
+                               dr.evomodel.substmodel.BinaryCovarionModel.Version version) {
 
         super(BinaryCovarionModelParser.COVARION_MODEL, dataType, frequencies, hiddenFrequencies);
 
@@ -70,6 +71,7 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
         this.switchRate = switchingParameter;
         this.frequencies = frequencies;
         this.hiddenFrequencies = hiddenFrequencies;
+        this.version = version;
 
         addVariable(alpha);
         addVariable(switchRate);
@@ -89,20 +91,23 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
         assert Math.abs(1.0 - f0 - f1) < 1e-8;
         assert Math.abs(1.0 - p0 - p1) < 1e-8;
 
+        f0 = version.getF0(f0);
+        f1 = version.getF1(f1);
+
         unnormalizedQ[0][1] = a * p1;
-        unnormalizedQ[0][2] = s;
+        unnormalizedQ[0][2] = s * f0;
         unnormalizedQ[0][3] = 0.0;
 
         unnormalizedQ[1][0] = a * p0;
         unnormalizedQ[1][2] = 0.0;
-        unnormalizedQ[1][3] = s;
+        unnormalizedQ[1][3] = s * f0;
 
-        unnormalizedQ[2][0] = s;
+        unnormalizedQ[2][0] = s * f1;
         unnormalizedQ[2][1] = 0.0;
         unnormalizedQ[2][3] = p1;
 
         unnormalizedQ[3][0] = 0.0;
-        unnormalizedQ[3][1] = s;
+        unnormalizedQ[3][1] = s * f1;
         unnormalizedQ[3][2] = p0;
     }
 
@@ -168,5 +173,6 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
     private Parameter switchRate;
     private Parameter frequencies;
     private Parameter hiddenFrequencies;
+    final private dr.evomodel.substmodel.BinaryCovarionModel.Version version;
 
 }

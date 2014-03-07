@@ -39,6 +39,9 @@ public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
     public static final String SWITCHING_RATE = dr.evomodelxml.substmodel.BinaryCovarionModelParser.SWITCHING_RATE;
     public static final String FREQUENCIES = dr.evomodelxml.substmodel.BinaryCovarionModelParser.FREQUENCIES;
     public static final String HIDDEN_FREQUENCIES = dr.evomodelxml.substmodel.BinaryCovarionModelParser.HIDDEN_FREQUENCIES;
+    public static final String VERSION = dr.evomodelxml.substmodel.BinaryCovarionModelParser.VERSION;
+    public static final dr.evomodel.substmodel.BinaryCovarionModel.Version DEFAULT_VERSION =
+            dr.evomodelxml.substmodel.BinaryCovarionModelParser.DEFAULT_VERSION;
 
     public String getParserName() {
         return COVARION_MODEL;
@@ -66,8 +69,13 @@ public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(SWITCHING_RATE);
         switchingRateParameter = (Parameter) cxo.getChild(Parameter.class);
 
+        dr.evomodel.substmodel.BinaryCovarionModel.Version version = DEFAULT_VERSION;
+        if (xo.hasAttribute(VERSION)) {
+            version = dr.evomodel.substmodel.BinaryCovarionModel.Version.parseFromString(xo.getStringAttribute(VERSION));
+        }
+
         BinaryCovarionModel model = new BinaryCovarionModel(TwoStateCovarion.INSTANCE,
-                frequencies, hiddenFrequencies, alphaParameter, switchingRateParameter);
+                frequencies, hiddenFrequencies, alphaParameter, switchingRateParameter, version);
 
         System.out.println(model);
 
@@ -101,6 +109,7 @@ public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class, true)}
             ),
+            AttributeRule.newStringRule(VERSION, true),
     };
 
 

@@ -1,3 +1,28 @@
+/*
+ * BinaryCovarionModel.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.TwoStateCovarion;
@@ -35,7 +60,8 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
                                Parameter frequencies,
                                Parameter hiddenFrequencies,
                                Parameter alphaParameter,
-                               Parameter switchingParameter) {
+                               Parameter switchingParameter,
+                               Version version) {
 
         super(BinaryCovarionModelParser.COVARION_MODEL, dataType, frequencies, hiddenFrequencies);
 
@@ -43,12 +69,60 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
         this.switchRate = switchingParameter;
         this.frequencies = frequencies;
         this.hiddenFrequencies = hiddenFrequencies;
+        this.version = version;
 
         addVariable(alpha);
         addVariable(switchRate);
         addVariable(frequencies);
         addVariable(hiddenFrequencies);
         setupUnnormalizedQMatrix();
+    }
+
+    public enum Version {
+        VERSION1("1") {
+            public double getF0(double iF0) {
+                return 1.0;
+            }
+
+            public double getF1(double iF1) {
+                return 1.0;
+            }
+        },
+        VERSION2("2") {
+            public double getF0(double iF0) {
+                return iF0;
+            }
+
+            public double getF1(double iF1) {
+                return iF1;
+            }
+        };
+
+        Version(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        private final String text;
+
+        public static Version parseFromString(String text) {
+            for (Version version : Version.values()) {
+                if (version.getText().compareToIgnoreCase(text) == 0)
+                    return version;
+            }
+            throw new IllegalArgumentException("Unknown version type: " + text);
+        }
+
+        public String toString() {
+            return getText();
+        }
+
+        abstract public double getF0(double iF0);
+
+        abstract public double getF1(double iF1);
     }
 
     protected void setupUnnormalizedQMatrix() {
@@ -63,20 +137,23 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
         assert Math.abs(1.0 - f0 - f1) < 1e-8;
         assert Math.abs(1.0 - p0 - p1) < 1e-8;
 
+        f0 = version.getF0(f0);
+        f1 = version.getF1(f1);
+
         unnormalizedQ[0][1] = a * p1;
-        unnormalizedQ[0][2] = s;
+        unnormalizedQ[0][2] = s * f0;
         unnormalizedQ[0][3] = 0.0;
 
         unnormalizedQ[1][0] = a * p0;
         unnormalizedQ[1][2] = 0.0;
-        unnormalizedQ[1][3] = s;
+        unnormalizedQ[1][3] = s * f0;
 
-        unnormalizedQ[2][0] = s;
+        unnormalizedQ[2][0] = s * f1;
         unnormalizedQ[2][1] = 0.0;
         unnormalizedQ[2][3] = p1;
 
         unnormalizedQ[3][0] = 0.0;
-        unnormalizedQ[3][1] = s;
+        unnormalizedQ[3][1] = s * f1;
         unnormalizedQ[3][2] = p0;
     }
 
@@ -133,5 +210,6 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
     private Parameter switchRate;
     private Parameter frequencies;
     private Parameter hiddenFrequencies;
+    private final Version version;
 
 }

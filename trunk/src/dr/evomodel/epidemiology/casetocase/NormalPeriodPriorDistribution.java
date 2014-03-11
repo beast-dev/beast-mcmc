@@ -27,6 +27,11 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
 
+    private NormalGammaDistribution hyperprior;
+
+    private Parameter posteriorMean;
+    private Parameter posteriorBeta;
+
     public NormalPeriodPriorDistribution(String name, boolean log, NormalGammaDistribution hyperprior){
         super(name, log);
         this.hyperprior = hyperprior;
@@ -41,10 +46,7 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
         this(name, log, new NormalGammaDistribution(mu_0, lambda_0, alpha_0, beta_0));
     }
 
-    private NormalGammaDistribution hyperprior;
 
-    private Parameter posteriorMean;
-    private Parameter posteriorBeta;
 
     public double calculateLogLikelihood(double[] values){
 

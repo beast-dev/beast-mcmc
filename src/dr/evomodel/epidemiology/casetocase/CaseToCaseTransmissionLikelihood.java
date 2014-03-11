@@ -25,6 +25,8 @@ import java.util.*;
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
 
+
+    private static final boolean COERCE = false;
     private static final boolean DEBUG = false;
     private static final double INTEGRAL_APPROXIMATION_TOLERANCE = 1;
     private static final int RETEST_INTEGRAL = 1000;
@@ -278,7 +280,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                         double[] point = {transmissionRate.getParameterValue(0),
                                 spatialKernel.geta().getParameterValue(0)};
 
-                        transLogProb = Math.log(totalProbability.evaluate(point));
+                        transLogProb = totalProbability.logEvaluate(point);
                     } else {
                         transLogProb = Math.log(totalProbability.evaluate(new double[]
                                 {transmissionRate.getParameterValue(0)}));
@@ -335,7 +337,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     // periodically test that the numerical integrator is working OK
                     // we're assuming that increasing the sample size always increases accuracy.
 
-                    if(mcmcState<=FULL_EVALUATION || mcmcState % RETEST_INTEGRAL == 0){
+                    if(COERCE && (mcmcState<=FULL_EVALUATION || mcmcState % RETEST_INTEGRAL == 0)){
 
                         int baseSteps = integrator.steps;
 
@@ -709,7 +711,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     /*
     Awkwardly, we need a 2D numerical integrator to normalise the transmission probability. We have already sampled
-    one nonzero point from this distribution; let's assume that's reasonably close to the mode in each dimension.
+    one nonzero point from this distribution; let's assume that's reasonably close to the mean in each dimension.
 
     Naive or stratified Monte Carlo integration has proved to be problematic. Importance sampling guided by the
     already sampled point might work.
@@ -736,28 +738,57 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
 
 
-            double[][] stepSizes = new double[2][2];
-
-            for(int i=0; i<2; i++){
-                stepSizes[i][0] = (centre[i] - mins[i])/Math.floor(steps/2);
-                stepSizes[i][1] = (maxes[i] - centre[i])/Math.floor(steps/2);
-            }
+//            double[][] stepSizes = new double[2][2];
+//
+//            for(int i=0; i<2; i++){
+//                stepSizes[i][0] = (centre[i] - mins[i])/Math.floor(steps/2);
+//                stepSizes[i][1] = (maxes[i] - centre[i])/Math.floor(steps/2);
+//            }
 
             double[] xSteps = new double[steps];
             double[] ySteps = new double[steps];
 
-            for(int i=0; i<steps; i++){
-                if(i<=(steps-1)/2){
-                    xSteps[i] = mins[0] + (i+0.5)*stepSizes[0][0];
-                    ySteps[i] = mins[1] + (i+0.5)*stepSizes[1][0];
-                } else if(steps % 2!=0 && i==(steps-1)/2) {
-                    xSteps[i] = centre[0];
-                    ySteps[i] = centre[1];
-                } else {
-                    xSteps[i] = centre[0] + (i-Math.ceil(steps/2)+0.5)*stepSizes[0][1];
-                    ySteps[i] = centre[1] + (i-Math.ceil(steps/2)+0.5)*stepSizes[1][1];
-                }
+            int stepsEachSide = steps % 2 == 0 ? steps/2 : (steps-1)/2;
+
+            int sumOfSquares = stepsEachSide*(stepsEachSide + 1)/2;
+
+            if(steps % 2 == 1){
+                xSteps[(int)Math.floor(steps/2)] = centre[0];
+                ySteps[(int)Math.floor(steps/2)] = centre[1];
             }
+
+            int bottomHalfStart = steps % 2 == 0 ? (int)Math.floor(((double)steps-1)/2) : ((steps-1)/2) - 1;
+            int topHalfStart = steps % 2 == 0 ? (int)Math.ceil(((double)steps - 1) / 2) : ((steps-1)/2) + 1;
+
+            double xBottomHalf = centre[0] - mins[0];
+            double xTopHalf = maxes[0] - centre[0];
+
+            double yBottomHalf = centre[1] - mins[1];
+            double yTopHalf = maxes[1] - centre[1];
+
+            for(int i = 0; i<stepsEachSide; i++){
+                double bottomOfStep = i*(i+1)/2;
+                double topOfStep = (i+1)*(i+2)/2;
+                double fractionalPosition = (bottomOfStep + (topOfStep-bottomOfStep)/2)/sumOfSquares;
+                xSteps[bottomHalfStart-i] = centre[0] - fractionalPosition*xBottomHalf;
+                xSteps[topHalfStart+i] = centre[0] + fractionalPosition*xTopHalf;
+                ySteps[bottomHalfStart-i] = centre[1] - fractionalPosition*yBottomHalf;
+                ySteps[topHalfStart+i] = centre[1] + fractionalPosition*yTopHalf;
+            }
+//
+//
+//            for(int i=0; i<steps; i++){
+//                if(i<=(steps-1)/2){
+//                    xSteps[i] = mins[0] + (i+0.5)*stepSizes[0][0];
+//                    ySteps[i] = mins[1] + (i+0.5)*stepSizes[1][0];
+//                } else if(steps % 2!=0 && i==(steps-1)/2) {
+//                    xSteps[i] = centre[0];
+//                    ySteps[i] = centre[1];
+//                } else {
+//                    xSteps[i] = centre[0] + (i-Math.ceil(steps/2)+0.5)*stepSizes[0][1];
+//                    ySteps[i] = centre[1] + (i-Math.ceil(steps/2)+0.5)*stepSizes[1][1];
+//                }
+//            }
 
             double integral = 0.0;
 

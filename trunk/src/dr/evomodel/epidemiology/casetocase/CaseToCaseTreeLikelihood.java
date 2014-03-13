@@ -947,7 +947,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
         if(foundProblem){
             debugOutputTree(map, "checkPartitionProblem", false);
-            throw new RuntimeException("Tree is not partitioned properly");
+            throw new BadPartitionException("Tree is not partitioned properly");
         }
         return !foundProblem;
     }
@@ -1307,6 +1307,19 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             NodeRef node = outTree.getNode(i);
             NodeRef parent = outTree.getParent(node);
             if(parent!=null && outTree.getNodeHeight(node)>outTree.getNodeHeight(parent)){
+                try{
+                    NexusExporter exporter = new NexusExporter(new PrintStream("fancyProblem.nex"));
+                    exporter.exportTree(outTree);
+                } catch(IOException e){
+                    e.printStackTrace();
+                }
+                try{
+                    checkPartitions();
+                } catch(BadPartitionException e){
+                    System.out.print("Rewiring messed up because of partition problem.");
+                }
+
+
                 throw new RuntimeException("Rewiring messed up; investigate");
             }
 
@@ -1512,10 +1525,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             }
             return branchMap.get(node.getNumber()).toString();
         }
-    }
-
-    public class PartitionChangedEvent {
-
     }
 
 }

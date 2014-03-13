@@ -9,6 +9,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.DemographicModel;
+import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
@@ -95,8 +96,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     protected double calculateLogLikelihood(){
 
+        checkPartitions();
+
         if(DEBUG){
-            checkPartitions();
+
             super.debugOutputTree("bleh.nex", false);
         }
 
@@ -517,12 +520,19 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             final double duration = intervals.getInterval(i);
             final double finishTime = startTime + duration;
 
+            // if this has happened the run is probably pretty unhappy
+
+            if(finishTime==0){
+                return Double.NEGATIVE_INFINITY;
+            }
+
             final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
-            double normalisationArea = demographicFunction.getIntegral(startTime, 0);
+            final double normalisationArea = demographicFunction.getIntegral(startTime, 0);
 
             if( intervalArea == 0 && duration != 0 ) {
                 return Double.NEGATIVE_INFINITY;
             }
+
             final int lineageCount = intervals.getLineageCount(i);
 
             if(lineageCount>=2){

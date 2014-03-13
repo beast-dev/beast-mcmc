@@ -1,4 +1,4 @@
-package dr.evomodel.epidemiology.casetocase;
+package dr.evomodel.epidemiology.casetocase.periodpriors;
 
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;

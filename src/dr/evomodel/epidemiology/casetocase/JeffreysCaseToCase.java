@@ -1,6 +1,7 @@
 package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.util.TaxonList;
+import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;

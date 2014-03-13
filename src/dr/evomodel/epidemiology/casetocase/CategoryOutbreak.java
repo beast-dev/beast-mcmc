@@ -3,6 +3,7 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.model.*;
 import dr.xml.*;
 
@@ -111,12 +112,19 @@ public class CategoryOutbreak extends AbstractOutbreak {
         return distances[getCaseIndex(a)][getCaseIndex(b)];
     }
 
+    private void setDistanceMatrix(double[][] distances){
+        this.distances = distances;
+    }
+
     private void buildDistanceMatrix(){
         distances = new double[cases.size()][cases.size()];
 
-        for(int i=0; i<cases.size(); i++){
-            for(int j=0; j<cases.size(); j++){
-                distances[i][j]= SpatialKernel.EuclideanDistance(getCase(i).getCoords(), getCase(j).getCoords());
+        if(hasGeography){
+
+            for(int i=0; i<cases.size(); i++){
+                for(int j=0; j<cases.size(); j++){
+                    distances[i][j]= SpatialKernel.EuclideanDistance(getCase(i).getCoords(), getCase(j).getCoords());
+                }
             }
         }
     }
@@ -198,7 +206,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         protected void handleModelChangedEvent(Model model, Object object, int index) {
-            // @todo to have all the outbreak listening seems excessive and I'm not sure it's necessary - maybe only the outbreak need listen
             fireModelChanged();
         }
 
@@ -365,8 +372,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String HAS_LATENT_PERIODS = "hasLatentPeriods";
         public static final String INFECTIOUS_PERIOD_PRIOR = "infectiousPeriodPrior";
         public static final String LATENT_PERIOD_PRIOR = "latentPeriodPrior";
+        public static final String DISTANCE_MATRIX = "distanceMatrix";
 
-        //for the outbreak
+        //for the cases
 
         public static final String CASE_ID = "caseID";
         public static final String CULL_DAY = "cullDay";
@@ -417,7 +425,48 @@ public class CategoryOutbreak extends AbstractOutbreak {
                     parseCase((XMLObject)cxo, cases, hasLatentPeriods);
                 }
             }
-            cases.buildDistanceMatrix();
+
+            if(xo.hasChildNamed(DISTANCE_MATRIX)){
+                if(!hasGeography){
+                    throw new XMLParseException("Told there is no geography but given a distance matrix");
+                }
+
+                Parameter matrixParameter = (Parameter)xo.getElementFirstChild(DISTANCE_MATRIX);
+
+                int size = cases.size();
+
+                if(matrixParameter.getDimension()!=size*(size-1)/2){
+                    throw new XMLParseException("Wrong number of distance matrix entries");
+                }
+
+                double[][] distances = new double[size][size];
+                int count=0;
+
+                for(int i=0; i<size; i++){
+                    for(int j=i; j<size; j++){
+                        if(i==j){
+                            distances[i][j]=0;
+                        } else {
+                            distances[i][j]=matrixParameter.getParameterValue(count);
+                            count++;
+                        }
+                    }
+                }
+
+                cases.setDistanceMatrix(distances);
+
+            } else if(hasGeography){
+
+                for(AbstractCase aCase : cases.getCases()){
+                    if(aCase.getCoords()==null){
+                        throw new XMLParseException("Some cases have no geographical information");
+                    }
+                }
+
+                cases.buildDistanceMatrix();
+            }
+
+
             return cases;
         }
 
@@ -491,7 +540,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
                         Integer.MAX_VALUE),
                 new ElementRule(LATENT_PERIOD_PRIOR, AbstractPeriodPriorDistribution.class, "blah", 0,
                         Integer.MAX_VALUE),
-                AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true)
+                AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true),
+                new ElementRule(DISTANCE_MATRIX, Parameter.class, "A matrix of distances between the cases in this " +
+                        "outbreak", true)
         };
     };
 

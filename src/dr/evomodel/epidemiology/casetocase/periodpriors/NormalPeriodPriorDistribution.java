@@ -1,5 +1,6 @@
-package dr.evomodel.epidemiology.casetocase;
+package dr.evomodel.epidemiology.casetocase.periodpriors;
 
+import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalGammaDistribution;
@@ -147,7 +148,7 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
         }
 
         public Class getReturnType() {
-            return OneOverStDevPeriodPriorDistribution.class;
+            return NormalPeriodPriorDistribution.class;
         }
     };
 

@@ -89,7 +89,7 @@ public class Coalescent implements MultivariateFunction, Units {
 
             final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
             if( intervalArea == 0 && duration != 0 ) {
-               return Double.NEGATIVE_INFINITY; 
+                return Double.NEGATIVE_INFINITY;
             }
             final int lineageCount = intervals.getLineageCount(i);
 
@@ -105,14 +105,14 @@ public class Coalescent implements MultivariateFunction, Units {
                 // This is protection against cases where ridiculous infinitesimal population size at the end of a
                 // linear interval drive coalescent values to infinity.
 
-                    if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
-    //                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
-                       logL -= Math.log(demographicAtCoalPoint);
-                    } else {
-                        // remove this at some stage
-                      //  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
-                        return Double.NEGATIVE_INFINITY;
-                    }
+                if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
+                    //                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
+                    logL -= Math.log(demographicAtCoalPoint);
+                } else {
+                    // remove this at some stage
+                    //  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
+                    return Double.NEGATIVE_INFINITY;
+                }
 
             }
 

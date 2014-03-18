@@ -61,8 +61,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
     public static final String OPTIMIZED_BEAGLE_TREE_LIKELIHOOD = "optimizedBeagleTreeLikelihood";
     
-    public final int TEST_RUNS = 500;
-    public final boolean SPLIT_BY_PATTERN_COUNT = false;
+    public final int TEST_RUNS = 100;
+    //public final boolean SPLIT_BY_PATTERN_COUNT = false;
 
     public String getParserName() {
         return OPTIMIZED_BEAGLE_TREE_LIKELIHOOD;
@@ -147,7 +147,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 		}
 		System.err.println();
     	
-    	ThreadedCompoundLikelihood compound = new ThreadedCompoundLikelihood(likelihoods);
+		//ThreadedCompoundLikelihood compound = new ThreadedCompoundLikelihood(likelihoods);
+		CompoundLikelihood compound = new CompoundLikelihood(likelihoods);
     	
     	double start = System.nanoTime();
     	for (int i = 0; i < TEST_RUNS; i++) {
@@ -161,7 +162,24 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         int longestIndex = 0;
         int longestSize = siteCounts[0];
 
-        if (SPLIT_BY_PATTERN_COUNT) {
+        
+        
+        //START TEST CODE
+        /*System.err.println("Detailed evaluation times: ");
+        long[] evaluationTimes = compound.getEvaluationTimes();
+        int[] evaluationCounts = compound.getEvaluationCounts();
+        long longest = evaluationTimes[0];
+        for (int i = 0; i < evaluationTimes.length; i++) {
+        	System.err.println(i + ": time=" + evaluationTimes[i] + "   count=" + evaluationCounts[i]);
+            if (evaluationTimes[i] > longest) {
+            	longest = evaluationTimes[i];
+        	}
+        }*/
+        //END TEST CODE
+        
+        
+        
+        /*if (SPLIT_BY_PATTERN_COUNT) {
 
         	boolean notFinished = true;
 
@@ -202,7 +220,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         		for (int i = longestIndex+1; i < currentLocation.length; i++) {
         			currentLocation[i]++;
         		}
-        		compound = new ThreadedCompoundLikelihood(likelihoods);
+        		//compound = new ThreadedCompoundLikelihood(likelihoods);
+        		compound = new CompoundLikelihood(likelihoods);
         		siteCounts[longestIndex] = (instanceCount-1)*siteCounts[longestIndex]/instanceCount;
         		longestSize = (instanceCount-1)*longestSize/instanceCount;
 
@@ -267,7 +286,9 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
             		}
                 	//likelihoods.remove(longestIndex);
                 	//likelihoods.add(longestIndex, new CompoundLikelihood(newList));
-                	compound = new ThreadedCompoundLikelihood(likelihoods);
+                	
+                	//compound = new ThreadedCompoundLikelihood(likelihoods);
+                	compound = new CompoundLikelihood(likelihoods);
                 	siteCounts[longestIndex] = (instanceCount+1)*siteCounts[longestIndex]/instanceCount;
                 	longestSize = (instanceCount+1)*longestSize/instanceCount;
                 	
@@ -291,41 +312,127 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         		
         	}
 
-        } else {
+        } else {*/
         	
-        	//TRY_ALL_LIKELIHOODS, starting with the highest pattern count
-        	//Try splitting the same likelihood until no further improvement, then move on towards the next one
-        	boolean notFinished = true;
+        //TRY_ALL_LIKELIHOODS, starting with the highest pattern count
+        //Try splitting the same likelihood until no further improvement, then move on towards the next one
+        boolean notFinished = true;
 
-        	//construct list with likelihoods to split up
-        	List<Integer> splitList = new ArrayList<Integer>();
-        	for (int i = 0; i < siteCounts.length; i++) {
-        		int top = 0;
-        		for (int j = 0; j < siteCounts.length; j++) {
-        			if (siteCounts[j] > siteCounts[top]) {
-        				top = j;
-        			}
+        //construct list with likelihoods to split up
+        List<Integer> splitList = new ArrayList<Integer>();
+        for (int i = 0; i < siteCounts.length; i++) {
+        	int top = 0;
+        	for (int j = 0; j < siteCounts.length; j++) {
+        		if (siteCounts[j] > siteCounts[top]) {
+        			top = j;
         		}
-        		siteCounts[top] = 0;
-        		splitList.add(top);
         	}
-        	for (int i = 0; i < likelihoods.size(); i++) {
-        		siteCounts[i] = patterns[i].getPatternCount();
+        	siteCounts[top] = 0;
+        	splitList.add(top);
+        }
+        for (int i = 0; i < likelihoods.size(); i++) {
+        	siteCounts[i] = patterns[i].getPatternCount();
+        }
+        //print list
+        System.err.print("Ordered list of likelihoods to be evaluated: ");
+        for (int i = 0; i < splitList.size(); i++) {
+        	System.err.print(splitList.get(i) + " ");
+        }
+        System.err.println();
+
+        while (notFinished) {
+
+        	//split it in 2
+        	longestIndex = splitList.get(0);
+        	int instanceCount = ++instanceCounts[longestIndex];
+
+        	List<Likelihood> newList = new ArrayList<Likelihood>();
+        	for (int i = 0; i < instanceCount; i++) {
+        		Patterns subPatterns = new Patterns(patterns[longestIndex], 0, 0, 1, i, instanceCount);
+
+        		BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
+        				subPatterns, treeModels[longestIndex], branchModels[longestIndex], siteRateModels[longestIndex], branchRateModels[longestIndex],
+        				null, 
+        				ambiguities[longestIndex], rescalingSchemes[longestIndex], partialsRestrictions.get(longestIndex),
+        				xo);
+
+        		treeLikelihood.setId(xo.getId() + "_" + instanceCount);
+        		newList.add(treeLikelihood);
         	}
-        	//print list
-        	System.err.print("Ordered list of likelihoods to be evaluated: ");
-        	for (int i = 0; i < splitList.size(); i++) {
-        		System.err.print(splitList.get(i) + " ");
+        	for (int i = 0; i < newList.size()-1; i++) {
+        		likelihoods.remove(currentLocation[longestIndex]);
+        	}
+        	//likelihoods.remove(longestIndex);
+        	//likelihoods.add(longestIndex, new CompoundLikelihood(newList));
+        	for (int i = 0; i < newList.size(); i++) {
+        		likelihoods.add(currentLocation[longestIndex], newList.get(i));
+        	}
+        	for (int i = longestIndex+1; i < currentLocation.length; i++) {
+        		currentLocation[i]++;
+        	}
+        	//compound = new ThreadedCompoundLikelihood(likelihoods);
+        	compound = new CompoundLikelihood(likelihoods);
+        	siteCounts[longestIndex] = (instanceCount-1)*siteCounts[longestIndex]/instanceCount;
+        	longestSize = (instanceCount-1)*longestSize/instanceCount;
+
+        	//check number of likelihoods
+        	System.err.println("Number of BeagleTreeLikelihoods: " + compound.getLikelihoodCount());
+        	System.err.println("Pattern counts: ");
+        	for (int i = 0;i < siteCounts.length; i++) {
+        		System.err.print(siteCounts[i] + " ");
         	}
         	System.err.println();
-        	
-        	while (notFinished) {
-        		
-        		//split it in 2
-        		longestIndex = splitList.get(0);
-        		int instanceCount = ++instanceCounts[longestIndex];
-        		
-        		List<Likelihood> newList = new ArrayList<Likelihood>();
+        	System.err.println("Instance counts: ");
+        	for (int i = 0;i < instanceCounts.length; i++) {
+        		System.err.print(instanceCounts[i] + " ");
+        	}
+        	System.err.println();
+        	System.err.println("Current locations: ");
+        	for (int i = 0;i < currentLocation.length; i++) {
+        		System.err.print(currentLocation[i] + " ");
+        	}
+        	System.err.println();
+
+        	//evaluate speed
+        	start = System.nanoTime();
+        	for (int i = 0; i < TEST_RUNS; i++) {
+        		compound.makeDirty();
+        		compound.getLogLikelihood();
+        	}
+        	end = System.nanoTime();
+        	double newResult = end - start;
+        	System.err.println("New evaluation took: " + newResult + " vs. old evaluation: " + baseResult);
+
+
+
+        	//START TEST CODE
+        	/*evaluationTimes = compound.getEvaluationTimes();
+                evaluationCounts = compound.getEvaluationCounts();
+                longest = evaluationTimes[0];
+                for (int i = 0; i < evaluationTimes.length; i++) {
+                	System.err.println(i + ": time=" + evaluationTimes[i] + "   count=" + evaluationCounts[i]);
+                    if (evaluationTimes[i] > longest) {
+                    	longest = evaluationTimes[i];
+                	}
+                }*/
+        	//END TEST CODE
+
+
+        	//System.exit(0);
+
+        	if (newResult < baseResult) {
+        		baseResult = newResult;
+        	} else {
+        		splitList.remove(0);
+        		if (splitList.size() == 0) {
+        			notFinished = false;
+        		}
+
+        		//remove 1 instanceCount
+        		System.err.print("Removing 1 instance count: " + instanceCount);
+        		instanceCount = --instanceCounts[longestIndex];
+        		System.err.println(" -> " + instanceCount + " for likelihood " + longestIndex);
+        		newList = new ArrayList<Likelihood>();
         		for (int i = 0; i < instanceCount; i++) {
         			Patterns subPatterns = new Patterns(patterns[longestIndex], 0, 0, 1, i, instanceCount);
 
@@ -338,23 +445,23 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         			treeLikelihood.setId(xo.getId() + "_" + instanceCount);
         			newList.add(treeLikelihood);
         		}
-        		for (int i = 0; i < newList.size()-1; i++) {
+        		for (int i = 0; i < newList.size()+1; i++) {
         			likelihoods.remove(currentLocation[longestIndex]);
         		}
-        		//likelihoods.remove(longestIndex);
-        		//likelihoods.add(longestIndex, new CompoundLikelihood(newList));
         		for (int i = 0; i < newList.size(); i++) {
         			likelihoods.add(currentLocation[longestIndex], newList.get(i));
         		}
         		for (int i = longestIndex+1; i < currentLocation.length; i++) {
-        			currentLocation[i]++;
+        			currentLocation[i]--;
         		}
-        		compound = new ThreadedCompoundLikelihood(likelihoods);
-        		siteCounts[longestIndex] = (instanceCount-1)*siteCounts[longestIndex]/instanceCount;
-        		longestSize = (instanceCount-1)*longestSize/instanceCount;
+        		//likelihoods.remove(longestIndex);
+        		//likelihoods.add(longestIndex, new CompoundLikelihood(newList));
 
-        		//check number of likelihoods
-        		System.err.println("Number of BeagleTreeLikelihoods: " + compound.getLikelihoodCount());
+        		//compound = new ThreadedCompoundLikelihood(likelihoods);
+        		compound = new CompoundLikelihood(likelihoods);
+        		siteCounts[longestIndex] = (instanceCount+1)*siteCounts[longestIndex]/instanceCount;
+        		longestSize = (instanceCount+1)*longestSize/instanceCount;
+
         		System.err.println("Pattern counts: ");
         		for (int i = 0;i < siteCounts.length; i++) {
         			System.err.print(siteCounts[i] + " ");
@@ -371,79 +478,11 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         		}
         		System.err.println();
 
-        		//evaluate speed
-        		start = System.nanoTime();
-        		for (int i = 0; i < TEST_RUNS; i++) {
-        			compound.makeDirty();
-        			compound.getLogLikelihood();
-        		}
-        		end = System.nanoTime();
-        		double newResult = end - start;
-        		System.err.println("New evaluation took: " + newResult + " vs. old evaluation: " + baseResult);
-        		
-        		//System.exit(0);
-        		
-        		if (newResult < baseResult) {
-            		baseResult = newResult;
-            	} else {
-            		splitList.remove(0);
-            		if (splitList.size() == 0) {
-            			notFinished = false;
-            		}
-            		
-            		//remove 1 instanceCount
-            		System.err.print("Removing 1 instance count: " + instanceCount);
-            		instanceCount = --instanceCounts[longestIndex];
-            		System.err.println(" -> " + instanceCount + " for likelihood " + longestIndex);
-            		newList = new ArrayList<Likelihood>();
-                	for (int i = 0; i < instanceCount; i++) {
-                		Patterns subPatterns = new Patterns(patterns[longestIndex], 0, 0, 1, i, instanceCount);
-
-                		BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
-                                subPatterns, treeModels[longestIndex], branchModels[longestIndex], siteRateModels[longestIndex], branchRateModels[longestIndex],
-                                null, 
-                                ambiguities[longestIndex], rescalingSchemes[longestIndex], partialsRestrictions.get(longestIndex),
-                                xo);
-                		
-                        treeLikelihood.setId(xo.getId() + "_" + instanceCount);
-                        newList.add(treeLikelihood);
-                	}
-                	for (int i = 0; i < newList.size()+1; i++) {
-            			likelihoods.remove(currentLocation[longestIndex]);
-            		}
-                	for (int i = 0; i < newList.size(); i++) {
-                		likelihoods.add(currentLocation[longestIndex], newList.get(i));
-                	}
-                	for (int i = longestIndex+1; i < currentLocation.length; i++) {
-            			currentLocation[i]--;
-            		}
-                	//likelihoods.remove(longestIndex);
-                	//likelihoods.add(longestIndex, new CompoundLikelihood(newList));
-                	compound = new ThreadedCompoundLikelihood(likelihoods);
-                	siteCounts[longestIndex] = (instanceCount+1)*siteCounts[longestIndex]/instanceCount;
-                	longestSize = (instanceCount+1)*longestSize/instanceCount;
-                	
-                	System.err.println("Pattern counts: ");
-                	for (int i = 0;i < siteCounts.length; i++) {
-                		System.err.print(siteCounts[i] + " ");
-                	}
-                	System.err.println();
-                	System.err.println("Instance counts: ");
-                	for (int i = 0;i < instanceCounts.length; i++) {
-                		System.err.print(instanceCounts[i] + " ");
-                	}
-                	System.err.println();
-                	System.err.println("Current locations: ");
-            		for (int i = 0;i < currentLocation.length; i++) {
-            			System.err.print(currentLocation[i] + " ");
-            		}
-            		System.err.println();
-                	
-            	}
-        		
         	}
-        	
+
         }
+
+        //}
 
         
         

@@ -102,6 +102,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
 
             boolean isThreshold = false;
+            boolean isLowerThreshold = false;
             double rawTitre = Double.NaN;
             if (values[TITRE].length() > 0) {
                 try {
@@ -111,11 +112,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     if (values[TITRE].contains("<")) {
                         rawTitre = Double.parseDouble(values[TITRE].replace("<",""));
                         isThreshold = true;
+                        isLowerThreshold = true;
                         thresholdCount++;
                     }
                     // check if threshold above
-                    if (values[TITRE].contains(">")) {
-                        throw new IllegalArgumentException("Error in measurement: unsupported greater than threshold at row " + (i+1));
+                    if (values[TITRE].contains(">")) {                	
+                        rawTitre = Double.parseDouble(values[TITRE].replace(">",""));
+                        isThreshold = true;
+                        isLowerThreshold = false;
+                        thresholdCount++;                    	
+                        //throw new IllegalArgumentException("Error in measurement: unsupported greater than threshold at row " + (i+1));
                     }
                 }
             }
@@ -129,7 +135,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
 
             MeasurementType type = (isThreshold ? MeasurementType.THRESHOLD : (useIntervals ? MeasurementType.INTERVAL : MeasurementType.POINT));
-            Measurement measurement = new Measurement(virus, serum, virusDate, serumDate, type, rawTitre);
+            Measurement measurement = new Measurement(virus, serum, virusDate, serumDate, type, rawTitre, isLowerThreshold);
 
             if (USE_THRESHOLDS || !isThreshold) {
                 measurements.add(measurement);
@@ -455,7 +461,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                         logLikelihoods[i] = computeMeasurementLikelihood(measurement.log2Titre, expectation, sd);
                     } break;
                     case THRESHOLD: {
-                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(measurement.log2Titre, expectation, sd);
+                    	if(measurement.isLowerThreshold){
+                    		logLikelihoods[i] = computeMeasurementThresholdLikelihood(measurement.log2Titre, expectation, sd);
+                    	}
+                    	else{
+                    		logLikelihoods[i] = computeMeasurementUpperThresholdLikelihood(measurement.log2Titre, expectation, sd);                  		
+                    	}
                     } break;
                     case MISSING:
                         break;
@@ -565,6 +576,21 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return lnL;
     }
 
+
+    private static double computeMeasurementUpperThresholdLikelihood(double titre, double expectation, double sd) {
+
+        // real titre is somewhere between -infinity and measured 'titre'
+        // want the lower tail of the normal CDF
+    	double L = NormalDistribution.cdf(titre, expectation, sd, false);          // returns  CDF
+    	double lnL = Math.log(1-L);  //get the upper tail probability, then log it
+
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite threshold measurement");
+        }
+        return lnL;
+    }    
+    
+    
     private static double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre, double expectation, double sd) {
 
         // real titre is somewhere between measured minTitre and maxTitre
@@ -590,7 +616,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     private class Measurement {
-        private Measurement(final int virus, final int serum, final double virusDate, final double serumDate, final MeasurementType type, final double titre) {
+        private Measurement(final int virus, final int serum, final double virusDate, final double serumDate, final MeasurementType type, final double titre, final boolean isLowerThreshold) {
             this.virus = virus;
             this.serum = serum;
             this.virusDate = virusDate;
@@ -598,6 +624,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             this.type = type;
             this.titre = titre;
             this.log2Titre = Math.log(titre) / Math.log(2);
+            this.isLowerThreshold = isLowerThreshold;
         }
 
         final int virus;
@@ -607,6 +634,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         final MeasurementType type;
         final double titre;
         final double log2Titre;
+        final boolean isLowerThreshold;
 
     };
 

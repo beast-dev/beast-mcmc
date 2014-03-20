@@ -571,7 +571,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     }
 
 
-//    public void setStates(int tipIndex, int[] states) {
+    //    public void setStates(int tipIndex, int[] states) {
 //        System.err.println("BTL:setStates");
 //        beagle.setTipStates(tipIndex, states);
 //        makeDirty();
@@ -581,6 +581,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 //        System.err.println("BTL:getStates");
 //        beagle.getTipStates(tipIndex, states);
 //    }
+
+    public final void setPatternWeights(double[] patternWeights) {
+        this.patternWeights = patternWeights;
+        beagle.setPatternWeights(patternWeights);
+    }
+
 
     // **************************************************************
     // ModelListener IMPLEMENTATION

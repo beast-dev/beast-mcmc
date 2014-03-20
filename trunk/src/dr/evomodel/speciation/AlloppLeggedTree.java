@@ -8,7 +8,8 @@ import java.util.Stack;
 
 import dr.util.AlloppMisc;
 import jebl.util.FixedBitSet;
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
+// AR - can't have dependencies between test.dr.* and dr.*
+//import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SlidableTree;
@@ -316,8 +317,7 @@ public class AlloppLeggedTree implements  SlidableTree  {
     /*
     * Constructor for testing.
     */
-     public AlloppLeggedTree(Taxon[] taxa,
-                             AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST netconvTEST) {
+     public AlloppLeggedTree(Taxon[] taxa) {
          int nTaxa = taxa.length;
          assert(nTaxa <= 4);
          int nNodes = 2 * nTaxa - 1;

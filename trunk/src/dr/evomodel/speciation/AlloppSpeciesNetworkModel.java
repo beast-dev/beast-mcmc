@@ -23,8 +23,6 @@ import jebl.util.FixedBitSet;
 import java.util.*;
 import java.util.logging.Logger;
 
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
-
 
 /**
  *
@@ -234,8 +232,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
       * This (partial) constructor is for testing conversion network to multree.
       * Real work done by testExampleNetworkToMulLabTree()
       */
-    public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apsp,
-                                     AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
+    public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apsp) {
         super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
         this.apsp = apsp;
         tippopvalues = null;
@@ -1039,6 +1036,9 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     // it just signals that this is indeed a test.
 
 
+    /*
+    AR - removing this as it creates a dependency to test.dr.* which is bad...
+
     public String testExampleNetworkToMulLabTree(
             AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
 
@@ -1209,7 +1209,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         String newick = testmullabtree.mullabTreeAsNewick();
         return newick;
     }
-
+    */
 
     // for test cases
     void addSimpleNodeChildren(SimpleNode anc,  SimpleNode lch, SimpleNode rch, double minlen) {

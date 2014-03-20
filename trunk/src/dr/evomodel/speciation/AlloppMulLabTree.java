@@ -17,7 +17,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.util.AlloppMisc;
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
+// AR - can't have dependencies between test.dr.* and dr.*
+//import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 
 /**
@@ -332,6 +333,7 @@ public class AlloppMulLabTree  {
 
 
 
+    /*
     // constructor for testing conversion of diploid history plus tetraploid trees to MUL-tree
     public AlloppMulLabTree(AlloppDiploidHistory adhist, ArrayList<AlloppLeggedTree> tettrees, AlloppSpeciesBindings apsp,
                             Parameter testtippopvalues, Parameter testrootpopvalues, double [] testhybpopvalues,
@@ -363,6 +365,7 @@ public class AlloppMulLabTree  {
 
         }
     }
+    */
 
     public double testGeneTreeInMULTreeLogLikelihood() {
         return geneTreeInMULTreeLogLikelihood();

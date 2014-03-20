@@ -9,6 +9,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer;
 import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
@@ -18,6 +19,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import jebl.evolution.io.NewickExporter;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
@@ -244,6 +246,43 @@ public class DataModelImporter {
             throw new IOException(e.getMessage());
         }
     }
+
+    public Map importFromTreeFile(String fileName, Map dataModel) throws IOException, Importer.ImportException {
+        Tree tree = null;
+        try {
+            Reader reader = new FileReader(fileName);
+
+            BufferedReader bufferedReader = new BufferedReader(reader);
+            String line = bufferedReader.readLine();
+            while (line != null && line.length() == 0) {
+                line = bufferedReader.readLine();
+            }
+
+            reader = new FileReader(fileName);
+
+            if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
+                // is a NEXUS file
+                NexusImporter importer = new NexusImporter(reader);
+                tree = importer.importNextTree();
+
+            } else {
+                NewickImporter importer = new NewickImporter(reader);
+                tree = importer.importNextTree();
+            }
+
+            bufferedReader.close();
+        } catch (IOException e) {
+            throw new IOException(e.getMessage());
+        }
+
+        if (tree != null) {
+            dataModel.put("tree", Tree.Utils.newick(tree));
+        }
+
+        return dataModel;
+
+    }
+
 
     private boolean isMissingValue(String value) {
         return (value.equals("?") || value.equals("NA") || value.length() == 0);

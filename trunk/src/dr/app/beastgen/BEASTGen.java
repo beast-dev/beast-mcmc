@@ -6,13 +6,13 @@ import dr.evolution.io.Importer;
 import freemarker.template.*;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BEASTGen {
 
-    public BEASTGen(DateGuesser guesser, Map argumentMap, String templateFileName, String inputFileName, String outputFileName) throws IOException {
+    public BEASTGen(DateGuesser guesser, Map argumentMap, String treeFileName, String templateFileName, String inputFileName, String outputFileName) throws IOException {
 
         Configuration cfg = new Configuration();
         cfg.setObjectWrapper(new DefaultObjectWrapper());
@@ -22,7 +22,7 @@ public class BEASTGen {
 
         Map root = null;
         try {
-            root = constructDataModel(inputFileName, guesser);
+            root = constructDataModel(inputFileName, treeFileName, guesser);
         } catch (Importer.ImportException ie) {
             System.err.println("Error importing file: " + ie.getMessage());
             System.exit(1);
@@ -44,10 +44,14 @@ public class BEASTGen {
         }
     }
 
-    private Map constructDataModel(String inputFileName, DateGuesser guesser) throws IOException, Importer.ImportException {
+    private Map constructDataModel(String inputFileName, String treeFileName, DateGuesser guesser) throws IOException, Importer.ImportException {
         DataModelImporter importer = new DataModelImporter(guesser);
 
         Map root = importer.importFromFile(new File(inputFileName));
+
+        if (treeFileName != null) {
+            importer.importFromTreeFile(treeFileName, root);
+        }
 
         return root;
     }
@@ -63,7 +67,7 @@ public class BEASTGen {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("BEASTGen v1.0, 2013", 60);
+        centreLine("BEASTGen v1.0.1, 2013-2014", 60);
         centreLine("BEAST input file generator", 60);
         centreLine("Andrew Rambaut, University of Edinburgh", 60);
         System.out.println();
@@ -78,7 +82,6 @@ public class BEASTGen {
         System.out.println();
     }
 
-
     public static void main(String[] args) {
 
         // There is a major issue with languages that use the comma as a decimal separator.
@@ -92,6 +95,7 @@ public class BEASTGen {
                         new Arguments.StringOption("date_regex", "regex", "A string that gives the regular expression to match the date"),
                         new Arguments.StringOption("date_format", "format", "A string that gives the date format for parsing"),
                         new Arguments.Option("date_precision", "Specifies the date is a variable precision yyyy-MM-dd format"),
+                        new Arguments.StringOption("tree", "tree-file-name", "Read a tree from a file"),
                         new Arguments.StringOption("D", "\"key=value,key=value...\"", "Properties for exchange in templates"),
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
@@ -161,10 +165,17 @@ public class BEASTGen {
             guesser.parseCalendarDatesAndPrecision = true;
         }
 
+        String treeFileName = null;
+        if (arguments.hasOption("tree")) {
+            treeFileName = arguments.getStringOption("tree");
+        }
+
+
         Map argumentMap = new HashMap();
 
         if (arguments.hasOption("D")) {
             String properties = arguments.getStringOption("D");
+
             for (String property : properties.split("\\s*,\\s*")) {
                 String[] keyValue = property.split("=");
                 if (keyValue.length != 2) {
@@ -208,7 +219,7 @@ public class BEASTGen {
         }
 
         try {
-            new BEASTGen(guesser, argumentMap, args2[0], args2[1], (args2.length == 3 ? args2[2] : null));
+            new BEASTGen(guesser, argumentMap, treeFileName, args2[0], args2[1], (args2.length == 3 ? args2[2] : null));
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);

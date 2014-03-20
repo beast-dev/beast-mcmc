@@ -13,7 +13,9 @@ import dr.evolution.util.Taxon;
 import dr.math.MathUtils;
 import dr.util.AlloppMisc;
 import jebl.util.FixedBitSet;
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
+
+// AR - can't have dependencies between test.dr.* and dr.*
+//import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 /**
  * AlloppDiploidHistory represents part of the network before hybridizations.
@@ -359,8 +361,7 @@ public class AlloppDiploidHistory implements SlidableTree {
 
     //  constructor for testing.
     public AlloppDiploidHistory(SimpleNode[] snodes, int sroot, ArrayList<AlloppLeggedTree> tettrees,
-                                boolean diprootisroot, AlloppSpeciesBindings apsp,
-                                AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
+                                boolean diprootisroot, AlloppSpeciesBindings apsp) {
         this.apsp = apsp;
         // Make array of dud nodes
         dhnodes = new DipHistNode[snodes.length];

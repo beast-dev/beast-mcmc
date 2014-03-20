@@ -13,7 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
+// AR - can't have dependencies between test.dr.* and dr.*
+//import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 import jebl.util.FixedBitSet;
 
@@ -704,24 +705,25 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		this(apspecies, geneTrees,  minheight, popFactors, true);
 	}
 
-	
 	/*
 	 * Minimal constructor for testing conversions network -> multree, diphist
 	 */
+    /*
 	public AlloppSpeciesBindings(ApSpInfo[] apspecies,
 			AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST networkToMulLabTreeTEST) {
 		this(apspecies, new TreeModel[0], 0.0, new double[0]);
 	}
-
+    */
 
     /*
       * Minimal constructor for testing conversions network -> multree, diphist
       */
+    /*
     public AlloppSpeciesBindings(ApSpInfo[] apspecies,
                                  AlloppSpeciesNetworkModelTEST.LhoodMultreeTEST lhoodMultreeTEST) {
         this(apspecies, new TreeModel[0], 0.0, new double[0]);
     }
-
+    */
 
 	public double initialMinGeneNodeHeight() {
 		return initialmingenenodeheight;

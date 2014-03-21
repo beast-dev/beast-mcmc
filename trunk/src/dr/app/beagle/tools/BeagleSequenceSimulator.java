@@ -60,6 +60,7 @@ public class BeagleSequenceSimulator {
 	private DataType dataType;
 	private boolean fieldsSet = false;
 	LinkedHashMap<Integer, LinkedHashMap<NodeRef, int[]>> partitionSequencesMap;
+//	private boolean outputAncestralSequences = true;
 	
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions) {
 
@@ -81,6 +82,7 @@ public class BeagleSequenceSimulator {
 			if (!fieldsSet) {
 				
 				dataType = partition.getDataType();
+//				outputAncestralSequences = partition.isOutputAncestralSequences();
 				fieldsSet = true;
 //				System.err.println(dataType);
 				
@@ -98,7 +100,7 @@ public class BeagleSequenceSimulator {
 		this.siteCount = siteCount + 1;
 	}// END: Constructor
 
-	public SimpleAlignment simulate(boolean parallel) {
+	public SimpleAlignment simulate(boolean parallel, boolean outputAncestralSequences) {
 
 		try {
 
@@ -116,7 +118,8 @@ public class BeagleSequenceSimulator {
 			for (Partition partition : partitions) {
 
 				partition.setPartitionNumber(partitionCount);
-
+                partition.setOutputAncestralSequences(outputAncestralSequences);
+				
 				simulatePartitionCallers.add(new simulatePartitionCallable(
 						partition
 //						, partitionCount

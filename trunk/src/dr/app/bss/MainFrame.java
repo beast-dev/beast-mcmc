@@ -256,7 +256,7 @@ private BeagleSequenceSimulator beagleSequenceSimulator;
                                 partitionsList
                         );
 
-                        SimpleAlignment alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
+                        SimpleAlignment alignment = beagleSequenceSimulator.simulate(dataList.useParallel, dataList.outputAncestralSequences);
                         alignment.setOutputType(dataList.outputFormat);
                         
 //                        if (dataList.outputFormat == SimpleAlignment.OutputType.NEXUS) {

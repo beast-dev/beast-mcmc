@@ -59,7 +59,8 @@ public class SimulationPanel extends JPanel implements Exportable {
     // Check boxes
     private JCheckBox setSeed;
     private JCheckBox useParallel;
-
+    private JCheckBox outputAncestralSequences;
+    
     //Combo boxes
     private JComboBox outputFormat;
 	private ComboBoxModel outputFormatModel;
@@ -95,7 +96,13 @@ public class SimulationPanel extends JPanel implements Exportable {
         optionPanel.addComponentWithLabel("Output format:", outputFormat);
         outputFormatModel = new DefaultComboBoxModel(SimpleAlignment.OutputType.values());
     	outputFormat.setModel(outputFormatModel);
-        
+
+        outputAncestralSequences = new JCheckBox();
+        outputAncestralSequences.addItemListener(new outputAncestralSequencesCheckBoxListener());
+        outputAncestralSequences.setSelected(dataList.useParallel);
+        optionPanel.addComponentWithLabel("Output ancestral sequences:",
+        		outputAncestralSequences);
+    	
         useParallel = new JCheckBox();
         useParallel.addItemListener(new UseParallelCheckBoxListener());
         useParallel.setSelected(dataList.useParallel);
@@ -162,6 +169,18 @@ public class SimulationPanel extends JPanel implements Exportable {
         }
     }// END: CheckBoxListener
 
+    private class outputAncestralSequencesCheckBoxListener implements ItemListener {
+        public void itemStateChanged(ItemEvent e) {
+
+            if (outputAncestralSequences.isSelected()) {
+                dataList.outputAncestralSequences = true;
+            } else {
+                dataList.outputAncestralSequences = false;
+            }
+
+        }
+    }// END: CheckBoxListener
+    
     private class ListenSimulate implements ActionListener {
         public void actionPerformed(ActionEvent ev) {
 

@@ -91,6 +91,7 @@ public class Partition {
 	private DataType dataType;
 	private boolean hasAncestralSequence = false;
 	private Sequence ancestralSequence = null;
+	private boolean outputAncestralSequences = false;
 
 	// Random number generation
 	private MersenneTwister random;
@@ -343,10 +344,13 @@ public class Partition {
 					}
 				}// END: DEBUG
 				
-			} 
-			else {
+			} else {
+				
+				if(outputAncestralSequences) {
 				
 				alignmentMap.put(new Taxon("internalNodeHeight" + treeModel.getNodeHeight(child)), partitionSequence);
+				
+				}
 				
 			} // END: tip node check
 
@@ -520,9 +524,17 @@ public class Partition {
 		this.hasAncestralSequence = true;
 	}// END: setAncestralSequence
 
+	public void setOutputAncestralSequences(boolean outputAncestralSequences) {
+		this.outputAncestralSequences = outputAncestralSequences;
+	}
+	
 	// /////////////
 	// --GETTERS--//
 	// /////////////
+
+//	public boolean isOutputAncestralSequences() {
+//		return outputAncestralSequences;
+//	}
 
 	public TreeModel getTreeModel() {
 		return treeModel;

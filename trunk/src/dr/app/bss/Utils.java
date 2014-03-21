@@ -1075,7 +1075,7 @@ public class Utils {
 	}// END: partitionDataListToString
 	
 	//TODO: doesn't work
-	private static String annotatedTreeModelToString(TreeModel treeModel, LinkedHashMap<NodeRef, int[]> sequencesMap, DataType dataType) {
+	public static String annotatedTreeModelToString(TreeModel treeModel, LinkedHashMap<NodeRef, int[]> sequencesMap, DataType dataType) {
 		
 		StringBuffer buffer = new StringBuffer();
 		NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);

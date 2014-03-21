@@ -44,6 +44,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
     public static final String PARALLEL = "parallel";
+    public static final String OUTPUT_ANCESTRAL_SEQUENCES = "outputAncestralSequences";
     public static final String OUTPUT = "output";
 
     public String getParserName() {
@@ -76,11 +77,16 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
         String msg = "";
         boolean parallel = false;
-
+        boolean outputAncestralSequences = false;
+        
         if (xo.hasAttribute(PARALLEL)) {
             parallel = xo.getBooleanAttribute(PARALLEL);
         }
 
+        if (xo.hasAttribute(OUTPUT_ANCESTRAL_SEQUENCES)) {
+        	outputAncestralSequences = xo.getBooleanAttribute(OUTPUT_ANCESTRAL_SEQUENCES);
+        }
+        
         SimpleAlignment.OutputType output = SimpleAlignment.OutputType.FASTA;
         if (xo.hasAttribute(OUTPUT)) {
             output = SimpleAlignment.OutputType.parseFromString(
@@ -144,7 +150,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
         }
 
         BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList);
-        SimpleAlignment alignment = s.simulate(parallel);
+        SimpleAlignment alignment = s.simulate(parallel, outputAncestralSequences);
 
         alignment.setOutputType(output);
 

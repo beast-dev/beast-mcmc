@@ -233,7 +233,7 @@ public class BeagleSeqSimTest {
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
 
-			System.out.println(simulator.simulate(simulateInPar).toString());
+			System.out.println(simulator.simulate(simulateInPar, false).toString());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -299,7 +299,7 @@ public class BeagleSeqSimTest {
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
 
-			SimpleAlignment alignment = simulator.simulate(simulateInPar);
+			SimpleAlignment alignment = simulator.simulate(simulateInPar, false);
 
 			// alignment.setOutputType(SimpleAlignment.OutputType.NEXUS);
 			alignment.setOutputType(SimpleAlignment.OutputType.XML);
@@ -382,7 +382,7 @@ public class BeagleSeqSimTest {
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
 
-			System.out.println(simulator.simulate(simulateInPar).toString());
+			System.out.println(simulator.simulate(simulateInPar, false).toString());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -470,9 +470,9 @@ public class BeagleSeqSimTest {
 
 			if (i == (N - 1)) {
 				System.out
-						.println(simulator.simulate(simulateInPar).toString());
+						.println(simulator.simulate(simulateInPar, false).toString());
 			} else {
-				simulator.simulate(simulateInPar);
+				simulator.simulate(simulateInPar, false);
 			}
 
 		} catch (Exception e) {
@@ -539,7 +539,7 @@ public class BeagleSeqSimTest {
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
 
-			System.out.println(simulator.simulate(simulateInPar).toString());
+			System.out.println(simulator.simulate(simulateInPar, false).toString());
 
 		} catch (Exception e) {
 
@@ -645,7 +645,7 @@ public class BeagleSeqSimTest {
 			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
 					partitionsList);
 
-			Alignment alignment = simulator.simulate(simulateInPar);
+			Alignment alignment = simulator.simulate(simulateInPar, false);
 
 			System.out.println(alignment.toString());
 

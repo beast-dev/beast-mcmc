@@ -38,7 +38,10 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 	
 	
-	public NPAntigenicLikelihood (TreeModel treeModel,CompoundParameter traitParameter , Parameter assignments, Parameter links, Parameter clusterPrec, Parameter priorMean, Parameter priorPrec, double transformFactor,Parameter means1, Parameter means2 ){
+	public NPAntigenicLikelihood (TreeModel treeModel,CompoundParameter traitParameter , Parameter assignments, Parameter links,
+                                  Parameter chi, Parameter clusterPrec, Parameter priorMean, Parameter priorPrec,
+                                  Parameter transformFactor,Parameter means1, Parameter means2, Parameter locationDrift,
+                                  Parameter offsets, Boolean hasDrift){
 		  super(NP_ANTIGENIC_LIKELIHOOD);
 
 
@@ -52,21 +55,29 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 		  this.transformFactor=transformFactor;
 		  this.means1=means1;
           this.means2=means2;
+          this.alpha= chi;
+          this.locationDrift=locationDrift;
+          this.offsets=offsets;
+        //  this.hasDrift=hasDrift;
+          this.hasDrift=false;
 
-		  this.alpha= 1.0;
 
-         addVariable(clusterPrec);
 
         addVariable(traitParameter);
         addVariable(assignments);
         addVariable(links);
         addModel(treeModel);
+        addVariable(chi);
+        addVariable(transformFactor);
+        addVariable(alpha);
+        addVariable(locationDrift);
+        addVariable(offsets);
 
         numdata = traitParameter.getParameterCount();
         this.allTips=Tree.Utils.getExternalNodes(treeModel,treeModel.getRoot());
 
 
-        setData();
+     //   setData();
        setDepMatrix();
 
 
@@ -80,29 +91,29 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 	       
 	       this.logLikelihoodsVector = new double[links.getDimension()+1];
 
-        double[] m = new double[2];
+        this.m = new double[2];
         m[0]= priorMean.getParameterValue(0);
         m[1]= priorMean.getParameterValue(1);
 
 
-         double v0 = 2;
-         double v1 = 3;
+         this.v0 = 2;
+       //  double v1 = 3;
 
-        double k0= priorPrec.getParameterValue(0)/clusterPrec.getParameterValue(0);
-        double k1= k0+1;
+        this.k0= priorPrec.getParameterValue(0)/clusterPrec.getParameterValue(0);
+       // double k1= k0+1;
 
 
-        double[][] T0Inv= new double[2][2];
+        this.T0Inv= new double[2][2];
         T0Inv[0][0]= v0/clusterPrec.getParameterValue(0);
         T0Inv[1][1]= v0/clusterPrec.getParameterValue(0);
         T0Inv[1][0]= 0.0;
         T0Inv[0][1]= 0.0;
 
 
-          double logDetT0= -Math.log(T0Inv[0][0]*T0Inv[1][1]);
+          this.logDetT0= -Math.log(T0Inv[0][0]*T0Inv[1][1]);
 
 
-        for(int i=0;i<logLikelihoodsVector.length-1;i++){
+      /*  for(int i=0;i<logLikelihoodsVector.length-1;i++){
 
          double[][] T1Inv = new double[2][2];
             T1Inv[0][0]=T0Inv[0][0]+(k0/k1)* data[i][0]*data[i][0];
@@ -122,15 +133,39 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 
         }
+    */
 
-
-       printInformtion(logLikelihoodsVector[0]);
-        printInformtion(logLikelihoodsVector[2]);
-
+       //printInformtion(logLikelihoodsVector[0]);
+       // printInformtion(logLikelihoodsVector[2]);
 
 
 
     }
+
+
+
+
+    private int findOffsetIndex(int traitParameterIndex){
+               String NAME = traitParameter.getParameter(traitParameterIndex).getParameterName();
+               boolean notFound =true;
+               int i=0;
+
+        while (notFound){
+
+            if(offsets.getDimensionName(i).compareTo(NAME)==0){
+
+                    notFound=false;
+                }else{
+                    i++;
+            }
+                }
+
+      //  printInformtion((double) i);
+      //  printInformation(offsets.getDimensionName(i),NAME);
+
+       return i;
+    }
+
 
 
 
@@ -144,6 +179,10 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
             for (int j=0; j<dim; j++){
                 Data[i][j]= traitParameter.getParameter(i).getParameterValue(j);
             }
+            if (hasDrift){
+                int offsetIndex = findOffsetIndex(i);
+                Data[i][0] += locationDrift.getParameterValue(0)*offsets.getParameterValue(offsetIndex);
+             }
         }
 
         this.data=Data;
@@ -156,8 +195,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
         List<NodeRef> childList = new ArrayList<NodeRef>();
 
         recursion(treeModel.getRoot(),childList);
-        logCorrectMatrix(transformFactor);
-        // printInformtion(depMatrix);
+        logCorrectMatrix(transformFactor.getParameterValue(0));
         logDepMatrix =  new double[numdata][numdata];
         for(int i=0;i<numdata;i++){
             for(int j=0;j<i;j++){
@@ -173,9 +211,84 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 
 
-	
-	
-	  public Model getModel() {
+    public double getLogLikGroup(int groupNumber){
+        double L =0.0;
+
+
+        int ngroup=0;
+        for (int i=0;i<assignments.getDimension(); i++){
+            if((int) assignments.getParameterValue(i) == groupNumber){
+                ngroup++;}}
+
+
+        if (ngroup != 0){
+            double[][] group = new double[ngroup][2];
+
+
+            double mean[]=new double[2];
+
+            int count = 0;
+            for (int i=0;i<assignments.getDimension(); i++){
+                if((int) assignments.getParameterValue(i) == groupNumber){
+                    group[count][0] = getData()[i][0];
+                    group[count][1] = getData()[i][1];
+                    mean[0]+=group[count][0];
+                    mean[1]+=group[count][1];
+                    count++;}}
+
+            mean[0]/=ngroup;
+            mean[1]/=ngroup;
+
+
+
+            double kn= k0+ngroup;
+            double vn= v0+ngroup;
+
+
+            double[][] sumdif=new double[2][2];
+
+            for(int i=0;i<ngroup;i++){
+                sumdif[0][0]+= (group[i][0]-mean[0])*(group[i][0]-mean[0]);
+                sumdif[0][1]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+                sumdif[1][0]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+                sumdif[1][1]+= (group[i][1]-mean[1])*(group[i][1]-mean[1]);
+            }
+
+
+
+            double[][] TnInv = new double[2][2];
+            TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(mean[0]-m[0])*(mean[0]-m[0])+sumdif[0][0];
+            TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(mean[1]-m[1])*(mean[0]-m[0])+sumdif[0][1];
+            TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (mean[0]-m[0])*(mean[1]-m[1])+sumdif[1][0];
+            TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (mean[1]-m[1])*(mean[1]-m[1])+sumdif[1][1];
+
+
+            double logDetTn=-Math.log(TnInv[0][0]*TnInv[1][1]-TnInv[0][1]*TnInv[1][0]);
+
+
+            L+= -(ngroup)*Math.log(Math.PI);
+            L+= Math.log(k0) - Math.log(kn);
+            L+= (vn/2)*logDetTn - (v0/2)*logDetT0;
+            L+= GammaFunction.lnGamma(vn/2)+ GammaFunction.lnGamma((vn/2)-0.5);
+            L+=-GammaFunction.lnGamma(v0/2)- GammaFunction.lnGamma((v0/2)-0.5);
+
+
+
+
+
+
+        }
+        return L;
+
+    }
+
+
+
+
+
+
+
+    public Model getModel() {
 	        return this;
 	    }
 
@@ -238,20 +351,22 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 	  public double getLogLikelihood() {
           setDepMatrix();
           setData();
-         //printInformtion(data[0][0]);
-          //printInformtion(depMatrix[0][1]);
 
 
-		  double logL = 0.0;
+
+
+
+          double logL = 0.0;
 		  for (int j=0 ; j<logLikelihoodsVector.length;j++){
-			  if(logLikelihoodsVector[j]!=0){
-				  logL +=logLikelihoodsVector[j];
-			  }
+			   logLikelihoodsVector[j]=getLogLikGroup(j);
+
+			  	  logL +=logLikelihoodsVector[j];
+
 		  }
 		  
 		  for (int j=0 ; j<links.getDimension();j++){
 		if(links.getParameterValue(j)==j){
-			logL += Math.log(alpha);
+			logL += Math.log(alpha.getParameterValue(0));
 		}
 		else{logL += Math.log(depMatrix[j][(int) links.getParameterValue(j)]);
 			
@@ -263,7 +378,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 			}
 			}
 		
-		  logL-= Math.log(alpha+sumDist);
+		  logL-= Math.log(alpha.getParameterValue(0)+sumDist);
 		  }
 		
 	
@@ -274,7 +389,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 	 
 	  
 	  
-	  /* Marc's suggestion on recursion for getting matrix from tree*/
+	  /* Getting matrix from tree*/
 	  
 	  void recursion( NodeRef node, List childList){
 		 
@@ -421,16 +536,26 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
              		 sb.append(x);
              
              Logger.getLogger("dr.evomodel").info(sb.toString()); };
-	  
-	
-	  
-	  
-	  
-	 
-	  
-	  
-	  
-	  public void makeDirty() {
+
+    public void printInformation(String x) {
+        StringBuffer sb = new StringBuffer("Info \n");
+        sb.append(x);
+
+        Logger.getLogger("dr.evomodel").info(sb.toString()); };
+
+    public void printInformation(String x, String y) {
+        StringBuffer sb = new StringBuffer("Info \n");
+        sb.append(x + " and " + y);
+
+        Logger.getLogger("dr.evomodel").info(sb.toString()); };
+
+
+
+
+
+
+
+    public void makeDirty() {
 	    }
 
 	    public void acceptState() {
@@ -455,7 +580,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 	Set<NodeRef> allTips;  
 	CompoundParameter traitParameter;  
-	double alpha;
+	Parameter alpha;
 	Parameter clusterPrec ;
 	Parameter priorPrec ;
 	Parameter priorMean ;
@@ -463,6 +588,10 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
     Parameter links;
     Parameter means2;
     Parameter means1;
+    Parameter locationDrift;
+    Parameter offsets;
+    boolean hasDrift;
+
     TreeModel treeModel;
 	String traitName;
 	double[][] data;
@@ -470,9 +599,13 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 	double[][] logDepMatrix;
 	double[] logLikelihoodsVector;
 	int numdata;
-	double transformFactor;
-	
-	
+	Parameter transformFactor;
+	double k0;
+    double v0;
+    double[][] T0Inv;
+	double[] m;
+    double logDetT0;
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public final static String CLUSTER_PREC = "clusterPrec";
         public final static String PRIOR_PREC = "priorPrec";
@@ -482,6 +615,13 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
         public final static String MEANS_1 = "clusterMeans1";
         public final static String MEANS_2 = "clusterMeans2";
         public final static String TRANSFORM_FACTOR = "transformFactor";
+        public final static String CHI = "chi";
+        public final static String OFFSETS = "offsets";
+        public final static String LOCATION_DRIFT = "locationDrift";
+
+
+
+
         boolean integrate = false;
     	
         
@@ -516,13 +656,26 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
             cxo = xo.getChild(MEANS_1);
             Parameter means1 = (Parameter) cxo.getChild(Parameter.class);
 
+            cxo = xo.getChild(CHI);
+            Parameter chi = (Parameter) cxo.getChild(Parameter.class);
+
+            cxo = xo.getChild(TRANSFORM_FACTOR);
+            Parameter transformFactor = (Parameter) cxo.getChild(Parameter.class);
 
 
 
-            double transformFactor=1.0;
-	        if(xo.hasAttribute(TRANSFORM_FACTOR)){
-	        	transformFactor = xo.getDoubleAttribute(TRANSFORM_FACTOR);
-	        }
+                cxo=xo.getChild(LOCATION_DRIFT) ;
+                Parameter locationDrift= (Parameter) cxo.getChild(Parameter.class);
+
+                cxo=xo.getChild(OFFSETS);
+                Parameter offsets =(Parameter) cxo.getChild(Parameter.class);
+
+            boolean hasDrift = false;
+            if (offsets.getDimension()>1){
+                hasDrift=true;
+            }
+
+
 	     
 	        TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
             String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -534,12 +687,11 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
             CompoundParameter traitParameter = returnValue.traitParameter;
             
 	     
-	        
-	        
-	        
+
 	       
 	        
-	        return new NPAntigenicLikelihood(treeModel,traitParameter,  assignments, links, clusterPrec, priorMean,priorPrec,transformFactor, means1,means2);
+	        return new NPAntigenicLikelihood(treeModel,traitParameter,  assignments, links, chi,clusterPrec, priorMean,priorPrec,
+                    transformFactor, means1,means2,locationDrift,offsets,hasDrift);
 	    }
 
 	    //************************************************************************
@@ -560,9 +712,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 	    private final XMLSyntaxRule[] rules = {
 	    		 new StringAttributeRule(TreeTraitParserUtilities.TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
-	    	
-	    		AttributeRule.newDoubleRule(TRANSFORM_FACTOR,true,"p in transformation of distances -p*log(dist)"),
-	    		 
+
 	    		 new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
 	                        new ElementRule(Parameter.class)
 	                }),   
@@ -576,11 +726,20 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(LINKS,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                new ElementRule(TRANSFORM_FACTOR,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+
                 new ElementRule(MEANS_1,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(MEANS_2,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-				    	                    new ElementRule(TreeModel.class),
+                new ElementRule(CHI, new XMLSyntaxRule[] {
+                        new ElementRule(Parameter.class),
+                }),
+                new ElementRule(OFFSETS, Parameter.class),
+                new ElementRule(LOCATION_DRIFT, Parameter.class),
+
+                new ElementRule(TreeModel.class),
 				    	                    
 	    };
     };

@@ -137,9 +137,9 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	         */
 	        
 	        
-	       modelLikelihood.setLogLikelihoodsVector(oldGroup,getLogLikGroup(oldGroup) );
+	       modelLikelihood.setLogLikelihoodsVector(oldGroup,modelLikelihood.getLogLikGroup(oldGroup) );
 
-	       modelLikelihood.setLogLikelihoodsVector(minEmp,getLogLikGroup(minEmp) );
+	       modelLikelihood.setLogLikelihoodsVector(minEmp,modelLikelihood.getLogLikGroup(minEmp) );
 
 
            int maxFull = maxFull( modelLikelihood.getLogLikelihoodsVector());
@@ -205,7 +205,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	       /*
 	        * updating conditional likelihood vector 
 	        */
-	        modelLikelihood.setLogLikelihoodsVector(newGroup, getLogLikGroup(newGroup));
+	        modelLikelihood.setLogLikelihoodsVector(newGroup, modelLikelihood.getLogLikGroup(newGroup));
 	        if (newGroup!=minEmp){
 	        	 modelLikelihood.setLogLikelihoodsVector(minEmp, 0);
 	  	       
@@ -323,76 +323,6 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	    
 	    
 	    
-		 public double getLogLikGroup(int groupNumber){   
-		    double L =0.0;
-			 
-		    
-				  int ngroup=0;
-				  for (int i=0;i<assignments.getDimension(); i++){
-				  if((int) assignments.getParameterValue(i) == groupNumber){
-				  ngroup++;}}
-				  
-				  
-				  if (ngroup != 0){
-				  double[][] group = new double[ngroup][2];
-
-
-                      double mean[]=new double[2];
-
-				  int count = 0;
-				  for (int i=0;i<assignments.getDimension(); i++){
-					  if((int) assignments.getParameterValue(i) == groupNumber){
-						  group[count][0] = modelLikelihood.getData()[i][0];
-						  group[count][1] = modelLikelihood.getData()[i][1];
-						  mean[0]+=group[count][0];
-                          mean[1]+=group[count][1];
-                          count++;}}
-
-                  mean[0]/=ngroup;
-                  mean[1]/=ngroup;
-
-
-
-                  double kn= k0+ngroup;
-                  double vn= v0+ngroup;
-
-
-                       double[][] sumdif=new double[2][2];
-
-                      for(int i=0;i<ngroup;i++){
-                          sumdif[0][0]+= (group[i][0]-mean[0])*(group[i][0]-mean[0]);
-                          sumdif[0][1]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
-                          sumdif[1][0]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
-                          sumdif[1][1]+= (group[i][1]-mean[1])*(group[i][1]-mean[1]);
-                      }
-
-
-
-                      double[][] TnInv = new double[2][2];
-                          TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(mean[0]-m[0])*(mean[0]-m[0])+sumdif[0][0];
-                          TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(mean[1]-m[1])*(mean[0]-m[0])+sumdif[0][1];
-                          TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (mean[0]-m[0])*(mean[1]-m[1])+sumdif[1][0];
-                          TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (mean[1]-m[1])*(mean[1]-m[1])+sumdif[1][1];
-
-
-                          double logDetTn=-Math.log(TnInv[0][0]*TnInv[1][1]-TnInv[0][1]*TnInv[1][0]);
-
-
-                          L+= -(ngroup)*Math.log(Math.PI);
-                          L+= Math.log(k0) - Math.log(kn);
-                          L+= (vn/2)*logDetTn - (v0/2)*logDetT0;
-                          L+= GammaFunction.lnGamma(vn/2)+ GammaFunction.lnGamma((vn/2)-0.5);
-                          L+=-GammaFunction.lnGamma(v0/2)- GammaFunction.lnGamma((v0/2)-0.5);
-
-
-
-
-
-
-                  }
-				    return L;
-		    
-		 }
 
   /*  OLD
 
@@ -738,14 +668,23 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
     private void exp(double[] logX) {
 	        for (int i = 0; i < logX.length; ++i) {
 	            logX[i] = Math.exp(logX[i]);
-	          //  if(logX[i]<1E-5){logX[i]=0;}
+	          //  if(logX[i]<1E-8){logX[i]=0;}
 	        }
 	    }
 
 	    private void rescale(double[] logX) {
 	        double max = this.max(logX);
 	        for (int i = 0; i < logX.length; ++i) {
-	            logX[i] -= max;
+	            if(logX[i] == Double.NEGATIVE_INFINITY){
+                    modelLikelihood.printInformtion(logX[i]);
+                    logX[i]=-1E16;
+                }
+                if(logX[i]==Double.POSITIVE_INFINITY){
+                    modelLikelihood.printInformtion(logX[i]);
+                    logX[i]=1E16;
+                }
+	             logX[i] -= max;
+
 	        }
 	    }
 

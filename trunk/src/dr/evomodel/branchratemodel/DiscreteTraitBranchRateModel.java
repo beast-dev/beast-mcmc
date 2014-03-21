@@ -1,7 +1,7 @@
 /*
- * ColouredTreeRateModel.java
+ * DiscreteTraitBranchRateModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut & Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -51,6 +51,8 @@ import dr.math.matrixAlgebra.Vector;
  * @author Trevor Bedford
  */
 public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
+    private static final boolean CACHING_RATES = true;
+
     enum Mode {
         NODE_STATES,
         MARKOV_JUMP_PROCESS,
@@ -69,7 +71,6 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     private double[] rates;
     private double[] storedRates;
     private boolean[] rateKnown;
-    private boolean[] storedRateKnown;
 
 //    private boolean normKnown = false;
 //    private boolean storedNormKnown = false;
@@ -81,7 +82,6 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     private FitchParsimony fitchParsimony;
 
     private boolean treeChanged = true;
-    private boolean shouldRestoreTree = false;
 
     private Mode mode;
     private DataType dataType;
@@ -218,7 +218,6 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         rates = new double[treeModel.getNodeCount()];
         storedRates = new double[treeModel.getNodeCount()];
         rateKnown = new boolean[treeModel.getNodeCount()];
-        storedRateKnown = new boolean[treeModel.getNodeCount()];
 
     }
 
@@ -240,21 +239,26 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     }
 
     protected void storeState() {
-        System.arraycopy(rates, 0, storedRates, 0, rates.length);
-//        System.arraycopy(rateKnown, 0, storedRateKnown, 0, rateKnown.length);
+        if (CACHING_RATES) {
+            System.arraycopy(rates, 0, storedRates, 0, rates.length);
+        }
     }
 
     protected void restoreState() {
-        double[] tmp = rates;
-        rates = storedRates;
-        storedRates = tmp;
+        if (CACHING_RATES) {
+            double[] tmp = rates;
+            rates = storedRates;
+            storedRates = tmp;
 
-        for (int i = 0; i < rateKnown.length; i++) {
-            rateKnown[i] = true;
+            for (int i = 0; i < rateKnown.length; i++) {
+                rateKnown[i] = true;
+            }
+        } else {
+            for (int i = 0; i < rateKnown.length; i++) {
+                rateKnown[i] = false;
+            }
+            treeChanged = true;
         }
-//        boolean[] tmp1 = rateKnown;
-//        rateKnown = storedRateKnown;
-//        storedRateKnown = tmp1;
     }
 
     protected void acceptState() {
@@ -274,14 +278,16 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
-        if (!rateKnown[node.getNumber()]) {
-            rates[node.getNumber()] = getRawBranchRate(tree, node);
-    //         rates[node.getNumber()] = rateParameter.getParameterValue(0);
-            rateKnown[node.getNumber()] = true;
+        if (CACHING_RATES) {
+            if (!rateKnown[node.getNumber()]) {
+                rates[node.getNumber()] = getRawBranchRate(tree, node);
+                rateKnown[node.getNumber()] = true;
+            }
+
+            return rates[node.getNumber()];
+        } else {
+            return getRawBranchRate(tree, node);
         }
-
-        return rates[node.getNumber()];
-
     }
 
     // produce weighted mean of rate for a branch
@@ -292,7 +298,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         int stateCount = getStateCount();
 
         double[] processValues = getProcessValues(tree, node);
-    //    double[] processValues = {1.0, 1.0};
+        //    double[] processValues = {1.0, 1.0};
         double[] branchWeights = new double[stateCount];
         double totalTime = 0;
 
@@ -387,8 +393,6 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             processValues[parentState] += branchTime / 2;
         }
 
- //       processValues[0] = 1.0;
- //       processValues[1] = 1.0;
         return processValues;
     }
 

@@ -41,6 +41,7 @@ public class PartitionDataList extends ArrayList<PartitionData> implements Seria
 
     public int simulationsCount = 1;
     public boolean useParallel = false;
+    public boolean outputAncestralSequences = false;
     public SimpleAlignment.OutputType outputFormat = SimpleAlignment.OutputType.FASTA;
 
     //List of all Taxa displayed in Taxa Panel

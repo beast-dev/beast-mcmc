@@ -608,12 +608,16 @@ public class BeagleSequenceSimulatorConsoleApp {
             }
 
             if (leftoverArguments.length > 2) {
-                dataList.useParallel = Boolean.parseBoolean(leftoverArguments[2]);
+                dataList.outputAncestralSequences = Boolean.parseBoolean(leftoverArguments[2]);
+            }
+            
+            if (leftoverArguments.length > 3) {
+                dataList.useParallel = Boolean.parseBoolean(leftoverArguments[3]);
             }
 
             BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
                     partitionsList);
-            alignment = beagleSequenceSimulator.simulate(dataList.useParallel);
+            alignment = beagleSequenceSimulator.simulate(dataList.useParallel, dataList.outputAncestralSequences);
             alignment.setOutputType(dataList.outputFormat);
 
             PrintWriter writer = new PrintWriter(new FileWriter(outputFile));
@@ -700,7 +704,7 @@ public class BeagleSequenceSimulatorConsoleApp {
 
         arguments.printUsage(
                 "java -Djava.library.path=/usr/local/lib -jar buss.jar", " "
-                + SPLIT_PARTITION + " " + "[<output-file-name>] [<seed>] [<true|false>]");
+                + SPLIT_PARTITION + " " + "[<output-file-name>] [<seed>] [<true|false>] [<true|false>]");
         System.out.println();
 
         System.out

@@ -1008,7 +1008,9 @@ public class Utils {
 		return string;
 	}// END: taxaToString
 	
-	public static String partitionDataToString(PartitionData data, TreeModel simulatedTreeModel,  LinkedHashMap<NodeRef, int[]> sequencesMap) {
+	public static String partitionDataToString(PartitionData data, TreeModel simulatedTreeModel
+//			,  LinkedHashMap<NodeRef, int[]> sequencesMap
+			) {
 
 		String string = "";
 		
@@ -1025,8 +1027,8 @@ public class Utils {
 //			//
 //		}
 		
-//		string += ("Tree model: " + simulatedTreeModel.toString()) + ("\n");
-		string += ("Tree model: " +annotatedTreeModelToString(simulatedTreeModel, sequencesMap, data.createDataType()) ) + ("\n");
+		string += ("Tree model: " + simulatedTreeModel.toString()) + ("\n");
+//		string += ("Tree model: " +annotatedTreeModelToString(simulatedTreeModel, sequencesMap, data.createDataType()) ) + ("\n");
 		string += ("From: " + data.from)+ ("\n");
 		string += ("To: " + data.to)+ ("\n");
 		string += ("Every: " + data.every)+ ("\n");
@@ -1041,13 +1043,13 @@ public class Utils {
 	}// END: partitionDataToString
 	
 	public static String partitionDataListToString(PartitionDataList dataList, //
-			ArrayList<TreeModel> simulatedTreeModelList, //
-			LinkedHashMap<Integer,LinkedHashMap<NodeRef, int[]>> partitionSequencesMap
+			ArrayList<TreeModel> simulatedTreeModelList
+//			,LinkedHashMap<Integer,LinkedHashMap<NodeRef, int[]>> partitionSequencesMap
 			) {
 
 		String string = "";
 		TreeModel simulatedTreeModel;
-		LinkedHashMap<NodeRef, int[]> sequencesMap;
+//		LinkedHashMap<NodeRef, int[]> sequencesMap;
 		
 		string += ("Site count: " + getSiteCount(dataList)) + ("\n");
 		if (dataList.setSeed) {
@@ -1058,12 +1060,12 @@ public class Utils {
 		for (PartitionData data : dataList) {
 
 			simulatedTreeModel = simulatedTreeModelList.get(row);
-			sequencesMap = partitionSequencesMap.get(row);
-//			sequencesMap = data.getSequenceMap();
-			
+//			sequencesMap = partitionSequencesMap.get(row);
 			
 			string += ("Partition: " + (row + 1)) + ("\n");
-			string += partitionDataToString(data, simulatedTreeModel, sequencesMap);
+			string += partitionDataToString(data, simulatedTreeModel
+//					, sequencesMap
+					);
 			string += ("\n");
 			row++;
 
@@ -1090,7 +1092,6 @@ public class Utils {
 				null, //
 				treeTraitProviders, //
 				null, buffer);
-		
 		
 		return buffer.toString();
 	}

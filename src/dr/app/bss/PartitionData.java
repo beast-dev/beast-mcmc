@@ -57,13 +57,13 @@ public class PartitionData implements Serializable {
 	}// END: Constructor
 
 	public int from = 1;
-	public int to = 1000;
+	public int to = 10;
 	public int every = 1;
 
 	public int createPartitionSiteCount() {
 		return ((to - from) / every) + 1;
 	}
-	
+
 	public void resetIdrefs() {
 		resetClockModelIdref();
 		resetFrequencyModelIdref();
@@ -74,6 +74,20 @@ public class PartitionData implements Serializable {
 		resetTaxaIdref();
 	}
 
+	// ///////////////////////
+	// ---TREE ANNOTATING---//
+	// ///////////////////////
+	
+//	private LinkedHashMap<NodeRef, int[]> sequenceMap;
+//	
+//	public void setSequenceMap(LinkedHashMap<NodeRef, int[]> sequenceMap) {
+//		this.sequenceMap = sequenceMap;
+//	}
+//	
+//	public LinkedHashMap<NodeRef, int[]> getSequenceMap() {
+//		return sequenceMap;
+//	}
+	
 	// /////////////////////////
 	// ---DEMOGRAPHIC MODEL---//
 	// /////////////////////////

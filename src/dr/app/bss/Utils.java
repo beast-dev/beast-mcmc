@@ -12,9 +12,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +27,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import dr.app.bss.test.AncestralSequenceTrait;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.io.Importer.ImportException;
@@ -32,6 +36,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -1003,9 +1008,10 @@ public class Utils {
 		return string;
 	}// END: taxaToString
 	
-	public static String partitionDataToString(PartitionData data, TreeModel simulatedTreeModel) {
+	public static String partitionDataToString(PartitionData data, TreeModel simulatedTreeModel,  LinkedHashMap<NodeRef, int[]> sequencesMap) {
 
 		String string = "";
+		
 		
 //		if (data.record.isTreeSet()) {
 //
@@ -1019,26 +1025,29 @@ public class Utils {
 //			//
 //		}
 		
-		string += ("Tree model: " + simulatedTreeModel.toString()) + ("\n");
-		string += ("Data type: ") + dataTypeToString(data) + ("\n");
-		string += ("Demographic model: ") + demographicModelToString(data) + ("\n");
+//		string += ("Tree model: " + simulatedTreeModel.toString()) + ("\n");
+		string += ("Tree model: " +annotatedTreeModelToString(simulatedTreeModel, sequencesMap, data.createDataType()) ) + ("\n");
 		string += ("From: " + data.from)+ ("\n");
 		string += ("To: " + data.to)+ ("\n");
 		string += ("Every: " + data.every)+ ("\n");
+		string += ("Data type: ") + dataTypeToString(data) + ("\n");
+		string += ("Demographic model: ") + demographicModelToString(data) + ("\n");
 		string += ("Branch Substitution model: ") + branchSubstitutionModelToString(data) + ("\n");
+		string += ("Frequency model: ") + frequencyModelToString(data) + ("\n");
 		string += ("Site Rate model: ") + siteRateModelToString(data) + ("\n");
 		string += ("Clock Rate model: ") + clockRateModelToString(data) + ("\n");
-		string += ("Frequency model: ") + frequencyModelToString(data) + ("\n");
 
 		return string;
 	}// END: partitionDataToString
 	
-	public static String partitionDataListToString(PartitionDataList dataList,
-			ArrayList<TreeModel> simulatedTreeModelList
+	public static String partitionDataListToString(PartitionDataList dataList, //
+			ArrayList<TreeModel> simulatedTreeModelList, //
+			LinkedHashMap<Integer,LinkedHashMap<NodeRef, int[]>> partitionSequencesMap
 			) {
 
 		String string = "";
 		TreeModel simulatedTreeModel;
+		LinkedHashMap<NodeRef, int[]> sequencesMap;
 		
 		string += ("Site count: " + getSiteCount(dataList)) + ("\n");
 		if (dataList.setSeed) {
@@ -1049,9 +1058,12 @@ public class Utils {
 		for (PartitionData data : dataList) {
 
 			simulatedTreeModel = simulatedTreeModelList.get(row);
-
+			sequencesMap = partitionSequencesMap.get(row);
+//			sequencesMap = data.getSequenceMap();
+			
+			
 			string += ("Partition: " + (row + 1)) + ("\n");
-			string += partitionDataToString(data, simulatedTreeModel);
+			string += partitionDataToString(data, simulatedTreeModel, sequencesMap);
 			string += ("\n");
 			row++;
 
@@ -1059,6 +1071,29 @@ public class Utils {
 
 		return string;
 	}// END: partitionDataListToString
+	
+	//TODO: doesn't work
+	private static String annotatedTreeModelToString(TreeModel treeModel, LinkedHashMap<NodeRef, int[]> sequencesMap, DataType dataType) {
+		
+		StringBuffer buffer = new StringBuffer();
+		NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
+		boolean useTipLabels = true;
+		
+		AncestralSequenceTrait ancestralSequence = new AncestralSequenceTrait(sequencesMap, dataType);
+		TreeTraitProvider[] treeTraitProviders = new TreeTraitProvider[] { ancestralSequence };
+		
+		Tree.Utils.newick(treeModel, //
+				treeModel.getRoot(), //
+				useTipLabels, //
+				Tree.BranchLengthType.LENGTHS_AS_TIME, //
+				format, //
+				null, //
+				treeTraitProviders, //
+				null, buffer);
+		
+		
+		return buffer.toString();
+	}
 	
 	private static String dataTypeToString(PartitionData data) {
 		String string = PartitionData.dataTypes[data.dataTypeIndex];

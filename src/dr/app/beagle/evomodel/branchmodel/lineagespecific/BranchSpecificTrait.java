@@ -11,7 +11,7 @@ import dr.inference.model.CompoundParameter;
  * @version $Id$
  * 
  */
-public class BranchSpecificTrait implements  TreeTraitProvider {
+public class BranchSpecificTrait implements TreeTraitProvider {
 
 //	private CompoundParameter parameter;
 //	private BranchSpecific branchSpecific;

@@ -25,20 +25,43 @@
 
 package dr.app.bss;
 
+import jam.framework.DocumentFrame;
+import jam.framework.Exportable;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.JComponent;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JProgressBar;
+import javax.swing.JTabbedPane;
+import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
+import javax.swing.plaf.BorderUIResource;
+
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evomodel.tree.TreeModel;
 import dr.math.MathUtils;
-import jam.framework.DocumentFrame;
-import jam.framework.Exportable;
-
-import javax.swing.*;
-import javax.swing.plaf.BorderUIResource;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.io.*;
-import java.util.ArrayList;
 
 /**
  * @author Filip Bielejec
@@ -48,7 +71,8 @@ import java.util.ArrayList;
 public class MainFrame extends DocumentFrame implements FileMenuHandler {
 
     private PartitionDataList dataList;
-
+private BeagleSequenceSimulator beagleSequenceSimulator;
+    
     private final String TAXA_TAB_NAME = "Taxa";
     private final String TREES_TAB_NAME = "Data";
     private final String PARTITIONS_TAB_NAME = "Partitions";
@@ -228,7 +252,7 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
                             startingSeed += 1;
                         }
 
-                        BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+                         beagleSequenceSimulator = new BeagleSequenceSimulator(
                                 partitionsList
                         );
 
@@ -260,7 +284,9 @@ public class MainFrame extends DocumentFrame implements FileMenuHandler {
             // Executed in event dispatch thread
             public void done() {
 
-                terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList));
+//            	LinkedHashMap<Integer, LinkedHashMap<NodeRef, int[]>> partitionSequencesMap = beagleSequenceSimulator.getPartitionSequencesMap();
+            	
+                terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList, beagleSequenceSimulator.getPartitionSequencesMap()));
                 setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
                 setIdle();
 

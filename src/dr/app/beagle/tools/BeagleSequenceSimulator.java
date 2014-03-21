@@ -38,9 +38,9 @@ import java.util.concurrent.Executors;
 
 import dr.app.bss.Utils;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.sequence.Sequence;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 
 /**
@@ -59,13 +59,16 @@ public class BeagleSequenceSimulator {
 	private SimpleAlignment alignment;
 	private DataType dataType;
 	private boolean fieldsSet = false;
-
+	LinkedHashMap<Integer, LinkedHashMap<NodeRef, int[]>> partitionSequencesMap;
+	
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions) {
 
 		this.partitions = partitions;
 		this.alignment = new SimpleAlignment();
 		alignment.setReportCountStatistics(false);
 
+		partitionSequencesMap = new LinkedHashMap<Integer, LinkedHashMap<NodeRef,int[]>>();
+		
 		int siteCount = 0;
 		int to = 0;
 		for (Partition partition : partitions) {
@@ -115,7 +118,7 @@ public class BeagleSequenceSimulator {
 				partition.setPartitionNumber(partitionCount);
 
 				simulatePartitionCallers.add(new simulatePartitionCallable(
-						partition));
+						partition, partitionCount));
 				partitionCount++;
 
 			}// END: partitions loop
@@ -139,9 +142,11 @@ public class BeagleSequenceSimulator {
 	private class simulatePartitionCallable implements Callable<Void> {
 
 		private Partition partition;
-
-		private simulatePartitionCallable(Partition partition) {
+        private int partitionNumber;
+		
+		private simulatePartitionCallable(Partition partition, int partitionNumber) {
 			this.partition = partition;
+			this.partitionNumber = partitionNumber;
 		}// END: Constructor
 
 		public Void call() {
@@ -149,7 +154,10 @@ public class BeagleSequenceSimulator {
 			try {
 
 				partition.simulatePartition();
-
+				
+				//TODO
+                partitionSequencesMap.put(partitionNumber, partition.getSequenceMap());
+                
 			} catch (Exception e) {
 				Utils.handleException(e);
 			}
@@ -170,7 +178,7 @@ public class BeagleSequenceSimulator {
 		// compile the alignment
 		for (Partition partition : partitions) {
 
-			Map<Taxon, int[]> sequenceMap = partition.getSequencesMap();
+			Map<Taxon, int[]> sequenceMap = partition.getTaxonSequencesMap();
 			Iterator<Entry<Taxon, int[]>> iterator = sequenceMap.entrySet()
 					.iterator();
 
@@ -222,9 +230,10 @@ public class BeagleSequenceSimulator {
 			Taxon taxon = (Taxon) pairs.getKey();
 			int[] intSequence = (int[]) pairs.getValue();
 			
-			Sequence sequence = intArray2Sequence(taxon, //
+			Sequence sequence = Utils.intArray2Sequence(taxon, //
 					intSequence, //
-					gapFlag
+					gapFlag, //
+					dataType
 			);
 			
 //			sequence.setDataType(dataType);
@@ -238,41 +247,45 @@ public class BeagleSequenceSimulator {
 		return simpleAlignment;
 	}// END: compileAlignment
 
-	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag) {
-
-		StringBuilder sSeq = new StringBuilder();
-
-		if (dataType instanceof Codons) {
-
-			for (int i = 0; i < siteCount; i++) {
-
-				int state = seq[i];
-
-				if (state == gapFlag) {
-					sSeq.append(dataType.getTriplet(dataType.getGapState()));
-				} else {
-					sSeq.append(dataType.getTriplet(seq[i]));
-				}// END: gap check
-
-			}// END: replications loop
-
-		} else {
-
-			for (int i = 0; i < siteCount; i++) {
-
-				int state = seq[i];
-
-				if (state == gapFlag) {
-					sSeq.append(dataType.getCode(dataType.getGapState()));
-				} else {
-					sSeq.append(dataType.getCode(seq[i]));
-				}// END: gap check
-
-			}// END: replications loop
-
-		}// END: dataType check
-
-		return new Sequence(taxon, sSeq.toString());
-	}// END: intArray2Sequence
+	public LinkedHashMap<Integer, LinkedHashMap<NodeRef, int[]>> getPartitionSequencesMap() {
+		return partitionSequencesMap;
+	}//END: getPartitionSequencesMap
+	
+//	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag) {
+//
+//		StringBuilder sSeq = new StringBuilder();
+//
+//		if (dataType instanceof Codons) {
+//
+//			for (int i = 0; i < siteCount; i++) {
+//
+//				int state = seq[i];
+//
+//				if (state == gapFlag) {
+//					sSeq.append(dataType.getTriplet(dataType.getGapState()));
+//				} else {
+//					sSeq.append(dataType.getTriplet(seq[i]));
+//				}// END: gap check
+//
+//			}// END: replications loop
+//
+//		} else {
+//
+//			for (int i = 0; i < siteCount; i++) {
+//
+//				int state = seq[i];
+//
+//				if (state == gapFlag) {
+//					sSeq.append(dataType.getCode(dataType.getGapState()));
+//				} else {
+//					sSeq.append(dataType.getCode(seq[i]));
+//				}// END: gap check
+//
+//			}// END: replications loop
+//
+//		}// END: dataType check
+//
+//		return new Sequence(taxon, sSeq.toString());
+//	}// END: intArray2Sequence
 
 } // END: class

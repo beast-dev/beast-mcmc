@@ -86,12 +86,17 @@ public class Partition {
 	private int siteRateCategoryCount;
 
 	// Sequence fields
-	private LinkedHashMap<Taxon, int[]> sequenceList;
+	private LinkedHashMap<Taxon, int[]> alignmentMap;
+	private LinkedHashMap<NodeRef, int[]> sequencesMap = new LinkedHashMap<NodeRef, int[]>();
 	private DataType dataType;
 	private boolean hasAncestralSequence = false;
 	private Sequence ancestralSequence = null;
 
+	// Random number generation
 	private MersenneTwister random;
+	
+	// Annotating trees
+	private boolean annotateTree = true;
 	
 	public Partition(TreeModel treeModel, //
 			BranchModel branchModel, //
@@ -120,7 +125,7 @@ public class Partition {
 		setSubstitutionModelDelegate();
 		loadBeagleInstance();
 
-		sequenceList = new LinkedHashMap<Taxon, int[]>();
+		alignmentMap = new LinkedHashMap<Taxon, int[]>();
 		random = new MersenneTwister(MathUtils.nextLong());
 		
 	}// END: Constructor
@@ -292,10 +297,6 @@ public class Partition {
 					System.out.println("Child finite transition probs matrix:");
 					Utils.print2DArray(probabilities, stateCount);
 					System.out.println();
-					
-					//TODO
-//					System.exit(0);
-					
 				}
 			}// END: DEBUG
 			
@@ -324,10 +325,16 @@ public class Partition {
 				}
 			}// END: if DEBUG
 			
+			if(annotateTree) {
+				
+				sequencesMap.put(child, partitionSequence);
+				
+			}
+			
 			if (treeModel.getChildCount(child) == 0) {
 
 				Taxon taxon = treeModel.getNodeTaxon(child);
-				sequenceList.put(taxon, partitionSequence);
+				alignmentMap.put(taxon, partitionSequence);
 				
 				if (DEBUG) {
 					synchronized (this) {
@@ -336,11 +343,10 @@ public class Partition {
 					}
 				}// END: DEBUG
 				
-			} else {
+			} 
+			else {
 				
-				//TODO: put inner nodes as well, for annotating the tree
-//				Taxon taxon = treeModel.getNodeTaxon(child);
-//				System.out.println(taxon.getId());
+				alignmentMap.put(new Taxon("internalNodeHeight" + treeModel.getNodeHeight(child)), partitionSequence);
 				
 			} // END: tip node check
 
@@ -542,10 +548,14 @@ public class Partition {
 		return dataType;
 	}// END: getDataType
 
-	public Map<Taxon, int[]> getSequencesMap() {
-		return sequenceList;
+	public Map<Taxon, int[]> getTaxonSequencesMap() {
+		return alignmentMap;
 	}// END: getSequenceList
 
+	public LinkedHashMap<NodeRef, int[]> getSequenceMap() {
+		return sequencesMap;
+	}
+	
 	public Sequence getAncestralSequence() {
 		return ancestralSequence;
 	}
@@ -556,7 +566,7 @@ public class Partition {
 
 	public void printSequences() {
 		System.out.println("partition " + partitionNumber);
-		Utils.printMap(sequenceList);
+		Utils.printMap(alignmentMap);
 	}// END: printSequences
 
 }// END: class

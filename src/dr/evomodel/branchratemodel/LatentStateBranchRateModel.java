@@ -1,3 +1,28 @@
+/*
+ * LatentStateBranchRateModel.java
+ *
+ * Copyright (C) 2002-2014 Alexei Drummond, Andrew Rambaut & Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
@@ -11,9 +36,10 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 /**
- * ${CLASS_NAME}
+ * LatentStateBranchRateModel
  *
  * @author Andrew Rambaut
+ * @author Marc Suchard
  * @version $Id$
  *
  * $HeadURL$
@@ -24,46 +50,78 @@ import dr.inference.model.Variable;
  */
 public class LatentStateBranchRateModel extends AbstractModelLikelihood implements BranchRateModel {
 
+    public static final String LATENT_STATE_BRANCH_RATE_MODEL = "latentStateBranchRateModel";
+
     private final TreeModel tree;
+    private final BranchRateModel nonLatentRateModel;
     private final Parameter latentTransitionRateParameter;
     private final Parameter latentStateProportionParameter;
     private final TreeParameterModel latentStateProportions;
 
 
-    /**
-     * @param name Model Name
-     */
+    public LatentStateBranchRateModel(TreeModel treeModel,
+                                      BranchRateModel nonLatentRateModel,
+                                      Parameter latentTransitionRateParameter,
+                                      Parameter latentStateProportionParameter) {
+        this(LATENT_STATE_BRANCH_RATE_MODEL, treeModel, nonLatentRateModel, latentTransitionRateParameter, latentStateProportionParameter);
+    }
+
     public LatentStateBranchRateModel(String name,
                                       TreeModel treeModel,
-                                      Parameter latentTransitionRateParameter) {
+                                      BranchRateModel nonLatentRateModel,
+                                      Parameter latentTransitionRateParameter,
+                                      Parameter latentStateProportionParameter) {
         super(name);
 
         this.tree = treeModel;
         addModel(tree);
 
+        this.nonLatentRateModel = nonLatentRateModel;
+        addModel(nonLatentRateModel);
+
         this.latentTransitionRateParameter = latentTransitionRateParameter;
         addVariable(latentTransitionRateParameter);
 
-        this.latentStateProportionParameter = new Parameter.Default(0.5);
+        if (latentStateProportionParameter != null) {
+            this.latentStateProportionParameter = latentStateProportionParameter;
+            addVariable(latentTransitionRateParameter);
+        } else {
+            this.latentStateProportionParameter = new Parameter.Default(0.5);
+        }
         this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false);
-
     }
 
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
-        double latentProportion = latentStateProportions.getNodeValue(tree, node);
         double length = tree.getBranchLength(node);
 
-        double rate = 1.0;
+        double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
 
-        // double rate = calculateRateHere(length, latentProportion);
 
-        return rate;
+        double latentProportion;
+        if (latentStateProportionParameter != null) {
+            latentProportion = latentStateProportions.getNodeValue(tree, node);
+        } else {
+            latentProportion = calculateLatentProportion(length);
+            latentStateProportions.setNodeValue(tree, node, latentProportion);
+        }
+
+        return calculateBranchRate(nonLatentRate, latentProportion);
+    }
+
+    private double calculateLatentProportion(double length) {
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    private double calculateBranchRate(double nonLatentRate, double latentProportion) {
+        return nonLatentRate * (1.0 - latentProportion);
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
+
+        } else if (model == nonLatentRateModel) {
 
         }
 
@@ -91,12 +149,12 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
     @Override
     public Model getModel() {
-        return null;
+        return this;
     }
 
     @Override
     public double getLogLikelihood() {
-        return 0;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override

@@ -87,7 +87,7 @@ public class Partition {
 
 	// Sequence fields
 	private LinkedHashMap<Taxon, int[]> alignmentMap;
-	private LinkedHashMap<NodeRef, int[]> sequencesMap = new LinkedHashMap<NodeRef, int[]>();
+//	private LinkedHashMap<NodeRef, int[]> sequencesMap = new LinkedHashMap<NodeRef, int[]>();
 	private DataType dataType;
 	private boolean hasAncestralSequence = false;
 	private Sequence ancestralSequence = null;
@@ -96,7 +96,7 @@ public class Partition {
 	private MersenneTwister random;
 	
 	// Annotating trees
-	private boolean annotateTree = true;
+//	private boolean annotateTree = true;
 	
 	public Partition(TreeModel treeModel, //
 			BranchModel branchModel, //
@@ -325,11 +325,11 @@ public class Partition {
 				}
 			}// END: if DEBUG
 			
-			if(annotateTree) {
-				
-				sequencesMap.put(child, partitionSequence);
-				
-			}
+//			if(annotateTree) {
+//				
+//				sequencesMap.put(child, partitionSequence);
+//				
+//			}
 			
 			if (treeModel.getChildCount(child) == 0) {
 
@@ -552,9 +552,9 @@ public class Partition {
 		return alignmentMap;
 	}// END: getSequenceList
 
-	public LinkedHashMap<NodeRef, int[]> getSequenceMap() {
-		return sequencesMap;
-	}
+//	public LinkedHashMap<NodeRef, int[]> getSequenceMap() {
+//		return sequencesMap;
+//	}
 	
 	public Sequence getAncestralSequence() {
 		return ancestralSequence;

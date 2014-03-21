@@ -286,7 +286,9 @@ private BeagleSequenceSimulator beagleSequenceSimulator;
 
 //            	LinkedHashMap<Integer, LinkedHashMap<NodeRef, int[]>> partitionSequencesMap = beagleSequenceSimulator.getPartitionSequencesMap();
             	
-                terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList, beagleSequenceSimulator.getPartitionSequencesMap()));
+                terminalPanel.setText(Utils.partitionDataListToString(dataList, simulatedTreeModelList
+//                		, beagleSequenceSimulator.getPartitionSequencesMap()
+                		));
                 setStatus("Generated " + Utils.getSiteCount(dataList) + " sites.");
                 setIdle();
 

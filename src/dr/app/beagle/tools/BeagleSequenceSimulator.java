@@ -118,7 +118,9 @@ public class BeagleSequenceSimulator {
 				partition.setPartitionNumber(partitionCount);
 
 				simulatePartitionCallers.add(new simulatePartitionCallable(
-						partition, partitionCount));
+						partition
+//						, partitionCount
+						));
 				partitionCount++;
 
 			}// END: partitions loop
@@ -142,11 +144,13 @@ public class BeagleSequenceSimulator {
 	private class simulatePartitionCallable implements Callable<Void> {
 
 		private Partition partition;
-        private int partitionNumber;
+//        private int partitionNumber;
 		
-		private simulatePartitionCallable(Partition partition, int partitionNumber) {
+		private simulatePartitionCallable(Partition partition
+//				, int partitionNumber
+				) {
 			this.partition = partition;
-			this.partitionNumber = partitionNumber;
+//			this.partitionNumber = partitionNumber;
 		}// END: Constructor
 
 		public Void call() {
@@ -154,9 +158,7 @@ public class BeagleSequenceSimulator {
 			try {
 
 				partition.simulatePartition();
-				
-				//TODO
-                partitionSequencesMap.put(partitionNumber, partition.getSequenceMap());
+//                partitionSequencesMap.put(partitionNumber, partition.getSequenceMap());
                 
 			} catch (Exception e) {
 				Utils.handleException(e);

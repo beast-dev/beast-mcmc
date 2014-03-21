@@ -28,6 +28,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import dr.app.bss.test.AncestralSequenceTrait;
+//import dr.app.bss.test.AncestralSequenceTrait;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.io.Importer.ImportException;

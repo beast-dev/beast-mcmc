@@ -48,7 +48,6 @@ public class BeagleSequenceSimulatorConsoleApp {
     private boolean VERBOSE = true;
 
     private Arguments arguments;
-//    private PartitionData data;
     private PartitionDataList dataList;
 
     private static final String SPLIT_PARTITION = ":";

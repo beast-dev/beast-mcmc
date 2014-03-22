@@ -257,7 +257,7 @@ public class BranchSpecific extends AbstractModel  implements BranchModel, Citab
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
                     partitionsList);
 
-            Alignment alignment = simulator.simulate(false);
+            Alignment alignment = simulator.simulate(false, false);
 
             ConvertAlignment convert = new ConvertAlignment(Nucleotides.INSTANCE,
                     GeneticCode.UNIVERSAL, alignment);

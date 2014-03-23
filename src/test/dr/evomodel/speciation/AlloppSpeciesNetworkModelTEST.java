@@ -34,8 +34,8 @@ public class AlloppSpeciesNetworkModelTEST {
 	@Test
 	public void testAlloppSpeciesNetworkModel() {
         //testGammaQuantile();
-		testNetworkToMulLabTree();
-        testLhoodMulLabTree();
+		//testNetworkToMulLabTree();
+        //testLhoodMulLabTree();
         // grjtodo-soon would like a test of gene tree in network compatibility.
 	}
 	
@@ -75,53 +75,54 @@ public class AlloppSpeciesNetworkModelTEST {
         }
     }
 
-	public void testNetworkToMulLabTree() {
-		ApSpInfo[] apspecies = new ApSpInfo[5];
-		apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
-		apspecies[1] = new ApSpInfo("b", 4, new Individual[0]);
-		apspecies[2] = new ApSpInfo("c", 4, new Individual[0]);
-		apspecies[3] = new ApSpInfo("d", 4, new Individual[0]);
-		apspecies[4] = new ApSpInfo("e", 2, new Individual[0]);
+    // AR these functions used a back-dependency between dr.* and test.dr.*
+//	public void testNetworkToMulLabTree() {
+//		ApSpInfo[] apspecies = new ApSpInfo[5];
+//		apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
+//		apspecies[1] = new ApSpInfo("b", 4, new Individual[0]);
+//		apspecies[2] = new ApSpInfo("c", 4, new Individual[0]);
+//		apspecies[3] = new ApSpInfo("d", 4, new Individual[0]);
+//		apspecies[4] = new ApSpInfo("e", 2, new Individual[0]);
+//
+//		NetworkToMultreeTEST nmltTEST = new NetworkToMultreeTEST(-1);
+//		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, nmltTEST);
+//		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, nmltTEST);
+//
+//		System.out.println("Tests of Network To MulLabTree conversion with dips a,e and tets b,c,d");
+//		String newick;
+//		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(1));
+//		System.out.println(newick + "\n\n");
+//		assertEquals(0,  newick.compareTo("((((b0,c0),d0),a),(((b1,c1),d1),e))"));
+//		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(2));
+//		System.out.println(newick + "\n\n");
+//		assertEquals(0,  newick.compareTo("(((((b0,c0),d0),a),((b1,c1),d1)),e)"));
+//		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(3));
+//		System.out.println(newick + "\n\n");
+//		assertEquals(0,  newick.compareTo("(((((b0,c0),d0),((b1,c1),d1)),a),e)"));
+//		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(4));
+//		System.out.println(newick + "\n\n");
+//		assertEquals(0,  newick.compareTo("((((b0,c0),a),(d0,d1)),((b1,c1),e))"));
+//		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(5));
+//		System.out.println(newick + "\n\n");
+//		assertEquals(0,  newick.compareTo("(((((a,b0),c0),c1),(d0,d1)),(b1,e))"));
+//		System.out.println("");
+//		System.out.println("");
+//		}
 
-		NetworkToMultreeTEST nmltTEST = new NetworkToMultreeTEST(-1);
-		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, nmltTEST);
-		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, nmltTEST);
-		
-		System.out.println("Tests of Network To MulLabTree conversion with dips a,e and tets b,c,d");   
-		String newick;
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(1));
-		System.out.println(newick + "\n\n");
-		assertEquals(0,  newick.compareTo("((((b0,c0),d0),a),(((b1,c1),d1),e))"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(2));
-		System.out.println(newick + "\n\n");
-		assertEquals(0,  newick.compareTo("(((((b0,c0),d0),a),((b1,c1),d1)),e)"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(3));
-		System.out.println(newick + "\n\n");
-		assertEquals(0,  newick.compareTo("(((((b0,c0),d0),((b1,c1),d1)),a),e)"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(4));
-		System.out.println(newick + "\n\n");
-		assertEquals(0,  newick.compareTo("((((b0,c0),a),(d0,d1)),((b1,c1),e))"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMultreeTEST(5));
-		System.out.println(newick + "\n\n");
-		assertEquals(0,  newick.compareTo("(((((a,b0),c0),c1),(d0,d1)),(b1,e))"));
-		System.out.println("");
-		System.out.println("");
-		}
 
-
-    public void testLhoodMulLabTree() {
-        ApSpInfo[] apspecies = new ApSpInfo[3];
-        apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
-        apspecies[1] = new ApSpInfo("b", 2, new Individual[0]);
-        apspecies[2] = new ApSpInfo("z", 4, new Individual[0]);
-        LhoodMultreeTEST lhoodTEST = new LhoodMultreeTEST(1);
-
-        AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, lhoodTEST);
-        AlloppMulLabTree testamlt = new AlloppMulLabTree(testASB, lhoodTEST);
-        double  llhood = testamlt.testGeneTreeInMULTreeLogLikelihood();
-        assertEquals(llhood, -13.562218135041552713, 1e-10);
-        System.out.println(llhood);
-    }
+//    public void testLhoodMulLabTree() {
+//        ApSpInfo[] apspecies = new ApSpInfo[3];
+//        apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
+//        apspecies[1] = new ApSpInfo("b", 2, new Individual[0]);
+//        apspecies[2] = new ApSpInfo("z", 4, new Individual[0]);
+//        LhoodMultreeTEST lhoodTEST = new LhoodMultreeTEST(1);
+//
+//        AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, lhoodTEST);
+//        AlloppMulLabTree testamlt = new AlloppMulLabTree(testASB, lhoodTEST);
+//        double  llhood = testamlt.testGeneTreeInMULTreeLogLikelihood();
+//        assertEquals(llhood, -13.562218135041552713, 1e-10);
+//        System.out.println(llhood);
+//    }
 
 
     /*   This R code produces -13.562218135041552713

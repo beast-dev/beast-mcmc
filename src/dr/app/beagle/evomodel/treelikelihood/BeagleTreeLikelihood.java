@@ -1316,7 +1316,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
 //            		, sequenceLength
             );
-            Alignment alignment = simulator.simulate(false);
+            Alignment alignment = simulator.simulate(false, false);
 
             BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 

@@ -33,7 +33,7 @@ public class ClockRateModelEditor {
 
 	// Settings
 	private OptionsPanel optionPanel;
-	private JComboBox<String> clockCombo;
+	private JComboBox clockCombo;
 	private RealNumberField[] clockParameterFields;
 	
 	// Buttons
@@ -54,7 +54,7 @@ public class ClockRateModelEditor {
 				+ (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 
-		clockCombo = new JComboBox<String>();
+		clockCombo = new JComboBox();
 		clockCombo.setOpaque(false);
 
 		for (String clockModel : PartitionData.clockModels) {

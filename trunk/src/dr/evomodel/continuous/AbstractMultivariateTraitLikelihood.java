@@ -385,7 +385,15 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (deltaParameter != null && treeModel.isExternal(node)) {
             length += deltaParameter.getParameterValue(0);
         }
+        //System.err.println("Node Number: " + node.getNumber());
 
+        //System.err.println("Trait value" + traitParameter.getParameterValue(0));
+        //System.err.println("Trait value" + traitParameter.getParameterValue(1));
+        // System.err.println("Trait value" + traitParameter.getParameterValue(2));
+        // System.err.println("Trait value" + traitParameter.getParameterValue(3));
+
+        // System.err.println("branch length: " + treeModel.getBranchLength(node));
+        // System.err.println("rate: " + branchRateModel.getBranchRate(treeModel,node));
         return length;
     }
 

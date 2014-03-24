@@ -124,7 +124,8 @@ public class MultivariateTraitUtils {
             for (int r = 0; r < branchCount; r++) {
                 if (r == tempNodeIndex) {
                     linCombMatrix[k][r] = tempScalar;
-                    tempScalar = tempScalar * (1 - treeModel.getBranchLength(tempNode) * trait.getTimeScaledSelection(tempNode));
+                    // tempScalar = tempScalar * (1 - treeModel.getBranchLength(tempNode) * trait.getTimeScaledSelection(tempNode));
+                    tempScalar = tempScalar * Math.exp(-trait.getTimeScaledSelection(tempNode));
                     tempNode = treeModel.getParent(tempNode);
                     tempNodeIndex = tempNode.getNumber();
                 } else {
@@ -147,10 +148,10 @@ public class MultivariateTraitUtils {
 
         for (int i = 0; i < tipCount; i++) {
             tempNode = myTreeModel.getExternalNode(i);
-            multiplierVect[i] = 1 - myTreeModel.getBranchLength(tempNode) * trait.getTimeScaledSelection(tempNode);
+            multiplierVect[i] = Math.exp(-trait.getTimeScaledSelection(tempNode));
             tempNode = myTreeModel.getParent(tempNode);
             while (!myTreeModel.isRoot(tempNode)) {
-                multiplierVect[i] = multiplierVect[i] * (1 - myTreeModel.getBranchLength(tempNode) * trait.getTimeScaledSelection(tempNode));
+                multiplierVect[i] = multiplierVect[i] * Math.exp(-trait.getTimeScaledSelection(tempNode));
                 tempNode = myTreeModel.getParent(tempNode);
             }
         }
@@ -225,11 +226,12 @@ public class MultivariateTraitUtils {
         for (int k = 0; k < branchCount; k++) {
             tempNode = myTreeModel.getNode(k);
             for (int t = 0; t < traitDim; t++) {
-                displacementMeans[k * traitDim + t] = trait.getTimeScaledSelection(tempNode) * myTreeModel.getBranchLength(tempNode) * trait.getOptimalValue(tempNode)[t];
+                displacementMeans[k * traitDim + t] = (1 - Math.exp(-trait.getTimeScaledSelection(tempNode))) * trait.getOptimalValue(tempNode)[t];
             }
         }
 
         //check this
+        //multiply linCombMatrix with displacement means
         for (int i = 0; i < nTaxa; i++) {
             for (int j = 0; j < branchCount; j++) {
                 for (int k = 0; k < traitDim; k++) {
@@ -358,7 +360,10 @@ public class MultivariateTraitUtils {
         tempMatrix = computeLinCombMatrix(trait);
 
         for (int i = 0; i < branchCount; i++) {
-            diagMatrix[i][i] = treeModel.getBranchLength(treeModel.getNode(i));
+            //  diagMatrix[i][i] = treeModel.getBranchLength(treeModel.getNode(i));
+            // diagMatrix[i][i] = (2*strengthOfSelection.getBranchRate(treeModel, node) ) / (1 - Math.exp(-2*getTimeScaledSelection(node)));
+            diagMatrix[i][i] = (1 - Math.exp(-2 * trait.getTimeScaledSelection(treeModel.getNode(i))))
+                    / (2 * trait.strengthOfSelection.getBranchRate(treeModel, treeModel.getNode(i)));
         }
 
 

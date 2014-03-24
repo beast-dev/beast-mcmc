@@ -1,7 +1,7 @@
 /*
  * StateHistory.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -237,6 +237,40 @@ public class StateHistory {
         // This function can produce inconsistent histories when not all changes are reported.
         isFiltered = true;
         return newHistory;
+    }
+
+    public double getLogLikelihood(final double[] infinitesimalRates, final int stateCount) {
+        checkFinalized(true);
+
+        // TODO This function needs testing
+        double logLikelihood = 0.0;
+        final int totalChanges = getNumberOfJumps();
+
+        int currentState = stateList.get(0).getState();
+        double currentTime = stateList.get(0).getTime();
+        for (int i = 1; i < totalChanges; ++i) {
+            int nextState = stateList.get(i).getState();
+            double nextTime = stateList.get(i).getTime();
+
+            // Exponential pdf and destination choice
+            logLikelihood += Math.log(infinitesimalRates[currentState * stateCount + nextState])
+                    + infinitesimalRates[currentState * stateCount + currentState] * (nextTime - currentTime);
+            // terms involving Math.log(\lambda_{ii}) cancel
+
+            currentState = nextState;
+            currentTime = nextTime;
+        }
+
+        final int lastState = stateList.get(stateList.size() - 1).getState();
+        final double lastTime = stateList.get(stateList.size() - 1).getTime();
+
+        assert (lastState == currentState);
+        assert (lastTime >= currentTime);
+
+        // No event in last interval
+        logLikelihood += infinitesimalRates[currentState * stateCount + currentState] * (lastTime - currentTime);
+
+        return logLikelihood;
     }
 
     public String toStringChanges(int site, DataType dataType) {

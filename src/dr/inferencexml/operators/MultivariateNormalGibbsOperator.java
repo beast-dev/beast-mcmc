@@ -8,6 +8,7 @@ import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
@@ -16,11 +17,7 @@ import dr.util.Attribute;
 import java.util.List;
 
 /**
- * Created with IntelliJ IDEA.
- * User: max
- * Date: 2/27/14
- * Time: 4:21 PM
- * To change this template use File | Settings | File Templates.
+@author Max Tolkoff
  */
 public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     private Matrix priorPrecision;
@@ -29,6 +26,7 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
     private Parameter likelihoodMean;
     private MultivariateDistributionLikelihood likelihood;
     private int dim;
+    public static final String MVN_GIBBS="multivariateNormalGibbsOperator";
 
 
     MultivariateNormalGibbsOperator(MultivariateDistributionLikelihood likelihood, MultivariateDistributionLikelihood prior, Double weight) throws IllegalDimension {
@@ -66,13 +64,25 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
                 answer[i]+=d.getAttributeValue()[i];
             }
         }
-//        System.err.print(answer[0]);
-//        System.err.print("\n");
+/*
+for(int i=0; i<dim; i++){
+System.err.print(answer[i]);
+System.err.print("\n");}
+*/
         return answer;}
 
     private Matrix getPrecision() throws IllegalDimension {
         Matrix currentPrecision=new Matrix(likelihoodPrecision.getParameterAsMatrix());
-        return priorPrecision.add(currentPrecision).inverse();
+        currentPrecision=currentPrecision.product(likelihood.getDataList().size());
+
+/*
+for(int i=0; i<currentPrecision.columns(); i++){
+for(int j=0; j<currentPrecision.rows(); j++){
+System.err.print(currentPrecision.toComponents()[i][j]);
+System.err.print(" ");}
+System.err.print("\n"); }
+*/
+        return priorPrecision.add(currentPrecision);
     }
 
     private Vector getMean() throws IllegalDimension {
@@ -80,12 +90,22 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
         Matrix workingPrecision=new Matrix(likelihoodPrecision.getParameterAsMatrix());
         Vector meanPart=workingPrecision.product(meanSum);
         meanPart=meanPart.add(priorPrecision.product(priorMean));
-        Matrix precisionPart=getPrecision();
+        Matrix varPart=getPrecision().inverse();
+        Vector answer=varPart.product(meanPart);
+/*
+for(int i=0; i<varPart.columns(); i++){
+for(int j=0; j<varPart.rows(); j++){
+System.err.print(varPart.toComponents()[i][j]);}
+System.err.print("\n"); }
+this.priorPrecision=new Matrix(prior.getDistribution().getScaleMatrix());
+System.err.print(answer.toComponents()[0]);
+System.err.print("\n");
+System.out.print(answer.toComponents()[0]);
+for(int i=0; i<answer.dimension(); i++){
+System.err.print(answer.toComponents()[i]);}
+System.err.print("\n");
+*/
 
-        Vector answer=precisionPart.product(meanPart);
-//        this.priorPrecision=new Matrix(prior.getDistribution().getScaleMatrix());
-
-//        System.out.print(answer.toComponents()[0]);
         return answer;
     }
 
@@ -99,7 +119,7 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
 
     @Override
     public String getOperatorName() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return MVN_GIBBS;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -110,12 +130,30 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
     @Override
     public double doOperation() throws OperatorFailedException{
         double[] draws=null;
+
+
+//        try {
+//            for(int i=0; i<getPrecision().columns(); i++){
+//            for(int j=0; j<getPrecision().rows(); j++){
+//            System.err.print(getPrecision().toComponents()[i][j]);
+//                System.err.print(", ");}}
+////            System.err.print(" ");}
+////            System.err.print("\n"); }
+//        } catch (IllegalDimension illegalDimension) {
+//            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//        }
+
+
+
         try {
             draws=MultivariateNormalDistribution.nextMultivariateNormalPrecision(getMean().toComponents(), getPrecision().toComponents());
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
 
+//        for(int i=0; i<dim; i++){
+//            System.err.print(draws[i]);
+//            System.err.print("\n");}
         setParameterValue(likelihoodMean, draws);
 
         return 0;  //To change body of implemented methods use File | Settings | File Templates.

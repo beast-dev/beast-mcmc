@@ -118,8 +118,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         outbreak = caseData;
 
-        Date lastSampleDate = getLatestTaxonDate();
-        estimatedLastSampleTime = lastSampleDate.getTimeValue();
+        estimatedLastSampleTime = getLatestTaxonTime();
 
         //map outbreak to tips
 
@@ -227,14 +226,14 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     /* Get the date of the last tip */
 
-    private Date getLatestTaxonDate(){
-        Date latestDate = new Date(new java.util.Date(-1000000), Units.Type.DAYS);
+    private double getLatestTaxonTime(){
+        double latestTime = -100000;
         for(AbstractCase thisCase : outbreak.getCases()){
-            if(thisCase.getExamDate().after(latestDate)){
-                latestDate = thisCase.getExamDate();
+            if(thisCase.getExamTime()>latestTime){
+                latestTime = thisCase.getExamTime();
             }
         }
-        return latestDate;
+        return latestTime;
     }
 
     private NodeRef[] getChildren(NodeRef node){
@@ -661,7 +660,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             AbstractCase parentCase = branchMap.get(treeModel.getParent(node).getNumber());
             if(childCase!=parentCase){
                 double infectionTime = infectionTimes[outbreak.getCaseIndex(childCase)];
-                if(infectionTime>parentCase.getCullDate().getTimeValue()
+                if(infectionTime>parentCase.getCullTime()
                         || hasLatentPeriods && infectionTime<infectiousTimes[outbreak.getCaseIndex(parentCase)]){
                     return false;
                 }

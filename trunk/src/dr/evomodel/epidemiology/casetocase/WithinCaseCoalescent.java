@@ -43,11 +43,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private Treelet[] storedPartitionsAsTrees;
     private DemographicModel demoModel;
 
-    private double infPeriodPosteriorMean;
-    private double infPeriodPosteriorVariance;
-
-    private double latPeriodPosteriorMean;
-    private double latPeriodPosteriorVariance;
 
     private double infectiousPeriodsLogLikelihood;
     private double storedInfectiousPeriodsLogLikelihood;
@@ -85,11 +80,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         storedPartitionsAsTrees = new Treelet[caseData.size()];
 
         prepareTree(startingNetworkFileName);
-
-        infPeriodPosteriorMean = 0;
-        infPeriodPosteriorVariance = 0;
-        latPeriodPosteriorMean = 0;
-        latPeriodPosteriorVariance = 0;
 
         prepareTimings();
     }
@@ -606,28 +596,16 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public LogColumn[] passColumns(){
         ArrayList<LogColumn> columns = new ArrayList<LogColumn>(Arrays.asList(super.passColumns()));
-        columns.add(new LogColumn.Abstract("Infectious_post_mean"){
-            protected String getFormattedValue() {
-                return String.valueOf(infPeriodPosteriorMean);
-            }
-        });
-        columns.add(new LogColumn.Abstract("Infectious_post_var"){
-            protected String getFormattedValue() {
-                return String.valueOf(infPeriodPosteriorVariance);
-            }
-        });
-        if(hasLatentPeriods){
-            columns.add(new LogColumn.Abstract("Latent_post_mean"){
-                protected String getFormattedValue() {
-                    return String.valueOf(latPeriodPosteriorMean);
-                }
-            });
-            columns.add(new LogColumn.Abstract("Latent_post_var"){
-                protected String getFormattedValue() {
-                    return String.valueOf(latPeriodPosteriorVariance);
-                }
-            });
+
+        for(AbstractPeriodPriorDistribution hyperprior : ((CategoryOutbreak)outbreak).getInfectiousMap().values()){
+            columns.addAll(Arrays.asList(hyperprior.getColumns()));
         }
+        if(hasLatentPeriods){
+            for(AbstractPeriodPriorDistribution hyperprior : ((CategoryOutbreak)outbreak).getLatentMap().values()){
+                columns.addAll(Arrays.asList(hyperprior.getColumns()));
+            }
+        }
+
         columns.add(new LogColumn.Abstract("inf_LL"){
             protected String getFormattedValue() {
                 return String.valueOf(infectiousPeriodsLogLikelihood);

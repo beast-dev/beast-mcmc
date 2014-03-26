@@ -3,14 +3,11 @@ package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.Units;
-import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.ProductStatistic;
 import dr.inference.model.Variable;
-import dr.math.RiemannApproximation;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -44,10 +41,10 @@ public class SimpleOutbreak extends AbstractOutbreak {
         this.cases.addAll(cases);
     }
 
-    private void addCase(String caseID, Date examDate, Date cullDate,
+    private void addCase(String caseID, double examTime, double cullTime,
                          ParametricDistributionModel infectiousPeriodDistribution, Parameter coords,
                          Taxa associatedTaxa){
-        SimpleCase thisCase = new SimpleCase(caseID, examDate, cullDate, infectiousPeriodDistribution, coords,
+        SimpleCase thisCase = new SimpleCase(caseID, examTime, cullTime, infectiousPeriodDistribution, coords,
                 associatedTaxa);
         cases.add(thisCase);
         addModel(thisCase);
@@ -128,35 +125,34 @@ public class SimpleOutbreak extends AbstractOutbreak {
         private ParametricDistributionModel infectiousPeriodDistribution;
 
 
-        private SimpleCase(String name, String caseID, Date examDate, Date cullDate,
+        private SimpleCase(String name, String caseID, double examTime, double cullTime,
                            ParametricDistributionModel infectiousPeriodDistribution, Parameter coords,
                            Taxa associatedTaxa){
             super(name);
             this.caseID = caseID;
-            this.examDate = examDate;
-            endOfInfectiousDate = cullDate;
+            this.examTime = examTime;
+            endOfInfectiousTime = cullTime;
             this.associatedTaxa = associatedTaxa;
             this.coords = coords;
             this.infectiousPeriodDistribution = infectiousPeriodDistribution;
             this.addModel(infectiousPeriodDistribution);
         }
 
-        private SimpleCase(String caseID, Date examDate, Date cullDate,
+        private SimpleCase(String caseID, double examTime, double cullTime,
                            ParametricDistributionModel infectiousPeriodDistribution, Parameter coords,
                            Taxa associatedTaxa){
-            this(SIMPLE_CASE, caseID, examDate, cullDate, infectiousPeriodDistribution, coords, associatedTaxa);
+            this(SIMPLE_CASE, caseID, examTime, cullTime, infectiousPeriodDistribution, coords, associatedTaxa);
         }
 
-        public Date getLatestPossibleInfectionDate() {
-            Double doubleDate = examDate.getTimeValue();
-            return Date.createTimeSinceOrigin(doubleDate, Units.Type.DAYS, examDate.getOrigin());
+        public double getLatestPossibleInfectionTime() {
+            return examTime;
         }
 
         public double infectedAt(double infected){
             if(examinedYet(infected)){
                 return 0;
             } else {
-                return infectiousPeriodDistribution.pdf(endOfInfectiousDate.getTimeValue()-infected);
+                return infectiousPeriodDistribution.pdf(endOfInfectiousTime-infected);
             }
         }
 
@@ -164,9 +160,9 @@ public class SimpleOutbreak extends AbstractOutbreak {
             if(examinedYet(start)){
                 return 0;
             } else {
-                double endPoint = end<endOfInfectiousDate.getTimeValue() ? end : endOfInfectiousDate.getTimeValue();
-                return infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-start)
-                        - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-endPoint);
+                double endPoint = end<endOfInfectiousTime ? end : endOfInfectiousTime;
+                return infectiousPeriodDistribution.cdf(endOfInfectiousTime-start)
+                        - infectiousPeriodDistribution.cdf(endOfInfectiousTime-endPoint);
             }
 
         }
@@ -175,7 +171,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
             if(examinedYet(time)){
                 return 1;
             } else {
-                return 1 - infectiousPeriodDistribution.cdf(endOfInfectiousDate.getTimeValue()-time);
+                return 1 - infectiousPeriodDistribution.cdf(endOfInfectiousTime-time);
             }
         }
 
@@ -184,11 +180,11 @@ public class SimpleOutbreak extends AbstractOutbreak {
         }
 
         public boolean culledYet(double time) {
-            return time>endOfInfectiousDate.getTimeValue();
+            return time>endOfInfectiousTime;
         }
 
         public boolean examinedYet(double time) {
-            return time>examDate.getTimeValue();
+            return time>examTime;
         }
 
         public double[] getCoords() {
@@ -229,8 +225,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
         //for the outbreak
 
         public static final String CASE_ID = "caseID";
-        public static final String CULL_DAY = "cullDay";
-        public static final String EXAMINATION_DAY = "examinationDay";
+        public static final String CULL_TIME = "cullTime";
+        public static final String EXAMINATION_TIME = "examinationTime";
         public static final String INFECTIOUS_PERIOD_DISTRIBUTION = "estimatedInfectionDate";
         public static final String COORDINATES = "coordinates";
 
@@ -251,8 +247,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
         public void parseCase(XMLObject xo, SimpleOutbreak outbreak)
                 throws XMLParseException {
             String farmID = (String) xo.getAttribute(CASE_ID);
-            final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
-            final Date examDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
+            final Double cullTime = (Double) xo.getAttribute(CULL_TIME);
+            final Double examTime = (Double) xo.getAttribute(EXAMINATION_TIME);
             final ParametricDistributionModel infDistribution
                     = (ParametricDistributionModel) xo.getElementFirstChild(INFECTIOUS_PERIOD_DISTRIBUTION);
             final Parameter coords = xo.hasChildNamed(COORDINATES) ?
@@ -263,7 +259,7 @@ public class SimpleOutbreak extends AbstractOutbreak {
                     taxa.addTaxon((Taxon)xo.getChild(i));
                 }
             }
-            outbreak.addCase(farmID, examDate, cullDate, infDistribution, coords, taxa);
+            outbreak.addCase(farmID, examTime, cullTime, infDistribution, coords, taxa);
         }
 
         public String getParserDescription(){
@@ -284,8 +280,8 @@ public class SimpleOutbreak extends AbstractOutbreak {
 
         private final XMLSyntaxRule[] caseRules = {
                 new StringAttributeRule(CASE_ID, "The unique identifier for this farm"),
-                new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
-                new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
+                AttributeRule.newDoubleRule(CULL_TIME, false, "The time this farm was culled"),
+                AttributeRule.newDoubleRule(EXAMINATION_TIME, false, "The date this farm was examined"),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
                 new ElementRule(INFECTIOUS_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The prior " +
                         "probability distribution of the time from infection to becoming noninfectious"),

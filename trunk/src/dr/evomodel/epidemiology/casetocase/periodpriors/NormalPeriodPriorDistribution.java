@@ -95,13 +95,13 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
 
         columns.add(new LogColumn.Abstract(getModelName()+"_posteriorMean"){
             protected String getFormattedValue() {
-                return String.valueOf(posteriorMean);
+                return String.valueOf(posteriorMean.getParameterValue(0));
             }
         });
 
         columns.add(new LogColumn.Abstract(getModelName()+"_posteriorBeta"){
             protected String getFormattedValue() {
-                return String.valueOf(posteriorBeta);
+                return String.valueOf(posteriorBeta.getParameterValue(0));
             }
         });
 

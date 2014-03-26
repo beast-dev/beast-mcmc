@@ -20,8 +20,8 @@ public abstract class AbstractCase extends AbstractModel {
 
     protected String caseID;
     protected Taxa associatedTaxa;
-    protected Date examDate;
-    protected Date endOfInfectiousDate;
+    protected double examTime;
+    protected double endOfInfectiousTime;
 
     public String getName(){
         return caseID;
@@ -31,20 +31,12 @@ public abstract class AbstractCase extends AbstractModel {
         return associatedTaxa;
     }
 
-    public Date getExamDate() {
-        return examDate;
-    }
-
     public double getExamTime() {
-        return examDate.getTimeValue();
-    }
-
-    public Date getCullDate(){
-        return endOfInfectiousDate;
+        return examTime;
     }
 
     public double getCullTime(){
-        return endOfInfectiousDate.getTimeValue();
+        return endOfInfectiousTime;
     }
 
     public abstract boolean culledYet(double time);

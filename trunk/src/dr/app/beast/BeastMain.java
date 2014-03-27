@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,7 +25,6 @@
 
 package dr.app.beast;
 
-import beagle.BeagleFactory;
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
 import dr.app.plugin.Plugin;
@@ -333,6 +332,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
+                        new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.IntegerOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
@@ -459,6 +459,7 @@ public class BeastMain {
                 arguments.hasOption("beagle_scaling") ||
                 arguments.hasOption("beagle_rescale") ||
                 arguments.hasOption("beagle_instances") ||
+                arguments.hasOption("beagle_async") ||
                 beagleShowInfo;
 
         if (arguments.hasOption("beagle_CPU")) {
@@ -481,6 +482,9 @@ public class BeastMain {
         }
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+        }
+        if (arguments.hasOption("beagle_async")) {
+            beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
         }
 
         if (arguments.hasOption("beagle_order")) {

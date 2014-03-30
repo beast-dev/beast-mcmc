@@ -39,7 +39,7 @@ public class AboutDialog extends JDialog {
 		  }
 */	
 	private static final int WIDTH = 700;
-	private static final int HEIGHT = 560;
+	private static final int HEIGHT = 600;
 	private static final int FONT_SIZE = 15;
 
 	private static final String FILIP_BIELEJEC = "Filip Bielejec";
@@ -139,13 +139,13 @@ public class AboutDialog extends JDialog {
 
 		add(Box.createRigidArea(new Dimension(0, 10)));
 
-		label = new JLabel("Computational and Evolutionary Virology");
+		label = new JLabel("Computational and Evolutionary Virology, KU Leuven");
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
 		label.setAlignmentX(0.5f);
 		add(label);
 
 		contact = new JLabel();
-		addres = "filip.bielejec@rega.kuleuven.be";
+		addres = "filip.bielejec(AT)rega.kuleuven.be";
 		contact.setText("<html><center><p><a href=\"mailto:" + addres + "\">"
 				+ addres + "</a></p></center></html>");
 		contact.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -156,6 +156,23 @@ public class AboutDialog extends JDialog {
 
 		add(Box.createRigidArea(new Dimension(0, 10)));
 
+		label = new JLabel("Departments of Biomathematics and Human Genetics, University of California, Los Angeles");
+		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
+		label.setAlignmentX(0.5f);
+		add(label);
+
+		contact = new JLabel();
+		addres = "msuchard(AT)ucla.edu";
+		contact.setText("<html><center><p><a href=\"mailto:" + addres + "\">"
+				+ addres + "</a></p></center></html>");
+		contact.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		contact.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
+		// contact.setAlignmentX(0.0f);
+		contact.addMouseListener(new ListenSendMail(addres));
+		add(contact);
+
+		add(Box.createRigidArea(new Dimension(0, 10)));
+		
 		label = new JLabel(
 				"Institute of Evolutionary Biology, University of Edinburgh");
 		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 3));
@@ -163,7 +180,7 @@ public class AboutDialog extends JDialog {
 		add(label);
 
 		contact = new JLabel();
-		addres = "a.rambaut@ed.ac.uk";
+		addres = "a.rambaut(AT)ed.ac.uk";
 		contact.setText("<html><p><a href=\"mailto:" + addres + "\">" + addres
 				+ "</a></p></html>");
 		contact.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

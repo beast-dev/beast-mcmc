@@ -89,8 +89,8 @@ public class Partition {
 	private LinkedHashMap<Taxon, int[]> alignmentMap;
 //	private LinkedHashMap<NodeRef, int[]> sequencesMap = new LinkedHashMap<NodeRef, int[]>();
 	private DataType dataType;
-	private boolean hasAncestralSequence = false;
-	private Sequence ancestralSequence = null;
+	private boolean hasRootSequence = false;
+	private Sequence rootSequence = null;
 	private boolean outputAncestralSequences = false;
 
 	// Random number generation
@@ -210,20 +210,20 @@ public class Partition {
 			int[] parentSequence = new int[partitionSiteCount];
 
 			// set ancestral sequence for partition if it exists
-			if (hasAncestralSequence) {
+			if (hasRootSequence) {
 
-				if (ancestralSequence.getLength() == partitionSiteCount) {
+				if (rootSequence.getLength() == partitionSiteCount) {
 
-					parentSequence = sequence2intArray(ancestralSequence);
+					parentSequence = sequence2intArray(rootSequence);
 
-				} else if (dataType instanceof Codons && ancestralSequence.getLength() == 3 * partitionSiteCount) {	
+				} else if (dataType instanceof Codons && rootSequence.getLength() == 3 * partitionSiteCount) {	
 					
-					parentSequence = sequence2intArray(ancestralSequence);
+					parentSequence = sequence2intArray(rootSequence);
 					
 				} else {
 
 					throw new RuntimeException("Ancestral sequence length of "
-							+ ancestralSequence.getLength()
+							+ rootSequence.getLength()
 							+ " does not match partition site count of "
 							+ partitionSiteCount + ".");
 
@@ -519,9 +519,9 @@ public class Partition {
 		this.partitionNumber = partitionNumber;
 	}
 
-	public void setAncestralSequence(Sequence ancestralSequence) {
-		this.ancestralSequence = ancestralSequence;
-		this.hasAncestralSequence = true;
+	public void setRootSequence(Sequence rootSequence) {
+		this.rootSequence = rootSequence;
+		this.hasRootSequence = true;
 	}// END: setAncestralSequence
 
 	public void setOutputAncestralSequences(boolean outputAncestralSequences) {
@@ -568,8 +568,8 @@ public class Partition {
 //		return sequencesMap;
 //	}
 	
-	public Sequence getAncestralSequence() {
-		return ancestralSequence;
+	public Sequence getRootSequence() {
+		return rootSequence;
 	}
 	
 	// ///////////////

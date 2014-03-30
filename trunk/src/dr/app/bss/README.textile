@@ -33,9 +33,8 @@ h1. CITING
    
 h1. TODO
 
-* annotate output tree (internal) nodes (separate trait element). Both newick and coalescent.
 * output type not updated after loading bussdata
 * tree/taxa not set in Partitions table after loading bussdata
+* simulating indels  
 * command line interface
   - complex argument for partitions 
-* simulating indels  

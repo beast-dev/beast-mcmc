@@ -101,7 +101,7 @@ public class BeagleSequenceSimulatorConsoleApp {
     private static final String TO = "to";
     private static final String EVERY = "every";
 
-    private static final String ANCESTRAL_SEQUENCE = "ancestralSequence";
+    private static final String ROOT_SEQUENCE = "rootSequence";
 
     public BeagleSequenceSimulatorConsoleApp() {
 
@@ -182,7 +182,7 @@ public class BeagleSequenceSimulatorConsoleApp {
                         new Arguments.RealArrayOption(NUCLEOTIDE_FREQUENCY_PARAMETER_VALUES, 4, "specify nucleotide frequency parameter values"),
                         new Arguments.RealArrayOption(CODON_FREQUENCY_PARAMETER_VALUES, 61, "specify codon frequency parameter values"),
 
-                        new Arguments.StringOption(ANCESTRAL_SEQUENCE, "ancestral sequence",
+                        new Arguments.StringOption(ROOT_SEQUENCE, "ancestral sequence",
                                 "specify ancestral sequence"),
 
                 });
@@ -533,10 +533,10 @@ public class BeagleSequenceSimulatorConsoleApp {
                         data.every // every
                 );
 
-                if (arguments.hasOption(ANCESTRAL_SEQUENCE)) {
+                if (arguments.hasOption(ROOT_SEQUENCE)) {
 
-                    data.ancestralSequenceString = arguments.getStringOption(ANCESTRAL_SEQUENCE);
-                    partition.setAncestralSequence(data.createAncestralSequence());
+                    data.ancestralSequenceString = arguments.getStringOption(ROOT_SEQUENCE);
+                    partition.setRootSequence(data.createAncestralSequence());
 
                 }// END: ANCESTRAL_SEQUENCE option check
 
@@ -707,7 +707,7 @@ public class BeagleSequenceSimulatorConsoleApp {
         System.out.println();
 
         System.out
-                .println("  Example: java -Djava.library.path=/usr/local/lib -jar buss.jar "
+                .println("  Example: java -Djava.library.path=/usr/local/lib -jar pibuss.jar "
                         + "-treeFile SimTree.figtree -from 1 -to 500 -every 1 -branchSubstitutionModel HKY -HKYsubstitutionParameterValues 1.0"
                         + " "
                         + SPLIT_PARTITION

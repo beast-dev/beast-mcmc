@@ -291,7 +291,7 @@ public class BeagleSeqSimTest {
 
 			Sequence ancestralSequence = new Sequence();
 			ancestralSequence.appendSequenceString("TCAAGTGAGG");
-			partition1.setAncestralSequence(ancestralSequence);
+			partition1.setRootSequence(ancestralSequence);
 
 			partitionsList.add(partition1);
 
@@ -373,7 +373,7 @@ public class BeagleSeqSimTest {
 
 			Sequence ancestralSequence = new Sequence();
 			ancestralSequence.appendSequenceString("TCAAGTG");
-			Partition.setAncestralSequence(ancestralSequence);
+			Partition.setRootSequence(ancestralSequence);
 
 			partitionsList.add(partition1);
 			partitionsList.add(Partition);

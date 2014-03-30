@@ -10,11 +10,12 @@ And constructed with the following guidelines:
   (and resets the patch)
 * Bug fixes and misc changes bumps the patch
 
-february 2014: PIBUSS version 1.3.5 release candidate
+February 2014: PIBUSS version 1.3.5
 ------------------------------------------------
 * Sequences in the alignment are now in the tree traversal order
 * Added MG94 codon model
 
-march 2014: PIBUSS version 1.3.6 release candidate
+April 2014: PIBUSS version 1.3.6 release candidate
 ------------------------------------------------
 * Option to output ancestral sequences
+* Starting sequence is now called root sequence to avoid confusion

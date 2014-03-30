@@ -124,18 +124,18 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
                 partition.to = siteCount - 1;
             }
 
-            if (partition.getAncestralSequence() != null) {
+            if (partition.getRootSequence() != null) {
 
-                if (partition.getAncestralSequence().getLength() != 3 * siteCount && partition.getFreqModel().getDataType() instanceof Codons) {
+                if (partition.getRootSequence().getLength() != 3 * siteCount && partition.getFreqModel().getDataType() instanceof Codons) {
 
-                    throw new RuntimeException("Ancestral codon sequence has "
-                            + partition.getAncestralSequence().getLength() + " characters "
+                    throw new RuntimeException("Root codon sequence has "
+                            + partition.getRootSequence().getLength() + " characters "
                             + "expecting " + 3 * siteCount + " characters");
 
-                } else if (partition.getAncestralSequence().getLength() != siteCount && partition.getFreqModel().getDataType() instanceof Nucleotides) {
+                } else if (partition.getRootSequence().getLength() != siteCount && partition.getFreqModel().getDataType() instanceof Nucleotides) {
 
-                    throw new RuntimeException("Ancestral nuleotide sequence has "
-                            + partition.getAncestralSequence().getLength() + " characters "
+                    throw new RuntimeException("Root nuleotide sequence has "
+                            + partition.getRootSequence().getLength() + " characters "
                             + "expecting " + siteCount + " characters");
 
                 }// END: dataType check

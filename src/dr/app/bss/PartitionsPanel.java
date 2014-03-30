@@ -151,7 +151,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
-		String toolTipText = "Leave this field empty to start from a random ancestral sequence.";
+		String toolTipText = "Leave this field empty to start from a random root sequence.";
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.ROOT_SEQUENCE_INDEX);
 		JTableButtonCellRenderer jTableButtonCellRenderer = new JTableButtonCellRenderer();

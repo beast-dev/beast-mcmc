@@ -238,7 +238,7 @@ private BeagleSequenceSimulator beagleSequenceSimulator;
                                 );
 
                                 if (data.ancestralSequenceString != null) {
-                                    partition.setAncestralSequence(data.createAncestralSequence());
+                                    partition.setRootSequence(data.createAncestralSequence());
                                 }
 
                                 partitionsList.add(partition);

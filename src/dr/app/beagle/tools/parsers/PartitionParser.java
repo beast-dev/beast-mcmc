@@ -105,7 +105,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 		
 		GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 		FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-		Sequence ancestralSequence = (Sequence) xo.getChild(Sequence.class);
+		Sequence rootSequence = (Sequence) xo.getChild(Sequence.class);
 		
 		BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 		if (rateModel == null) {
@@ -122,8 +122,8 @@ public class PartitionParser extends AbstractXMLObjectParser {
 		
 		Partition partition = new Partition(tree, branchModel, siteModel, rateModel, freqModel, from, to, every);
 
-		if (ancestralSequence != null) {
-				partition.setAncestralSequence(ancestralSequence);
+		if (rootSequence != null) {
+				partition.setRootSequence(rootSequence);
 		}// END: ancestralSequence check
 
 		return partition;

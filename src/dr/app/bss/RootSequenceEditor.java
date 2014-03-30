@@ -80,7 +80,7 @@ public class RootSequenceEditor {
 		optionPanel.removeAll();
 		
 		ancestralSequenceField.setText(dataList.get(row).ancestralSequenceString);
-		optionPanel.addComponents(new JLabel("Ancestral sequence:"),
+		optionPanel.addComponents(new JLabel("Root sequence:"),
 				ancestralSequenceField);
 
 		window.validate();

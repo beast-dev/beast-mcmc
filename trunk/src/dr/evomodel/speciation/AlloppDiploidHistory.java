@@ -14,8 +14,6 @@ import dr.math.MathUtils;
 import dr.util.AlloppMisc;
 import jebl.util.FixedBitSet;
 
-// AR - can't have dependencies between test.dr.* and dr.*
-//import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 /**
  * AlloppDiploidHistory represents part of the network before hybridizations.
@@ -33,7 +31,7 @@ import jebl.util.FixedBitSet;
  * tetraploid) occurs. The latter are in pairs and have times before present,
  * and I call them `hydridization tips' or `hyb-tips'. From the point of
  * view of a tetraploid tree these hyb-tips are feet at the ends of legs.
- * 
+ *
  * The purpose of this class is to represent the part of the network before
  * hybridizations (=`diploid history') in a form (the array of DipHistNode's)
  * that can be subjected to Mau-type moves.
@@ -310,7 +308,7 @@ public class AlloppDiploidHistory implements SlidableTree {
             dhnodes[nextn].height = tettipsheight;
             tojoin.add(new JoiningNode(nextn, false));
             nextn ++;
-            }
+        }
 
         // build the tree from tips, taking care not to join the last diploids before all tets used up
         for (int i = 0; i < ntips-1; i++) {

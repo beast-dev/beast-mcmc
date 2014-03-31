@@ -17,13 +17,14 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.util.AlloppMisc;
-// AR - can't have dependencies between test.dr.* and dr.*
-//import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
+
+
+
 
 
 /**
- * An AlloppMulLabTree represents the species network as single 
- * binary tree with tips that can be multiply labelled with species. 
+ * An AlloppMulLabTree represents the species network as single
+ * binary tree with tips that can be multiply labelled with species.
  *
  * @author Graham Jones
  *         Date: 13/09/2011
@@ -31,31 +32,31 @@ import dr.util.AlloppMisc;
 
 
 /*
- * An AlloppMulLabTree represents the species network as single 
- * binary tree with tips that can be multiply labelled with species. 
- * 
+ * An AlloppMulLabTree represents the species network as single
+ * binary tree with tips that can be multiply labelled with species.
+ *
  * classes LegLink and FootLinks are for gathering and organising
- * the links between trees of different ploidy, so that the 
+ * the links between trees of different ploidy, so that the
  * rootward-pointing legs can become tipward-pointing branches.
- * 
- * SpSqUnion is used for sorting the nodes in an AlloppMulLabTree. It is 
+ *
+ * SpSqUnion is used for sorting the nodes in an AlloppMulLabTree. It is
  * used by Comparator SPUNION_ORDER, and hence indirectly by
  * fillinpopvals().
- * 
+ *
  * class BranchPopulationAndLineages records the information needed
  * to calculate the probability of coalescences in a single branch of the
  * AlloppMulLabTree.
- * 
+ *
  */
 
 
 /* mlnodes[], rootn implement the tree; nextn is for building it
- * 
+ *
  * apsp references the (species, indivs, sequences) structure.
- * 
+ *
  * popvals references the population parameters. fillinpopvals() assigns
  * them to branches.
- * 
+ *
  * simptree is so that AlloppSpeciesNetworkModel, which contains a AlloppMulLabTree,
  * can implement the Tree interface.
  */
@@ -333,12 +334,13 @@ public class AlloppMulLabTree  {
 
 
 
-    /*
+
     // constructor for testing conversion of diploid history plus tetraploid trees to MUL-tree
     public AlloppMulLabTree(AlloppDiploidHistory adhist, ArrayList<AlloppLeggedTree> tettrees, AlloppSpeciesBindings apsp,
-                            Parameter testtippopvalues, Parameter testrootpopvalues, double [] testhybpopvalues,
-                            AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
+                            Parameter testtippopvalues, Parameter testrootpopvalues, double [] testhybpopvalues, int testcase) {
         this(adhist, tettrees, apsp, testtippopvalues, testrootpopvalues, testhybpopvalues);
+        assert testcase >= 1;
+        assert testcase <= 5;
         fillinpopvals();
     }
 
@@ -346,26 +348,18 @@ public class AlloppMulLabTree  {
     // constructor for testing likelihood calculations.
     // Makes a particular multree with nlineages, coalheights so test can call
     // geneTreeInMULTreeLogLikelihood()
-    public AlloppMulLabTree(AlloppSpeciesBindings apsp, AlloppSpeciesNetworkModelTEST.LhoodMultreeTEST lhoodTEST) {
+    public AlloppMulLabTree(AlloppSpeciesBindings apsp) {
         this.apsp = apsp;
-        switch (lhoodTEST.testcase) {
-            case 1:
-                nofhybpopvals = 1;
-                tippopvals = new Parameter.Default(3, .003);
-                rootpopvals = new Parameter.Default(4, .001);
-                hybpopvals = new double[1];
-                hybpopvals[0] = .001;
-                fillmlnodesforlhoodtest1();
-                fillinTetraFlagsInSubtree(mlnodes[rootn]);
-                mlnodes[rootn].fillinUnionsInSubtree(4);
-                break;
-
-            default:
-                assert false;
-
-        }
+        nofhybpopvals = 1;
+        tippopvals = new Parameter.Default(3, .003);
+        rootpopvals = new Parameter.Default(4, .001);
+        hybpopvals = new double[1];
+        hybpopvals[0] = .001;
+        fillmlnodesforlhoodtest1();
+        fillinTetraFlagsInSubtree(mlnodes[rootn]);
+        mlnodes[rootn].fillinUnionsInSubtree(4);
     }
-    */
+
 
     public double testGeneTreeInMULTreeLogLikelihood() {
         return geneTreeInMULTreeLogLikelihood();

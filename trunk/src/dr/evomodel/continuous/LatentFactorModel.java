@@ -46,7 +46,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private Matrix residual;
 
-    private final MatrixParameter data;
+    private final Parameter data;
     private final CompoundParameter factors;
     private final MatrixParameter loadings;
     private final MatrixParameter precision;
@@ -58,7 +58,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
-    public LatentFactorModel(MatrixParameter data, CompoundParameter factors, MatrixParameter loadings,
+    public LatentFactorModel(Parameter data, CompoundParameter factors, MatrixParameter loadings,
                              MatrixParameter precision,
                              int numFactors) {
         super("");
@@ -75,8 +75,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         addVariable(loadings);
 
         dimFactors = numFactors;
-        nTaxa = data.getColumnDimension();
-        dimData = data.getRowDimension();
+        nTaxa = loadings.getColumnDimension();
+        dimData = factors.getDimension();
 
         // TODO Check dimensions of loadings (dimFactors x dimData)
         // TODO dimData >= dimFactors
@@ -111,9 +111,21 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private void computeResiduals() {
+        Parameter[] dataTemp=new Parameter[nTaxa];
+        for(int i=0; i<nTaxa; i++)
+        {
+            dataTemp[i] = new Parameter.Default(dimData);
+            for(int j=0; j<dimData; j++)
+            {
+                dataTemp[i].setParameterValue(j, data.getParameterValue(i*dimData+j));
+            }
+
+        }
+        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
+
 
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
-        Matrix tData = new Matrix(data.getParameterAsMatrix());
+        Matrix tData = new Matrix(dataMatrix.getParameterAsMatrix());
         Matrix tFactors = copy(factors, nTaxa, dimFactors);
         try {
             residual = tData.subtract(tFactors.product(tLoadings).transpose());

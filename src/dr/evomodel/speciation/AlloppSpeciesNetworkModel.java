@@ -35,29 +35,29 @@ import java.util.logging.Logger;
 
 /*
  * class AlloppSpeciesNetworkModel
- * 
+ *
  * Implements the species network as a collection of `trees with legs'.
- * and converts this representation into a multiply labelled 
+ * and converts this representation into a multiply labelled
  * binary tree.
- * 
+ *
  * General idea is that the network is easiest to change (eg detach
  * and re-attach tetraploid subtrees) while likelihood calculations
  * are easiest to do in the multiply labelled tree.
- * 
- * The individual `trees with legs' are implemented by AlloppLeggedTree's. 
+ *
+ * The individual `trees with legs' are implemented by AlloppLeggedTree's.
  * The multiply labelled binary tree is implemented by AlloppMulLabTree.
- * 
+ *
  * *********************
- * 
- * apsp is a reference to the AlloppSpeciesBindings which knows how 
+ *
+ * apsp is a reference to the AlloppSpeciesBindings which knows how
  * species are made of individuals and individuals are made of taxa,
  * and which contains the list of gene trees.
- * 
+ *
  * trees[][] represents the network as a set of homoploid trees
- * 
+ *
  * mullabtree represents the network as single tree with tips that
- * can be multiply labelled with species. 
- * 
+ * can be multiply labelled with species.
+ *
  */
 //  grjtodo-oneday JH's SpeciesTreeModel implements
 // MutableTree, TreeTraitProvider, TreeLogger.LogUpon, Scalable
@@ -702,7 +702,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 
     /*
-	 * Make a random initial starting network. 
+	 * Make a random initial starting network.
 	 */
     private void makeInitialNDipsNTetsNetwork(Taxon[] dipspp, Taxon[] tetspp) {
         //
@@ -1036,11 +1036,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     // it just signals that this is indeed a test.
 
 
-    /*
-    AR - removing this as it creates a dependency to test.dr.* which is bad...
 
-    public String testExampleNetworkToMulLabTree(
-            AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
+    //AR - removing this as it creates a dependency to test.dr.* which is bad...
+
+    public String testExampleNetworkToMulLabTree(int testcase) {
 
         int ntaxa = apsp.numberOfSpecies();
         Taxon[] spp = new Taxon[ntaxa];
@@ -1060,7 +1059,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         // case 5. three tettrees, 1+1+1, one of each type of feet, as in cases 1-3
 
         int ntettrees = 0;
-        switch (nmltTEST.testcase) {
+        switch (testcase) {
             case 1:
             case 2:
             case 3:
@@ -1088,33 +1087,33 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         Taxon[] tets2 = {spp[2]};
         Taxon[] tets3 = {spp[3]};
         Taxon[] dips = new Taxon[0];
-        switch (nmltTEST.testcase) {
+        switch (testcase) {
             case 1:
-                tettrees.add(new AlloppLeggedTree(tets123, nmltTEST));
+                tettrees.add(new AlloppLeggedTree(tets123));
                 tetheight0 = tettrees.get(0).getRootHeight();
                 dips = new Taxon[] {spp[0], l0, r0, spp[4]};
                 break;
             case 2:
-                tettrees.add(new AlloppLeggedTree(tets123, nmltTEST));
+                tettrees.add(new AlloppLeggedTree(tets123));
                 tetheight0 = tettrees.get(0).getRootHeight();
                 dips = new Taxon[] {spp[0], l0, r0, spp[4]};
                 break;
             case 3:
-                tettrees.add(new AlloppLeggedTree(tets123, nmltTEST));
+                tettrees.add(new AlloppLeggedTree(tets123));
                 tetheight0 = tettrees.get(0).getRootHeight();
                 dips = new Taxon[] {spp[0], l0, r0, spp[4]};
                 break;
             case 4:
-                tettrees.add(new AlloppLeggedTree(tets12, nmltTEST));
-                tettrees.add(new AlloppLeggedTree(tets3, nmltTEST));
+                tettrees.add(new AlloppLeggedTree(tets12));
+                tettrees.add(new AlloppLeggedTree(tets3));
                 tetheight0 = tettrees.get(0).getRootHeight();
                 tetheight1 = tettrees.get(1).getRootHeight();
                 dips = new Taxon[] {spp[0], l0, r0, l1, r1, spp[4]};
                 break;
             case 5:
-                tettrees.add(new AlloppLeggedTree(tets1, nmltTEST));
-                tettrees.add(new AlloppLeggedTree(tets2, nmltTEST));
-                tettrees.add(new AlloppLeggedTree(tets3, nmltTEST));
+                tettrees.add(new AlloppLeggedTree(tets1));
+                tettrees.add(new AlloppLeggedTree(tets2));
+                tettrees.add(new AlloppLeggedTree(tets3));
                 tetheight0 = tettrees.get(0).getRootHeight();
                 tetheight1 = tettrees.get(1).getRootHeight();
                 tetheight2 = tettrees.get(2).getRootHeight();
@@ -1133,7 +1132,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
             }
         }
         int dhroot = -1;
-        switch (nmltTEST.testcase) {
+        switch (testcase) {
             case 1:
                 dhnodes[1].setHeight(tetheight0 + 1.0);
                 dhnodes[2].setHeight(tetheight0 + 1.0);
@@ -1187,7 +1186,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
                 dhroot = 14;
                 break;
         }
-        AlloppDiploidHistory adhist = new AlloppDiploidHistory(dhnodes, dhroot, tettrees, true, apsp, nmltTEST);
+        AlloppDiploidHistory adhist = new AlloppDiploidHistory(dhnodes, dhroot, tettrees, true, apsp);
         int ntippopparams = numberOfTipPopParameters();
         int nrootpopparams = numberOfRootPopParameters();
         int maxnhybpopparams = maxNumberOfHybPopParameters();
@@ -1204,12 +1203,12 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
             testhybpopvalues[pp] = 3000+pp;
         }
         AlloppMulLabTree testmullabtree = new AlloppMulLabTree(adhist, tettrees, apsp,
-                testtippopvalues, testrootpopvalues, testhybpopvalues, nmltTEST);
+                testtippopvalues, testrootpopvalues, testhybpopvalues);
         System.out.println(testmullabtree.asText());
         String newick = testmullabtree.mullabTreeAsNewick();
         return newick;
     }
-    */
+
 
     // for test cases
     void addSimpleNodeChildren(SimpleNode anc,  SimpleNode lch, SimpleNode rch, double minlen) {

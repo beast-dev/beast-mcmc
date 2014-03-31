@@ -8,8 +8,6 @@ import java.util.Stack;
 
 import dr.util.AlloppMisc;
 import jebl.util.FixedBitSet;
-// AR - can't have dependencies between test.dr.* and dr.*
-//import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SlidableTree;
@@ -236,29 +234,29 @@ public class AlloppLeggedTree implements  SlidableTree  {
         for (int i = 0; i < altnodes.length; i++) {
             altnodes[i] = new ALTNode(i);
         }
-    	ArrayList<Integer> tojoin = new ArrayList<Integer>(noftets);
-    	for (int n = 0; n < noftets; n++) {
-    		altnodes[n].setTaxon(taxa[n].getId());
-    		altnodes[n].setHeight(0.0);
-    		tojoin.add(n);
-    	}
-    	double treeheight = 0.0;
-    	for (int i = 0; i < noftets-1; i++) {
-    		int numtojoin = tojoin.size();
-    		int j = MathUtils.nextInt(numtojoin);
-    		Integer child0 = tojoin.get(j);
-    		tojoin.remove(j);
-    		int k = MathUtils.nextInt(numtojoin-1);
-    		Integer child1 = tojoin.get(k);
-    		tojoin.remove(k);
-    		altnodes[noftets+i].addChildren(altnodes[child0], altnodes[child1]);
-    		altnodes[noftets+i].setHeight(treeheight + randomnodeheight(numtojoin*rate));
-    		treeheight = altnodes[noftets+i].getHeight();
-    		tojoin.add(noftets+i);
-    	}
+        ArrayList<Integer> tojoin = new ArrayList<Integer>(noftets);
+        for (int n = 0; n < noftets; n++) {
+            altnodes[n].setTaxon(taxa[n].getId());
+            altnodes[n].setHeight(0.0);
+            tojoin.add(n);
+        }
+        double treeheight = 0.0;
+        for (int i = 0; i < noftets-1; i++) {
+            int numtojoin = tojoin.size();
+            int j = MathUtils.nextInt(numtojoin);
+            Integer child0 = tojoin.get(j);
+            tojoin.remove(j);
+            int k = MathUtils.nextInt(numtojoin-1);
+            Integer child1 = tojoin.get(k);
+            tojoin.remove(k);
+            altnodes[noftets+i].addChildren(altnodes[child0], altnodes[child1]);
+            altnodes[noftets+i].setHeight(treeheight + randomnodeheight(numtojoin*rate));
+            treeheight = altnodes[noftets+i].getHeight();
+            tojoin.add(noftets+i);
+        }
         diphistlftleg = -1;
         diphistrgtleg = -1;
-    	rootn = altnodes.length - 1;
+        rootn = altnodes.length - 1;
     }
 
 
@@ -317,43 +315,43 @@ public class AlloppLeggedTree implements  SlidableTree  {
     /*
     * Constructor for testing.
     */
-     public AlloppLeggedTree(Taxon[] taxa) {
-         int nTaxa = taxa.length;
-         assert(nTaxa <= 4);
-         int nNodes = 2 * nTaxa - 1;
-         altnodes = new ALTNode[nNodes];
-         for (int n = 0; n < nNodes; n++) {
-             altnodes[n] = new ALTNode(n);
-         }
+    public AlloppLeggedTree(Taxon[] taxa) {
+        int nTaxa = taxa.length;
+        assert(nTaxa <= 4);
+        int nNodes = 2 * nTaxa - 1;
+        altnodes = new ALTNode[nNodes];
+        for (int n = 0; n < nNodes; n++) {
+            altnodes[n] = new ALTNode(n);
+        }
 
-         for (int t = 0; t<nTaxa; t++) {
-             altnodes[t].setTaxon(taxa[t].getId());
-             altnodes[t].setHeight(0.0);
-         }
-         if (nTaxa == 2) {
-         altnodes[2].setHeight(1.0);
-         altnodes[2].addChildren(altnodes[0], altnodes[1]);
-         }
-         if (nTaxa == 3) {
-             altnodes[3].setHeight(altnodes[0].getHeight() + 1.0);
-             altnodes[3].addChildren(altnodes[0], altnodes[1]);
-             altnodes[4].setHeight(altnodes[3].getHeight() + 1.0);
-             altnodes[4].addChildren(altnodes[2], altnodes[3]);
-         }
-         if (nTaxa == 4) {
-             altnodes[4].setHeight(altnodes[0].getHeight() + 1.0);
-             altnodes[4].addChildren(altnodes[0], altnodes[1]);
-             altnodes[5].setHeight(altnodes[4].getHeight() + 1.0);
-             altnodes[5].addChildren(altnodes[2], altnodes[4]);
-             altnodes[6].setHeight(altnodes[5].getHeight() + 1.0);
-             altnodes[6].addChildren(altnodes[3], altnodes[5]);
-         }
-         rootn = altnodes.length - 1;
-     }
+        for (int t = 0; t<nTaxa; t++) {
+            altnodes[t].setTaxon(taxa[t].getId());
+            altnodes[t].setHeight(0.0);
+        }
+        if (nTaxa == 2) {
+            altnodes[2].setHeight(1.0);
+            altnodes[2].addChildren(altnodes[0], altnodes[1]);
+        }
+        if (nTaxa == 3) {
+            altnodes[3].setHeight(altnodes[0].getHeight() + 1.0);
+            altnodes[3].addChildren(altnodes[0], altnodes[1]);
+            altnodes[4].setHeight(altnodes[3].getHeight() + 1.0);
+            altnodes[4].addChildren(altnodes[2], altnodes[3]);
+        }
+        if (nTaxa == 4) {
+            altnodes[4].setHeight(altnodes[0].getHeight() + 1.0);
+            altnodes[4].addChildren(altnodes[0], altnodes[1]);
+            altnodes[5].setHeight(altnodes[4].getHeight() + 1.0);
+            altnodes[5].addChildren(altnodes[2], altnodes[4]);
+            altnodes[6].setHeight(altnodes[5].getHeight() + 1.0);
+            altnodes[6].addChildren(altnodes[3], altnodes[5]);
+        }
+        rootn = altnodes.length - 1;
+    }
 
 
 
- // SlidableTree implementation
+    // SlidableTree implementation
 
     @Override
     public NodeRef getSlidableRoot() {
@@ -499,16 +497,16 @@ public class AlloppLeggedTree implements  SlidableTree  {
 
 
 
-     public int scaleAllHeights(double scale) {
-     	int count = 0;
-     	for (int n = 0; n < altnodes.length; n++) {
-             if (altnodes[n].nofChildren() > 0) {
-                 altnodes[n].height *= scale;
-                 count++;
-             }
-     	}
-     	return count;
-     }
+    public int scaleAllHeights(double scale) {
+        int count = 0;
+        for (int n = 0; n < altnodes.length; n++) {
+            if (altnodes[n].nofChildren() > 0) {
+                altnodes[n].height *= scale;
+                count++;
+            }
+        }
+        return count;
+    }
 
 
     public ArrayList<Taxon> getSpeciesTaxons() {
@@ -534,9 +532,9 @@ public class AlloppLeggedTree implements  SlidableTree  {
         }
     }
 
-     public double getRootHeight() {
-    	 return altnodes[rootn].height;
-     }
+    public double getRootHeight() {
+        return altnodes[rootn].height;
+    }
 
 
 
@@ -615,8 +613,8 @@ public class AlloppLeggedTree implements  SlidableTree  {
 
 
     private double randomnodeheight(double rate) {
-    	return MathUtils.nextExponential(rate) + 1e-6/rate;
-    	// 1e-6/rate to avoid very tiny heights
+        return MathUtils.nextExponential(rate) + 1e-6/rate;
+        // 1e-6/rate to avoid very tiny heights
     }
 
 

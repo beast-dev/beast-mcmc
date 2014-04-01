@@ -138,7 +138,11 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                 + Citable.Utils.getCitationString(this));
     }
 
-    private double getModelRateScalar(int model) {
+    public int getNumBaseModel() {
+        return numBaseModel;
+    }
+
+    public double getModelRateScalar(int model) {
         if (gammaRateModel != null) {
 //            System.err.println("M" + model + " = " + gammaRateModel.getRateForCategory(model));
             return gammaRateModel.getRateForCategory(model);
@@ -254,6 +258,8 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         if (variable == switchingRates || variable == rateScalar) {
             // Update rates
             updateMatrix = true;
+            if (variable == rateScalar)
+                fireModelChanged(); // TODO Determine if necessary for ExposeRateCategoriesWrapper
         }
         // else do nothing, action taken care of at individual base models
     }
@@ -265,21 +271,19 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             columns.add(parentColumn);
         }
 
-        if (gammaRateModel != null) {
-            for (int i = 0; i < gammaRateModel.getCategoryCount(); ++i) {
-                String label = "rateScalar." + i;
-                columns.add(new GammaRateColumn(label, i));
-            }
+        for (int i = 0; i < numBaseModel; ++i) {
+            String label = "rateScalar." + i;
+            columns.add(new RateColumn(label, i));
         }
 
         return columns.toArray(new LogColumn[0]);
     }
 
-    private class GammaRateColumn extends NumberColumn {
+    private class RateColumn extends NumberColumn {
 
         private final int index;
 
-        public GammaRateColumn(String label, int index) {
+        public RateColumn(String label, int index) {
             super(label);
             this.index = index;
         }
@@ -289,7 +293,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
          */
         @Override
         public double getDoubleValue() {
-            return gammaRateModel.getRateForCategory(index);
+            return getModelRateScalar(index);
         }
     }
 }

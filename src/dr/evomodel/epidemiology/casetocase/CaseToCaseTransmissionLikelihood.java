@@ -25,15 +25,7 @@ import java.util.*;
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
 
-
-    private static final boolean COERCE = false;
     private static final boolean DEBUG = false;
-    private static final double INTEGRAL_APPROXIMATION_TOLERANCE = 1;
-    private static final int RETEST_INTEGRAL = 1000;
-    private static final int FULL_EVALUATION = 10000;
-    private static final int MAX_STEPS=10;
-    private static final int MIN_STEPS=5;
-    private int mcmcState = -1;
 
     private AbstractOutbreak outbreak;
     private CaseToCaseTreeLikelihood treeLikelihood;
@@ -46,6 +38,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private boolean storedTransProbKnown;
     private boolean normalisationKnown;
     private boolean storedNormalisationKnown;
+    private boolean geographyProbKnown;
+    private boolean storedGeographyProbKnown;
     private boolean treeProbKnown;
     private boolean storedTreeProbKnown;
     private double logLikelihood;
@@ -54,16 +48,16 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double storedTransLogProb;
     private double normalisation;
     private double storedNormalisation;
+    private double geographyLogProb;
+    private double storedGeographyLogProb;
     private double treeLogProb;
     private double storedTreeLogProb;
     private final boolean hasGeography;
-    private final BespokeNumericalIntegrator integrator;
+    private final LogSpaceRiemannApproximation integrator;
     private ArrayList<AbstractCase> sortedCases;
     private ArrayList<AbstractCase> storedSortedCases;
     private TotalProbability totalProbability;
 
-    private int integratorSteps;
-    private int storedIntegratorSteps;
 
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
@@ -76,9 +70,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.spatialKernel = spatialKernal;
         if(spatialKernal!=null){
             kernelAlpha = spatialKernal.geta();
-            if(kernelAlpha.getBounds().getUpperLimit(0)==Double.POSITIVE_INFINITY){
-                throw new RuntimeException("Infinite upper limits for kernel parameters not implemeted yet");
-            }
             this.addModel(spatialKernal);
         }
         this.transmissionRate = transmissionRate;
@@ -88,8 +79,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
         likelihoodKnown = false;
-        this.integratorSteps = steps;
-        integrator = new BespokeNumericalIntegrator(integratorSteps);
+        integrator = new LogSpaceRiemannApproximation(steps);
         hasGeography = spatialKernal!=null;
         totalProbability = new TotalProbability(hasGeography);
         sortCases();
@@ -102,15 +92,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(!(object instanceof AbstractOutbreak)){
                 transProbKnown = false;
                 normalisationKnown = false;
+                geographyProbKnown = false;
                 sortedCases = null;
             }
         } else if(model instanceof SpatialKernel){
             transProbKnown = false;
 
-            // because of the way the numerical integrator works currently, changing the parameter does change
-            // the normalisation
-
             normalisationKnown = false;
+
+            geographyProbKnown = false;
         }
         likelihoodKnown = false;
     }
@@ -121,21 +111,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         if(variable==transmissionRate){
             transProbKnown = false;
 
-            // because of the way the numerical integrator works currently, changing the parameter does change
-            // the normalisation
-
             normalisationKnown = false;
         }
         likelihoodKnown = false;
     }
 
     protected void storeState() {
-        // I apologise for this horrible hack. The number of times storeState() is has been called, minus one, is
-        // the current state number of the chain, and the dynamic monitoring of the numerical integrator performance
-        // needs to know the current state number
-        mcmcState++;
-
-
         storedLogLikelihood = logLikelihood;
         storedLikelihoodKnown = likelihoodKnown;
         storedNormalisation = normalisation;
@@ -144,7 +125,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         storedTransProbKnown = transProbKnown;
         storedTreeLogProb = treeLogProb;
         storedTreeProbKnown = treeProbKnown;
-        storedIntegratorSteps = integrator.steps;
+        storedGeographyLogProb = geographyLogProb;
+        storedGeographyProbKnown = geographyProbKnown;
         storedSortedCases = new ArrayList<AbstractCase>(sortedCases);
     }
 
@@ -157,7 +139,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         treeProbKnown = storedTreeProbKnown;
         normalisation = storedNormalisation;
         normalisationKnown = storedNormalisationKnown;
-        integrator.steps = storedIntegratorSteps;
+        geographyLogProb = storedGeographyLogProb;
+        geographyProbKnown = storedGeographyProbKnown;
         sortedCases = storedSortedCases;
     }
 
@@ -173,102 +156,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return treeLikelihood;
     }
 
-    public void setIntegratorSteps(int steps){
-        integrator.steps = steps;
-    }
-
-    private void testLoop(int gridSize, int maxSamples) throws IOException{
-        BufferedWriter writer = new BufferedWriter(new FileWriter("forgraph.csv"));
-
-        double[] steps = new double[2];
-        steps[0] = (transmissionRate.getBounds().getUpperLimit(0)-  transmissionRate.getBounds().getLowerLimit(0))
-                /gridSize;
-        steps[1] = (spatialKernel.geta().getBounds().getUpperLimit(0)-spatialKernel.geta().getBounds().getLowerLimit(0))
-                /gridSize;
-
-        writer.write(",");
-        for(int i=0; i<=gridSize; i++){
-            writer.write(Double.toString(i*steps[1]));
-            if(i<gridSize){
-                writer.write(",");
-            }
-        }
-        writer.newLine();
-
-        for(int i=0; i<=gridSize; i++){
-            writer.write(Double.toString(i*steps[0])+",");
-            for(int j=0; j<=gridSize; j++){
-                writer.write(Double.toString(totalProbability.evaluate(new double[]
-                        {i*steps[0], j*steps[1]})));
-                if(j<gridSize){
-                    writer.write(",");
-                }
-            }
-            writer.newLine();
-        }
-
-        writer.flush();
-        writer.close();
-
-
-        BufferedWriter writer2 = new BufferedWriter(new FileWriter("MCvartest2.csv"));
-
-        double[] values2 = new double[maxSamples];
-
-        for(int i=0; i<maxSamples; i++){
-            setIntegratorSteps(i+1);
-
-            if(hasGeography){
-
-                double expnormalisation = integrator.integrate(totalProbability,
-                        new double[]{transmissionRate.getBounds().getLowerLimit(0),
-                                spatialKernel.geta().getBounds().getLowerLimit(0)},
-                        new double[]{transmissionRate.getBounds().getUpperLimit(0),
-                                spatialKernel.geta().getBounds().getUpperLimit(0)});
-
-                values2[i] = Math.log(expnormalisation);
-
-            } else {
-
-                double expnormalisation = integrator.integrate(totalProbability,
-                        new double[]{transmissionRate.getBounds().getLowerLimit(0)},
-                        new double[]{transmissionRate.getBounds().getUpperLimit(0)});
-
-                values2[i] = Math.log(expnormalisation);
-            }
-
-
-
-        }
-
-        for(int i=1; i<=maxSamples; i++){
-            writer2.write(Integer.toString(i));
-            if(i<maxSamples){
-                writer2.write(",");
-            }
-        }
-        writer2.newLine();
-
-
-        for(int j=0; j<maxSamples; j++){
-            writer2.write(Double.toString(values2[j]));
-            if(j<maxSamples){
-                writer2.write(",");
-            }
-        }
-        writer2.newLine();
-
-
-        writer2.flush();
-        writer2.close();
-
-    }
-
     public double getLogLikelihood() {
-
-//        if(DEBUG){
-//            treeLikelihood.debugOutputTree("test.nex", false);
-//        }
 
         if(!likelihoodKnown){
             if(!treeProbKnown){
@@ -276,15 +164,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
             if(!transProbKnown){
                 try{
-                    if(hasGeography){
-                        double[] point = {transmissionRate.getParameterValue(0),
-                                spatialKernel.geta().getParameterValue(0)};
-
-                        transLogProb = totalProbability.logEvaluate(point);
-                    } else {
-                        transLogProb = Math.log(totalProbability.evaluate(new double[]
-                                {transmissionRate.getParameterValue(0)}));
-                    }
+                    transLogProb = totalProbability.logEvaluate(transmissionRate.getParameterValue(0));
                 } catch(BadPartitionException e){
                     transLogProb = Double.NEGATIVE_INFINITY;
                     logLikelihood = Double.NEGATIVE_INFINITY;
@@ -295,191 +175,47 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 transProbKnown = true;
             }
             if(!normalisationKnown){
-//                if(DEBUG){
-//                    try{
-//                        testLoop(100, 20);
-//                    } catch(IOException e){
-//                        e.printStackTrace();
-//                    }
-//                }
-                if(hasGeography){
-
-                    double[] point;
-                    point = new double[]{transmissionRate.getParameterValue(0),
-                            spatialKernel.geta().getParameterValue(0)};
-
-                    integrator.centre = point;
-
-                    normalisation = integrator.logIntegrate(totalProbability,
-                            new double[]{transmissionRate.getBounds().getLowerLimit(0),
-                                    spatialKernel.geta().getBounds().getLowerLimit(0)},
-                            new double[]{transmissionRate.getBounds().getUpperLimit(0),
-                                    spatialKernel.geta().getBounds().getUpperLimit(0)});
-
-                    while(normalisation == Double.NEGATIVE_INFINITY){
-                        if(integrator.steps<MAX_STEPS){
-                            setIntegratorSteps(integrator.steps+1);
-                            if(DEBUG){
-                                System.out.println("Increasing the number of integrator steps to "+integrator.steps
-                                        +" due to underflow");
-                            }
-                            normalisation = integrator.logIntegrate(totalProbability,
-                                    new double[]{transmissionRate.getBounds().getLowerLimit(0),
-                                            spatialKernel.geta().getBounds().getLowerLimit(0)},
-                                    new double[]{transmissionRate.getBounds().getUpperLimit(0),
-                                            spatialKernel.geta().getBounds().getUpperLimit(0)});
-                        } else {
-                            throw new RuntimeException("Infinite normalisation but can't increase number of steps " +
-                                    "further");
-                        }
-                    }
-
-                    // periodically test that the numerical integrator is working OK
-                    // we're assuming that increasing the sample size always increases accuracy.
-
-                    if(COERCE && (mcmcState<=FULL_EVALUATION || mcmcState % RETEST_INTEGRAL == 0)){
-
-                        int baseSteps = integrator.steps;
-
-                        boolean changedSteps = false;
-
-                        int currentSteps = integrator.steps;
-
-                        double testSlower = normalisation;
-
-                        boolean ok = false;
-
-                        while(!ok && currentSteps<=MAX_STEPS){
-                            double old = testSlower;
-
-                            currentSteps = integrator.steps;
-
-                            setIntegratorSteps(currentSteps+1);
-
-                            testSlower = integrator.logIntegrate(totalProbability,
-                                    new double[]{transmissionRate.getBounds().getLowerLimit(0),
-                                            spatialKernel.geta().getBounds().getLowerLimit(0)},
-                                    new double[]{transmissionRate.getBounds().getUpperLimit(0),
-                                            spatialKernel.geta().getBounds().getUpperLimit(0)});
-
-                            if(Math.abs(testSlower-old)<INTEGRAL_APPROXIMATION_TOLERANCE){
-                                ok = true;
-                                setIntegratorSteps(currentSteps);
-
-                                if(currentSteps!=baseSteps){
-                                    changedSteps = true;
-                                    if(DEBUG){
-                                        System.out.println("Increasing the number of integrator steps to "
-                                                +integrator.steps+" due to unreliability");
-                                    }
-                                }
-
-                                normalisation = old;
-
-
-                            } else if(currentSteps==MAX_STEPS){
-                                ok = true;
-
-                                setIntegratorSteps(currentSteps);
-
-                                if(currentSteps!=baseSteps){
-                                    changedSteps = true;
-                                    if(DEBUG){
-                                        System.out.println("Tried to increase the number of integrator steps to "
-                                                +(integrator.steps+1)+" due to unreliability, but hit maximum " +
-                                                "(difference="+Math.abs(testSlower-old)+"); stayed at "+MAX_STEPS);
-                                    }
-                                }
-
-                                normalisation = old;
-
-
-                            }
-
-                        }
-                        if(!changedSteps) {
-
-                            // don't do this in the full evaluation phase, just to be safe
-
-                            if(mcmcState>FULL_EVALUATION){
-
-                                currentSteps = integrator.steps;
-
-                                double testFaster = normalisation;
-
-                                ok = true;
-
-                                while(ok && currentSteps>=MIN_STEPS){
-
-                                    double old = testFaster;
-
-                                    currentSteps = integrator.steps;
-
-                                    setIntegratorSteps(currentSteps-1);
-
-                                    testFaster = integrator.logIntegrate(totalProbability,
-                                            new double[]{transmissionRate.getBounds().getLowerLimit(0),
-                                                    spatialKernel.geta().getBounds().getLowerLimit(0)},
-                                            new double[]{transmissionRate.getBounds().getUpperLimit(0),
-                                                    spatialKernel.geta().getBounds().getUpperLimit(0)});
-
-
-                                    if(Math.abs(testFaster-old)>INTEGRAL_APPROXIMATION_TOLERANCE){
-                                        ok = false;
-                                        setIntegratorSteps(currentSteps);
-
-                                        normalisation = old;
-
-                                        if(currentSteps!=baseSteps){
-                                            changedSteps = true;
-                                            if(DEBUG){
-                                                System.out.println("Decreasing the number of integrator steps to "
-                                                        +integrator.steps);
-                                            }
-                                        }
-
-
-                                    } else if(currentSteps==MIN_STEPS){
-                                        ok = false;
-                                        setIntegratorSteps(currentSteps);
-
-                                        normalisation = old;
-
-                                        if(currentSteps!=baseSteps){
-                                            changedSteps = true;
-                                            if(DEBUG){
-                                                System.out.println("Tried to decrease the number of integrator steps " +
-                                                        "to "+(integrator.steps-1)+", but hit minimum (distance="
-                                                        +Math.abs(testFaster-old)+"); stayed at "+MIN_STEPS);
-                                            }
-                                        }
-
-
-
-                                    }
-                                }
-
-                            }
-                            if(!changedSteps){
-                                setIntegratorSteps(baseSteps);
-                            }
-                        }
-                    }
-
-
-                } else {
-
-                    //todo this needs updating
-
-                    double expNormalisation = integrator.integrate(totalProbability,
-                            new double[]{transmissionRate.getBounds().getLowerLimit(0)},
-                            new double[]{transmissionRate.getBounds().getUpperLimit(0)});
-
-                    normalisation = Math.log(expNormalisation);
-                }
+                normalisation = integrator.logIntegrate(totalProbability, transmissionRate.getBounds().getLowerLimit(0),
+                        transmissionRate.getBounds().getUpperLimit(0));
 
                 normalisationKnown = true;
             }
+            if(!geographyProbKnown){
+                geographyLogProb = 0;
+
+                for(AbstractCase aCase : outbreak.getCases()){
+                    int number = outbreak.getCaseIndex(aCase);
+
+                    double infectionTime = treeLikelihood.getInfectionTime(aCase);
+                    AbstractCase parent = treeLikelihood.getInfector(aCase);
+                    if(parent!=null){
+                        if(treeLikelihood.getInfectiousTime(parent)>infectionTime
+                                        || parent.culledYet(infectionTime)) {
+                            geographyLogProb += Double.NEGATIVE_INFINITY;
+                        } else {
+                            double numerator = outbreak.getKernelValue(aCase, parent, spatialKernel);
+                            double denominator = 0;
+
+                            for(int i=0; i< outbreak.size(); i++){
+                                AbstractCase parentCandidate = outbreak.getCase(i);
+
+                                if(i!=number && treeLikelihood.getInfectiousTime(parentCandidate)<infectionTime
+                                        && !parentCandidate.culledYet(infectionTime)){
+                                    denominator += (outbreak.getKernelValue(aCase, parentCandidate,
+                                            spatialKernel));
+                                }
+                            }
+                            geographyLogProb += Math.log(numerator/denominator);
+                        }
+                    } else {
+                        // probability of first infection given all the timings is 1
+
+                        geographyLogProb += 0;
+                    }
+                }
+                geographyProbKnown = true;
+            }
+
             if(!treeProbKnown){
                 treeLogProb = treeLikelihood.getLogLikelihood();
                 treeProbKnown = true;
@@ -512,8 +248,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     public void makeDirty() {
         likelihoodKnown = false;
         transProbKnown = false;
-        treeProbKnown = false;
         normalisationKnown = false;
+        geographyProbKnown = false;
+        treeProbKnown = false;
         sortedCases = null;
         treeLikelihood.makeDirty();
     }
@@ -531,28 +268,33 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         Collections.sort(sortedCases, new CaseInfectionComparator());
     }
 
-    private double caseLogProbability(AbstractCase infectee, double[] argument){
+    /* todo at the moment we're assuming a uniform prior on the finite bounds of transmissionRate. This should be
+    regarded as temporary
+     */
+
+    private double caseLogProbability(AbstractCase infectee, double argument){
         double logP = 0;
 
         if(sortedCases == null){
             sortCases();
         }
         if(treeLikelihood.getInfector(infectee)==null){
-            return -Math.log(outbreak.size());
+            return 0;
         }
         AbstractCase infector = treeLikelihood.getInfector(infectee);
 
         // probability that the infector infected this case at this time
 
-        double r = argument[0];
+        double r = argument;
 
-        if(argument.length>1){
-            double kernelValue = outbreak.getKernelValue(infectee, infector, spatialKernel, argument[1]);
+        if(hasGeography){
+            double kernelValue = outbreak.getKernelValue(infectee, infector, spatialKernel);
             r *= kernelValue;
         }
 
         double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
         double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
+        double infecteeExamined = infectee.getExamTime();
         double infecteeNoninfectious = infectee.getCullTime();
         double infectorNoninfectious = infector.getCullTime();
 
@@ -572,9 +314,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 break;
             }
 
-            r = argument[0];
-            if(argument.length>1){
-                double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel, argument[1]);
+            r = argument;
+            if(hasGeography){
+                double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel);
                 r *= kernelValue;
             }
             double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
@@ -583,7 +325,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
         }
 
-        // probability that _something_ infected this case before it became noninfectious
+        // probability that _something_ infected this case before it was examined
 
         double logProduct = 0;
 
@@ -591,19 +333,19 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(nonInfector != infectee){
                 double nonInfectorInfected = treeLikelihood.getInfectionTime(nonInfector);
 
-                if(nonInfectorInfected > infecteeNoninfectious){
+                if(nonInfectorInfected > infecteeExamined){
                     // no need to consider any infections happening later
                     break;
                 }
 
-                r = argument[0];
-                if(argument.length>1){
-                    double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel, argument[1]);
+                r = argument;
+                if(hasGeography){
+                    double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel);
                     r *= kernelValue;
                 }
                 double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
-                if(nonInfectorInfectious <= infecteeNoninfectious){
-                    logProduct += -r*(infecteeNoninfectious - nonInfectorInfectious);
+                if(nonInfectorInfectious <= infecteeExamined){
+                    logProduct += -r*(infecteeExamined - nonInfectorInfectious);
                 }
             }
         }
@@ -612,10 +354,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         logP -= Math.log1p(-product);
 
+        // prior probability
+
+        logP -= Math.log(transmissionRate.getBounds().getUpperLimit(0) - transmissionRate.getBounds().getLowerLimit(0));
+
         return logP;
     }
 
-    private class TotalProbability implements MultivariateFunction {
+    private class TotalProbability implements IntegrableUnivariateFunction {
 
         final boolean hasGeography;
 
@@ -625,11 +371,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         // index 0 is lambda, index 1 if present is alpha
 
-        public double evaluate(double[] argument) {
+        public double evaluate(double argument) {
             return Math.exp(logEvaluate(argument));
         }
 
-        public double logEvaluate(double[] argument) {
+        public double logEvaluate(double argument) {
             if(sortedCases == null){
                 sortCases();
             }
@@ -646,12 +392,16 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             return 2;
         }
 
-        public double getLowerBound(int n) {
+        public double getLowerBound() {
             return 0;
         }
 
-        public double getUpperBound(int n) {
-            return n==0 ? kernelAlpha.getBounds().getUpperLimit(0) : transmissionRate.getBounds().getUpperLimit(0);
+        public double getUpperBound() {
+            return transmissionRate.getBounds().getUpperLimit(0);
+        }
+
+        public double evaluateIntegral(double a, double b) {
+            return integrator.integrate(this, a, b);
         }
     }
 
@@ -709,155 +459,28 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return treeLikelihood.passColumns();
     }
 
-    /*
-    Awkwardly, we need a 2D numerical integrator to normalise the transmission probability. We have already sampled
-    one nonzero point from this distribution; let's assume that's reasonably close to the mean in each dimension.
+    // to prevent underflow:
 
-    Naive or stratified Monte Carlo integration has proved to be problematic. Importance sampling guided by the
-    already sampled point might work.
-    */
+    public class LogSpaceRiemannApproximation extends RiemannApproximation{
 
-    private class BespokeNumericalIntegrator implements MultivariateIntegral{
-
-        private int steps;
-        private double[] centre;
-
-        public BespokeNumericalIntegrator(int steps){
-            this.steps = steps;
+        public LogSpaceRiemannApproximation(int sampleSize){
+            super(sampleSize);
         }
 
+        public double logIntegrate(TotalProbability f, double min, double max){
+            double logIntegral = Double.NEGATIVE_INFINITY;
 
-        public double logIntegrate(MultivariateFunction f, double[] mins, double[] maxes) {
-
-            double totalArea=1;
-//            double[] stepSizes = new double[2];
-
-            for(int i=0; i<2; i++){
-                totalArea *= (maxes[i]-mins[i]);
-//                stepSizes[i] = (maxes[i]-mins[i])/steps;
+            double gridpoint = min;
+            double step = (max - min) / getSampleSize();
+            for (int i = 1; i <= getSampleSize(); i++) {
+                gridpoint += step;
+                logIntegral = LogTricks.logSum(logIntegral, f.logEvaluate(gridpoint));
             }
+            logIntegral += Math.log((max - min) / (double)getSampleSize());
+            return logIntegral;
 
-
-//            double[][] stepSizes = new double[2][2];
-//
-//            for(int i=0; i<2; i++){
-//                stepSizes[i][0] = (centre[i] - mins[i])/Math.floor(steps/2);
-//                stepSizes[i][1] = (maxes[i] - centre[i])/Math.floor(steps/2);
-//            }
-
-            double[] xSteps = new double[steps];
-            double[] ySteps = new double[steps];
-
-            int stepsEachSide = steps % 2 == 0 ? steps/2 : (steps-1)/2;
-
-            int sumOfSquares = stepsEachSide*(stepsEachSide + 1)/2;
-
-            if(steps % 2 == 1){
-                xSteps[(int)Math.floor(steps/2)] = centre[0];
-                ySteps[(int)Math.floor(steps/2)] = centre[1];
-            }
-
-            int bottomHalfStart = steps % 2 == 0 ? (int)Math.floor(((double)steps-1)/2) : ((steps-1)/2) - 1;
-            int topHalfStart = steps % 2 == 0 ? (int)Math.ceil(((double)steps - 1) / 2) : ((steps-1)/2) + 1;
-
-            double xBottomHalf = centre[0] - mins[0];
-            double xTopHalf = maxes[0] - centre[0];
-
-            double yBottomHalf = centre[1] - mins[1];
-            double yTopHalf = maxes[1] - centre[1];
-
-            for(int i = 0; i<stepsEachSide; i++){
-                double bottomOfStep = i*(i+1)/2;
-                double topOfStep = (i+1)*(i+2)/2;
-                double fractionalPosition = (bottomOfStep + (topOfStep-bottomOfStep)/2)/sumOfSquares;
-                xSteps[bottomHalfStart-i] = centre[0] - fractionalPosition*xBottomHalf;
-                xSteps[topHalfStart+i] = centre[0] + fractionalPosition*xTopHalf;
-                ySteps[bottomHalfStart-i] = centre[1] - fractionalPosition*yBottomHalf;
-                ySteps[topHalfStart+i] = centre[1] + fractionalPosition*yTopHalf;
-            }
-//
-//
-//            for(int i=0; i<steps; i++){
-//                if(i<=(steps-1)/2){
-//                    xSteps[i] = mins[0] + (i+0.5)*stepSizes[0][0];
-//                    ySteps[i] = mins[1] + (i+0.5)*stepSizes[1][0];
-//                } else if(steps % 2!=0 && i==(steps-1)/2) {
-//                    xSteps[i] = centre[0];
-//                    ySteps[i] = centre[1];
-//                } else {
-//                    xSteps[i] = centre[0] + (i-Math.ceil(steps/2)+0.5)*stepSizes[0][1];
-//                    ySteps[i] = centre[1] + (i-Math.ceil(steps/2)+0.5)*stepSizes[1][1];
-//                }
-//            }
-
-            double integral = 0.0;
-
-            for(int i=0; i<steps; i++){
-                for(int j=0; j<steps; j++){
-
-                    double[] point = {xSteps[i], ySteps[j]};
-
-                    integral += f.evaluate(point);
-
-                }
-            }
-
-//            double integral = 0;
-//
-//            for(int i=0; i<steps; i++){
-//                for(int j=0; j<steps; j++){
-//
-//                    double[] point = {mins[0] + (i+0.5)*stepSizes[0], mins[1] + (j+0.5)*stepSizes[1]};
-//
-//                    integral += f.evaluate(point);
-//
-//                }
-//            }
-
-            integral *= totalArea/(Math.pow(steps,2));
-
-            if(integral>0){
-                return Math.log(integral);
-            } else {
-
-                double logIntegral = Double.NEGATIVE_INFINITY;
-
-                for(int i=0; i<steps; i++){
-                    for(int j=0; j<steps; j++){
-
-                        double[] point = {xSteps[i], ySteps[j]};
-
-                        logIntegral = LogTricks.logSum(logIntegral, ((TotalProbability)f).logEvaluate(point));
-
-                    }
-                }
-
-
-                logIntegral += Math.log(totalArea) - 2*Math.log(steps);
-
-                return logIntegral;
-//
-//
-//                for(int i=0; i<steps; i++){
-//                    for(int j=0; j<steps; j++){
-//
-//                        double[] point = {mins[0] + (i+0.5)*stepSizes[0], mins[1] + (j+0.5)*stepSizes[1]};
-//
-//                        logIntegral = LogTricks.logSum(logIntegral, ((TotalProbability)f).logEvaluate(point));
-//
-//                    }
-//                }
-//
-//
-//                logIntegral += Math.log(totalArea) - 2*Math.log(steps);
-//
-//                return logIntegral;
-            }
         }
 
-        public double integrate(MultivariateFunction f, double[] mins, double[] maxes){
-            return Math.exp(logIntegrate(f, mins, maxes));
-        }
     }
 
 }

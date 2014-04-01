@@ -90,5 +90,9 @@ public class RiemannApproximation implements Integral {
           }*/
     }
 
+    public int getSampleSize(){
+        return sampleSize;
+    }
+
     private int sampleSize;
 }

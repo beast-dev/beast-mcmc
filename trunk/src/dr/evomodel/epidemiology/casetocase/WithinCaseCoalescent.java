@@ -36,8 +36,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     private double[] partitionTreeLogLikelihoods;
     private double[] storedPartitionTreeLogLikelihoods;
-    private double[] timingLogLikelihoods;
-    private double[] storedTimingLogLikelihoods;
     private boolean[] recalculateCoalescentFlags;
     private Treelet[] partitionsAsTrees;
     private Treelet[] storedPartitionsAsTrees;
@@ -48,8 +46,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private double storedInfectiousPeriodsLogLikelihood;
     private double latentPeriodsLogLikelihood;
     private double storedLatentPeriodsLogLikelihood;
-    private double totalTimingsLogLikelihood;
-    private double storedTotalTimingsLogLikelihood;
     private double coalescencesLogLikelihood;
     private double storedCoalescencesLogLikelihood;
 
@@ -72,8 +68,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         addModel(demoModel);
         partitionTreeLogLikelihoods = new double[noTips];
         storedPartitionTreeLogLikelihoods = new double[noTips];
-        timingLogLikelihoods = new double[noTips];
-        storedTimingLogLikelihoods = new double[noTips];
         recalculateCoalescentFlags = new boolean[noTips];
 
         partitionsAsTrees = new Treelet[caseData.size()];
@@ -190,47 +184,14 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         boolean recalculateTimings = false;
 
-        totalTimingsLogLikelihood = 0;
         coalescencesLogLikelihood = 0;
 
-        if(timingLogLikelihoods==null){
-            timingLogLikelihoods = new double[noTips];
-            recalculateTimings = true;
-        }
 
         for(AbstractCase aCase : outbreak.getCases()){
 
             //todo weights (and remember if a weight is zero then the return value should be -INF)
 
             int number = outbreak.getCaseIndex(aCase);
-
-            if(recalculateTimings){
-                double infectionTime = getInfectionTime(aCase);
-                AbstractCase parent = getInfector(aCase);
-                if(parent!=null &&
-                        (getInfectiousTime(parent)>infectionTime
-                                || parent.culledYet(infectionTime))) {
-                    timingLogLikelihoods[number] = Double.NEGATIVE_INFINITY;
-                } else {
-                    int possibleParents = 0;
-                    for(int i=0; i< outbreak.size(); i++){
-                        AbstractCase parentCandidate = outbreak.getCase(i);
-
-                        if(i!=number && getInfectiousTime(parentCandidate)<infectionTime
-                                && !parentCandidate.culledYet(infectionTime)){
-                            possibleParents++;
-                        }
-                    }
-                    if(possibleParents>1){
-                        timingLogLikelihoods[number] = -Math.log(possibleParents);
-                    } else {
-                        timingLogLikelihoods[number] = 0.0;
-                    }
-                }
-            }
-
-            totalTimingsLogLikelihood += timingLogLikelihoods[number];
-
 
             // and then the little tree calculations
 
@@ -258,7 +219,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             }
         }
 
-        logL += totalTimingsLogLikelihood;
         logL += coalescencesLogLikelihood;
 
         likelihoodKnown = true;
@@ -276,11 +236,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         storedPartitionsAsTrees = Arrays.copyOf(partitionsAsTrees, partitionsAsTrees.length);
         storedPartitionTreeLogLikelihoods = Arrays.copyOf(partitionTreeLogLikelihoods,
                 partitionTreeLogLikelihoods.length);
-        storedTimingLogLikelihoods = Arrays.copyOf(timingLogLikelihoods, timingLogLikelihoods.length);
+
 
         storedCoalescencesLogLikelihood = coalescencesLogLikelihood;
         storedInfectiousPeriodsLogLikelihood = infectiousPeriodsLogLikelihood;
-        storedTotalTimingsLogLikelihood = totalTimingsLogLikelihood;
+
 
         if(hasLatentPeriods){
             storedLatentPeriodsLogLikelihood = latentPeriodsLogLikelihood;
@@ -291,11 +251,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         super.restoreState();
         partitionsAsTrees = storedPartitionsAsTrees;
         partitionTreeLogLikelihoods = storedPartitionTreeLogLikelihoods;
-        timingLogLikelihoods = storedTimingLogLikelihoods;
+
 
         coalescencesLogLikelihood = storedCoalescencesLogLikelihood;
         infectiousPeriodsLogLikelihood = storedInfectiousPeriodsLogLikelihood;
-        totalTimingsLogLikelihood = storedTotalTimingsLogLikelihood;
+
 
         if(hasLatentPeriods){
             latentPeriodsLogLikelihood = storedLatentPeriodsLogLikelihood;
@@ -338,7 +298,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         } else if(model == demoModel){
             Arrays.fill(recalculateCoalescentFlags, true);
         }
-        timingLogLikelihoods=null;
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -355,10 +314,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             }
         }
-
-        if(variable == infectionTimeBranchPositions || variable == infectiousTimePositions){
-            timingLogLikelihoods=null;
-        }
     }
 
     protected void recalculateCaseWCC(int index){
@@ -374,7 +329,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     public void makeDirty(){
         super.makeDirty();
         Arrays.fill(recalculateCoalescentFlags, true);
-        timingLogLikelihoods=null;
         Arrays.fill(partitionsAsTrees, null);
     }
 
@@ -618,19 +572,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 }
             });
         }
-        for(int i=0; i<outbreak.size(); i++){
-            final int finalI = i;
-            columns.add(new LogColumn.Abstract("timing_LL_"+i){
-                protected String getFormattedValue() {
-                    return String.valueOf(timingLogLikelihoods[finalI]);
-                }
-            });
-        }
-        columns.add(new LogColumn.Abstract("total_timing_LL"){
-            protected String getFormattedValue() {
-                return String.valueOf(totalTimingsLogLikelihood);
-            }
-        });
         for(int i=0; i<outbreak.size(); i++){
             final int finalI = i;
             columns.add(new LogColumn.Abstract("coal_LL_"+i){

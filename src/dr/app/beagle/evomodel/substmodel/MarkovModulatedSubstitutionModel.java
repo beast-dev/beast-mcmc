@@ -27,6 +27,9 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.evolution.datatype.DataType;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -42,7 +45,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
-public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel implements Citable {
+public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel implements Citable, Loggable {
 
     private List<SubstitutionModel> baseModels;
     private final int numBaseModel;
@@ -187,7 +190,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
                         double rate = swRates[sw];
                         if (geometricRates) {
                             rate *= getModelRateScalar(numBaseModel - h - 1) /// numBaseModel; // TODO Why not: "/ numBaseModel" ??
-                            / totalRate;
+                                    / totalRate;
                         }
                         for (int i = 0; i < baseStateCount; ++i) {
                             matrix[g * baseStateCount + i][h * baseStateCount + i] = rate;
@@ -253,5 +256,40 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
             updateMatrix = true;
         }
         // else do nothing, action taken care of at individual base models
+    }
+
+    public LogColumn[] getColumns() {
+
+        List<LogColumn> columns = new ArrayList<LogColumn>();
+        for (LogColumn parentColumn : super.getColumns()) {
+            columns.add(parentColumn);
+        }
+
+        if (gammaRateModel != null) {
+            for (int i = 0; i < gammaRateModel.getCategoryCount(); ++i) {
+                String label = "rateScalar." + i;
+                columns.add(new GammaRateColumn(label, i));
+            }
+        }
+
+        return columns.toArray(new LogColumn[0]);
+    }
+
+    private class GammaRateColumn extends NumberColumn {
+
+        private final int index;
+
+        public GammaRateColumn(String label, int index) {
+            super(label);
+            this.index = index;
+        }
+
+        /**
+         * Returns the current value as a double.
+         */
+        @Override
+        public double getDoubleValue() {
+            return gammaRateModel.getRateForCategory(index);
+        }
     }
 }

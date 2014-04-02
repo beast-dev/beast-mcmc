@@ -3,10 +3,7 @@ package dr.inferencexml.model;
 import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
 import dr.inference.model.LowerTriangularMatrixParameter;
 import dr.inference.model.Parameter;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,7 +13,7 @@ import dr.xml.XMLSyntaxRule;
  * To change this template use File | Settings | File Templates.
  */
 public class LowerTriangularMatrixParameterParser extends AbstractXMLObjectParser {
-    private static final String LOWER_TRIANGULAR_MATRIX="lowerTriangularMatrix";
+    private static final String LOWER_TRIANGULAR_MATRIX="lowerTriangularMatrixParameter";
     private static final String COLUMN_DIMENSION="columnDimension";
 
 
@@ -52,8 +49,14 @@ public class LowerTriangularMatrixParameterParser extends AbstractXMLObjectParse
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];  //To change body of implemented methods use File | Settings | File Templates.
+        return rules;
     }
+
+    private final XMLSyntaxRule[] rules = {
+            new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
+            AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
+    };
+
 
     @Override
     public String getParserDescription() {

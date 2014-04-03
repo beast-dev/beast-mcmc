@@ -18,6 +18,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
     public static final String RELATIVE = "relative";
     public static final String CLADE = "clade";
     public static final String INCLUDE_STEM = "includeStem";
+    public static final String STEM_PROPORTION = "stemProportion";
     public static final String EXCLUDE_CLADE = "excludeClade";
     public static final String EXTERNAL_BRANCHES = "externalBranches";
     public static final String TRUNK = "trunk";
@@ -52,9 +53,19 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
 
                     boolean includeStem = false;
                     boolean excludeClade = false;
+                    double stemProportion = 0.0;
 
                     if (xoc.hasAttribute(INCLUDE_STEM)) {
                         includeStem = xoc.getBooleanAttribute(INCLUDE_STEM);
+                        // if includeStem=true then assume it is the whole stem
+                        stemProportion = 1.0;
+                    }
+
+                    if (xoc.hasAttribute(STEM_PROPORTION)) {
+                        stemProportion = xoc.getDoubleAttribute(STEM_PROPORTION);
+                        if (stemProportion < 0.0 || stemProportion > 1.0) {
+                            throw new XMLParseException("A stem proportion should be between 0, 1");
+                        }
                     }
 
                     if (xoc.hasAttribute(EXCLUDE_CLADE)) {
@@ -62,7 +73,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                     }
 
                     try {
-                        localClockModel.addCladeClock(taxonList, rateParameter, relative, includeStem, excludeClade);
+                        localClockModel.addCladeClock(taxonList, rateParameter, relative, stemProportion, excludeClade);
 
                     } catch (Tree.MissingTaxonException mte) {
                         throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
@@ -139,6 +150,7 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             AttributeRule.newBooleanRule(RELATIVE, true),
                             AttributeRule.newBooleanRule(INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel (default false)."),
+                            AttributeRule.newDoubleRule(STEM_PROPORTION, true, "proportion of stem to include in clade rate (default 0)."),
                             AttributeRule.newBooleanRule(EXCLUDE_CLADE, true, "determines whether to exclude actual branches of the clade from the siteModel (default false)."),
                             new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
                             new ElementRule(Parameter.class, "The rate parameter")

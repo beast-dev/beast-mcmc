@@ -155,9 +155,6 @@ public class BeastGenerator extends Generator {
                     }
                 }
             }
-        } catch (Exception e) {
-            throw new GeneratorException(e.getMessage());
-        }
 
         //++++++++++++++++ Taxon List ++++++++++++++++++
         TaxonList taxonList = options.taxonList;
@@ -348,6 +345,11 @@ public class BeastGenerator extends Generator {
         // add other tests and warnings here
         // Speciation model with dated tips
         // Sampling rates without dated tips or priors on rate or nodes
+
+        } catch (Exception e) {
+            // catch any other exceptions here and rethrow to generate messages
+            throw new GeneratorException(e.getMessage());
+        }
 
     }
 

@@ -66,6 +66,7 @@
                 <include name="dr/util/**/*.class"/>
                 <include name="dr/xml/**/*.class"/>
             </fileset>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
             <zipgroupfileset dir="${lib}" includes="**/freemarker.jar"/>
             <zipgroupfileset dir="${lib}" includes="**/jdom.jar"/>
         </jar>

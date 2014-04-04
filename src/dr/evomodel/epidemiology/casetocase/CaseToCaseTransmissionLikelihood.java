@@ -220,7 +220,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 treeLogProb = treeLikelihood.getLogLikelihood();
                 treeProbKnown = true;
             }
-            logLikelihood =  treeLogProb + transLogProb - normalisation;
+            logLikelihood =  treeLogProb + geographyLogProb + transLogProb - normalisation;
             likelihoodKnown = true;
         }
 

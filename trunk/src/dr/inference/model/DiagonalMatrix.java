@@ -57,6 +57,18 @@ public class DiagonalMatrix extends MatrixParameter {
         return parameterAsMatrix;
     }
 
+    public void inverse(){
+        for (int i=0; i<diagonalParameter.getDimension(); i++){{
+            if(diagonalParameter.getValue(i)==0){
+                System.err.print("Diagonal matrix is not of full rank.\n");
+                System.exit(1);
+            }
+            else{
+                setParameterValue(i, 1/diagonalParameter.getParameterValue(i));
+            }
+        }}
+    }
+
     public int getDimension() {
         return diagonalParameter.getDimension() * diagonalParameter.getDimension();
     }

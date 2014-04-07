@@ -66,12 +66,14 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 maxFirstInfToRoot);
         this.demoModel = demoModel;
         addModel(demoModel);
+        addModel(outbreak);
         partitionTreeLogLikelihoods = new double[noTips];
         storedPartitionTreeLogLikelihoods = new double[noTips];
         recalculateCoalescentFlags = new boolean[noTips];
 
         partitionsAsTrees = new Treelet[caseData.size()];
         storedPartitionsAsTrees = new Treelet[caseData.size()];
+
 
         prepareTree(startingNetworkFileName);
 

@@ -44,6 +44,20 @@ public class CategoryOutbreak extends AbstractOutbreak {
         infectiousCategories = new HashSet<String>();
         this.latentMap = latentMap;
         this.infectiousMap = infectiousMap;
+
+        // todo put these somewhere more appropriate
+
+        for(String category : (getInfectiousCategories())){
+            AbstractPeriodPriorDistribution hyperprior = getInfectiousCategoryPrior(category);
+            addModel(hyperprior);
+        }
+
+        if(hasLatentPeriods){
+            for(String category : getLatentCategories()){
+                AbstractPeriodPriorDistribution hyperprior = getLatentCategoryPrior(category);
+                addModel(hyperprior);
+            }
+        }
     }
 
 
@@ -435,7 +449,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
                 int size = cases.size();
 
-                if(matrixParameter.getDimension()!=size*(size-1)/2){
+                if(matrixParameter.getDimension()!=size*size){
                     throw new XMLParseException("Wrong number of distance matrix entries");
                 }
 
@@ -443,7 +457,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 int count=0;
 
                 for(int i=0; i<size; i++){
-                    for(int j=i; j<size; j++){
+                    for(int j=0; j<size; j++){
                         if(i==j){
                             distances[i][j]=0;
                         } else {

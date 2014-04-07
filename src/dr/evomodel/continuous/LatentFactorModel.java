@@ -48,8 +48,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private final Parameter data;
     private final CompoundParameter factors;
-    private final MatrixParameter loadings;
-    private final MatrixParameter precision;
+    private final LowerTriangularMatrixParameter loadings;
+    private final DiagonalMatrix precision;
 
     private final int dimFactors;
     private final int dimData;
@@ -58,8 +58,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
-    public LatentFactorModel(Parameter data, CompoundParameter factors, MatrixParameter loadings,
-                             MatrixParameter precision,
+    public LatentFactorModel(Parameter data, CompoundParameter factors, LowerTriangularMatrixParameter loadings,
+                             DiagonalMatrix precision,
                              int numFactors) {
         super("");
 //        data = new Matrix(dataIn.getParameterAsMatrix());
@@ -75,8 +75,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         addVariable(loadings);
 
         dimFactors = numFactors;
-        nTaxa = loadings.getColumnDimension();
-        dimData = factors.getDimension();
+        dimData = loadings.getColDim();
+        nTaxa = factors.getParameter(0).getDimension();
+
+        System.out.print(nTaxa);
+        System.out.print("\n");
+        System.out.print(dimData);
+        System.out.print("\n");
 
         // TODO Check dimensions of loadings (dimFactors x dimData)
         // TODO dimData >= dimFactors
@@ -222,7 +227,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private double calculateLogLikelihood() {
-        //TODO return correct answer
         Matrix tPrecision= new Matrix(precision.getParameterAsMatrix());
         computeResiduals();
         Matrix expPart=null;
@@ -233,6 +237,17 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         } catch (IllegalDimension illegalDimension) {
         illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
-       return -.5*expPart.toComponents()[0][0] - .5*logDet;
+        double trace=0;
+        if(!expPart.isSquare())
+        {
+            System.err.print("Matrices are not conformable");
+            System.exit(0);
+        }
+        else{
+            for(int i=0; i<expPart.rows(); i++){
+                trace+=expPart.component(i,i);
+            }
+        }
+       return -.5*trace - .5*tPrecision.rows()*logDet-.5*dimData*nTaxa*StrictMath.log(StrictMath.PI);
     }
 }

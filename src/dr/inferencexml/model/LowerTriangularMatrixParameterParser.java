@@ -6,14 +6,10 @@ import dr.inference.model.Parameter;
 import dr.xml.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: max
- * Date: 3/27/14
- * Time: 3:16 PM
- * To change this template use File | Settings | File Templates.
+@author Max Tolkoff
  */
 public class LowerTriangularMatrixParameterParser extends AbstractXMLObjectParser {
-    private static final String LOWER_TRIANGULAR_MATRIX="lowerTriangularMatrixParameter";
+    private static final String LOWER_TRIANGULAR_MATRIX="LowerTriangularMatrixParameter";
     private static final String COLUMN_DIMENSION="columnDimension";
 
 

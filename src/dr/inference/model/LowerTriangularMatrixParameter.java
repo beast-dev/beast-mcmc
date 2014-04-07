@@ -1,13 +1,10 @@
 package dr.inference.model;
 
-/**
- * Created with IntelliJ IDEA.
- * User: max
- * Date: 3/27/14
- * Time: 3:18 PM
- * To change this template use File | Settings | File Templates.
- */
-public class LowerTriangularMatrixParameter extends CompoundParameter {
+/*
+@author Max Tolkoff
+*/
+
+public class LowerTriangularMatrixParameter extends MatrixParameter {
     private int rowDim;
     private int colDim;
     private Parameter[] parameters;

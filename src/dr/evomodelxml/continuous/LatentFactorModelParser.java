@@ -28,9 +28,7 @@ package dr.evomodelxml.continuous;
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
@@ -93,8 +91,8 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
 //        System.err.print(new Matrix(dataMatrix.getParameterAsMatrix()));
 //        System.err.print(dataMatrix.getRowDimension());
-        MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
-        MatrixParameter precision = (MatrixParameter) xo.getChild(PRECISION).getChild(MatrixParameter.class);
+        LowerTriangularMatrixParameter loadings = (LowerTriangularMatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
+        DiagonalMatrix precision = (DiagonalMatrix) xo.getChild(PRECISION).getChild(MatrixParameter.class);
         int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
 
         return new LatentFactorModel(dataParameter, factors, loadings, precision, numFactors);
@@ -111,10 +109,10 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
                     new ElementRule(CompoundParameter.class),
             }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameter.class)
+                    new ElementRule(LowerTriangularMatrixParameter.class)
             }),
             new ElementRule(PRECISION, new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameter.class)
+                    new ElementRule(DiagonalMatrix.class)
             }),
     };
 

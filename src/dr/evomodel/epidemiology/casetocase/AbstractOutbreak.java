@@ -56,6 +56,8 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return hasGeography;
     }
 
+    // todo this should be in terms of arbitary distance functions, not kernels
+
 
     public double getKernelValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){
         if(!hasGeography){
@@ -71,6 +73,16 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         } else {
             return kernel.value(getDistance(a,b), alpha);
         }
+    }
+
+    // all the kernel values going TO case a (this is symmetric, usually, but potentially might not be)
+
+    public double[] getKernelValues(AbstractCase aCase, SpatialKernel kernel){
+        double[] out = new double[cases.size()];
+        for(int i=0; i<out.length; i++){
+            out[i] = kernel.value(getDistance(aCase, cases.get(i)));
+        }
+        return out;
     }
 
     public int getCaseIndex(AbstractCase thisCase){

@@ -80,7 +80,7 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
 
         posteriorBeta.setParameterValue(0, beta_n / (alpha_n - 0.5));
 
-        return GammaFunction.logGamma(alpha_n)
+        logL = GammaFunction.logGamma(alpha_n)
                 - GammaFunction.logGamma(alpha_0)
                 + alpha_0*Math.log(beta_0)
                 - alpha_n*Math.log(beta_n)
@@ -88,6 +88,8 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
                 - 0.5*Math.log(lambda_n)
                 - (count/2)*Math.log(2*Math.PI);
 
+
+        return logL;
     }
 
     public LogColumn[] getColumns() {

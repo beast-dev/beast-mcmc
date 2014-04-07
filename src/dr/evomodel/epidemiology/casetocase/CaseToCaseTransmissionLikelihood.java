@@ -5,6 +5,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.math.*;
 import dr.xml.*;
+import org.apache.commons.math.util.FastMath;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -57,7 +58,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private ArrayList<AbstractCase> sortedCases;
     private ArrayList<AbstractCase> storedSortedCases;
     private TotalProbability totalProbability;
-
 
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
@@ -287,15 +287,16 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         double r = argument;
 
+        double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
+
         if(hasGeography){
-            double kernelValue = outbreak.getKernelValue(infectee, infector, spatialKernel);
+            double kernelValue = kernelValues[outbreak.getCaseIndex(infector)];
             r *= kernelValue;
         }
 
         double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
         double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
         double infecteeExamined = infectee.getExamTime();
-        double infecteeNoninfectious = infectee.getCullTime();
         double infectorNoninfectious = infector.getCullTime();
 
         // need to differentiate between an actual zero probability and a rounding error. This is a zero probability.
@@ -307,52 +308,45 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         logP += Math.log(r);
 
         // probability that nothing infected this case sooner
+        // and
+
+        double sum1 = 0;
+        double sum2 = 0;
 
         for(AbstractCase nonInfector : sortedCases){
-            if(nonInfector == infectee){
-                // no need to consider any infections happening after this one
+
+            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
+
+            if(nonInfectorInfectious > infecteeExamined){
                 break;
             }
 
-            r = argument;
-            if(hasGeography){
-                double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel);
-                r *= kernelValue;
-            }
-            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
+            double nonInfectorNoninfectious = nonInfector.getCullTime();
+
+            double rate = hasGeography ? kernelValues[outbreak.getCaseIndex(nonInfector)] : 1;
+
             if(nonInfectorInfectious <= infecteeInfected){
-                logP += -r*(infecteeInfected - nonInfectorInfectious);
+                double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeInfected);
+                sum1 += -rate*(lastPossibleInfectionTime - nonInfectorInfectious);
             }
+
+            // probability that _something_ infected this case before it was examined
+
+            double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeExamined);
+            sum2 += -rate*(lastPossibleInfectionTime - nonInfectorInfectious);
+
         }
+
+        // probability that nothing infected this case sooner
+
+        logP += argument*sum1;
 
         // probability that _something_ infected this case before it was examined
 
-        double logProduct = 0;
-
-        for(AbstractCase nonInfector : sortedCases){
-            if(nonInfector != infectee){
-                double nonInfectorInfected = treeLikelihood.getInfectionTime(nonInfector);
-
-                if(nonInfectorInfected > infecteeExamined){
-                    // no need to consider any infections happening later
-                    break;
-                }
-
-                r = argument;
-                if(hasGeography){
-                    double kernelValue = outbreak.getKernelValue(infectee, nonInfector, spatialKernel);
-                    r *= kernelValue;
-                }
-                double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
-                if(nonInfectorInfectious <= infecteeExamined){
-                    logProduct += -r*(infecteeExamined - nonInfectorInfectious);
-                }
-            }
-        }
-
-        double product = Math.exp(logProduct);
+        double product = Math.exp(argument*sum2);
 
         logP -= Math.log1p(-product);
+
 
         // prior probability
 
@@ -456,7 +450,24 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // is the numerical log and C2CTreeL the TT one.
 
     public LogColumn[] getColumns(){
-        return treeLikelihood.passColumns();
+        ArrayList<LogColumn> columns = new ArrayList<LogColumn>();
+
+        columns.add(new LogColumn.Abstract("trans_LL"){
+            protected String getFormattedValue() {
+                return String.valueOf(transLogProb - normalisation);
+            }
+        });
+
+        columns.add(new LogColumn.Abstract("geog_LL"){
+            protected String getFormattedValue() {
+                return String.valueOf(geographyLogProb);
+            }
+        });
+
+        columns.addAll(Arrays.asList(treeLikelihood.passColumns()));
+
+
+        return columns.toArray(new LogColumn[columns.size()]);
     }
 
     // to prevent underflow:
@@ -476,7 +487,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 gridpoint += step;
                 logIntegral = LogTricks.logSum(logIntegral, f.logEvaluate(gridpoint));
             }
-            logIntegral += Math.log((max - min) / (double)getSampleSize());
+            logIntegral += Math.log((max - min) / (double) getSampleSize());
             return logIntegral;
 
         }

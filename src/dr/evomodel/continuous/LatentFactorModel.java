@@ -49,7 +49,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final Parameter data;
     private final CompoundParameter factors;
     private final LowerTriangularMatrixParameter loadings;
-    private final DiagonalMatrix precision;
+    private final DiagonalMatrix rowPrecision;
+    private final DiagonalMatrix colPrecision;
 
     private final int dimFactors;
     private final int dimData;
@@ -59,7 +60,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double logLikelihood;
 
     public LatentFactorModel(Parameter data, CompoundParameter factors, LowerTriangularMatrixParameter loadings,
-                             DiagonalMatrix precision,
+                             DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
                              int numFactors) {
         super("");
 //        data = new Matrix(dataIn.getParameterAsMatrix());
@@ -68,7 +69,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         this.data = data;
         this.factors = factors;
         this.loadings = loadings;
-        this.precision = precision;
+        this.rowPrecision = rowPrecision;
+        this.colPrecision = colPrecision;
 
         addVariable(data);
         addVariable(factors);
@@ -227,13 +229,16 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private double calculateLogLikelihood() {
-        Matrix tPrecision= new Matrix(precision.getParameterAsMatrix());
+        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
+        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
         computeResiduals();
         Matrix expPart=null;
-        double logDet=0;
+        double logDetRow=0;
+        double logDetCol=0;
         try{
-        expPart = residual.product(tPrecision.product(residual.transpose()));
-            logDet=tPrecision.logDeterminant();
+        expPart = residual.product(tRowPrecision.product(residual.transpose())).product(tColPrecision);
+            logDetRow=tRowPrecision.logDeterminant();
+            logDetCol=tColPrecision.logDeterminant();
         } catch (IllegalDimension illegalDimension) {
         illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -248,6 +253,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 trace+=expPart.component(i,i);
             }
         }
-       return -.5*trace - .5*tPrecision.rows()*logDet-.5*dimData*nTaxa*StrictMath.log(StrictMath.PI);
+       return -.5*trace - .5*tColPrecision.rows()*logDetCol-.5*tRowPrecision.rows()*logDetRow-.5*tRowPrecision.rows()*tColPrecision.rows()*StrictMath.log(StrictMath.PI);
     }
 }

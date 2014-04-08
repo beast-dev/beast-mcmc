@@ -46,7 +46,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public final static String FACTORS = "factors";
     public final static String DATA = "data";
     public final static String LOADINGS = "loadings";
-    public static final String PRECISION = "precision";
+    public static final String ROW_PRECISION = "rowPrecision";
+    public static final String COLUMN_PRECISION = "columnPrecision";
+
 
     public String getParserName() {
         return LATENT_FACTOR_MODEL;
@@ -92,10 +94,11 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        System.err.print(new Matrix(dataMatrix.getParameterAsMatrix()));
 //        System.err.print(dataMatrix.getRowDimension());
         LowerTriangularMatrixParameter loadings = (LowerTriangularMatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
-        DiagonalMatrix precision = (DiagonalMatrix) xo.getChild(PRECISION).getChild(MatrixParameter.class);
+        DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
+        DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
         int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
 
-        return new LatentFactorModel(dataParameter, factors, loadings, precision, numFactors);
+        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, numFactors);
     }
 
     private static final XMLSyntaxRule[] rules = {
@@ -111,7 +114,10 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(LowerTriangularMatrixParameter.class)
             }),
-            new ElementRule(PRECISION, new XMLSyntaxRule[]{
+            new ElementRule(ROW_PRECISION, new XMLSyntaxRule[]{
+                    new ElementRule(DiagonalMatrix.class)
+            }),
+            new ElementRule(COLUMN_PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(DiagonalMatrix.class)
             }),
     };

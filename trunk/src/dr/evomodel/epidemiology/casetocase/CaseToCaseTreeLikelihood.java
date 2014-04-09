@@ -5,6 +5,7 @@ import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.inference.loggers.LogColumn;
@@ -492,43 +493,44 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-        if (model == treeModel) {
+        if(!(model instanceof AbstractPeriodPriorDistribution)){
 
-            if(object instanceof PartitionedTreeModel.PartitionsChangedEvent){
-                HashSet<AbstractCase> changedPartitions =
-                        ((PartitionedTreeModel.PartitionsChangedEvent)object).getCasesToRecalculate();
-                for(AbstractCase aCase : changedPartitions){
-                    recalculateCase(aCase);
+            if (model == treeModel) {
 
-                }
-            }
-        } else if (model == branchMap){
-            if(object instanceof ArrayList){
+                if(object instanceof PartitionedTreeModel.PartitionsChangedEvent){
+                    HashSet<AbstractCase> changedPartitions =
+                            ((PartitionedTreeModel.PartitionsChangedEvent)object).getCasesToRecalculate();
+                    for(AbstractCase aCase : changedPartitions){
+                        recalculateCase(aCase);
 
-                for(int i=0; i<((ArrayList) object).size(); i++){
-                    BranchMapModel.BranchMapChangedEvent event
-                            =  (BranchMapModel.BranchMapChangedEvent)((ArrayList) object).get(i);
-
-                    recalculateCase(event.getOldCase());
-                    recalculateCase(event.getNewCase());
-
-                    NodeRef node = treeModel.getNode(event.getNodeToRecalculate());
-                    NodeRef parent = treeModel.getParent(node);
-
-                    if(parent!=null){
-                        recalculateCase(branchMap.get(parent.getNumber()));
                     }
                 }
-            } else {
-                throw new RuntimeException("Unanticipated model changed event from BranchMapModel");
+            } else if (model == branchMap){
+                if(object instanceof ArrayList){
+
+                    for(int i=0; i<((ArrayList) object).size(); i++){
+                        BranchMapModel.BranchMapChangedEvent event
+                                =  (BranchMapModel.BranchMapChangedEvent)((ArrayList) object).get(i);
+
+                        recalculateCase(event.getOldCase());
+                        recalculateCase(event.getNewCase());
+
+                        NodeRef node = treeModel.getNode(event.getNodeToRecalculate());
+                        NodeRef parent = treeModel.getParent(node);
+
+                        if(parent!=null){
+                            recalculateCase(branchMap.get(parent.getNumber()));
+                        }
+                    }
+                } else {
+                    throw new RuntimeException("Unanticipated model changed event from BranchMapModel");
+                }
             }
 
+            fireModelChanged(model);
 
+            likelihoodKnown = false;
         }
-
-        fireModelChanged(object);
-
-        likelihoodKnown = false;
     }
 
     protected void recalculateCase(int index){

@@ -1,15 +1,12 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.evomodel.coalescent.DemographicModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.math.*;
 import dr.xml.*;
-import org.apache.commons.math.util.FastMath;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -54,7 +51,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double treeLogProb;
     private double storedTreeLogProb;
     private final boolean hasGeography;
-    private final LogSpaceRiemannApproximation integrator;
+    private final TransmissionNumericalIntegrator integrator;
     private ArrayList<AbstractCase> sortedCases;
     private ArrayList<AbstractCase> storedSortedCases;
     private TotalProbability totalProbability;
@@ -79,7 +76,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
         likelihoodKnown = false;
-        integrator = new LogSpaceRiemannApproximation(steps);
+        integrator = new TransmissionNumericalIntegrator(steps);
         hasGeography = spatialKernal!=null;
         totalProbability = new TotalProbability(hasGeography);
         sortCases();
@@ -89,7 +86,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         if(model instanceof CaseToCaseTreeLikelihood){
 
             treeProbKnown = false;
-            if(!(object instanceof AbstractOutbreak)){
+            if(!(object instanceof AbstractOutbreak) && !(object instanceof DemographicModel)){
                 transProbKnown = false;
                 normalisationKnown = false;
                 geographyProbKnown = false;
@@ -164,7 +161,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
             if(!transProbKnown){
                 try{
-                    transLogProb = totalProbability.logEvaluate(transmissionRate.getParameterValue(0));
+                    double rate = transmissionRate.getParameterValue(0);
+
+                    transLogProb = totalProbability.logEvaluate(rate);
+                    integrator.setCentre(rate);
                 } catch(BadPartitionException e){
                     transLogProb = Double.NEGATIVE_INFINITY;
                     logLikelihood = Double.NEGATIVE_INFINITY;
@@ -472,26 +472,57 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     // to prevent underflow:
 
-    public class LogSpaceRiemannApproximation extends RiemannApproximation{
+    public class TransmissionNumericalIntegrator implements Integral{
 
-        public LogSpaceRiemannApproximation(int sampleSize){
-            super(sampleSize);
+        private int sampleSize;
+        private double centre;
+
+        public TransmissionNumericalIntegrator(int sampleSize){
+            this.sampleSize = sampleSize;
+        }
+
+        public void setCentre(double value){
+            centre = value;
         }
 
         public double logIntegrate(TotalProbability f, double min, double max){
+            if(centre<min || centre>max){
+                throw new IllegalArgumentException();
+            }
+
             double logIntegral = Double.NEGATIVE_INFINITY;
 
-            double gridpoint = min;
-            double step = (max - min) / getSampleSize();
-            for (int i = 1; i <= getSampleSize(); i++) {
-                gridpoint += step;
-                logIntegral = LogTricks.logSum(logIntegral, f.logEvaluate(gridpoint));
-            }
-            logIntegral += Math.log((max - min) / (double) getSampleSize());
-            return logIntegral;
+            int samplesPerHalf = sampleSize % 2 == 0 ? sampleSize/2 : (sampleSize-1)/2;
+            int startOfUpperHalf = sampleSize % 2 == 0 ? sampleSize/2 : (sampleSize+1)/2;
 
+            double bottomHalf = centre - min;
+            double bottomStep = bottomHalf/samplesPerHalf;
+            double topHalf = max - centre;
+            double topStep = topHalf/samplesPerHalf;
+
+            double[] points = new double[sampleSize];
+
+            if(sampleSize % 2 == 1){
+                points[(sampleSize - 1)/2]=centre;
+            }
+
+            for(int i=0; i<samplesPerHalf; i++){
+                points[i]= min + bottomStep/2 + i*bottomStep;
+                points[startOfUpperHalf + i]= centre + topStep/2 + i*topStep;
+            }
+
+            for (int i = 0; i < sampleSize; i++) {
+                logIntegral = LogTricks.logSum(logIntegral, f.logEvaluate(points[i]));
+            }
+
+
+            logIntegral += Math.log((max - min) / (double)sampleSize);
+            return logIntegral;
         }
 
+        public double integrate(UnivariateFunction f, double min, double max) {
+            return Math.exp(logIntegrate((TotalProbability)f, min, max));
+        }
     }
 
 }

@@ -44,20 +44,14 @@ public class CategoryOutbreak extends AbstractOutbreak {
         infectiousCategories = new HashSet<String>();
         this.latentMap = latentMap;
         this.infectiousMap = infectiousMap;
-
-        // todo put these somewhere more appropriate
-
-        for(String category : (getInfectiousCategories())){
-            AbstractPeriodPriorDistribution hyperprior = getInfectiousCategoryPrior(category);
+        for(AbstractPeriodPriorDistribution hyperprior : infectiousMap.values()){
+            addModel(hyperprior);
+        }
+        for(AbstractPeriodPriorDistribution hyperprior : latentMap.values()){
             addModel(hyperprior);
         }
 
-        if(hasLatentPeriods){
-            for(String category : getLatentCategories()){
-                AbstractPeriodPriorDistribution hyperprior = getLatentCategoryPrior(category);
-                addModel(hyperprior);
-            }
-        }
+
     }
 
 
@@ -462,8 +456,8 @@ public class CategoryOutbreak extends AbstractOutbreak {
                             distances[i][j]=0;
                         } else {
                             distances[i][j]=matrixParameter.getParameterValue(count);
-                            count++;
                         }
+                        count++;
                     }
                 }
 

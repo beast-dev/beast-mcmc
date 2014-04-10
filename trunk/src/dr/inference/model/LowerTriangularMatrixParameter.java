@@ -73,12 +73,17 @@ public class LowerTriangularMatrixParameter extends MatrixParameter {
 
 
     //Which parameter is changed is a function of the length of the parameter
-    public void setParameter(double[] New){
+    public void setParameterValue(double[] New){
         int len=New.length;
         int paramNum=colDim-rowDim+len-1;
         for(int i=0; i<paramNum; i++){
             parameters[paramNum].setParameterValueQuietly(i, New[i]);
         }
         parameters[paramNum].fireParameterChangedEvent();
+    }
+
+    public double[] getParameterValues(int j){
+        double[] answer=parameters[j].getParameterValues();
+        return answer;
     }
 }

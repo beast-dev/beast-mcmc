@@ -2,15 +2,12 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
-import dr.evomodel.continuous.ContinuousDiffusionStatistic;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
-import dr.geo.contouring.ContourMode;
 import dr.geo.math.SphericalPolarCoordinates;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.TIFFWriter;

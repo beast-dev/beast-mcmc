@@ -313,27 +313,30 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         double sum1 = 0;
         double sum2 = 0;
 
-        for(AbstractCase nonInfector : sortedCases){
+        for(AbstractCase possibleInfector : sortedCases){
 
-            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(nonInfector);
 
-            if(nonInfectorInfectious > infecteeExamined){
-                break;
+            if(possibleInfector!=infectee){
+
+                double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
+
+                if(nonInfectorInfectious > infecteeExamined){
+                    break;
+                }
+
+                double nonInfectorNoninfectious = possibleInfector.getCullTime();
+
+                double rate = hasGeography ? kernelValues[outbreak.getCaseIndex(possibleInfector)] : 1;
+
+                if(nonInfectorInfectious <= infecteeInfected){
+                    double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeInfected);
+                    sum1 += -rate*(lastPossibleInfectionTime - nonInfectorInfectious);
+                }
+
+
+                double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeExamined);
+                sum2 += -rate*(lastPossibleInfectionTime - nonInfectorInfectious);
             }
-
-            double nonInfectorNoninfectious = nonInfector.getCullTime();
-
-            double rate = hasGeography ? kernelValues[outbreak.getCaseIndex(nonInfector)] : 1;
-
-            if(nonInfectorInfectious <= infecteeInfected){
-                double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeInfected);
-                sum1 += -rate*(lastPossibleInfectionTime - nonInfectorInfectious);
-            }
-
-            // probability that _something_ infected this case before it was examined
-
-            double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeExamined);
-            sum2 += -rate*(lastPossibleInfectionTime - nonInfectorInfectious);
 
         }
 

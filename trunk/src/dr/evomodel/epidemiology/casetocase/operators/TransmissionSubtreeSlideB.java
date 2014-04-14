@@ -75,7 +75,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         // 1. choose a random eligible node avoiding root
         do {
             i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-        } while (root == i || !eligibleForMove(i, tree, branchMap));
+        } while (!eligibleForMove(i, tree, branchMap));
 
         final NodeRef iP = tree.getParent(i);
         final NodeRef CiP = getOtherChild(tree, iP, i);
@@ -305,16 +305,11 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
     }
 
     private boolean eligibleForMove(NodeRef node, TreeModel tree, BranchMapModel branchMap){
-        // to be eligible for this move, the node's parent and grandparent (if it has one), or parent and sibling,
-        // must be in the same partition (so removing the parent has no effect on the remaining links of the TT), and
-        // the node and its parent must be in different partitions (so the move does not disconnect anything)
+        // to be eligible for this move, the node's parent must exist and be in a different partition to itself. This
+        // forces the parent to be in the same partition as either its grandchild or its child.
 
-        return ((tree.getParent(tree.getParent(node))!=null
-                && branchMap.get(tree.getParent(node).getNumber())
-                ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
-                || branchMap.get(tree.getParent(node).getNumber())
-                ==branchMap.get(getOtherChild(tree,tree.getParent(node), node).getNumber()))
-                && branchMap.get(tree.getParent(node).getNumber())!=branchMap.get(node.getNumber());
+        return (!tree.isRoot(node) && branchMap.get(tree.getParent(node).getNumber())
+                !=branchMap.get(node.getNumber()));
     }
 
     //intersectingEdges is the same as in normal STS, since there's no additional restriction in this case on where

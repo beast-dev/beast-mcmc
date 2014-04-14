@@ -88,6 +88,14 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         double hr = 0;
 
         assert map.get(parent.getNumber())==map.get(node.getNumber()) : "Partition problem";
+
+        NodeRef sibling = node;
+        for(int i=0; i<tree.getChildCount(parent); i++){
+            if(tree.getChild(parent, i)!=node){
+                sibling = tree.getChild(parent, i);
+            }
+        }
+
         if(!extended || c2cLikelihood.tipLinked(parent)){
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map.get(grandparent.getNumber())==map.get(parent.getNumber())){
@@ -97,21 +105,18 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
                 }
                 newMap[grandparent.getNumber()]=map.get(node.getNumber());
             }
+
+            hr += tree.isExternal(sibling) ? Math.log(2) : 0;
             hr += tree.isExternal(node) ? Math.log(0.5) : 0;
+
         } else {
-            NodeRef sibling = node;
-            for(int i=0; i<tree.getChildCount(parent); i++){
-                if(tree.getChild(parent, i)!=node){
-                    sibling = tree.getChild(parent, i);
-                }
-            }
             if(map.get(sibling.getNumber())==map.get(parent.getNumber())){
                 for(Integer descendant: c2cLikelihood.samePartitionUpTree(sibling, true)){
                     newMap[descendant]=map.get(node.getNumber());
                 }
                 newMap[sibling.getNumber()]=map.get(node.getNumber());
             }
-            hr += tree.isExternal(sibling) ? Math.log(2) : 0;
+
             hr += tree.isExternal(node) ? Math.log(0.5) : 0;
         }
         newMap[parent.getNumber()]=map.get(node.getNumber());

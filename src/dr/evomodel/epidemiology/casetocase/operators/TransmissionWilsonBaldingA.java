@@ -10,6 +10,7 @@ import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -50,10 +51,13 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
         // choose a random node avoiding root, and nodes that are ineligible for this move because they have nowhere to
         // go
-        final int nodeCount = tree.getNodeCount();
-        do {
-            i = tree.getNode(MathUtils.nextInt(nodeCount));
-        } while (tree.getRoot() == i || !eligibleForMove(i, tree, branchMap));
+
+        ArrayList<NodeRef> eligibleNodes = getEligibleNodes(tree, branchMap);
+
+        i = eligibleNodes.get(MathUtils.nextInt(eligibleNodes.size()));
+
+        int eligibleNodeCount = eligibleNodes.size();
+
         final NodeRef iP = tree.getParent(i);
         Integer[] samePaintings = c2cLikelihood.samePartition(iP, false);
         HashSet<Integer> possibleDestinations = new HashSet<Integer>();
@@ -140,6 +144,10 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         }
         logq = Math.log(q);
 
+        int reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
+
+        logq += Math.log(eligibleNodeCount/reverseEligibleNodeCount);
+
     }
 
     public String getPerformanceSuggestion() {
@@ -157,7 +165,16 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
                 tree.getParent(node), node).getNumber());
     }
 
-    @Override
+    private ArrayList<NodeRef> getEligibleNodes(TreeModel tree, BranchMapModel branchMap){
+        ArrayList<NodeRef> out = new ArrayList<NodeRef>();
+        for(NodeRef node : tree.getNodes()){
+            if(eligibleForMove(node, tree, branchMap)){
+                out.add(node);
+            }
+        }
+        return out;
+    }
+
     public String getOperatorName() {
         return TRANSMISSION_WILSON_BALDING_A + " (" + c2cLikelihood.getTreeModel().getId() +")";
     }

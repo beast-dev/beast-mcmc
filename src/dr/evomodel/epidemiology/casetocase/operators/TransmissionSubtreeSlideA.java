@@ -78,10 +78,14 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
         NodeRef i;
 
-        // 1. choose a random eligible node avoiding root
-        do {
-            i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-        } while (root == i || !eligibleForMove(i, tree, branchMap));
+        // 1. choose a random eligible node
+
+        ArrayList<NodeRef> eligibleNodes = getEligibleNodes(tree, branchMap);
+
+        i = eligibleNodes.get(MathUtils.nextInt(eligibleNodes.size()));
+
+        int eligibleNodeCount = eligibleNodes.size();
+
 
         final NodeRef iP = tree.getParent(i);
         final NodeRef CiP = getOtherChild(tree, iP, i);
@@ -274,6 +278,10 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             c2cLikelihood.debugOutputTree("afterTSSA.nex", false);
         }
 
+        int reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
+
+        logq += Math.log(eligibleNodeCount/reverseEligibleNodeCount);
+
         return logq;
     }
 
@@ -289,11 +297,21 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         // to be eligible for this move, the node's parent and grandparent, or parent and sibling, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
 
-        return  (tree.getParent(tree.getParent(node))!=null
+        return  (!tree.isRoot(node) && (tree.getParent(tree.getParent(node))!=null
                 && branchMap.get(tree.getParent(node).getNumber())
                 ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
                 || branchMap.get(tree.getParent(node).getNumber())==branchMap.get(getOtherChild(tree,
-                tree.getParent(node), node).getNumber());
+                tree.getParent(node), node).getNumber()));
+    }
+
+    private ArrayList<NodeRef> getEligibleNodes(TreeModel tree, BranchMapModel branchMap){
+        ArrayList<NodeRef> out = new ArrayList<NodeRef>();
+        for(NodeRef node : tree.getNodes()){
+            if(eligibleForMove(node, tree, branchMap)){
+                out.add(node);
+            }
+        }
+        return out;
     }
 
     //intersectingEdges here is modified to count only possible sources for this special case of the operator - i.e.
@@ -307,7 +325,9 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         if (tree.getNodeHeight(parent) < height || branchMap.get(parent.getNumber())!=partition) return 0;
 
         if (tree.getNodeHeight(node) < height) {
-            if (directChildren != null) directChildren.add(node);
+            if (directChildren != null){
+                directChildren.add(node);
+            }
             return 1;
         }
 

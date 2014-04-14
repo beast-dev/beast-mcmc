@@ -1684,4 +1684,52 @@ public class Branch2dRateToGrid {
 
     }
 
+    class Trait {
+
+        Trait(Object obj) {
+            this.obj = obj;
+            if (obj instanceof Object[]) {
+                isMultivariate = true;
+                array = (Object[])obj;
+            }
+        }
+
+        public boolean isMultivariate() { return isMultivariate; }
+
+        public boolean isNumber() {
+            if (!isMultivariate)
+                return (obj instanceof Double);
+            return (array[0] instanceof Double);
+        }
+
+        public int getDim() {
+            if (isMultivariate) {
+                return array.length;
+            }
+            return 1;
+        }
+
+        public double[] getValue() {
+            int dim = getDim();
+            double[] result = new double[dim];
+            for(int i=0; i<dim; i++)
+                result[i] = (Double)array[i];
+            return result;
+        }
+
+        private Object obj;
+        private Object[] array;
+        private boolean isMultivariate = false;
+
+        public String toString() {
+            if (!isMultivariate)
+                return obj.toString();
+            StringBuffer sb = new StringBuffer(array[0].toString());
+            for(int i=1; i<array.length; i++)
+                sb.append("\t").append(array[i]);
+            return sb.toString();
+        }
+    }
+
+
 }

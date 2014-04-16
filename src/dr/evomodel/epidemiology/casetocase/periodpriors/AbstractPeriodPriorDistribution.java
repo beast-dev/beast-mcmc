@@ -11,14 +11,15 @@ import java.util.ArrayList;
 
 
 /**
- * Created by mhall on 28/02/2014.
+ * Abstract class for the probability of a set of latent or infectious periods being drawn from an unknown probability
+ * distribution, given hyperpriors on the parameters of that distribution.
  */
 
 public abstract class AbstractPeriodPriorDistribution extends AbstractModel implements Loggable {
 
     // are we working on the logarithms of the values?
-
     protected boolean log;
+
     protected double logL;
     protected double storedLogL;
 

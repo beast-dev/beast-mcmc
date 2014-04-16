@@ -12,9 +12,7 @@ import java.util.Arrays;
 
 /**
  The assumption here is that the periods are drawn from a normal distribution with unknown mean and variance.
- The prior is on the parameters of this distribution, and is the conjugate, normal-gamma distribution. We do
- not estimate the parameters of the distribution directly, and instead treat the periods as draws from the
- prior predictive distribution
+ The hyperprior is the conjugate, normal-gamma distribution.
 
  @author Matthew Hall
  */

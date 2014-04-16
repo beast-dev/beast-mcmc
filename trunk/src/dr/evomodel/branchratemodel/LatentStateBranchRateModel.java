@@ -250,7 +250,17 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     }
 
     public static void main(String[] args) {
-        LatentStateBranchRateModel lsbrm = new LatentStateBranchRateModel();
+        FrequencyModel frequencyModel = new FrequencyModel(TwoStates.INSTANCE, new double[] { 0.5, 0.5 });
+        Parameter rateParameter = new Parameter.Default(new double[] { 1.0, 1.0 });
+
+        SubstitutionModel binaryModel = new GeneralSubstitutionModel("binary", TwoStates.INSTANCE, frequencyModel, rateParameter, 0);
+
+        // Do this once, for all branches
+        UniformizedSubstitutionModel uSM = new UniformizedSubstitutionModel(binaryModel, MarkovJumpsType.REWARDS);
+        uSM.setSaveCompleteHistory(true);
+        double[] rewardRegister = new double[]{0.0, 1.0};
+        uSM.setRegistration(rewardRegister);
+
         double delta = 0.01;
         double[] values = new double[101];
         int count = 100000;
@@ -258,7 +268,9 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         for (int i = 0; i < count; i++) {
             double length = 0.01;
             for (int j = 0; j < 100; j++) {
-                values[j] += lsbrm.getLatentProportion(length);
+                double reward = uSM.computeCondStatMarkovJumps(0, 0, length);
+                double proportionTime = reward / length;
+                values[j] += proportionTime;
             }
         }
         double length = 0.01;

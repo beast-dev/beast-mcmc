@@ -242,6 +242,16 @@ public class MathUtils {
 		}
 	}
 
+    //Mean = alpha/(alpha+beta)
+    //Variance = (alpha*beta)/(alpha+beta)^2*(alpha+beta+1)
+
+    public static double nextBeta(double alpha, double beta){
+        double x = nextGamma(alpha, 1);
+        double y = nextGamma(beta, 1);
+        return x/(x+y);
+    }
+
+
 	/**
 	 * Access a default instance of this class, access is synchronized
 	 *

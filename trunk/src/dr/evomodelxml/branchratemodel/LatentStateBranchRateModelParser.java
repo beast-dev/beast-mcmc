@@ -26,15 +26,11 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.CompoundBranchRateModel;
 import dr.evomodel.branchratemodel.LatentStateBranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeParameterModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -71,7 +67,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         return "This element provides a model with a latent state where no evolution occurs but condition on being non-latent at the nodes.";
     }
 
-    public Class getReturnType() {
+    public Class getReturnType()  {
         return LatentStateBranchRateModel.class;
     }
 

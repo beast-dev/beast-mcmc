@@ -1,11 +1,10 @@
 package dr.evomodel.epidemiology.casetocase.periodpriors;
 
-import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.xml.*;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 /**
- * Created by mhall on 28/02/2014.
+ * Probability is proportion to one over variance
  */
 public class OneOverVariancePeriodPriorDistribution extends AbstractPeriodPriorDistribution {
 

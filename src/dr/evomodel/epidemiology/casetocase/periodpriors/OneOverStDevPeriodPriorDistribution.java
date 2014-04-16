@@ -1,11 +1,12 @@
 package dr.evomodel.epidemiology.casetocase.periodpriors;
 
-import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.xml.*;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 /**
- * Created by mhall on 28/02/2014.
+ * This is effectively the Jeffreys prior on the set of periods assuming that they are normally (or lognormally)
+ * distributed; the probability is proportional to the reciprocal of their variance (or the variance of their
+ * logarithms).
  */
 public class OneOverStDevPeriodPriorDistribution extends AbstractPeriodPriorDistribution {
 

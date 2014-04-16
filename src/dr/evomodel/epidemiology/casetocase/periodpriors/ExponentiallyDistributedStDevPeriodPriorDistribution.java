@@ -1,14 +1,11 @@
 package dr.evomodel.epidemiology.casetocase.periodpriors;
 
-import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.math.distributions.ExponentialDistribution;
 import dr.xml.*;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 /**
- * This isn't terribly rigorous, truth be told
- *
- * Created by mhall on 28/02/2014.
+ * Not rigorous; exponential distribution on the variance of the set of periods
  */
 public class ExponentiallyDistributedStDevPeriodPriorDistribution extends AbstractPeriodPriorDistribution {
 

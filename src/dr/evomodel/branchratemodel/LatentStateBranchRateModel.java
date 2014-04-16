@@ -251,7 +251,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
     public static void main(String[] args) {
         FrequencyModel frequencyModel = new FrequencyModel(TwoStates.INSTANCE, new double[] { 0.5, 0.5 });
-        Parameter rateParameter = new Parameter.Default(new double[] { 1.0, 1.0 });
+        Parameter rateParameter = new Parameter.Default(new double[] { 0.001, 0.001 });
 
         SubstitutionModel binaryModel = new GeneralSubstitutionModel("binary", TwoStates.INSTANCE, frequencyModel, rateParameter, 0);
 
@@ -261,22 +261,33 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         double[] rewardRegister = new double[]{0.0, 1.0};
         uSM.setRegistration(rewardRegister);
 
-        double delta = 0.01;
+        double delta = 1;
         double[] values = new double[101];
         int count = 100000;
 
-        for (int i = 0; i < count; i++) {
-            double length = 0.01;
-            for (int j = 0; j < 100; j++) {
-                double reward = uSM.computeCondStatMarkovJumps(0, 0, length);
-                double proportionTime = reward / length;
-                values[j] += proportionTime;
-            }
-        }
-        double length = 0.01;
+        double length = 0.0;
         for (int j = 0; j < 100; j++) {
-            System.out.println(length + "\t" + values[j] / count);
+            double reward = uSM.computeCondStatMarkovJumps(0, 0, length);
+            double proportionTime = reward / length;
+            System.out.println(length + "\t" + proportionTime);
             length += delta;
         }
+
+        // average over many realizations...
+//        for (int i = 0; i < count; i++) {
+//            double length = 0.0;
+//            for (int j = 0; j < 100; j++) {
+//                double reward = uSM.computeCondStatMarkovJumps(0, 0, length);
+//                double proportionTime = reward / length;
+//                values[j] += proportionTime;
+//                length += delta;
+//            }
+//        }
+//
+//        double length = 0.0;
+//        for (int j = 0; j < 100; j++) {
+//            System.out.println(length + "\t" + values[j] / count);
+//            length += delta;
+//        }
     }
 }

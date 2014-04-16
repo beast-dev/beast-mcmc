@@ -1,3 +1,28 @@
+/*
+ * Branch2dRateToGrid.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
@@ -22,8 +47,6 @@ import java.util.*;
  * Date: 08/01/2013
  * Time: 08:27
  * To change this template use File | Settings | File Templates.
- *
- *
  */
 public class Branch2dRateToGrid {
 
@@ -62,9 +85,9 @@ public class Branch2dRateToGrid {
 
 
     public Branch2dRateToGrid(String treeFileName, int burnin, int skipEvery,
-                              String traitString, boolean traitNoise, boolean rateNoise, String rateString,double maxPathLength, Normalization normalize,
+                              String traitString, boolean traitNoise, boolean rateNoise, String rateString, double maxPathLength, Normalization normalize,
                               double latMin, double latMax, double longMin, double longMax, int gridXcells, int gridYcells, double[] sliceHeights, boolean getStdevs,
-                              double posteriorCutoff, String discreteTrait, String[] discreteTraitStates, String historyAnnotation){
+                              double posteriorCutoff, String discreteTrait, String[] discreteTraitStates, String historyAnnotation) {
 
 
         this.latMin = latMin;
@@ -74,8 +97,8 @@ public class Branch2dRateToGrid {
         this.gridXcells = gridXcells;
         this.gridYcells = gridYcells;
 
-         cellXWidth = (longMax - longMin)/gridXcells;
-        cellYHeight = (latMax - latMin)/gridYcells;
+        cellXWidth = (longMax - longMin) / gridXcells;
+        cellYHeight = (latMax - latMin) / gridYcells;
 
         rateAttributeString = rateString;
 
@@ -83,7 +106,7 @@ public class Branch2dRateToGrid {
 //        mostRecentSamplingDate = mrsd;
         sliceCount = sliceHeights.length;
 
-        if (sliceCount > 1){
+        if (sliceCount > 1) {
             sliceHeights = extractUnique(sliceHeights);
             Arrays.sort(sliceHeights);
             reverse(sliceHeights);
@@ -92,7 +115,7 @@ public class Branch2dRateToGrid {
         this.sliceHeights = sliceHeights;
         this.getStdevs = getStdevs;
 
-        if (discreteTrait != null){
+        if (discreteTrait != null) {
             this.discreteTrait = discreteTrait;
             this.discreteTraitStates = discreteTraitStates;
             this.historyAnnotation = historyAnnotation;
@@ -100,11 +123,11 @@ public class Branch2dRateToGrid {
         }
 
         densities = new double[sliceCount][gridXcells][gridYcells];
-        if (summarizeByDiscreteTrait){
+        if (summarizeByDiscreteTrait) {
             densitiesByDTrait = new double[sliceCount][discreteTraitStates.length][gridXcells][gridYcells];
         }
         rates = new double[sliceCount][gridXcells][gridYcells];
-        if (getStdevs){
+        if (getStdevs) {
             stdevs = new double[sliceCount][gridXcells][gridYcells];
         }
 
@@ -113,7 +136,7 @@ public class Branch2dRateToGrid {
         try {
             readAndAnalyzeTrees(treeFileName, burnin, skipEvery, traitString, traitNoise, rateNoise, maxPathLength, normalize, false);
             summarizeMeanRates();
-            if(getStdevs){
+            if (getStdevs) {
 //                progressStream.println("\n");
                 readAndAnalyzeTrees(treeFileName, burnin, skipEvery, traitString, traitNoise, rateNoise, maxPathLength, normalize, true);
                 summarizeStdevs();
@@ -140,14 +163,14 @@ public class Branch2dRateToGrid {
         int totalTrees = 10000;
         int totalStars = 0;
 
-        if (!printedBar){
+        if (!printedBar) {
             progressStream.println("Reading and analyzing trees (bar assumes 10,000 trees)...");
             progressStream.println("0              25             50             75            100");
             progressStream.println("|--------------|--------------|--------------|--------------|");
             printedBar = true;
         }
 
-        if (getStdev){
+        if (getStdev) {
             progressStream.println("summarizing standard deviations");
         }
 
@@ -185,7 +208,7 @@ public class Branch2dRateToGrid {
         progressStream.print("\n");
     }
 
-    private void analyzeTree(Tree treeTime, String traitString,  boolean traitNoise, boolean rateNoise, double maxPathLength, Normalization normalize, boolean getStdev) {
+    private void analyzeTree(Tree treeTime, String traitString, boolean traitNoise, boolean rateNoise, double maxPathLength, Normalization normalize, boolean getStdev) {
 
         double[][] precision = null;
 
@@ -224,21 +247,21 @@ public class Branch2dRateToGrid {
                     System.err.println("Trait '" + traitString + "' not found on branch.");
                     System.exit(-1);
                 }
-                Trait nodeTrait= new Trait(tmpNodeTrait);
+                Trait nodeTrait = new Trait(tmpNodeTrait);
 
                 Object tmpParentNodeTrait = treeTime.getNodeAttribute(treeTime.getParent(node), traitString);
                 if (tmpParentNodeTrait == null) {
                     System.err.println("Trait '" + traitString + "' not found on branch.");
                     System.exit(-1);
                 }
-                Trait parentNodeTrait= new Trait(tmpParentNodeTrait);
+                Trait parentNodeTrait = new Trait(tmpParentNodeTrait);
 
                 double rate = 1;
-                if (!rateNoise){
-                    if (GREATCIRCLEDISTANCE){
-                        rate = getGeographicalDistance(nodeTrait.getValue(), parentNodeTrait.getValue())/(parentHeight - nodeHeight);
-                    }   else{
-                        rate = getNativeDistance(nodeTrait.getValue(), parentNodeTrait.getValue())/(parentHeight - nodeHeight);
+                if (!rateNoise) {
+                    if (GREATCIRCLEDISTANCE) {
+                        rate = getGeographicalDistance(nodeTrait.getValue(), parentNodeTrait.getValue()) / (parentHeight - nodeHeight);
+                    } else {
+                        rate = getNativeDistance(nodeTrait.getValue(), parentNodeTrait.getValue()) / (parentHeight - nodeHeight);
                     }
                 }
 
@@ -246,18 +269,18 @@ public class Branch2dRateToGrid {
                 History history = null;
                 if (summarizeByDiscreteTrait) {
                     Object historyObject = treeTime.getNodeAttribute(node, historyAnnotation);
-                    String nodeState = ((String)treeTime.getNodeAttribute(node,discreteTrait)).replaceAll("\"","");
-                    String parentNodeState = ((String)treeTime.getNodeAttribute(treeTime.getParent(node),discreteTrait)).replaceAll("\"","");
+                    String nodeState = ((String) treeTime.getNodeAttribute(node, discreteTrait)).replaceAll("\"", "");
+                    String parentNodeState = ((String) treeTime.getNodeAttribute(treeTime.getParent(node), discreteTrait)).replaceAll("\"", "");
 
-                    if (!parentNodeState.equals(nodeState)){
-                        if (historyObject instanceof Object[]){
-                            Object[] histories = (Object[])historyObject;
+                    if (!parentNodeState.equals(nodeState)) {
+                        if (historyObject instanceof Object[]) {
+                            Object[] histories = (Object[]) historyObject;
                             history = setUpHistory(histories, nodeState, parentNodeState, nodeHeight, parentHeight);
                         } else {
                             System.err.println("History '" + historyAnnotation + "' not found on a branch that has different node and parent node states.");
                             System.exit(-1);
                         }
-                    }  else {
+                    } else {
                         history = setUpHistory(nodeState, nodeHeight, parentHeight);
                     }
                 }
@@ -272,18 +295,18 @@ public class Branch2dRateToGrid {
                     }
 
                     //branch entirely in interval
-                    if ((nodeHeight > sliceHeights[i]) && (parentHeight < heightAbove)){
-                        inSliceInterval =  true;
+                    if ((nodeHeight > sliceHeights[i]) && (parentHeight < heightAbove)) {
+                        inSliceInterval = true;
                     }
-                    if ((parentHeight > heightAbove) && (nodeHeight < heightAbove)){
-                        inSliceInterval =  true;
+                    if ((parentHeight > heightAbove) && (nodeHeight < heightAbove)) {
+                        inSliceInterval = true;
                         //impute parentNode
                         Double rateAttribute = (Double) treeTime.getNodeAttribute(node, rateAttributeString);
                         double diffusionRate = 1.0;
                         if (rateAttribute != null) {
                             diffusionRate = rateAttribute;
                             if (outputRateWarning) {
-                                progressStream.println("Warning: using "+rateAttributeString+" as rate attribute during imputation!");
+                                progressStream.println("Warning: using " + rateAttributeString + " as rate attribute during imputation!");
                                 outputRateWarning = false;
                             }
                         }
@@ -299,16 +322,16 @@ public class Branch2dRateToGrid {
 //                            history.truncateUpper(heightAbove);
 //                        }
 
-                     }
-                    if ((nodeHeight < sliceHeights[i]) && (parentHeight > sliceHeights[i])){
-                        inSliceInterval =  true;
+                    }
+                    if ((nodeHeight < sliceHeights[i]) && (parentHeight > sliceHeights[i])) {
+                        inSliceInterval = true;
                         //impute node
                         Double rateAttribute = (Double) treeTime.getNodeAttribute(node, rateAttributeString);
                         double diffusionRate = 1.0;
                         if (rateAttribute != null) {
                             diffusionRate = rateAttribute;
                             if (outputRateWarning) {
-                                progressStream.println("Warning: using "+rateAttributeString+" as rate attribute during imputation!");
+                                progressStream.println("Warning: using " + rateAttributeString + " as rate attribute during imputation!");
                                 outputRateWarning = false;
                             }
                         }
@@ -326,18 +349,18 @@ public class Branch2dRateToGrid {
                     }
 
 
-                    if ((isInGrid(nodeTrait.getValue())) && (isInGrid(parentNodeTrait.getValue())) && inSliceInterval){
-    //                    System.out.println("found a branch in the grid");
+                    if ((isInGrid(nodeTrait.getValue())) && (isInGrid(parentNodeTrait.getValue())) && inSliceInterval) {
+                        //                    System.out.println("found a branch in the grid");
 
                         double branchLength = parentHeight - nodeHeight;
-                        while(branchLength > maxPathLength){
+                        while (branchLength > maxPathLength) {
 
                             Double rateAttribute = (Double) treeTime.getNodeAttribute(node, rateAttributeString);
                             double diffusionRate = 1.0;
                             if (rateAttribute != null) {
                                 diffusionRate = rateAttribute;
                                 if (outputRateWarning) {
-                                    progressStream.println("Warning: using "+rateAttributeString+" as rate attribute during imputation!");
+                                    progressStream.println("Warning: using " + rateAttributeString + " as rate attribute during imputation!");
                                     outputRateWarning = false;
                                 }
                             }
@@ -346,10 +369,10 @@ public class Branch2dRateToGrid {
                                 System.exit(-1);
                             }
 
-                            double imputeTime = parentHeight-maxPathLength;
+                            double imputeTime = parentHeight - maxPathLength;
                             Trait intermediateTrait = imputeValue(nodeTrait, parentNodeTrait, imputeTime, nodeHeight, parentHeight, precision, diffusionRate, traitNoise);
 
-                            if ((isInGrid(intermediateTrait.getValue())) && (isInGrid(parentNodeTrait.getValue()))){
+                            if ((isInGrid(intermediateTrait.getValue())) && (isInGrid(parentNodeTrait.getValue()))) {
 
                                 // no truncation needed as all we eventually need to do is to find in what state we are at a particular point in time in that history, may need to be reconsidered for other purposes
 //                                if (summarizeByDiscreteTrait) {
@@ -359,22 +382,22 @@ public class Branch2dRateToGrid {
                                 int[] nodeGridCell = getCellforPoint(intermediateTrait.getValue());
                                 int[] parentNodeGridCell = getCellforPoint(parentNodeTrait.getValue());
 
-                                if (rateNoise){
+                                if (rateNoise) {
                                     if (precision == null) {
                                         progressStream.println("Error: no precision available for imputation with correct noise!");
                                         System.exit(-1);
                                     }
-                                    if (GREATCIRCLEDISTANCE){
-                                        rate = getGeographicalDistance(intermediateTrait.getValue(), parentNodeTrait.getValue())/(parentHeight - imputeTime);
-                                    }   else{
-                                        rate = getNativeDistance(intermediateTrait.getValue(), parentNodeTrait.getValue())/(parentHeight - imputeTime);
+                                    if (GREATCIRCLEDISTANCE) {
+                                        rate = getGeographicalDistance(intermediateTrait.getValue(), parentNodeTrait.getValue()) / (parentHeight - imputeTime);
+                                    } else {
+                                        rate = getNativeDistance(intermediateTrait.getValue(), parentNodeTrait.getValue()) / (parentHeight - imputeTime);
                                     }
                                 }
 
-                                if (!getStdev){
-                                    addDensityAndRate(parentNodeGridCell[0],parentNodeGridCell[1],nodeGridCell[0],nodeGridCell[1],i, rate, history, parentHeight, nodeHeight);
+                                if (!getStdev) {
+                                    addDensityAndRate(parentNodeGridCell[0], parentNodeGridCell[1], nodeGridCell[0], nodeGridCell[1], i, rate, history, parentHeight, nodeHeight);
                                 } else {
-                                    addStdev(parentNodeGridCell[0],parentNodeGridCell[1],nodeGridCell[0],nodeGridCell[1],i,rate);
+                                    addStdev(parentNodeGridCell[0], parentNodeGridCell[1], nodeGridCell[0], nodeGridCell[1], i, rate);
                                 }
 
                                 branchLength = branchLength - maxPathLength;
@@ -386,22 +409,22 @@ public class Branch2dRateToGrid {
                         int[] nodeGridCell = getCellforPoint(nodeTrait.getValue());
                         int[] parentNodeGridCell = getCellforPoint(parentNodeTrait.getValue());
 
-                        if (rateNoise){
+                        if (rateNoise) {
                             if (precision == null) {
                                 progressStream.println("Error: no precision available for imputation with correct noise!");
                                 System.exit(-1);
                             }
-                            if (GREATCIRCLEDISTANCE){
-                                rate = getGeographicalDistance(nodeTrait.getValue(), parentNodeTrait.getValue())/(parentHeight - nodeHeight);
-                            }   else{
-                                rate = getNativeDistance(nodeTrait.getValue(), parentNodeTrait.getValue())/(parentHeight - nodeHeight);
+                            if (GREATCIRCLEDISTANCE) {
+                                rate = getGeographicalDistance(nodeTrait.getValue(), parentNodeTrait.getValue()) / (parentHeight - nodeHeight);
+                            } else {
+                                rate = getNativeDistance(nodeTrait.getValue(), parentNodeTrait.getValue()) / (parentHeight - nodeHeight);
                             }
                         }
 
-                        if (!getStdev){
-                            addDensityAndRate(parentNodeGridCell[0],parentNodeGridCell[1],nodeGridCell[0],nodeGridCell[1],i,rate, history, parentHeight, nodeHeight);
+                        if (!getStdev) {
+                            addDensityAndRate(parentNodeGridCell[0], parentNodeGridCell[1], nodeGridCell[0], nodeGridCell[1], i, rate, history, parentHeight, nodeHeight);
                         } else {
-                            addStdev(parentNodeGridCell[0],parentNodeGridCell[1],nodeGridCell[0],nodeGridCell[1],i,rate);
+                            addStdev(parentNodeGridCell[0], parentNodeGridCell[1], nodeGridCell[0], nodeGridCell[1], i, rate);
                         }
 
                     }
@@ -414,135 +437,147 @@ public class Branch2dRateToGrid {
     private int[] getCellforPoint(double[] location) {
         // For point coordinates (x,y) and a grid with origin (Ox,Oy) and cellsize c, the grid coordinates are found by rounding (x-Ox)/c and (y-Oy)/c down to the nearest integer.
         int[] cell = new int[2];
-        cell[0] = (int)Math.floor((location[1] - longMin)/cellXWidth);
-        cell[1] =  gridYcells - (int)Math.ceil((location[0] - latMin) / cellYHeight);
+        cell[0] = (int) Math.floor((location[1] - longMin) / cellXWidth);
+        cell[1] = gridYcells - (int) Math.ceil((location[0] - latMin) / cellYHeight);
         return cell;
     }
 
-    public void addDensityAndRate(int x,int y,int x2, int y2, int slice, double rate) {
-        int w = x2 - x ;
-        int h = y2 - y ;
-        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
-        if (w<0) dx1 = -1 ; else if (w>0) dx1 = 1 ;
-        if (h<0) dy1 = -1 ; else if (h>0) dy1 = 1 ;
-        if (w<0) dx2 = -1 ; else if (w>0) dx2 = 1 ;
-        int longest = Math.abs(w) ;
-        int shortest = Math.abs(h) ;
-        if (!(longest>shortest)) {
-            longest = Math.abs(h) ;
-            shortest = Math.abs(w) ;
-            if (h<0) dy2 = -1 ; else if (h>0) dy2 = 1 ;
-            dx2 = 0 ;
+    public void addDensityAndRate(int x, int y, int x2, int y2, int slice, double rate) {
+        int w = x2 - x;
+        int h = y2 - y;
+        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+        if (w < 0) dx1 = -1;
+        else if (w > 0) dx1 = 1;
+        if (h < 0) dy1 = -1;
+        else if (h > 0) dy1 = 1;
+        if (w < 0) dx2 = -1;
+        else if (w > 0) dx2 = 1;
+        int longest = Math.abs(w);
+        int shortest = Math.abs(h);
+        if (!(longest > shortest)) {
+            longest = Math.abs(h);
+            shortest = Math.abs(w);
+            if (h < 0) dy2 = -1;
+            else if (h > 0) dy2 = 1;
+            dx2 = 0;
         }
-        int numerator = longest >> 1 ;
-        for (int i=0;i<=longest;i++) {
+        int numerator = longest >> 1;
+        for (int i = 0; i <= longest; i++) {
 //            putpixel(x,y,color) ;
             densities[slice][x][y]++;
-            rates[slice][x][y] =+ rate;
-            numerator += shortest ;
-            if (!(numerator<longest)) {
-                numerator -= longest ;
-                x += dx1 ;
-                y += dy1 ;
+            rates[slice][x][y] = +rate;
+            numerator += shortest;
+            if (!(numerator < longest)) {
+                numerator -= longest;
+                x += dx1;
+                y += dy1;
             } else {
-                x += dx2 ;
-                y += dy2 ;
+                x += dx2;
+                y += dy2;
             }
         }
     }
 
-    public void addDensityAndRate(int x,int y,int x2, int y2, int slice, double rate, History history, double parentHeight, double nodeHeight) {
-        int w = x2 - x ;
-        int h = y2 - y ;
+    public void addDensityAndRate(int x, int y, int x2, int y2, int slice, double rate, History history, double parentHeight, double nodeHeight) {
+        int w = x2 - x;
+        int h = y2 - y;
         double branchLength = parentHeight - nodeHeight;
-        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
-        if (w<0) dx1 = -1 ; else if (w>0) dx1 = 1 ;
-        if (h<0) dy1 = -1 ; else if (h>0) dy1 = 1 ;
-        if (w<0) dx2 = -1 ; else if (w>0) dx2 = 1 ;
-        int longest = Math.abs(w) ;
-        int shortest = Math.abs(h) ;
-        if (!(longest>shortest)) {
-            longest = Math.abs(h) ;
-            shortest = Math.abs(w) ;
-            if (h<0) dy2 = -1 ; else if (h>0) dy2 = 1 ;
-            dx2 = 0 ;
+        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+        if (w < 0) dx1 = -1;
+        else if (w > 0) dx1 = 1;
+        if (h < 0) dy1 = -1;
+        else if (h > 0) dy1 = 1;
+        if (w < 0) dx2 = -1;
+        else if (w > 0) dx2 = 1;
+        int longest = Math.abs(w);
+        int shortest = Math.abs(h);
+        if (!(longest > shortest)) {
+            longest = Math.abs(h);
+            shortest = Math.abs(w);
+            if (h < 0) dy2 = -1;
+            else if (h > 0) dy2 = 1;
+            dx2 = 0;
         }
-        int numerator = longest >> 1 ;
-        for (int i=0;i<=longest;i++) {
+        int numerator = longest >> 1;
+        for (int i = 0; i <= longest; i++) {
 
-            if(history != null){
+            if (history != null) {
                 double height = parentHeight;
-                if (longest > 0){
-                    height -= (branchLength/longest)*i;
+                if (longest > 0) {
+                    height -= (branchLength / longest) * i;
                 }
                 double[] test = history.getHeights();
-                if (height < test[test.length -1]){
-                    System.err.println("encountered height ("+height+") that is lower than lower of history heights ("+ test[test.length -1]+"). Possible rounding error -- setting the height to upper of history heights");
-                    height = test[test.length -1];
+                if (height < test[test.length - 1]) {
+                    System.err.println("encountered height (" + height + ") that is lower than lower of history heights (" + test[test.length - 1] + "). Possible rounding error -- setting the height to upper of history heights");
+                    height = test[test.length - 1];
                 }
 
                 String state = history.getStateForHeight(height);
-                int stateInt =  getIntForState(state);
-                if (stateInt >= 0){
+                int stateInt = getIntForState(state);
+                if (stateInt >= 0) {
                     densitiesByDTrait[slice][stateInt][x][y]++;
                 }
             }
 
             densities[slice][x][y]++;
-            rates[slice][x][y] =+ rate;
+            rates[slice][x][y] = +rate;
 
-            numerator += shortest ;
-            if (!(numerator<longest)) {
-                numerator -= longest ;
-                x += dx1 ;
-                y += dy1 ;
+            numerator += shortest;
+            if (!(numerator < longest)) {
+                numerator -= longest;
+                x += dx1;
+                y += dy1;
             } else {
-                x += dx2 ;
-                y += dy2 ;
+                x += dx2;
+                y += dy2;
             }
         }
     }
 
-    public void addStdev(int x,int y,int x2, int y2, int slice, double rate) {
-        int w = x2 - x ;
-        int h = y2 - y ;
-        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0 ;
-        if (w<0) dx1 = -1 ; else if (w>0) dx1 = 1 ;
-        if (h<0) dy1 = -1 ; else if (h>0) dy1 = 1 ;
-        if (w<0) dx2 = -1 ; else if (w>0) dx2 = 1 ;
-        int longest = Math.abs(w) ;
-        int shortest = Math.abs(h) ;
-        if (!(longest>shortest)) {
-            longest = Math.abs(h) ;
-            shortest = Math.abs(w) ;
-            if (h<0) dy2 = -1 ; else if (h>0) dy2 = 1 ;
-            dx2 = 0 ;
+    public void addStdev(int x, int y, int x2, int y2, int slice, double rate) {
+        int w = x2 - x;
+        int h = y2 - y;
+        int dx1 = 0, dy1 = 0, dx2 = 0, dy2 = 0;
+        if (w < 0) dx1 = -1;
+        else if (w > 0) dx1 = 1;
+        if (h < 0) dy1 = -1;
+        else if (h > 0) dy1 = 1;
+        if (w < 0) dx2 = -1;
+        else if (w > 0) dx2 = 1;
+        int longest = Math.abs(w);
+        int shortest = Math.abs(h);
+        if (!(longest > shortest)) {
+            longest = Math.abs(h);
+            shortest = Math.abs(w);
+            if (h < 0) dy2 = -1;
+            else if (h > 0) dy2 = 1;
+            dx2 = 0;
         }
-        int numerator = longest >> 1 ;
-        for (int i=0;i<=longest;i++) {
+        int numerator = longest >> 1;
+        for (int i = 0; i <= longest; i++) {
 //            System.out.println(i+"\t"+x+"\t"+y);
 //            System.out.println(rates[slice][x][y]);
-            stdevs[slice][x][y] =+ Math.pow((rate - rates[slice][x][y]),2);
-            numerator += shortest ;
-            if (!(numerator<longest)) {
-                numerator -= longest ;
-                x += dx1 ;
-                y += dy1 ;
+            stdevs[slice][x][y] = +Math.pow((rate - rates[slice][x][y]), 2);
+            numerator += shortest;
+            if (!(numerator < longest)) {
+                numerator -= longest;
+                x += dx1;
+                y += dy1;
             } else {
-                x += dx2 ;
-                y += dy2 ;
+                x += dx2;
+                y += dy2;
             }
         }
     }
 
     private static double getNativeDistance(double[] location1, double[] location2) {
-        return Math.sqrt(Math.pow((location2[0]-location1[0]),2.0)+Math.pow((location2[1]-location1[1]),2.0));
+        return Math.sqrt(Math.pow((location2[0] - location1[0]), 2.0) + Math.pow((location2[1] - location1[1]), 2.0));
     }
 
     private static double getGeographicalDistance(double[] location1, double[] location2) {
         if (location1.length == 1) {
             // assume we only have latitude so put them on the prime meridian
-            return getKilometerGreatCircleDistance(new double[] { location1[0], 0.0}, new double[] { location2[0], 0.0});
+            return getKilometerGreatCircleDistance(new double[]{location1[0], 0.0}, new double[]{location2[0], 0.0});
         } else if (location1.length == 2) {
             return getKilometerGreatCircleDistance(location1, location2);
         }
@@ -609,10 +644,10 @@ public class Branch2dRateToGrid {
 
         double[][] precision = new double[dim][dim];
         int counter = 0;
-        for (int a = 0; a < dim; a++){
-            for (int b = 0; b < dim; b++){
+        for (int a = 0; a < dim; a++) {
+            for (int b = 0; b < dim; b++) {
                 precision[a][b] = precisionArray[counter];
-                counter++ ;
+                counter++;
             }
         }
 
@@ -647,21 +682,21 @@ public class Branch2dRateToGrid {
         return result;
     }
 
-    private boolean isInGrid(double[] point){
+    private boolean isInGrid(double[] point) {
         boolean in = false;
-         if (((point[0] > latMin) && (point[0] < latMax)) &&
-                ((point[1] > longMin) && (point[1] < longMax))){
+        if (((point[0] > latMin) && (point[0] < latMax)) &&
+                ((point[1] > longMin) && (point[1] < longMax))) {
             in = true;
         }
         return in;
     }
 
-    private int getIntForState(String state){
+    private int getIntForState(String state) {
 
         int returnInt = -1;
 
-        for (int x = 0; x < discreteTraitStates.length; x++){
-            if (state.equals(discreteTraitStates[x])){
+        for (int x = 0; x < discreteTraitStates.length; x++) {
+            if (state.equals(discreteTraitStates[x])) {
                 returnInt = x;
             }
 
@@ -673,7 +708,6 @@ public class Branch2dRateToGrid {
     }
 
 
-
     enum Normalization {
         LENGTH,
         HEIGHT,
@@ -681,7 +715,7 @@ public class Branch2dRateToGrid {
     }
 
 
-    public void output(String outFileName){
+    public void output(String outFileName) {
 
         resultsStream = System.out;
 
@@ -697,27 +731,27 @@ public class Branch2dRateToGrid {
         outputGridInfo();
         resultsStream.print("\n");
 
-        if (posteriorCutoff>0){
+        if (posteriorCutoff > 0) {
 //            setDensityCutoff();
             setPosteriorCutoff();
         }
 
         double maxGridDensity = 0;
-        if (sliceCount > 1){
-            for (int a = 0; a < sliceCount; a++){
+        if (sliceCount > 1) {
+            for (int a = 0; a < sliceCount; a++) {
                 double tempMax = getMaxMatrix(densities[a]);
-                if (maxGridDensity < tempMax){
+                if (maxGridDensity < tempMax) {
                     maxGridDensity = tempMax;
                 }
             }
         }
 
         double maxGridDensityByDtrait = 0;
-        if (summarizeByDiscreteTrait){
-            for (int a = 0; a < sliceCount; a++){
-                for (int b = 0; b < discreteTraitStates.length; b++){
+        if (summarizeByDiscreteTrait) {
+            for (int a = 0; a < sliceCount; a++) {
+                for (int b = 0; b < discreteTraitStates.length; b++) {
                     double tempMax = getMaxMatrix(densitiesByDTrait[a][b]);
-                    if (maxGridDensityByDtrait < tempMax){
+                    if (maxGridDensityByDtrait < tempMax) {
                         maxGridDensityByDtrait = tempMax;
                     }
                 }
@@ -725,14 +759,13 @@ public class Branch2dRateToGrid {
         }
 
 
-
-        for (int i = 0; i < sliceCount; i++){
+        for (int i = 0; i < sliceCount; i++) {
 
             String ratesFile = "gridRates";
             String densityFile = "gridDensity";
             String rateStdevFile = "gridRateStdevs";
 
-            if (sliceCount == 1){
+            if (sliceCount == 1) {
                 //all these tranposation below to accomodate printing X coordinates row by row
                 resultsStream.print("grid rates:\n");
                 printGrid(transpose(rates[i]));
@@ -748,44 +781,61 @@ public class Branch2dRateToGrid {
                 }
                 resultsStream.print("\n");
 
-                writeAsTIFF(ratesFile+".tiff", transpose(rates[i]), true);
-                writeAsTIFF(densityFile+".tiff", transpose(densities[i]), true);
-                writeAsTIFF(rateStdevFile+".tiff", transpose(stdevs[i]), true);
+                writeAsTIFF(ratesFile + ".tiff", transpose(rates[i]), true);
+                writeAsTIFF(densityFile + ".tiff", transpose(densities[i]), true);
+                writeAsTIFF(rateStdevFile + ".tiff", transpose(stdevs[i]), true);
 
-                if (summarizeByDiscreteTrait){
-                    for (int x = 0; x < discreteTraitStates.length; x++){
-                        resultsStream.print("grid densities for discrete trait "+discreteTraitStates[x]+":\n");
+                System.err.println("Start PNGs");
+
+                writeAsPNG(ratesFile + ".png", rates[i], true);
+                writeAsPNG(densityFile + ".png", densities[i], true);
+                writeAsPNG(rateStdevFile + ".png", stdevs[i], true);
+
+                System.err.println("End PNGs");
+
+                if (summarizeByDiscreteTrait) {
+                    for (int x = 0; x < discreteTraitStates.length; x++) {
+                        resultsStream.print("grid densities for discrete trait " + discreteTraitStates[x] + ":\n");
                         printGrid(transpose(densitiesByDTrait[i][x]));
                         resultsStream.print("\n");
 
-                        writeAsTIFF(densityFile+".discreteTrait"+discreteTraitStates[x]+".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
+                        writeAsTIFF(densityFile + ".discreteTrait" + discreteTraitStates[x] + ".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
+                        writeAsPNG(densityFile + ".discreteTrait" + discreteTraitStates[x] + ".png", densitiesByDTrait[i][x], true, maxGridDensityByDtrait);
                     }
+
+                    // Try multiple channels
+                    List<double[][]> channels = new ArrayList<double[][]>();
+                    for (int x = 0; x < discreteTraitStates.length; ++x) {
+                        channels.add(densitiesByDTrait[i][x]);
+                    }
+                    writeAsPNGMultiChannel("channel." + densityFile + ".discreteTraitAll.png", channels, true, maxGridDensityByDtrait, TIFFWriter.CHANNEL_RED_BLUE);
+
                 }
 
-            }  else {
-                resultsStream.print("grid rates for slice height "+sliceHeights[i]+":\n");
+            } else {
+                resultsStream.print("grid rates for slice height " + sliceHeights[i] + ":\n");
                 printGrid(transpose(rates[i]));
                 resultsStream.print("\n");
 
-                resultsStream.print("grid densities for slice height "+sliceHeights[i]+":\n");
+                resultsStream.print("grid densities for slice height " + sliceHeights[i] + ":\n");
                 printGrid(transpose(densities[i]));
                 resultsStream.print("\n");
 
-                resultsStream.print("grid rate stdevs for slice height "+sliceHeights[i]+":\n");
+                resultsStream.print("grid rate stdevs for slice height " + sliceHeights[i] + ":\n");
                 printGrid(transpose(stdevs[i]));
                 resultsStream.print("\n");
 
-                writeAsTIFF(ratesFile+".height"+sliceHeights[i]+".tiff", transpose(rates[i]), true, maxGridDensity);
-                writeAsTIFF(densityFile+".height"+sliceHeights[i]+".tiff", transpose(densities[i]), true, maxGridDensity);
-                writeAsTIFF(rateStdevFile+".height"+sliceHeights[i]+".tiff", transpose(stdevs[i]), true, maxGridDensity);
+                writeAsTIFF(ratesFile + ".height" + sliceHeights[i] + ".tiff", transpose(rates[i]), true, maxGridDensity);
+                writeAsTIFF(densityFile + ".height" + sliceHeights[i] + ".tiff", transpose(densities[i]), true, maxGridDensity);
+                writeAsTIFF(rateStdevFile + ".height" + sliceHeights[i] + ".tiff", transpose(stdevs[i]), true, maxGridDensity);
 
-                if (summarizeByDiscreteTrait){
-                    for (int x = 0; x < discreteTraitStates.length; x++){
-                        resultsStream.print("grid densities for slice height "+sliceHeights[i]+" and for discrete trait "+discreteTraitStates[x]+":\n");
+                if (summarizeByDiscreteTrait) {
+                    for (int x = 0; x < discreteTraitStates.length; x++) {
+                        resultsStream.print("grid densities for slice height " + sliceHeights[i] + " and for discrete trait " + discreteTraitStates[x] + ":\n");
                         printGrid(transpose(densitiesByDTrait[i][x]));
                         resultsStream.print("\n");
 
-                        writeAsTIFF(densityFile+".height"+sliceHeights[i]+".discreteTrait"+discreteTraitStates[x]+".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
+                        writeAsTIFF(densityFile + ".height" + sliceHeights[i] + ".discreteTrait" + discreteTraitStates[x] + ".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
                     }
                 }
             }
@@ -795,7 +845,7 @@ public class Branch2dRateToGrid {
 
     }
 
-    private void outputGridInfo(){
+    private void outputGridInfo() {
         StringBuffer sb = new StringBuffer("# grid info\n");
         sb.append("# lat min (Y)").append(sep).append(latMin);
         sb.append("\n");
@@ -813,18 +863,18 @@ public class Branch2dRateToGrid {
         sb.append("\n");
         sb.append("# Y cell height (lat)").append(sep).append(cellYHeight);
         sb.append("\n");
-        if (posteriorCutoff > 0){
+        if (posteriorCutoff > 0) {
             sb.append("# cut off for reporting grid values").append(sep).append(posteriorCutoff);
             sb.append("\n");
         }
         resultsStream.print(sb);
     }
 
-    private void printGrid(double array[][]){
+    private void printGrid(double array[][]) {
 
         StringBuffer sb = new StringBuffer();
-        for (int a = 0; a < array.length; a++){
-            for (int b = 0; b < array[0].length; b ++){
+        for (int a = 0; a < array.length; a++) {
+            for (int b = 0; b < array[0].length; b++) {
                 sb.append(array[a][b]).append(sep);
             }
             sb.append("\n");
@@ -836,11 +886,20 @@ public class Branch2dRateToGrid {
 
 //        System.out.print("matrix x = "+matrix.length+"; "+"y = "+matrix[0].length);
 
-        matrix = normalize(matrix, 255, log);
+        double[][] mat = normalize(matrix, 255, log);
         try {
             DataOutputStream tiffOut = new DataOutputStream(new FileOutputStream(fileName));
-            TIFFWriter.writeDoubleArray(tiffOut, matrix);
+            TIFFWriter.writeDoubleArray(tiffOut, mat);
             tiffOut.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public void writeAsPNG(String fileName, double[][] matrix, boolean log) {
+        double[][] mat = normalize(matrix, 255, log);
+        try {
+            TIFFWriter.writeDoubleArray(fileName, mat, "png", TIFFWriter.HEATMAP);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -850,14 +909,53 @@ public class Branch2dRateToGrid {
 
 //        System.out.print("matrix x = "+matrix.length+"; "+"y = "+matrix[0].length);
 
-        matrix = normalize(matrix, 255, log, maxValue);
+        double[][] mat = normalize(matrix, 255, log, maxValue);
         try {
             DataOutputStream tiffOut = new DataOutputStream(new FileOutputStream(fileName));
-            TIFFWriter.writeDoubleArray(tiffOut, matrix);
+            TIFFWriter.writeDoubleArray(tiffOut, mat);
             tiffOut.close();
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public void writeAsPNG(String fileName, double[][] matrix, boolean log, double maxValue) {
+
+//        System.out.print("matrix x = "+matrix.length+"; "+"y = "+matrix[0].length);
+
+        double[][] mat = normalize(matrix, 255, log, maxValue);
+        try {
+            TIFFWriter.writeDoubleArray(fileName, mat, "png", TIFFWriter.HEATMAP);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public void writeAsPNGMultiChannel(String fileName, List<double[][]> matrices, boolean log, double maxValue,
+                                       TIFFWriter.MultipleChannelColorScheme scheme) {
+
+//        System.out.print("matrix x = "+matrix.length+"; "+"y = "+matrix[0].length);
+
+        List<double[][]> normalizedMatrix = new ArrayList<double[][]>();
+        for (double[][] matrix : matrices) {
+            normalizedMatrix.add(normalize(matrix, 255, log, maxValue)); // TODO Maybe we want different maxValue for each matrix?
+        }
+
+        try {
+            TIFFWriter.writeDoubleArrayMultiChannel(fileName, normalizedMatrix, "png", scheme);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    private double sum(double[][] mat) {
+        double value = 0.0;
+        for (int i = 0; i < mat.length; ++i) {
+            for (int j = 0; j < mat[i].length; ++j) {
+                value += mat[i][j];
+            }
+        }
+        return value;
     }
 
     private double[][] normalize(double inputArray[][], double max, boolean log) {
@@ -869,7 +967,7 @@ public class Branch2dRateToGrid {
             for (int j = 0; j < inputArray.length; j++) {
                 if (log) {
                     //pseudocount
-                    if (inputArray[j][i] == 0){
+                    if (inputArray[j][i] == 0) {
                         inputArray[j][i] = 1;
                     }
                     inputArray[j][i] = Math.log(inputArray[j][i]);
@@ -899,10 +997,11 @@ public class Branch2dRateToGrid {
             for (int i = 0; i < inputArray[0].length; i++) {
                 for (int j = 0; j < inputArray.length; j++) {
                     //pseudocount
-                    if (inputArray[j][i] == 0){
-                        inputArray[j][i] = 1;
+                    if (inputArray[j][i] == 0) {
+                        matrix[j][i] = 0;
+                    } else {
+                        matrix[j][i] = Math.log(inputArray[j][i]);
                     }
-                    inputArray[j][i] = Math.log(inputArray[j][i]);
                 }
             }
         }
@@ -910,7 +1009,7 @@ public class Branch2dRateToGrid {
 
         for (int i = 0; i < inputArray[0].length; i++) {
             for (int j = 0; j < inputArray.length; j++) {
-                matrix[j][i] = ((double) inputArray[j][i] / maxValue) * max;
+                matrix[j][i] = ((double) matrix[j][i] / maxValue) * max;
             }
         }
 
@@ -918,11 +1017,11 @@ public class Branch2dRateToGrid {
 
     }
 
-    private double[][] toDoubleArray(int array[][]){
+    private double[][] toDoubleArray(int array[][]) {
 
         double[][] returnArray = new double[array.length][array[0].length];
-        for (int a = 0; a < returnArray.length; a++){
-            for (int b = 0; b < array[0].length; b ++){
+        for (int a = 0; a < returnArray.length; a++) {
+            for (int b = 0; b < array[0].length; b++) {
                 returnArray[a][b] = array[a][b];
             }
         }
@@ -932,7 +1031,7 @@ public class Branch2dRateToGrid {
     public double[][] transpose(double[][] matrix) {
 
         double[][] transposeMatrix = new double[matrix[0].length][matrix.length];
-        for(int i =0; i < matrix.length; i++){
+        for (int i = 0; i < matrix.length; i++) {
             for (int j = 0; j < matrix[0].length; j++) {
                 transposeMatrix[j][i] = matrix[i][j];
             }
@@ -941,40 +1040,40 @@ public class Branch2dRateToGrid {
         return transposeMatrix;
     }
 
-    private void summarizeMeanRates(){
-        for (int a = 0; a < rates.length; a++){
-            for (int b = 0; b < rates[0].length; b++){
-                for (int c = 0; c < rates[0][0].length; c++){
-                    rates[a][b][c] = rates[a][b][c]/densities[a][b][c];
+    private void summarizeMeanRates() {
+        for (int a = 0; a < rates.length; a++) {
+            for (int b = 0; b < rates[0].length; b++) {
+                for (int c = 0; c < rates[0][0].length; c++) {
+                    rates[a][b][c] = rates[a][b][c] / densities[a][b][c];
                 }
             }
         }
     }
 
-    private void summarizeStdevs(){
-        for (int a = 0; a < stdevs.length; a++){
-            for (int b = 0; b < stdevs[0].length; b++){
-                for (int c = 0; c < stdevs[0][0].length; c++){
-                    stdevs[a][b][c] = Math.sqrt(stdevs[a][b][c]/densities[a][b][c]);
+    private void summarizeStdevs() {
+        for (int a = 0; a < stdevs.length; a++) {
+            for (int b = 0; b < stdevs[0].length; b++) {
+                for (int c = 0; c < stdevs[0][0].length; c++) {
+                    stdevs[a][b][c] = Math.sqrt(stdevs[a][b][c] / densities[a][b][c]);
                 }
             }
         }
     }
 
-    private double[][] summarizRateStdevs(List<Double>[][] individualRates, double[][] meanRates){
+    private double[][] summarizRateStdevs(List<Double>[][] individualRates, double[][] meanRates) {
         double[][] rateStdevs = new double[individualRates.length][individualRates[0].length];
-        for(int i =0; i < individualRates.length; i++){
+        for (int i = 0; i < individualRates.length; i++) {
             for (int j = 0; j < individualRates[0].length; j++) {
-                if (individualRates[i][j].isEmpty()){
+                if (individualRates[i][j].isEmpty()) {
 //                    sumOfrates = Double.NaN;
                     rateStdevs[i][j] = Double.NaN;
                 } else {
                     List<Double> cellRates = individualRates[i][j];
                     double sumOfSquaredDifferences = 0;
                     for (Double element : cellRates) {
-                        sumOfSquaredDifferences += Math.pow((element - meanRates[i][j]),2);
+                        sumOfSquaredDifferences += Math.pow((element - meanRates[i][j]), 2);
                     }
-                    rateStdevs[i][j] = Math.sqrt(sumOfSquaredDifferences/(cellRates.size()));
+                    rateStdevs[i][j] = Math.sqrt(sumOfSquaredDifferences / (cellRates.size()));
                 }
 
             }
@@ -1038,12 +1137,12 @@ public class Branch2dRateToGrid {
         }
     }
 
-    public static double[] extractUnique(double[] array){
+    public static double[] extractUnique(double[] array) {
         Set<Double> tmp = new LinkedHashSet<Double>();
         for (Double each : array) {
             tmp.add(each);
         }
-        double [] output = new double[tmp.size()];
+        double[] output = new double[tmp.size()];
         int i = 0;
         for (Double each : tmp) {
             output[i++] = each;
@@ -1061,11 +1160,11 @@ public class Branch2dRateToGrid {
         return result;
     }
 
-    public static double getMaxMatrix(double[][] gridDensities){
+    public static double getMaxMatrix(double[][] gridDensities) {
         double max = 0;
-        for (int x = 0; x < gridDensities.length; x++){
-            for (int y = 0; y < gridDensities[0].length; y++){
-                if (gridDensities[x][y] > max){
+        for (int x = 0; x < gridDensities.length; x++) {
+            for (int y = 0; y < gridDensities[0].length; y++) {
+                if (gridDensities[x][y] > max) {
                     max = gridDensities[x][y];
                 }
             }
@@ -1074,7 +1173,7 @@ public class Branch2dRateToGrid {
         return max;
     }
 
-    private void setPosteriorCutoff(){
+    private void setPosteriorCutoff() {
 // no discrete traits
 //        for (int a = 0; a < densities.length; a++){
 //            for (int b = 0; b < densities[0].length; b++){
@@ -1088,16 +1187,16 @@ public class Branch2dRateToGrid {
 //            }
 //        }
 
-        for (int a = 0; a < densitiesByDTrait.length; a++){
-            for (int b = 0; b < densitiesByDTrait[0].length; b++){
-                for (int c = 0; c < densitiesByDTrait[0][0].length; c++){
-                    for (int d = 0; d < densitiesByDTrait[0][0][0].length; d++){
-                        if(summarizeByDiscreteTrait){
-                            if (densitiesByDTrait[a][b][c][d] < (posteriorCutoff*treesAnalyzed)){
+        for (int a = 0; a < densitiesByDTrait.length; a++) {
+            for (int b = 0; b < densitiesByDTrait[0].length; b++) {
+                for (int c = 0; c < densitiesByDTrait[0][0].length; c++) {
+                    for (int d = 0; d < densitiesByDTrait[0][0][0].length; d++) {
+                        if (summarizeByDiscreteTrait) {
+                            if (densitiesByDTrait[a][b][c][d] < (posteriorCutoff * treesAnalyzed)) {
                                 densitiesByDTrait[a][b][c][d] = 0;
                             }
                         }
-                        if (densities[a][c][d] < (posteriorCutoff*treesAnalyzed)){
+                        if (densities[a][c][d] < (posteriorCutoff * treesAnalyzed)) {
                             densities[a][c][d] = 0;
                             rates[a][c][d] = Double.NaN;
                             stdevs[a][c][d] = Double.NaN;
@@ -1108,25 +1207,25 @@ public class Branch2dRateToGrid {
         }
     }
 
-    public History setUpHistory(String nodeState, double timeLow, double timeUp){
-        double[] heights = new double[]{timeUp,timeLow};
+    public History setUpHistory(String nodeState, double timeLow, double timeUp) {
+        double[] heights = new double[]{timeUp, timeLow};
         String[] states = new String[]{nodeState};
-        return new History(heights,states);
+        return new History(heights, states);
     }
 
-    public History setUpHistory(Object[] historyObject, String nodeState, String parentNodeState, double timeLow, double timeUp){
+    public History setUpHistory(Object[] historyObject, String nodeState, String parentNodeState, double timeLow, double timeUp) {
         double[] heights;
         String[] states;
 
-        Object[] histories = (Object[])historyObject;
+        Object[] histories = (Object[]) historyObject;
 //        System.out.println(histories.length);
-        Object[] testHistory = (Object[])histories[0];
+        Object[] testHistory = (Object[]) histories[0];
         String[][] jumpStrings = new String[histories.length][testHistory.length];
 
 
-        for (int q = 0; q < histories.length; q++){
-            Object[] singleHistory = (Object[])histories[q];
-            for (int r = 0; r < singleHistory.length; r ++){
+        for (int q = 0; q < histories.length; q++) {
+            Object[] singleHistory = (Object[]) histories[q];
+            for (int r = 0; r < singleHistory.length; r++) {
 //                System.out.println(singleHistory[r]);
                 jumpStrings[q][r] = singleHistory[r].toString();
             }
@@ -1135,40 +1234,40 @@ public class Branch2dRateToGrid {
 
         //sorting jumpStrings not necessary: jumps are in order of their occurrence
         //fill heights and states
-        heights = new double[histories.length+2];
-        states = new String[histories.length+1];
-        for (int b = 0; b < histories.length; b++){
+        heights = new double[histories.length + 2];
+        states = new String[histories.length + 1];
+        for (int b = 0; b < histories.length; b++) {
             states[b] = jumpStrings[b][1];
             heights[b + 1] = Double.valueOf(jumpStrings[b][0]);
         }
 
         //sanity check
-        if (!jumpStrings[0][1].equals(parentNodeState)){
-            System.out.println(jumpStrings[0][1]+"\t"+parentNodeState);
+        if (!jumpStrings[0][1].equals(parentNodeState)) {
+            System.out.println(jumpStrings[0][1] + "\t" + parentNodeState);
             System.err.println("mismatch in jump history and parent node state");
             System.exit(-1);
         }
 
         //sanity check
-        states[histories.length] = jumpStrings[histories.length-1][2];
-        if (!jumpStrings[histories.length-1][2].equals(nodeState)){
+        states[histories.length] = jumpStrings[histories.length - 1][2];
+        if (!jumpStrings[histories.length - 1][2].equals(nodeState)) {
             System.err.println("mismatch in jump history and node state");
             System.exit(-1);
         }
 
         heights[0] = timeUp;
-        heights[histories.length+1] =  timeLow;
+        heights[histories.length + 1] = timeLow;
 
 
-        return new History(heights,states);
+        return new History(heights, states);
     }
 
-    private String getState(int stateInt){
+    private String getState(int stateInt) {
         String returnString = null;
-        try{
+        try {
 //            returnString = markovJumpLikelihood.formattedState(new int[] {stateInt}).replaceAll("\"","");
         } catch (IndexOutOfBoundsException iobe) {
-            System.err.println("no state found for int = "+stateInt+"...");
+            System.err.println("no state found for int = " + stateInt + "...");
             System.exit(-1);
         }
         return returnString;
@@ -1185,7 +1284,7 @@ public class Branch2dRateToGrid {
     private double cellXWidth;
     private double cellYHeight;
     private String rateAttributeString = "rate";
-//    private double[][] gridMeanRates;
+    //    private double[][] gridMeanRates;
 //    private int[][] gridHits;
     private ArrayList treeLengths = new ArrayList();
     private boolean outputRateWarning = true;
@@ -1193,13 +1292,13 @@ public class Branch2dRateToGrid {
     private double[][][][] densitiesByDTrait;
     private double[][][] rates;
     private double[][][] stdevs;
-// by discrete trait
+    // by discrete trait
 //    private double[][][][] densities;
 //    private double[][][][] rates;
 //    private double[][][][] stdevs;
     private int sliceCount;
     private double[] sliceHeights;
-//    private double mostRecentSamplingDate;
+    //    private double mostRecentSamplingDate;
     private boolean printedBar = false;
     private boolean getStdevs = true;
     private double posteriorCutoff;
@@ -1208,12 +1307,12 @@ public class Branch2dRateToGrid {
     private boolean summarizeByDiscreteTrait = false;
     private String historyAnnotation;
 
-//    // Messages to stderr, output to stdout
+    //    // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
     private PrintStream resultsStream;
-//
+    //
     private final static Version version = new BeastVersion();
-//
+    //
     private static final String commandName = "Branch2dRateToGrid";
 
 
@@ -1253,9 +1352,6 @@ public class Branch2dRateToGrid {
     }
 
 
-
-
-
     public static void main(String[] args) throws IOException {
 
         String inputFileName = null;
@@ -1279,7 +1375,7 @@ public class Branch2dRateToGrid {
         double[] sliceHeights = null;
         double mrsd = 0;
         boolean getStdevs = true;
-        String discreteTraitName =  null;
+        String discreteTraitName = null;
         String[] discreteTraitStates = null;
         String historyAnnotation = "history";
 
@@ -1332,7 +1428,7 @@ public class Branch2dRateToGrid {
             System.exit(0);
         }
 
-        try{
+        try {
 
             if (arguments.hasOption(LATMAX)) {
                 latMax = arguments.getRealOption(LATMAX);
@@ -1428,16 +1524,16 @@ public class Branch2dRateToGrid {
             String discreteTraitNameString = arguments.getStringOption(DISCRETE_TRAIT_NAME);
             if (discreteTraitNameString != null) {
                 discreteTraitName = discreteTraitNameString;
-                if(!arguments.hasOption(DISCRETE_TRAIT_STATES)){
-                    System.err.print("a discrete trait name is specified ("+discreteTraitName+"), but no associated states of that trait are specified");
+                if (!arguments.hasOption(DISCRETE_TRAIT_STATES)) {
+                    System.err.print("a discrete trait name is specified (" + discreteTraitName + "), but no associated states of that trait are specified");
                     System.exit(-1);
                 }
             }
 
             String discreteTraitStatesString = arguments.getStringOption(DISCRETE_TRAIT_STATES);
-            if (discreteTraitStatesString != null){
+            if (discreteTraitStatesString != null) {
                 discreteTraitStates = parseVariableLengthStringArray(discreteTraitStatesString);
-                if (discreteTraitName == null){
+                if (discreteTraitName == null) {
                     System.err.print("states for a discrete trait are specified, but no associated trait name for trait annotation is specified");
                     System.exit(-1);
                 }
@@ -1464,33 +1560,33 @@ public class Branch2dRateToGrid {
             if (arguments.hasOption(SLICE_COUNT)) {
                 int sliceCount = arguments.getIntegerOption(SLICE_COUNT);
                 double startTime;
-                if (arguments.hasOption(START_TIME)){
+                if (arguments.hasOption(START_TIME)) {
                     startTime = arguments.getRealOption(START_TIME);
-                }  else {
-                    progressStream.println("slice count specified, but no associated start time?" );
+                } else {
+                    progressStream.println("slice count specified, but no associated start time?");
                     System.exit(-1);
-                    startTime =0;
+                    startTime = 0;
                 }
                 double delta;
                 if (mrsd != 0) {
-                    if (sliceCount == 1){
+                    if (sliceCount == 1) {
                         delta = (mrsd - startTime);
                     } else {
                         delta = (mrsd - startTime) / (sliceCount - 1);
                     }
                 } else {
-                    if (sliceCount == 1){
+                    if (sliceCount == 1) {
                         delta = startTime;
-                    }   else {
+                    } else {
                         delta = startTime / (sliceCount - 1);
                     }
                 }
                 sliceHeights = new double[sliceCount];
-    //                double height = mrsd - startTime;
-    //                for (int i = 0; i < sliceCount; i++) {
-    //                   sliceHeights[i] = height;
-    //                   height -= delta;
-    //                }
+                //                double height = mrsd - startTime;
+                //                for (int i = 0; i < sliceCount; i++) {
+                //                   sliceHeights[i] = height;
+                //                   height -= delta;
+                //                }
                 double height = 0;
                 for (int i = 0; i < sliceCount; i++) {
                     sliceHeights[i] = height;
@@ -1498,19 +1594,18 @@ public class Branch2dRateToGrid {
                 }
             }
 
-            if ((sliceTimeString == null) && (sliceHeightString ==null) && (!arguments.hasOption(SLICE_COUNT))){
+            if ((sliceTimeString == null) && (sliceHeightString == null) && (!arguments.hasOption(SLICE_COUNT))) {
                 sliceHeights = new double[]{0};
             }
 
         } catch (Arguments.ArgumentException e) {
-                progressStream.println(e);
-                printUsage(arguments);
-                System.exit(-1);
+            progressStream.println(e);
+            printUsage(arguments);
+            System.exit(-1);
         }
 
 
-
-            final String[] args2 = arguments.getLeftoverArguments();
+        final String[] args2 = arguments.getLeftoverArguments();
 
         switch (args2.length) {
             case 0:
@@ -1530,7 +1625,7 @@ public class Branch2dRateToGrid {
             }
         }
 
-        Branch2dRateToGrid grid = new Branch2dRateToGrid(inputFileName, burnin, skipEvery, traitName,  trait2DNoise, rate2DNoise, rateString,  maxPathLength, normalize, latMin, latMax, longMin, longMax, gridXcells,  gridYcells, sliceHeights, getStdevs, posteriorCutoff, discreteTraitName, discreteTraitStates, historyAnnotation);
+        Branch2dRateToGrid grid = new Branch2dRateToGrid(inputFileName, burnin, skipEvery, traitName, trait2DNoise, rate2DNoise, rateString, maxPathLength, normalize, latMin, latMax, longMin, longMax, gridXcells, gridYcells, sliceHeights, getStdevs, posteriorCutoff, discreteTraitName, discreteTraitStates, historyAnnotation);
         grid.output(outputFileName);
 
         System.exit(0);
@@ -1548,14 +1643,14 @@ public class Branch2dRateToGrid {
             this.historyStates = historyStates;
         }
 
-        public String getStateForHeight(double height){
+        public String getStateForHeight(double height) {
             String returnState = null;
-            if ((height > historyHeights[0]) || (height < historyHeights[(historyHeights.length -1)])){
-                System.err.print("height "+height+" is outside the history range!!");
+            if ((height > historyHeights[0]) || (height < historyHeights[(historyHeights.length - 1)])) {
+                System.err.print("height " + height + " is outside the history range!!");
                 System.exit(-1);
             }
             for (int a = 0; a < (historyHeights.length - 1); a++) {
-                if ((height <= historyHeights[a]) && (height >= historyHeights[a+1])) {
+                if ((height <= historyHeights[a]) && (height >= historyHeights[a + 1])) {
                     returnState = historyStates[a];
                 }
             }
@@ -1563,19 +1658,19 @@ public class Branch2dRateToGrid {
             return returnState;
         }
 
-        public double[] getHeights(){
+        public double[] getHeights() {
             return historyHeights;
         }
 
         public void truncateUpper(double time) {
             int cutFrom = -1;
             for (int a = 0; a < (historyHeights.length - 1); a++) {
-                if ((time < historyHeights[a]) && (time > historyHeights[a+1])) {
+                if ((time < historyHeights[a]) && (time > historyHeights[a + 1])) {
                     cutFrom = a;
                 }
             }
 
-            if (cutFrom < 0){
+            if (cutFrom < 0) {
                 System.err.println("no upper truncation of discrete trait history on branch possible");
                 System.exit(0);
             }
@@ -1589,10 +1684,10 @@ public class Branch2dRateToGrid {
             tempStates = Arrays.copyOfRange(historyStates, cutFrom, historyStates.length);
 
             historyHeights = tempHeights;
-            historyStates =  tempStates;
+            historyStates = tempStates;
         }
 
-        public void truncateLower (double time) {
+        public void truncateLower(double time) {
             int cutTo = -1;
 
             for (int a = (historyHeights.length - 1); a > 0; a--) {
@@ -1601,7 +1696,7 @@ public class Branch2dRateToGrid {
                 }
             }
 
-            if (cutTo < 0){
+            if (cutTo < 0) {
                 System.err.println("no lower truncation of discrete trait history on branch possible");
                 System.exit(0);
             }
@@ -1610,73 +1705,73 @@ public class Branch2dRateToGrid {
             String[] tempStates = new String[cutTo];
 
             tempHeights = Arrays.copyOfRange(historyHeights, 0, cutTo + 1);
-            tempHeights[(tempHeights.length-1)] = time;
+            tempHeights[(tempHeights.length - 1)] = time;
 
             tempStates = Arrays.copyOfRange(historyStates, 0, cutTo);
 
             historyHeights = tempHeights;
-            historyStates =  tempStates;
+            historyStates = tempStates;
         }
 
-        public double getStateTime(String state){
+        public double getStateTime(String state) {
             double time = 0;
-            for (int x = 0; x < historyStates.length; x++){
-                if (state.equals(historyStates[x])){
-                    time += (historyHeights[x] - historyHeights[x+1]);
+            for (int x = 0; x < historyStates.length; x++) {
+                if (state.equals(historyStates[x])) {
+                    time += (historyHeights[x] - historyHeights[x + 1]);
                 }
             }
             return time;
         }
 
-        private void setTraitsforHeights(double[] traitUp,  double[] traitLow, double[] precisionArray, double rate, boolean trueNoise){
+        private void setTraitsforHeights(double[] traitUp, double[] traitLow, double[] precisionArray, double rate, boolean trueNoise) {
             historyTraits = new double[historyHeights.length][2];
-            for (int x = 0; x < historyHeights.length; x++){
-                if(x == 0){
+            for (int x = 0; x < historyHeights.length; x++) {
+                if (x == 0) {
                     historyTraits[x] = traitUp;
-                } else if (x == (historyTraits.length -1)) {
+                } else if (x == (historyTraits.length - 1)) {
                     historyTraits[x] = traitLow;
                 } else {
-                    historyTraits[x] = imputeValue(traitUp, traitLow, historyHeights[x], historyHeights[(historyHeights.length -1)], historyHeights[0], precisionArray, rate, trueNoise);
+                    historyTraits[x] = imputeValue(traitUp, traitLow, historyHeights[x], historyHeights[(historyHeights.length - 1)], historyHeights[0], precisionArray, rate, trueNoise);
                 }
 
             }
         }
 
-        public double getStateGreatCircleDistance(String state){
+        public double getStateGreatCircleDistance(String state) {
             double distance = 0;
-            for (int x = 0; x < historyStates.length; x++){
-                if (state.equals(historyStates[x])){
+            for (int x = 0; x < historyStates.length; x++) {
+                if (state.equals(historyStates[x])) {
                     distance += getKilometerGreatCircleDistance(historyTraits[x], historyTraits[x + 1]);
                 }
             }
             return distance;
         }
 
-        public double getStateDifferenceInGreatCircleDistanceFromRoot(String state, double[] rootTrait){
+        public double getStateDifferenceInGreatCircleDistanceFromRoot(String state, double[] rootTrait) {
             double distance = 0;
-            for (int x = 0; x < historyStates.length; x++){
-                if (state.equals(historyStates[x])){
+            for (int x = 0; x < historyStates.length; x++) {
+                if (state.equals(historyStates[x])) {
                     distance += (getKilometerGreatCircleDistance(historyTraits[x + 1], rootTrait) - getKilometerGreatCircleDistance(historyTraits[x], rootTrait));
                 }
             }
             return distance;
         }
 
-        public double getStateNativeDistance(String state){
+        public double getStateNativeDistance(String state) {
             double distance = 0;
-            for (int x = 0; x < historyStates.length; x++){
-                if (state.equals(historyStates[x])){
-                    distance += getNativeDistance(historyTraits[x],historyTraits[x+1]);
+            for (int x = 0; x < historyStates.length; x++) {
+                if (state.equals(historyStates[x])) {
+                    distance += getNativeDistance(historyTraits[x], historyTraits[x + 1]);
                 }
             }
             return distance;
         }
 
-        public double getStateDifferenceInNativeDistanceFromRoot(String state, double[] rootTrait){
+        public double getStateDifferenceInNativeDistanceFromRoot(String state, double[] rootTrait) {
             double distance = 0;
-            for (int x = 0; x < historyStates.length; x++){
-                if (state.equals(historyStates[x])){
-                    distance += (getNativeDistance(historyTraits[x+1],rootTrait) - getNativeDistance(historyTraits[x],rootTrait));
+            for (int x = 0; x < historyStates.length; x++) {
+                if (state.equals(historyStates[x])) {
+                    distance += (getNativeDistance(historyTraits[x + 1], rootTrait) - getNativeDistance(historyTraits[x], rootTrait));
                 }
             }
             return distance;
@@ -1690,11 +1785,13 @@ public class Branch2dRateToGrid {
             this.obj = obj;
             if (obj instanceof Object[]) {
                 isMultivariate = true;
-                array = (Object[])obj;
+                array = (Object[]) obj;
             }
         }
 
-        public boolean isMultivariate() { return isMultivariate; }
+        public boolean isMultivariate() {
+            return isMultivariate;
+        }
 
         public boolean isNumber() {
             if (!isMultivariate)
@@ -1712,8 +1809,8 @@ public class Branch2dRateToGrid {
         public double[] getValue() {
             int dim = getDim();
             double[] result = new double[dim];
-            for(int i=0; i<dim; i++)
-                result[i] = (Double)array[i];
+            for (int i = 0; i < dim; i++)
+                result[i] = (Double) array[i];
             return result;
         }
 
@@ -1725,7 +1822,7 @@ public class Branch2dRateToGrid {
             if (!isMultivariate)
                 return obj.toString();
             StringBuffer sb = new StringBuffer(array[0].toString());
-            for(int i=1; i<array.length; i++)
+            for (int i = 1; i < array.length; i++)
                 sb.append("\t").append(array[i]);
             return sb.toString();
         }

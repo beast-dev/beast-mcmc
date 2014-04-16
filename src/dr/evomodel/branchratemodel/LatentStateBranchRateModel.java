@@ -25,11 +25,17 @@
 
 package dr.evomodel.branchratemodel;
 
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.UniformizedSubstitutionModel;
+import dr.evolution.datatype.TwoStates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -58,6 +64,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     private final Parameter latentStateProportionParameter;
     private final TreeParameterModel latentStateProportions;
 
+    private UniformizedSubstitutionModel uSM = null;
 
     public LatentStateBranchRateModel(TreeModel treeModel,
                                       BranchRateModel nonLatentRateModel,
@@ -91,12 +98,28 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false);
     }
 
+    /**
+     * Empty constructor for use by the main
+     */
+    public LatentStateBranchRateModel() {
+        super(LATENT_STATE_BRANCH_RATE_MODEL);
+        tree = null;
+        nonLatentRateModel = null;
+        latentTransitionRateParameter = null;
+        latentStateProportionParameter = null;
+        latentStateProportions = null;
+
+    }
+
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
+        if (uSM == null) {
+            createRewards();
+        }
+
         double length = tree.getBranchLength(node);
 
         double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
-
 
         double latentProportion;
         if (latentStateProportionParameter != null) {
@@ -109,12 +132,36 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         return calculateBranchRate(nonLatentRate, latentProportion);
     }
 
+    public double getLatentProportion(double length) {
+        if (uSM == null) {
+            createRewards();
+        }
+
+        return calculateLatentProportion(length);
+    }
+
     private double calculateLatentProportion(double length) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        // Do this each time you need a new branch rate
+        double reward = uSM.computeCondStatMarkovJumps(0, 0, length);
+        double proportionTime = reward / length;
+        return proportionTime;
     }
 
     private double calculateBranchRate(double nonLatentRate, double latentProportion) {
         return nonLatentRate * (1.0 - latentProportion);
+    }
+
+    private void createRewards() {
+        FrequencyModel frequencyModel = new FrequencyModel(TwoStates.INSTANCE, new double[] { 0.5, 0.5 });
+        Parameter rateParameter = new Parameter.Default(new double[] { 1.0, 1.0 });
+
+        SubstitutionModel binaryModel = new GeneralSubstitutionModel("binary", TwoStates.INSTANCE, frequencyModel, rateParameter, 0);
+
+        // Do this once, for all branches
+        uSM = new UniformizedSubstitutionModel(binaryModel, MarkovJumpsType.REWARDS);
+        uSM.setSaveCompleteHistory(true);
+        double[] rewardRegister = new double[]{0.0, 1.0};
+        uSM.setRegistration(rewardRegister);
     }
 
     @Override
@@ -200,5 +247,24 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
     @Override
     public TreeTrait getTreeTrait(String key) {
         return null;
+    }
+
+    public static void main(String[] args) {
+        LatentStateBranchRateModel lsbrm = new LatentStateBranchRateModel();
+        double delta = 0.01;
+        double[] values = new double[101];
+        int count = 100000;
+
+        for (int i = 0; i < count; i++) {
+            double length = 0.01;
+            for (int j = 0; j < 100; j++) {
+                values[j] += lsbrm.getLatentProportion(length);
+            }
+        }
+        double length = 0.01;
+        for (int j = 0; j < 100; j++) {
+            System.out.println(length + "\t" + values[j] / count);
+            length += delta;
+        }
     }
 }

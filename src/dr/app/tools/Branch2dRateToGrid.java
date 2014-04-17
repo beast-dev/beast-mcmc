@@ -38,6 +38,7 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.TIFFWriter;
 import dr.util.Version;
 
+import javax.imageio.ImageIO;
 import java.io.*;
 import java.util.*;
 
@@ -715,6 +716,10 @@ public class Branch2dRateToGrid {
     }
 
 
+    private String name(String pre, String post) {
+        return pre + "." + post;
+    }
+
     public void output(String outFileName) {
 
         resultsStream = System.out;
@@ -759,6 +764,14 @@ public class Branch2dRateToGrid {
         }
 
 
+        String writerNames[] = ImageIO.getWriterFormatNames();
+        for (String name : writerNames) {
+            System.err.println("Available format:" + name);
+        }
+        // set graphicsFormat equal to one of the names get that's printed out above.
+        String graphicsFormat = "png";
+//        String graphicsFormat = "tiff";
+
         for (int i = 0; i < sliceCount; i++) {
 
             String ratesFile = "gridRates";
@@ -787,9 +800,9 @@ public class Branch2dRateToGrid {
 
                 System.err.println("Start PNGs");
 
-                writeAsPNG(ratesFile + ".png", rates[i], true);
-                writeAsPNG(densityFile + ".png", densities[i], true);
-                writeAsPNG(rateStdevFile + ".png", stdevs[i], true);
+                writeAsAnyFormat(name(ratesFile, graphicsFormat), graphicsFormat, rates[i], true);
+                writeAsAnyFormat(name(densityFile, graphicsFormat), graphicsFormat, densities[i], true);
+                writeAsAnyFormat(name(rateStdevFile, graphicsFormat), graphicsFormat, stdevs[i], true);
 
                 System.err.println("End PNGs");
 
@@ -800,7 +813,9 @@ public class Branch2dRateToGrid {
                         resultsStream.print("\n");
 
                         writeAsTIFF(densityFile + ".discreteTrait" + discreteTraitStates[x] + ".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
-                        writeAsPNG(densityFile + ".discreteTrait" + discreteTraitStates[x] + ".png", densitiesByDTrait[i][x], true, maxGridDensityByDtrait);
+                        writeAsAnyFormat(name(densityFile + ".discreteTrait" + discreteTraitStates[x], graphicsFormat),
+                                graphicsFormat,
+                                densitiesByDTrait[i][x], true, maxGridDensityByDtrait);
                     }
 
                     // Try multiple channels
@@ -808,8 +823,9 @@ public class Branch2dRateToGrid {
                     for (int x = 0; x < discreteTraitStates.length; ++x) {
                         channels.add(densitiesByDTrait[i][x]);
                     }
-                    writeAsPNGMultiChannel("channel." + densityFile + ".discreteTraitAll.png", channels, true, maxGridDensityByDtrait, TIFFWriter.CHANNEL_RED_BLUE);
-
+                    writeAsAnyFormatMultiChannel(name("channel." + densityFile + ".discreteTraitAll", graphicsFormat),
+                            graphicsFormat,
+                            channels, true, maxGridDensityByDtrait, TIFFWriter.CHANNEL_RED_BLUE);
                 }
 
             } else {
@@ -896,10 +912,13 @@ public class Branch2dRateToGrid {
         }
     }
 
-    public void writeAsPNG(String fileName, double[][] matrix, boolean log) {
+
+    // format = "png", = "tiff" = "gif", etc.
+
+    public void writeAsAnyFormat(String fileName, String format, double[][] matrix, boolean log) {
         double[][] mat = normalize(matrix, 255, log);
         try {
-            TIFFWriter.writeDoubleArray(fileName, mat, "png", TIFFWriter.HEATMAP);
+            TIFFWriter.writeDoubleArray(fileName, mat, format, TIFFWriter.HEATMAP);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -919,20 +938,20 @@ public class Branch2dRateToGrid {
         }
     }
 
-    public void writeAsPNG(String fileName, double[][] matrix, boolean log, double maxValue) {
+    public void writeAsAnyFormat(String fileName, String format, double[][] matrix, boolean log, double maxValue) {
 
 //        System.out.print("matrix x = "+matrix.length+"; "+"y = "+matrix[0].length);
 
         double[][] mat = normalize(matrix, 255, log, maxValue);
         try {
-            TIFFWriter.writeDoubleArray(fileName, mat, "png", TIFFWriter.HEATMAP);
+            TIFFWriter.writeDoubleArray(fileName, mat, format, TIFFWriter.HEATMAP);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    public void writeAsPNGMultiChannel(String fileName, List<double[][]> matrices, boolean log, double maxValue,
-                                       TIFFWriter.MultipleChannelColorScheme scheme) {
+    public void writeAsAnyFormatMultiChannel(String fileName, String format, List<double[][]> matrices, boolean log, double maxValue,
+                                             TIFFWriter.MultipleChannelColorScheme scheme) {
 
 //        System.out.print("matrix x = "+matrix.length+"; "+"y = "+matrix[0].length);
 
@@ -942,7 +961,7 @@ public class Branch2dRateToGrid {
         }
 
         try {
-            TIFFWriter.writeDoubleArrayMultiChannel(fileName, normalizedMatrix, "png", scheme);
+            TIFFWriter.writeDoubleArrayMultiChannel(fileName, normalizedMatrix, format, scheme);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }

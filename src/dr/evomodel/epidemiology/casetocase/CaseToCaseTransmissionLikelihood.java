@@ -1,10 +1,13 @@
 package dr.evomodel.epidemiology.casetocase;
 
 import dr.evomodel.coalescent.DemographicModel;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.math.*;
+import dr.math.distributions.Distribution;
 import dr.xml.*;
 
 import java.util.*;
@@ -30,6 +33,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private SpatialKernel spatialKernel;
     private Parameter kernelAlpha;
     private Parameter transmissionRate;
+    private ParametricDistributionModel transmissionRatePrior;
     private boolean likelihoodKnown;
     private boolean storedLikelihoodKnown;
     private boolean transProbKnown;
@@ -60,7 +64,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
                                             CaseToCaseTreeLikelihood treeLikelihood, SpatialKernel spatialKernal,
-                                            Parameter transmissionRate, int steps){
+                                            Parameter transmissionRate,
+                                            ParametricDistributionModel transmissionRatePrior, int steps){
         super(name);
         this.outbreak = outbreak;
         this.treeLikelihood = treeLikelihood;
@@ -70,6 +75,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             this.addModel(spatialKernal);
         }
         this.transmissionRate = transmissionRate;
+        this.transmissionRatePrior = transmissionRatePrior;
         if(transmissionRate.getBounds().getUpperLimit(0)==Double.POSITIVE_INFINITY){
             throw new RuntimeException("Infinite upper limits for transmission rate not implemented yet");
         }
@@ -350,11 +356,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         logP -= Math.log1p(-product);
 
-
-        // prior probability
-
-        logP -= Math.log(transmissionRate.getBounds().getUpperLimit(0) - transmissionRate.getBounds().getLowerLimit(0));
-
         return logP;
     }
 
@@ -382,6 +383,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 logProb += caseLogProbability(aCase, argument);
             }
 
+
+            // prior probability
+
+            logProb += transmissionRatePrior.logPdf(argument);
+            logProb -= Math.log(transmissionRatePrior.cdf(transmissionRate.getBounds().getUpperLimit(0)) -
+                    transmissionRatePrior.cdf(transmissionRate.getBounds().getLowerLimit(0)));
+
             return logProb;
         }
 
@@ -406,12 +414,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         public static final String TRANSMISSION_RATE = "transmissionRate";
         public static final String INTEGRATOR_STEPS = "integratorSteps";
+        public static final String TRANSMISSION_RATE_PRIOR = "transmissionRatePrior";
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             CaseToCaseTreeLikelihood c2cTL = (CaseToCaseTreeLikelihood)
                     xo.getChild(CaseToCaseTreeLikelihood.class);
             SpatialKernel kernel = (SpatialKernel) xo.getChild(SpatialKernel.class);
             Parameter transmissionRate = (Parameter) xo.getElementFirstChild(TRANSMISSION_RATE);
+
+            ParametricDistributionModel transmissionRatePrior
+                    = (ParametricDistributionModel) xo.getElementFirstChild(TRANSMISSION_RATE_PRIOR);
+
             int steps = 2;
 
             if(xo.hasAttribute(INTEGRATOR_STEPS)){
@@ -419,7 +432,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
 
             return new CaseToCaseTransmissionLikelihood(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, c2cTL.getOutbreak(),
-                    c2cTL, kernel, transmissionRate, steps);
+                    c2cTL, kernel, transmissionRate, transmissionRatePrior, steps);
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -443,6 +456,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 new ElementRule(CaseToCaseTreeLikelihood.class, "The tree likelihood"),
                 new ElementRule(SpatialKernel.class, "The spatial kernel", 0, 1),
                 new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate"),
+                new ElementRule(TRANSMISSION_RATE_PRIOR, ParametricDistributionModel.class),
                 AttributeRule.newIntegerRule(INTEGRATOR_STEPS, true)
         };
 

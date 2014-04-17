@@ -297,11 +297,11 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         // to be eligible for this move, the node's parent and grandparent, or parent and sibling, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
 
-        return  (!tree.isRoot(node) && (tree.getParent(tree.getParent(node))!=null
+        return  (!tree.isRoot(node) && ((tree.getParent(tree.getParent(node))!=null
                 && branchMap.get(tree.getParent(node).getNumber())
                 ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
                 || branchMap.get(tree.getParent(node).getNumber())==branchMap.get(getOtherChild(tree,
-                tree.getParent(node), node).getNumber()));
+                tree.getParent(node), node).getNumber())));
     }
 
     private ArrayList<NodeRef> getEligibleNodes(TreeModel tree, BranchMapModel branchMap){

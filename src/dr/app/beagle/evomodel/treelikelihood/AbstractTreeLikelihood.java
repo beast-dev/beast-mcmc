@@ -215,6 +215,10 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
         updateAllNodes();
         updateAllPatterns();
     }
+    
+    public boolean isLikelihoodKnown() {
+    	return likelihoodKnown;
+    }
 
     protected abstract double calculateLogLikelihood();
 

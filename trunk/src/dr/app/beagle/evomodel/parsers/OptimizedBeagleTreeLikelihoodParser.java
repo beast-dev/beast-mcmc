@@ -61,7 +61,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
     public static final String OPTIMIZED_BEAGLE_TREE_LIKELIHOOD = "optimizedBeagleTreeLikelihood";
     
-    public final int TEST_RUNS = 100;
+    //public final int TEST_RUNS = 100;
+	public static final String CALIBRATE = "calibrate";
     //public final boolean SPLIT_BY_PATTERN_COUNT = false;
 
     public String getParserName() {
@@ -90,6 +91,11 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    	
+    	int calibrate = 100;
+		if (xo.hasAttribute(CALIBRATE)) {
+			calibrate = xo.getIntegerAttribute(CALIBRATE);
+		}
     	
     	int childCount = xo.getChildCount();
     	List<Likelihood> likelihoods = new ArrayList<Likelihood>();
@@ -147,11 +153,11 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 		}
 		System.err.println();
     	
-		//ThreadedCompoundLikelihood compound = new ThreadedCompoundLikelihood(likelihoods);
-		CompoundLikelihood compound = new CompoundLikelihood(likelihoods);
+		ThreadedCompoundLikelihood compound = new ThreadedCompoundLikelihood(likelihoods);
+		//CompoundLikelihood compound = new CompoundLikelihood(likelihoods);
     	
     	double start = System.nanoTime();
-    	for (int i = 0; i < TEST_RUNS; i++) {
+    	for (int i = 0; i < calibrate; i++) {
         	compound.makeDirty();
         	compound.getLogLikelihood();
         }
@@ -370,8 +376,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         	for (int i = longestIndex+1; i < currentLocation.length; i++) {
         		currentLocation[i]++;
         	}
-        	//compound = new ThreadedCompoundLikelihood(likelihoods);
-        	compound = new CompoundLikelihood(likelihoods);
+        	compound = new ThreadedCompoundLikelihood(likelihoods);
+        	//compound = new CompoundLikelihood(likelihoods);
         	siteCounts[longestIndex] = (instanceCount-1)*siteCounts[longestIndex]/instanceCount;
         	longestSize = (instanceCount-1)*longestSize/instanceCount;
 
@@ -395,7 +401,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
         	//evaluate speed
         	start = System.nanoTime();
-        	for (int i = 0; i < TEST_RUNS; i++) {
+        	for (int i = 0; i < calibrate; i++) {
         		compound.makeDirty();
         		compound.getLogLikelihood();
         	}
@@ -457,8 +463,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         		//likelihoods.remove(longestIndex);
         		//likelihoods.add(longestIndex, new CompoundLikelihood(newList));
 
-        		//compound = new ThreadedCompoundLikelihood(likelihoods);
-        		compound = new CompoundLikelihood(likelihoods);
+        		compound = new ThreadedCompoundLikelihood(likelihoods);
+        		//compound = new CompoundLikelihood(likelihoods);
         		siteCounts[longestIndex] = (instanceCount+1)*siteCounts[longestIndex]/instanceCount;
         		longestSize = (instanceCount+1)*longestSize/instanceCount;
 
@@ -704,7 +710,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
     }
 
     public static final XMLSyntaxRule[] rules = {
-            new ElementRule(BeagleTreeLikelihood.class, 1, Integer.MAX_VALUE)
+            new ElementRule(BeagleTreeLikelihood.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newIntegerRule(CALIBRATE, true)
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

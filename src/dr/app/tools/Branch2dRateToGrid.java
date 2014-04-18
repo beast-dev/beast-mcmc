@@ -33,6 +33,8 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.geo.color.ChannelColorScheme;
+import dr.geo.color.ColorScheme;
 import dr.geo.math.SphericalPolarCoordinates;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.TIFFWriter;
@@ -837,7 +839,7 @@ public class Branch2dRateToGrid {
                     }
                     writeAsAnyFormatMultiChannel(name("channel." + densityFile + ".discreteTraitAll", graphicsFormat),
                             graphicsFormat,
-                            channels, true, maxGridDensityByDtrait, TIFFWriter.CHANNEL_RED_BLUE);
+                            channels, true, maxGridDensityByDtrait, ChannelColorScheme.CHANNEL_RED_BLUE);
                     writeWorldFile(name("channel." + densityFile + ".discreteTraitAll", suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
 
                 }
@@ -889,15 +891,12 @@ public class Branch2dRateToGrid {
                     }
                     writeAsAnyFormatMultiChannel(name("channel." + densityFile + ".height" + sliceHeights[i] + ".discreteTraitAll", graphicsFormat),
                             graphicsFormat,
-                            channels, true, maxGridDensityByDtrait, TIFFWriter.CHANNEL_RED_BLUE);
+                            channels, true, maxGridDensityByDtrait, ChannelColorScheme.CHANNEL_RED_BLUE);
                     writeWorldFile(name("channel." + densityFile + ".height" + sliceHeights[i] + ".discreteTraitAll", suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
 
                 }
             }
-
         }
-
-
     }
 
     private void outputGridInfo() {
@@ -957,7 +956,7 @@ public class Branch2dRateToGrid {
     public void writeAsAnyFormat(String fileName, String format, double[][] matrix, boolean log) {
         double[][] mat = normalize(matrix, 255, log);
         try {
-            TIFFWriter.writeDoubleArray(fileName, mat, format, TIFFWriter.HEATMAP);
+            TIFFWriter.writeDoubleArray(fileName, mat, format, ColorScheme.HEATMAP);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -983,14 +982,18 @@ public class Branch2dRateToGrid {
 
         double[][] mat = normalize(matrix, 255, log, maxValue);
         try {
-            TIFFWriter.writeDoubleArray(fileName, mat, format, TIFFWriter.HEATMAP);
+            TIFFWriter.writeDoubleArray(fileName, mat, format,
+//                    TIFFWriter.HEATMAP
+//                    TIFFWriter.TRANPARENT_HEATMAP2  // Assumes NaN is transparent
+                    ColorScheme.TRANPARENT0_HEATMAP // Assumes 0.0 is transparent
+            );
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
     public void writeAsAnyFormatMultiChannel(String fileName, String format, List<double[][]> matrices, boolean log, double maxValue,
-                                             TIFFWriter.MultipleChannelColorScheme scheme) {
+                                             ChannelColorScheme scheme) {
 
 //        System.out.print("matrix x = "+matrix.length+"; "+"y = "+matrix[0].length);
 
@@ -1026,8 +1029,7 @@ public class Branch2dRateToGrid {
 
     }
 
-
-
+    // TODO Fix function to handle matrices with NaN entries
     private double sum(double[][] mat) {
         double value = 0.0;
         for (int i = 0; i < mat.length; ++i) {
@@ -1038,6 +1040,8 @@ public class Branch2dRateToGrid {
         return value;
     }
 
+    // TODO Fix function to handle matrices with NaN entries
+    // TODO Or: remove code duplication in function immediately below
     private double[][] normalize(double inputArray[][], double max, boolean log) {
 
         double[][] matrix = new double[inputArray.length][inputArray[0].length];
@@ -1068,6 +1072,7 @@ public class Branch2dRateToGrid {
 
     }
 
+    // TODO Fix function to handle matrices with NaN entries
     private double[][] normalize(double inputArray[][], double max, boolean log, double maxValue) {
 
         double[][] matrix = new double[inputArray.length][inputArray[0].length];

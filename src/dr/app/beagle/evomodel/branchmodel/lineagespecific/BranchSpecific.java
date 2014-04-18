@@ -68,7 +68,7 @@ import dr.util.Citation;
  * @version $Id$
  */
 @SuppressWarnings("serial")
-public class BranchSpecific extends AbstractModel  implements BranchModel, Citable {
+public class BranchSpecific extends AbstractModel implements BranchModel, Citable {
 
 	private static final boolean DEBUG = false;
 	

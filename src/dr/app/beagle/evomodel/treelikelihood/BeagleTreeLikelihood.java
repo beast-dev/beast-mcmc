@@ -53,6 +53,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.ThreadAwareLikelihood;
 import dr.math.MathUtils;
 
 import java.util.*;
@@ -68,7 +69,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
-public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
+public class BeagleTreeLikelihood extends AbstractTreeLikelihood implements ThreadAwareLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then

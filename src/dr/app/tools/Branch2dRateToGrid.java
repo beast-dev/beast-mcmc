@@ -509,7 +509,7 @@ public class Branch2dRateToGrid {
                 }
                 double[] test = history.getHeights();
                 if (height < test[test.length - 1]) {
-                    System.err.println("encountered height (" + height + ") that is lower than lower of history heights (" + test[test.length - 1] + "). Possible rounding error -- setting the height to upper of history heights");
+//                    System.err.println("encountered height (" + height + ") that is lower than lower of history heights (" + test[test.length - 1] + "). Possible rounding error -- setting the height to upper of history heights");
                     height = test[test.length - 1];
                 }
 
@@ -521,7 +521,7 @@ public class Branch2dRateToGrid {
             }
 
             densities[slice][x][y]++;
-            rates[slice][x][y] = +rate;
+            rates[slice][x][y] =+ rate;
 
             numerator += shortest;
             if (!(numerator < longest)) {
@@ -771,6 +771,10 @@ public class Branch2dRateToGrid {
         // set graphicsFormat equal to one of the names get that's printed out above.
         String graphicsFormat = "png";
 //        String graphicsFormat = "tiff";
+        String suffix = ".worldFile";
+        if (graphicsFormat.equals("png")){
+            suffix = "pgw";
+        }
 
         for (int i = 0; i < sliceCount; i++) {
 
@@ -794,17 +798,24 @@ public class Branch2dRateToGrid {
                 }
                 resultsStream.print("\n");
 
-                writeAsTIFF(ratesFile + ".tiff", transpose(rates[i]), true);
-                writeAsTIFF(densityFile + ".tiff", transpose(densities[i]), true);
-                writeAsTIFF(rateStdevFile + ".tiff", transpose(stdevs[i]), true);
+//                writeAsTIFF(ratesFile + ".tiff", transpose(rates[i]), true);
+//                writeWorldFile(ratesFile + ".tfw", cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+//                writeAsTIFF(densityFile + ".tiff", transpose(densities[i]), true);
+//                writeWorldFile(densityFile + ".tfw", cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+//                writeAsTIFF(rateStdevFile + ".tiff", transpose(stdevs[i]), true);
+//                writeWorldFile(rateStdevFile + ".tfw", cellXWidth, cellYHeight, 0, 0, longMin, latMax);
 
-                System.err.println("Start PNGs");
+//                System.err.println("Start PNGs");
 
                 writeAsAnyFormat(name(ratesFile, graphicsFormat), graphicsFormat, rates[i], true);
                 writeAsAnyFormat(name(densityFile, graphicsFormat), graphicsFormat, densities[i], true);
                 writeAsAnyFormat(name(rateStdevFile, graphicsFormat), graphicsFormat, stdevs[i], true);
 
-                System.err.println("End PNGs");
+                writeWorldFile(name(ratesFile, suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+                writeWorldFile(name(densityFile, suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+                writeWorldFile(name(rateStdevFile, suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+
+//                System.err.println("End PNGs");
 
                 if (summarizeByDiscreteTrait) {
                     for (int x = 0; x < discreteTraitStates.length; x++) {
@@ -812,10 +823,11 @@ public class Branch2dRateToGrid {
                         printGrid(transpose(densitiesByDTrait[i][x]));
                         resultsStream.print("\n");
 
-                        writeAsTIFF(densityFile + ".discreteTrait" + discreteTraitStates[x] + ".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
+//                        writeAsTIFF(densityFile + ".discreteTrait" + discreteTraitStates[x] + ".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
                         writeAsAnyFormat(name(densityFile + ".discreteTrait" + discreteTraitStates[x], graphicsFormat),
                                 graphicsFormat,
                                 densitiesByDTrait[i][x], true, maxGridDensityByDtrait);
+                        writeWorldFile(name(densityFile + ".discreteTrait" + discreteTraitStates[x], suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
                     }
 
                     // Try multiple channels
@@ -826,6 +838,8 @@ public class Branch2dRateToGrid {
                     writeAsAnyFormatMultiChannel(name("channel." + densityFile + ".discreteTraitAll", graphicsFormat),
                             graphicsFormat,
                             channels, true, maxGridDensityByDtrait, TIFFWriter.CHANNEL_RED_BLUE);
+                    writeWorldFile(name("channel." + densityFile + ".discreteTraitAll", suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+
                 }
 
             } else {
@@ -837,13 +851,25 @@ public class Branch2dRateToGrid {
                 printGrid(transpose(densities[i]));
                 resultsStream.print("\n");
 
-                resultsStream.print("grid rate stdevs for slice height " + sliceHeights[i] + ":\n");
-                printGrid(transpose(stdevs[i]));
-                resultsStream.print("\n");
+                if (getStdevs){
+                    resultsStream.print("grid rate stdevs for slice height " + sliceHeights[i] + ":\n");
+                    printGrid(transpose(stdevs[i]));
+                    resultsStream.print("\n");
+                }
 
-                writeAsTIFF(ratesFile + ".height" + sliceHeights[i] + ".tiff", transpose(rates[i]), true, maxGridDensity);
-                writeAsTIFF(densityFile + ".height" + sliceHeights[i] + ".tiff", transpose(densities[i]), true, maxGridDensity);
-                writeAsTIFF(rateStdevFile + ".height" + sliceHeights[i] + ".tiff", transpose(stdevs[i]), true, maxGridDensity);
+//                writeAsTIFF(ratesFile + ".height" + sliceHeights[i] + ".tiff", transpose(rates[i]), true, maxGridDensity);
+//                writeAsTIFF(densityFile + ".height" + sliceHeights[i] + ".tiff", transpose(densities[i]), truemaxGridDensity);
+//                writeAsTIFF(rateStdevFile + ".height" + sliceHeights[i] + ".tiff", transpose(stdevs[i]), true, maxGridDensity);
+                writeAsAnyFormat(name(ratesFile + ".height" + sliceHeights[i], graphicsFormat), graphicsFormat, rates[i], true, maxGridDensity);
+                writeAsAnyFormat(name(densityFile + ".height" + sliceHeights[i], graphicsFormat), graphicsFormat, densities[i], true, maxGridDensity);
+
+                writeWorldFile(name(ratesFile + ".height" + sliceHeights[i], suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+                writeWorldFile(name(densityFile + ".height" + sliceHeights[i], suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+
+                if (getStdevs){
+                    writeAsAnyFormat(name(rateStdevFile + ".height" + sliceHeights[i], graphicsFormat), graphicsFormat, stdevs[i], true, maxGridDensity);
+                    writeWorldFile(name(rateStdevFile + ".height" + sliceHeights[i], suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+                }
 
                 if (summarizeByDiscreteTrait) {
                     for (int x = 0; x < discreteTraitStates.length; x++) {
@@ -851,8 +877,21 @@ public class Branch2dRateToGrid {
                         printGrid(transpose(densitiesByDTrait[i][x]));
                         resultsStream.print("\n");
 
-                        writeAsTIFF(densityFile + ".height" + sliceHeights[i] + ".discreteTrait" + discreteTraitStates[x] + ".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
+//                        writeAsTIFF(densityFile + ".height" + sliceHeights[i] + ".discreteTrait" + discreteTraitStates[x] + ".tiff", transpose(densitiesByDTrait[i][x]), true, maxGridDensityByDtrait);
+                        writeAsAnyFormat(name(densityFile + ".height" + sliceHeights[i] + ".discreteTrait" + discreteTraitStates[x], graphicsFormat), graphicsFormat, densitiesByDTrait[i][x], true, maxGridDensityByDtrait);
+                        writeWorldFile(name(densityFile + ".height" + sliceHeights[i] + ".discreteTrait" + discreteTraitStates[x], suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
                     }
+
+                    // Try multiple channels
+                    List<double[][]> channels = new ArrayList<double[][]>();
+                    for (int x = 0; x < discreteTraitStates.length; ++x) {
+                        channels.add(densitiesByDTrait[i][x]);
+                    }
+                    writeAsAnyFormatMultiChannel(name("channel." + densityFile + ".height" + sliceHeights[i] + ".discreteTraitAll", graphicsFormat),
+                            graphicsFormat,
+                            channels, true, maxGridDensityByDtrait, TIFFWriter.CHANNEL_RED_BLUE);
+                    writeWorldFile(name("channel." + densityFile + ".height" + sliceHeights[i] + ".discreteTraitAll", suffix), cellXWidth, cellYHeight, 0, 0, longMin, latMax);
+
                 }
             }
 
@@ -967,6 +1006,28 @@ public class Branch2dRateToGrid {
         }
     }
 
+    public void writeWorldFile(String fileName, double xDim, double yDim, double rot1, double rot2, double upperLeftLong, double upperLeftLat) {
+
+        try {
+            PrintWriter outFile = new PrintWriter(new FileWriter(fileName), true);
+
+            outFile.println(xDim);
+            outFile.println(rot1);
+            outFile.println(rot2);
+            outFile.println(-yDim);
+            outFile.println(upperLeftLong+(xDim/2.0));
+            outFile.println(upperLeftLat-(yDim/2.0));
+
+            outFile.close();
+
+        } catch(IOException io) {
+            System.err.print("Error writing to file: " + fileName);
+        }
+
+    }
+
+
+
     private double sum(double[][] mat) {
         double value = 0.0;
         for (int i = 0; i < mat.length; ++i) {
@@ -1064,6 +1125,9 @@ public class Branch2dRateToGrid {
             for (int b = 0; b < rates[0].length; b++) {
                 for (int c = 0; c < rates[0][0].length; c++) {
                     rates[a][b][c] = rates[a][b][c] / densities[a][b][c];
+                    if (rates[a][b][c] == 0){
+                        rates[a][b][c] = Double.NaN;
+                    }
                 }
             }
         }
@@ -1218,7 +1282,9 @@ public class Branch2dRateToGrid {
                         if (densities[a][c][d] < (posteriorCutoff * treesAnalyzed)) {
                             densities[a][c][d] = 0;
                             rates[a][c][d] = Double.NaN;
-                            stdevs[a][c][d] = Double.NaN;
+                            if (getStdevs){
+                                stdevs[a][c][d] = Double.NaN;
+                            }
                         }
                     }
                 }

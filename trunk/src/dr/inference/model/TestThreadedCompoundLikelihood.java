@@ -248,7 +248,7 @@ public class TestThreadedCompoundLikelihood implements Likelihood {
 
         public boolean isLikelihoodKnown() {
             return ((likelihood instanceof ThreadAwareLikelihood) &&
-                    ((ThreadAwareLikelihood) likelihoods).isLikelihoodKnown());
+                    ((ThreadAwareLikelihood) likelihood).isLikelihoodKnown());
         }
     }
 

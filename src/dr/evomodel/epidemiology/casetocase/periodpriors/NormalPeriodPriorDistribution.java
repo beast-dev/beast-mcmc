@@ -30,14 +30,17 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
 
     private Parameter posteriorMean;
     private Parameter posteriorBeta;
+    private Parameter posteriorExpectedPrecision;
 
     public NormalPeriodPriorDistribution(String name, boolean log, NormalGammaDistribution hyperprior){
         super(name, log);
         this.hyperprior = hyperprior;
         posteriorBeta = new Parameter.Default(1);
         posteriorMean = new Parameter.Default(1);
+        posteriorExpectedPrecision = new Parameter.Default(1);
         addVariable(posteriorBeta);
         addVariable(posteriorMean);
+        addVariable(posteriorExpectedPrecision);
     }
 
     public NormalPeriodPriorDistribution(String name, boolean log, double mu_0, double lambda_0,
@@ -76,7 +79,8 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
         double beta_n = beta_0 + 0.5*sumOfDifferences
                 + lambda_0*count*Math.pow(mean-mu_0, 2)/(2*(lambda_0+count));
 
-        posteriorBeta.setParameterValue(0, beta_n / (alpha_n - 0.5));
+        posteriorBeta.setParameterValue(0, beta_n);
+        posteriorExpectedPrecision.setParameterValue(0, alpha_n/beta_n);
 
         logL = GammaFunction.logGamma(alpha_n)
                 - GammaFunction.logGamma(alpha_0)
@@ -102,6 +106,12 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
         columns.add(new LogColumn.Abstract(getModelName()+"_posteriorBeta"){
             protected String getFormattedValue() {
                 return String.valueOf(posteriorBeta.getParameterValue(0));
+            }
+        });
+
+        columns.add(new LogColumn.Abstract(getModelName()+"_posteriorExpectedPrecision"){
+            protected String getFormattedValue() {
+                return String.valueOf(posteriorExpectedPrecision.getParameterValue(0));
             }
         });
 

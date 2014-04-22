@@ -92,7 +92,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         addVariable(latentTransitionRateParameter);
 
         this.latentStateProportionParameter = latentStateProportionParameter;
-        addVariable(latentTransitionRateParameter);
+        addVariable(latentStateProportionParameter);
 
         this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false);
         addModel(latentStateProportions);

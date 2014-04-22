@@ -25,17 +25,11 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.GeneralSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.UniformizedSubstitutionModel;
-import dr.evolution.datatype.TwoStates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.markovjumps.SericolaSeriesMarkovReward;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
@@ -116,6 +110,15 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     }
 
+    public SericolaLatentStateBranchRateModel(Parameter rate, Parameter prop) {
+        super(LATENT_STATE_BRANCH_RATE_MODEL);
+        tree = null;
+        nonLatentRateModel = null;
+        latentTransitionRateParameter = rate;
+        latentStateProportionParameter = prop;
+        latentStateProportions = null;
+    }
+
     private double[] createLatentInfinitesimalMatrix() {
         final double rate = latentTransitionRateParameter.getParameterValue(0);
         final double prop = latentStateProportionParameter.getParameterValue(0);
@@ -154,6 +157,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
         } else if (model == nonLatentRateModel) {
 
+        } else if (model == latentStateProportions) {
+            likelihoodKnown = false; // argument of density has changed
         }
 
     }
@@ -203,10 +208,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     private double calculateLogLikelihood() {
 
-        if (series == null) {
-            series = createSeries();
-        }
-
         double logLike = 0.0;
         for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
@@ -215,13 +216,23 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
                 double latentProportion = latentStateProportions.getNodeValue(tree, node);
                 double reward = branchLength * latentProportion;
 
-                logLike += Math.log(series.computePdf(reward, branchLength)[1 * 2 + 1]); // just start = end = 1
+                logLike += Math.log(getBranchRewardDensity(reward, branchLength));
                 // TODO These quantities are off by the log(conditional transition probability) alone each branch,
                 // TODO but cprobs should be constant with Metropolis-Hastings proposal on proportions alone
+
+                // TODO More importantly, MH proposals on [0,1] may be missing a Jacobian for which we should adjust.
+                // TODO This is easy to test and we should do it when sampling appears to work.
             }
         }
 
         return logLike;
+    }
+
+    public double getBranchRewardDensity(double reward, double branchLength) {
+        if (series == null) {
+            series = createSeries();
+        }
+        return series.computePdf(reward, branchLength)[1 * 2 + 1]; // just start = end = 1 entry
     }
 
     @Override
@@ -270,28 +281,19 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     }
 
     public static void main(String[] args) {
-        FrequencyModel frequencyModel = new FrequencyModel(TwoStates.INSTANCE, new double[]{0.5, 0.5});
-        Parameter rateParameter = new Parameter.Default(new double[]{0.001, 0.001});
 
-        SubstitutionModel binaryModel = new GeneralSubstitutionModel("binary", TwoStates.INSTANCE, frequencyModel, rateParameter, 0);
+        Parameter rate = new Parameter.Default(4.4);
+        Parameter prop = new Parameter.Default(0.25);
 
-        // Do this once, for all branches
-        UniformizedSubstitutionModel uSM = new UniformizedSubstitutionModel(binaryModel, MarkovJumpsType.REWARDS);
-        uSM.setSaveCompleteHistory(true);
-        double[] rewardRegister = new double[]{0.0, 1.0};
-        uSM.setRegistration(rewardRegister);
+        SericolaLatentStateBranchRateModel model = new SericolaLatentStateBranchRateModel(rate, prop);
 
-        double delta = 1;
-        double[] values = new double[101];
-        int count = 100000;
-
-        double length = 0.0;
-        for (int j = 0; j < 100; j++) {
-            double reward = uSM.computeCondStatMarkovJumps(0, 0, length);
-            double proportionTime = reward / length;
-            System.out.println(length + "\t" + proportionTime);
-            length += delta;
+        double branchLength = 2.0;
+        for (double reward = 0; reward < branchLength; reward += 0.01) {
+            System.out.println(reward + ",\t" + model.getBranchRewardDensity(reward, branchLength) + ",");
         }
+
+        System.out.println();
+        System.out.println(model.getSeries());
 
         // average over many realizations...
 //        for (int i = 0; i < count; i++) {
@@ -309,5 +311,12 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 //            System.out.println(length + "\t" + values[j] / count);
 //            length += delta;
 //        }
+    }
+
+    public SericolaSeriesMarkovReward getSeries() {
+        if (series == null) {
+            series = createSeries();
+        }
+        return series;
     }
 }

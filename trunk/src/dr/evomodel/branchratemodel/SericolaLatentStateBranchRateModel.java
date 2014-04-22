@@ -56,7 +56,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private final TreeModel tree;
     private final BranchRateModel nonLatentRateModel;
     private final Parameter latentTransitionRateParameter;
-    private final Parameter latentStateProportionParameter;
+    private final Parameter latentTransitionFrequencyParameter;
+    //    private final Parameter latentStateProportionParameter;
     private final TreeParameterModel latentStateProportions;
 
     private SericolaSeriesMarkovReward series;
@@ -71,14 +72,17 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     public SericolaLatentStateBranchRateModel(TreeModel treeModel,
                                               BranchRateModel nonLatentRateModel,
                                               Parameter latentTransitionRateParameter,
+                                              Parameter latentTransitionFrequencyParameter,
                                               Parameter latentStateProportionParameter) {
-        this(LATENT_STATE_BRANCH_RATE_MODEL, treeModel, nonLatentRateModel, latentTransitionRateParameter, latentStateProportionParameter);
+        this(LATENT_STATE_BRANCH_RATE_MODEL, treeModel, nonLatentRateModel, latentTransitionRateParameter,
+                latentTransitionFrequencyParameter, latentStateProportionParameter);
     }
 
     public SericolaLatentStateBranchRateModel(String name,
                                               TreeModel treeModel,
                                               BranchRateModel nonLatentRateModel,
                                               Parameter latentTransitionRateParameter,
+                                              Parameter latentTransitionFrequencyParameter,
                                               Parameter latentStateProportionParameter) {
         super(name);
 
@@ -91,8 +95,11 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         this.latentTransitionRateParameter = latentTransitionRateParameter;
         addVariable(latentTransitionRateParameter);
 
-        this.latentStateProportionParameter = latentStateProportionParameter;
-        addVariable(latentStateProportionParameter);
+        this.latentTransitionFrequencyParameter = latentTransitionFrequencyParameter;
+        addVariable(latentTransitionFrequencyParameter);
+
+//        this.latentStateProportionParameter = latentStateProportionParameter;
+//        addVariable(latentStateProportionParameter);   // TODO This may not be necessary
 
         this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false);
         addModel(latentStateProportions);
@@ -106,7 +113,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         tree = null;
         nonLatentRateModel = null;
         latentTransitionRateParameter = null;
-        latentStateProportionParameter = null;
+        latentTransitionFrequencyParameter = null;
+//        latentStateProportionParameter = null;
         latentStateProportions = null;
 
     }
@@ -116,13 +124,14 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         tree = null;
         nonLatentRateModel = null;
         latentTransitionRateParameter = rate;
-        latentStateProportionParameter = prop;
+        latentTransitionFrequencyParameter = prop;
+//        latentStateProportionParameter = null;
         latentStateProportions = null;
     }
 
     private double[] createLatentInfinitesimalMatrix() {
         final double rate = latentTransitionRateParameter.getParameterValue(0);
-        final double prop = latentStateProportionParameter.getParameterValue(0);
+        final double prop = latentTransitionFrequencyParameter.getParameterValue(0);
 
         double[] mat = new double[]{
                 -rate * prop, rate * prop,
@@ -136,7 +145,9 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     }
 
     private SericolaSeriesMarkovReward createSeries() {
-        return new SericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(), createReward(), 2);
+        SericolaSeriesMarkovReward series = new SericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),
+                createReward(), 2);
+        return series;
     }
 
     @Override
@@ -155,15 +166,13 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            likelihoodKnown = false; // argument of density has changed
-        } else if (model == nonLatentRateModel) {
-            // rates will change but the latent proportions haven't so the density is unchanged
-            fireModelChanged();
-        } else if (model == latentStateProportions) {
-            fireModelChanged();
-            likelihoodKnown = false; // argument of density has changed
-        }
 
+        } else if (model == nonLatentRateModel) {
+            fireModelChanged(nonLatentRateModel);
+        } else if (model == latentStateProportions) {
+            likelihoodKnown = false; // argument of density has changed
+            fireModelChanged(latentStateProportions);
+        }
     }
 
     @Override
@@ -187,7 +196,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == latentStateProportionParameter || variable == latentTransitionRateParameter) {
+        if (variable == latentTransitionFrequencyParameter || variable == latentTransitionRateParameter) {
             // series computations have changed
             series = null;
             likelihoodKnown = false;
@@ -298,6 +307,22 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         System.out.println();
         System.out.println(model.getSeries());
 
+        // average over many realizations...
+//        for (int i = 0; i < count; i++) {
+//            double length = 0.0;
+//            for (int j = 0; j < 100; j++) {
+//                double reward = uSM.computeCondStatMarkovJumps(0, 0, length);
+//                double proportionTime = reward / length;
+//                values[j] += proportionTime;
+//                length += delta;
+//            }
+//        }
+//
+//        double length = 0.0;
+//        for (int j = 0; j < 100; j++) {
+//            System.out.println(length + "\t" + values[j] / count);
+//            length += delta;
+//        }
     }
 
     public SericolaSeriesMarkovReward getSeries() {

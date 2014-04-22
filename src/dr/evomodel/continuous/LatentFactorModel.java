@@ -48,7 +48,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private final Parameter data;
     private final CompoundParameter factors;
-    private final LowerTriangularMatrixParameter loadings;
+    private final BlockUpperTriangularMatrixParameter loadings;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
 
@@ -59,7 +59,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
-    public LatentFactorModel(Parameter data, CompoundParameter factors, LowerTriangularMatrixParameter loadings,
+    public LatentFactorModel(Parameter data, CompoundParameter factors, BlockUpperTriangularMatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
                              int numFactors) {
         super("");
@@ -77,7 +77,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         addVariable(loadings);
 
         dimFactors = numFactors;
-        dimData = loadings.getColDim();
+        dimData = loadings.getRowDimension();
         nTaxa = factors.getParameter(0).getDimension();
 
         System.out.print(nTaxa);

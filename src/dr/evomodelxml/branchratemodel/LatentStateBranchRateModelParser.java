@@ -27,6 +27,7 @@ package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.LatentStateBranchRateModel;
+import dr.evomodel.branchratemodel.SericolaLatentStateBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -41,7 +42,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
 
 
     public String getParserName() {
-        return LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL;
+        return SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -56,7 +57,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Creating a latent state branch rate model");
 
-        return new LatentStateBranchRateModel(tree, nonLatentRateModel, latentTransitionRateParameter, latentStateProportionParameter);
+        return new SericolaLatentStateBranchRateModel(tree, nonLatentRateModel, latentTransitionRateParameter, latentStateProportionParameter);
     }
 
     //************************************************************************
@@ -68,7 +69,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
     }
 
     public Class getReturnType()  {
-        return LatentStateBranchRateModel.class;
+        return SericolaLatentStateBranchRateModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

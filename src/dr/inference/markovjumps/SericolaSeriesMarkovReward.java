@@ -28,6 +28,7 @@ package dr.inference.markovjumps;
 import dr.math.Binomial;
 import dr.math.GammaFunction;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Marc Suchard
@@ -56,6 +57,10 @@ public class SericolaSeriesMarkovReward {
         this.dim = dim;
         phi = dim - 1;
 
+        if (DEBUG) {
+            System.err.println("lambda = " + lambda);
+        }
+
         P = initializeP(Q, lambda);
     }
 
@@ -81,6 +86,9 @@ public class SericolaSeriesMarkovReward {
 
         // Grow C if necessary
         if (newN > getNfromC()) {
+            if (DEBUG) {
+                System.err.println("Growing C to N = " + newN);
+            }
             initializeSpace(phi, newN);
             computeChnk();
         }
@@ -387,15 +395,16 @@ public class SericolaSeriesMarkovReward {
                 (1.0 - epsilon);
         double sum2 = 0.0;
 //        double sum2 = Double.NEGATIVE_INFINITY;
-        while (Math.abs(sum2 - tolerance2) > epsilon) {
+        while (Math.abs(sum2 - tolerance2) > epsilon && sum2 < 1.0) {
 //        while (sum2 < tolerance2) {
             i++;
             double logDensity = -lambda * time + i * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(i + 1);
             sum2 += Math.exp(logDensity);
 //            sum2 = LogTricks.logSum(sum2, logDensity);
-
-//            System.err.println(sum2 + " " + tolerance2 + " " + Math.abs(sum2 - tolerance2) + " " + epsilon * 0.01);
+            if (DEBUG) {
+                System.err.println(sum2 + " " + tolerance2 + " " + Math.abs(sum2 - tolerance2) + " " + epsilon * 0.01);
 //            if (i > 500) System.exit(-1);
+            }
         }
 
 //        System.err.println("First: " + firstN);
@@ -403,6 +412,16 @@ public class SericolaSeriesMarkovReward {
 //        System.exit(-1);
 
         return i;
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Q: " + new Vector(Q) + "\n");
+        sb.append("r: " + new Vector(r) + "\n");
+        sb.append("lambda: " + lambda + "\n");
+        sb.append("N: " + getNfromC() + "\n");
+        sb.append("maxTime: " + maxTime + "\n");
+        return sb.toString();
     }
 
     private final double[] Q;

@@ -29,8 +29,6 @@ import dr.evomodel.continuous.LatentFactorModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 import java.util.List;
@@ -93,18 +91,17 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
 //        System.err.print(new Matrix(dataMatrix.getParameterAsMatrix()));
 //        System.err.print(dataMatrix.getRowDimension());
-        LowerTriangularMatrixParameter loadings = (LowerTriangularMatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
+        BlockUpperTriangularMatrixParameter loadings = (BlockUpperTriangularMatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
         int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
-        double[] temp=null;
-        for(int i=0; i<loadings.getRowDim(); i++)
+        Parameter temp=null;
+        for(int i=0; i<loadings.getColumnDimension(); i++)
         {
-            temp=loadings.getParameterValues(i);
-            if(temp[i]<0)
+            temp=loadings.getParameter(i);
+            if(temp.getParameterValue(i)<0)
             {
-                temp[i]=-temp[i];
-                loadings.setParameterValue(temp);
+               temp.setParameterValue(i, temp.getParameterValue(i));
             }
         }
 
@@ -123,7 +120,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
                     new ElementRule(CompoundParameter.class),
             }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
-                    new ElementRule(LowerTriangularMatrixParameter.class)
+                    new ElementRule(BlockUpperTriangularMatrixParameter.class)
             }),
             new ElementRule(ROW_PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(DiagonalMatrix.class)

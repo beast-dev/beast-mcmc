@@ -86,9 +86,9 @@ public class SericolaSeriesMarkovReward {
 
         // Grow C if necessary
         if (newN > getNfromC()) {
-            if (DEBUG) {
-                System.err.println("Growing C to N = " + newN);
-            }
+//            if (DEBUG) {
+            System.err.println("Growing C to N = " + newN + " with " + maxTime);
+//            }
             initializeSpace(phi, newN);
             computeChnk();
         }

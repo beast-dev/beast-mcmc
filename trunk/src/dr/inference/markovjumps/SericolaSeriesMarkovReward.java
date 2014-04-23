@@ -52,9 +52,9 @@ public class SericolaSeriesMarkovReward {
         this.maxTime = 0;
         this.epsilon = epsilon;
 
+        this.dim = dim;
         lambda = determineLambda();
 
-        this.dim = dim;
         phi = dim - 1;
 
         if (DEBUG) {

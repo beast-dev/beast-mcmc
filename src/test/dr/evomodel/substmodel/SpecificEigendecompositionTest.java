@@ -1,7 +1,7 @@
 /*
  * SpecificEigendecompositionTest.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -55,8 +55,8 @@ public class SpecificEigendecompositionTest extends MathTestCase {
 
         return new ComplexSubstitutionModel("test", dataType, freqModel, rateVector) {
             protected EigenSystem getDefaultEigenSystem(int stateCount) {
-                 return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
-             }
+                return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+            }
         };
     }
 
@@ -91,21 +91,20 @@ public class SpecificEigendecompositionTest extends MathTestCase {
     private static int dim = 6;
 
     private static double[] testRates = {
-            0.0,        0.0,        0.0,        0.0,        0.0,
-                        0.0,        0.0,        0.0,        0.0,
-                                    0.0,        0.0,        0.0,
-                                                0.0,        0.0,
-                                                            3.5409959027854936,
-    0.0,    0.0,        0.0,        1.9115985677138407,     3.6880365950035827,
-            0.0,        0.0,        3.135364040895322,      1.2936152589276488,
-                        0.0,        2.4748026323565226,     4.738559654533422,
-                                    3.4092727663178453,     2.1723540463137088,
-                                                            3.635400535152609
+            0.0, 0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 0.0,
+            3.5409959027854936,
+            0.0, 0.0, 0.0, 1.9115985677138407, 3.6880365950035827,
+            0.0, 0.0, 3.135364040895322, 1.2936152589276488,
+            0.0, 2.4748026323565226, 4.738559654533422,
+            3.4092727663178453, 2.1723540463137088,
+            3.635400535152609
 
     };
 
     private static double[] checkEigenvalues = {-3.72531, -2.27469, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
 
 
 //    private static double[] testRates = {
@@ -113,13 +112,12 @@ public class SpecificEigendecompositionTest extends MathTestCase {
 //    };
 
 
-
     private static double tolerance = 1E-4;
 
     public void testEigendecomposition() {
         System.out.println("Testing specific eigendecomposition...");
         ComplexSubstitutionModel csm = setupModel(dim, testRates);
-        double[] tmp = new double[dim*dim];
+        double[] tmp = new double[dim * dim];
         csm.getInfinitesimalMatrix(tmp);
         System.out.println("Rates: " + new Vector(tmp) + "\n");
 

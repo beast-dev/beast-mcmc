@@ -1,7 +1,7 @@
 /*
  * DefaultEigenSystem.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,8 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.math.MachineAccuracy;
+
+import java.util.Arrays;
 
 /**
  * A default Eigen decomposition system
@@ -71,6 +73,59 @@ public class DefaultEigenSystem implements EigenSystem {
 
         return new EigenDecomposition(flatEvec, flatIevc, Eval);
     }
+
+    public double computeExponential(EigenDecomposition eigen, double distance, int i, int j) {
+        if (eigen == null) {
+            return 0.0;
+        }
+
+        double[] Evec = eigen.getEigenVectors();
+        double[] Eval = eigen.getEigenValues();
+        double[] Ievc = eigen.getInverseEigenVectors();
+
+        double temp = 0.0;
+        for (int k = 0; k < stateCount; ++k) {
+            temp += Evec[i * stateCount + k] * Math.exp(distance * Eval[k]) * Ievc[k * stateCount + j];
+        }
+        return Math.abs(temp);
+    }
+
+    public void computeExponential(EigenDecomposition eigen, double distance, double[] matrix) {
+        double temp;
+
+        if (eigen == null) {
+            Arrays.fill(matrix, 0.0);
+            return;
+        }
+
+        double[] Evec = eigen.getEigenVectors();
+        double[] Ievc = eigen.getInverseEigenVectors();
+        double[] Eval = eigen.getEigenValues();
+
+        // implemented a pool of iexp matrices to support multiple threads
+        // without creating a new matrix each call. - AJD
+        double[][] iexp = new double[stateCount][stateCount];
+        for (int i = 0; i < stateCount; i++) {
+            temp = Math.exp(distance * Eval[i]);
+            for (int j = 0; j < stateCount; j++) {
+                iexp[i][j] = Ievc[i * stateCount + j] * temp;
+            }
+        }
+
+        int u = 0;
+        for (int i = 0; i < stateCount; i++) {
+            for (int j = 0; j < stateCount; j++) {
+                temp = 0.0;
+                for (int k = 0; k < stateCount; k++) {
+                    temp += Evec[i * stateCount + k] * iexp[k][j];
+                }
+
+                matrix[u] = Math.abs(temp);
+                u++;
+            }
+        }
+    }
+
 
     // Eigenvalues, eigenvectors, and inverse eigenvectors
     private double[] Eval;
@@ -144,7 +199,7 @@ public class DefaultEigenSystem implements EigenSystem {
     }
 
     private void hqr2(int n, int low, int hgh, double[][] h, double[][] zz,
-              double[] wr, double[] wi) throws ArithmeticException {
+                      double[] wr, double[] wi) throws ArithmeticException {
         int i, j, k, l = 0, m, en, na, itn, its;
         double p = 0, q = 0, r = 0, s = 0, t, w, x = 0, y, ra, sa, vi, vr, z = 0, norm, tst1, tst2;
         boolean notLast;

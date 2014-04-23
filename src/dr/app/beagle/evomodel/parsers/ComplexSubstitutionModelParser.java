@@ -1,7 +1,7 @@
 /*
  * ComplexSubstitutionModelParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -103,7 +103,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             if (!checkConditioning) {
                 return new ComplexSubstitutionModel(COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter) {
                     protected EigenSystem getDefaultEigenSystem(int stateCount) {
-                        return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                        return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
                     }
                 };
             } else {
@@ -140,7 +140,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         if (!checkConditioning) {
             model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL, dataType, freqModel, ratesParameter, indicatorParameter) {
                 protected EigenSystem getDefaultEigenSystem(int stateCount) {
-                    return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+                    return new ComplexColtEigenSystem(stateCount, false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
                 }
             };
         } else {

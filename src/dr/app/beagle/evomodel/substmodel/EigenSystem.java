@@ -1,7 +1,7 @@
 /*
  * EigenSystem.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,12 +27,18 @@ package dr.app.beagle.evomodel.substmodel;
 
 /**
  * @author Andrew Rambaut
+ * @author Marc Suchard
  * @version $Id$
  */
 public interface EigenSystem {
     /**
      * Set the instantaneous rate matrix
+     *
      * @param matrix
      */
     EigenDecomposition decomposeMatrix(double[][] matrix);
+
+    void computeExponential(EigenDecomposition ed, double time, double[] matrix);
+
+    double computeExponential(EigenDecomposition ed, double time, int i, int j);
 }

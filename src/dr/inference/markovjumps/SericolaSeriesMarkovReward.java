@@ -25,6 +25,9 @@
 
 package dr.inference.markovjumps;
 
+import dr.app.beagle.evomodel.substmodel.DefaultEigenSystem;
+import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
+import dr.app.beagle.evomodel.substmodel.EigenSystem;
 import dr.math.Binomial;
 import dr.math.GammaFunction;
 import dr.math.matrixAlgebra.Matrix;
@@ -62,6 +65,7 @@ public class SericolaSeriesMarkovReward {
         }
 
         P = initializeP(Q, lambda);
+        eigenSystem = new DefaultEigenSystem(dim);
     }
 
     private double[][] initializeW(int times, int dim) {
@@ -424,7 +428,29 @@ public class SericolaSeriesMarkovReward {
         sb.append("lambda: " + lambda + "\n");
         sb.append("N: " + getNfromC() + "\n");
         sb.append("maxTime: " + maxTime + "\n");
+        sb.append("cprob at maxTime: " + new Vector(computeConditionalProbabilities(maxTime)) + "\n");
         return sb.toString();
+    }
+
+    private EigenDecomposition getEigenDecomposition() {
+        if (eigenDecomposition == null) {
+            eigenDecomposition = eigenSystem.decomposeMatrix(squareMatrix(Q));
+        }
+        return eigenDecomposition;
+    }
+
+    private EigenDecomposition eigenDecomposition;
+
+    public double[] computeConditionalProbabilities(double distance) {
+
+        double[] matrix = new double[dim * dim];
+        eigenSystem.computeExponential(getEigenDecomposition(), distance, matrix);
+
+        return matrix;
+    }
+
+    public double computeConditionalProbability(double distance, int i, int j) {
+        return eigenSystem.computeExponential(getEigenDecomposition(), distance, i, j);
     }
 
     private final double[] Q;
@@ -435,6 +461,8 @@ public class SericolaSeriesMarkovReward {
     private final int phi;
     private final int dim;
     private final double epsilon;
+
+    private final EigenSystem eigenSystem;
 
     private double maxTime;
 }

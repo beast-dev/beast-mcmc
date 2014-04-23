@@ -1,7 +1,7 @@
 /*
  * ComplexSubstitutionModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -47,7 +47,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     }
 
     protected EigenSystem getDefaultEigenSystem(int stateCount) {
-        return new ComplexColtEigenSystem();
+        return new ComplexColtEigenSystem(stateCount);
     }
 
     /**

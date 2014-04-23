@@ -1,7 +1,7 @@
 /*
  * MarkovModulatedGY94CodonModelParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -62,12 +62,12 @@ public class MarkovModulatedGY94CodonModelParser extends GY94CodonModelParser {
         FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
         EigenSystem eigenSystem;
-        if (xo.getAttribute(DIAGONALIZATION,"default").compareToIgnoreCase("colt") == 0)
-            eigenSystem = new ColtEigenSystem();
+        if (xo.getAttribute(DIAGONALIZATION, "default").compareToIgnoreCase("colt") == 0)
+            eigenSystem = new ColtEigenSystem(dataType.getStateCount());
         else
             eigenSystem = new DefaultEigenSystem(dataType.getStateCount());
 
-        return new MarkovModulatedGY94CodonModel(codons, switchingParam, omegaParam, kappaParam, freqModel,eigenSystem);
+        return new MarkovModulatedGY94CodonModel(codons, switchingParam, omegaParam, kappaParam, freqModel, eigenSystem);
     }
 
     public String getParserDescription() {

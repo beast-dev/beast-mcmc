@@ -101,7 +101,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         this.latentStateProportionParameter = latentStateProportionParameter;
         addVariable(latentStateProportionParameter);   // TODO This may not be necessary
 
-        this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false);
+        this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false, Intent.BRANCH);
         addModel(latentStateProportions);
     }
 
@@ -261,42 +261,48 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     @Override
     public String getTraitName() {
-        return null;
+        return BranchRateModel.RATE;
     }
 
     @Override
     public Intent getIntent() {
-        return null;
+        return Intent.BRANCH;
     }
 
     @Override
-    public Class getTraitClass() {
-        return null;
-    }
-
-    @Override
-    public Double getTrait(Tree tree, NodeRef node) {
-        return null;
-    }
-
-    @Override
-    public String getTraitString(Tree tree, NodeRef node) {
-        return null;
-    }
-
-    @Override
-    public boolean getLoggable() {
-        return false;
+    public TreeTrait getTreeTrait(final String key) {
+        if (key.equals(BranchRateModel.RATE)) {
+        return this;
+        } else if (key.equals(latentStateProportions.getTraitName())) {
+            return latentStateProportions;
+        } else {
+            throw new IllegalArgumentException("Unrecognised Tree Trait key, " + key);
+        }
     }
 
     @Override
     public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[0];
+        return new TreeTrait[] { this, latentStateProportions };
     }
 
     @Override
-    public TreeTrait getTreeTrait(String key) {
-        return null;
+    public Class getTraitClass() {
+        return Double.class;
+    }
+
+    @Override
+    public boolean getLoggable() {
+        return true;
+    }
+
+    @Override
+    public Double getTrait(final Tree tree, final NodeRef node) {
+        return getBranchRate(tree, node);
+    }
+
+    @Override
+    public String getTraitString(final Tree tree, final NodeRef node) {
+        return Double.toString(getBranchRate(tree, node));
     }
 
     public static void main(String[] args) {

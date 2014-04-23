@@ -1,7 +1,7 @@
 /*
  * TransposedMatrixParameter.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -36,6 +36,19 @@ public class TransposedMatrixParameter extends MatrixParameter {
 
     public TransposedMatrixParameter(String name) {
         super(name + ".transpose");
+    }
+
+    public TransposedMatrixParameter(String name, Parameter[] parameters) {
+        super(name + ".transpose", parameters);
+    }
+
+    public static TransposedMatrixParameter recast(String name, CompoundParameter compoundParameter) {
+        final int count = compoundParameter.getParameterCount();
+        Parameter[] parameters = new Parameter[count];
+        for (int i = 0; i < count; ++i) {
+            parameters[i] = compoundParameter.getParameter(i);
+        }
+        return new TransposedMatrixParameter(name, parameters);
     }
 
     public double getParameterValue(int row, int col) {

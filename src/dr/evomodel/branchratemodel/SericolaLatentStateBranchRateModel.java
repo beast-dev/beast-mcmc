@@ -232,9 +232,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
                 double reward = branchLength * latentProportion;
                 double density = getBranchRewardDensity(reward, branchLength);
                 logLike += Math.log(density);
-                // TODO These quantities are off by the log(conditional transition probability) alone each branch,
-                // TODO but cprobs should be constant with Metropolis-Hastings proposal on proportions alone
-
                 // TODO More importantly, MH proposals on [0,1] may be missing a Jacobian for which we should adjust.
                 // TODO This is easy to test and we should do it when sampling appears to work.
             }
@@ -247,10 +244,14 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         if (series == null) {
             series = createSeries();
         }
-        return series.computePdf(reward, branchLength)[0 * 2 + 0]; // just start = end = 1 entry
+        int state = 0 * 2 + 0; // just start = end = 0 entry
         // Reward is [0,1], and we want to track time in latent state (= 1).
         // Therefore all nodes are in state 0
+        double joint = series.computePdf(reward, branchLength)[state];
+        double marg = series.computeConditionalProbability(branchLength, 0, 0);
+        // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 
+        return joint / marg; // conditional on ending state.
     }
 
     @Override
@@ -272,7 +273,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     @Override
     public TreeTrait getTreeTrait(final String key) {
         if (key.equals(BranchRateModel.RATE)) {
-        return this;
+            return this;
         } else if (key.equals(latentStateProportions.getTraitName())) {
             return latentStateProportions;
         } else {
@@ -282,7 +283,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     @Override
     public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[] { this, latentStateProportions };
+        return new TreeTrait[]{this, latentStateProportions};
     }
 
     @Override

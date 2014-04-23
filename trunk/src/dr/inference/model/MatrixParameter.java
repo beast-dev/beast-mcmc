@@ -1,7 +1,7 @@
 /*
  * MatrixParameter.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -43,6 +43,15 @@ public class MatrixParameter extends CompoundParameter {
     public MatrixParameter(String name, Parameter[] parameters) {
         super(name, parameters);
         dimensionsEstablished = true;
+    }
+
+    public static MatrixParameter recast(String name, CompoundParameter compoundParameter) {
+        final int count = compoundParameter.getParameterCount();
+        Parameter[] parameters = new Parameter[count];
+        for (int i = 0; i < count; ++i) {
+            parameters[i] = compoundParameter.getParameter(i);
+        }
+        return new MatrixParameter(name, parameters);
     }
 
     public double getParameterValue(int row, int col) {
@@ -162,6 +171,7 @@ public class MatrixParameter extends CompoundParameter {
     private static final String ROW_DIMENSION = "rows";
     private static final String COLUMN_DIMENSION = "columns";
     private static final String TRANSPOSE = "transpose";
+    private static final String AS_COMPOUND = "asCompoundParameter";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -173,8 +183,20 @@ public class MatrixParameter extends CompoundParameter {
 
             final String name = xo.hasId() ? xo.getId() : null;
             boolean transposed = xo.getAttribute(TRANSPOSE, false);
+            boolean compound = xo.getAttribute(AS_COMPOUND, false);
 
             MatrixParameter matrixParameter;
+
+            if (compound) {
+                CompoundParameter parameter = (CompoundParameter) xo.getChild(0);
+                if (transposed) {
+                    matrixParameter = TransposedMatrixParameter.recast(name, parameter);
+                } else {
+                    matrixParameter = MatrixParameter.recast(name, parameter);
+                }
+                return matrixParameter;
+            }
+
             if (!transposed) {
                 matrixParameter = new MatrixParameter(name);
             } else {
@@ -221,6 +243,7 @@ public class MatrixParameter extends CompoundParameter {
                 AttributeRule.newIntegerRule(ROW_DIMENSION, true),
                 AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
                 AttributeRule.newBooleanRule(TRANSPOSE, true),
+                AttributeRule.newBooleanRule(AS_COMPOUND, true),
         };
 
         public Class getReturnType() {

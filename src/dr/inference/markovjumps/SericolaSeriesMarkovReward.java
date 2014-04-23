@@ -86,9 +86,12 @@ public class SericolaSeriesMarkovReward {
 
         // Grow C if necessary
         if (newN > getNfromC()) {
-//            if (DEBUG) {
-            System.err.println("Growing C to N = " + newN + " with " + maxTime);
-//            }
+            if (DEBUG) {
+                System.err.println("Growing C to N = " + newN + " with " + maxTime);
+            }
+            if (newN > 500) {
+                System.err.println("Warning: > 500 recursion depth in SericolaSeriesMarkovReward");
+            }
             initializeSpace(phi, newN);
             computeChnk();
         }

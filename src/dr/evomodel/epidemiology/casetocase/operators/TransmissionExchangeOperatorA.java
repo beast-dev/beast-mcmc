@@ -1,9 +1,12 @@
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
@@ -14,7 +17,10 @@ import java.util.ArrayList;
 /**
  * Implements branch exchange operations that leave the transmission tree unchanged. As this already severely
  * restricts the set of eligible pairs of nodes, this is set up as special case of Wide Exchange.
-
+ *
+ * todo For both exchange operators, and the Type B STS and WB moves, you can actually keep the infection times.
+ * This likely helps both speed and convergence.
+ *
  *
  * @author Matthew Hall
  */
@@ -24,9 +30,14 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
     private final CaseToCaseTreeLikelihood c2cLikelihood;
     public static final String TRANSMISSION_EXCHANGE_OPERATOR_A = "transmissionExchangeOperatorA";
 
-    public TransmissionExchangeOperatorA(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
+    private final boolean resampleInfectionTimes;
+
+    public TransmissionExchangeOperatorA(CaseToCaseTreeLikelihood c2cLikelihood, double weight,
+                                         boolean resampleInfectionTimes) {
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
+
+        this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -42,6 +53,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
     }
 
     public double exchange() throws OperatorFailedException{
+
         TreeModel tree = c2cLikelihood.getTreeModel();
 
         final int nodeCount = tree.getNodeCount();
@@ -59,8 +71,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         int candidateCount = candidates.size();
 
-
-
         if(candidateCount==0){
             throw new OperatorFailedException("No valid exchanges for this node");
         }
@@ -73,6 +83,25 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         NodeRef iP = tree.getParent(i);
         NodeRef jP = tree.getParent(j);
+
+        if(resampleInfectionTimes){
+            BranchMapModel branchMap = c2cLikelihood.getBranchMap();
+            Parameter branchPostitions = c2cLikelihood.getInfectionTimeBranchPositions();
+            AbstractCase iCase = branchMap.get(i.getNumber());
+            AbstractCase iPCase = branchMap.get(iP.getNumber());
+            AbstractCase jCase = branchMap.get(j.getNumber());
+            AbstractCase jPCase = branchMap.get(jP.getNumber());
+
+            if(iCase!=iPCase){
+                branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
+                        MathUtils.nextDouble());
+            }
+
+            if(jCase!=jPCase){
+                branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(jCase),
+                        MathUtils.nextDouble());
+            }
+        }
 
 /*
         I tend to think that this may fail quite a lot of the time due to lack of candidates... a version that does
@@ -135,6 +164,8 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public static final String RESAMPLE_INFECTION_TIMES = "resampleInfectionTimes";
+
         public String getParserName() {
             return TRANSMISSION_EXCHANGE_OPERATOR_A;
         }
@@ -147,7 +178,13 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
             }
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-            return new TransmissionExchangeOperatorA(c2cL, weight);
+            boolean resampleInfectionTimes = false;
+
+            if(xo.hasAttribute(RESAMPLE_INFECTION_TIMES)) {
+                resampleInfectionTimes = xo.getBooleanAttribute(RESAMPLE_INFECTION_TIMES);
+            }
+
+            return new TransmissionExchangeOperatorA(c2cL, weight, resampleInfectionTimes);
         }
 
         // ************************************************************************
@@ -170,6 +207,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         private final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
+                    AttributeRule.newBooleanRule(RESAMPLE_INFECTION_TIMES, true),
                     new ElementRule(CaseToCaseTreeLikelihood.class)
             };
         }

@@ -6,6 +6,7 @@ import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
@@ -25,9 +26,14 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
     private final CaseToCaseTreeLikelihood c2cLikelihood;
     public static final String TRANSMISSION_EXCHANGE_OPERATOR_B = "transmissionExchangeOperatorB";
 
-    public TransmissionExchangeOperatorB(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
+    private final boolean resampleInfectionTimes;
+
+    public TransmissionExchangeOperatorB(CaseToCaseTreeLikelihood c2cLikelihood, double weight,
+                                         boolean resampleInfectionTimes) {
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
+
+        this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -77,6 +83,20 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         double HRDenom = (1/((double)candidateCount)) + (1/((double)jFirstCandidateCount));
 
         NodeRef jP = tree.getParent(j);
+
+
+        if(resampleInfectionTimes){
+            Parameter branchPostitions = c2cLikelihood.getInfectionTimeBranchPositions();
+
+            AbstractCase iCase = branchMap.get(i.getNumber());
+            AbstractCase jCase = branchMap.get(j.getNumber());
+
+            branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
+                    MathUtils.nextDouble());
+            branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(jCase),
+                    MathUtils.nextDouble());
+
+        }
 
 /*
         Intuitively it would seem this is a lot more likely to succeed than operator A.
@@ -138,6 +158,8 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public static final String RESAMPLE_INFECTION_TIMES = "resampleInfectionTimes";
+
         public String getParserName() {
             return TRANSMISSION_EXCHANGE_OPERATOR_B;
         }
@@ -150,7 +172,13 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
             }
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-            return new TransmissionExchangeOperatorB(c2cL, weight);
+            boolean resampleInfectionTimes = false;
+
+            if(xo.hasAttribute(RESAMPLE_INFECTION_TIMES)) {
+                resampleInfectionTimes = xo.getBooleanAttribute(RESAMPLE_INFECTION_TIMES);
+            }
+
+            return new TransmissionExchangeOperatorB(c2cL, weight, resampleInfectionTimes);
         }
 
         // ************************************************************************
@@ -173,7 +201,8 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
         private final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                    new ElementRule(CaseToCaseTreeLikelihood.class)
+                    AttributeRule.newBooleanRule(RESAMPLE_INFECTION_TIMES, true),
+                    new ElementRule(CaseToCaseTreeLikelihood.class),
             };
         }
     };

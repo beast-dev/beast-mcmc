@@ -32,15 +32,15 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
 //        System.err.print("\n");
 
 //
-        double[][] temp=getParameterAsMatrix();
-        for(int i=0; i<getRowDimension(); i++){
-            for(int j=0; j<getColumnDimension(); j++)
-            {
-                System.err.print(temp[i][j]);
-                System.err.print(" ");
-            }
-            System.err.print("\n");
-        }
+//        double[][] temp=getParameterAsMatrix();
+//        for(int i=0; i<getRowDimension(); i++){
+//            for(int j=0; j<getColumnDimension(); j++)
+//            {
+//                System.err.print(temp[i][j]);
+//                System.err.print(" ");
+//            }
+//            System.err.print("\n");
+//        }
     }
 
     @Override

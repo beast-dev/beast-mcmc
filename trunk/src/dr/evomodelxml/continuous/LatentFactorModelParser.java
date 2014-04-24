@@ -61,7 +61,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        System.err.println("TN: " + traitName);
+//        System.err.println("TN: " + traitName);
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);

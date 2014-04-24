@@ -80,10 +80,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         dimData = loadings.getColumnDimension();
         nTaxa = factors.getParameter(0).getDimension();
 
-        System.out.print(nTaxa);
-        System.out.print("\n");
-        System.out.print(dimData);
-        System.out.print("\n");
+//        System.out.print(nTaxa);
+//        System.out.print("\n");
+//        System.out.print(dimData);
+//        System.out.print("\n");
 
         if(nTaxa*dimData!=data.getDimension())
         {
@@ -96,9 +96,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             System.exit(10);
         }
 
-        computeResiduals();
-        System.out.print(new Matrix(residual.toComponents()));
-        System.out.print(calculateLogLikelihood());
+//        computeResiduals();
+//        System.out.print(new Matrix(residual.toComponents()));
+//        System.out.print(calculateLogLikelihood());
     }
 
 //    public Matrix getData(){

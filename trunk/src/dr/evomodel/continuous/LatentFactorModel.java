@@ -77,7 +77,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         addVariable(loadings);
 
         dimFactors = numFactors;
-        dimData = loadings.getRowDimension();
+        dimData = loadings.getColumnDimension();
         nTaxa = factors.getParameter(0).getDimension();
 
         System.out.print(nTaxa);
@@ -85,8 +85,16 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         System.out.print(dimData);
         System.out.print("\n");
 
-        // TODO Check dimensions of loadings (dimFactors x dimData)
-        // TODO dimData >= dimFactors
+        if(nTaxa*dimData!=data.getDimension())
+        {
+            System.err.print("LOADINGS MATRIX AND FACTOR MATRIX MUST HAVE EXTERNAL DIMENSIONS WHOSE PRODUCT IS EQUAL TO THE NUMBER OF DATA POINTS\n");
+            System.exit(10);
+        }
+        if(dimData<dimFactors)
+        {
+            System.err.print("MUST HAVE FEWER FACTORS THAN DATA POINTS\n");
+            System.exit(10);
+        }
 
         computeResiduals();
         System.out.print(new Matrix(residual.toComponents()));
@@ -135,7 +143,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         Matrix tData = new Matrix(dataMatrix.getParameterAsMatrix());
         Matrix tFactors = copy(factors, nTaxa, dimFactors);
         try {
-            residual = tData.subtract(tFactors.product(tLoadings).transpose());
+            residual = tData.subtract(tLoadings.transpose().product(tFactors.transpose()));
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

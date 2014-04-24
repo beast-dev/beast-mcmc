@@ -1,10 +1,12 @@
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
+import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
@@ -24,10 +26,15 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
     private static final boolean DEBUG = false;
     private final int tipCount;
 
-    public TransmissionWilsonBaldingB(CaseToCaseTreeLikelihood c2cLikelihood, double weight) {
+    private final boolean resampleInfectionTimes;
+
+    public TransmissionWilsonBaldingB(CaseToCaseTreeLikelihood c2cLikelihood, double weight,
+                                      boolean resampleInfectionTimes) {
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
         tipCount = c2cLikelihood.getTreeModel().getExternalNodeCount();
+
+        this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -81,6 +88,39 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
 
         final NodeRef CiP = getOtherChild(tree, iP, i);
         NodeRef PiP = tree.getParent(iP);
+
+        if(resampleInfectionTimes) {
+            Parameter branchPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+
+            AbstractCase iCase = branchMap.get(i.getNumber());
+            AbstractCase iPCase = branchMap.get(iP.getNumber());
+            AbstractCase CiPCase = branchMap.get(CiP.getNumber());
+            AbstractCase PiPCase = null;
+            if(PiP!=null){
+                PiPCase = branchMap.get(PiP.getNumber());
+            }
+
+            // what happens on i's branch
+
+            if (iCase != iPCase) {
+                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
+                        MathUtils.nextDouble());
+            }
+
+            // what happens between PiP and CiP
+            if (PiPCase == null || CiPCase != PiPCase) {
+                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(CiPCase),
+                        MathUtils.nextDouble());
+            }
+
+            // what happens between k and j
+
+            AbstractCase jCase = branchMap.get(j.getNumber());
+
+            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(jCase),
+                    MathUtils.nextDouble());
+
+        }
 
         newMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(j));
         newRange = tree.getNodeHeight(k) - newMinAge;
@@ -179,6 +219,8 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public static final String RESAMPLE_INFECTION_TIMES = "resampleInfectionTimes";
+
         public String getParserName() {
             return TRANSMISSION_WILSON_BALDING_B;
         }
@@ -188,7 +230,13 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
                     = (CaseToCaseTreeLikelihood) xo.getChild(CaseToCaseTreeLikelihood.class);
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-            return new TransmissionWilsonBaldingB(c2cL, weight);
+            boolean resampleInfectionTimes = false;
+
+            if(xo.hasAttribute(RESAMPLE_INFECTION_TIMES)) {
+                resampleInfectionTimes = xo.getBooleanAttribute(RESAMPLE_INFECTION_TIMES);
+            }
+
+            return new TransmissionWilsonBaldingB(c2cL, weight, resampleInfectionTimes);
         }
 
         // ************************************************************************
@@ -211,6 +259,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         private final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
+                    AttributeRule.newBooleanRule(RESAMPLE_INFECTION_TIMES, true),
                     new ElementRule(CaseToCaseTreeLikelihood.class)
             };
         }

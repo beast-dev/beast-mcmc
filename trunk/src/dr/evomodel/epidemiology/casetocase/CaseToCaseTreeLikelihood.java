@@ -691,6 +691,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return treeModel.getNodeHeight(node);
     }
 
+
     /* Return the case which infected this case */
 
     public AbstractCase getInfector(AbstractCase thisCase){
@@ -778,6 +779,32 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             }
         }
         return infectionTimes;
+    }
+
+    public void setInfectionTime(AbstractCase thisCase, double time){
+        setInfectionHeight(thisCase, timeToHeight(time));
+    }
+
+    public void setInfectionHeight(AbstractCase thisCase, double height){
+        NodeRef child = getEarliestNodeInPartition(thisCase);
+        NodeRef parent = treeModel.getParent(child);
+
+        double minHeight = treeModel.getNodeHeight(child);
+        double maxHeight = parent!=null ? treeModel.getNodeHeight(parent)
+                : minHeight + maxFirstInfToRoot.getParameterValue(0);
+
+        if(height<minHeight || height>maxHeight){
+            throw new RuntimeException("Trying to set an infection time outside the branch on which it must occur");
+        }
+
+        double branchPosition = (height - minHeight)/(maxHeight - minHeight);
+
+        infectionTimeBranchPositions.setParameterValue(outbreak.getCaseIndex(thisCase), branchPosition);
+
+    }
+
+    public Parameter getInfectionTimeBranchPositions(){
+        return infectionTimeBranchPositions;
     }
 
     public double getInfectiousTime(AbstractCase thisCase){

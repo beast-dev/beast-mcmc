@@ -5,6 +5,8 @@ import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
+import dr.inference.model.Parameter;
+import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -21,11 +23,17 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     public static final String INFECTION_BRANCH_MOVEMENT_OPERATOR = "infectionBranchMovementOperator";
     private CaseToCaseTreeLikelihood c2cLikelihood;
+
+    private final boolean resampleInfectionTimes;
+
     static final boolean DEBUG = false;
 
-    public InfectionBranchMovementOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight){
+    public InfectionBranchMovementOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight,
+                                           boolean resampleInfectionTimes){
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
+
+        this.resampleInfectionTimes = resampleInfectionTimes;
     }
 
     public String getOperatorName(){
@@ -81,6 +89,8 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     private double moveDown(PartitionedTreeModel tree, NodeRef node, BranchMapModel map, boolean extended){
 
+        AbstractCase infectedCase = map.get(node.getNumber());
+
         AbstractCase[] newMap = map.getArrayCopy();
 
         NodeRef parent = tree.getParent(node);
@@ -97,6 +107,15 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
 
         if(!extended || c2cLikelihood.tipLinked(parent)){
+
+            AbstractCase infectorCase = map.get(parent.getNumber());
+
+            if(resampleInfectionTimes){
+                Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+                branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectorCase),
+                        MathUtils.nextDouble());
+            }
+
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map.get(grandparent.getNumber())==map.get(parent.getNumber())){
 
@@ -122,10 +141,18 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         newMap[parent.getNumber()]=map.get(node.getNumber());
         map.setAll(newMap, false);
 
+        if(resampleInfectionTimes){
+            Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+            branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectedCase),
+                    MathUtils.nextDouble());
+        }
+
         return hr;
     }
 
     private double moveUp(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
+
+        AbstractCase infectedCase = map.get(node.getNumber());
 
         AbstractCase[] newMap = map.getArrayCopy();
 
@@ -149,6 +176,13 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
                 out += Math.log(2);
             }
         }
+
+        if(resampleInfectionTimes){
+            Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+            branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectedCase),
+                    MathUtils.nextDouble());
+        }
+
         newMap[node.getNumber()]=map.get(parent.getNumber());
         map.setAll(newMap, false);
 
@@ -163,6 +197,8 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser(){
 
+        public static final String RESAMPLE_INFECTION_TIMES = "resampleInfectionTimes";
+
         public String getParserName(){
             return INFECTION_BRANCH_MOVEMENT_OPERATOR;
         }
@@ -171,8 +207,15 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
             CaseToCaseTreeLikelihood ftLikelihood =
                     (CaseToCaseTreeLikelihood) xo.getChild(CaseToCaseTreeLikelihood.class);
-            final double weight = xo.getDoubleAttribute("weight");
-            return new InfectionBranchMovementOperator(ftLikelihood, weight);
+            final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+
+            boolean resampleInfectionTimes = false;
+
+            if(xo.hasAttribute(RESAMPLE_INFECTION_TIMES)) {
+                resampleInfectionTimes = xo.getBooleanAttribute(RESAMPLE_INFECTION_TIMES);
+            }
+
+            return new InfectionBranchMovementOperator(ftLikelihood, weight, resampleInfectionTimes);
         }
 
         public String getParserDescription(){
@@ -189,7 +232,8 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule("weight"),
+                AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
+                AttributeRule.newBooleanRule(RESAMPLE_INFECTION_TIMES, true),
                 new ElementRule(CaseToCaseTreeLikelihood.class),
         };
     };

@@ -7,6 +7,7 @@ import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -28,6 +29,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     private boolean gaussian = false;
     private final boolean swapInRandomRate;
     private final boolean swapInRandomTrait;
+    private final boolean resampleInfectionTimes;
     private CoercionMode mode = CoercionMode.DEFAULT;
     private final static boolean DEBUG = false;
     public static final String TRANSMISSION_SUBTREE_SLIDE_A = "transmissionSubtreeSlideA";
@@ -37,7 +39,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
 
     public TransmissionSubtreeSlideA(CaseToCaseTreeLikelihood c2cLikelihood, double weight, double size,
-                                     boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode) {
+                                     boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode,
+                                     boolean resampleInfectionTimes) {
         this.c2cLikelihood = c2cLikelihood;
         tree = c2cLikelihood.getTreeModel();
         setWeight(weight);
@@ -54,6 +57,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         this.gaussian = gaussian;
         this.swapInRandomRate = swapRates;
         this.swapInRandomTrait = swapTraits;
+
+        this.resampleInfectionTimes = resampleInfectionTimes;
 
         this.mode = mode;
     }
@@ -96,8 +101,34 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         final double oldHeight = tree.getNodeHeight(iP);
         final double newHeight = oldHeight + delta;
 
+        Parameter branchPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+
+        AbstractCase iCase = branchMap.get(i.getNumber());
+        AbstractCase iPCase = branchMap.get(iP.getNumber());
+        AbstractCase CiPCase = branchMap.get(CiP.getNumber());
+        AbstractCase PiPCase = null;
+        if(PiP!=null){
+            PiPCase = branchMap.get(PiP.getNumber());
+        }
+
+        if(resampleInfectionTimes) {
+            // what happens on i's branch
+
+            if (iCase != iPCase) {
+                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
+                        MathUtils.nextDouble());
+            }
+
+            // what happens between PiP and CiP
+            if (PiPCase == null || CiPCase != PiPCase) {
+                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(CiPCase),
+                        MathUtils.nextDouble());
+            }
+        }
+
         // 3. if the move is down
         if (delta > 0) {
+
 
             // 3.1 if the topology will change
             if (PiP != null && tree.getNodeHeight(PiP) < newHeight) {
@@ -110,9 +141,27 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                     if (newParent == null) break;
                 }
 
+
                 // if the parent has slid out of its partition
                 if(branchMap.get(newChild.getNumber())!=branchMap.get(iP.getNumber())){
                     throw new OperatorFailedException("invalid slide");
+                }
+
+                // if iP is now the earliest node in its subtree
+
+                if(resampleInfectionTimes){
+                    if(newParent==null){
+                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iPCase),
+                                MathUtils.nextDouble());
+
+                    } else {
+                        AbstractCase newParentCase = branchMap.get(newParent.getNumber());
+                        if(newParentCase!=iPCase){
+                            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iPCase),
+                                    MathUtils.nextDouble());
+                        }
+                    }
+
                 }
 
                 tree.beginTreeEdit();
@@ -159,6 +208,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
                 tree.endTreeEdit();
 
+
                 // 3.1.3 count the hypothetical sources of this destination.
                 final int possibleSources = intersectingEdges(tree, newChild, oldHeight, branchMap,
                         branchMap.get(iP.getNumber()), null);
@@ -168,6 +218,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
             } else {
                 // just change the node height
+
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
             }
@@ -179,6 +230,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             if (tree.getNodeHeight(i) > newHeight) {
                 return Double.NEGATIVE_INFINITY;
             }
+
 
             // 4.1 will the move change the topology
             if (tree.getNodeHeight(CiP) > newHeight) {
@@ -196,6 +248,17 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 final int childIndex = MathUtils.nextInt(newChildren.size());
                 NodeRef newChild = newChildren.get(childIndex);
                 NodeRef newParent = tree.getParent(newChild);
+
+                // if newChild was the earliest node in its subtree it has a new infection time
+
+                if(resampleInfectionTimes){
+                        AbstractCase newChildCase = branchMap.get(newChild.getNumber());
+                        if(newChildCase!=iPCase){
+                            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
+                                    MathUtils.nextDouble());
+                        }
+                }
+
 
                 tree.beginTreeEdit();
 
@@ -240,9 +303,12 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
                 tree.endTreeEdit();
 
+
+
                 logq = Math.log(possibleDestinations);
 
             } else {
+
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
             }
@@ -372,6 +438,8 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public static final String RESAMPLE_INFECTION_TIMES = "resampleInfectionTimes";
+
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean swapRates = xo.getAttribute(SWAP_RATES, false);
@@ -398,9 +466,15 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                         " for tree " + c2cL.getTreeModel().getId() );
             }
 
+            boolean resampleInfectionTimes = false;
+
+            if(xo.hasAttribute(RESAMPLE_INFECTION_TIMES)) {
+                resampleInfectionTimes = xo.getBooleanAttribute(RESAMPLE_INFECTION_TIMES);
+            }
+
             final boolean gaussian = xo.getBooleanAttribute("gaussian");
             TransmissionSubtreeSlideA operator = new TransmissionSubtreeSlideA(c2cL, weight, size, gaussian,
-                    swapRates, swapTraits, mode);
+                    swapRates, swapTraits, mode, resampleInfectionTimes);
             operator.setTargetAcceptanceProbability(targetAcceptance);
 
             return operator;
@@ -431,6 +505,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 AttributeRule.newBooleanRule(SWAP_RATES, true),
                 AttributeRule.newBooleanRule(SWAP_TRAITS, true),
                 AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(RESAMPLE_INFECTION_TIMES, true),
                 new ElementRule(CaseToCaseTreeLikelihood.class)
         };
     };

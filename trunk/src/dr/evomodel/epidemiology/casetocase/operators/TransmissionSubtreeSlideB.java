@@ -2,10 +2,12 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -27,6 +29,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
     private boolean gaussian = false;
     private final boolean swapInRandomRate;
     private final boolean swapInRandomTrait;
+    private final boolean resampleInfectionTimes;
     private CoercionMode mode = CoercionMode.DEFAULT;
     private static final boolean DEBUG = false;
     public static final String TRANSMISSION_SUBTREE_SLIDE_B = "transmissionSubtreeSlideB";
@@ -35,7 +38,8 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
     public static final String TARGET_ACCEPTANCE = "targetAcceptance";
 
     public TransmissionSubtreeSlideB(CaseToCaseTreeLikelihood c2cLikelihood, double weight, double size,
-                                     boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode) {
+                                     boolean gaussian, boolean swapRates, boolean swapTraits,  CoercionMode mode,
+                                     boolean resampleInfectionTimes) {
         this.c2cLikelihood = c2cLikelihood;
         tree = c2cLikelihood.getTreeModel();
         setWeight(weight);
@@ -52,6 +56,8 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         this.gaussian = gaussian;
         this.swapInRandomRate = swapRates;
         this.swapInRandomTrait = swapTraits;
+
+        this.resampleInfectionTimes = resampleInfectionTimes;
 
         this.mode = mode;
     }
@@ -86,8 +92,34 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         final double oldHeight = tree.getNodeHeight(iP);
         final double newHeight = oldHeight + delta;
 
+        Parameter branchPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+
+        AbstractCase iCase = branchMap.get(i.getNumber());
+        AbstractCase iPCase = branchMap.get(iP.getNumber());
+        AbstractCase CiPCase = branchMap.get(CiP.getNumber());
+        AbstractCase PiPCase = null;
+        if(PiP!=null){
+            PiPCase = branchMap.get(PiP.getNumber());
+        }
+
+        if(resampleInfectionTimes) {
+            // what happens on i's branch (there has always been a change)
+
+            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
+                    MathUtils.nextDouble());
+
+            // what happens between PiP and CiP
+
+            if (PiPCase == null || CiPCase != PiPCase) {
+                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(CiPCase),
+                        MathUtils.nextDouble());
+            }
+        }
+
+
         // 3. if the move is down
         if (delta > 0) {
+
 
             // 3.1 if the topology will change
             if (PiP != null && tree.getNodeHeight(PiP) < newHeight) {
@@ -156,19 +188,49 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                     logq += Math.log(0.5);
                 }
 
+                AbstractCase newiPCase;
+
+                AbstractCase newChildCase = branchMap.get(newChild.getNumber());
+
                 if(newParent != null && branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
                     if(MathUtils.nextInt(2)==0){
-                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()), true);
+                        newiPCase = branchMap.get(newParent.getNumber());
                     } else {
-                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
+                        newiPCase = newChildCase;
                     }
+
+                    if(resampleInfectionTimes) {
+                        //whichever we picked for iP, it's the new child's case whose infection branch is modified
+                        // (even if this infection branch is iP's branch)
+
+                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
+                                MathUtils.nextDouble());
+
+                    }
+
                     logq += Math.log(2);
+
                 } else {
-                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
+                    newiPCase = newChildCase;
+
+                    // if iP is now the root its case infection time has changed. If not, then there is no infection
+                    // on this branch
+
+                    if(resampleInfectionTimes) {
+                        if (newParent == null) {
+                            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
+                                    MathUtils.nextDouble());
+                        }
+                    }
                 }
+
+                branchMap.set(iP.getNumber(), newiPCase, true);
 
             } else {
                 // just change the node height
+
+                // todo you could actually randomise whether the subtree containing iP is changed here
+
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
             }
@@ -249,18 +311,38 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                     logq += Math.log(0.5);
                 }
 
-                if(newParent!=null && branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
+                AbstractCase newiPCase;
+
+                AbstractCase newChildCase = branchMap.get(newChild.getNumber());
+
+                if(branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
                     if(MathUtils.nextInt(2)==0){
-                        branchMap.set(iP.getNumber(), branchMap.get(newParent.getNumber()), true);
+                        newiPCase = branchMap.get(newParent.getNumber());
                     } else {
-                        branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
+                        newiPCase = newChildCase;
                     }
+
+
+                    if(resampleInfectionTimes) {
+                        //whichever we picked for iP, it's the new child's case whose infection branch is modified
+                        // (even if this infection branch is iP's branch)
+
+                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
+                                MathUtils.nextDouble());
+
+                    }
+
                     logq += Math.log(2);
                 } else {
-                    branchMap.set(iP.getNumber(), branchMap.get(newChild.getNumber()), true);
+                    //upward, so don't have to worry about newParent being the root if the topology changed
+
+                    newiPCase = newChildCase;
                 }
 
+                branchMap.set(iP.getNumber(), newiPCase, true);
+
             } else {
+
                 tree.setNodeHeight(iP, newHeight);
                 logq = 0.0;
             }
@@ -368,6 +450,8 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
+        public static final String RESAMPLE_INFECTION_TIMES = "resampleInfectionTimes";
+
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             boolean swapRates = xo.getAttribute(SWAP_RATES, false);
@@ -394,9 +478,15 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                         " for tree " + c2cL.getTreeModel().getId() );
             }
 
+            boolean resampleInfectionTimes = false;
+
+            if(xo.hasAttribute(RESAMPLE_INFECTION_TIMES)) {
+                resampleInfectionTimes = xo.getBooleanAttribute(RESAMPLE_INFECTION_TIMES);
+            }
+
             final boolean gaussian = xo.getBooleanAttribute("gaussian");
             TransmissionSubtreeSlideB operator = new TransmissionSubtreeSlideB(c2cL, weight, size, gaussian,
-                    swapRates, swapTraits, mode);
+                    swapRates, swapTraits, mode, resampleInfectionTimes);
             operator.setTargetAcceptanceProbability(targetAcceptance);
 
             return operator;
@@ -427,6 +517,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 AttributeRule.newBooleanRule(SWAP_RATES, true),
                 AttributeRule.newBooleanRule(SWAP_TRAITS, true),
                 AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(RESAMPLE_INFECTION_TIMES, true),
                 new ElementRule(CaseToCaseTreeLikelihood.class)
         };
     };

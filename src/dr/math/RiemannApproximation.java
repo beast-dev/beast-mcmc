@@ -36,8 +36,20 @@ import dr.math.distributions.NormalDistribution;
  */
 public class RiemannApproximation implements Integral {
 
-    public RiemannApproximation(int sampleSize) {
+    public enum variant {
+        UPPER,
+        LOWER,
+        MIDPOINT,
+        TRAPEZOID
+    }
+
+    public RiemannApproximation(int sampleSize, variant mode) {
+        this.mode = mode;
         this.sampleSize = sampleSize;
+    }
+
+    public RiemannApproximation(int sampleSize) {
+        this(sampleSize, variant.UPPER);
     }
 
     /**
@@ -53,12 +65,74 @@ public class RiemannApproximation implements Integral {
 
         double gridpoint = min;
         double step = (max - min) / sampleSize;
-        for (int i = 1; i <= sampleSize; i++) {
-            integral += f.evaluate(gridpoint);
-            gridpoint += step;
+
+        switch (mode){
+            case UPPER:
+                for (int i = 1; i <= sampleSize; i++) {
+                    gridpoint += step;
+                    integral += f.evaluate(gridpoint);
+                }
+                break;
+            case LOWER:
+                for (int i = 1; i <= sampleSize; i++) {
+                    integral += f.evaluate(gridpoint);
+                    gridpoint += step;
+                }
+                break;
+            case MIDPOINT:
+                for (int i = 1; i <= sampleSize; i++) {
+                    integral += f.evaluate(gridpoint + step/2);
+                    gridpoint += step;
+                }
+                break;
+            case TRAPEZOID:
+                for (int i = 1; i <= sampleSize; i++) {
+                    integral += (f.evaluate(gridpoint) + f.evaluate(gridpoint+step))/2;
+                    gridpoint += step;
+                }
+                break;
         }
         integral *= (max - min) / (double) sampleSize;
         return integral;
+    }
+
+    // this does the addition on a log scale, in case of underflow
+
+    public double logIntegrate(UnivariateFunction f, double min, double max){
+        double logIntegral = Double.NEGATIVE_INFINITY;
+
+        double gridpoint = min;
+        double step = (max - min) / sampleSize;
+
+        switch (mode){
+            case UPPER:
+                for (int i = 1; i <= sampleSize; i++) {
+                    gridpoint += step;
+                    logIntegral = LogTricks.logSum(logIntegral, Math.log(f.evaluate(gridpoint)));
+                }
+                break;
+            case LOWER:
+                for (int i = 1; i <= sampleSize; i++) {
+                    logIntegral = LogTricks.logSum(logIntegral, Math.log(f.evaluate(gridpoint)));
+                    gridpoint += step;
+                }
+                break;
+            case MIDPOINT:
+                for (int i = 1; i <= sampleSize; i++) {
+                    logIntegral = LogTricks.logSum(logIntegral, Math.log(f.evaluate(gridpoint+step/2)));
+                    gridpoint += step;
+                }
+                break;
+            case TRAPEZOID:
+                for (int i = 1; i <= sampleSize; i++) {
+                    logIntegral = LogTricks.logSum(logIntegral,
+                            Math.log((f.evaluate(gridpoint) + f.evaluate(gridpoint+step))/2));
+                    gridpoint += step;
+                }
+                break;
+        }
+        logIntegral += Math.log((max - min) / (double) sampleSize);
+        return logIntegral;
     }
 
     public static void main(String[] args) {
@@ -95,4 +169,6 @@ public class RiemannApproximation implements Integral {
     }
 
     private int sampleSize;
+
+    private variant mode;
 }

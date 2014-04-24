@@ -369,6 +369,7 @@ public class DataModelImporter {
         checkTaxonList(taxonList, guesser);
         dataModel.put("taxa", createTaxonList(taxonList));
         dataModel.put("taxon_count", Integer.toString(taxonList.getTaxonCount()));
+        dataModel.put("taxon_count_minus_one", Integer.toString(taxonList.getTaxonCount()-1));
 
         if (taxonLists != null) {
             List<Map> tss = new ArrayList<Map>();

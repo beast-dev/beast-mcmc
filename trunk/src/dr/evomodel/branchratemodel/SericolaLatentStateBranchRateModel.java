@@ -67,6 +67,15 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private double logLikelihood;
     private double storedLogLikelihood;
 
+    private double[] branchRateCache;
+    private double[] storedBranchRateCache;
+
+    private double[] branchLikelihoodCache;
+    private double[] storedbranchLikelihoodCache;
+
+    private boolean[] updateBranch;
+    private boolean[] storedUpdateBranch;
+
 //    private UniformizedSubstitutionModel uSM = null;
 
     public SericolaLatentStateBranchRateModel(TreeModel treeModel,
@@ -103,6 +112,11 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
         this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false, Intent.BRANCH);
         addModel(latentStateProportions);
+
+        branchRateCache = new double[tree.getNodeCount()];
+        storedBranchRateCache = new double[tree.getNodeCount()];
+        branchLikelihoodCache = new double[tree.getNodeCount()];
+        storedbranchLikelihoodCache = new double[tree.getNodeCount()];
     }
 
     /**
@@ -152,11 +166,13 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
+        if (updateBranch[node.getNumber()]) {
+            double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
+            double latentProportion = latentStateProportions.getNodeValue(tree, node);
 
-        double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
-        double latentProportion = latentStateProportions.getNodeValue(tree, node);
-
-        return calculateBranchRate(nonLatentRate, latentProportion);
+            branchRateCache[node.getNumber()] = calculateBranchRate(nonLatentRate, latentProportion);
+        }
+        return branchRateCache[node.getNumber()];
     }
 
     private double calculateBranchRate(double nonLatentRate, double latentProportion) {
@@ -167,6 +183,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
             likelihoodKnown = false; // node heights change elasped times on branches, TODO could cache
+
+            updateBranch[index] = true;
         } else if (model == nonLatentRateModel) {
             // rates will change but the latent proportions haven't so the density is unchanged
             fireModelChanged();

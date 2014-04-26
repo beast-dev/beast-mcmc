@@ -232,6 +232,8 @@ public class SericolaSeriesMarkovReward {
         );
 
         // TODO Make factorial/choose static look-up tables
+        // AR - Binomial has a look-up-table built in for k=2.
+
 
         for (int t = 0; t < X.length; ++t) { // For each time point
             double x = X[t];

@@ -53,6 +53,15 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     public static final String LATENT_STATE_BRANCH_RATE_MODEL = "latentStateBranchRateModel";
 
+    public static final boolean USE_CACHING = true;
+    // seed 666, caching off: 204.69 seconds for 20000 states
+    // state 20000	-5510.2520
+    // 85.7%  5202  +     6    dr.inference.markovjumps.SericolaSeriesMarkovReward.accumulatePdf
+
+    // seed 666, caching on: 119.43 seconds for 20000 states
+    // state 20000	-5510.2520
+    // 83.4%  3156  +     4    dr.inference.markovjumps.SericolaSeriesMarkovReward.accumulatePdf
+
     private final TreeModel tree;
     private final BranchRateModel nonLatentRateModel;
     private final Parameter latentTransitionRateParameter;
@@ -67,11 +76,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private double logLikelihood;
     private double storedLogLikelihood;
 
-    private double[] branchRateCache;
-    private double[] storedBranchRateCache;
-
-    private double[] branchLikelihoodCache;
-    private double[] storedbranchLikelihoodCache;
+    private double[] branchLikelihoods;
+    private double[] storedbranchLikelihoods;
 
     private boolean[] updateBranch;
     private boolean[] storedUpdateBranch;
@@ -113,10 +119,14 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false, Intent.BRANCH);
         addModel(latentStateProportions);
 
-        branchRateCache = new double[tree.getNodeCount()];
-        storedBranchRateCache = new double[tree.getNodeCount()];
-        branchLikelihoodCache = new double[tree.getNodeCount()];
-        storedbranchLikelihoodCache = new double[tree.getNodeCount()];
+        branchLikelihoods = new double[tree.getNodeCount()];
+        if (USE_CACHING) {
+            updateBranch = new boolean[tree.getNodeCount()];
+            storedUpdateBranch = new boolean[tree.getNodeCount()];
+            storedbranchLikelihoods = new double[tree.getNodeCount()];
+
+            setUpdateAllBranches();
+        }
     }
 
     /**
@@ -166,13 +176,10 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     @Override
     public double getBranchRate(Tree tree, NodeRef node) {
-        if (updateBranch[node.getNumber()]) {
-            double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
-            double latentProportion = latentStateProportions.getNodeValue(tree, node);
+        double nonLatentRate = nonLatentRateModel.getBranchRate(tree, node);
+        double latentProportion = latentStateProportions.getNodeValue(tree, node);
 
-            branchRateCache[node.getNumber()] = calculateBranchRate(nonLatentRate, latentProportion);
-        }
-        return branchRateCache[node.getNumber()];
+        return calculateBranchRate(nonLatentRate, latentProportion);
     }
 
     private double calculateBranchRate(double nonLatentRate, double latentProportion) {
@@ -182,15 +189,47 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == tree) {
-            likelihoodKnown = false; // node heights change elasped times on branches, TODO could cache
+            likelihoodKnown = false; // node heights change elapsed times on branches, TODO could cache
 
-            updateBranch[index] = true;
+            if (index == -1) {
+                setUpdateAllBranches();
+            } else {
+                setUpdateBranch(index);
+            }
+
         } else if (model == nonLatentRateModel) {
             // rates will change but the latent proportions haven't so the density is unchanged
-            fireModelChanged();
         } else if (model == latentStateProportions) {
-            fireModelChanged();
             likelihoodKnown = false; // argument of density has changed
+
+            if (index == -1) {
+                setUpdateAllBranches();
+            } else {
+                setUpdateBranch(index);
+            }
+        }
+        fireModelChanged();
+    }
+
+    private void setUpdateBranch(int nodeNumber) {
+        if (USE_CACHING) {
+            updateBranch[nodeNumber] = true;
+        }
+    }
+
+    private void setUpdateAllBranches() {
+        if (USE_CACHING) {
+            for (int i = 0; i < updateBranch.length; i++) {
+                updateBranch[i] = true;
+            }
+        }
+    }
+
+    private void clearUpdateAllBranches() {
+        if (USE_CACHING) {
+            for (int i = 0; i < updateBranch.length; i++) {
+                updateBranch[i] = false;
+            }
         }
     }
 
@@ -199,6 +238,10 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         storedSeries = series;
         storedLogLikelihood = logLikelihood;
         storedLikelihoodKnown = likelihoodKnown;
+        if (USE_CACHING) {
+            System.arraycopy(branchLikelihoods, 0, storedbranchLikelihoods, 0, branchLikelihoods.length);
+            System.arraycopy(updateBranch, 0, storedUpdateBranch, 0, updateBranch.length);
+        }
     }
 
     @Override
@@ -206,6 +249,16 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         series = storedSeries;
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = storedLikelihoodKnown;
+
+        if (USE_CACHING) {
+            double[] tmp = branchLikelihoods;
+            branchLikelihoods = storedbranchLikelihoods;
+            storedbranchLikelihoods = tmp;
+
+            boolean[] tmp2 = updateBranch;
+            updateBranch = storedUpdateBranch;
+            storedUpdateBranch = tmp2;
+        }
     }
 
     @Override
@@ -218,8 +271,14 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         if (variable == latentTransitionFrequencyParameter || variable == latentTransitionRateParameter) {
             // series computations have changed
             series = null;
+            setUpdateAllBranches();
             likelihoodKnown = false;
         } else if (variable == latentStateProportionParameter) {
+            if (index == -1) {
+                setUpdateAllBranches();
+            } else {
+                setUpdateBranch(index);
+            }
             likelihoodKnown = false;
         }
     }
@@ -242,14 +301,21 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private double calculateLogLikelihood() {
 
         double logLike = 0.0;
+
         for (int i = 0; i < tree.getInternalNodeCount(); ++i) {
             NodeRef node = tree.getNode(i);
             if (node != tree.getRoot()) {
-                double branchLength = tree.getBranchLength(node);
-                double latentProportion = latentStateProportions.getNodeValue(tree, node);
-                double reward = branchLength * latentProportion;
-                double density = getBranchRewardDensity(reward, branchLength);
-                logLike += Math.log(density);
+                if (!USE_CACHING || updateBranch[node.getNumber()]) {
+                    double branchLength = tree.getBranchLength(node);
+                    double latentProportion = latentStateProportions.getNodeValue(tree, node);
+                    double reward = branchLength * latentProportion;
+                    double density = getBranchRewardDensity(reward, branchLength);
+                    branchLikelihoods[node.getNumber()] = Math.log(density);
+                }
+                if (USE_CACHING) {
+                    updateBranch[node.getNumber()] = false;
+                }
+                logLike += branchLikelihoods[node.getNumber()];
                 // TODO More importantly, MH proposals on [0,1] may be missing a Jacobian for which we should adjust.
                 // TODO This is easy to test and we should do it when sampling appears to work.
             }
@@ -262,6 +328,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         if (series == null) {
             series = createSeries();
         }
+
         int state = 0 * 2 + 0; // just start = end = 0 entry
         // Reward is [0,1], and we want to track time in latent state (= 1).
         // Therefore all nodes are in state 0
@@ -276,6 +343,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     public void makeDirty() {
         likelihoodKnown = false;
         series = null;
+        setUpdateAllBranches();
     }
 
     @Override

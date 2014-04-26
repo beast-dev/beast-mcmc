@@ -66,7 +66,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private final BranchRateModel nonLatentRateModel;
     private final Parameter latentTransitionRateParameter;
     private final Parameter latentTransitionFrequencyParameter;
-    private final Parameter latentStateProportionParameter;
     private final TreeParameterModel latentStateProportions;
 
     private SericolaSeriesMarkovReward series;
@@ -81,8 +80,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     private boolean[] updateBranch;
     private boolean[] storedUpdateBranch;
-
-//    private UniformizedSubstitutionModel uSM = null;
 
     public SericolaLatentStateBranchRateModel(TreeModel treeModel,
                                               BranchRateModel nonLatentRateModel,
@@ -113,9 +110,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         this.latentTransitionFrequencyParameter = latentTransitionFrequencyParameter;
         addVariable(latentTransitionFrequencyParameter);
 
-        this.latentStateProportionParameter = latentStateProportionParameter;
-        addVariable(latentStateProportionParameter);   // TODO This may not be necessary
-
         this.latentStateProportions = new TreeParameterModel(tree, latentStateProportionParameter, false, Intent.BRANCH);
         addModel(latentStateProportions);
 
@@ -138,7 +132,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         nonLatentRateModel = null;
         latentTransitionRateParameter = null;
         latentTransitionFrequencyParameter = null;
-        latentStateProportionParameter = null;
         latentStateProportions = null;
 
     }
@@ -149,7 +142,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         nonLatentRateModel = null;
         latentTransitionRateParameter = rate;
         latentTransitionFrequencyParameter = prop;
-        latentStateProportionParameter = null;
         latentStateProportions = null;
     }
 
@@ -211,6 +203,16 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         fireModelChanged();
     }
 
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if (variable == latentTransitionFrequencyParameter || variable == latentTransitionRateParameter) {
+            // series computations have changed
+            series = null;
+            setUpdateAllBranches();
+            likelihoodKnown = false;
+        }
+    }
+
     private void setUpdateBranch(int nodeNumber) {
         if (USE_CACHING) {
             updateBranch[nodeNumber] = true;
@@ -264,23 +266,6 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     @Override
     protected void acceptState() {
 
-    }
-
-    @Override
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == latentTransitionFrequencyParameter || variable == latentTransitionRateParameter) {
-            // series computations have changed
-            series = null;
-            setUpdateAllBranches();
-            likelihoodKnown = false;
-        } else if (variable == latentStateProportionParameter) {
-            if (index == -1) {
-                setUpdateAllBranches();
-            } else {
-                setUpdateBranch(index);
-            }
-            likelihoodKnown = false;
-        }
     }
 
     @Override

@@ -120,11 +120,12 @@ public class InverseGammaDistribution implements Distribution {
      * @param scale scale parameter
      * @return pdf value
      */
-    static double pdf(double x, double shape, double scale, double factor) {
+    public static double pdf(double x, double shape, double scale, double factor) {
         if (x <= 0)
             return 0.0;
 
-        final double a = Math.exp(-scale/x) / Math.pow(x, shape+1);
+        final double a = Math.exp(shape*Math.log(scale) - (shape + 1)*Math.log(x) - (scale/x)
+                - GammaFunction.lnGamma(shape));
 
         return factor * a;
     }
@@ -137,11 +138,11 @@ public class InverseGammaDistribution implements Distribution {
      * @param scale scale parameter
      * @return log pdf value
      */
-    static double logPdf(double x, double shape, double scale, double factor) {
+    public static double logPdf(double x, double shape, double scale, double factor) {
         if (x <= 0)
             return Double.NEGATIVE_INFINITY;
 
-        return  factor - (scale/x + (shape+1)*Math.log(x));
+        return  factor + shape*Math.log(scale) - (shape + 1)*Math.log(x) - (scale/x) - GammaFunction.lnGamma(shape);
     }
 
     /**

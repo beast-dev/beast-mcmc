@@ -126,8 +126,9 @@ public interface Transform {
 //            return Math.log((1.0 - newValue) * (1.0 / oldValue - 1.0 / (1.0 - oldValue)));
 //        }
 
+        //TODO: double check this log Jacobian, but I think it is correct now
         public double getLogJacobian(double value) {
-            return Math.log(1.0 - value) - Math.log(value);
+            return -Math.log(1.0 - value) - Math.log(value);
         }
     }
 

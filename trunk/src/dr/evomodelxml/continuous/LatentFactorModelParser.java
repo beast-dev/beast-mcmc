@@ -54,7 +54,11 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 //        Parameter latent  = null;
-        CompoundParameter factors = (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class);
+        MatrixParameter factors = MatrixParameter.recast("name",
+                (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class));
+
+//        MatrixParameter.DefaultBounds FactorBounds= new MatrixParameter.DefaultBounds(Double.MAX_VALUE,Double.MIN_VALUE, factors.getColumnDimension());
+//        factors.addBounds(null);
 
         TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
 //        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
@@ -65,7 +69,10 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
-        CompoundParameter dataParameter = returnValue.traitParameter;
+        MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
+                returnValue.traitParameter);
+//        MatrixParameter.DefaultBounds DataBounds=new MatrixParameter.DefaultBounds(Double.MAX_VALUE, Double.MIN_VALUE, dataParameter.getColumnDimension());
+//        dataParameter.addBounds(null);
         List<Integer> missingIndices = returnValue.missingIndices;
         traitName = returnValue.traitName;
 //
@@ -94,7 +101,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         BlockUpperTriangularMatrixParameter loadings = (BlockUpperTriangularMatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
-        int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
+ //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
         Parameter temp=null;
         for(int i=0; i<loadings.getRowDimension(); i++)
         {
@@ -106,7 +113,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         }
 
 
-        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, numFactors);
+        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision);
     }
 
     private static final XMLSyntaxRule[] rules = {

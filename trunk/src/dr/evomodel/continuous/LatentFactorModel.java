@@ -46,8 +46,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private Matrix residual;
 
-    private final Parameter data;
-    private final CompoundParameter factors;
+    private final MatrixParameter data;
+    private final MatrixParameter factors;
     private final BlockUpperTriangularMatrixParameter loadings;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
@@ -59,9 +59,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
-    public LatentFactorModel(Parameter data, CompoundParameter factors, BlockUpperTriangularMatrixParameter loadings,
-                             DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
-                             int numFactors) {
+    public LatentFactorModel(MatrixParameter data, MatrixParameter factors, BlockUpperTriangularMatrixParameter loadings,
+                             DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision
+                             ) {
         super("");
 //        data = new Matrix(dataIn.getParameterAsMatrix());
 //        factors = new Matrix(factorsIn.getParameterAsMatrix());
@@ -76,27 +76,36 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         addVariable(factors);
         addVariable(loadings);
 
-        dimFactors = numFactors;
+        dimFactors = factors.getRowDimension();
         dimData = loadings.getColumnDimension();
-        nTaxa = factors.getParameter(0).getDimension();
+//        nTaxa = factors.getParameterCount();
+//        nTaxa = factors.getParameter(0).getDimension();
+        nTaxa = factors.getColumnDimension();
 
 //        System.out.print(nTaxa);
 //        System.out.print("\n");
 //        System.out.print(dimData);
 //        System.out.print("\n");
+//        System.out.println(dimFactors);
+//        System.out.println(data.getDimension());
+//        System.out.println(data.getRowDimension());
+//        System.out.println(data.getColumnDimension());
+
+//        System.out.println(new Matrix(data.getParameterAsMatrix()));
+//        System.out.println(new Matrix(factors.getParameterAsMatrix()));
+
 
         if(nTaxa*dimData!=data.getDimension())
         {
-            System.err.print("LOADINGS MATRIX AND FACTOR MATRIX MUST HAVE EXTERNAL DIMENSIONS WHOSE PRODUCT IS EQUAL TO THE NUMBER OF DATA POINTS\n");
-            System.exit(10);
+            throw new RuntimeException("LOADINGS MATRIX AND FACTOR MATRIX MUST HAVE EXTERNAL DIMENSIONS WHOSE PRODUCT IS EQUAL TO THE NUMBER OF DATA POINTS\n");
+//            System.exit(10);
         }
         if(dimData<dimFactors)
         {
-            System.err.print("MUST HAVE FEWER FACTORS THAN DATA POINTS\n");
-            System.exit(10);
+            throw new RuntimeException("MUST HAVE FEWER FACTORS THAN DATA POINTS\n");
         }
 
-//        computeResiduals();
+//       computeResiduals();
 //        System.out.print(new Matrix(residual.toComponents()));
 //        System.out.print(calculateLogLikelihood());
     }
@@ -126,24 +135,24 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private void computeResiduals() {
-        Parameter[] dataTemp=new Parameter[nTaxa];
-        for(int i=0; i<nTaxa; i++)
-        {
-            dataTemp[i] = new Parameter.Default(dimData);
-            for(int j=0; j<dimData; j++)
-            {
-                dataTemp[i].setParameterValue(j, data.getParameterValue(i*dimData+j));
-            }
-
-        }
-        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
+//        Parameter[] dataTemp=new Parameter[nTaxa];
+//        for(int i=0; i<nTaxa; i++)
+//        {
+//            dataTemp[i] = new Parameter.Default(dimData);
+//            for(int j=0; j<dimData; j++)
+//            {
+//                dataTemp[i].setParameterValue(j, data.getParameterValue(i*dimData+j));
+//            }
+//
+//        }
+//        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
 
 
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
-        Matrix tData = new Matrix(dataMatrix.getParameterAsMatrix());
-        Matrix tFactors = copy(factors, nTaxa, dimFactors);
+        Matrix tData = new Matrix(data.getParameterAsMatrix());
+        Matrix tFactors = new Matrix(factors.getParameterAsMatrix());
         try {
-            residual = tData.subtract(tLoadings.transpose().product(tFactors.transpose()));
+            residual = tData.subtract(tLoadings.transpose().product(tFactors));
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -237,6 +246,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private double calculateLogLikelihood() {
+        for(int i=0; i<StrictMath.min(loadings.getRowDimension(),loadings.getColumnDimension()); i++)
+        {
+            if(loadings.getParameter(i).getParameterValue(i)<0)
+            {
+                return Double.NEGATIVE_INFINITY;
+            }
+        }
         Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
         Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
         computeResiduals();

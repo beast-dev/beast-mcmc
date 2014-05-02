@@ -48,7 +48,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private final MatrixParameter data;
     private final MatrixParameter factors;
-    private final BlockUpperTriangularMatrixParameter loadings;
+    private final MatrixParameter loadings;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
 
@@ -57,24 +57,41 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final int nTaxa;
 
     private boolean likelihoodKnown = false;
+    private boolean storedLikelihoodKnown;
     private double logLikelihood;
+    private double storedLogLikelihood;
 
-    public LatentFactorModel(MatrixParameter data, MatrixParameter factors, BlockUpperTriangularMatrixParameter loadings,
+    public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision
-                             ) {
+    ) {
         super("");
 //        data = new Matrix(dataIn.getParameterAsMatrix());
 //        factors = new Matrix(factorsIn.getParameterAsMatrix());
 //        loadings = new Matrix(loadingsIn.getParameterAsMatrix());
         this.data = data;
         this.factors = factors;
+        // Put default bounds on factors
+        for (int i = 0; i < factors.getParameterCount(); ++i) {
+            Parameter p = factors.getParameter(i);
+            System.err.println(p.getId() + " " + p.getDimension());
+            p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, p.getDimension()));
+        }
+
+
         this.loadings = loadings;
+
+        // Put default bounds on loadings
+//        loadings.addBounds();
+
+
         this.rowPrecision = rowPrecision;
         this.colPrecision = colPrecision;
 
         addVariable(data);
         addVariable(factors);
         addVariable(loadings);
+        addVariable(rowPrecision);
+        addVariable(colPrecision);
 
         dimFactors = factors.getRowDimension();
         dimData = loadings.getColumnDimension();
@@ -95,13 +112,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        System.out.println(new Matrix(factors.getParameterAsMatrix()));
 
 
-        if(nTaxa*dimData!=data.getDimension())
-        {
+        if (nTaxa * dimData != data.getDimension()) {
             throw new RuntimeException("LOADINGS MATRIX AND FACTOR MATRIX MUST HAVE EXTERNAL DIMENSIONS WHOSE PRODUCT IS EQUAL TO THE NUMBER OF DATA POINTS\n");
 //            System.exit(10);
         }
-        if(dimData<dimFactors)
-        {
+        if (dimData < dimFactors) {
             throw new RuntimeException("MUST HAVE FEWER FACTORS THAN DATA POINTS\n");
         }
 
@@ -134,7 +149,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         return new Matrix(parameter.getParameterValues(), dimMajor, dimMinor);
     }
 
-    private void computeResiduals() {
+    private Matrix computeResiduals() {
 //        Parameter[] dataTemp=new Parameter[nTaxa];
 //        for(int i=0; i<nTaxa; i++)
 //        {
@@ -147,7 +162,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
 
-
+        Matrix residual = null;
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
         Matrix tData = new Matrix(data.getParameterAsMatrix());
         Matrix tFactors = new Matrix(factors.getParameterAsMatrix());
@@ -156,13 +171,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
+        return residual;
     }
-
 
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        //To change body of implemented methods use File | Settings | File Templates.
+        // Do nothing
     }
 
     /**
@@ -170,7 +185,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void storeState() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        storedLogLikelihood = logLikelihood;
+        storedLikelihoodKnown = likelihoodKnown;
     }
 
     /**
@@ -180,7 +196,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void restoreState() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        logLikelihood = storedLogLikelihood; // TODO Possible error in store/restore -- when changed to 42, no error arises
+        likelihoodKnown = storedLikelihoodKnown;
     }
 
     /**
@@ -189,7 +206,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void acceptState() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        // Do nothing
     }
 
     /**
@@ -220,7 +237,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     public Model getModel() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return this;
     }
 
     /**
@@ -242,7 +259,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     public void makeDirty() {
-        //To change body of implemented methods use File | Settings | File Templates.
+        likelihoodKnown = false;
     }
 
     private double calculateLogLikelihood() {
@@ -255,7 +272,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         }
         Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
         Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
-        computeResiduals();
+        Matrix residual = computeResiduals();
+//        computeResiduals();
         Matrix expPart=null;
         double logDetRow=0;
         double logDetCol=0;

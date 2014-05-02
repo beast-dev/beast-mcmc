@@ -52,27 +52,35 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
         this.rowDim=rowDim;
     }
 
-    public double[][] getParameterAsMatrix(){
-        double[][] answer=new double[getRowDimension()][getColumnDimension()];
-        for(int i=0; i<getRowDimension(); i++){
-            for(int j=0; j<getColumnDimension(); j++){
-                if(i<=j){
-//                    System.err.print(parameters[i].getSize());
-//                    System.err.print("we get here\n");
-                    answer[i][j]=getParameter(j).getParameterValue(i);
-                }
-                else{
-//                    System.err.print(i);
-//                    System.err.print(" ");
-//                    System.err.print(j);
-//                    System.err.print("\n");
-                    answer[i][j]=0;
-//                    System.err.print("getting here?\n");
-                }
-            }
-        }
+//    public double[][] getParameterAsMatrix(){
+//        double[][] answer=new double[getRowDimension()][getColumnDimension()];
+//        for(int i=0; i<getRowDimension(); i++){
+//            for(int j=0; j<getColumnDimension(); j++){
+//                if(i<=j){
+////                    System.err.print(parameters[i].getSize());
+////                    System.err.print("we get here\n");
+//                    answer[i][j]=getParameter(j).getParameterValue(i);
+//                }
+//                else{
+////                    System.err.print(i);
+////                    System.err.print(" ");
+////                    System.err.print(j);
+////                    System.err.print("\n");
+//                    answer[i][j]=0;
+////                    System.err.print("getting here?\n");
+//                }
+//            }
+//        }
+//
+//        return answer;
+//    }
 
-        return answer;
+    public double getParameterValue(int row, int col) {
+        if (row > col) {
+            return 0.0;
+        } else {
+            return getParameter(col).getParameterValue(row);
+        }
     }
 
 }

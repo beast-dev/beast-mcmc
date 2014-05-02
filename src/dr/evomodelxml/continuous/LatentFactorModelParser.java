@@ -98,7 +98,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
 //        System.err.print(new Matrix(dataMatrix.getParameterAsMatrix()));
 //        System.err.print(dataMatrix.getRowDimension());
-        BlockUpperTriangularMatrixParameter loadings = (BlockUpperTriangularMatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
+        MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
  //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
@@ -127,7 +127,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
                     new ElementRule(CompoundParameter.class),
             }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
-                    new ElementRule(BlockUpperTriangularMatrixParameter.class)
+                    new ElementRule(MatrixParameter.class)
             }),
             new ElementRule(ROW_PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(DiagonalMatrix.class)

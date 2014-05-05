@@ -290,11 +290,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             System.err.print("Matrices are not conformable");
             System.exit(0);
         }
+
         else{
             for(int i=0; i<expPart.rows(); i++){
                 trace+=expPart.component(i,i);
             }
         }
-       return -.5*trace - .5*tColPrecision.rows()*logDetCol-.5*tRowPrecision.rows()*logDetRow-.5*tRowPrecision.rows()*tColPrecision.rows()*StrictMath.log(StrictMath.PI);
+//        System.out.println(expPart);
+       return -.5*trace + .5*tColPrecision.rows()*logDetCol + .5*tRowPrecision.rows()*logDetRow-.5*tRowPrecision.rows()*tColPrecision.rows()*StrictMath.log(StrictMath.PI);
     }
 }

@@ -1,10 +1,7 @@
 package dr.inferencexml.operators;
 
-import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.distribution.MultivariateNormalDistributionModel;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.CompoundParameter;
+import dr.inference.operators.MultivariateNormalGibbsOperator;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.xml.*;
 

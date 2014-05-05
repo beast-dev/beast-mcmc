@@ -1,4 +1,4 @@
-package dr.inferencexml.operators;
+package dr.inference.operators;
 
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.MultivariateNormalDistributionModel;
@@ -29,7 +29,7 @@ public class MultivariateNormalGibbsOperator extends SimpleMCMCOperator implemen
     public static final String MVN_GIBBS="multivariateNormalGibbsOperator";
 
 
-    MultivariateNormalGibbsOperator(MultivariateDistributionLikelihood likelihood, MultivariateDistributionLikelihood prior, Double weight) throws IllegalDimension {
+    public MultivariateNormalGibbsOperator(MultivariateDistributionLikelihood likelihood, MultivariateDistributionLikelihood prior, Double weight) throws IllegalDimension {
 
         
         MultivariateNormalDistribution tempPrior=(MultivariateNormalDistribution) prior.getDistribution();

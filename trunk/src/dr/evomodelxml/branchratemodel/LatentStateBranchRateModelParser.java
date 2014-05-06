@@ -26,6 +26,8 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
+import dr.evomodel.branchratemodel.CountableMixtureBranchRates;
 import dr.evomodel.branchratemodel.SericolaLatentStateBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
@@ -49,7 +51,9 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
         BranchRateModel nonLatentRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         Parameter latentTransitionRateParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_RATE);
-        Parameter latentTransitionFrequenceParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_FREQUENCY);
+        Parameter latentTransitionFrequencyParameter = (Parameter) xo.getElementFirstChild(LATENT_TRANSITION_FREQUENCY);
+
+        CountableBranchCategoryProvider branchCategoryProvider = (CountableBranchCategoryProvider)xo.getChild(CountableBranchCategoryProvider.class);
 
         Parameter latentStateProportionParameter = null;
         if (xo.hasChildNamed(LATENT_STATE_PROPORTIONS)) {
@@ -58,9 +62,10 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Creating a latent state branch rate model");
 
-        return new SericolaLatentStateBranchRateModel(tree, nonLatentRateModel,
-                latentTransitionRateParameter, latentTransitionFrequenceParameter, /* 0/1 CTMC have two parameters */
-                latentStateProportionParameter);
+        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
+                tree, nonLatentRateModel,
+                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
+                latentStateProportionParameter, branchCategoryProvider);
     }
 
     //************************************************************************
@@ -83,6 +88,7 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
 
             new ElementRule(BranchRateModel.class, "A branch rate model to provide the rates for the non-latent state"),
             new ElementRule(TreeModel.class, "The tree on which this will operate"),
+            new ElementRule(CountableBranchCategoryProvider.class, true),
             new ElementRule(LATENT_TRANSITION_RATE, Parameter.class, "A parameter which gives the instantaneous rate of switching to and from the latent state", false),
             new ElementRule(LATENT_TRANSITION_FREQUENCY, Parameter.class, "A parameter which gives the rate bias of switching to and from the latent state", false),
             new ElementRule(LATENT_STATE_PROPORTIONS, Parameter.class, "The proportion of each branch which is spend in a latent state", true)

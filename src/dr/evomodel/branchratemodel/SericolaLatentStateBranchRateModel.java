@@ -413,6 +413,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
             return this;
         } else if (latentStateProportions != null && key.equals(latentStateProportions.getTraitName())) {
             return latentStateProportions;
+        } else if (branchCategoryProvider != null && key.equals(branchCategoryProvider.getTraitName())) {
+            return branchCategoryProvider;
         } else {
             throw new IllegalArgumentException("Unrecognised Tree Trait key, " + key);
         }
@@ -420,7 +422,7 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
 
     @Override
     public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[]{this, latentStateProportions};
+        return new TreeTrait[]{this, latentStateProportions, branchCategoryProvider};
     }
 
     @Override

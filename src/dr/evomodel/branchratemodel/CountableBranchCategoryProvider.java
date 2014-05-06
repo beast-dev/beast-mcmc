@@ -28,6 +28,8 @@ package dr.evomodel.branchratemodel;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeDoubleTraitProvider;
+import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
@@ -44,7 +46,7 @@ import java.util.Set;
  * @author Philippe Lemey
  * @author Andrew Rambaut
  */
-public interface CountableBranchCategoryProvider {
+public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
     public int getBranchCategory(final Tree tree, final NodeRef node);
 
@@ -64,6 +66,36 @@ public interface CountableBranchCategoryProvider {
         @Override
         public int getCategoryCount() {
             return 1;
+        }
+
+        @Override
+        public String getTraitName() {
+            return "categories";
+        }
+
+        @Override
+        public Intent getIntent() {
+            return Intent.BRANCH;
+        }
+
+        @Override
+        public Class getTraitClass() {
+            return Integer.class;
+        }
+
+        @Override
+        public Double getTrait(Tree tree, NodeRef node) {
+            return 1.0;
+        }
+
+        @Override
+        public String getTraitString(Tree tree, NodeRef node) {
+            return "1";
+        }
+
+        @Override
+        public boolean getLoggable() {
+            return true;
         }
     }
 

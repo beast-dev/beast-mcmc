@@ -50,6 +50,8 @@ public interface CountableBranchCategoryProvider {
 
     public void setCategoryCount(final int count);
 
+    public int getCategoryCount();
+
     public class SingleBranchCategoryModel implements CountableBranchCategoryProvider {
         @Override
         public int getBranchCategory(final Tree tree, final NodeRef node) {
@@ -58,6 +60,10 @@ public interface CountableBranchCategoryProvider {
         @Override
         public void setCategoryCount(final int count) {
             // Do nothing
+        }
+        @Override
+        public int getCategoryCount() {
+            return 1;
         }
     }
 
@@ -71,6 +77,8 @@ public interface CountableBranchCategoryProvider {
 //                categoryParameter.setParameterValue(i, 0.0);
 //            }
             this.treeModel = tree;
+
+            categoryCount = 1;
         }
 
 //        public BranchCategoryModel(TreeModel tree, Parameter parameter, boolean resetCategories) {
@@ -90,6 +98,11 @@ public interface CountableBranchCategoryProvider {
         @Override
         public int getBranchCategory(final Tree tree, final NodeRef node) {
             return (int) Math.round(getNodeValue(tree, node));
+        }
+
+        @Override
+        public int getCategoryCount() {
+            return categoryCount;
         }
 
         protected int categoryCount;
@@ -251,6 +264,9 @@ public interface CountableBranchCategoryProvider {
                 }
                 trunkSetList.add(new CladeContainer(leafSet, rateCategory));
                 cladesChanged = true;
+            }
+            if (rateCategory >= categoryCount) {
+                categoryCount = rateCategory + 1;
             }
         }
 

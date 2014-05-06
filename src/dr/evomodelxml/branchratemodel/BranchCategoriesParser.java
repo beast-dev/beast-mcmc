@@ -1,7 +1,7 @@
 /*
- * CountableMixtureBranchRatesParser.java
+ * BranchCategoryProviderParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -42,53 +42,23 @@ import java.util.logging.Logger;
 
 /**
  */
-public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
+public class BranchCategoriesParser extends AbstractXMLObjectParser {
 
-    public static final String COUNTABLE_CLOCK_BRANCH_RATES = "countableMixtureBranchRates";
-    public static final String RATES = "rates";
-    public static final String ALLOCATION = "rateCategories";
+    public static final String BRANCH_CATEGORIES = "branchCategories";
     public static final String CATEGORY = "category";
+    public static final String ALLOCATION = "rateCategories";
+
     public static final String RANDOMIZE = "randomize";
-    public static final String RANDOM_EFFECTS = "randomEffects";
-    public static final String FIXED_EFFECTS = "fixedEffects";
-    public static final String IN_LOG_SPACE = "inLogSpace";
 
     public String getParserName() {
-        return COUNTABLE_CLOCK_BRANCH_RATES;
+        return BRANCH_CATEGORIES;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter ratesParameter = null;
-
-        List<AbstractBranchRateModel> fixedEffects = null;
-        if (xo.hasChildNamed(FIXED_EFFECTS)) {
-            XMLObject cxo = xo.getChild(FIXED_EFFECTS);
-            fixedEffects = new ArrayList<AbstractBranchRateModel>();
-            for (int i = 0; i < cxo.getChildCount(); ++i) {
-                fixedEffects.add((AbstractBranchRateModel)cxo.getChild(i));
-            }
-        } else {
-            ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
-        }
-
-
         Parameter allocationParameter = (Parameter) xo.getElementFirstChild(ALLOCATION);
+        CountableBranchCategoryProvider cladeModel;
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        List<AbstractBranchRateModel> randomEffects = null;
-        if (xo.hasChildNamed(RANDOM_EFFECTS)) {
-            XMLObject cxo = xo.getChild(RANDOM_EFFECTS);
-            randomEffects = new ArrayList<AbstractBranchRateModel>();
-            for (int i = 0; i < cxo.getChildCount(); ++i) {
-                randomEffects.add((AbstractBranchRateModel)cxo.getChild(i));
-            }
-        }
-
-        boolean inLogSpace = xo.getAttribute(IN_LOG_SPACE, false);
-
-        Logger.getLogger("dr.evomodel").info("Using a countable mixture molecular clock model.");
-
-        CountableBranchCategoryProvider.BranchCategoryModel cladeModel;
 
         if (!xo.getAttribute(RANDOMIZE, true)) {
             CountableBranchCategoryProvider.CladeBranchCategoryModel cm = new
@@ -128,11 +98,7 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             cladeModel = cm;
         }
 
-        if (fixedEffects != null) {
-            return new CountableModelMixtureBranchRates(cladeModel, treeModel, fixedEffects, randomEffects, inLogSpace);
-        } else {
-            return new CountableMixtureBranchRates(cladeModel, treeModel, ratesParameter, randomEffects, inLogSpace);
-        }
+        return cladeModel;
     }
 
     //************************************************************************
@@ -141,11 +107,11 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
 
     public String getParserDescription() {
         return
-                "This element provides a clock consisting of a mixture of fixed effects and random effects.";
+                "This element provides a set of branch categories.";
     }
 
     public Class getReturnType() {
-        return CountableMixtureBranchRates.class;
+        return CountableBranchCategoryProvider.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -154,23 +120,17 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(TreeModel.class),
-            new XORRule(
-                    new ElementRule(RATES, Parameter.class, "The molecular evolutionary rate parameter", false),
-                    new ElementRule(RANDOM_EFFECTS,
-                            new XMLSyntaxRule[] {
-                                    new ElementRule(AbstractBranchRateModel.class, 0, Integer.MAX_VALUE),
-                            },
-                            "Fixed effects", true)
-            ),
             new ElementRule(ALLOCATION, Parameter.class, "Allocation parameter", false),
-            new ElementRule(RANDOM_EFFECTS,
-                    new XMLSyntaxRule[] {
-                            new ElementRule(AbstractBranchRateModel.class, 0, Integer.MAX_VALUE),
-                    },
-                    "Possible random effects", true),
-            AttributeRule.newBooleanRule(IN_LOG_SPACE, true),
             AttributeRule.newBooleanRule(RANDOMIZE, true),
             new ElementRule(LocalClockModelParser.CLADE,
+                    new XMLSyntaxRule[]{
+//                            AttributeRule.newBooleanRule(RELATIVE, true),
+                            AttributeRule.newIntegerRule(CATEGORY, false),
+                            AttributeRule.newBooleanRule(LocalClockModelParser.INCLUDE_STEM, true, "determines whether or not the stem branch above this clade is included in the siteModel (default false)."),
+                            AttributeRule.newBooleanRule(LocalClockModelParser.EXCLUDE_CLADE, true, "determines whether to exclude actual branches of the clade from the siteModel (default false)."),
+                            new ElementRule(Taxa.class, "A set of taxa which defines a clade to apply a different site model to"),
+                    }, 0, Integer.MAX_VALUE),
+            new ElementRule(LocalClockModelParser.TRUNK,
                     new XMLSyntaxRule[]{
 //                            AttributeRule.newBooleanRule(RELATIVE, true),
                             AttributeRule.newIntegerRule(CATEGORY, false),

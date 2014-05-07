@@ -125,11 +125,12 @@ public class SericolaSeriesMarkovReward {
     // END: internal structure of C, TODO Change to expandable list
 
     private int[] getHfromX(double[] X, double time) {
-        int[] H = new int[X.length];
-        for (int i = 0; i < X.length; ++i) {
-            H[i] = getHfromX(X[0], time);
-        }
-        return H;
+//        int[] H = new int[X.length];
+//        for (int i = 0; i < X.length; ++i) {
+//            H[i] = getHfromX(X[0], time);
+//        }
+//        return H;
+        return new int[] { 1 };      // AR nasty hack - revert shortly
     }
 
     public double[] computePdf(double x, double time) {

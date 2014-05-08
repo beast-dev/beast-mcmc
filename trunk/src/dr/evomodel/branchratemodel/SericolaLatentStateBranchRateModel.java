@@ -30,11 +30,15 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.markovjumps.SericolaSeriesMarkovReward;
+import dr.inference.markovjumps.MarkovReward;
+import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * SericolaLatentStateBranchRateModel
@@ -70,8 +74,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
     private final Parameter latentStateProportionParameter;
     private final CountableBranchCategoryProvider branchCategoryProvider;
 
-    private SericolaSeriesMarkovReward series;
-    private SericolaSeriesMarkovReward storedSeries;
+    private MarkovReward series;
+    private MarkovReward storedSeries;
     private boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown;
     private double logLikelihood;
@@ -164,9 +168,10 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         return new double[]{0.0, 1.0};
     }
 
-    private SericolaSeriesMarkovReward createSeries() {
-        SericolaSeriesMarkovReward series = new SericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),
-                createReward(), 2);
+    private MarkovReward createSeries() {
+//        MarkovReward series = new SericolaSeriesMarkovReward(createLatentInfinitesimalMatrix(),
+//                createReward(), 2);
+        MarkovReward series = new TwoStateOccupancyMarkovReward(createLatentInfinitesimalMatrix());
         return series;
     }
 
@@ -383,7 +388,8 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         int state = 0 * 2 + 0; // just start = end = 0 entry
         // Reward is [0,1], and we want to track time in latent state (= 1).
         // Therefore all nodes are in state 0
-        double joint = series.computePdf(reward, branchLength)[state];
+//        double joint = series.computePdf(reward, branchLength)[state];
+        double joint = series.computePdf(reward, branchLength, 0, 0);
         double marg = series.computeConditionalProbability(branchLength, 0, 0);
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 
@@ -445,24 +451,77 @@ public class SericolaLatentStateBranchRateModel extends AbstractModelLikelihood 
         return Double.toString(getBranchRate(tree, node));
     }
 
+    static class Mode {
+        double pdf;
+        double reward;
+
+        Mode(double pdf, double reward) {
+            this.pdf = pdf;
+            this.reward = reward;
+        }
+    }
+
+    static Mode findMode(List<Double> values, List<Double> rewards) {
+        Mode find = new Mode(values.get(0), rewards.get(0));
+        for (int i = 1; i < values.size(); ++i) {
+            if (values.get(i) > find.pdf) {
+                find.pdf = values.get(i);
+                find.reward = rewards.get(i);
+            }
+        }
+        return find;
+    }
+
+    static double calculateExpectation(List<Double> pdfs, List<Double> rewards) {
+        double weight = 0.0;
+        double wsum = 0.0;
+        for (int i = 0; i < pdfs.size(); ++i) {
+            weight += pdfs.get(i);
+            wsum += rewards.get(i) * pdfs.get(i);
+        }
+        double mean = wsum / weight;
+//        System.err.println(wsum);
+//        System.err.println(weight);
+//        System.err.println(mean);
+//
+//        System.exit(-1);
+        return wsum;
+    }
+
     public static void main(String[] args) {
 
-        Parameter rate = new Parameter.Default(4.4);
-        Parameter prop = new Parameter.Default(0.25);
+        Parameter rate = new Parameter.Default(2.0);
+        Parameter prop = new Parameter.Default(0.5);
+
 
         SericolaLatentStateBranchRateModel model = new SericolaLatentStateBranchRateModel(rate, prop);
 
-        double branchLength = 2.0;
-        for (double reward = 0; reward < branchLength; reward += 0.01) {
-            System.out.println(reward + ",\t" + model.getBranchRewardDensity(reward, branchLength) + ",");
-        }
 
-        System.out.println();
-        System.out.println(model.getSeries());
+        for (double branchLength = 0.1; branchLength <= 10.0; branchLength += 0.1) {
+
+            List<Double> pdfs = new ArrayList<Double>();
+            List<Double> rewards = new ArrayList<Double>();
+
+            for (double reward = 0; reward <= branchLength; reward += 0.01 * branchLength) {
+                double value = model.getBranchRewardDensity(reward, branchLength);
+//                System.out.println(reward + "," + model.getBranchRewardDensity(reward, branchLength));
+                System.out.println();
+                rewards.add(reward);
+                pdfs.add(value);
+            }
+            Mode mode = findMode(pdfs, rewards);
+
+//        System.out.println();
+            System.out.println(branchLength // ", " + mode.reward //+ " " + mode.pdf
+                    + " " + (mode.reward / branchLength)
+                    + " " + (calculateExpectation(pdfs, rewards) / branchLength)
+            );
+            //System.out.println(model.getSeries());
+        }
 
     }
 
-    public SericolaSeriesMarkovReward getSeries() {
+    public MarkovReward getSeries() {
         if (series == null) {
             series = createSeries();
         }

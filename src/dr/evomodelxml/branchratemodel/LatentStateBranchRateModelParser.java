@@ -25,10 +25,7 @@
 
 package dr.evomodelxml.branchratemodel;
 
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
-import dr.evomodel.branchratemodel.CountableMixtureBranchRates;
-import dr.evomodel.branchratemodel.SericolaLatentStateBranchRateModel;
+import dr.evomodel.branchratemodel.*;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -62,6 +59,10 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Creating a latent state branch rate model");
 
+//        return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
+//                tree, nonLatentRateModel,
+//                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
+//                latentStateProportionParameter, branchCategoryProvider);
         return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                 tree, nonLatentRateModel,
                 latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */

@@ -59,14 +59,14 @@ public class LatentStateBranchRateModelParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evomodel").info("Creating a latent state branch rate model");
 
-//        return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
-//                tree, nonLatentRateModel,
-//                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
-//                latentStateProportionParameter, branchCategoryProvider);
-        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
+        return new LatentStateBranchRateModel(LatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
                 tree, nonLatentRateModel,
                 latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
                 latentStateProportionParameter, branchCategoryProvider);
+//        return new SericolaLatentStateBranchRateModel(SericolaLatentStateBranchRateModel.LATENT_STATE_BRANCH_RATE_MODEL,
+//                tree, nonLatentRateModel,
+//                latentTransitionRateParameter, latentTransitionFrequencyParameter, /* 0/1 CTMC have two parameters */
+//                latentStateProportionParameter, branchCategoryProvider);
     }
 
     //************************************************************************

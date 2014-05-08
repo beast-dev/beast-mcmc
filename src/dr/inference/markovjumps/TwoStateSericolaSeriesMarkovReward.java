@@ -1,5 +1,5 @@
 /*
- * SericolaSeriesMarkovReward.java
+ * TwoStateSericolaSeriesMarkovReward.java
  *
  * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -37,19 +37,20 @@ import dr.math.matrixAlgebra.Vector;
  * @author Marc Suchard
  * @author Forrest Crawford
  */
-public class SericolaSeriesMarkovReward implements MarkovReward {
+public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
 
     // Following Bladt, Meini, Neuts and Sericola (2002).
     // Assuming each state has a distinct reward, i.e. \phi + 1 = stateCount,
     // and states are sorted in increasing reward order
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
+    private static final boolean DEBUG2 = false;
 
-    public SericolaSeriesMarkovReward(double[] Q, double[] r, int dim) {
+    public TwoStateSericolaSeriesMarkovReward(double[] Q, double[] r, int dim) {
         this(Q, r, dim, 1E-10);
     }
 
-    public SericolaSeriesMarkovReward(double[] Q, double[] r, int dim, double epsilon) {
+    public TwoStateSericolaSeriesMarkovReward(double[] Q, double[] r, int dim, double epsilon) {
         this.Q = Q;
         this.r = r;
         this.maxTime = 0;
@@ -60,7 +61,7 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
         phi = dim - 1;
 
-        if (DEBUG) {
+        if (DEBUG2) {
             System.err.println("lambda = " + lambda);
         }
 
@@ -90,7 +91,7 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
 
         // Grow C if necessary
         if (newN > getNfromC()) {
-            if (DEBUG) {
+            if (DEBUG && newN > 200) {
                 System.err.println("Growing C to N = " + newN + " with " + maxTime);
             }
             if (newN > 500) {
@@ -125,35 +126,54 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
     // END: internal structure of C, TODO Change to expandable list
 
     private int[] getHfromX(double[] X, double time) {
-//        int[] H = new int[X.length];
-//        for (int i = 0; i < X.length; ++i) {
-//            H[i] = getHfromX(X[0], time);
-//        }
-//        return H;
-        return new int[] { 1 };      // AR nasty hack - revert shortly
+        int[] H = new int[X.length];
+        for (int i = 0; i < X.length; ++i) {
+            H[i] = getHfromX(X[0], time);
+        }
+        return H;
     }
 
     public double computePdf(double x, double time, int i, int j) {
-        return computePdf(x, time)[i * dim + j];
+        growC(time, 1);
+
+        int uv = i * dim + j;
+
+//        double[][] W = initializeW(1, dim); // initialize with zeros
+        double w = 0.0;
+
+        final int N = getNfromC() - 1;
+        for (int n = 0; n <= N; ++n) {
+            w += accumulatePdf(x, n, time, uv);
+        }
+
+//        if (DEBUG2) {
+//            for (int i = 0; i < W.length; ++i) {
+//                System.err.println("W'[" + i + "]:\n" + new Matrix(squareMatrix(W[i])));
+//            }
+//            System.err.println("");
+//        }
+
+        return w;
     }
 
     public double[] computePdf(double x, double time) {
         return computePdf(new double[]{x}, time)[0];
     }
 
+
     public double[][] computePdf(double[] X, double time) {
-        int[] H = getHfromX(X, time);
+//        int[] H = getHfromX(X, time);
 
         growC(time, 1);
 
         double[][] W = initializeW(X.length, dim); // initialize with zeros
 
-        final int N = getNfromC() - 1; // TODO N should be branch-length-specific to save computation
+        final int N = getNfromC() - 1;
         for (int n = 0; n <= N; ++n) {
-            accumulatePdf(W, X, H, n, time); // TODO This can be sped up when only a single entry is wanted
+            accumulatePdf(W, X, n, time); // TODO This can be sped up when only a single entry is wanted
         }
 
-        if (DEBUG) {
+        if (DEBUG2) {
             for (int i = 0; i < W.length; ++i) {
                 System.err.println("W'[" + i + "]:\n" + new Matrix(squareMatrix(W[i])));
             }
@@ -180,7 +200,7 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
             accumulateCdf(W, X, H, n, time);
         }
 
-        if (DEBUG) {
+        if (DEBUG2) {
             for (int i = 0; i < W.length; ++i) {
                 System.err.println("W[" + i + "]:\n" + new Matrix(squareMatrix(W[i])));
             }
@@ -230,19 +250,51 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
         }
     }
 
-    private void accumulatePdf(double[][] W, double[] X, int[] H, int n, double time) {
+    private double accumulatePdf(double x, int n, double time, int uv) {
+
+        double w = 0.0;
 
         final double premult = Math.exp(
                 -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
         );
 
         // TODO Make factorial/choose static look-up tables
-        // AR - Binomial has a look-up-table built in for k=2.
 
+//         for (int t = 0; t < X.length; ++t) { // For each time point
+        int h = 1;
+
+        final double factor = lambda / (r[h] - r[h - 1]);
+
+        double xh = (x - r[h - 1] * time) / ((r[h] - r[h - 1]) * time);
+
+//        final int dim2 = dim * dim;
+//        double[] inc = new double[dim2]; // W^{\epsilon}(x(i),t,n)
+        double inc = 0.0;
+        for (int k = 0; k <= n; k++) {
+            final double binomialCoef = Binomial.choose(n, k) * Math.pow(xh, k) * Math.pow(1.0 - xh, n - k);
+//                 for (int uv = 0; uv < dim2; ++uv) {
+            inc += binomialCoef * (C(h, n + 1, k + 1)[uv] - C(h, n + 1, k)[uv]);
+//                 }
+        }
+
+//             for (int uv = 0; uv < dim2; ++uv) {
+        w += factor * premult * inc;
+//             }
+//         }
+        return w;
+    }
+
+    private void accumulatePdf(double[][] W, double[] X, int n, double time) {
+
+        final double premult = Math.exp(
+                -lambda * time + n * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(n + 1.0)
+        );
+
+        // TODO Make factorial/choose static look-up tables
 
         for (int t = 0; t < X.length; ++t) { // For each time point
             double x = X[t];
-            int h = H[t];
+            int h = 1;
 
             final double factor = lambda / (r[h] - r[h - 1]);
 
@@ -415,7 +467,7 @@ public class SericolaSeriesMarkovReward implements MarkovReward {
             double logDensity = -lambda * time + i * (Math.log(lambda) + Math.log(time)) - GammaFunction.lnGamma(i + 1);
             sum2 += Math.exp(logDensity);
 //            sum2 = LogTricks.logSum(sum2, logDensity);
-            if (DEBUG) {
+            if (DEBUG2) {
                 System.err.println(sum2 + " " + tolerance2 + " " + Math.abs(sum2 - tolerance2) + " " + epsilon * 0.01);
 //            if (i > 500) System.exit(-1);
             }

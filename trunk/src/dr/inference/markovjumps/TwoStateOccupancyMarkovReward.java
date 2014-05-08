@@ -42,7 +42,7 @@ import dr.math.matrixAlgebra.Vector;
 
 // This class only works for 2-state models with equal rates, starting and ending in state 0
 
-public class TwoStateOccupancyMarkovReward implements MarkovReward {
+public class TwoStateOccupancyMarkovReward {
 
 
     private static final boolean DEBUG = true;

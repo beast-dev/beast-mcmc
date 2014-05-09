@@ -44,17 +44,9 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = false;
 
-    public AbstractTreeLikelihood(String name, PatternList patternList,
-                                  TreeModel treeModel) {
+    public AbstractTreeLikelihood(String name, TreeModel treeModel) {
 
         super(name);
-
-        this.patternList = patternList;
-        this.dataType = patternList.getDataType();
-        patternCount = patternList.getPatternCount();
-        stateCount = dataType.getStateCount();
-
-        patternWeights = patternList.getPatternWeights();
 
         this.treeModel = treeModel;
         addModel(treeModel);
@@ -115,32 +107,6 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             updateNode[i] = true;
         }
         likelihoodKnown = false;
-    }
-
-    /**
-     * Set update flag for a pattern
-     */
-    protected void updatePattern(int i) {
-        if (updatePattern != null) {
-            updatePattern[i] = true;
-        }
-        likelihoodKnown = false;
-    }
-
-    /**
-     * Set update flag for all patterns
-     */
-    protected void updateAllPatterns() {
-        if (updatePattern != null) {
-            for (int i = 0; i < patternCount; i++) {
-                updatePattern[i] = true;
-            }
-        }
-        likelihoodKnown = false;
-    }
-
-    public final double[] getPatternWeights() {
-        return patternWeights;
     }
 
     // **************************************************************
@@ -213,7 +179,6 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
             totalMakeDirtyCount++;
         likelihoodKnown = false;
         updateAllNodes();
-        updateAllPatterns();
     }
     
     public boolean isLikelihoodKnown() {
@@ -249,36 +214,9 @@ public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood imp
     protected TreeModel treeModel = null;
 
     /**
-     * the patternList
-     */
-    protected PatternList patternList = null;
-
-    protected DataType dataType = null;
-
-    /**
-     * the pattern weights
-     */
-    protected double[] patternWeights;
-
-    /**
-     * the number of patterns
-     */
-    protected int patternCount;
-
-    /**
-     * the number of states in the data
-     */
-    protected int stateCount;
-
-    /**
      * the number of nodes in the tree
      */
     protected int nodeCount;
-
-    /**
-     * Flags to specify which patterns are to be updated
-     */
-    protected boolean[] updatePattern = null;
 
     /**
      * Flags to specify which nodes are to be updated

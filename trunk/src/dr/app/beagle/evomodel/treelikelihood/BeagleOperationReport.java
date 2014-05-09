@@ -31,6 +31,7 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
@@ -50,7 +51,29 @@ import java.io.PrintWriter;
  * @version $Id$
  */
 
-public class BeagleOperationReport extends AbstractTreeLikelihood {
+public class BeagleOperationReport extends AbstractSinglePartitionTreeLikelihood {
+
+    /**
+     * the patternList
+     */
+    protected PatternList patternList = null;
+    protected DataType dataType = null;
+    /**
+     * the pattern weights
+     */
+    protected double[] patternWeights;
+    /**
+     * the number of patterns
+     */
+    protected int patternCount;
+    /**
+     * the number of states in the data
+     */
+    protected int stateCount;
+    /**
+     * Flags to specify which patterns are to be updated
+     */
+    protected boolean[] updatePattern = null;
 
     public BeagleOperationReport(TreeModel treeModel, PatternList patternList, BranchRateModel branchRateModel, GammaSiteRateModel siteRateModel, Alignment alignment, PrintWriter branch, PrintWriter operation) {
         super(BeagleOperationParser.OPERATION_REPORT, patternList, treeModel);
@@ -538,6 +561,28 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
     private final SubstitutionModel substitutionModel;
 
     private final Alignment alignment;
+
+    /**
+     * Set update flag for a pattern
+     */
+    protected void updatePattern(int i) {
+        if (updatePattern != null) {
+            updatePattern[i] = true;
+        }
+        likelihoodKnown = false;
+    }
+
+    /**
+     * Set update flag for all patterns
+     */
+    protected void updateAllPatterns() {
+        if (updatePattern != null) {
+            for (int i = 0; i < patternCount; i++) {
+                updatePattern[i] = true;
+            }
+        }
+        likelihoodKnown = false;
+    }
 
     protected class BufferIndexHelper {
         /**

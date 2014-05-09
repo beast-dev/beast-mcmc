@@ -34,6 +34,7 @@ import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -61,7 +62,7 @@ import java.util.logging.Logger;
 @SuppressWarnings("serial")
 
 @Deprecated
-public class OldBeagleTreeLikelihood extends AbstractTreeLikelihood {
+public class OldBeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -83,6 +84,27 @@ public class OldBeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
+    /**
+     * the patternList
+     */
+    protected PatternList patternList = null;
+    protected DataType dataType = null;
+    /**
+     * the pattern weights
+     */
+    protected double[] patternWeights;
+    /**
+     * the number of patterns
+     */
+    protected int patternCount;
+    /**
+     * the number of states in the data
+     */
+    protected int stateCount;
+    /**
+     * Flags to specify which patterns are to be updated
+     */
+    protected boolean[] updatePattern = null;
 
     public OldBeagleTreeLikelihood(PatternList patternList,
                                    TreeModel treeModel,
@@ -1242,6 +1264,28 @@ public class OldBeagleTreeLikelihood extends AbstractTreeLikelihood {
      */
 
     private boolean ascertainedSitePatterns = false;
+
+    /**
+     * Set update flag for a pattern
+     */
+    protected void updatePattern(int i) {
+        if (updatePattern != null) {
+            updatePattern[i] = true;
+        }
+        likelihoodKnown = false;
+    }
+
+    /**
+     * Set update flag for all patterns
+     */
+    protected void updateAllPatterns() {
+        if (updatePattern != null) {
+            for (int i = 0; i < patternCount; i++) {
+                updatePattern[i] = true;
+            }
+        }
+        likelihoodKnown = false;
+    }
 
 //    protected class BufferIndexHelper {
 //        /**

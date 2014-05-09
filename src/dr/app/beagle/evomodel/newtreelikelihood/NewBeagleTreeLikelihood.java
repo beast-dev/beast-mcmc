@@ -35,10 +35,7 @@ import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.AbstractTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.evomodel.treelikelihood.SubstitutionModelDelegate;
+import dr.app.beagle.evomodel.treelikelihood.*;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
@@ -71,7 +68,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
-public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
+public class NewBeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then

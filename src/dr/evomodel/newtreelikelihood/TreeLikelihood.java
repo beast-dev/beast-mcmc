@@ -25,11 +25,12 @@
 
 package dr.evomodel.newtreelikelihood;
 
+import dr.app.beagle.evomodel.treelikelihood.AbstractSinglePartitionTreeLikelihood;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.app.beagle.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -49,11 +50,32 @@ import java.util.logging.Logger;
  * @version $Id: TreeLikelihood.java,v 1.31 2006/08/30 16:02:42 rambaut Exp $
  */
 
-public class TreeLikelihood extends AbstractTreeLikelihood {
+public class TreeLikelihood extends AbstractSinglePartitionTreeLikelihood {
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String DEVICE_NUMBER = "deviceNumber";
+    /**
+     * the patternList
+     */
+    protected PatternList patternList = null;
+    protected DataType dataType = null;
+    /**
+     * the pattern weights
+     */
+    protected double[] patternWeights;
+    /**
+     * the number of patterns
+     */
+    protected int patternCount;
+    /**
+     * the number of states in the data
+     */
+    protected int stateCount;
+    /**
+     * Flags to specify which patterns are to be updated
+     */
+    protected boolean[] updatePattern = null;
 
     /**
      * Constructor.
@@ -453,6 +475,28 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
      * so will override that if loaded.
      */
     public static TreeLikelihoodParser PARSER = new TreeLikelihoodParser(TREE_LIKELIHOOD);
+
+    /**
+     * Set update flag for a pattern
+     */
+    protected void updatePattern(int i) {
+        if (updatePattern != null) {
+            updatePattern[i] = true;
+        }
+        likelihoodKnown = false;
+    }
+
+    /**
+     * Set update flag for all patterns
+     */
+    protected void updateAllPatterns() {
+        if (updatePattern != null) {
+            for (int i = 0; i < patternCount; i++) {
+                updatePattern[i] = true;
+            }
+        }
+        likelihoodKnown = false;
+    }
 
     static class TreeLikelihoodParser extends AbstractXMLObjectParser {
 

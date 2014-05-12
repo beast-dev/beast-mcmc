@@ -804,6 +804,11 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                             traitParameter, missingIndices, cacheBranches,
                             scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
                             rootDistribution, reciprocalRates);
+
+//                    like = new DebugableIntegratedMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+//                            traitParameter, missingIndices, cacheBranches,
+//                            scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+//                            rootDistribution, reciprocalRates);
                 } else {
                     XMLObject cxo = xo.getChild(CONJUGATE_ROOT_PRIOR);
                     if (cxo == null) {

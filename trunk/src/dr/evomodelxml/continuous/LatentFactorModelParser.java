@@ -25,6 +25,7 @@
 
 package dr.evomodelxml.continuous;
 
+import dr.evolution.tree.MultivariateTraitTree;
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
@@ -64,7 +65,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
         String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
 
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
 //        System.err.println("TN: " + traitName);
 
         TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
@@ -118,7 +119,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     private static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
-            new ElementRule(TreeModel.class),
+            new ElementRule(MultivariateTraitTree.class),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
             new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)

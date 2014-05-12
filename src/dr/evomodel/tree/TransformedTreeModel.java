@@ -63,6 +63,10 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
         log.info(Citable.Utils.getCitationString(this));
     }
 
+    public String toString() {
+        return Tree.Utils.newick(this);
+    }
+
     public double getNodeHeight(NodeRef node) {
         return treeTransform.transform(treeModel, node, treeModel.getNodeHeight(node));
     }
@@ -72,6 +76,8 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
         if (parent == null) {
             return 0.0;
         }
+//        System.err.println("p: " + this.getNodeHeight(parent));
+//        System.err.println("c: " + this.getNodeHeight(node));
         return this.getNodeHeight(parent) - this.getNodeHeight(node);
     }
 

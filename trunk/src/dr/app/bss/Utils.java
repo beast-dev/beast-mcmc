@@ -84,6 +84,17 @@ public class Utils {
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
+	public static double map(double value, double low1, double high1,
+			double low2, double high2) {
+		/**
+		 * maps a single value from its range into another interval
+		 * 
+		 * @param low1, high1 - range of value; low2, high2 - interval
+		 * @return the mapped value
+		 */
+		return (value - low1) / (high1 - low1) * (high2 - low2) + low2;
+	}// END: map
+	
 	public static String[] loadStrings(String filename) throws IOException {
 
 		int linesCount = countLines(filename);
@@ -793,6 +804,13 @@ public class Utils {
 			for (int col = 0; col < array[row].length; col++) {
 				System.out.print(array[row][col] + " ");
 			}
+			System.out.print("\n");
+		}
+	}// END: print2DArray
+	
+	public static void print2Arrays(int[] array1, double[] array2, int nrow) {
+		for (int row = 0; row < nrow; row++) {
+				System.out.print(array1[row] + " " + array2[row] + " ");
 			System.out.print("\n");
 		}
 	}// END: print2DArray

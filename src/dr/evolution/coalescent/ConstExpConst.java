@@ -85,10 +85,24 @@ public class ConstExpConst extends ConstExponential {
 	 * Returns value of demographic intensity function at time t
 	 * (= integral 1/N(x) dx from 0 to t).
 	 */
-	public double getIntensity(double t) {
+    public double getIntensity(double t) {
+        double time1 = getTime1();
+        double time2 = getTime2();
+        double oneOverN0 = 1.0 / getN0();
 
-		throw new RuntimeException("Not implemented!");
-  	}
+        if (t < time1) {
+            return (t * oneOverN0);
+        }
+        double oneOverNt = 1.0 / getDemographic(t);
+        if (t > time1 && t < time2) {
+            return (t * oneOverN0) + ( 0.5 * (t-time1) * (oneOverNt-oneOverN0) );
+        }
+        double oneOverN1 = 1.0 / getN1();
+        if (t >= time2) {
+            return (t * oneOverN0) + ( 0.5 * (time2-time1) * (oneOverN1-oneOverN0) ) + (oneOverN1 * (t-time2));
+        }
+        throw new RuntimeException("Not implemented!");
+    }
 
 	public double getInverseIntensity(double x) {
 

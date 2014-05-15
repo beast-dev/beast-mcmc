@@ -281,6 +281,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         expPart = residual.product(tRowPrecision.product(residual.transpose())).product(tColPrecision);
             logDetRow=tRowPrecision.logDeterminant();
             logDetCol=tColPrecision.logDeterminant();
+//            System.out.println(logDetCol);
+//            System.out.println(logDetRow);
         } catch (IllegalDimension illegalDimension) {
         illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
@@ -297,6 +299,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             }
         }
 //        System.out.println(expPart);
-       return -.5*trace + .5*tColPrecision.rows()*logDetCol + .5*tRowPrecision.rows()*logDetRow-.5*tRowPrecision.rows()*tColPrecision.rows()*StrictMath.log(StrictMath.PI);
+       return -.5*trace + .5*tRowPrecision.rows()*logDetCol
+                        + .5*tColPrecision.rows()*logDetRow
+
+               -.5*tRowPrecision.rows()*tColPrecision.rows()*Math.log(2.0 * StrictMath.PI);
     }
 }

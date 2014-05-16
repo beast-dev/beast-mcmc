@@ -49,6 +49,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final MatrixParameter data;
     private final MatrixParameter factors;
     private final MatrixParameter loadings;
+    private Matrix scaledData;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
 
@@ -144,6 +145,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        Matrix ans=residual;
 //        return ans;
 //    }
+
+    private Matrix getScaledData(){
+        Matrix answer=new Matrix(data.getRowDimension(), data.getColumnDimension());
+        return answer;
+    }
 
     private Matrix copy(CompoundParameter parameter, int dimMajor, int dimMinor) {
         return new Matrix(parameter.getParameterValues(), dimMajor, dimMinor);

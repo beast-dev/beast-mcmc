@@ -431,7 +431,7 @@ public class Matrix {
         int m = this.columns();
         double[][] newComponents = new double[n][m];
         for (int i = 0; i < n; i++) {
-            for (int j = 0; j < n; j++)
+            for (int j = 0; j < m; j++)
                 newComponents[i][j] = components[i][j] - a.components[i][j];
         }
         return newComponents;

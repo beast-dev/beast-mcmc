@@ -49,7 +49,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final MatrixParameter data;
     private final MatrixParameter factors;
     private final MatrixParameter loadings;
-    private Matrix scaledData;
+    private Matrix tData;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
 
@@ -58,6 +58,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final int nTaxa;
 
     private boolean likelihoodKnown = false;
+    private boolean isDataScaled=false;
     private boolean storedLikelihoodKnown;
     private double logLikelihood;
     private double storedLogLikelihood;
@@ -147,8 +148,46 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //    }
 
     private Matrix getScaledData(){
-        Matrix answer=new Matrix(data.getRowDimension(), data.getColumnDimension());
-        return answer;
+ //       Matrix answer=new Matrix(data.getRowDimension(), data.getColumnDimension());
+        double[][] aData=data.getParameterAsMatrix();
+        double[] meanList=new double[data.getRowDimension()];
+        double[] varList=new double[data.getRowDimension()];
+        for(int i=0; i<data.getColumnDimension(); i++){
+            for (int j=0; j<data.getRowDimension(); j++){
+                meanList[j]+=data.getParameterValue(j,i);
+            }
+        }
+        for(int i=0; i<data.getRowDimension(); i++){
+            meanList[i]=meanList[i]/data.getColumnDimension();
+        }
+
+        double[][] answerTemp=new double[data.getRowDimension()][data.getColumnDimension()];
+        for(int i=0; i<data.getColumnDimension(); i++){
+            for(int j=0; j<data.getRowDimension(); j++){
+                answerTemp[j][i]=aData[j][i]-meanList[j];
+            }
+        }
+//        System.out.println(new Matrix(answerTemp));
+
+        for(int i=0; i<data.getColumnDimension(); i++){
+            for(int j=0; j<data.getRowDimension(); j++){
+                varList[j]+=answerTemp[j][i]*answerTemp[j][i];
+            }
+        }
+
+        for(int i=0; i<data.getRowDimension(); i++){
+            varList[i]=varList[i]/(data.getColumnDimension()-1);
+            varList[i]=StrictMath.sqrt(varList[i]);
+        }
+
+        for(int i=0; i<data.getColumnDimension(); i++){
+            for(int j=0; j<data.getRowDimension(); j++){
+                answerTemp[j][i]=answerTemp[j][i]/varList[j];
+            }
+        }
+//        System.out.println(new Matrix(answerTemp));
+
+        return new Matrix(answerTemp);
     }
 
     private Matrix copy(CompoundParameter parameter, int dimMajor, int dimMinor) {
@@ -170,7 +209,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         Matrix residual = null;
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
-        Matrix tData = new Matrix(data.getParameterAsMatrix());
+        if(!isDataScaled){
+        tData = getScaledData();
+            isDataScaled=true;
+        }
         Matrix tFactors = new Matrix(factors.getParameterAsMatrix());
         try {
             residual = tData.subtract(tLoadings.transpose().product(tFactors));
@@ -226,6 +268,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
+        isDataScaled=false;
     }
 
     /**

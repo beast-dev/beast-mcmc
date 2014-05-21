@@ -30,6 +30,7 @@ import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
+import org.boehn.kmlframework.kml.Data;
 
 import java.util.List;
 
@@ -206,7 +207,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
-
         Matrix residual = null;
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
         if(!isDataScaled){
@@ -267,8 +267,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if(variable==data){
+            isDataScaled=false;
+        }
         likelihoodKnown = false;
-        isDataScaled=false;
     }
 
     /**

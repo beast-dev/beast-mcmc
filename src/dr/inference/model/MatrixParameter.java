@@ -156,6 +156,32 @@ public class MatrixParameter extends CompoundParameter {
         return new MatrixParameter(null, parameter);
     }
 
+    public void rowMultiply(double a, int row){
+        rowMultiplyQuietly(a, row);
+        fireParameterChangedEvent();
+    }
+
+    public void columnMultiply(double a, int col){
+        columnMultiplyQuietly(a,col);
+        fireParameterChangedEvent();
+    }
+
+    public void rowMultiplyQuietly(double a, int row){
+        for (int i = 0; i <getColumnDimension() ; i++) {
+            if(getParameter(i).getDimension()<row){
+                getParameter(i).setParameterValueQuietly(row, a*getParameterValue(row, i));
+            }
+        }
+    }
+
+    public void columnMultiplyQuietly(double a, int col){
+        Parameter i=getParameter(col);
+        for (int j = 0; j < i.getDimension() ; j++) {
+            i.setParameterValueQuietly(j, a*i.getParameterValue(j));
+        }
+    }
+
+
     private boolean dimensionsEstablished = false;
     private int columnDimension = 0;
     private int rowDimension = 0;

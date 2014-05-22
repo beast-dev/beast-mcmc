@@ -273,7 +273,7 @@ public class Matrix {
     public Matrix product(Matrix a) throws IllegalDimension {
         if (a.rows() != columns())
             throw new IllegalDimension(
-                    "Operation error: cannot multiply a"
+                    "Operation error: cannot multiply a "
                             + rows() + " by " + columns()
                             + " matrix with a " + a.rows()
                             + " by " + a.columns()

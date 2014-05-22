@@ -330,8 +330,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         double logDetCol=0;
         try{
         expPart = residual.product(tRowPrecision.product(residual.transpose())).product(tColPrecision);
-            logDetRow=tRowPrecision.logDeterminant();
-            logDetCol=tColPrecision.logDeterminant();
+            logDetRow=StrictMath.log(rowPrecision.getDeterminant());
+            logDetCol=StrictMath.log(colPrecision.getDeterminant());
 //            System.out.println(logDetCol);
 //            System.out.println(logDetRow);
         } catch (IllegalDimension illegalDimension) {

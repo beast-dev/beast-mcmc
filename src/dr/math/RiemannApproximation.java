@@ -134,6 +134,11 @@ public class RiemannApproximation implements Integral {
         return logIntegral;
     }
 
+    public variant getMode() {
+        return mode;
+    }
+
+
     public static void main(String[] args) {
 
         UnivariateFunction normalPDF = new NormalDistribution(0.0, 1.0).getProbabilityDensityFunction();
@@ -169,5 +174,5 @@ public class RiemannApproximation implements Integral {
 
     private int sampleSize;
 
-    private variant mode;
+    private final variant mode;
 }

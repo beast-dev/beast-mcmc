@@ -5,6 +5,7 @@ import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.inference.model.Parameter;
 
 /**
@@ -50,7 +51,13 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
         return answer;
     }
 
-
+    private void copy(double[] put, int i){
+        Parameter working=LFM.getFactors().getParameter(i);
+        for (int j = 0; j < working.getSize(); j++) {
+           working.setParameterValueQuietly(j, put[j]);
+        }
+        working.fireParameterChangedEvent();
+    }
 
     public int getStepCount() {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
@@ -69,9 +76,16 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     @Override
     public double doOperation() throws OperatorFailedException {
         Matrix mean=getMean();
-        System.out.println(mean.columns());
-        System.out.println(mean.rows());
-        MatrixParameter meanList=MatrixParameter.parseFromSymmetricDoubleArray(getMean().toComponents());
+        double[][] meanFull=mean.transpose().toComponents();
+        double[][] precFull=getPrecision().toComponents();
+        double[] nextList=null;
+        double[] nextValue=null;
+        for (int i = 0; i <mean.columns() ; i++) {
+            nextList=meanFull[i];
+            nextValue=MultivariateNormalDistribution.nextMultivariateNormalPrecision(nextList, precFull);
+            copy(nextValue, i);
+        }
+        LFM.getFactors().fireParameterChangedEvent();
 
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }

@@ -338,6 +338,14 @@ public class Matrix {
         return new Matrix(productWithTransposedComponents(a));
     }
 
+    public Matrix buildIdentity(int dim){
+        double[][] idTemp=new double[dim][dim];
+        for (int i = 0; i < dim; i++) {
+            idTemp[i][i]=1;
+        }
+        return new Matrix(idTemp);
+    }
+
     /**
      * @param a MatrixAlgebra.Matrix
      * @return double[][]    the components of the product of the receiver

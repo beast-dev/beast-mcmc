@@ -26,7 +26,7 @@ import java.util.*;
 
 public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood implements Loggable {
 
-    private boolean DEBUG = false;
+    private static final boolean DEBUG = false;
 
     private AbstractOutbreak outbreak;
     private CaseToCaseTreeLikelihood treeLikelihood;
@@ -493,10 +493,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     public class TransmissionNumericalIntegrator{
 
         private double centre;
-        private RiemannApproximation riemannIntegrator;
+        private MyRiemann riemannIntegrator;
 
         public TransmissionNumericalIntegrator(int sampleSize){
-            riemannIntegrator = new RiemannApproximation(sampleSize, RiemannApproximation.variant.MIDPOINT);
+            riemannIntegrator = new MyRiemann(sampleSize, RiemannApproximation.variant.MIDPOINT);
         }
 
         public void setCentre(double value){
@@ -504,19 +504,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         public double logIntegrate(TotalProbability f, double min, double max){
-
-            //todo delete
-
-            if(DEBUG) {
-
-                ArrayList<Double> likelihoodCurve = new ArrayList<Double>();
-
-                for (double i = 0.001; i < 0.5; i = i + 0.001) {
-                    likelihoodCurve.add(Math.log(f.evaluate(i)));
-                }
-
-                System.out.println();
-            }
 
             if(centre<min || centre>max){
                 throw new IllegalArgumentException();
@@ -532,6 +519,53 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         public double integrate(UnivariateFunction f, double min, double max) {
             return Math.exp(logIntegrate((TotalProbability)f, min, max));
+        }
+    }
+
+    private class MyRiemann extends RiemannApproximation{
+
+        public MyRiemann(int sampleSize, variant mode) {
+            super(sampleSize, mode);
+        }
+
+        public double logIntegrate(UnivariateFunction f, double min, double max) {
+            double logIntegral = Double.NEGATIVE_INFINITY;
+
+            double gridpoint = min;
+            double step = (max - min) / getSampleSize();
+
+            switch (getMode()) {
+                case UPPER:
+                    for (int i = 1; i <= getSampleSize(); i++) {
+                        gridpoint += step;
+                        logIntegral = LogTricks.logSum(logIntegral, ((TotalProbability) f).logEvaluate(gridpoint));
+                    }
+                    break;
+                case LOWER:
+                    for (int i = 1; i <= getSampleSize(); i++) {
+                        logIntegral = LogTricks.logSum(logIntegral, ((TotalProbability) f).logEvaluate(gridpoint));
+                        gridpoint += step;
+                    }
+                    break;
+                case MIDPOINT:
+                    for (int i = 1; i <= getSampleSize(); i++) {
+                        logIntegral = LogTricks.logSum(logIntegral,
+                                ((TotalProbability) f).logEvaluate(gridpoint+step/2));
+                        gridpoint += step;
+                    }
+                    break;
+                case TRAPEZOID:
+                    for (int i = 1; i <= getSampleSize(); i++) {
+                        double logPointValue = LogTricks.logSum(((TotalProbability) f).logEvaluate(gridpoint),
+                                ((TotalProbability) f).logEvaluate(gridpoint + step));
+                        logPointValue -= Math.log(2);
+                        logIntegral = LogTricks.logSum(logIntegral, logPointValue);
+                        gridpoint += step;
+                    }
+                    break;
+            }
+            logIntegral += Math.log((max - min) / (double) getSampleSize());
+            return logIntegral;
         }
     }
 

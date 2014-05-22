@@ -147,8 +147,16 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        Matrix ans=residual;
 //        return ans;
 //    }
+    public MatrixParameter getFactors(){return factors;}
 
-    private Matrix getScaledData(){
+    public MatrixParameter getLoadings(){return loadings;}
+
+    public MatrixParameter getData(){return data;}
+
+    public Matrix getScaledData(){return tData;}
+
+
+    private Matrix computeScaledData(){
  //       Matrix answer=new Matrix(data.getRowDimension(), data.getColumnDimension());
         double[][] aData=data.getParameterAsMatrix();
         double[] meanList=new double[data.getRowDimension()];
@@ -210,7 +218,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         Matrix residual = null;
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
         if(!isDataScaled){
-        tData = getScaledData();
+        tData = computeScaledData();
             isDataScaled=true;
         }
         Matrix tFactors = new Matrix(factors.getParameterAsMatrix());

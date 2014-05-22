@@ -77,6 +77,28 @@ public class DiagonalMatrix extends MatrixParameter {
         return getParameterValue(i / diagonalParameter.getDimension(), i % diagonalParameter.getDimension());
     }
 
+    public void preMultiply(MatrixParameter right){
+        for (int i = 0; i < diagonalParameter.getDimension(); i++) {
+            right.rowMultiplyQuietly(diagonalParameter.getParameterValue(i), i);
+        }
+        right.fireParameterChangedEvent();
+    }
+
+    public void postMultiply(MatrixParameter left){
+        for (int i = 0; i <diagonalParameter.getDimension() ; i++) {
+            left.columnMultiplyQuietly(diagonalParameter.getParameterValue(i), i);
+        }
+        left.fireParameterChangedEvent();
+    }
+
+    public double getDeterminant(){
+        double product=1;
+        for (int i = 0; i <diagonalParameter.getDimension(); i++) {
+            product*=diagonalParameter.getParameterValue(i);
+        }
+        return product;
+    }
+
     public int getColumnDimension() {
         return diagonalParameter.getDimension();
     }

@@ -149,6 +149,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //    }
     public MatrixParameter getFactors(){return factors;}
 
+    public MatrixParameter getColumnPrecision(){return colPrecision;}
+
     public MatrixParameter getLoadings(){return loadings;}
 
     public MatrixParameter getData(){return data;}

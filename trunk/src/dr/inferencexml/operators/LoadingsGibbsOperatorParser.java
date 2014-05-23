@@ -2,6 +2,7 @@ package dr.inferencexml.operators;
 
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.operators.LoadingsGibbsOperator;
 import dr.xml.*;
 import dr.inference.distribution.DistributionLikelihood;
 
@@ -12,7 +13,7 @@ import dr.inference.distribution.DistributionLikelihood;
  * Time: 1:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LoadingsGibbsOperator extends AbstractXMLObjectParser {
+public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     public static final String LOADINGS_GIBBS_OPERATOR="loadingsGibbsOperator";
     public static final String WEIGHT="weight";
 
@@ -22,10 +23,10 @@ public class LoadingsGibbsOperator extends AbstractXMLObjectParser {
         String weightTemp= (String) xo.getAttribute(WEIGHT);
         Double weight=Double.parseDouble(weightTemp);
         LatentFactorModel LFM =(LatentFactorModel) xo.getChild(LatentFactorModel.class);
-        MultivariateDistributionLikelihood prior= (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
+        DistributionLikelihood prior= (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
 
 
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return new LoadingsGibbsOperator(LFM, prior, weight);  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
@@ -47,7 +48,7 @@ public class LoadingsGibbsOperator extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return LoadingsGibbsOperator.class;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

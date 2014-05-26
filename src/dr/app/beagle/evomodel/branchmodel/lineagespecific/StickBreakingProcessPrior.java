@@ -18,6 +18,7 @@ public class StickBreakingProcessPrior implements Distribution {
 	private int[] support;
 	private UnivariateFunction pdfFunction;
 
+	
 	public StickBreakingProcessPrior(double intensity, int K) {
 
 		this.intensity = intensity;
@@ -108,6 +109,7 @@ public class StickBreakingProcessPrior implements Distribution {
 		return sum;
 	}// END: cdf
 
+	//TODO: check this
 	@Override
 	public double quantile(double y) {
 
@@ -176,7 +178,7 @@ public class StickBreakingProcessPrior implements Distribution {
 
 		try {
 
-			int K = 10; // close to infinity but not too big to save compute
+			int K = 8; // close to infinity but not too big to save compute
 						// time
 			double intensity = 2;
 
@@ -188,12 +190,12 @@ public class StickBreakingProcessPrior implements Distribution {
 
 			Utils.print2Arrays(sbp.getSupport(), probs, probs.length);
 
-			// System.out.println();
-			// System.out.println(Utils.sumArray(probs));
-
 			System.out.println();
+			System.out.println(Utils.sumArray(probs));
 
-			System.out.println(sbp.quantile(0.5));
+//			System.out.println();
+
+//			System.out.println(sbp.quantile(0.5));
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -202,3 +204,4 @@ public class StickBreakingProcessPrior implements Distribution {
 	}// END: main
 
 }// END: class
+

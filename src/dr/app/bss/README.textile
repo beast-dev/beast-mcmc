@@ -33,6 +33,7 @@ h1. CITING
    
 h1. TODO
 
+* fix simulation-inference XML problem when using codons
 * output type not updated after loading bussdata
 * tree/taxa not set in Partitions table after loading bussdata
 * simulating indels  

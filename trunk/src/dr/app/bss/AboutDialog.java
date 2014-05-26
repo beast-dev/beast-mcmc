@@ -26,20 +26,19 @@ import javax.swing.JLabel;
 @SuppressWarnings("serial")
 public class AboutDialog extends JDialog {
 
-// TODO: add citation
-/*	To cite BUSS in publications, please use:
-		 
-          AAA
-		 
-		A BibTeX entry for LaTeX users:
-		 
-		  article{,
-		    author = {},
-		    title = {},
-		  }
-*/	
+//	+ "A BibTeX entry for LaTeX users: \n\n"
+//	+ "@Article{, \n"
+//	+ "\t AUTHOR = {Bielejec, Filip and Lemey, Philippe and Carvalho, Luiz and Baele, Guy and Rambaut, Andrew and Suchard, Marc A.}, \n"
+//	+ "\t TITLE = {piBUSS: a parallel BEAST/BEAGLE utility for sequence simulation under complex evolutionary scenarios}, \n"
+//	+ "\t JOURNAL = {BMC Bioinformatics}, \n"
+//	+ "\t VOLUME = {15}, \n"
+//	+ "\t YEAR = {2014}, \n" 
+//	+ "\t NUMBER = {1}, \n" 
+//	+ "\t PAGES = {133} \n" +
+//	"}";
+	
 	private static final int WIDTH = 700;
-	private static final int HEIGHT = 600;
+	private static final int HEIGHT = 700;
 	private static final int FONT_SIZE = 15;
 
 	private static final String FILIP_BIELEJEC = "Filip Bielejec";
@@ -49,6 +48,11 @@ public class AboutDialog extends JDialog {
 	private static final String LUIZ_MAX_CARVAHLO = "Luiz Max Carvahlo";
 	private static final String GUY_BAELE = "Guy Baele";
 
+	private static final String CITATION1 = "To cite " + BeagleSequenceSimulatorApp.SHORT_NAME + " in publications, please use:";
+	private static final String CITATION2 = "Bielejec, F., P. Lemey, L. Carvalho, G. Baele, A. Rambaut, and M. A. Suchard. 2014.";
+	private static final String CITATION3 = "pibuss: a parallel beast/beagle utility for sequence simulation under complex evolutionary scenarios."; 
+	private static final String CITATION4 = "BMC Bioinformatics 15:133";
+	
 	public AboutDialog() {
 		initUI();
 	}// END: Constructor
@@ -106,6 +110,29 @@ public class AboutDialog extends JDialog {
 		label.setAlignmentX(0.5f);
 		add(label);
 
+		add(Box.createRigidArea(new Dimension(0, 10)));
+		
+		//Setup citation
+		label = new JLabel(CITATION1);
+		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 2));
+		label.setAlignmentX(0.5f);
+		add(label);		
+		
+		label = new JLabel(CITATION2);
+		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 2));
+		label.setAlignmentX(0.5f);
+		add(label);	
+		
+		label = new JLabel(CITATION3);
+		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 2));
+		label.setAlignmentX(0.5f);
+		add(label);	
+		
+		label = new JLabel(CITATION4);
+		label.setFont(new Font("Serif", Font.PLAIN, FONT_SIZE - 2));
+		label.setAlignmentX(0.5f);
+		add(label);	
+		
 		add(Box.createRigidArea(new Dimension(0, 10)));
 
 		// Setup about

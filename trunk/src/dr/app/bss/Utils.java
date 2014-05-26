@@ -1219,6 +1219,16 @@ public class Utils {
 		return sum;
 	}// END: sumArray
 
-	
+	public static double sumArray(int[] array) {
+
+		double sum = 0.0;
+		for (int i = 0; i < array.length; i++) {
+
+			sum += array[i];
+
+		}
+
+		return sum;
+	}// END: sumArray
 	
 }// END: class

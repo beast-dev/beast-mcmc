@@ -4,6 +4,7 @@ import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
@@ -118,13 +119,18 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     @Override
     public double doOperation() throws OperatorFailedException {
         Matrix tempFactors = null;
+        double[] draws=null;
         int size = LFM.getLoadings().getColumnDimension();
         for (int i = 0; i < size; i++) {
             Matrix precision=getPrecision(i);
             Vector mean=getMean(i);
-
+            draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents(),precision.toComponents());
+            while(draws[i]<0){
+                draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents(),precision.toComponents());
+            }
+            copy(i, draws);
         }
-
+        LFM.getLoadings().fireParameterChangedEvent();
 
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }

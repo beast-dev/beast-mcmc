@@ -1,8 +1,6 @@
 package dr.inference.operators;
 
 import dr.evomodel.continuous.LatentFactorModel;
-import dr.inference.model.DiagonalMatrix;
-import dr.inference.model.MatrixParameter;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -26,9 +24,9 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     }
 
     private Matrix getPrecision(){
-        if(numFactors!=LFM.getFactors().getRowDimension()){
-            numFactors=LFM.getFactors().getRowDimension();
-            idMat=Matrix.buildIdentity(numFactors);
+        if(numFactors!=LFM.getFactorDimension()){
+            numFactors=LFM.getFactorDimension();
+            idMat=Matrix.buildIdentityTimesElementMatrix(numFactors, 1);
         }
         Matrix LoadMat=new Matrix(LFM.getLoadings().getParameterAsMatrix());
         Matrix colPrec=new Matrix(LFM.getColumnPrecision().getParameterAsMatrix());

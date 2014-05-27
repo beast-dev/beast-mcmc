@@ -338,10 +338,10 @@ public class Matrix {
         return new Matrix(productWithTransposedComponents(a));
     }
 
-    public static Matrix buildIdentity(int dim){
+    public static Matrix buildIdentityTimesElementMatrix(int dim, double element){
         double[][] idTemp=new double[dim][dim];
         for (int i = 0; i < dim; i++) {
-            idTemp[i][i]=1;
+            idTemp[i][i]=element;
         }
         return new Matrix(idTemp);
     }

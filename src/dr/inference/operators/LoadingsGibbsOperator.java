@@ -5,7 +5,9 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalDistribution;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * Created with IntelliJ IDEA.
@@ -35,6 +37,69 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         return new Matrix(answerArray);
     }
 
+    private Matrix getPrecision(int i){
+        Matrix factors=null;
+        int size=LFM.getFactorDimension();
+        Matrix answer=null;
+        if(i<size){
+            factors=truncateMatrixParameter(LFM.getFactors(),i+1);
+            try {
+                answer= Matrix.buildIdentityTimesElementMatrix(i + 1, 1 / (prior.getSD() * prior.getSD())).add(factors.productWithTransposed(factors).product(LFM.getColumnPrecision().getParameterValue(i, i)));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+        else{
+                answer=new Matrix(LFM.getFactors().getParameterAsMatrix());
+                try {
+                    answer= Matrix.buildIdentityTimesElementMatrix(i, 1/(prior.getSD()*prior.getSD())).add(factors.productWithTransposed(factors).product(LFM.getColumnPrecision().getParameterValue(i, i)));
+                } catch (IllegalDimension illegalDimension) {
+                    illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                }
+            }
+        return answer;
+    }
+
+    private Vector getMean(int i){
+        Matrix factors=null;
+        int size=LFM.getFactorDimension();
+        Vector answer=null;
+        Vector dataColumn=null;
+        Vector priorVector=null;
+        Vector temp=null;
+        if(i<size){
+            factors=truncateMatrixParameter(LFM.getFactors(), i+1);
+            dataColumn=new Vector(LFM.getScaledData().toComponents()[i]);
+            priorVector=Vector.buildOneTimesElementVector(i+1, prior.getMean()/(prior.getSD()*prior.getSD()));
+            try {
+                answer=getPrecision(i).inverse().product(priorVector.add(factors.product(dataColumn)));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+        else{
+            factors=new Matrix(LFM.getFactors().getParameterAsMatrix());
+            dataColumn=new Vector(LFM.getScaledData().toComponents()[i]);
+            priorVector=Vector.buildOneTimesElementVector(size, prior.getMean()/(prior.getSD()*prior.getSD()));
+            try {
+                answer=getPrecision(i).inverse().product(priorVector.add(factors.product(dataColumn)));
+            } catch (IllegalDimension illegalDimension) {
+                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+        }
+
+
+        return answer;
+    }
+
+    private void copy(int i, double[] random){
+        Parameter changing=LFM.getLoadings().getParameter(i);
+        for (int j = 0; j <random.length ; j++) {
+            changing.setParameterValueQuietly(j,random[j]);
+        }
+    }
+
+
     @Override
     public int getStepCount() {
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
@@ -55,13 +120,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         Matrix tempFactors = null;
         int size = LFM.getLoadings().getColumnDimension();
         for (int i = 0; i < size; i++) {
-            if (i < size) {
-                tempFactors = truncateMatrixParameter(LFM.getFactors(), i+1);
-//                System.out.println(tempFactors.rows());
-//                System.out.println(tempFactors.columns());
-//                System.out.println(tempFactors);
-//                System.out.println(new Matrix(LFM.getFactors().getParameterAsMatrix()));
-            }
+            Matrix precision=getPrecision(i);
+            Vector mean=getMean(i);
+
         }
 
 

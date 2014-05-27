@@ -157,6 +157,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public Matrix getScaledData(){return tData;}
 
+    public int getFactorDimension(){return dimFactors;}
+
 
     private Matrix computeScaledData(){
  //       Matrix answer=new Matrix(data.getRowDimension(), data.getColumnDimension());

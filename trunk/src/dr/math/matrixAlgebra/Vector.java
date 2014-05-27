@@ -363,4 +363,12 @@ public class Vector {
 		sb.append(']');
 		return sb.toString();
 	}
+
+    public static Vector buildOneTimesElementVector(int dim, double element){
+        double[] component=new double[dim];
+        for (int i = 0; i <dim ; i++) {
+            component[i]=element;
+        }
+        return new Vector(component);
+    }
 }

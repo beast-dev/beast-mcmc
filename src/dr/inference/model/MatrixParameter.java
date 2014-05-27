@@ -58,6 +58,19 @@ public class MatrixParameter extends CompoundParameter {
         return getParameter(col).getParameterValue(row);
     }
 
+    public double[] getRowValues(int row){
+        int colDim=getColumnDimension();
+        double[] rowValues=new double[colDim];
+        for (int i = 0; i <colDim ; i++) {
+            rowValues[i]=getParameterValue(row, i);
+        }
+        return rowValues;
+    }
+
+    public double[] getColumnValues(int col){
+        return this.getParameter(col).getParameterValues();
+    }
+
     public double[][] getParameterAsMatrix() {
         final int I = getRowDimension();
         final int J = getColumnDimension();

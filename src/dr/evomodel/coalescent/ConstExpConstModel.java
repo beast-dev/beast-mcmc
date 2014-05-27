@@ -49,7 +49,8 @@ public class ConstExpConstModel extends DemographicModel {
     public ConstExpConstModel(Parameter N0Parameter, Parameter N1Parameter, Parameter timeParameter,
                               Parameter growthRateParameter, Type units, boolean usingGrowthRate) {
 
-        this(ConstExpConstModelParser.CONST_EXP_CONST_MODEL, N0Parameter, N1Parameter, timeParameter, growthRateParameter, units, usingGrowthRate);
+        this(ConstExpConstModelParser.CONST_EXP_CONST_MODEL, N0Parameter, N1Parameter, timeParameter,
+                growthRateParameter, units, usingGrowthRate);
     }
 
     /**

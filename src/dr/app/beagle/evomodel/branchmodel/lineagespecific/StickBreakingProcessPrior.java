@@ -1,207 +1,128 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import org.apache.commons.math.MathException;
-
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.bss.Utils;
-import dr.math.MathUtils;
-import dr.math.UnivariateFunction;
-import dr.math.distributions.BetaDistribution;
+import dr.evolution.tree.NodeRef;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
+import dr.math.GammaFunction;
 import dr.math.distributions.Distribution;
-import dr.util.HeapSort;
+import dr.math.distributions.MultivariateDistribution;
 
-public class StickBreakingProcessPrior implements Distribution {
+public class StickBreakingProcessPrior implements MultivariateDistribution {
 
-	private double intensity;
-	private BetaDistribution beta;
-	private int K;
-	private double[] probabilities;
-	private int[] support;
-	private UnivariateFunction pdfFunction;
-
+	private Distribution baseDistribution;
+	private Parameter mdParameter;
+	private int categoryCount;
 	
-	public StickBreakingProcessPrior(double intensity, int K) {
+	private TreeModel treeModel;
+	private BranchModel branchSpecificModel;
+	
+	public StickBreakingProcessPrior(
+			BranchModel branchSpecificModel, //
+			TreeModel treeModel, //
+			Distribution baseDistribution,//
+//			List<Parameter> parameters
+			Parameter mdParameter
+			) {
+		
+		this.baseDistribution = baseDistribution;
+		this.mdParameter = mdParameter;
+		
+		this.branchSpecificModel = branchSpecificModel;
+		this.treeModel = treeModel;
+		
+		this.categoryCount = mdParameter.getDimension();
+		
+	}//END: Constructor
+	
+	
+	private int[] getCounts() {
 
-		this.intensity = intensity;
-		this.K = K;
+		int[] branchAssignments = new int[categoryCount];
+		
+		for (NodeRef branch : treeModel.getNodes()) {
 
-		beta = new BetaDistribution(this.intensity, 1.0);
-
-	}// END: Constructor
-
-	public void stickBreak() throws MathException {
-
-		probabilities = new double[K];
-		support = new int[K];
-
-		double stickLength = 1.0;
-		int i = 0;
-		for (int x = 1; x <= K; x++) {
-
-			support[i] = x;
-
-			double beta = rBeta();
-			probabilities[i] = beta * stickLength;
-			stickLength *= (1 - beta);
-
-			i = i + 1;
-
+			int branchParameterIndex = ((BranchSpecific) branchSpecificModel)
+					.getBranchModelMapping(branch).getOrder()[0];
+			branchAssignments[branchParameterIndex]++;
 		}
 
-		pdfFunction = new UnivariateFunction() {
-			public double evaluate(double x) {
-				return pdf(x);
-			}
+		return branchAssignments;
+	}// END: getBranchAssignmentCounts
+	
+	
+	private double[] getValues() {
+		
+		double[] values = new double[categoryCount];
+		
 
-			public double getLowerBound() {
-				return 1.0;
-			}
-
-			public double getUpperBound() {
-				return K;
-			}
-		};
-
-	}// END: stickBreak
-
-	private boolean inSupport(double x) {
-
-		for (int i = 0; i < K; i++) {
-
-			if (support[i] == x) {
-				return true;
-			}
-
+		for(int i=0;i<categoryCount;i++) {
+			
+			values[i]=mdParameter.getParameterValue(i);
+			
 		}
+		
+		
+		return values;
+	}
+	
+	/*
+	 * Distribution Likelihood
+	 */
+	public double getLogLikelihood() {
 
-		return false;
-	}// END: inSupport
+		double logLike = 0.0;
 
-	// probability mass function
+		int[] counts = getCounts();
+		double[] values = getValues();
+		double countSum = Utils.sumArray(counts);
+		
+		logLike += GammaFunction.lnGamma(countSum);
+		for (int i = 0; i < categoryCount; i++) {
+
+			logLike += ( (counts[i] - 1) * Math.log(values[i]) - GammaFunction.lnGamma(counts[i])  ); 
+					
+		}// END: i loop
+
+		return logLike;
+	}// END: getLogLikelihood
+
+
 	@Override
-	public double pdf(double x) {
+	public double logPdf(double[] x) {
+		double logLike = 0.0;
 
-		if (inSupport(x)) {
+		int[] counts = getCounts();
+		double countSum = Utils.sumArray(counts);
+		
+		logLike += GammaFunction.lnGamma(countSum);
+		for (int i = 0; i < categoryCount; i++) {
 
-			return probabilities[(int) (x - 1)];
+			logLike += (  (counts[i] - 1) * Math.log(x[i]) -  GammaFunction.lnGamma(counts[i])  ); 
+					
+		}// END: i loop
 
-		}
-
-		return 0;
-	}// END: pdf
-
-	@Override
-	public double logPdf(double x) {
-		return Math.log(pdf(x));
+		return logLike;
 	}
 
+
 	@Override
-	public double cdf(double x) {
-
-		double sum = 0.0;
-		for (int i = 0; i < K; i++) {
-
-			if (i <= x) {
-				sum += probabilities[i];
-			}
-
-		}
-
-		return sum;
-	}// END: cdf
-
-	//TODO: check this
-	@Override
-	public double quantile(double y) {
-
-		if (y < 0.0 || y > 1.0) {
-			throw new RuntimeException("Quantile out of range.");
-		}
-
-		// if (y == 0.0) {
-		// return support[indices[0]] - 1.0;
-		// }
-
-		int[] indices = new int[K];
-		HeapSort.sort(probabilities, indices);
-
-		// Utils.printArray(indices);
-
-		return support[indices[(int) Math.ceil(y * K) - 1]];
+	public double[][] getScaleMatrix() {
+		return null;
 	}
 
-	@Override
-	public double mean() {
-
-		double mean = 0.0;
-		for (int i = 0; i < K; i++) {
-
-			mean += (support[i] * probabilities[i]);
-
-		}
-
-		return mean;
-	}// END: mean
 
 	@Override
-	public double variance() {
+	public double[] getMean() {
+		return null;
+	}
 
-		double mean = mean();
-
-		double variance = 0.0;
-		for (int i = 0; i < K; i++) {
-
-			variance += Math.pow((support[i] - mean), 2) * probabilities[i];
-
-		}
-
-		return variance;
-	}// END: variance
 
 	@Override
-	public UnivariateFunction getProbabilityDensityFunction() {
-		return pdfFunction;
+	public String getType() {
+		return null;
 	}
-
-	private double rBeta() throws MathException {
-		return beta.inverseCumulativeProbability(MathUtils.nextDouble());
-	}// END: rbeta
-
-	public double[] getProbabilities() {
-		return probabilities;
-	}
-
-	public int[] getSupport() {
-		return support;
-	}
-
-	public static void main(String args[]) {
-
-		try {
-
-			int K = 8; // close to infinity but not too big to save compute
-						// time
-			double intensity = 2;
-
-			StickBreakingProcessPrior sbp = new StickBreakingProcessPrior(
-					intensity, K);
-			sbp.stickBreak();
-
-			double[] probs = sbp.getProbabilities();
-
-			Utils.print2Arrays(sbp.getSupport(), probs, probs.length);
-
-			System.out.println();
-			System.out.println(Utils.sumArray(probs));
-
-//			System.out.println();
-
-//			System.out.println(sbp.quantile(0.5));
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}// END: main
-
+	
 }// END: class
 

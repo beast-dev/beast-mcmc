@@ -46,7 +46,7 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 			int branchParameterIndex = ((BranchSpecific) branchSpecificModel)
 					.getBranchModelMapping(branch).getOrder()[0];
 			counts[branchParameterIndex]++;
-		}
+		}//END: branch loop
 
 		return counts;
 	}// END: getBranchAssignmentCounts
@@ -65,7 +65,7 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 		
 		
 		return values;
-	}
+	}//END: getValues
 	
 	/*
 	 * Distribution Likelihood
@@ -104,14 +104,7 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 		}// END: i loop
 
 		return logLike;
-	}
-
-
-	@Override
-	public double[][] getScaleMatrix() {
-		return null;
-	}
-
+	}//END: logPdf
 
 	@Override
 	public double[] getMean() {
@@ -126,8 +119,12 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
         }
         
         return mean;
-	}
+	}//END: mean
 
+	@Override
+	public double[][] getScaleMatrix() {
+		return null;
+	}
 
 	@Override
 	public String getType() {

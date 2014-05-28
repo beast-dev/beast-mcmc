@@ -39,16 +39,16 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 	
 	private int[] getCounts() {
 
-		int[] branchAssignments = new int[categoryCount];
+		int[] counts = new int[categoryCount];
 		
 		for (NodeRef branch : treeModel.getNodes()) {
 
 			int branchParameterIndex = ((BranchSpecific) branchSpecificModel)
 					.getBranchModelMapping(branch).getOrder()[0];
-			branchAssignments[branchParameterIndex]++;
+			counts[branchParameterIndex]++;
 		}
 
-		return branchAssignments;
+		return counts;
 	}// END: getBranchAssignmentCounts
 	
 	
@@ -115,7 +115,17 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 
 	@Override
 	public double[] getMean() {
-		return null;
+        
+		int[] counts = getCounts();
+		double countSum = Utils.sumArray(counts);
+		
+		double[] mean = new double[categoryCount];
+        
+        for (int i = 0; i < categoryCount; i++) {
+            mean[i] = counts[i] / countSum;
+        }
+        
+        return mean;
 	}
 
 

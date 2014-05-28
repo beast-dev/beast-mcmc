@@ -1,30 +1,52 @@
 package dr.math;
 
 /**
- * Approximate the integral from 0 to +INF of (x-A)^alpha * e^-B(x-A) * f(x) by generalised Gauss-Riemann quadrature
+ * Approximate the integral from min to +INF of x^alpha * e^-Bx * f(x) by generalised Gauss-Riemann quadrature
  *
  * Adapted from Numerical Recipes
  */
 public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
-    final private double B;
-    final private double alpha;
+    private double B;
+    private double alpha;
     final private int noPoints;
-    final private double[] abscissas;
+    final private double[] abscissae;
     final private double[] coefficients;
 
     public GeneralisedGaussLaguerreQuadrature(double B, double alpha, int noPoints){
         this.B = B;
         this.alpha = alpha;
         this.noPoints = noPoints;
-        abscissas = new double[noPoints];
+        abscissae = new double[noPoints];
         coefficients = new double[noPoints];
+        setupArrays();
+    }
+
+    public GeneralisedGaussLaguerreQuadrature(int noPoints){
+        this.noPoints = noPoints;
+        abscissae = new double[noPoints];
+        coefficients = new double[noPoints];
+    }
+
+    public void setB(double B){
+        this.B = B;
+        setupArrays();
+    }
+
+    public void setAlpha(double alpha){
+        this.alpha = alpha;
+        setupArrays();
+    }
+
+    public void setAlphaAndB(double alpha, double B){
+        this.alpha = alpha;
+        this.B = B;
         setupArrays();
     }
 
     private void setupArrays(){
         final int maxIterations = 10;
-        final double eps = 1E-14;
+        final double eps = 1E-10;
 
         double z = 0;
 
@@ -32,12 +54,12 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
         for(int i=0; i<noPoints; i++){
             if(i==0){
-                z +=  (1.0+alpha)*(3.0+0.92*alpha)/(1.0+2.4*noPoints+1.8*alpha);
+                z = (1.0+alpha)*(3.0+0.92*alpha)/(1.0+2.4*noPoints+1.8*alpha);
             } else if (i==1){
                 z += (15.0+6.25*alpha)/(1.0+0.9*alpha+2.5*noPoints);
             } else {
                 double ai = i-1;
-                z += ((1.0+2.55*alpha)/(1.9+ai) + 1.26*ai*alpha/(1.0+3.5*ai))+(z-abscissas[i-2])/(1.0+0.3*alpha);
+                z += ((1.0+2.55*ai)/(1.9*ai) + 1.26*ai*alpha/(1.0+3.5*ai))*(z- abscissae[i-2])/(1.0+0.3*alpha);
             }
 
             boolean failed = true;
@@ -61,14 +83,14 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
             if(failed){
                 throw new RuntimeException("Too many iterations");
             }
-            abscissas[i] = z;
+            abscissae[i] = z;
+
             coefficients[i] = -Math.exp(GammaFunction.lnGamma(alpha+noPoints) - GammaFunction.lnGamma((double)noPoints))/
                     (pp*noPoints*p2);
 
         }
 
     }
-
 
 
     public double integrate(UnivariateFunction f, double min, double max) {
@@ -80,17 +102,44 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
         }
     }
 
+    public double logIntegrate(UnivariateFunction f, double min, double max) {
+        if(max!=Double.POSITIVE_INFINITY){
+            throw new RuntimeException("Gauss-Laguerre quadrature is for integration with an infinite upper limit");
+        }
+        else{
+            return logIntegrate(f, min);
+        }
+    }
+
     public double integrate(UnivariateFunction f, double min){
         double integral = 0;
 
         for(int i=0; i<noPoints; i++){
-            integral+=coefficients[i]+f.evaluate(abscissas[i]/B+min);
+            integral+=coefficients[i]*f.evaluate(abscissae[i]/B+min);
         }
 
-
-        integral *= 1*Math.pow(B, alpha+1);
+        integral *= 1/Math.pow(B, alpha+1);
 
         return integral;
+    }
+
+    public double logIntegrate(UnivariateFunction f, double min){
+        try {
+
+            double logIntegral = Double.NEGATIVE_INFINITY;
+
+            for (int i = 0; i < noPoints; i++) {
+                logIntegral = LogTricks.logSum(logIntegral, Math.log(coefficients[i]) +
+                        ((UnivariateFunction.AbstractLogEvaluatableUnivariteFunction)f).logEvaluate(min + abscissae[i] / B));
+            }
+
+            logIntegral += -(alpha + 1) * Math.log(B);
+
+            return logIntegral;
+        } catch(ClassCastException e){
+            throw new RuntimeException(f.toString()+" has no logEvaluate method");
+        }
+
     }
 
 

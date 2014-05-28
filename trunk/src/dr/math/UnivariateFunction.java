@@ -53,4 +53,13 @@ public interface UnivariateFunction
 	 * @return upper bound of argument
 	 */
 	double getUpperBound();
+
+    public abstract class AbstractLogEvaluatableUnivariteFunction implements UnivariateFunction{
+
+        public double logEvaluate(double argument){
+            return Math.log(evaluate(argument));
+        }
+
+    }
+
 }

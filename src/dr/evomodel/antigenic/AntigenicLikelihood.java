@@ -52,6 +52,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             int mdsDimension,
             Parameter mdsPrecisionParameter,
             Parameter locationDriftParameter,
+            Parameter virusDriftParameter,
+            Parameter serumDriftParameter,
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
             CompoundParameter tipTraitsParameter,
@@ -162,6 +164,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         this.locationDriftParameter = locationDriftParameter;
         if (this.locationDriftParameter != null) {
             addVariable(locationDriftParameter);
+        }
+
+        this.virusDriftParameter = virusDriftParameter;
+        if (this.virusDriftParameter != null) {
+            addVariable(virusDriftParameter);
+        }
+
+        this.serumDriftParameter = serumDriftParameter;
+        if (this.serumDriftParameter != null) {
+            addVariable(serumDriftParameter);
         }
 
         this.virusLocationsParameter = virusLocationsParameter;
@@ -393,6 +405,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             setLocationChangedFlags(true);
         } else if (variable == locationDriftParameter) {
             setLocationChangedFlags(true);
+        } else if (variable == virusDriftParameter) {
+                setLocationChangedFlags(true);
+        } else if (variable == serumDriftParameter) {
+                setLocationChangedFlags(true);
         } else if (variable == serumPotenciesParameter) {
             serumEffectChanged[index] = true;
         } else if (variable == serumBreadthsParameter) {
@@ -519,6 +535,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         if (locationDriftParameter != null && virusOffsetsParameter != null && serumOffsetsParameter != null) {
             vxOffset = locationDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
             sxOffset = locationDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
+        }
+        if (virusDriftParameter != null && virusOffsetsParameter != null) {
+            vxOffset = virusDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
+        }
+        if (serumDriftParameter != null && serumOffsetsParameter != null) {
+            sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
         }
 
         double vxLoc = vLoc.getParameterValue(0) + vxOffset;
@@ -648,6 +670,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
     private final Parameter locationDriftParameter;
+    private final Parameter virusDriftParameter;
+    private final Parameter serumDriftParameter;
 
     private final MatrixParameter virusLocationsParameter;
     private final MatrixParameter serumLocationsParameter;
@@ -688,6 +712,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
         public static final String LOCATION_DRIFT = "locationDrift";
+        public static final String VIRUS_DRIFT = "virusDrift";
+        public static final String SERUM_DRIFT = "serumDrift";
         public static final String VIRUS_AVIDITIES = "virusAvidities";
         public static final String SERUM_POTENCIES = "serumPotencies";
         public static final String SERUM_BREADTHS = "serumBreadths";
@@ -744,6 +770,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 locationDrift = (Parameter) xo.getElementFirstChild(LOCATION_DRIFT);
             }
 
+            Parameter virusDrift = null;
+            if (xo.hasChildNamed(VIRUS_DRIFT)) {
+                locationDrift = (Parameter) xo.getElementFirstChild(VIRUS_DRIFT);
+            }
+
+            Parameter serumDrift = null;
+            if (xo.hasChildNamed(SERUM_DRIFT)) {
+                locationDrift = (Parameter) xo.getElementFirstChild(SERUM_DRIFT);
+            }
+
             Parameter virusOffsetsParameter = null;
             if (xo.hasChildNamed(VIRUS_OFFSETS)) {
                 virusOffsetsParameter = (Parameter) xo.getElementFirstChild(VIRUS_OFFSETS);
@@ -773,6 +809,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     mdsDimension,
                     mdsPrecision,
                     locationDrift,
+                    virusDrift,
+                    serumDrift,
                     virusLocationsParameter,
                     serumLocationsParameter,
                     tipTraitParameter,
@@ -819,7 +857,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 new ElementRule(SERUM_BREADTHS, Parameter.class, "Optional parameter for serum breadths", true),
                 new ElementRule(VIRUS_AVIDITIES, Parameter.class, "Optional parameter for virus avidities", true),
                 new ElementRule(MDS_PRECISION, Parameter.class, "Parameter for precision of MDS embedding"),
-                new ElementRule(LOCATION_DRIFT, Parameter.class, "Optional parameter for drifting locations with time", true)
+                new ElementRule(LOCATION_DRIFT, Parameter.class, "Optional parameter for drifting locations with time", true),
+                new ElementRule(VIRUS_DRIFT, Parameter.class, "Optional parameter for drifting only virus locations, overrides locationDrift", true),
+                new ElementRule(SERUM_DRIFT, Parameter.class, "Optional parameter for drifting only serum locations, overrides locationDrift", true)
         };
 
         public Class getReturnType() {
@@ -842,7 +882,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                         new Author("DJ", "Smith"),
                         new Author("A", "Rambaut")
                 },
-                Citation.Status.IN_PREPARATION
+                "Integrating influenza antigenic dynamics with molecular evolution",
+                "eLife",
+                Citation.Status.ACCEPTED
         ));
         return citations;
     }

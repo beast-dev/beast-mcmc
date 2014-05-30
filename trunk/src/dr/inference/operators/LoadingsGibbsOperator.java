@@ -61,7 +61,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         return answer;
     }
 
-    private Vector getMean(int i){
+    private Vector getMean(int i, Matrix precision){
         Matrix factors=null;
         int size=LFM.getFactorDimension();
         Vector answer=null;
@@ -73,7 +73,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             dataColumn=new Vector(LFM.getScaledData().toComponents()[i]);
             priorVector=Vector.buildOneTimesElementVector(i+1, prior.getMean()/(prior.getSD()*prior.getSD()));
             try {
-                answer=getPrecision(i).inverse().product(priorVector.add(factors.product(dataColumn)));
+                answer=precision.inverse().product(priorVector.add(factors.product(dataColumn)));
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
@@ -83,7 +83,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             dataColumn=new Vector(LFM.getScaledData().toComponents()[i]);
             priorVector=Vector.buildOneTimesElementVector(size, prior.getMean()/(prior.getSD()*prior.getSD()));
             try {
-                answer=getPrecision(i).inverse().product(priorVector.add(factors.product(dataColumn)));
+                answer=precision.inverse().product(priorVector.add(factors.product(dataColumn)));
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
@@ -123,7 +123,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         int size = LFM.getLoadings().getColumnDimension();
         for (int i = 0; i < size; i++) {
             Matrix precision=getPrecision(i);
-            Vector mean=getMean(i);
+            Vector mean=getMean(i, precision);
             draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents(),precision.toComponents());
             while(draws[i]<0){
                 draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents(),precision.toComponents());

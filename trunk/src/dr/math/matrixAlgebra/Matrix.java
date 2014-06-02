@@ -113,7 +113,7 @@ public class Matrix {
      */
     public Matrix add(Matrix a) throws IllegalDimension {
         if (a.rows() != rows() || a.columns() != columns())
-            throw new IllegalDimension("Operation error: cannot add a"
+            throw new IllegalDimension("Operation error: cannot add a "
                     + a.rows() + " by " + a.columns()
                     + " matrix to a " + rows() + " by "
                     + columns() + " matrix");

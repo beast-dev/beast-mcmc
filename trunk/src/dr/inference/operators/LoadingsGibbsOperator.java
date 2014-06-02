@@ -51,9 +51,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             }
         }
         else{
-                answer=new Matrix(LFM.getFactors().getParameterAsMatrix());
+                factors=new Matrix(LFM.getFactors().getParameterAsMatrix());
                 try {
-                    answer= Matrix.buildIdentityTimesElementMatrix(i, 1/(prior.getSD()*prior.getSD())).add(factors.productWithTransposed(factors).product(LFM.getColumnPrecision().getParameterValue(i, i)));
+                    answer= Matrix.buildIdentityTimesElementMatrix(size, 1/(prior.getSD()*prior.getSD())).add(factors.productWithTransposed(factors).product(LFM.getColumnPrecision().getParameterValue(i, i)));
                 } catch (IllegalDimension illegalDimension) {
                     illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                 }
@@ -125,8 +125,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             Matrix precision=getPrecision(i);
             Vector mean=getMean(i, precision);
             draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents(),precision.toComponents());
-            while(draws[i]<0){
-                draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents(),precision.toComponents());
+            if(i<draws.length){
+                while(draws[i]<0){
+                    draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents(),precision.toComponents());
+                }
             }
             copy(i, draws);
         }

@@ -29,6 +29,7 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
     private double logBayesFactor;
     private List<Double> maxLogLikelihood;
     private List<Double> orderedTheta;
+    private List<Double> mlContribution;
     
     public GeneralizedSteppingStoneSamplingAnalysis(String sourceName, String destinationName, List<Double> thetaSample, List<Double> sourceSample, List<Double> destinationSample) {
         this.sourceName = sourceName;
@@ -78,10 +79,13 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
         	System.out.println(ml);
         }
 
+        mlContribution = new ArrayList<Double>();
+        
         logBayesFactor = 0.0;
         for (int i = 1; i < orderedTheta.size(); i++) {
-        	logBayesFactor += (orderedTheta.get(i) - orderedTheta.get(i-1)) * maxLogLikelihood.get(i-1);
-        	//System.out.println(i + ": " + maxLogLikelihood.get(i-1));
+        	double contribution = (orderedTheta.get(i) - orderedTheta.get(i-1)) * maxLogLikelihood.get(i-1);
+        	logBayesFactor += contribution;
+        	mlContribution.add(contribution);
         }
         //System.out.println(logBayesFactor);
         
@@ -103,11 +107,15 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
     public String toString() {
         double bf = getLogBayesFactor();
         StringBuffer sb = new StringBuffer();
-        sb.append("PathParameter\tMaxPathLikelihood\n");
+        sb.append("PathParameter\tMaxPathLikelihood\tMLContribution\n");
         for (int i = 0; i < orderedTheta.size(); ++i) {
             sb.append(String.format(FORMAT, orderedTheta.get(i)));
             sb.append("\t");
             sb.append(String.format(FORMAT, maxLogLikelihood.get(i)));
+            sb.append("\t");
+            if (i != (orderedTheta.size()-1)) {
+            	sb.append(String.format(FORMAT, mlContribution.get(i)));
+            }
             sb.append("\n");
         }
 

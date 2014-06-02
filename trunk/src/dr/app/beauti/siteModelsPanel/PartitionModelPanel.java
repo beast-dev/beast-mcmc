@@ -243,7 +243,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(setYang96Button);
         setYang96Button
                 .setToolTipText("<html>Sets a 3 codon-position model with independent GTR and Gamma as described in<br>"
-                        + "Yang (1996) <i>J Mol Evol</i> <b>42</b>: 587–596. This model is named 3' in this paper.</html>");
+                        + "Yang (1996) <i>J Mol Evol</i> <b>42</b>: 587-596. This model is named 3' in this paper.</html>");
 
         setSRD06Button = new JButton("Use SRD06 model");
         setSRD06Button.addActionListener(new ActionListener() {

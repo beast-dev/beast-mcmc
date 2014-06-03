@@ -43,8 +43,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //    private Matrix factors;
 //    private Matrix loadings;
 
-    private Matrix residual;
-
     private final MatrixParameter data;
     private final MatrixParameter factors;
     private final MatrixParameter loadings;
@@ -61,6 +59,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean storedLikelihoodKnown;
     private double logLikelihood;
     private double storedLogLikelihood;
+
+    private MatrixParameter residual;
+    private MatrixParameter LxF;
+    private MatrixParameter TResidualxC;
+    private MatrixParameter RxTRxC;
+    private MatrixParameter expPart;
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision
@@ -121,9 +125,24 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             throw new RuntimeException("MUST HAVE FEWER FACTORS THAN DATA POINTS\n");
         }
 
+        residual=new MatrixParameter(null);
+        LxF=new MatrixParameter(null);
+        TResidualxC=new MatrixParameter(null);
+        RxTRxC=new MatrixParameter(null);
+        expPart=new MatrixParameter(null);
+        setDimensions();
 //       computeResiduals();
 //        System.out.print(new Matrix(residual.toComponents()));
 //        System.out.print(calculateLogLikelihood());
+    }
+
+    private void setDimensions(){
+        residual.setDimensions(data.getRowDimension(), data.getColumnDimension());
+        LxF.setDimensions(loadings.getColumnDimension(), factors.getColumnDimension());
+        TResidualxC.setDimensions(residual.getColumnDimension(), colPrecision.getColumnDimension());
+        RxTRxC.setDimensions(rowPrecision.getRowDimension(), TResidualxC.getColumnDimension());
+        expPart.setDimensions(residual.getRowDimension(), RxTRxC.getColumnDimension());
+
     }
 
 //    public Matrix getData(){
@@ -221,14 +240,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
-        MatrixParameter residual = null;
-        Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
         if(!isDataScaled){
         sData = computeScaledData();
             isDataScaled=true;
         }
 
-        residual = sData.subtract(loadings.transposeThenProduct(factors));
+        residual = sData.subtractInPlace(loadings.transposeThenProductInPlace(factors, LxF), residual);
         return residual;
     }
 
@@ -333,12 +350,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         }
 //        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
 //        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
-        MatrixParameter residual = computeResiduals();
+        residual = computeResiduals();
 //        computeResiduals();
-        MatrixParameter expPart=null;
         double logDetRow=0;
         double logDetCol=0;
-        expPart = residual.product(rowPrecision.product(residual.transposeThenProduct(colPrecision)));
+        expPart = residual.productInPlace(rowPrecision.productInPlace(residual.transposeThenProductInPlace(colPrecision, TResidualxC), RxTRxC), expPart);
             logDetRow=StrictMath.log(rowPrecision.getDeterminant());
             logDetCol=StrictMath.log(colPrecision.getDeterminant());
 //            System.out.println(logDetCol);

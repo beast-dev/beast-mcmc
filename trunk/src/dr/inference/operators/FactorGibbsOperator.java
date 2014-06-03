@@ -41,8 +41,9 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
 
     private Matrix getMean(){
         Matrix answer=null;
+        Matrix data=new Matrix(LFM.getScaledData().getParameterAsMatrix());
         try {
-            answer=getPrecision().inverse().product(new Matrix(LFM.getLoadings().getParameterAsMatrix())).product(new Matrix(LFM.getColumnPrecision().getParameterAsMatrix())).product(LFM.getScaledData());
+            answer=getPrecision().inverse().product(new Matrix(LFM.getLoadings().getParameterAsMatrix())).product(new Matrix(LFM.getColumnPrecision().getParameterAsMatrix())).product(data);
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }

@@ -77,18 +77,33 @@ public class DiagonalMatrix extends MatrixParameter {
         return getParameterValue(i / diagonalParameter.getDimension(), i % diagonalParameter.getDimension());
     }
 
-    public void preMultiply(MatrixParameter right){
-        for (int i = 0; i < diagonalParameter.getDimension(); i++) {
-            right.rowMultiplyQuietly(diagonalParameter.getParameterValue(i), i);
+    public MatrixParameter preMultiply(MatrixParameter right){
+        if (right.getRowDimension()!=this.getColumnDimension()){
+            throw new RuntimeException("Incompatible Dimensions: " + right.getRowDimension()+" does not equal " + this.getColumnDimension() +".\n");
         }
-        right.fireParameterChangedEvent();
+        MatrixParameter answer=new MatrixParameter(null);
+        for (int i = 0; i <right.getRowDimension(); i++) {
+            for (int j = 0; j <right.getColumnDimension() ; j++) {
+                answer.setParameterValueQuietly(i, j, right.getParameterValue(i,j)*getParameterValue(i));
+            }
+
+        }
+        return answer;
     }
 
-    public void postMultiply(MatrixParameter left){
-        for (int i = 0; i <diagonalParameter.getDimension() ; i++) {
-            left.columnMultiplyQuietly(diagonalParameter.getParameterValue(i), i);
+    public MatrixParameter postMultiply(MatrixParameter left){
+        if (left.getColumnDimension()!=this.getRowDimension()){
+            throw new RuntimeException("Incompatible Dimensions: " + this.getColumnDimension()+" does not equal " +left.getRowDimension()  +".\n");
         }
-        left.fireParameterChangedEvent();
+        MatrixParameter answer=new MatrixParameter(null);
+        answer.setDimensions(left.getRowDimension(), left.getColumnDimension());
+        for (int i = 0; i <left.getRowDimension() ; i++) {
+            for (int j = 0; j <left.getColumnDimension() ; j++) {
+                answer.setParameterValueQuietly(i, j, left.getParameterValue(i,j)*getParameterValue(j));
+            }
+
+        }
+        return answer;
     }
 
     public double getDeterminant(){

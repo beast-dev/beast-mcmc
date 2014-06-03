@@ -68,9 +68,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         Vector dataColumn=null;
         Vector priorVector=null;
         Vector temp=null;
+        Matrix data=new Matrix(LFM.getScaledData().getParameterAsMatrix());
         if(i<size){
             factors=truncateMatrixParameter(LFM.getFactors(), i+1);
-            dataColumn=new Vector(LFM.getScaledData().toComponents()[i]);
+            dataColumn=new Vector(data.toComponents()[i]);
             priorVector=Vector.buildOneTimesElementVector(i+1, prior.getMean()/(prior.getSD()*prior.getSD()));
             try {
                 answer=precision.inverse().product(priorVector.add(factors.product(dataColumn)));
@@ -80,7 +81,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         }
         else{
             factors=new Matrix(LFM.getFactors().getParameterAsMatrix());
-            dataColumn=new Vector(LFM.getScaledData().toComponents()[i]);
+            dataColumn=new Vector(data.toComponents()[i]);
             priorVector=Vector.buildOneTimesElementVector(size, prior.getMean()/(prior.getSD()*prior.getSD()));
             try {
                 answer=precision.inverse().product(priorVector.add(factors.product(dataColumn)));

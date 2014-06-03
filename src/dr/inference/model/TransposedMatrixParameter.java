@@ -105,5 +105,9 @@ public class TransposedMatrixParameter extends MatrixParameter {
         return slices.get(index);
     }
 
+    MatrixParameter transposeBack(){
+        return MatrixParameter.recast(null, this);
+    }
+
     private List<Parameter> slices = null;
 }

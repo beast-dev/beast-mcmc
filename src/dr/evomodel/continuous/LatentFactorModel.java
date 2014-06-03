@@ -26,11 +26,9 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.*;
-import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
-import org.boehn.kmlframework.kml.Data;
 
 import java.util.List;
 
@@ -50,7 +48,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final MatrixParameter data;
     private final MatrixParameter factors;
     private final MatrixParameter loadings;
-    private Matrix tData;
+    private MatrixParameter sData;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
 
@@ -155,12 +153,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public MatrixParameter getData(){return data;}
 
-    public Matrix getScaledData(){return tData;}
+    public MatrixParameter getScaledData(){return sData;}
 
     public int getFactorDimension(){return dimFactors;}
 
 
-    private Matrix computeScaledData(){
+    private MatrixParameter computeScaledData(){
+        MatrixParameter answer=new MatrixParameter(data.getParameterName() + ".scaled");
+        answer.setDimensions(data.getRowDimension(), data.getColumnDimension());
  //       Matrix answer=new Matrix(data.getRowDimension(), data.getColumnDimension());
         double[][] aData=data.getParameterAsMatrix();
         double[] meanList=new double[data.getRowDimension()];
@@ -192,22 +192,24 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             varList[i]=varList[i]/(data.getColumnDimension()-1);
             varList[i]=StrictMath.sqrt(varList[i]);
         }
+        System.out.println(data.getColumnDimension());
+        System.out.println(data.getRowDimension());
 
         for(int i=0; i<data.getColumnDimension(); i++){
             for(int j=0; j<data.getRowDimension(); j++){
-                answerTemp[j][i]=answerTemp[j][i]/varList[j];
+                answer.setParameterValue(j,i, answerTemp[j][i]/varList[j]);
             }
         }
 //        System.out.println(new Matrix(answerTemp));
 
-        return new Matrix(answerTemp);
+        return answer;
     }
 
     private Matrix copy(CompoundParameter parameter, int dimMajor, int dimMinor) {
         return new Matrix(parameter.getParameterValues(), dimMajor, dimMinor);
     }
 
-    private Matrix computeResiduals() {
+    private MatrixParameter computeResiduals() {
 //        Parameter[] dataTemp=new Parameter[nTaxa];
 //        for(int i=0; i<nTaxa; i++)
 //        {
@@ -219,18 +221,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
-        Matrix residual = null;
+        MatrixParameter residual = null;
         Matrix tLoadings = new Matrix(loadings.getParameterAsMatrix());
         if(!isDataScaled){
-        tData = computeScaledData();
+        sData = computeScaledData();
             isDataScaled=true;
         }
-        Matrix tFactors = new Matrix(factors.getParameterAsMatrix());
-        try {
-            residual = tData.subtract(tLoadings.transpose().product(tFactors));
-        } catch (IllegalDimension illegalDimension) {
-            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+
+        residual = sData.subtract(loadings.transposeThenProduct(factors));
         return residual;
     }
 
@@ -333,38 +331,35 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 return Double.NEGATIVE_INFINITY;
             }
         }
-        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
-        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
-        Matrix residual = computeResiduals();
+//        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
+//        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
+        MatrixParameter residual = computeResiduals();
 //        computeResiduals();
-        Matrix expPart=null;
+        MatrixParameter expPart=null;
         double logDetRow=0;
         double logDetCol=0;
-        try{
-        expPart = residual.product(tRowPrecision.product(residual.transpose())).product(tColPrecision);
+        expPart = residual.product(rowPrecision.product(residual.transposeThenProduct(colPrecision)));
             logDetRow=StrictMath.log(rowPrecision.getDeterminant());
             logDetCol=StrictMath.log(colPrecision.getDeterminant());
 //            System.out.println(logDetCol);
 //            System.out.println(logDetRow);
-        } catch (IllegalDimension illegalDimension) {
-        illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+
         double trace=0;
-        if(!expPart.isSquare())
+        if(expPart.getRowDimension()!=expPart.getColumnDimension())
         {
             System.err.print("Matrices are not conformable");
             System.exit(0);
         }
 
         else{
-            for(int i=0; i<expPart.rows(); i++){
-                trace+=expPart.component(i,i);
+            for(int i=0; i<expPart.getRowDimension(); i++){
+                trace+=expPart.getParameterValue(i, i);
             }
         }
 //        System.out.println(expPart);
-       return -.5*trace + .5*tRowPrecision.rows()*logDetCol
-                        + .5*tColPrecision.rows()*logDetRow
+       return -.5*trace + .5*rowPrecision.getRowDimension()*logDetCol
+                        + .5*colPrecision.getColumnDimension()*logDetRow
 
-               -.5*tRowPrecision.rows()*tColPrecision.rows()*Math.log(2.0 * StrictMath.PI);
+               -.5*rowPrecision.getRowDimension()*colPrecision.getColumnDimension()*Math.log(2.0 * StrictMath.PI);
     }
 }

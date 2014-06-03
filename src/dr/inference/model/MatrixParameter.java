@@ -42,6 +42,8 @@ public class MatrixParameter extends CompoundParameter {
 
     public MatrixParameter(String name, Parameter[] parameters) {
         super(name, parameters);
+        rowDimension=parameters[0].getDimension();
+        columnDimension=parameters.length;
         dimensionsEstablished = true;
     }
 
@@ -107,6 +109,18 @@ public class MatrixParameter extends CompoundParameter {
                 row.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, columnDimension));
                 addParameter(row);
             }
+        }
+    }
+
+
+    //TODO rewrite so that it doesn't destroy existing parameters
+    public void setDimensions(int rowDim, int colDim){
+        rowDimension=rowDim;
+        columnDimension=colDim;
+        for (int i = 0; i < colDim; i++) {
+            Parameter column = new Parameter.Default(rowDim, 0.0);
+            column.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, rowDim));
+            addParameter(column);
         }
     }
 
@@ -177,6 +191,97 @@ public class MatrixParameter extends CompoundParameter {
     public void columnMultiply(double a, int col){
         columnMultiplyQuietly(a,col);
         fireParameterChangedEvent();
+    }
+
+    public void setParameterValue(int row, int column, double a)
+    {
+        getParameter(column).setParameterValue(row, a);
+    }
+
+    public void setParameterValueQuietly(int row, int column, double a){
+        getParameter(column).setParameterValueQuietly(row, a);
+    }
+
+    public TransposedMatrixParameter transpose(){
+        return TransposedMatrixParameter.recast(null, this);
+    }
+
+    // **************************************************************
+    // Matrix Operations
+    // **************************************************************
+
+    public MatrixParameter add(MatrixParameter Right) {
+        if (Right.getRowDimension() != getRowDimension() || getColumnDimension() != Right.getColumnDimension()){
+            throw new RuntimeException("You cannot add a " + getRowDimension() +" by " + getColumnDimension() + " matrix to a " + Right.getRowDimension() + " by " + Right.getColumnDimension() + " matrix.");
+        }
+        MatrixParameter answer=new MatrixParameter(null);
+        answer.setDimensions(getRowDimension(), getColumnDimension());
+        for (int i = 0; i <getRowDimension() ; i++) {
+            for (int j = 0; j <getColumnDimension() ; j++) {
+                answer.setParameterValueQuietly(i, j, getParameterValue(i, j) + Right.getParameterValue(i, j));
+            }
+
+        }
+        return answer;
+    }
+
+    public MatrixParameter subtract(MatrixParameter Right) {
+        if (Right.getRowDimension() != getRowDimension() || getColumnDimension() != Right.getColumnDimension()){
+            throw new RuntimeException("You cannot subtract a " + getRowDimension() +" by " + getColumnDimension() + " matrix to a " + Right.getRowDimension() + " by " + Right.getColumnDimension() + " matrix.");
+        }
+        MatrixParameter answer=new MatrixParameter(null);
+        answer.setDimensions(getRowDimension(), getColumnDimension());
+        for (int i = 0; i <getRowDimension() ; i++) {
+            for (int j = 0; j <getColumnDimension() ; j++) {
+                answer.setParameterValueQuietly(i,j, getParameterValue(i,j)-Right.getParameterValue(i,j));
+            }
+
+        }
+        return answer;
+    }
+
+    public MatrixParameter transposeThenProduct(MatrixParameter Right){
+        if(this.getRowDimension()!=Right.getRowDimension()){
+            throw new RuntimeException("Incompatible Dimensions: " + Right.getRowDimension() + " does not equal " + this.getRowDimension() +".\n");
+        }
+        MatrixParameter answer=new MatrixParameter(null);
+        answer.setDimensions(this.getColumnDimension(), Right.getColumnDimension());
+
+        int p = this.getRowDimension();
+        int n = this.getColumnDimension();
+        int m = Right.getColumnDimension();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                double sum = 0;
+                for (int k = 0; k < p; k++)
+                    sum += getParameterValue(k,i) * Right.getParameterValue(k,j);
+                answer.setParameterValueQuietly(i,j, sum);
+            }
+        }
+
+        return answer;
+    }
+
+    public MatrixParameter product(MatrixParameter Right){
+        if(this.getColumnDimension()!=Right.getRowDimension()){
+            throw new RuntimeException("Incompatible Dimensions: " + Right.getRowDimension() + " does not equal " + this.getColumnDimension() +".\n");
+        }
+        MatrixParameter answer=new MatrixParameter(null);
+        answer.setDimensions(this.getRowDimension(), Right.getColumnDimension());
+
+        int p = this.getColumnDimension();
+        int n = this.getRowDimension();
+        int m = Right.getColumnDimension();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                double sum = 0;
+                for (int k = 0; k < p; k++)
+                    sum += getParameterValue(i,k) * Right.getParameterValue(k,j);
+                answer.setParameterValueQuietly(i,j, sum);
+            }
+        }
+
+        return answer;
     }
 
     public void rowMultiplyQuietly(double a, int row){

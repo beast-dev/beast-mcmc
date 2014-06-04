@@ -60,11 +60,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double logLikelihood;
     private double storedLogLikelihood;
 
-    private MatrixParameter residual;
-    private MatrixParameter LxF;
-    private MatrixParameter TResidualxC;
-    private MatrixParameter RxTRxC;
-    private MatrixParameter expPart;
+    private double[] residual;
+    private double[] LxF;
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision
@@ -125,25 +122,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             throw new RuntimeException("MUST HAVE FEWER FACTORS THAN DATA POINTS\n");
         }
 
-        residual=new MatrixParameter(null);
-        LxF=new MatrixParameter(null);
-        TResidualxC=new MatrixParameter(null);
-        RxTRxC=new MatrixParameter(null);
-        expPart=new MatrixParameter(null);
-        setDimensions();
+        residual=new double[loadings.getColumnDimension()*factors.getColumnDimension()];
+        LxF=new double[loadings.getColumnDimension()*factors.getColumnDimension()];
+
 //       computeResiduals();
 //        System.out.print(new Matrix(residual.toComponents()));
 //        System.out.print(calculateLogLikelihood());
     }
 
-    private void setDimensions(){
-        residual.setDimensions(data.getRowDimension(), data.getColumnDimension());
-        LxF.setDimensions(loadings.getColumnDimension(), factors.getColumnDimension());
-        TResidualxC.setDimensions(residual.getColumnDimension(), colPrecision.getColumnDimension());
-        RxTRxC.setDimensions(rowPrecision.getRowDimension(), TResidualxC.getColumnDimension());
-        expPart.setDimensions(residual.getRowDimension(), RxTRxC.getColumnDimension());
-
-    }
 
 //    public Matrix getData(){
 //        Matrix ans=data;
@@ -176,6 +162,57 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public int getFactorDimension(){return factors.getRowDimension();}
 
+    private void transposeThenMultiply(MatrixParameter Left, MatrixParameter Right, double[] answer){
+        int dim=Left.getRowDimension();
+        int n=Left.getColumnDimension();
+        int p=Right.getColumnDimension();
+
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < p; j++) {
+                double sum = 0;
+                for (int k = 0; k < dim; k++)
+                    sum += Left.getParameterValue(k, i) * Right.getParameterValue(k,j);
+                answer[i*p+j]=sum;
+            }
+        }
+    }
+
+    private void add(MatrixParameter Left, MatrixParameter Right, double[] answer){
+        int row=Left.getRowDimension();
+        int col=Left.getColumnDimension();
+        for (int i = 0; i <row ; i++) {
+            for (int j = 0; j < col; j++) {
+                answer[i*col+j]=Left.getParameterValue(i,j)+Right.getParameterValue(i,j);
+            }
+
+        }
+    }
+
+    private void subtract(MatrixParameter Left, double[] Right, double[] answer){
+        int row=Left.getRowDimension();
+        int col=Left.getColumnDimension();
+        for (int i = 0; i <row ; i++) {
+            for (int j = 0; j < col; j++) {
+                answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
+            }
+
+        }
+    }
+
+    private double TDTTrace(double[] array, DiagonalMatrix middle){
+        int innerDim=middle.getRowDimension();
+        int outerDim=array.length/innerDim;
+        double sum=0;
+        for (int i = 0; i <outerDim; i++) {
+            for (int j = 0; j <innerDim ; j++) {
+                double s1=array[i*innerDim+j];
+                double s2=middle.getParameterValue(j, j);
+                sum+=s1*s1*s2;
+            }
+
+        }
+        return sum;
+    }
 
     private MatrixParameter computeScaledData(){
         MatrixParameter answer=new MatrixParameter(data.getParameterName() + ".scaled");
@@ -228,7 +265,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         return new Matrix(parameter.getParameterValues(), dimMajor, dimMinor);
     }
 
-    private MatrixParameter computeResiduals() {
+    private void computeResiduals() {
 //        Parameter[] dataTemp=new Parameter[nTaxa];
 //        for(int i=0; i<nTaxa; i++)
 //        {
@@ -245,8 +282,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             isDataScaled=true;
         }
 
-        residual = sData.subtractInPlace(loadings.transposeThenProductInPlace(factors, LxF), residual);
-        return residual;
+    transposeThenMultiply(loadings, factors, LxF);
+        subtract(sData, LxF, residual);
     }
 
 
@@ -350,28 +387,28 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         }
 //        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
 //        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
-        residual = computeResiduals();
-//        computeResiduals();
+
+        computeResiduals();
         double logDetRow=0;
         double logDetCol=0;
-        expPart = residual.productInPlace(rowPrecision.productInPlace(residual.transposeThenProductInPlace(colPrecision, TResidualxC), RxTRxC), expPart);
+//        expPart = residual.productInPlace(rowPrecision.productInPlace(residual.transposeThenProductInPlace(colPrecision, TResidualxC), RxTRxC), expPart);
             logDetRow=StrictMath.log(rowPrecision.getDeterminant());
             logDetCol=StrictMath.log(colPrecision.getDeterminant());
 //            System.out.println(logDetCol);
 //            System.out.println(logDetRow);
 
-        double trace=0;
-        if(expPart.getRowDimension()!=expPart.getColumnDimension())
-        {
-            System.err.print("Matrices are not conformable");
-            System.exit(0);
-        }
+        double trace=TDTTrace(residual, colPrecision);
+//        if(expPart.getRowDimension()!=expPart.getColumnDimension())
+//        {
+//            System.err.print("Matrices are not conformable");
+//            System.exit(0);
+//        }
 
-        else{
-            for(int i=0; i<expPart.getRowDimension(); i++){
-                trace+=expPart.getParameterValue(i, i);
-            }
-        }
+//        else{
+//            for(int i=0; i<expPart.getRowDimension(); i++){
+//                trace+=expPart.getParameterValue(i, i);
+//            }
+//        }
 //        System.out.println(expPart);
        return -.5*trace + .5*rowPrecision.getRowDimension()*logDetCol
                         + .5*colPrecision.getColumnDimension()*logDetRow

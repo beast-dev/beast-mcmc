@@ -57,11 +57,25 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean likelihoodKnown = false;
     private boolean isDataScaled=false;
     private boolean storedLikelihoodKnown;
+    private boolean residualKnown=false;
+    private boolean LxFKnown=false;
+    private boolean storedResidualKnown=false;
+    private boolean storedLxFKnown;
+    private boolean traceKnown=false;
+    private boolean storedTraceKnown;
+    private boolean logDetColKnown=false;
+    private boolean storedLogDetColKnown;
+    private double trace;
+    private double storedTrace;
     private double logLikelihood;
     private double storedLogLikelihood;
+    private double logDetCol;
+    private double storedLogDetCol;
 
     private double[] residual;
     private double[] LxF;
+    private double[] storedResidual;
+    private double[] storedLxF;
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision
@@ -124,6 +138,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         residual=new double[loadings.getColumnDimension()*factors.getColumnDimension()];
         LxF=new double[loadings.getColumnDimension()*factors.getColumnDimension()];
+        storedResidual=new double[residual.length];
+        storedLxF=new double[LxF.length];
 
 //       computeResiduals();
 //        System.out.print(new Matrix(residual.toComponents()));
@@ -281,8 +297,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         sData = computeScaledData();
             isDataScaled=true;
         }
-
+    if(!LxFKnown){
     transposeThenMultiply(loadings, factors, LxF);
+        LxFKnown=true;
+    }
         subtract(sData, LxF, residual);
     }
 
@@ -299,6 +317,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     protected void storeState() {
         storedLogLikelihood = logLikelihood;
         storedLikelihoodKnown = likelihoodKnown;
+        storedLogDetColKnown=logDetColKnown;
+        storedLogDetCol=logDetCol;
+        storedTrace=trace;
+        storedTraceKnown=traceKnown;
+        storedResidualKnown=residualKnown;
+        storedLxFKnown=LxFKnown;
+        System.arraycopy(residual, 0, storedResidual, 0, residual.length);
+        System.arraycopy(LxF, 0, storedLxF, 0, residual.length);
     }
 
     /**
@@ -310,6 +336,16 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     protected void restoreState() {
         logLikelihood = storedLogLikelihood; // TODO Possible error in store/restore -- when changed to 42, no error arises
         likelihoodKnown = storedLikelihoodKnown;
+        trace=storedTrace;
+        traceKnown=storedTraceKnown;
+        residualKnown=storedResidualKnown;
+        LxFKnown=storedLxFKnown;
+        residual=storedResidual;
+        storedResidual=new double[residual.length];
+        LxF=storedLxF;
+        storedLxF=new double[LxF.length];
+        logDetCol=storedLogDetCol;
+        logDetColKnown=storedLogDetColKnown;
     }
 
     /**
@@ -333,6 +369,22 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if(variable==data){
             isDataScaled=false;
+            residualKnown=false;
+            traceKnown=false;
+        }
+        if(variable==factors){
+            LxFKnown=false;
+            residualKnown=false;
+            traceKnown=false;
+        }
+        if(variable==loadings){
+            LxFKnown=false;
+            residualKnown=false;
+            traceKnown=false;
+        }
+        if(variable==colPrecision){
+            logDetColKnown=false;
+            traceKnown=false;
         }
         likelihoodKnown = false;
     }
@@ -387,17 +439,22 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         }
 //        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
 //        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
-
-        computeResiduals();
-        double logDetRow=0;
-        double logDetCol=0;
+        if(!residualKnown){
+            residualKnown=true;
+            computeResiduals();
+        }
 //        expPart = residual.productInPlace(rowPrecision.productInPlace(residual.transposeThenProductInPlace(colPrecision, TResidualxC), RxTRxC), expPart);
-            logDetRow=StrictMath.log(rowPrecision.getDeterminant());
+//            logDetRow=StrictMath.log(rowPrecision.getDeterminant());
+        if(!logDetColKnown){
+            logDetColKnown=true;
             logDetCol=StrictMath.log(colPrecision.getDeterminant());
+        }
 //            System.out.println(logDetCol);
 //            System.out.println(logDetRow);
-
-        double trace=TDTTrace(residual, colPrecision);
+        if(!traceKnown){
+            traceKnown=true;
+            trace=TDTTrace(residual, colPrecision);
+        }
 //        if(expPart.getRowDimension()!=expPart.getColumnDimension())
 //        {
 //            System.err.print("Matrices are not conformable");
@@ -410,9 +467,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //            }
 //        }
 //        System.out.println(expPart);
-       return -.5*trace + .5*rowPrecision.getRowDimension()*logDetCol
-                        + .5*colPrecision.getColumnDimension()*logDetRow
+       return -.5*trace + .5*data.getColumnDimension()*logDetCol
 
-               -.5*rowPrecision.getRowDimension()*colPrecision.getColumnDimension()*Math.log(2.0 * StrictMath.PI);
+               -.5*data.getRowDimension()*data.getColumnDimension()*Math.log(2.0 * StrictMath.PI);
     }
 }

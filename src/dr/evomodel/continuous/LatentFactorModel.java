@@ -174,7 +174,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public MatrixParameter getScaledData(){return sData;}
 
-    public int getFactorDimension(){return dimFactors;}
+    public int getFactorDimension(){return factors.getRowDimension();}
 
 
     private MatrixParameter computeScaledData(){
@@ -211,8 +211,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             varList[i]=varList[i]/(data.getColumnDimension()-1);
             varList[i]=StrictMath.sqrt(varList[i]);
         }
-        System.out.println(data.getColumnDimension());
-        System.out.println(data.getRowDimension());
+//        System.out.println(data.getColumnDimension());
+//        System.out.println(data.getRowDimension());
 
         for(int i=0; i<data.getColumnDimension(); i++){
             for(int j=0; j<data.getRowDimension(); j++){

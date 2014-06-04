@@ -48,6 +48,17 @@ public class MatrixParameter extends CompoundParameter {
         dimensionsEstablished = true;
     }
 
+    public MatrixParameter(String name, int row, int column){
+        super(name);
+        setDimensions(row, column);
+    }
+
+    public MatrixParameter(String name, int row, int column, double a){
+        super(name);
+        setDimensions(row, column, a);
+    }
+
+
     public static MatrixParameter recast(String name, CompoundParameter compoundParameter) {
         final int count = compoundParameter.getParameterCount();
         Parameter[] parameters = new Parameter[count];
@@ -116,10 +127,14 @@ public class MatrixParameter extends CompoundParameter {
 
     //TODO rewrite so that it doesn't destroy existing parameters
     public void setDimensions(int rowDim, int colDim){
+        setDimensions(rowDim, colDim, 0.0);
+    }
+
+    public void setDimensions(int rowDim, int colDim, double a){
         rowDimension=rowDim;
         columnDimension=colDim;
         for (int i = 0; i < colDim; i++) {
-            Parameter column = new Parameter.Default(rowDim, 0.0);
+            Parameter column = new Parameter.Default(rowDim, a);
             column.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, rowDim));
             addParameter(column);
         }
@@ -249,7 +264,7 @@ public class MatrixParameter extends CompoundParameter {
         answer.setDimensions(getRowDimension(), getColumnDimension());
         for (int i = 0; i <getRowDimension() ; i++) {
             for (int j = 0; j <getColumnDimension() ; j++) {
-                answer.setParameterValueQuietly(i,j, getParameterValue(i,j)-Right.getParameterValue(i,j));
+                answer.setParameterValueQuietly(i, j, getParameterValue(i, j) - Right.getParameterValue(i, j));
             }
 
         }
@@ -286,7 +301,7 @@ public class MatrixParameter extends CompoundParameter {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
                     sum += getParameterValue(k,i) * Right.getParameterValue(k,j);
-                answer.setParameterValueQuietly(i,j, sum);
+                answer.setParameterValueQuietly(i, j, sum);
             }
         }
 
@@ -331,7 +346,7 @@ public class MatrixParameter extends CompoundParameter {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
                     sum += getParameterValue(i,k) * Right.getParameterValue(k,j);
-                answer.setParameterValueQuietly(i,j, sum);
+                answer.setParameterValueQuietly(i, j, sum);
             }
         }
 
@@ -357,6 +372,74 @@ public class MatrixParameter extends CompoundParameter {
             }
         }
 
+        return answer;
+    }
+
+    public MatrixParameter productWithTransposed(MatrixParameter Right){
+        if(this.getColumnDimension()!=Right.getColumnDimension()){
+            throw new RuntimeException("Incompatible Dimensions: " + Right.getColumnDimension() + " does not equal " + this.getColumnDimension() +".\n");
+        }
+        MatrixParameter answer=new MatrixParameter(null);
+        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
+
+        int p = this.getColumnDimension();
+        int n = this.getRowDimension();
+        int m = Right.getRowDimension();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                double sum = 0;
+                for (int k = 0; k < p; k++)
+                    sum += getParameterValue(i,k) * Right.getParameterValue(j,k);
+                answer.setParameterValueQuietly(i,j, sum);
+            }
+        }
+
+        return answer;
+    }
+
+    public MatrixParameter productWithTransposedInPlace(MatrixParameter Right, MatrixParameter answer){
+        if(this.getColumnDimension()!=Right.getColumnDimension()){
+            throw new RuntimeException("Incompatible Dimensions: " + Right.getColumnDimension() + " does not equal " + this.getColumnDimension() +".\n");
+        }
+//        MatrixParameter answer=new MatrixParameter(null);
+//        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
+
+        int p = this.getColumnDimension();
+        int n = this.getRowDimension();
+        int m = Right.getRowDimension();
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < m; j++) {
+                double sum = 0;
+                for (int k = 0; k < p; k++)
+                    sum += getParameterValue(i,k) * Right.getParameterValue(j,k);
+                answer.setParameterValueQuietly(i,j, sum);
+            }
+        }
+
+        return answer;
+    }
+
+    public MatrixParameter product(double a){
+        MatrixParameter answer=new MatrixParameter(null);
+        answer.setDimensions(this.getRowDimension(), this.getColumnDimension());
+        for (int i = 0; i <this.getRowDimension() ; i++) {
+            for (int j = 0; j <this.getColumnDimension() ; j++) {
+                answer.setParameterValueQuietly(i,j, a*this.getParameterValue(i,j));
+            }
+
+        }
+        return answer;
+    }
+
+    public MatrixParameter productInPlace(double a, MatrixParameter answer){
+//        MatrixParameter answer=new MatrixParameter(null);
+//        answer.setDimensions(this.getRowDimension(), this.getColumnDimension());
+        for (int i = 0; i <this.getRowDimension() ; i++) {
+            for (int j = 0; j <this.getColumnDimension() ; j++) {
+                answer.setParameterValueQuietly(i,j, a*this.getParameterValue(i,j));
+            }
+
+        }
         return answer;
     }
 

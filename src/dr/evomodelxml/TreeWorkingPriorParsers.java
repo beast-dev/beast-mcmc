@@ -34,7 +34,7 @@ import jebl.math.Binomial;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.TreeTrace;
 import dr.evomodel.coalescent.CoalescentConstantLikelihood;
-import dr.evomodel.coalescent.CoalescentTreeIntervalStatistic;
+import dr.evomodel.coalescent.ExponentialProductLikelihood;
 import dr.evomodel.coalescent.GammaProductLikelihood;
 import dr.evomodel.tree.ConditionalCladeFrequency;
 import dr.evomodel.tree.TreeModel;
@@ -42,7 +42,6 @@ import dr.inference.distribution.ConditionalCladeProbability;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.ConstantLikelihood;
 import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
@@ -175,32 +174,10 @@ public class TreeWorkingPriorParsers {
     	
     	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
     		
-    		double popSize = xo.getDoubleAttribute("popSize");
+    		double popSize = xo.getDoubleAttribute("logPopSize");
     		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
     		
-    		/*TreeIntervals intervals = new TreeIntervals(treeModel);
-    		System.err.println("count: " + intervals.getIntervalCount());
-    		for (int i = 0; i < intervals.getIntervalCount(); i++) {
-    			System.err.println(intervals.getLineageCount(i));
-    		}*/
-    		
-    		CoalescentTreeIntervalStatistic test = new CoalescentTreeIntervalStatistic(treeModel);
-    		/*System.err.println("count: " + test.getDimension());
-    		for (int i = 0; i < test.getDimension(); i++) {
-    			System.err.println(test.getLineageCount(i));
-    		}*/
-    		
-    		double logL = 0.0;
-    		for (int i = 0; i < test.getDimension(); i++) {
-    			if (i == (test.getDimension()-1)) {
-    				logL += Math.log(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2) - popSize;
-    			} else if (test.getLineageCount(i) - test.getLineageCount(i+1) > 0) {
-    				logL += Math.log(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2) - popSize;
-    			}
-    			logL -= test.getStatisticValue(i)*Math.exp(-popSize)*(test.getLineageCount(i)*(test.getLineageCount(i)-1)/2);
-    		}
-    		//System.err.println(logL);
-    		return new ConstantLikelihood(logL);
+    		return new ExponentialProductLikelihood(treeModel, popSize);
     		
     	}
     	
@@ -209,7 +186,7 @@ public class TreeWorkingPriorParsers {
         }
 
         private final XMLSyntaxRule[] rules = {
-        		AttributeRule.newDoubleRule("popSize"),
+        		AttributeRule.newDoubleRule("logPopSize"),
         		new ElementRule(TreeModel.class)
         };
 

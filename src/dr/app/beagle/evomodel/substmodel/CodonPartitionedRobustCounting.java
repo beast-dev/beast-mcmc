@@ -1,7 +1,7 @@
 /*
  * CodonPartitionedRobustCounting.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -65,6 +65,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     public static final String UNCONDITIONED_PREFIX = "u_";
     public static final String SITE_SPECIFIC_PREFIX = "c_";
     public static final String TOTAL_PREFIX = "total_";
+    public static final String UNCONDITIONED_TOTAL_PREFIX = "utotal_";
     public static final String BASE_TRAIT_PREFIX = "base_";
     public static final String COMPLETE_HISTORY_PREFIX = "all_";
     public static final String UNCONDITIONED_PER_BRANCH_PREFIX = "b_u_";
@@ -460,6 +461,19 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     return true;
                 }
             };
+
+            TreeTrait sumUnconditionedOverSitesAndTreeTrait = new TreeTrait.SumOverTreeD(
+                    UNCONDITIONED_TOTAL_PREFIX + codonLabeling.getText(),
+                    sumUnconditionedOverSitesTrait,
+                    includeExternalBranches,
+                    includeInternalBranches) {
+                public boolean getLoggable() {
+                    return true;
+                }
+            };
+
+            treeTraitLogger = new TreeTraitLogger(tree,
+                    new TreeTrait[]{sumOverSitesAndTreeTrait, sumUnconditionedOverSitesAndTreeTrait});
 
             treeTraits.addTrait(unconditionedBase);
             treeTraits.addTrait(sumUnconditionedOverSitesTrait);

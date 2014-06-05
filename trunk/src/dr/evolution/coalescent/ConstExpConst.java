@@ -35,7 +35,7 @@ package dr.evolution.coalescent;
  * @version $ID$
  *
  */
-public class ConstExpConst extends ConstExponential {
+public class ConstExpConst extends DemographicFunction.Abstract {
 
 	/**
 	 * Construct demographic model with default settings
@@ -44,7 +44,33 @@ public class ConstExpConst extends ConstExponential {
 		super(units);
 	}
 
-	public double getTime1() {
+    /**
+     * @return initial population size.
+     */
+    public double getN0() { return N0; }
+
+    /**
+     * sets initial population size.
+     * @param N0 new size
+     */
+    public void setN0(double N0) { this.N0 = N0; }
+
+    /**
+     * @return ancestral population size.
+     */
+    public double getN1() { return N1; }
+
+    /**
+     * sets ancestral population size.
+     * @param N1 new size
+     */
+    public void setN1(double N1) { this.N1 = N1; }
+
+    /**
+     * return the first transition time to exponential growth
+     * @return
+     */
+    public double getTime1() {
 		return time1;
 	}
 
@@ -52,64 +78,73 @@ public class ConstExpConst extends ConstExponential {
 		this.time1 = time1;
 	}
 
-	public double getTime2() {
-		return time1 + (-Math.log(getN1()/getN0())/getGrowthRate());
-	}
+    /**
+     * Get the time period of exponential growth phase
+     * @return
+     */
+    public double getEpochTime() {
+        return epochTime;
+    }
 
-	public void setProportion(double p) {
-		this.setN1(getN0() * p);
-	}
+    public void setEpochTime(double epochTime) {
+        this.epochTime = epochTime;
+    }
 
-	// Implementation of abstract methods
+    /**
+     * Return the second transition time to constant size N1
+     * @return
+     */
+    public double getTime2() {
+        return time1 + epochTime;
+    }
+
+    /**
+     * @return growth rate.
+     */
+    public final double getGrowthRate() {
+        return (Math.log(N0) - Math.log(N1)) / epochTime;
+    }
+
+
+    // Implementation of abstract methods
 
 	public double getDemographic(double t) {
 
-		double N0 = getN0();
-		double N1 = getN1();
-		double r = getGrowthRate();
-		double t1 = getTime1();
-				
-		if (t < t1) {
-			return N0;
+        double r = getGrowthRate();
+
+        if (t < getTime1()) {
+			return getN0();
 		}
 
-		double t2 = getTime2();
-		if (t >= t2) {
-			return N1;
+		if (t >= getTime2()) {
+			return getN1();
 		}
 
-		return N0 * Math.exp(-r*(t - t1));
+		return getN0() * Math.exp(-r*(t - getTime1()));
 	}
 
 	/**
 	 * Returns value of demographic intensity function at time t
 	 * (= integral 1/N(x) dx from 0 to t).
 	 */
-
-    public double getIntensity(double t) {
-        double r = getGrowthRate();
-
-        double time1 = getTime1();
+	public double getIntensity(double t) {
         double time2 = getTime2();
         double oneOverN0 = 1.0 / getN0();
+        double r = getGrowthRate();
 
         if (t < time1) {
             return (t * oneOverN0);
         }
-        double oneOverNt = 1.0 / getDemographic(t);
         if (t > time1 && t < time2) {
             return (time1 * oneOverN0) + (( (Math.exp(t*r) - Math.exp(time1*r)) * oneOverN0) / r);
         }
+
         double oneOverN1 = 1.0 / getN1();
-        if (t >= time2) {
-            return (time1 * oneOverN0) + (( (Math.exp(time2*r) - Math.exp(time1*r)) * oneOverN0) / r)
-                    + (oneOverN1 * (t-time2));
-        }
-        throw new RuntimeException("Not implemented!");
-    }
+        // if (t >= time2) {
+        return (time1 * oneOverN0) + (( (Math.exp(time2*r) - Math.exp(time1*r)) * oneOverN0) / r) + (oneOverN1 * (t-time2));
+  	}
 
-
-    public double getInverseIntensity(double x) {
+	public double getInverseIntensity(double x) {
 
 		throw new RuntimeException("Not implemented!");
 	}
@@ -121,8 +156,8 @@ public class ConstExpConst extends ConstExponential {
 	public String getArgumentName(int n) {
 		switch (n) {
 			case 0: return "N0";
-			case 1: return "r";
-			case 2: return "N1";
+			case 1: return "N1";
+            case 2: return "epochTime";
 			case 3: return "time1";
 		}
 		throw new IllegalArgumentException("Argument " + n + " does not exist");
@@ -131,8 +166,8 @@ public class ConstExpConst extends ConstExponential {
 	public double getArgument(int n) {
 		switch (n) {
 			case 0: return getN0();
-			case 1: return getGrowthRate();
-			case 2: return getN1();
+			case 1: return getN1();
+            case 2: return getEpochTime();
 			case 3: return getTime1();
 		}
 		throw new IllegalArgumentException("Argument " + n + " does not exist");
@@ -141,8 +176,8 @@ public class ConstExpConst extends ConstExponential {
 	public void setArgument(int n, double value) {
 		switch (n) {
 			case 0: setN0(value); break;
-			case 1: setGrowthRate(value); break;
-			case 2: setN1(value); break;
+			case 1: setN1(value); break;
+            case 2: setEpochTime(value); break;
 			case 3: setTime1(value); break;
 			default: throw new IllegalArgumentException("Argument " + n + " does not exist");
 
@@ -161,5 +196,8 @@ public class ConstExpConst extends ConstExponential {
 	// private stuff
 	//
 
-	private double time1 = 0.0;
+    private double N0;
+    private double N1;
+    private double time1;
+    private double epochTime;
 }

@@ -107,7 +107,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
 	/**
 	 * Returns a copy of this function.
 	 */
-	DemographicFunction getCopy();
+//	DemographicFunction getCopy();
 
     /**
      * A threshold for underflow on calculation of likelihood of internode intervals.

@@ -174,10 +174,10 @@ public class TreeWorkingPriorParsers {
     	
     	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
     		
-    		double popSize = xo.getDoubleAttribute("logPopSize");
+    		double logPopSize = xo.getDoubleAttribute("logPopSize");
     		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
     		
-    		return new ExponentialProductLikelihood(treeModel, popSize);
+    		return new ExponentialProductLikelihood(treeModel, logPopSize);
     		
     	}
     	
@@ -359,13 +359,12 @@ public class TreeWorkingPriorParsers {
 				int counter = 0;
 				for (int i = 0; i < flags.length; i++) {
 					if (flags[i]) {
-						newMeans[newLength-counter-1] = means[i];
-						newVariances[newLength-counter-1] = variances[i];
+						newMeans[counter] = means[i];
+						newVariances[counter] = variances[i];
 						counter++;
 					}
 				}
 
-    			//return new GammaProductLikelihood(treeModel, popSize, means, variances);
     			return new GammaProductLikelihood(treeModel, popSize, newMeans, newVariances);
 				
     		} catch (FileNotFoundException fnfe) {

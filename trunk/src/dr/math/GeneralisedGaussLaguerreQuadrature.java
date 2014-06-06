@@ -130,7 +130,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
             for (int i = 0; i < noPoints; i++) {
                 logIntegral = LogTricks.logSum(logIntegral, Math.log(coefficients[i]) +
-                        ((UnivariateFunction.AbstractLogEvaluatableUnivariteFunction)f).logEvaluate(min + abscissae[i] / B));
+                        ((UnivariateFunction.AbstractLogEvaluatableUnivariateFunction)f).logEvaluate(min + abscissae[i] / B));
             }
 
             logIntegral += -(alpha + 1) * Math.log(B);

@@ -54,7 +54,7 @@ public interface UnivariateFunction
 	 */
 	double getUpperBound();
 
-    public abstract class AbstractLogEvaluatableUnivariteFunction implements UnivariateFunction{
+    public abstract class AbstractLogEvaluatableUnivariateFunction implements UnivariateFunction{
 
         public double logEvaluate(double argument){
             return Math.log(evaluate(argument));

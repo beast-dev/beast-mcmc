@@ -180,7 +180,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 transProbKnown = true;
 
                 if (!normalisationKnown) {
-                    //into the jaws of fate...
+
                     integrator.setAlphaAndB(K,E);
 
                     normalisation = integrator.logIntegrate(f, transmissionRate.getBounds().getLowerLimit(0));
@@ -361,7 +361,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return (transmissionRatePrior.getShape()-1);
     }
 
-    private class F extends UnivariateFunction.AbstractLogEvaluatableUnivariteFunction {
+    private class F extends UnivariateFunction.AbstractLogEvaluatableUnivariateFunction {
 
         final boolean hasGeography;
 

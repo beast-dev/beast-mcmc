@@ -2,8 +2,6 @@ package dr.evomodel.coalescent;
 
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
-import dr.math.distributions.GammaDistribution;
 
 /**
  * Calculates a product of exponential densities and exponential tail probabilities.
@@ -13,19 +11,17 @@ import dr.math.distributions.GammaDistribution;
 
 public class ExponentialProductLikelihood extends Likelihood.Abstract {
 	
-	public final static boolean REDUCE_TO_EXPONENTIAL = true;
-	
 	//not used at the moment
 	public final static boolean FIXED_TREE = false;
 	
 	private TreeModel treeModel;
-	private double popSize;
+	private double logPopSize;
 
 	//make sure to provide a log(popSize)
-	public ExponentialProductLikelihood(TreeModel treeModel, double popSize) {
+	public ExponentialProductLikelihood(TreeModel treeModel, double logPopSize) {
 		super(treeModel);
 		this.treeModel = treeModel;
-		this.popSize = popSize;
+		this.logPopSize = logPopSize;
 	}
 	
 	public double calculateLogLikelihood() {
@@ -56,19 +52,19 @@ public class ExponentialProductLikelihood extends Likelihood.Abstract {
 				if (i == ctis.getDimension()-1) {
 					//coalescent event at root: exponential density
 					//System.err.print("coalescent event at root: ");
-					double logContribution = -popSize - combinations*branchLength*Math.exp(-popSize);
+					double logContribution = -logPopSize - combinations*branchLength*Math.exp(-logPopSize);
 					logPDF += logContribution;
 					//System.err.println(logContribution);
 				} else if (ctis.getLineageCount(i) > ctis.getLineageCount(i+1)) {
 					//coalescent event: exponential density
 					//System.err.print("coalescent event (not at root): ");
-					double logContribution = -popSize - combinations*branchLength*Math.exp(-popSize);
+					double logContribution = -logPopSize - combinations*branchLength*Math.exp(-logPopSize);
 					logPDF += logContribution;
 					//System.err.println(logContribution);
 				} else {
 					//sampling event: exponential tail probability
 					//System.err.print("sampling event: ");
-					double logContribution = -combinations*branchLength*Math.exp(-popSize);
+					double logContribution = -combinations*branchLength*Math.exp(-logPopSize);
 					logPDF += logContribution;
 					//System.err.println(logContribution);
 				}

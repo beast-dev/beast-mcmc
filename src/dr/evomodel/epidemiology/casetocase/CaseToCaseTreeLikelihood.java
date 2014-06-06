@@ -1150,7 +1150,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     private void partitionAccordingToRandomTT(boolean checkNonZero){
         boolean gotOne = false;
         int tries = 1;
-        System.out.println("Generating a random starting painting of the tree (checking nonzero likelihood for all " +
+        System.out.println("Generating a random starting partition of the tree (checking nonzero likelihood for all " +
                 "branches and repeating up to 100 times until a start with nonzero likelihood is found)");
         System.out.print("Attempt: ");
         while(!gotOne){
@@ -1195,9 +1195,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
 
 
-    /* Paints a phylogenetic tree with a random compatible painting; if checkNonZero is true, make sure all branch
-    likelihoods are nonzero in the process (this sometimes still results in a zero likelihood for the whole tree, but
-    is much less likely to).
+    /* Partitions a phylogenetic tree randomly; if checkNonZero is true, make sure all branch likelihoods are nonzero
+    in the process (this sometimes still results in a zero likelihood for the whole tree, but is much less likely to).
     */
 
     private BranchMapModel partitionAccordingToRandomTT(BranchMapModel map, boolean checkNonZero){

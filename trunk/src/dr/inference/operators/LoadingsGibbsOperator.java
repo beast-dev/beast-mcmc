@@ -188,9 +188,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         ListIterator<double[][]> currentPrecision=precisionArray.listIterator();
         ListIterator<double[]> currentMidMean=meanMidArray.listIterator();
         ListIterator<double[]> currentMean=meanArray.listIterator();
-        double[] draws=null;
+        double[] draws;
         double[][] precision=null;
-        double[][] variance=null;
+        double[][] variance;
         double[] midMean=null;
         double[] mean=null;
         int size = LFM.getLoadings().getColumnDimension();

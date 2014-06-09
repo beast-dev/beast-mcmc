@@ -9,7 +9,9 @@ import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.Vector;
+
+import java.util.ArrayList;
+import java.util.ListIterator;
 
 /**
  * Created with IntelliJ IDEA.
@@ -22,7 +24,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     NormalDistribution prior;
     LatentFactorModel LFM;
     DiagonalMatrix[] singleElement;
-    MatrixParameter[] innerProductAnswer;
+    ArrayList<double[][]> precisionArray;
     MatrixParameter[] vectorProductAnswer;
     MatrixParameter[] priorMeanVector;
 
@@ -35,10 +37,11 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             for (int i = 0; i <singleElement.length ; i++) {
                 singleElement[i]=DiagonalMatrix.buildIdentityTimesElementMatrix(i+1, 1/(this.prior.getSD()*this.prior.getSD()));
             }
-        innerProductAnswer=new MatrixParameter[LFM.getLoadings().getRowDimension()];
-            for (int i = 0; i <innerProductAnswer.length ; i++) {
-                innerProductAnswer[i]=new MatrixParameter(null);
-                innerProductAnswer[i].setDimensions(i+1,i+1);
+        precisionArray=new ArrayList<double[][]>();
+            double[][] temp;
+        for (int i = 0; i < LFM.getFactorDimension() ; i++) {
+            temp=new double[i+1][i+1];
+            precisionArray.add(temp);
             }
 
         vectorProductAnswer=new MatrixParameter[LFM.getLoadings().getRowDimension()];
@@ -55,24 +58,25 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             }
     }
 
-    private MatrixParameter truncatedInnerProductInPlace(MatrixParameter full, int newRowDimension, MatrixParameter answer){
+    private void getPrecisionOfTruncated(MatrixParameter full, int newRowDimension, double[][] answer){
 
 //        MatrixParameter answer=new MatrixParameter(null);
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
 //        System.out.println(answer.getRowDimension());
 //        System.out.println(answer.getColumnDimension());
-
+        double priorPrecision= 1/(prior.getSD()*prior.getSD());
         int p = full.getColumnDimension();
         for (int i = 0; i < newRowDimension; i++) {
             for (int j = 0; j < newRowDimension; j++) {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
                     sum += full.getParameterValue(i, k) * full.getParameterValue(j,k);
-                answer.setParameterValueQuietly(i,j, sum);
+                answer[i][j]=sum*LFM.getColumnPrecision().getParameterValue(newRowDimension,newRowDimension);
+                if(i==j){
+                    answer[i][j]+=priorPrecision;
+                }
             }
         }
-
-        return answer;
 
     }
 
@@ -97,16 +101,14 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 
     }
 
-    private MatrixParameter getPrecision(int i){
+    private void getPrecision(int i, double[][] answer){
         int size=LFM.getFactorDimension();
-        MatrixParameter answer=null;
         if(i<size){
-            answer= singleElement[i].add(truncatedInnerProductInPlace(LFM.getFactors(), i + 1, innerProductAnswer[i]).product(LFM.getColumnPrecision().getParameterValue(i, i)));
+            getPrecisionOfTruncated(LFM.getFactors(), i + 1, answer);
         }
         else{
-             answer= singleElement[size-1].add(innerProductAnswer[size-1].productWithTransposed(innerProductAnswer[size-1]).product(LFM.getColumnPrecision().getParameterValue(i, i)));
+             getPrecisionOfTruncated(LFM.getFactors(), size, answer);
             }
-        return answer;
     }
 
     private Matrix getMean(int i, Matrix precision){
@@ -167,12 +169,15 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 
     @Override
     public double doOperation() throws OperatorFailedException {
-        Matrix tempFactors = null;
+        ListIterator<double[][]> currentPrecision=precisionArray.listIterator();
         double[] draws=null;
+        double[][] precision=null;
         int size = LFM.getLoadings().getColumnDimension();
         for (int i = 0; i < size; i++) {
-            MatrixParameter precision=getPrecision(i);
-            Matrix mean=getMean(i, new Matrix(precision.getParameterAsMatrix()));
+            if(currentPrecision.hasNext()){
+                precision=currentPrecision.next();}
+            getPrecision(i, precision);
+            Matrix mean=getMean(i, new Matrix(precision));
             double[] meanArray;
             if(i<LFM.getFactorDimension()){
                 meanArray=new double[i+1];
@@ -187,10 +192,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                 }
             }
 
-            draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(meanArray,precision.getParameterAsMatrix());
+            draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(meanArray,precision);
             if(i<draws.length){
                 while(draws[i]<0){
-                    draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(meanArray,precision.getParameterAsMatrix());
+                    draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(meanArray,precision);
                 }
             }
             copy(i, draws);

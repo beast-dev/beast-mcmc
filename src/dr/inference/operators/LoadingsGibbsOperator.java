@@ -82,18 +82,21 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 
         int p = full.getColumnDimension();
         for (int i = 0; i < newRowDimension; i++) {
-            for (int j = 0; j < newRowDimension; j++) {
+            for (int j = i; j < newRowDimension; j++) {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
                     sum += full.getParameterValue(i, k) * full.getParameterValue(j,k);
                 answer[i][j]=sum*LFM.getColumnPrecision().getParameterValue(newRowDimension,newRowDimension);
-                if(i==j){
-                    answer[i][j]+=priorPrecision;
+                if(i==j) {
+                    answer[i][j] += priorPrecision;
+                }
+                else{
+                    answer[j][i]=answer[i][j];
+                }
                 }
             }
         }
 
-    }
 
     private void getTruncatedMean(int newRowDimension, int dataColumn, double[][] variance, double[] midMean, double[] mean){
 

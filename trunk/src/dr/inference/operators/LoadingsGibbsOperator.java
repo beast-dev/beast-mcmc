@@ -88,6 +88,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             double sum = 0;
                 for (int k = 0; k < p; k++)
                     sum += Left.getParameterValue(i, k) * Right[k];
+                sum=sum*LFM.getColumnPrecision().getParameterValue(i,i);
                 answer.setParameterValueQuietly(i,0, sum);
             }
 
@@ -122,7 +123,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             FxY=truncatedMatrixProductWithTransposedWithVectorInPlace(LFM.getFactors(), scaledDataColumn, i+1, vectorProductAnswer[i]);
 //            dataColumn=new Vector(data.toComponents()[i]);
             try {
-                answer=precision.inverse().product(new Matrix(priorMeanVector[i].add(FxY).getParameterAsMatrix()));
+                answer=precision.inverse().product(new Matrix(priorMeanVector[i].add(vectorProductAnswer[i]).getParameterAsMatrix()));
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
@@ -131,7 +132,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             FxY=truncatedMatrixProductWithTransposedWithVectorInPlace(LFM.getFactors(), scaledDataColumn, size, vectorProductAnswer[size-1]);
 //            dataColumn=new Vector(data.toComponents()[i]);
             try {
-                answer=precision.inverse().product(new Matrix(priorMeanVector[size-1].add(FxY).getParameterAsMatrix()));
+                answer=precision.inverse().product(new Matrix(priorMeanVector[size-1].add(vectorProductAnswer[size-1]).getParameterAsMatrix()));
             } catch (IllegalDimension illegalDimension) {
                 illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
@@ -172,10 +173,24 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         for (int i = 0; i < size; i++) {
             MatrixParameter precision=getPrecision(i);
             Matrix mean=getMean(i, new Matrix(precision.getParameterAsMatrix()));
-            draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents()[0],precision.getParameterAsMatrix());
+            double[] meanArray;
+            if(i<LFM.getFactorDimension()){
+                meanArray=new double[i+1];
+                for (int j = 0; j < meanArray.length; j++) {
+                    meanArray[j]=mean.toComponents()[j][0];
+                }
+            }
+            else{
+                meanArray=new double[LFM.getFactorDimension()];
+                for (int j = 0; j < meanArray.length; j++) {
+                    meanArray[j]=mean.toComponents()[j][0];
+                }
+            }
+
+            draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(meanArray,precision.getParameterAsMatrix());
             if(i<draws.length){
                 while(draws[i]<0){
-                    draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean.toComponents()[0],precision.getParameterAsMatrix());
+                    draws= MultivariateNormalDistribution.nextMultivariateNormalPrecision(meanArray,precision.getParameterAsMatrix());
                 }
             }
             copy(i, draws);

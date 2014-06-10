@@ -16,6 +16,7 @@ import dr.inference.distribution.DistributionLikelihood;
 public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     public static final String LOADINGS_GIBBS_OPERATOR="loadingsGibbsOperator";
     public static final String WEIGHT="weight";
+    private final String RANDOM_SCAN="randomScan";
 
 
     @Override
@@ -24,9 +25,9 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         Double weight=Double.parseDouble(weightTemp);
         LatentFactorModel LFM =(LatentFactorModel) xo.getChild(LatentFactorModel.class);
         DistributionLikelihood prior= (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        boolean randomScan=xo.getAttribute(RANDOM_SCAN, true);
 
-
-        return new LoadingsGibbsOperator(LFM, prior, weight);  //To change body of implemented methods use File | Settings | File Templates.
+        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan);  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

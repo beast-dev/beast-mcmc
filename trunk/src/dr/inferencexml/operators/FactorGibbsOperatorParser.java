@@ -7,11 +7,12 @@ import dr.inference.operators.FactorGibbsOperator;
 import dr.xml.*;
 
 /**
- * Created by Max on 5/5/14.
+ @author Max Tolkoff
  */
 public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
     private final String FACTOR_GIBBS_SAMPLER="factorGibbsOperator";
     private final String WEIGHT="weight";
+    private final String RANDOM_SCAN="randomScan";
 
 
     @Override
@@ -19,7 +20,8 @@ public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
         String weightTemp= (String) xo.getAttribute(WEIGHT);
         Double weight=Double.parseDouble(weightTemp);
         LatentFactorModel LFM =(LatentFactorModel) xo.getChild(LatentFactorModel.class);
-        return new FactorGibbsOperator(LFM, weight);
+        boolean randomScan=xo.getAttribute(RANDOM_SCAN, true);
+        return new FactorGibbsOperator(LFM, weight, randomScan);
     }
 
     @Override

@@ -4,8 +4,11 @@ import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
+import dr.math.matrixAlgebra.CholeskyDecomposition;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 import java.util.ArrayList;
@@ -18,7 +21,7 @@ import java.util.ListIterator;
  * Time: 2:23 PM
  * To change this template use File | Settings | File Templates.
  */
-public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator{
+public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     NormalDistribution prior;
     LatentFactorModel LFM;
     ArrayList<double[][]> precisionArray;
@@ -26,36 +29,54 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     ArrayList<double[]> meanArray;
     MatrixParameter[] vectorProductAnswer;
     MatrixParameter[] priorMeanVector;
+    boolean randomScan;
+
 
     double priorPrecision;
     double priorMeanPrecision;
 
-        public LoadingsGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight){
+    public LoadingsGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan) {
         setWeight(weight);
 
-        this.prior=(NormalDistribution) prior.getDistribution();
-        this.LFM=LFM;
-        precisionArray=new ArrayList<double[][]>();
-            double[][] temp;
-        for (int i = 0; i < LFM.getFactorDimension() ; i++) {
-            temp=new double[i+1][i+1];
-            precisionArray.add(temp);
+        this.prior = (NormalDistribution) prior.getDistribution();
+        this.LFM = LFM;
+        precisionArray = new ArrayList<double[][]>();
+        double[][] temp;
+        this.randomScan = randomScan;
+
+
+        meanArray = new ArrayList<double[]>();
+        meanMidArray = new ArrayList<double[]>();
+        double[] tempMean;
+        if (!randomScan) {
+            for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                temp = new double[i + 1][i + 1];
+                precisionArray.add(temp);
             }
-
-
-            meanArray=new ArrayList<double[]>();
-            meanMidArray=new ArrayList<double[]>();
-            double[] tempMean;
-            for (int i = 0; i < LFM.getFactorDimension() ; i++) {
-                tempMean=new double[i+1];
+            for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                tempMean = new double[i + 1];
                 meanArray.add(tempMean);
             }
 
-            for (int i = 0; i < LFM.getFactorDimension() ; i++) {
-                tempMean=new double[i+1];
+            for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                tempMean = new double[i + 1];
                 meanMidArray.add(tempMean);
             }
+        } else {
+            for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                temp = new double[LFM.getFactorDimension()-i][LFM.getFactorDimension() - i];
+                precisionArray.add(temp);
+            }
+            for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                tempMean = new double[LFM.getFactorDimension() - i];
+                meanArray.add(tempMean);
+            }
 
+            for (int i = 0; i < LFM.getFactorDimension(); i++) {
+                tempMean = new double[LFM.getFactorDimension() - i];
+                meanMidArray.add(tempMean);
+            }
+        }
 
 //            vectorProductAnswer=new MatrixParameter[LFM.getLoadings().getRowDimension()];
 //            for (int i = 0; i <vectorProductAnswer.length ; i++) {
@@ -69,11 +90,11 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //
 //
 //            }
-            priorPrecision= 1/(this.prior.getSD()*this.prior.getSD());
-            priorMeanPrecision=this.prior.getMean()*priorPrecision;
+        priorPrecision = 1 / (this.prior.getSD() * this.prior.getSD());
+        priorMeanPrecision = this.prior.getMean() * priorPrecision;
     }
 
-    private void getPrecisionOfTruncated(MatrixParameter full, int newRowDimension, int row, double[][] answer){
+    private void getPrecisionOfTruncated(MatrixParameter full, int newRowDimension, int row, double[][] answer) {
 
 //        MatrixParameter answer=new MatrixParameter(null);
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
@@ -85,64 +106,62 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             for (int j = i; j < newRowDimension; j++) {
                 double sum = 0;
                 for (int k = 0; k < p; k++)
-                    sum += full.getParameterValue(i, k) * full.getParameterValue(j,k);
-                answer[i][j]=sum*LFM.getColumnPrecision().getParameterValue(row, row);
-                if(i==j) {
+                    sum += full.getParameterValue(i, k) * full.getParameterValue(j, k);
+                answer[i][j] = sum * LFM.getColumnPrecision().getParameterValue(row, row);
+                if (i == j) {
                     answer[i][j] += priorPrecision;
-                }
-                else{
-                    answer[j][i]=answer[i][j];
-                }
+                } else {
+                    answer[j][i] = answer[i][j];
                 }
             }
         }
+    }
 
 
-    private void getTruncatedMean(int newRowDimension, int dataColumn, double[][] variance, double[] midMean, double[] mean){
+    private void getTruncatedMean(int newRowDimension, int dataColumn, double[][] variance, double[] midMean, double[] mean) {
 
 //        MatrixParameter answer=new MatrixParameter(null);
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
 //        System.out.println(answer.getRowDimension());
 //        System.out.println(answer.getColumnDimension());
-        MatrixParameter data=LFM.getScaledData();
-        MatrixParameter Left=LFM.getFactors();
+        MatrixParameter data = LFM.getScaledData();
+        MatrixParameter Left = LFM.getFactors();
         int p = data.getColumnDimension();
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
-                for (int k = 0; k < p; k++)
-                    sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
-                sum=sum*LFM.getColumnPrecision().getParameterValue(dataColumn,dataColumn);
-                sum+=priorMeanPrecision;
-                midMean[i]=sum;
-            }
+            for (int k = 0; k < p; k++)
+                sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
+            sum = sum * LFM.getColumnPrecision().getParameterValue(dataColumn, dataColumn);
+            sum += priorMeanPrecision;
+            midMean[i] = sum;
+        }
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
             for (int k = 0; k < newRowDimension; k++)
                 sum += variance[i][k] * midMean[k];
-            mean[i]=sum;
+            mean[i] = sum;
         }
 
     }
 
-    private void getPrecision(int i, double[][] answer){
-        int size=LFM.getFactorDimension();
-        if(i<size){
+    private void getPrecision(int i, double[][] answer) {
+        int size = LFM.getFactorDimension();
+        if (i < size) {
             getPrecisionOfTruncated(LFM.getFactors(), i + 1, i, answer);
+        } else {
+            getPrecisionOfTruncated(LFM.getFactors(), size, i, answer);
         }
-        else{
-             getPrecisionOfTruncated(LFM.getFactors(), size, i, answer);
-            }
     }
 
-    private void getMean(int i, double[][] variance, double[] midMean, double[] mean){
+    private void getMean(int i, double[][] variance, double[] midMean, double[] mean) {
 //        Matrix factors=null;
-        int size=LFM.getFactorDimension();
+        int size = LFM.getFactorDimension();
 //        double[] scaledDataColumn=LFM.getScaledData().getRowValues(i);
 //        Vector dataColumn=null;
 //        Vector priorVector=null;
 //        Vector temp=null;
 //        Matrix data=new Matrix(LFM.getScaledData().getParameterAsMatrix());
-        if(i<size){
+        if (i < size) {
             getTruncatedMean(i + 1, i, variance, midMean, mean);
 //            dataColumn=new Vector(data.toComponents()[i]);
 //            try {
@@ -150,8 +169,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //            } catch (IllegalDimension illegalDimension) {
 //                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 //            }
-        }
-        else{
+        } else {
             getTruncatedMean(size, i, variance, midMean, mean);
 //            dataColumn=new Vector(data.toComponents()[i]);
 //            try {
@@ -163,13 +181,60 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 
     }
 
-    private void copy(int i, double[] random){
-        Parameter changing=LFM.getLoadings().getParameter(i);
-        for (int j = 0; j <random.length ; j++) {
-            changing.setParameterValueQuietly(j,random[j]);
+    private void copy(int i, double[] random) {
+        Parameter changing = LFM.getLoadings().getParameter(i);
+        for (int j = 0; j < random.length; j++) {
+            changing.setParameterValueQuietly(j, random[j]);
+        }
+    }
+    private void drawI(int i, ListIterator<double[][]> currentPrecision, ListIterator<double[]> currentMidMean, ListIterator<double[]> currentMean)
+    {
+        double[] draws=null;
+        double[][] precision=null;
+        double[][] variance;
+        double[] midMean=null;
+        double[] mean=null;
+        double[][] cholesky=null;
+    if(currentPrecision.hasNext())
+    {
+        precision = currentPrecision.next();
+    }
+
+    if(currentMidMean.hasNext())
+    {
+        midMean = currentMidMean.next();
+    }
+    if(currentMean.hasNext())
+    {
+        mean = currentMean.next();
+    }
+    getPrecision(i, precision);
+    variance=(new SymmetricMatrix(precision)).inverse().toComponents();
+
+    try
+    {
+        cholesky = new CholeskyDecomposition(variance).getL();
+    }
+
+    catch(IllegalDimension illegalDimension)
+    {
+        illegalDimension.printStackTrace();
+    }
+
+    getMean(i, variance, mean, midMean);
+
+    draws=MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean,cholesky);
+    if(i<draws.length)
+
+    {
+        while (draws[i] < 0) {
+            draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
         }
     }
 
+    copy(i, draws);
+
+}
 
     @Override
     public int getStepCount() {
@@ -188,38 +253,35 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 
     @Override
     public double doOperation() throws OperatorFailedException {
-        ListIterator<double[][]> currentPrecision=precisionArray.listIterator();
-        ListIterator<double[]> currentMidMean=meanMidArray.listIterator();
-        ListIterator<double[]> currentMean=meanArray.listIterator();
-        double[] draws;
-        double[][] precision=null;
-        double[][] variance;
-        double[] midMean=null;
-        double[] mean=null;
+
         int size = LFM.getLoadings().getColumnDimension();
-        for (int i = 0; i < size; i++) {
-            if(currentPrecision.hasNext()){
-                precision=currentPrecision.next();}
-            if(currentMidMean.hasNext())
-            {midMean=currentMidMean.next();
+        if(!randomScan) {
+            ListIterator<double[][]> currentPrecision = precisionArray.listIterator();
+            ListIterator<double[]> currentMidMean = meanMidArray.listIterator();
+            ListIterator<double[]> currentMean = meanArray.listIterator();
+            for (int i = 0; i < size; i++) {
+                drawI(i, currentPrecision, currentMidMean, currentMean);
             }
-            if(currentMean.hasNext()){
-                mean=currentMean.next();
-            }
-            getPrecision(i, precision);
-            variance=(new SymmetricMatrix(precision)).inverse().toComponents();
-            getMean(i, variance, mean, midMean);
-
-            draws= MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
-            if(i<draws.length){
-                while(draws[i]<0){
-                    draws= MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
-                }
-            }
-            copy(i, draws);
+            LFM.getLoadings().fireParameterChangedEvent();
         }
-        LFM.getLoadings().fireParameterChangedEvent();
-
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+        else{
+            int i= MathUtils.nextInt(LFM.getLoadings().getColumnDimension());
+                ListIterator<double[][]> currentPrecision;
+                ListIterator<double[]> currentMidMean;
+                ListIterator<double[]> currentMean;
+                if(i<LFM.getFactorDimension()){
+                    currentPrecision = precisionArray.listIterator(LFM.getFactorDimension()-i-1);
+                    currentMidMean = meanMidArray.listIterator(LFM.getFactorDimension()-i-1);
+                    currentMean = meanArray.listIterator(LFM.getFactorDimension()-i-1);
+                }
+                else{
+                    currentPrecision = precisionArray.listIterator();
+                    currentMidMean = meanMidArray.listIterator();
+                    currentMean = meanArray.listIterator();
+                }
+                drawI(i, currentPrecision, currentMidMean, currentMean);
+                LFM.getLoadings().fireParameterChangedEvent();
+            }
+        return 0;
+        }
 }

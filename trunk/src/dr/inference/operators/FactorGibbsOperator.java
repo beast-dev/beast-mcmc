@@ -2,6 +2,7 @@ package dr.inference.operators;
 
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -24,10 +25,12 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     double[] mean;
     double[] midMean;
     private int numFactors;
+    private boolean randomScan;
 
-    public FactorGibbsOperator(LatentFactorModel LFM, double weight){
+    public FactorGibbsOperator(LatentFactorModel LFM, double weight, boolean randomScan){
         this.LFM=LFM;
         setWeight(weight);
+        this.randomScan=randomScan;
         setupParameters();
 
     }
@@ -112,18 +115,26 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
         return FACTOR_GIBBS_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    public void randomDraw(int i, double[][] variance){
+        double[] nextValue;
+        getMean(i, variance, midMean, mean);
+
+        nextValue=MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
+
+        copy(nextValue, i);
+    }
+
     @Override
     public double doOperation() throws OperatorFailedException {
         setupParameters();
         getPrecision(precision);
         double[][] variance=(new SymmetricMatrix(precision)).inverse().toComponents();
-        double[] nextValue;
+        if(randomScan){
+            int i= MathUtils.nextInt(LFM.getFactors().getColumnDimension());
+            randomDraw(i, variance);
+        }
         for (int i = 0; i <LFM.getFactors().getColumnDimension() ; i++) {
-            getMean(i, variance, midMean, mean);
-
-            nextValue=MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
-
-            copy(nextValue, i);
+            randomDraw(i, variance);
         }
         LFM.getFactors().fireParameterChangedEvent();
 

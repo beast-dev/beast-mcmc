@@ -43,14 +43,15 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     private void getPrecision(double[][] precision){
         MatrixParameter Loadings=LFM.getLoadings();
         MatrixParameter Precision=LFM.getColumnPrecision();
-        double outerDim=Loadings.getRowDimension();
-        double innerDim=Loadings.getColumnDimension();
+        int outerDim=Loadings.getRowDimension();
+        int innerDim=Loadings.getColumnDimension();
         for (int i = 0; i <outerDim ; i++) {
             for (int j = i; j <outerDim ; j++) {
                 double sum=0;
                 for (int k = j; k <innerDim ; k++) {
                     sum+=Loadings.getParameterValue(i,k)*Loadings.getParameterValue(j,k)*Precision.getParameterValue(k,k);
                 }
+                //todo should be a function of precision on trait model added, not 1
                 if(i==j){
                     precision[i][j]=sum+1;
                 }
@@ -76,7 +77,7 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
         }
         for (int i = 0; i <numFactors ; i++) {
             double sum=0;
-            for (int j = i; j < numFactors; j++) {
+            for (int j = 0; j < numFactors; j++) {
                 sum+=variance[i][j]*midMean[j];
             }
             mean[i]=sum;

@@ -73,7 +73,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             priorMeanPrecision=this.prior.getMean()*priorPrecision;
     }
 
-    private void getPrecisionOfTruncated(MatrixParameter full, int newRowDimension, double[][] answer){
+    private void getPrecisionOfTruncated(MatrixParameter full, int newRowDimension, int row, double[][] answer){
 
 //        MatrixParameter answer=new MatrixParameter(null);
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
@@ -86,7 +86,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                 double sum = 0;
                 for (int k = 0; k < p; k++)
                     sum += full.getParameterValue(i, k) * full.getParameterValue(j,k);
-                answer[i][j]=sum*LFM.getColumnPrecision().getParameterValue(newRowDimension,newRowDimension);
+                answer[i][j]=sum*LFM.getColumnPrecision().getParameterValue(row, row);
                 if(i==j) {
                     answer[i][j] += priorPrecision;
                 }
@@ -111,7 +111,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             double sum = 0;
                 for (int k = 0; k < p; k++)
                     sum += Left.getParameterValue(i, k) * data.getParameterValue(dataColumn, k);
-                sum=sum*LFM.getColumnPrecision().getParameterValue(i,i);
+                sum=sum*LFM.getColumnPrecision().getParameterValue(dataColumn,dataColumn);
                 sum+=priorMeanPrecision;
                 midMean[i]=sum;
             }
@@ -127,10 +127,10 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     private void getPrecision(int i, double[][] answer){
         int size=LFM.getFactorDimension();
         if(i<size){
-            getPrecisionOfTruncated(LFM.getFactors(), i + 1, answer);
+            getPrecisionOfTruncated(LFM.getFactors(), i + 1, i, answer);
         }
         else{
-             getPrecisionOfTruncated(LFM.getFactors(), size, answer);
+             getPrecisionOfTruncated(LFM.getFactors(), size, i, answer);
             }
     }
 

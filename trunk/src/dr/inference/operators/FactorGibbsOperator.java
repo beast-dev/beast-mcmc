@@ -1,10 +1,13 @@
 package dr.inference.operators;
 
 import dr.evomodel.continuous.LatentFactorModel;
+import dr.inference.model.MatrixParameter;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.SymmetricMatrix;
+import org.apache.commons.math.stat.descriptive.moment.Mean;
 
 /**
  * Created with IntelliJ IDEA.
@@ -16,38 +19,74 @@ import dr.inference.model.Parameter;
 public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOperator{
     private static final String FACTOR_GIBBS_OPERATOR="factorGibbsOperator";
     private LatentFactorModel LFM;
-    private int numFactors=0;
     private Matrix idMat;
+    double[][] precision;
+    double[] mean;
+    double[] midMean;
+    private int numFactors;
+
     public FactorGibbsOperator(LatentFactorModel LFM, double weight){
         this.LFM=LFM;
         setWeight(weight);
+        setupParameters();
+
     }
 
-    private Matrix getPrecision(){
+    private void setupParameters(){
         if(numFactors!=LFM.getFactorDimension()){
-            numFactors=LFM.getFactorDimension();
-            idMat=Matrix.buildIdentityTimesElementMatrix(numFactors, 1);
-        }
-        Matrix LoadMat=new Matrix(LFM.getLoadings().getParameterAsMatrix());
-        Matrix colPrec=new Matrix(LFM.getColumnPrecision().getParameterAsMatrix());
-        Matrix answer= null;
-        try {
-            answer = LoadMat.product(colPrec).product(LoadMat.transpose()).add(idMat);
-        } catch (IllegalDimension illegalDimension) {
-            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
-        return answer;
+        numFactors=LFM.getFactorDimension();
+        mean=new double[numFactors];
+        midMean=new double[numFactors];
+        precision=new double[numFactors][numFactors];}
     }
 
-    private Matrix getMean(){
-        Matrix answer=null;
-        Matrix data=new Matrix(LFM.getScaledData().getParameterAsMatrix());
-        try {
-            answer=getPrecision().inverse().product(new Matrix(LFM.getLoadings().getParameterAsMatrix())).product(new Matrix(LFM.getColumnPrecision().getParameterAsMatrix())).product(data);
-        } catch (IllegalDimension illegalDimension) {
-            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+    private void getPrecision(double[][] precision){
+        MatrixParameter Loadings=LFM.getLoadings();
+        MatrixParameter Precision=LFM.getColumnPrecision();
+        double outerDim=Loadings.getRowDimension();
+        double innerDim=Loadings.getColumnDimension();
+        for (int i = 0; i <outerDim ; i++) {
+            for (int j = i; j <outerDim ; j++) {
+                double sum=0;
+                for (int k = j; k <innerDim ; k++) {
+                    sum+=Loadings.getParameterValue(i,k)*Loadings.getParameterValue(j,k)*Precision.getParameterValue(k,k);
+                }
+                if(i==j){
+                    precision[i][j]=sum+1;
+                }
+                else{
+                    precision[i][j]=sum;
+                    precision[j][i]=sum;
+                }
+            }
+
         }
-        return answer;
+    }
+
+    private void getMean(int column, double[][] variance, double[]midMean, double[] mean){
+        MatrixParameter scaledData=LFM.getScaledData();
+        MatrixParameter Precision=LFM.getColumnPrecision();
+        MatrixParameter Loadings=LFM.getLoadings();
+        for (int i = 0; i < Loadings.getRowDimension(); i++) {
+            double sum=0;
+            for (int j = i; j < Loadings.getColumnDimension(); j++) {
+                sum+=Loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*scaledData.getParameterValue(j,column);
+            }
+            midMean[i]=sum;
+        }
+        for (int i = 0; i <numFactors ; i++) {
+            double sum=0;
+            for (int j = i; j < numFactors; j++) {
+                sum+=variance[i][j]*midMean[j];
+            }
+            mean[i]=sum;
+        }
+
+//        try {
+//            answer=getPrecision().inverse().product(new Matrix(LFM.getLoadings().getParameterAsMatrix())).product(new Matrix(LFM.getColumnPrecision().getParameterAsMatrix())).product(data);
+//        } catch (IllegalDimension illegalDimension) {
+//            illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//        }
     }
 
     private void copy(double[] put, int i){
@@ -74,14 +113,15 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
 
     @Override
     public double doOperation() throws OperatorFailedException {
-        Matrix mean=getMean();
-        double[][] meanFull=mean.transpose().toComponents();
-        double[][] precFull=getPrecision().toComponents();
-        double[] nextList=null;
-        double[] nextValue=null;
-        for (int i = 0; i <mean.columns() ; i++) {
-            nextList=meanFull[i];
-            nextValue=MultivariateNormalDistribution.nextMultivariateNormalPrecision(nextList, precFull);
+        setupParameters();
+        getPrecision(precision);
+        double[][] variance=(new SymmetricMatrix(precision)).inverse().toComponents();
+        double[] nextValue;
+        for (int i = 0; i <LFM.getFactors().getColumnDimension() ; i++) {
+            getMean(i, variance, midMean, mean);
+
+            nextValue=MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
+
             copy(nextValue, i);
         }
         LFM.getFactors().fireParameterChangedEvent();

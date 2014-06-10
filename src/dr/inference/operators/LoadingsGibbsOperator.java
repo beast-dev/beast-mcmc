@@ -57,18 +57,18 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             }
 
 
-            vectorProductAnswer=new MatrixParameter[LFM.getLoadings().getRowDimension()];
-            for (int i = 0; i <vectorProductAnswer.length ; i++) {
-                vectorProductAnswer[i]=new MatrixParameter(null);
-                vectorProductAnswer[i].setDimensions(i+1, 1);
-            }
+//            vectorProductAnswer=new MatrixParameter[LFM.getLoadings().getRowDimension()];
+//            for (int i = 0; i <vectorProductAnswer.length ; i++) {
+//                vectorProductAnswer[i]=new MatrixParameter(null);
+//                vectorProductAnswer[i].setDimensions(i+1, 1);
+//            }
 
-        priorMeanVector=new MatrixParameter[LFM.getLoadings().getRowDimension()];
-            for (int i = 0; i <priorMeanVector.length ; i++) {
-                priorMeanVector[i]=new MatrixParameter(null, i+1, 1, this.prior.getMean()/(this.prior.getSD()*this.prior.getSD()));
-
-
-            }
+//        priorMeanVector=new MatrixParameter[LFM.getLoadings().getRowDimension()];
+//            for (int i = 0; i <priorMeanVector.length ; i++) {
+//                priorMeanVector[i]=new MatrixParameter(null, i+1, 1, this.prior.getMean()/(this.prior.getSD()*this.prior.getSD()));
+//
+//
+//            }
             priorPrecision= 1/(this.prior.getSD()*this.prior.getSD());
             priorMeanPrecision=this.prior.getMean()*priorPrecision;
     }

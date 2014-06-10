@@ -106,7 +106,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //        System.out.println(answer.getColumnDimension());
         MatrixParameter data=LFM.getScaledData();
         MatrixParameter Left=LFM.getFactors();
-        int p = Left.getColumnDimension();
+        int p = data.getColumnDimension();
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;
                 for (int k = 0; k < p; k++)

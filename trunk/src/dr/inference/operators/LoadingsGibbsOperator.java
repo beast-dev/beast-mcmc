@@ -27,8 +27,6 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     ArrayList<double[][]> precisionArray;
     ArrayList<double[]> meanMidArray;
     ArrayList<double[]> meanArray;
-    MatrixParameter[] vectorProductAnswer;
-    MatrixParameter[] priorMeanVector;
     boolean randomScan;
 
 

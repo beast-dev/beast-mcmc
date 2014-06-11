@@ -47,20 +47,20 @@ public class ConstExpConstModel extends DemographicModel {
      * Construct demographic model with default settings
      */
     public ConstExpConstModel(Parameter N0Parameter, Parameter N1Parameter, Parameter timeParameter,
-                              Parameter epochParameter, Type units) {
+                              Parameter epochParameter, boolean useNumericalIntegrator, Type units) {
 
-        this(ConstExpConstModelParser.CONST_EXP_CONST_MODEL, N0Parameter, N1Parameter, timeParameter, epochParameter, units);
+        this(ConstExpConstModelParser.CONST_EXP_CONST_MODEL, N0Parameter, N1Parameter, timeParameter, epochParameter, useNumericalIntegrator, units);
     }
 
     /**
      * Construct demographic model with default settings
      */
     public ConstExpConstModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter timeParameter,
-                              Parameter epochParameter, Type units) {
+                              Parameter epochParameter, boolean useNumericalIntegrator, Type units) {
 
         super(name);
 
-        constExpConst = new ConstExpConst(units);
+        constExpConst = new ConstExpConst(useNumericalIntegrator, units);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);

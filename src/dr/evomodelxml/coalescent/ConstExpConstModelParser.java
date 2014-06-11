@@ -17,6 +17,7 @@ public class ConstExpConstModelParser extends AbstractXMLObjectParser {
     public static String ANCESTRAL_POPULATION_SIZE = "ancestralPopulationSize";
     public static String FINAL_PHASE_START_TIME = "finalPhaseStartTime";
     public static String GROWTH_PHASE_TIME = "growthPhaseTime";
+    public static String USE_NUMERICAL_INTEGRATION = "useNumericalIntegration";
 
     public String getParserName() {
         return CONST_EXP_CONST_MODEL;
@@ -38,7 +39,12 @@ public class ConstExpConstModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(GROWTH_PHASE_TIME);
         Parameter epochParam = (Parameter) cxo.getChild(Parameter.class);
 
-        return new ConstExpConstModel(N0Param, N1Param, timeParam, epochParam, units);
+        boolean useNumericalIntegrator = false;
+        if (xo.hasAttribute(USE_NUMERICAL_INTEGRATION)) {
+            useNumericalIntegrator = xo.getBooleanAttribute(USE_NUMERICAL_INTEGRATION);
+        }
+
+        return new ConstExpConstModel(N0Param, N1Param, timeParam, epochParam, useNumericalIntegrator, units);
     }
 
     //************************************************************************
@@ -59,6 +65,7 @@ public class ConstExpConstModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             XMLUnits.SYNTAX_RULES[0],
+            AttributeRule.newBooleanRule(USE_NUMERICAL_INTEGRATION, true),
             new ElementRule(POPULATION_SIZE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(ANCESTRAL_POPULATION_SIZE,

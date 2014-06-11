@@ -37,12 +37,17 @@ package dr.evolution.coalescent;
  */
 public class ConstExpConst extends DemographicFunction.Abstract {
 
-	/**
-	 * Construct demographic model with default settings
-	 */
-	public ConstExpConst(Type units) {
-		super(units);
-	}
+    /**
+     * Construct demographic model with default settings
+     */
+    public ConstExpConst(Type units) {
+        this(false, units);
+    }
+
+    public ConstExpConst(boolean useNumericalIntegrator, Type units) {
+        super(units);
+        this.useNumericalIntegrator = useNumericalIntegrator;
+    }
 
     /**
      * @return initial population size.
@@ -71,12 +76,12 @@ public class ConstExpConst extends DemographicFunction.Abstract {
      * @return
      */
     public double getTime1() {
-		return time1;
-	}
+        return time1;
+    }
 
-	public void setTime1(double time1) {
-		this.time1 = time1;
-	}
+    public void setTime1(double time1) {
+        this.time1 = time1;
+    }
 
     /**
      * Get the time period of exponential growth phase
@@ -108,26 +113,38 @@ public class ConstExpConst extends DemographicFunction.Abstract {
 
     // Implementation of abstract methods
 
-	public double getDemographic(double t) {
+    public double getDemographic(double t) {
 
         double r = getGrowthRate();
 
         if (t < getTime1()) {
-			return getN0();
-		}
+            return getN0();
+        }
 
-		if (t >= getTime2()) {
-			return getN1();
-		}
+        if (t >= getTime2()) {
+            return getN1();
+        }
 
-		return getN0() * Math.exp(-r*(t - getTime1()));
-	}
+        return getN0() * Math.exp(-r*(t - getTime1()));
+    }
 
-	/**
-	 * Returns value of demographic intensity function at time t
-	 * (= integral 1/N(x) dx from 0 to t).
-	 */
-	public double getIntensity(double t) {
+    /**
+     * Calculates the integral 1/N(x) dx between start and finish.
+     */
+    public double getIntegral(double start, double finish)
+    {
+        if (useNumericalIntegrator) {
+            return getNumericalIntegral(start, finish);
+        } else {
+            return getIntensity(finish) - getIntensity(start);
+        }
+    }
+
+    /**
+     * Returns value of demographic intensity function at time t
+     * (= integral 1/N(x) dx from 0 to t).
+     */
+    public double getIntensity(double t) {
         double time2 = getTime2();
         double oneOverN0 = 1.0 / getN0();
         double r = getGrowthRate();
@@ -142,62 +159,63 @@ public class ConstExpConst extends DemographicFunction.Abstract {
         double oneOverN1 = 1.0 / getN1();
         // if (t >= time2) {
         return (time1 * oneOverN0) + (( (Math.exp(time2*r) - Math.exp(time1*r)) * oneOverN0) / r) + (oneOverN1 * (t-time2));
-  	}
+    }
 
-	public double getInverseIntensity(double x) {
+    public double getInverseIntensity(double x) {
 
-		throw new RuntimeException("Not implemented!");
-	}
+        throw new RuntimeException("Not implemented!");
+    }
 
-	public int getNumArguments() {
-		return 4;
-	}
+    public int getNumArguments() {
+        return 4;
+    }
 
-	public String getArgumentName(int n) {
-		switch (n) {
-			case 0: return "N0";
-			case 1: return "N1";
+    public String getArgumentName(int n) {
+        switch (n) {
+            case 0: return "N0";
+            case 1: return "N1";
             case 2: return "epochTime";
-			case 3: return "time1";
-		}
-		throw new IllegalArgumentException("Argument " + n + " does not exist");
-	}
+            case 3: return "time1";
+        }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
 
-	public double getArgument(int n) {
-		switch (n) {
-			case 0: return getN0();
-			case 1: return getN1();
+    public double getArgument(int n) {
+        switch (n) {
+            case 0: return getN0();
+            case 1: return getN1();
             case 2: return getEpochTime();
-			case 3: return getTime1();
-		}
-		throw new IllegalArgumentException("Argument " + n + " does not exist");
-	}
+            case 3: return getTime1();
+        }
+        throw new IllegalArgumentException("Argument " + n + " does not exist");
+    }
 
-	public void setArgument(int n, double value) {
-		switch (n) {
-			case 0: setN0(value); break;
-			case 1: setN1(value); break;
+    public void setArgument(int n, double value) {
+        switch (n) {
+            case 0: setN0(value); break;
+            case 1: setN1(value); break;
             case 2: setEpochTime(value); break;
-			case 3: setTime1(value); break;
-			default: throw new IllegalArgumentException("Argument " + n + " does not exist");
+            case 3: setTime1(value); break;
+            default: throw new IllegalArgumentException("Argument " + n + " does not exist");
 
-		}
-	}
+        }
+    }
 
-	public double getLowerBound(int n) {
-		return 0.0;
-	}
+    public double getLowerBound(int n) {
+        return 0.0;
+    }
 
-	public double getUpperBound(int n) {
-		return Double.POSITIVE_INFINITY;
-	}
+    public double getUpperBound(int n) {
+        return Double.POSITIVE_INFINITY;
+    }
 
-	//
-	// private stuff
-	//
+    //
+    // private stuff
+    //
 
     private double N0;
     private double N1;
     private double time1;
     private double epochTime;
+    private final boolean useNumericalIntegrator;
 }

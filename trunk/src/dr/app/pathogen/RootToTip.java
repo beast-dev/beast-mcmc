@@ -54,7 +54,37 @@ import java.util.List;
 
 public class RootToTip {
 
-    private final static Version version = new BeastVersion();
+    private final static Version version = new Version() {
+        @Override
+        public String getVersion() {
+            return "1.5";
+        }
+
+        @Override
+        public String getVersionString() {
+            return "v1.5";
+        }
+
+        @Override
+        public String getBuildString() {
+            return "";
+        }
+
+        @Override
+        public String getDateString() {
+            return "2003-2014";
+        }
+
+        @Override
+        public String[] getCredits() {
+            return new String[0];
+        }
+
+        @Override
+        public String getHTMLCredits() {
+            return "";
+        }
+    };
 
     public RootToTip(int burnin, String dateOrder, final boolean keepRoot, String outgroup,
                      boolean writeTree, String inputFileName, String outputFileName) throws IOException {

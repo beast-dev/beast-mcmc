@@ -26,7 +26,7 @@
 
     <target name="compile" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath">
+        <javac source="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">
             <include name="dr/app/pathogen/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/tools/**"/>

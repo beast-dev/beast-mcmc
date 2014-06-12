@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.evomodel.continuous.LatentFactorModel;
+import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.MatrixParameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.IllegalDimension;
@@ -20,17 +21,18 @@ import org.apache.commons.math.stat.descriptive.moment.Mean;
 public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOperator{
     private static final String FACTOR_GIBBS_OPERATOR="factorGibbsOperator";
     private LatentFactorModel LFM;
-    private Matrix idMat;
+    private MatrixParameter diffusionPrecision;
     double[][] precision;
     double[] mean;
     double[] midMean;
     private int numFactors;
     private boolean randomScan;
 
-    public FactorGibbsOperator(LatentFactorModel LFM, double weight, boolean randomScan){
+    public FactorGibbsOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision){
         this.LFM=LFM;
         setWeight(weight);
         this.randomScan=randomScan;
+        this.diffusionPrecision=diffusionPrecision;
         setupParameters();
 
     }
@@ -54,9 +56,8 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
                 for (int k = j; k <innerDim ; k++) {
                     sum+=Loadings.getParameterValue(i,k)*Loadings.getParameterValue(j,k)*Precision.getParameterValue(k,k);
                 }
-                //todo should be a function of precision on trait model added, not 1
                 if(i==j){
-                    precision[i][j]=sum+1;
+                    precision[i][j]=sum+diffusionPrecision.getParameterValue(i,j);
                 }
                 else{
                     precision[i][j]=sum;

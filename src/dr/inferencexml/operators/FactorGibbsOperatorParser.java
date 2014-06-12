@@ -2,6 +2,7 @@ package dr.inferencexml.operators;
 
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.model.DiagonalMatrix;
 import dr.math.Polynomial;
 import dr.inference.operators.FactorGibbsOperator;
 import dr.xml.*;
@@ -19,9 +20,11 @@ public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String weightTemp= (String) xo.getAttribute(WEIGHT);
         Double weight=Double.parseDouble(weightTemp);
+        DiagonalMatrix diffusionMatrix;
+        diffusionMatrix=(DiagonalMatrix) xo.getChild(DiagonalMatrix.class);
         LatentFactorModel LFM =(LatentFactorModel) xo.getChild(LatentFactorModel.class);
         boolean randomScan=xo.getAttribute(RANDOM_SCAN, true);
-        return new FactorGibbsOperator(LFM, weight, randomScan);
+        return new FactorGibbsOperator(LFM, weight, randomScan, diffusionMatrix);
     }
 
     @Override
@@ -32,6 +35,7 @@ public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(LatentFactorModel.class),
 //            new ElementRule(CompoundParameter.class),
+            new ElementRule(DiagonalMatrix.class),
             AttributeRule.newDoubleRule(WEIGHT),
     };
 

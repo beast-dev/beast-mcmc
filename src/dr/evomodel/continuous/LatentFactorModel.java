@@ -225,7 +225,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         double sum=0;
         for (int i = 0; i <outerDim; i++) {
             for (int j = 0; j <innerDim ; j++) {
-                double s1=array[i*innerDim+j];
+                double s1=array[j*outerDim+i];
                 double s2=middle.getParameterValue(j, j);
                 sum+=s1*s1*s2;
             }

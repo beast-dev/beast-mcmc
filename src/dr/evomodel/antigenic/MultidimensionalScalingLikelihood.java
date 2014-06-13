@@ -168,8 +168,24 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter) {
-        locationsParameter.setColumnDimension(mdsDimension);
-        locationsParameter.setRowDimension(locationCount);
+        if (locationsParameter.getColumnDimension() > 0){
+            boolean proceed = true;
+            //TODO: allow for a generic tipTrait/location specification with mismatches: tipTraits which are not represented by the pairwise distances (tipTraits > locations) and more locations based on pairwise distances than represented by the tipTraits
+            if (locationsParameter.getColumnDimension() != locationCount){
+                System.err.println("locationsParameter column dimension ("+locationsParameter.getColumnDimension()+") is not equal to the locationCount ("+locationCount+")");
+                proceed = false;
+            }
+            if (locationsParameter.getRowDimension() != mdsDimension){
+                System.err.println("locationsParameter row dimension ("+locationsParameter.getRowDimension()+") is not equal to the mdsDimension ("+mdsDimension+")");
+                proceed = false;
+            }
+            if (!proceed) {
+                System.exit(-1);
+            }
+        } else{
+            locationsParameter.setColumnDimension(mdsDimension);
+            locationsParameter.setRowDimension(locationCount);
+        }
         for (int i = 0; i < locationLabels.length; i++) {
             locationsParameter.getParameter(i).setId(locationLabels[i]);
         }

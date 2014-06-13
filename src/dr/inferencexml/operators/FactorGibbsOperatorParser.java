@@ -19,7 +19,7 @@ public class FactorGibbsOperatorParser extends AbstractXMLObjectParser {
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         String weightTemp= (String) xo.getAttribute(WEIGHT);
-        Double weight=Double.parseDouble(weightTemp);
+        double weight=Double.parseDouble(weightTemp);
         DiagonalMatrix diffusionMatrix;
         diffusionMatrix=(DiagonalMatrix) xo.getChild(DiagonalMatrix.class);
         LatentFactorModel LFM =(LatentFactorModel) xo.getChild(LatentFactorModel.class);

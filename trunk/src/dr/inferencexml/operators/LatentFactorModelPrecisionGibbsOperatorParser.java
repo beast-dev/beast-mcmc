@@ -1,22 +1,18 @@
 package dr.inferencexml.operators;
 
 import dr.evomodel.continuous.LatentFactorModel;
-import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.operators.LatentFactorModelPrecisionGibbsOperator;
 import dr.inference.operators.LoadingsGibbsOperator;
 import dr.xml.*;
-import dr.inference.distribution.DistributionLikelihood;
 
 /**
- * Created with IntelliJ IDEA.
- * User: max
- * Date: 5/23/14
- * Time: 1:49 PM
- * To change this template use File | Settings | File Templates.
+ * Created by max on 6/12/14.
  */
-public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
-    public static final String LOADINGS_GIBBS_OPERATOR="loadingsGibbsOperator";
-    public static final String WEIGHT="weight";
-    private final String RANDOM_SCAN="randomScan";
+public class LatentFactorModelPrecisionGibbsOperatorParser extends AbstractXMLObjectParser {
+    public final String LATENT_FACTOR_MODEL_PRECISION_OPERATOR="latentFactorModelPrecisionOperator";
+    public final String WEIGHT="weight";
+    public final String RANDOM_SCAN="randomScan";
 
 
     @Override
@@ -27,7 +23,9 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         DistributionLikelihood prior= (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
         boolean randomScan=xo.getAttribute(RANDOM_SCAN, true);
 
-        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan);  //To change body of implemented methods use File | Settings | File Templates.
+        return new LatentFactorModelPrecisionGibbsOperator(LFM, prior, weight, randomScan);
+
+
     }
 
     @Override
@@ -44,16 +42,16 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserDescription() {
-        return "Gibbs sampler for the loadings matrix of a latent factor model";  //To change body of implemented methods use File | Settings | File Templates.
+        return "Gibbs sampler for the precision of a factor analysis model";
     }
 
     @Override
     public Class getReturnType() {
-        return LoadingsGibbsOperator.class;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     @Override
     public String getParserName() {
-        return LOADINGS_GIBBS_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
+        return LATENT_FACTOR_MODEL_PRECISION_OPERATOR;
     }
 }

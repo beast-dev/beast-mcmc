@@ -70,6 +70,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
                 if (updateIndex.getParameterValue(i) == 1.0)
                     updateMap.add(i);
             }
+            updateMapSize=updateMap.size();
         }
 
         this.lowerOperatorBound = lowerOperatorBound;
@@ -97,7 +98,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         if (updateMap == null) {
             index = MathUtils.nextInt(parameter.getDimension());
         } else {
-            index = updateMap.get(MathUtils.nextInt(updateMap.size()));
+            index = updateMap.get(MathUtils.nextInt(updateMapSize));
         }
 
         // a random point around old value within windowSize * 2
@@ -241,6 +242,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     private Parameter parameter = null;
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
+    private int updateMapSize;
     private final BoundaryCondition condition;
 
     private final Double lowerOperatorBound;

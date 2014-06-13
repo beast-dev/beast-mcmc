@@ -50,6 +50,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
 
+    private final boolean scaleData;
+
     private final int dimFactors;
     private final int dimData;
     private final int nTaxa;
@@ -78,12 +80,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double[] storedLxF;
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
-                             DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision
+                             DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
+                             boolean scaleData
     ) {
         super("");
 //        data = new Matrix(dataIn.getParameterAsMatrix());
 //        factors = new Matrix(factorsIn.getParameterAsMatrix());
 //        loadings = new Matrix(loadingsIn.getParameterAsMatrix());
+        this.scaleData=scaleData;
         this.data = data;
         this.factors = factors;
         // Put default bounds on factors
@@ -293,6 +297,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
+        if(!isDataScaled & !scaleData){
+            sData=data;
+            isDataScaled=true;
+        }
         if(!isDataScaled){
         sData = computeScaledData();
             isDataScaled=true;

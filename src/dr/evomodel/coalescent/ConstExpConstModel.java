@@ -66,7 +66,7 @@ public class ConstExpConstModel extends DemographicModel {
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.N1Parameter = N0Parameter;
+        this.N1Parameter = N1Parameter;
         addVariable(N1Parameter);
         N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 

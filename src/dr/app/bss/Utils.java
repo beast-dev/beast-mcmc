@@ -775,8 +775,9 @@ public class Utils {
 
 	public static void printArray(Object[] x) {
 		for (int i = 0; i < x.length; i++) {
-			System.out.println(x[i]);
+			System.out.print(x[i] + " ");
 		}
+		System.out.println();
 	}// END: printArray
 
 	public static void printArray(int[] x) {
@@ -1206,6 +1207,23 @@ public class Utils {
 	// ////////////////////
 	// ---ARRAYS UTILS---//
 	// ////////////////////
+	
+	public static int findMaximum(ArrayList<Integer> array) {
+		
+		int max = -Integer.MAX_VALUE;
+		
+		for(Integer element: array) {
+			
+			if(element > max) {
+				
+				max = element;
+				
+			}//END: if check
+			
+		}//END: i loop
+		
+		return max;
+	}//END: findMaximum
 	
 	public static double sumArray(double[] array) {
 

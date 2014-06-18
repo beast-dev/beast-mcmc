@@ -9,11 +9,15 @@ import dr.xml.*;
 
 /**
  * Parses an element from an DOM document into a ConstantExponentialModel.
+ *
+ * There are 2 parameterization depending on whether a growth rate parameter
+ * or an ancestral population size parameter are specified.
  */
 public class ConstExpConstModelParser extends AbstractXMLObjectParser {
 
     public static String CONST_EXP_CONST_MODEL = "constExpConst";
     public static String POPULATION_SIZE = "populationSize";
+    public static String GROWTH_RATE = "growthRate";
     public static String ANCESTRAL_POPULATION_SIZE = "ancestralPopulationSize";
     public static String FINAL_PHASE_START_TIME = "finalPhaseStartTime";
     public static String GROWTH_PHASE_TIME = "growthPhaseTime";
@@ -30,8 +34,16 @@ public class ConstExpConstModelParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(POPULATION_SIZE);
         Parameter N0Param = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(ANCESTRAL_POPULATION_SIZE);
-        Parameter N1Param = (Parameter) cxo.getChild(Parameter.class);
+        Parameter N1Param = null;
+        Parameter growthRateParam = null;
+
+        if (xo.hasChildNamed(ANCESTRAL_POPULATION_SIZE)) {
+            cxo = xo.getChild(ANCESTRAL_POPULATION_SIZE);
+            N1Param = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            cxo = xo.getChild(GROWTH_RATE);
+            growthRateParam = (Parameter) cxo.getChild(Parameter.class);
+        }
 
         cxo = xo.getChild(FINAL_PHASE_START_TIME);
         Parameter timeParam = (Parameter) cxo.getChild(Parameter.class);
@@ -44,7 +56,7 @@ public class ConstExpConstModelParser extends AbstractXMLObjectParser {
             useNumericalIntegrator = xo.getBooleanAttribute(USE_NUMERICAL_INTEGRATION);
         }
 
-        return new ConstExpConstModel(N0Param, N1Param, timeParam, epochParam, useNumericalIntegrator, units);
+        return new ConstExpConstModel(N0Param, N1Param, growthRateParam, timeParam, epochParam, useNumericalIntegrator, units);
     }
 
     //************************************************************************
@@ -68,8 +80,12 @@ public class ConstExpConstModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(USE_NUMERICAL_INTEGRATION, true),
             new ElementRule(POPULATION_SIZE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(ANCESTRAL_POPULATION_SIZE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new XORRule(
+                    new ElementRule(ANCESTRAL_POPULATION_SIZE,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                    new ElementRule(GROWTH_RATE,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+            ),
             new ElementRule(FINAL_PHASE_START_TIME,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(GROWTH_PHASE_TIME,

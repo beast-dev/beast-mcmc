@@ -36,16 +36,21 @@ package dr.evolution.coalescent;
  *
  */
 public class ConstExpConst extends DemographicFunction.Abstract {
+    public enum Parameterization {
+        GROWTH_RATE,
+        ANCESTRAL_POPULATION_SIZE
+    }
 
     /**
      * Construct demographic model with default settings
      */
     public ConstExpConst(Type units) {
-        this(false, units);
+        this(Parameterization.ANCESTRAL_POPULATION_SIZE, false, units);
     }
 
-    public ConstExpConst(boolean useNumericalIntegrator, Type units) {
+    public ConstExpConst(Parameterization parameterization, boolean useNumericalIntegrator, Type units) {
         super(units);
+        this.parameterization = parameterization;
         this.useNumericalIntegrator = useNumericalIntegrator;
     }
 
@@ -63,13 +68,22 @@ public class ConstExpConst extends DemographicFunction.Abstract {
     /**
      * @return ancestral population size.
      */
-    public double getN1() { return N1; }
+    public double getN1() {
+        if (parameterization == Parameterization.ANCESTRAL_POPULATION_SIZE) {
+            return N1;
+        }
+
+        return N0 * Math.exp(-epochTime * growthRate);
+    }
 
     /**
-     * sets ancestral population size.
+     * sets ancestral population size. Can only be set if the parameterization is ANCESTRAL_POPULATION_SIZE
      * @param N1 new size
      */
-    public void setN1(double N1) { this.N1 = N1; }
+    public void setN1(double N1) {
+        assert(parameterization == Parameterization.ANCESTRAL_POPULATION_SIZE);
+        this.N1 = N1;
+    }
 
     /**
      * return the first transition time to exponential growth
@@ -104,9 +118,22 @@ public class ConstExpConst extends DemographicFunction.Abstract {
     }
 
     /**
+     * sets growth rate for exponential phase. Can only be set if the parameterization is GROWTH_RATE
+     * @param growthRate new growthRate
+     */
+    public final void setGrowthRate(double growthRate) {
+        assert(parameterization == Parameterization.GROWTH_RATE);
+        this.growthRate = growthRate;
+    }
+
+    /**
      * @return growth rate.
      */
     public final double getGrowthRate() {
+        if (parameterization == Parameterization.GROWTH_RATE) {
+            return growthRate;
+        }
+
         return (Math.log(N0) - Math.log(N1)) / epochTime;
     }
 
@@ -173,7 +200,7 @@ public class ConstExpConst extends DemographicFunction.Abstract {
     public String getArgumentName(int n) {
         switch (n) {
             case 0: return "N0";
-            case 1: return "N1";
+            case 1: return (parameterization == Parameterization.ANCESTRAL_POPULATION_SIZE ? "N1": "r");
             case 2: return "epochTime";
             case 3: return "time1";
         }
@@ -183,7 +210,7 @@ public class ConstExpConst extends DemographicFunction.Abstract {
     public double getArgument(int n) {
         switch (n) {
             case 0: return getN0();
-            case 1: return getN1();
+            case 1: return (parameterization == Parameterization.ANCESTRAL_POPULATION_SIZE ? getN1(): getGrowthRate());
             case 2: return getEpochTime();
             case 3: return getTime1();
         }
@@ -193,7 +220,13 @@ public class ConstExpConst extends DemographicFunction.Abstract {
     public void setArgument(int n, double value) {
         switch (n) {
             case 0: setN0(value); break;
-            case 1: setN1(value); break;
+            case 1:
+                if (parameterization == Parameterization.ANCESTRAL_POPULATION_SIZE) {
+                    setN1(value);
+                } else {
+                    setGrowthRate(value);
+                }
+                break;
             case 2: setEpochTime(value); break;
             case 3: setTime1(value); break;
             default: throw new IllegalArgumentException("Argument " + n + " does not exist");
@@ -202,6 +235,9 @@ public class ConstExpConst extends DemographicFunction.Abstract {
     }
 
     public double getLowerBound(int n) {
+        if (n == 1 && parameterization == Parameterization.GROWTH_RATE) {
+            return Double.NEGATIVE_INFINITY;
+        }
         return 0.0;
     }
 
@@ -217,5 +253,7 @@ public class ConstExpConst extends DemographicFunction.Abstract {
     private double N1;
     private double time1;
     private double epochTime;
+    private double growthRate;
     private final boolean useNumericalIntegrator;
+    private final Parameterization parameterization;
 }

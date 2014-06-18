@@ -46,29 +46,42 @@ public class ConstExpConstModel extends DemographicModel {
     /**
      * Construct demographic model with default settings
      */
-    public ConstExpConstModel(Parameter N0Parameter, Parameter N1Parameter, Parameter timeParameter,
+    public ConstExpConstModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter,
                               Parameter epochParameter, boolean useNumericalIntegrator, Type units) {
 
-        this(ConstExpConstModelParser.CONST_EXP_CONST_MODEL, N0Parameter, N1Parameter, timeParameter, epochParameter, useNumericalIntegrator, units);
+        this(ConstExpConstModelParser.CONST_EXP_CONST_MODEL, N0Parameter, N1Parameter, growthRateParameter, timeParameter, epochParameter, useNumericalIntegrator, units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public ConstExpConstModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter timeParameter,
+    public ConstExpConstModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter,
                               Parameter epochParameter, boolean useNumericalIntegrator, Type units) {
 
         super(name);
 
-        constExpConst = new ConstExpConst(useNumericalIntegrator, units);
+        if (N1Parameter != null && growthRateParameter != null) {
+            throw new RuntimeException("Only one of N1 and growthRate can be specified");
+        }
+
+        constExpConst = new ConstExpConst(
+                (N1Parameter != null ? ConstExpConst.Parameterization.ANCESTRAL_POPULATION_SIZE : ConstExpConst.Parameterization.GROWTH_RATE),
+                useNumericalIntegrator, units);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.N1Parameter = N1Parameter;
-        addVariable(N1Parameter);
-        N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.growthRateParameter = growthRateParameter;
+
+        if (N1Parameter != null) {
+            addVariable(N1Parameter);
+            N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        } else {
+            addVariable(growthRateParameter);
+            growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+        }
 
         this.timeParameter = timeParameter;
         addVariable(timeParameter);
@@ -86,15 +99,15 @@ public class ConstExpConstModel extends DemographicModel {
 
     public DemographicFunction getDemographicFunction() {
 
-        double time1 = timeParameter.getParameterValue(0);
-        double N0 = N0Parameter.getParameterValue(0);
-        double N1 = N1Parameter.getParameterValue(0);
-        double epochTime = epochParameter.getParameterValue(0);
+        constExpConst.setEpochTime(epochParameter.getParameterValue(0));
+        constExpConst.setN0(N0Parameter.getParameterValue(0));
+        constExpConst.setTime1(timeParameter.getParameterValue(0));
 
-        constExpConst.setEpochTime(epochTime);
-        constExpConst.setN0(N0);
-        constExpConst.setN1(N1);
-        constExpConst.setTime1(time1);
+        if (N1Parameter != null) {
+            constExpConst.setN1(N1Parameter.getParameterValue(0));
+        } else {
+            constExpConst.setGrowthRate(growthRateParameter.getParameterValue(0));
+        }
 
         return constExpConst;
     }
@@ -105,6 +118,7 @@ public class ConstExpConstModel extends DemographicModel {
 
     private final Parameter N0Parameter;
     private final Parameter N1Parameter;
+    private final Parameter growthRateParameter;
     private final Parameter timeParameter;
     private final Parameter epochParameter;
     private final ConstExpConst constExpConst;

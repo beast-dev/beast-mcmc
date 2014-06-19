@@ -91,6 +91,23 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean saveCompleteHistory,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
+        this(name, tree, partition, codons, codonLabeling, useUniformization, includeExternalBranches,
+                includeInternalBranches, doUnconditionalPerBranch, saveCompleteHistory, false,
+                branchFormat, logFormat);
+    }
+
+    public CodonPartitionedRobustCounting(String name, TreeModel tree,
+                                          AncestralStateBeagleTreeLikelihood[] partition,
+                                          Codons codons,
+                                          CodonLabeling codonLabeling,
+                                          boolean useUniformization,
+                                          boolean includeExternalBranches,
+                                          boolean includeInternalBranches,
+                                          boolean doUnconditionalPerBranch,
+                                          boolean saveCompleteHistory,
+                                          boolean forceAverageRate,
+                                          StratifiedTraitOutputFormat branchFormat,
+                                          StratifiedTraitOutputFormat logFormat) {
         super(name);
         this.tree = tree;
         addModel(tree);
@@ -120,7 +137,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.saveCompleteHistory = saveCompleteHistory;
 
         productChainModel =
-                new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList);
+                new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList, forceAverageRate);
         addModel(productChainModel);
 
         this.useUniformization = useUniformization;

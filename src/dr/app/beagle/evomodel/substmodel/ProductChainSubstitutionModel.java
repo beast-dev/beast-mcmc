@@ -1,7 +1,7 @@
 /*
  * ProductChainSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -59,10 +59,18 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     public ProductChainSubstitutionModel(String name,
                                          List<SubstitutionModel> baseModels,
                                          List<SiteRateModel> rateModels) {
+        this(name, baseModels, rateModels, false);
+    }
+
+    public ProductChainSubstitutionModel(String name,
+                                         List<SubstitutionModel> baseModels,
+                                         List<SiteRateModel> rateModels,
+                                         boolean forceAverageModel) {
         super(name);
 
         this.baseModels = baseModels;
         this.rateModels = rateModels;
+        this.forceAverageModel = forceAverageModel;
         numBaseModel = baseModels.size();
 
         if (numBaseModel == 0) {
@@ -159,11 +167,23 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         System.arraycopy(rateMatrix, 0, out, 0, stateCount * stateCount);
     }
 
+    double getRateForModel(int index) {
+        if (!forceAverageModel) {
+            return rateModels.get(index).getRateForCategory(0);
+        } else {
+            double total = 0.0;
+            for (int i = 0; i < rateModels.size(); ++i) {
+                total += rateModels.get(i).getRateForCategory(0);
+            }
+            return total / rateModels.size();
+        }
+    }
+
     protected double[] scaleForProductChain(double[] in, int model) {
         if (rateModels == null) {
             return in;
         }
-        final double scalar = rateModels.get(model).getRateForCategory(0);
+        final double scalar = getRateForModel(model);
         if (scalar == 1.0) {
             return in;
         }
@@ -173,22 +193,30 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
             out[i] = scalar * in[i];
         }
         return out;
-    }    
+    }
+
+    SubstitutionModel getBaseModel(int index) {
+//        if (!forceAverageModel) {
+        return baseModels.get(index);
+//        } else {
+//            throw new IllegalArgumentException("Not yet implemented");
+//        }
+    }
 
     private void computeKroneckerSumsAndProducts() {
 
         int currentStateSize = stateSizes[0];
         double[] currentRate = new double[currentStateSize * currentStateSize];
-        baseModels.get(0).getInfinitesimalMatrix(currentRate);
+        getBaseModel(0).getInfinitesimalMatrix(currentRate);
         currentRate = scaleForProductChain(currentRate, 0);
-        
-        EigenDecomposition currentED = baseModels.get(0).getEigenDecomposition();
+
+        EigenDecomposition currentED = getBaseModel(0).getEigenDecomposition();
         double[] currentEval = scaleForProductChain(currentED.getEigenValues(), 0);
         double[] currentEvec = currentED.getEigenVectors();
         double[] currentIevcT = transpose(currentED.getInverseEigenVectors(), currentStateSize);
 
         for (int i = 1; i < numBaseModel; i++) {
-            SubstitutionModel nextModel = baseModels.get(i);
+            SubstitutionModel nextModel = getBaseModel(i);
             int nextStateSize = stateSizes[i];
             double[] nextRate = new double[nextStateSize * nextStateSize];
             nextModel.getInfinitesimalMatrix(nextRate);
@@ -263,4 +291,5 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     protected final int[] stateSizes;
     protected final ProductChainFrequencyModel pcFreqModel;
     protected double[] rateMatrix = null;
+    private final boolean forceAverageModel;
 }

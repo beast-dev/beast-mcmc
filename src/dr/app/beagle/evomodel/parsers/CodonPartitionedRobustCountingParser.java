@@ -1,7 +1,7 @@
 /*
  * CodonPartitionedRobustCountingParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -52,6 +52,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
     public static final String INCLUDE_INTERNAL = "includeInternalBranches";
     public static final String DO_UNCONDITIONED_PER_BRANCH = "unconditionedPerBranch";
     public static final String SAVE_HISTORY = "saveCompleteHistory";
+    public static final String AVERAGE_RATES = "averageRates";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -119,6 +120,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         boolean includeExternalBranches = xo.getAttribute(INCLUDE_EXTERNAL, true);
         boolean includeInternalBranches = xo.getAttribute(INCLUDE_INTERNAL, true);
         boolean doUnconditionedPerBranch = xo.getAttribute(DO_UNCONDITIONED_PER_BRANCH, false);
+        boolean averageRates = xo.getAttribute(AVERAGE_RATES, false);
         boolean saveCompleteHistory = xo.getAttribute(SAVE_HISTORY, false);
 
         return new CodonPartitionedRobustCounting(
@@ -132,6 +134,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
                 includeInternalBranches,
                 doUnconditionedPerBranch,
                 saveCompleteHistory,
+                averageRates,
                 branchFormat,
                 logFormat);
     }
@@ -157,6 +160,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             AttributeRule.newBooleanRule(INCLUDE_EXTERNAL, true),
             AttributeRule.newBooleanRule(INCLUDE_INTERNAL, true),
             AttributeRule.newBooleanRule(DO_UNCONDITIONED_PER_BRANCH, true),
+            AttributeRule.newBooleanRule(AVERAGE_RATES, true),
             AttributeRule.newStringRule(LABELING),
             AttributeRule.newBooleanRule(SAVE_HISTORY, true),
     };

@@ -3,11 +3,7 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 
 import dr.app.bss.Utils;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
-import dr.math.GammaFunction;
 import dr.math.distributions.Distribution;
-import dr.math.distributions.LogNormalDistribution;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.UniformDistribution;
 
@@ -17,33 +13,32 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 	private Distribution distribution;
 	// vector z of branch assignments (length 2N-1)
 	private ArrayList<Integer> mapping;
-	// vector with realized parameter values (length K)
-	private ArrayList<Double> parameterValues;
 
 	// K
 	private int categoryCount;
-	// 2N-1
+	// N=2n-1
 	private int mappingLength;
 	// concentration parameter of DPP
 	private double gamma;
 
 	public StickBreakingProcessPrior(Distribution distribution, //
 			ArrayList<Integer> mapping, //
-			ArrayList<Double> parameterValues, //
 			double gamma //
 	) {
 
 		this.distribution = distribution;
 		this.mapping = mapping;
-		this.parameterValues = parameterValues;
 
-		this.categoryCount = parameterValues.size()+1;
+		this.categoryCount = Utils.findMaximum(mapping) + 1;// parameterValues.size();
 		this.mappingLength = mapping.size();
 
 		this.gamma = gamma;
 
 	}// END: Constructor
 
+	/**
+	 * Assumes mappings start from index 0
+	 * */
 	private int[] getCounts() {
 
 		// eta_k parameters (number of assignments to each category)
@@ -59,20 +54,19 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 
 	public double getPriorLoglike() {
 
-		double loglike = categoryCount * Math.log(gamma);
-
 		// eta_k parameters (number of assignments to each category)
 		int[] counts = getCounts();
+
+		double loglike = categoryCount * Math.log(gamma);
+
 		for (int k = 0; k < categoryCount; k++) {
 
-			loglike += Math.log(factorial(counts[k] - 1));
+			loglike += logfactorial(counts[k] - 1);
 
 		}// END: k loop
 
-		for (int i = 0; i < mappingLength; i++) {
-
+		for (int i = 1; i <= mappingLength; i++) {
 			loglike -= Math.log(gamma + i - 1);
-
 		}// END: i loop
 
 		return loglike;
@@ -82,57 +76,36 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 	public double logPdf(double[] x) {
 
 		double loglike = 0.0;
+		for (int i = 0; i < x.length; i++) {
 
-		for (int i = 0; i < categoryCount; i++) {
+			loglike += distribution.logPdf(x[i]);
 
-			
-			loglike += distribution.logPdf(parameterValues.get(i));
-			
-//			System.err.println("FUBAR" + loglike);
-			
 		}
 
 		return loglike;
 	}// END: logPdf
 
-	private double factorial(double n) {
+	private double logfactorial(int n) {
 
-		if (n <= 0.0) {
-			return 1.0;
+		double logfactorial = 0.0;
+
+		for (int j = 1; j < n; j++) {
+			logfactorial += +Math.log(j);
+		}
+
+		return logfactorial;
+	}
+
+	// TODO: test and remove
+	private long factorial(long n) {
+
+		if (n <= 0) {
+			return 1;
 		} else {
 			return n * factorial(n - 1);
 		}
 
 	}// END: factorial
-
-	public double getMultivariateLoglike() {
-
-		double logLike = 0.0;
-
-		int[] counts = getCounts();
-		double countSum = Utils.sumArray(counts);
-
-		logLike += GammaFunction.lnGamma(countSum);
-		for (int i = 0; i < categoryCount; i++) {
-
-			logLike += ((counts[i] - 1) * Math.log(parameterValues.get(i)) - GammaFunction
-					.lnGamma(counts[i]));
-
-		}// END: i loop
-
-		return logLike;
-	}// END: getMultivariateLoglike
-	
-	// S(n,k) = S(n-1,k-1) * k*S(n-1, k)
-	public int stirlingNumberSecondKind(int n, int k) {
-
-		if (k == 1 || k == n) {
-			return 1;
-		}
-
-		return stirlingNumberSecondKind(n - 1, k - 1) + k
-				* stirlingNumberSecondKind(n - 1, k);
-	}// END: stirlingNumberSecondKind
 
 	@Override
 	public double[][] getScaleMatrix() {
@@ -151,9 +124,9 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 
 	public static ArrayList<Integer> chinRest(int N, double gamma) {
 
-		ArrayList<Integer> mapping = new ArrayList<>();
+		ArrayList<Integer> mapping = new ArrayList<Integer>();
 
-		mapping.add(0, 1);
+		mapping.add(0, 0);
 		int nextFree = 1;
 
 		for (int i = 1; i < N; i++) {
@@ -168,7 +141,6 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 			} else {
 
 				// choose existing table with weights by number of customers
-
 				int samplePos = -Integer.MAX_VALUE;
 				double cumProb = 0.0;
 				double u2 = Math.random();
@@ -196,36 +168,36 @@ public class StickBreakingProcessPrior implements MultivariateDistribution {
 
 		// szybki lopez
 
-		int N = 10;
+		int N = 3;
 		double gamma = 2.9;
-		ArrayList<Integer> mappings = chinRest(N, gamma);
-		int K = Utils.findMaximum(mappings);
+		ArrayList<Integer> mapping = chinRest(N, gamma);
+		int K = Utils.findMaximum(mapping) + 1;
 
 		Distribution dist = new UniformDistribution(0.0, 1.1);
 
-		ArrayList<Double> parameterValues = new ArrayList<>();
+		double[] parameterValues = new double[K];
 		for (int i = 0; i < K; i++) {
 
 			double u = Math.random();
-			parameterValues.add(i, u);
+			parameterValues[i] = u;
 
 		}// END: i loop
 
-		StickBreakingProcessPrior dpp = new StickBreakingProcessPrior(dist, mappings, parameterValues, gamma);
+		StickBreakingProcessPrior dpp = new StickBreakingProcessPrior(dist,
+				mapping, gamma);
 
-		
 		System.out.println("Mappings:");
-		Utils.printArray(mappings.toArray());
+		Utils.printArray(mapping.toArray());
 		System.out.println("K=" + K);
-		System.out.println("Values:");
-		Utils.printArray(parameterValues.toArray());
+		// System.out.println("Values:");
+		// Utils.printArray(parameterValues);
 		System.out.println("Etas:");
 		Utils.printArray(dpp.getCounts());
-		
-		double loglike =  dpp.getPriorLoglike(); //+dpp.logPdf( null );
 
-		System.out.println("Loglikelihood=" + loglike);	
-		
+		double loglike = dpp.getPriorLoglike();// +dpp.logPdf( null );
+
+		System.out.println("Loglikelihood=" + loglike);
+
 	}// END: main
 
 }// END: class

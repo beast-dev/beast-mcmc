@@ -55,7 +55,7 @@
 
     <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}"
+        <javac source="1.6" target="1.6" srcdir="${src}" destdir="${build}"
                classpath="${lib}/colt.jar:${lib}/commons-math-2.2.jar:${lib}/jebl.jar:${lib}/jam.jar:${lib}/itext-1.4.5.jar:${lib}/jdom.jar:${lib}/mtj.jar:${lib}/JRI.jar:${lib}/mpj.jar">
             <include name="dr/app/tracer/**"/>
             <include name="dr/app/util/**"/>
@@ -124,13 +124,13 @@
             <zipgroupfileset dir="${lib}" includes="jebl.jar"/>
             <zipgroupfileset dir="${lib}" includes="jam.jar"/>
             <zipgroupfileset dir="${lib}" includes="itext-1.4.5.jar"/>
-            <zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar"/>
+            <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>
         </jar>
 
     </target>
 
-    <property name="version" value="1.6" />
-    <property name="version_number" value="1.6.0" />
+    <property name="version" value="1.6.1pre" />
+    <property name="version_number" value="1.6.1" />
     <property name="release_dir" value="release_tracer" />
     <property name="name" value="Tracer" />
 
@@ -202,8 +202,7 @@
         <echo message="Linux/Unix version release is finished." />
     </target>
 
-    <target name="mac"
-                                   description="release Mac version of Tracer">
+    <target name="mac" description="release Mac version of Tracer">
         <delete dir="${Mac_package_dir}" />
         <!-- Create the release directory -->
         <mkdir dir="${Mac_package_dir}" />

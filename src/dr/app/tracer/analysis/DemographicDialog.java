@@ -74,19 +74,19 @@ public class DemographicDialog {
     };
 
     private String[][] argumentGuesses = {
-            {"populationsize", "population", "popsize", "n0", "size", "pop"},
-            {"ancestralsize", "ancestralproportion", "ancpopsize", "proportion", "ancestral", "n1"},
-            {"exponentialgrowthrate", "exponentialrate", "growthrate", "expgrowth", "growth", "r", "rate"},
-            {"doublingtime", "doubling", "time", "t"},
-            {"logisticshape", "shape", "halflife", "t50", "t_50", "time50", "logt50"},
-            {"spikefactor", "spike", "factor", "f"},
-            {"cataclysmtime", "cataclysm", "time", "t"},
-            {"transitiontime", "time1", "time", "t1", "t"},
-            {"logisticgrowthrate", "logisticgrowth", "loggrowth", "logisticrate"},
-            {"populationsize2", "population2", "popsize2", "n02", "size2", "pop2"},
-            {"exponentialgrowthrate2", "exponentialrate2", "growthrate2", "expgrowth2", "growth2", "rate2", "r2"},
-            {"ancestralsize", "ancestralproportion", "ancpopsize", "proportion", "ancestral", "n1"},
-            {"growthepoch", "growthtime", "epoch", "dt"}
+            {".*populationsize", ".*population", ".*popsize", ".*n0", ".*size", ".*pop.*"},
+            {".*ancestralsize", ".*ancestralproportion", ".*ancpopsize", ".*proportion.*", ".*ancestral.*", ".*n1"},
+            {".*exponentialgrowthrate", ".*exponentialrate", ".*growthrate", ".*expgrowth", ".*growth.*", ".*\\.r$", ".*rate"},
+            {".*doublingtime", ".*doubling.*", ".*time.*", "\\.t$"},
+            {".*logisticshape", ".*shape", ".*halflife", ".*t50", ".*t_50", ".*time50", ".*logt50"},
+            {".*spikefactor", ".*spike", ".*factor.*", "\\.f$"},
+            {".*cataclysmtime", ".*cataclysm", ".*time", "\\.t$"},
+            {".*transitiontime", ".*time1", ".*time", ".*t1", "\\.t$"},
+            {".*logisticgrowthrate", ".*logisticgrowth", ".*loggrowth", ".*logr", ".*logisticrate"},
+            {".*populationsize2", ".*population2", ".*popsize2", ".*n02", ".*n2", ".*size2", ".*pop2"},
+            {".*exponentialgrowthrate2", ".*exponentialrate2", ".*growthrate2", ".*expgrowth2", ".*growth2", ".*rate2", ".*r2"},
+            {".*ancestralsize", ".*ancestralproportion", ".*ancpopsize", ".*proportion.*", ".*ancestral.*", ".*n1"},
+            {".*growthepoch", ".*growthtime", ".*epoch.*", ".*dt"}
     };
 
     private String[] argumentNames = new String[]{
@@ -115,8 +115,8 @@ public class DemographicDialog {
             {0, 1, 3},      // expansion doubling time
             {0, 7, 2},      // const-exp
             {0, 1, 2, 4},   // const-log
-            {0, 11, 12, 7}, // const-exp-const ancestral size
-            {0, 2, 12, 7},  // const-exp-const growth rate
+            {0, 11, 7, 12}, // const-exp-const ancestral size
+            {0, 2, 7, 12},  // const-exp-const growth rate
             {0, 2, 4, 7, 8},// exp-logistic
             {0, 2, 5, 6},   // boom bust
             {0, 2, 9, 10, 7}// Two Epoch
@@ -173,7 +173,9 @@ public class DemographicDialog {
     private int findArgument(JComboBox comboBox, String argument) {
         for (int i = 0; i < comboBox.getItemCount(); i++) {
             String item = ((String) comboBox.getItemAt(i)).toLowerCase();
-            if (item.indexOf(argument) != -1) return i;
+            if (item.matches(argument)) {
+                return i;
+            }
         }
         return -1;
     }
@@ -201,13 +203,17 @@ public class DemographicDialog {
 
         setArguments(temporalAnalysisFrame);
 
+        rootHeightCombo.removeAllItems();
         for (int j = 0; j < traceList.getTraceCount(); j++) {
             String statistic = traceList.getTraceName(j);
             rootHeightCombo.addItem(statistic);
         }
         int index = findArgument(rootHeightCombo, rootHeightTrace);
-        if (index == -1) index = findArgument(rootHeightCombo, "root");
-        if (index == -1) index = findArgument(rootHeightCombo, "height");
+        if (index == -1) index = findArgument(rootHeightCombo, ".*rootheight.*");
+        if (index == -1) index = findArgument(rootHeightCombo, ".*rootage.*");
+        if (index == -1) index = findArgument(rootHeightCombo, ".*tmrca.*");
+        if (index == -1) index = findArgument(rootHeightCombo, ".*root.*");
+        if (index == -1) index = findArgument(rootHeightCombo, ".*height.*");
         if (index == -1) index = 0;
         rootHeightCombo.setSelectedIndex(index);
 
@@ -222,8 +228,9 @@ public class DemographicDialog {
         final JDialog dialog = optionPane.createDialog(frame, "Demographic Analysis");
         dialog.pack();
 
-        demographicCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
+        demographicCombo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
                 setArguments(temporalAnalysisFrame);
                 dialog.pack();
             }
@@ -265,8 +272,7 @@ public class DemographicDialog {
 
         for (int i = 0; i < argumentIndices[demo].length; i++) {
             int k = argumentIndices[demo][i];
-            optionPanel.addComponentWithLabel(argumentNames[k] + ":",
-                    argumentCombos[k]);
+            optionPanel.addComponentWithLabel(argumentNames[k] + ":", argumentCombos[k]);
         }
 
         optionPanel.addSeparator();
@@ -620,7 +626,7 @@ public class DemographicDialog {
 
             } else if (demographicCombo.getSelectedIndex() == 9) { // ConstExpConst Ancestral Size
                 title = "Constant-Exponential-Constant";
-                ConstExpConst demo = new ConstExpConst(ConstExpConst.Parameterization.GROWTH_RATE, false, Units.Type.YEARS);
+                ConstExpConst demo = new ConstExpConst(ConstExpConst.Parameterization.ANCESTRAL_POPULATION_SIZE, false, Units.Type.YEARS);
                 for (int i = 0; i < values.get(0).size(); i++) {
                     demo.setN0((Double) values.get(0).get(i));
                     demo.setN1((Double) values.get(1).get(i));

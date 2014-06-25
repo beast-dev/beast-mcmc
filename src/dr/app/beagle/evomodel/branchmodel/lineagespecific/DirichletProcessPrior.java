@@ -3,59 +3,114 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import dr.app.bss.Utils;
+import dr.inference.distribution.MultivariateNormalDistributionModel;
+import dr.inference.distribution.ParametricMultivariateDistributionModel;
+import dr.inference.model.AbstractModelLikelihood;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.math.distributions.Distribution;
-import dr.math.distributions.MultivariateDistribution;
-import dr.math.distributions.UniformDistribution;
+import dr.inference.model.Variable;
+import dr.inference.model.Variable.ChangeType;
+import dr.math.MathUtils;
 
-public class DirichletProcessPrior implements MultivariateDistribution {
-
-	private List<List<Parameter>> hyperparameterList;
+@SuppressWarnings("serial")
+public class DirichletProcessPrior extends AbstractModelLikelihood {
 	
-	// distribution of realized parameter values
-	private MultivariateDistribution distribution;
-	// vector z of branch assignments (length 2n-1)
-	private ArrayList<Integer> mapping;
 	private Parameter categoriesParameter;
-	// K
-	private int categoryCount;
-	// N=2n-1
+	private ArrayList<Integer> mapping;
 	private int mappingLength;
-	// concentration parameter of DPP
+	private int categoryCount;
+	private boolean likelihoodKnown;
+	private double logLikelihood;
+	private boolean mappingsKnown = false;
+//	private MultivariateDistribution distribution;
+	private CompoundParameter uniquelyRealizedParameters;
+	private List<ParametricMultivariateDistributionModel> baseModels;
 	private Parameter gamma;
+	private int[] counts;
+	private final List<Double> cachedLogFactorials;
 
-	private Parameter uniquelyRealizedParameters;
-	
-	private double[] cachedLogFactors;
-	
-	public DirichletProcessPrior(MultivariateDistribution distribution, //
-			ArrayList<Integer> mapping, //
-			Parameter categoriesParameter,
-			Parameter uniquelyRealizedParameters,
-			List<List<Parameter>> hyperparameterList,
+	public DirichletProcessPrior(Parameter categoriesParameter, //
+//			MultivariateDistribution distribution, //
+			// ArrayList<Integer> mapping, //
+			CompoundParameter uniquelyRealizedParameters, //
+//			List<ParametricMultivariateDistributionModel> baseModels, //
+			List<ParametricMultivariateDistributionModel> baseModels, //
+			// List<List<Parameter>> hyperparameterList, //
 			Parameter gamma //
 	) {
 
+		super("");
+
+		this.categoriesParameter = categoriesParameter;
+		getMappings();
+        getCounts();
 		
-		this.hyperparameterList=hyperparameterList;
-		
+		// this.hyperparameterList=hyperparameterList;
+		this.baseModels = baseModels;
+
 		this.uniquelyRealizedParameters = uniquelyRealizedParameters;
-		
-		this.distribution = distribution;
-		this.mapping = mapping;
+
+//		this.distribution = distribution;
+		// this.mapping = mapping;
 
 		this.categoryCount = Utils.findMaximum(mapping) + 1;// parameterValues.size();
 		this.mappingLength = mapping.size();
 
 		this.gamma = gamma;
 
-		this.categoriesParameter = categoriesParameter;
+		cachedLogFactorials = new ArrayList<Double>();
+		cachedLogFactorials.add(0, 0.0);
 		
-		cacheLogFactorials();
+		// add all
+		this.addVariable(categoriesParameter);
+		this.addVariable(gamma);
+		this.addVariable(uniquelyRealizedParameters);
+
+		// for (List<Parameter> list : hyperparameterList) {
+		//
+		// for (Parameter param : list) {
+		// this.addVariable(param);
+		// }
+		//
+		// }// END: list loop
+
+		for (ParametricMultivariateDistributionModel base : baseModels) {
+			addModel(base);
+		}
 		
+		this.likelihoodKnown = false;
 	}// END: Constructor
+
+	private double getLogFactorial(int i) {
+
+		if (i <= cachedLogFactorials.size()) {
+
+			for (int j = cachedLogFactorials.size() - 1; j <= i; j++) {
+
+				double logfactorial = cachedLogFactorials.get(j)
+						+ Math.log(j + 1);
+				cachedLogFactorials.add(logfactorial);
+			}
+
+		}
+
+		return cachedLogFactorials.get(i);
+	}
+
+	private void getMappings() {
+
+		mapping = new ArrayList<Integer>();
+		for (int i = 0; i < categoriesParameter.getDimension(); i++) {
+
+			int category = (int) categoriesParameter.getParameterValue(i);
+			mapping.add(i, category);
+
+		}
+
+	}// END: getMappings
 
 	/**
 	 * Assumes mappings start from index 0
@@ -63,7 +118,7 @@ public class DirichletProcessPrior implements MultivariateDistribution {
 	private int[] getCounts() {
 
 		// eta_k parameters (number of assignments to each category)
-		int[] counts = new int[categoryCount];
+		counts = new int[categoryCount];
 		for (int i = 0; i < mappingLength; i++) {
 
 			counts[mapping.get(i)]++;
@@ -73,16 +128,46 @@ public class DirichletProcessPrior implements MultivariateDistribution {
 		return counts;
 	}// END: getCounts
 
-	public double getPriorLoglike() {
+	private int getMapping(int i) {
+		// TODO All wrong
+		return mapping.get(i);
+	}
+
+	private int getCounts(int whichDensity) {
+		// TODO All wrong
+		return counts[whichDensity];
+	}
+
+	private double getLogDensity(Parameter param, int whichIndex) {
+		
+		// List<Parameter> hyperParameters = hyperparameterList.get(whichIndex);
+		return baseModels.get(whichIndex).logPdf(param.getAttributeValue());
+	}
+
+	private double getRealizedValuesLogDensity() {
+
+		double total = 0.0;
+
+		for (int i = 0; i < uniquelyRealizedParameters.getParameterCount(); ++i) {
+
+			Parameter param = uniquelyRealizedParameters.getParameter(i);
+			int whichDensity = getMapping(i);
+
+			total += getCounts(whichDensity) * getLogDensity(param, whichDensity);
+
+		}
+
+		return total;
+	}
+
+	private double getCategoriesLogDensity() {
 
 		int[] counts = getCounts();
 		double loglike = categoryCount * Math.log(gamma.getParameterValue(0));
 
 		for (int k = 0; k < categoryCount; k++) {
 
-//			loglike += logfactor(counts[k] - 1);
-			loglike+= cachedLogFactors[counts[k] - 1];
-			
+			loglike += getLogFactorial(counts[k] - 1);
 
 		}// END: k loop
 
@@ -94,60 +179,135 @@ public class DirichletProcessPrior implements MultivariateDistribution {
 	}// END: getPriorLoglike
 
 	@Override
-	public double logPdf(double[] x) {
+	public Model getModel() {
+		return this;
+	}
 
-		double loglike = 0.0;
-		for (int i = 0; i < x.length; i++) {
+	@Override
+	public double getLogLikelihood() {
 
-//			loglike += distribution.logPdf(x[i]);
-
+		if (!likelihoodKnown) {
+			logLikelihood = calculateLogLikelihood();
+			likelihoodKnown = true;
 		}
 
-		return loglike;
-	}// END: logPdf
+		return logLikelihood;
+	}
 
-	
-	private void cacheLogFactorials() {
+	private double calculateLogLikelihood() {
+		return getCategoriesLogDensity() + getRealizedValuesLogDensity();
+	}
+
+	@Override
+	public void makeDirty() {
+
+	}
+
+	@Override
+	protected void handleModelChangedEvent(Model model, Object object, int index) {
+		likelihoodKnown = false;
+	}
+
+	@Override
+	protected void handleVariableChangedEvent(Variable variable, int index,
+			ChangeType type) {
+
+		if (variable == categoriesParameter) {
+			mappingsKnown = false;
+		} else if (variable == gamma) {
+
+			// do nothing
+
+		} else if (variable == uniquelyRealizedParameters) {
+
+			// TODO: do sth
+
+		} else {
+
+			// assuming list<list> hyperparameterList changed
+
+			throw new IllegalArgumentException("Unknown parameter");
+
+		}
 		
-        cachedLogFactors = new double[categoryCount];
-        cachedLogFactors[0] = 0.0;
-        for (int j = 1; j < categoryCount; j++) {
-            cachedLogFactors[j] = cachedLogFactors[j - 1] + Math.log(j);
+		likelihoodKnown = true;
+
+	}//END: handleVariableChangedEvent
+
+	@Override
+	protected void storeState() {
+
+	}
+
+	@Override
+	protected void restoreState() {
+		likelihoodKnown = false;
+	}
+
+	@Override
+	protected void acceptState() {
+
+	}
+
+	public static void main(String args[]) {
+		
+		double[] mappings = new double[]{0, 0, 1, 1, 2};
+		Parameter categoriesParameter = new Parameter.Default(mappings);
+
+		Parameter rTheta1 = new Parameter.Default(1.0);
+		Parameter rTheta2 = new Parameter.Default(1.0);
+		Parameter rTheta3 = new Parameter.Default(2.0);
+		Parameter rTheta4 = new Parameter.Default(2.0);
+		Parameter rTheta5 = new Parameter.Default(3.0);
+		
+		CompoundParameter realizedThetas = new CompoundParameter("realizedThetas");		
+		realizedThetas.addParameter(rTheta1);
+		realizedThetas.addParameter(rTheta2);
+		realizedThetas.addParameter(rTheta3);
+		realizedThetas.addParameter(rTheta4);
+		realizedThetas.addParameter(rTheta5);
+
+		int dim = 2;
+        double[] mean = new double[dim];
+        double[] precision = new double[dim*dim];
+//        Parameter[] params = new Parameter[dim*dim];
+        
+        MathUtils.setSeed(666);
+        
+        for(int i = 0; i < dim; i++) {
+        	mean[i]=MathUtils.nextDouble();
+        	for (int j = i; j < dim; j++) {
+        		precision[i + j*dim] = MathUtils.nextDouble();
+        	}
         }
+        
+       Parameter meanParameter = new Parameter.Default(mean);
+       
+       Parameter prec1 = new Parameter.Default(new double[]{precision[0], precision[1]});
+       Parameter prec2 = new Parameter.Default(new double[]{precision[2], precision[3]});
+       Parameter[] params = new Parameter[]{prec1, prec2};
+       MatrixParameter precParameter = new MatrixParameter("name", params);
+       
+	   MultivariateNormalDistributionModel mvn1 = new MultivariateNormalDistributionModel(meanParameter, precParameter);
+	   MultivariateNormalDistributionModel mvn2 = new MultivariateNormalDistributionModel(meanParameter, precParameter);
+	   MultivariateNormalDistributionModel mvn3 = new MultivariateNormalDistributionModel(meanParameter, precParameter);
+	   MultivariateNormalDistributionModel mvn4 = new MultivariateNormalDistributionModel(meanParameter, precParameter);
+	   MultivariateNormalDistributionModel mvn5 = new MultivariateNormalDistributionModel(meanParameter, precParameter);
+	   
+		List<ParametricMultivariateDistributionModel> baseModels = new ArrayList<ParametricMultivariateDistributionModel>();
+		baseModels.add(0, mvn1);
+		baseModels.add(1, mvn2);
+		baseModels.add(2, mvn3);
+		baseModels.add(3, mvn4);
+		baseModels.add(4, mvn5);
 		
-	}//END: cacheFactorials
+		Parameter gamma = new Parameter.Default(0.9);
+		
+		DirichletProcessPrior dpp = new DirichletProcessPrior(categoriesParameter, realizedThetas, baseModels, gamma);
+		System.out.println(dpp.getLogLikelihood());
+		
+	}// END: main
 	
-	private double logfactor(int n) {
-
-//		double fact = 1;
-//		   for ( int i = 1 ; i <= n ; i++ ) {
-//	            fact = fact*i;
-//	      }
-		
-		double logfactor = 0.0;
-
-		for (int i = 1; i <= n; i++) {
-			logfactor += Math.log(i);
-		}
-
-		return logfactor;
-	}
-
-	@Override
-	public double[][] getScaleMatrix() {
-		return null;
-	}
-
-	@Override
-	public double[] getMean() {
-		return null;
-	}
-
-	@Override
-	public String getType() {
-		return null;
-	}
-
 	public static ArrayList<Integer> chinRest(int N, double gamma) {
 
 		ArrayList<Integer> mapping = new ArrayList<Integer>();
@@ -171,18 +331,18 @@ public class DirichletProcessPrior implements MultivariateDistribution {
 				double cumProb = 0.0;
 				double u2 = Math.random();
 				double size = (double) mapping.size();
-				
-				for(int j : mapping) {
-					
-					cumProb += 1/size;
-					
+
+				for (int j : mapping) {
+
+					cumProb += 1 / size;
+
 					if (u2 < cumProb) {
 						samplePos = j;
 						break;
 					}
-					
+
 				}
-				
+
 				mapping.add(i, samplePos);
 
 			}// END: u1 check
@@ -191,42 +351,6 @@ public class DirichletProcessPrior implements MultivariateDistribution {
 
 		return mapping;
 	}// END: chinProc
-
-//	public static void main(String args[]) {
-//
-//		// szybki lopez
-//
-//		int N = 10;
-//		Parameter gamma = new Parameter.Default(0.9);
-//		ArrayList<Integer> mapping = chinRest(N, gamma);
-//		int K = Utils.findMaximum(mapping) + 1;
-//
-//		MultivariateDistribution dist =  null;// new UniformDistribution(0.0, 1.1);
-//		
-//		double[] parameterValues = new double[K];
-//		for (int i = 0; i < K; i++) {
-//
-//			double u = Math.random();
-//			parameterValues[i] = u;
-//
-//		}// END: i loop
-//
-//		DirichletProcessPrior dpp = new DirichletProcessPrior(dist,
-//				mapping, gamma);
-//
-//		System.out.println("Mappings:");
-//		Utils.printArray(mapping.toArray());
-//		System.out.println("K=" + K);
-//		// System.out.println("Values:");
-//		// Utils.printArray(parameterValues);
-//		System.out.println("Etas:");
-//		Utils.printArray(dpp.getCounts());
-//
-//		double loglike = dpp.getPriorLoglike() +dpp.logPdf( parameterValues );
-//
-//		System.out.println("Loglikelihood=" + loglike);
-//
-//	}// END: main
-
+	
 }// END: class
 

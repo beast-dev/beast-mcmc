@@ -84,6 +84,16 @@ public class Utils {
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
 
+	public static double logfactor(int n) {
+
+		double logfactor = 0.0;
+		for (int i = 1; i <= n; i++) {
+			logfactor += Math.log(i);
+		}
+
+		return logfactor;
+	}
+	
 	public static double map(double value, double low1, double high1,
 			double low2, double high2) {
 		/**

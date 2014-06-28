@@ -97,7 +97,7 @@ public class FactorOperator extends AbstractCoercableOperator{
     private void copy(double[] put, int i){
         Parameter working=LFM.getFactors().getParameter(i);
         for (int j = 0; j < working.getSize(); j++) {
-            working.setParameterValueQuietly(j, scaleFactor*put[j]);
+            working.setParameterValueQuietly(j, put[j]);
         }
         working.fireParameterChangedEvent();
     }
@@ -119,7 +119,8 @@ public class FactorOperator extends AbstractCoercableOperator{
     public void randomDraw(int i, double[][] variance){
         double[] nextValue;
         nextValue=MultivariateNormalDistribution.nextMultivariateNormalVariance(LFM.getFactors().getParameter(i).getParameterValues(), variance, scaleFactor);
-
+//        System.out.println(nextValue[0]);
+//        System.out.println(nextValue[1]);
         copy(nextValue, i);
     }
 

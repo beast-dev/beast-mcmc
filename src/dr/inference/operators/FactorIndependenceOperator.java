@@ -15,7 +15,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
  * Time: 12:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FactorOperator extends AbstractCoercableOperator{
+public class FactorIndependenceOperator extends AbstractCoercableOperator{
     private static final String FACTOR_OPERATOR="factorOperator";
     private LatentFactorModel LFM;
     private MatrixParameter diffusionPrecision;
@@ -26,7 +26,7 @@ public class FactorOperator extends AbstractCoercableOperator{
     private boolean randomScan;
     private double scaleFactor;
 
-    public FactorOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision, double scaleFactor, CoercionMode mode){
+    public FactorIndependenceOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision, double scaleFactor, CoercionMode mode){
         super(mode);
         this.scaleFactor=scaleFactor;
         this.LFM=LFM;
@@ -97,7 +97,7 @@ public class FactorOperator extends AbstractCoercableOperator{
     private void copy(double[] put, int i){
         Parameter working=LFM.getFactors().getParameter(i);
         for (int j = 0; j < working.getSize(); j++) {
-            working.setParameterValueQuietly(j, scaleFactor*put[j]);
+            working.setParameterValueQuietly(j, put[j]);
         }
         working.fireParameterChangedEvent();
     }
@@ -118,7 +118,9 @@ public class FactorOperator extends AbstractCoercableOperator{
 
     public void randomDraw(int i, double[][] variance){
         double[] nextValue;
-        nextValue=MultivariateNormalDistribution.nextMultivariateNormalVariance(LFM.getFactors().getParameter(i).getParameterValues(), variance, scaleFactor);
+        getMean(i, variance, midMean, mean);
+
+        nextValue=MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance, scaleFactor);
 
         copy(nextValue, i);
     }

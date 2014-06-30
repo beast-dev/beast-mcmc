@@ -56,7 +56,9 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 //		this.distribution = distribution;
 		// this.mapping = mapping;
 
+		// M clusters
 		this.categoryCount = Utils.findMaximum(mapping) + 1;// parameterValues.size();
+		// vector z of cluster assignments
 		this.mappingLength = mapping.size();
 
 		this.gamma = gamma;
@@ -65,9 +67,17 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 		cachedLogFactorials.add(0, 0.0);
 		
 		// add all
-		this.addVariable(categoriesParameter);
-		this.addVariable(gamma);
-		this.addVariable(uniquelyRealizedParameters);
+		
+		
+//		Parameter.DefaultBounds bounds = new Parameter.DefaultBounds(4, 0, 5);
+//		this.categoriesParameter.addBounds(bounds);
+		
+		
+		
+		
+		this.addVariable(this.categoriesParameter);
+		this.addVariable(this.gamma);
+		this.addVariable(this.uniquelyRealizedParameters);
 
 		// for (List<Parameter> list : hyperparameterList) {
 		//
@@ -129,12 +139,10 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 	}// END: getCounts
 
 	private int getMapping(int i) {
-		// TODO All wrong
 		return mapping.get(i);
 	}
 
 	private int getCounts(int whichDensity) {
-		// TODO All wrong
 		return counts[whichDensity];
 	}
 
@@ -221,7 +229,7 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 		} else if (variable == uniquelyRealizedParameters) {
 
 			// TODO: do sth
-
+	        
 		} else {
 
 			// assuming list<list> hyperparameterList changed
@@ -307,50 +315,6 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 		System.out.println(dpp.getLogLikelihood());
 		
 	}// END: main
-	
-	public static ArrayList<Integer> chinRest(int N, double gamma) {
-
-		ArrayList<Integer> mapping = new ArrayList<Integer>();
-
-		mapping.add(0, 0);
-		int nextFree = 1;
-
-		for (int i = 1; i < N; i++) {
-
-			double u1 = Math.random();
-			if (u1 < (gamma / (gamma + i))) {
-
-				// sit at new table
-				mapping.add(i, nextFree);
-				nextFree++;
-
-			} else {
-
-				// choose existing table with weights by number of customers
-				int samplePos = -Integer.MAX_VALUE;
-				double cumProb = 0.0;
-				double u2 = Math.random();
-				double size = (double) mapping.size();
-
-				for (int j : mapping) {
-
-					cumProb += 1 / size;
-
-					if (u2 < cumProb) {
-						samplePos = j;
-						break;
-					}
-
-				}
-
-				mapping.add(i, samplePos);
-
-			}// END: u1 check
-
-		}// END: i loop
-
-		return mapping;
-	}// END: chinProc
 	
 }// END: class
 

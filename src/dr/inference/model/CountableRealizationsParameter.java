@@ -26,18 +26,28 @@
 package dr.inference.model;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+
+import javax.sound.midi.SysexMessage;
 
 /**
  * @author Marc Suchard
  */
+@SuppressWarnings("serial")
 public class CountableRealizationsParameter extends Parameter.Abstract implements VariableListener {
 
 	private final Parameter categoriesParameter;
 	private final CompoundParameter uniquelyRealizedParameters;
 	
+	
 	private final int dim;
 	private final int realizationCount;
+
+	private final int uniqueRealizationCount;
+	
+    private final LinkedList<Parameter> paramList;
+    private Bounds bounds = null;
 	
     public CountableRealizationsParameter(Parameter categoriesParameter, //
     		 CompoundParameter uniquelyRealizedParameters //
@@ -51,7 +61,7 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
     	
     	realizationCount = categoriesParameter.getDimension();
     	
-    	paramList = new ArrayList<Parameter>();
+    	paramList = new LinkedList<Parameter>();
     	paramList.add(categoriesParameter);
     	paramList.add(uniquelyRealizedParameters);
     	
@@ -59,11 +69,13 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
 //        for (Parameter p : paramList) {
 //            p.addVariableListener(this);
 //        }
+    	
+    	uniqueRealizationCount = uniquelyRealizedParameters.getDimension();
     
     }
 
     public int getDimension() {
-        return dim * realizationCount; //  paramList.get(0).getDimension(); // Unwritten contract
+    	return dim * realizationCount; //  paramList.get(0).getDimension(); // Unwritten contract
     }
 
     protected void storeValues() {
@@ -90,12 +102,27 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
 
     public double getParameterValue(int index) {
     	
-    	int whichCategoryIndex = index % dim; // TODO Maybe?
-    	int whichDimIndex = index - whichCategoryIndex * dim; // TODO Maybe?
+//    	int whichCategoryIndex = index % dim; // TODO Maybe?
+//    	int whichDimIndex = index - whichCategoryIndex * dim; // TODO Maybe?
+//    	Parameter param = uniquelyRealizedParameters.getParameter((int) categoriesParameter.getParameterValue(whichCategoryIndex));
+//    	return param.getParameterValue(whichDimIndex);     
     	
-    	Parameter param = uniquelyRealizedParameters.getParameter((int) categoriesParameter.getParameterValue(whichCategoryIndex));
+    	
+    	
+    	int whichCategoryIndex = categoriesParameter.getValue(index).intValue();//
+    	int whichDimIndex = 0;
+    	
+    	int idx = categoriesParameter.getValue(index).intValue();
+    	if(idx > (uniqueRealizationCount - 1)) {
+    	
+    	System.out.println("index: " + index);
+    	System.out.println("category: " + categoriesParameter.getValue(index).intValue());
+    	System.exit(-1);
+    	}
+    	
+    	Parameter param = uniquelyRealizedParameters.getParameter(whichCategoryIndex);
     	return param.getParameterValue(whichDimIndex);     
-    }
+    }//END: getParameterValue
 
     public void setParameterValue(int dim, double value) {
         throw new RuntimeException("Not implemented");
@@ -144,6 +171,4 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
         fireParameterChangedEvent(index,type);
     }
 
-    private final List<Parameter> paramList;
-    private Bounds bounds = null;
-}
+}//END: class

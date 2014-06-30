@@ -27,6 +27,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
+import org.apache.commons.math.random.MersenneTwister;
+
 import dr.app.bss.test.AncestralSequenceTrait;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
@@ -41,6 +43,7 @@ import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
+import dr.math.MathUtils;
 
 /**
  * @author Filip Bielejec
@@ -48,6 +51,11 @@ import dr.evomodel.tree.TreeModel;
  */
 public class Utils {
 
+	// ////////////////////////////////
+	// ---RANDOM NUMB3R GENERATION---//
+	// ////////////////////////////////
+	private static MersenneTwister random = new MersenneTwister(MathUtils.nextLong());
+	
 	// /////////////////
 	// ---CONSTANTS---//
 	// /////////////////
@@ -1217,6 +1225,25 @@ public class Utils {
 	// ////////////////////
 	// ---ARRAYS UTILS---//
 	// ////////////////////
+	
+	public static int sample(double[] probabilities) {
+
+		int samplePos = -Integer.MAX_VALUE;
+		double cumProb = 0.0;
+		double u = random.nextDouble();
+		
+		for (int i = 0; i < probabilities.length; i++) {
+			
+			cumProb += probabilities[i];
+			
+			if (u < cumProb) {
+				samplePos = i;
+				break;
+			}
+		}
+
+		return samplePos;
+	}// END: randomChoicePDF
 	
 	public static int findMaximum(ArrayList<Integer> array) {
 		

@@ -3,9 +3,7 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.List;
 
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
-import dr.inference.model.AbstractModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;

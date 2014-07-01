@@ -10,10 +10,11 @@ import dr.xml.XMLSyntaxRule;
 
 public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 
-	public static final String DIRICHLET_PROCESS_OPERATOR = "dPOperator";
+	public static final String DIRICHLET_PROCESS_OPERATOR = "dpOperator";
 	public static final String INTENSITY = "intensity";
 	public static final String UNIQUE_REALIZATION_COUNT = "uniqueRealizationCount";
-
+	public static final String CATEGORY_PROBABILITIES = "categoryProbabilities";
+	
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -22,7 +23,13 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 		int uniqueRealizationCount = xo
 				.getIntegerAttribute(UNIQUE_REALIZATION_COUNT);
 
-		return new DirichletProcessOperator(zParameter, intensity,
+		Parameter categoryProbabilitiesParameter = null;
+		if(xo.hasChildNamed(CATEGORY_PROBABILITIES)) {
+			
+			 categoryProbabilitiesParameter = (Parameter) xo.getElementFirstChild(CATEGORY_PROBABILITIES); 
+		}
+		
+		return new DirichletProcessOperator(zParameter, categoryProbabilitiesParameter, intensity,
 				uniqueRealizationCount);
 	}// END: parseXMLObject
 
@@ -30,6 +37,9 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 	public XMLSyntaxRule[] getSyntaxRules() {
 		return new XMLSyntaxRule[] {
 
+				new ElementRule(CATEGORY_PROBABILITIES,
+	                    new XMLSyntaxRule[] { new ElementRule(Parameter.class, true) }), // 
+				
 		new ElementRule(Parameter.class, false), //
 				AttributeRule.newDoubleRule(INTENSITY), //
 				AttributeRule.newIntegerRule(UNIQUE_REALIZATION_COUNT)

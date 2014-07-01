@@ -47,7 +47,7 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
 	private final int uniqueRealizationCount;
 	
     private final LinkedList<Parameter> paramList;
-    private Bounds bounds = null;
+    private Bounds<Double> bounds = null;
 	
     public CountableRealizationsParameter(Parameter categoriesParameter, //
     		 CompoundParameter uniquelyRealizedParameters //
@@ -107,20 +107,19 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
 //    	Parameter param = uniquelyRealizedParameters.getParameter((int) categoriesParameter.getParameterValue(whichCategoryIndex));
 //    	return param.getParameterValue(whichDimIndex);     
     	
-    	
-    	
     	int whichCategoryIndex = categoriesParameter.getValue(index).intValue();//
     	int whichDimIndex = 0;
     	
-    	int idx = categoriesParameter.getValue(index).intValue();
-    	if(idx > (uniqueRealizationCount - 1)) {
-    	
-    	System.out.println("index: " + index);
-    	System.out.println("category: " + categoriesParameter.getValue(index).intValue());
-    	System.exit(-1);
-    	}
+//    	int idx = categoriesParameter.getValue(index).intValue();
+//    	if(idx > (uniqueRealizationCount - 1)) {
+//    	
+//    	System.out.println("index: " + index);
+//    	System.out.println("category: " + categoriesParameter.getValue(index).intValue());
+//    	System.exit(-1);
+//    	}
     	
     	Parameter param = uniquelyRealizedParameters.getParameter(whichCategoryIndex);
+    	
     	return param.getParameterValue(whichDimIndex);     
     }//END: getParameterValue
 
@@ -147,7 +146,7 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
         return getId();
     }
 
-    public void addBounds(Bounds bounds) {
+    public void addBounds(Bounds<Double> bounds) {
         this.bounds = bounds;
     }
 

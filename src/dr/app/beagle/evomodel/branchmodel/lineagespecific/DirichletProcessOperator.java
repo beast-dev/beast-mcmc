@@ -10,23 +10,30 @@ import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.math.distributions.BetaDistribution;
-import dr.app.bss.Utils;
 
 public class DirichletProcessOperator extends AbstractCoercableOperator {
 
 	private Parameter zParameter;
+	private Parameter categoryProbabilitiesParameter;
 	private int realizationCount;
 	private int uniqueRealizationCount;
 	private double intensity;
 	private BetaDistribution beta;
 
 	public DirichletProcessOperator(Parameter zParameter, double intensity, int uniqueRealizationCount) {
-		this(zParameter, null, intensity, uniqueRealizationCount);
+		this(zParameter, null, null, intensity, uniqueRealizationCount);
 	}// END: Constructor
-	
-	public DirichletProcessOperator(Parameter zParameter, CoercionMode mode, double intensity, int uniqueRealizationCount) {
+
+	public DirichletProcessOperator(Parameter zParameter, Parameter categoryProbabilitiesParameter, double intensity, int uniqueRealizationCount) {
+		this(zParameter, categoryProbabilitiesParameter, null, intensity, uniqueRealizationCount);
+	}// END: Constructor
+
+	public DirichletProcessOperator(Parameter zParameter, Parameter categoryProbabilitiesParameter, CoercionMode mode, double intensity, 
+			int uniqueRealizationCount) {
 
 		super(mode);
+
+		this.categoryProbabilitiesParameter = categoryProbabilitiesParameter;
 
 		this.zParameter = zParameter;
 		realizationCount = zParameter.getDimension();
@@ -35,7 +42,6 @@ public class DirichletProcessOperator extends AbstractCoercableOperator {
 		this.uniqueRealizationCount = uniqueRealizationCount;
 
 		beta = new BetaDistribution(this.intensity, 1.0);
-
 	}// END: Constructor
 
 	@Override
@@ -57,10 +63,19 @@ public class DirichletProcessOperator extends AbstractCoercableOperator {
 		beta = new BetaDistribution(0.9, 1.0);
 		double[] probs = stickBreak(uniqueRealizationCount);
 
+		if (categoryProbabilitiesParameter != null) {
+
+			for (int i = 0; i < uniqueRealizationCount; i++) {
+				double prob = probs[i];
+				categoryProbabilitiesParameter.setParameterValue(i, prob);
+			}
+
+		}// END: null check
+
 		for (int i = 0; i < realizationCount; i++) {
 
-			int value = dr.app.bss.Utils.sample(probs);
-			zParameter.setParameterValue(i, value);
+			int categoryIndex = dr.app.bss.Utils.sample(probs);
+			zParameter.setParameterValue(i, categoryIndex);
 
 		}// END: realizationCount loop
 
@@ -83,7 +98,7 @@ public class DirichletProcessOperator extends AbstractCoercableOperator {
 		}// END: K loop
 
 		double fallThrough = 1 - dr.app.bss.Utils.sumArray(probabilities);
-		probabilities[probabilities.length - 1] += fallThrough;
+		probabilities[K - 1] += fallThrough;
 
 		return probabilities;
 	}// END: stickBreak

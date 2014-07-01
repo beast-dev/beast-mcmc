@@ -1,7 +1,7 @@
 /*
  * TipStateSwapOperator.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -69,11 +69,11 @@ public class TipStateSwapOperator extends SimpleMCMCOperator {
 
     private void swap(int i, int j) {
 
-        treeLikelihood.getStates(i, states1);
-        treeLikelihood.getStates(j, states2);
+        treeLikelihood.getTipStates(i, states1);
+        treeLikelihood.getTipStates(j, states2);
 
-        treeLikelihood.setStates(j, states1);
-        treeLikelihood.setStates(i, states2);                
+        treeLikelihood.setTipStates(j, states1);
+        treeLikelihood.setTipStates(i, states2);
     }
 
     public void reject() {

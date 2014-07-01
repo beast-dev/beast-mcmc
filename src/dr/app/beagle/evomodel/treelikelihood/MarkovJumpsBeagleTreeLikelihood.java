@@ -1,7 +1,7 @@
 /*
  * MarkovJumpsBeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -148,7 +148,9 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             this.scaleByTime[oldScaleByTimeLength] = scaleByTime;
 
             if (type != MarkovJumpsType.HISTORY) {
-                treeTraits.addTrait(traitName, new TreeTrait.DA() {
+
+
+                TreeTrait.DA da = new TreeTrait.DA() {
 
                     final int registerNumber = numRegisters;
 
@@ -163,7 +165,14 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                     public double[] getTrait(Tree tree, NodeRef node) {
                         return getMarkovJumpsForNodeAndRegister(tree, node, registerNumber);
                     }
-                });
+                };
+
+                treeTraits.addTrait(traitName + "_base", da);
+
+                treeTraits.addTrait(addRegisterParameter.getId(),
+                        new TreeTrait.SumAcrossArrayD(
+                                new TreeTrait.SumOverTreeDA(da)));
+
             } else {
                 if (histories == null) {
                     histories = new String[treeModel.getNodeCount()][patternCount];

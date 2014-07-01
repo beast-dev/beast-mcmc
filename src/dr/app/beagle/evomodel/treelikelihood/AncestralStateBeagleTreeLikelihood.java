@@ -1,7 +1,7 @@
 /*
  * AncestralStateBeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -91,13 +91,21 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
         // Save tip states locally so these do not need to be transfers back
 
-        tipStates = new int[tipCount][];
+        if (useAmbiguities()) {
+            tipPartials = new double[tipCount][];
+        } else {
+            tipStates = new int[tipCount][];
+        }
 
         for (int i = 0; i < tipCount; i++) {
             // Find the id of tip i in the patternList
             String id = treeModel.getTaxonId(i);
             int index = patternList.getTaxonIndex(id);
-            tipStates[i] = getStates(patternList, index);
+            if (useAmbiguities()) {
+                tipPartials[i] = getPartials(patternList, index);
+            } else {
+                tipStates[i] = getStates(patternList, index);
+            }
         }
 
         reconstructedStates = new int[treeModel.getNodeCount()][patternCount];
@@ -128,6 +136,30 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             }
         });
 
+    }
+
+    private double[] getPartials(PatternList patternList, int sequenceIndex) {
+        double[] partials = new double[patternCount * stateCount];
+
+        boolean[] stateSet;
+
+        int v = 0;
+        for (int i = 0; i < patternCount; i++) {
+
+            int state = patternList.getPatternState(sequenceIndex, i);
+            stateSet = dataType.getStateSet(state);
+
+            for (int j = 0; j < stateCount; j++) {
+                if (stateSet[j]) {
+                    partials[v] = 1.0;
+                } else {
+                    partials[v] = 0.0;
+                }
+                v++;
+            }
+        }  // TODO Note code duplication with BTL, refactor when debugged
+
+        return partials;
     }
 
     private int[] getStates(PatternList patternList,
@@ -261,13 +293,17 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         // NB: It may be faster to compute matrices in BEAST via substitutionModel
     }
 
-    public void setStates(int tipNum, int[] states) {
+    public void setTipStates(int tipNum, int[] states) {
         System.arraycopy(states, 0, tipStates[tipNum], 0, states.length);
         beagle.setTipStates(tipNum, states);
         makeDirty();
     }
 
-    public void getStates(int tipNum, int[] states) {
+//    public void getTipPartials(int tipNum, double[] partials) {
+//        System.arraycopy(tipPartials[tipNum], 0, partials, 0, partials.length);
+//    }
+
+    public void getTipStates(int tipNum, int[] states) {
         // Saved locally to reduce BEAGLE library access
         System.arraycopy(tipStates[tipNum], 0, states, 0, states.length);
     }
@@ -451,41 +487,66 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
             // This is an external leaf
 
-            getStates(nodeNum, reconstructedStates[nodeNum]);
+            if (useAmbiguities()) {
 
-            // Check for ambiguity codes and sample them
+                getMatrix(nodeNum, probabilities);
+                double[] partials = tipPartials[nodeNum];
 
-            for (int j = 0; j < patternCount; j++) {
-
-                final int thisState = reconstructedStates[nodeNum][j];
-
-                if (dataType.isAmbiguousState(thisState)) {
-
+                for (int j = 0; j < patternCount; j++) {
                     final int parentIndex = parentState[j] * stateCount;
                     int category = rateCategory == null ? 0 : rateCategory[j];
                     int matrixIndex = category * stateCount * stateCount;
 
-                    getMatrix(nodeNum, probabilities);
                     System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
-
-                    if (useAmbiguities && !dataType.isUnknownState(thisState)) { // Not completely unknown
-                        boolean[] stateSet = dataType.getStateSet(thisState);
-
-                        for (int k = 0; k < stateCount; k++) {
-                            if (!stateSet[k]) {
-                                conditionalProbabilities[k] = 0.0;
-                            }
-                        }
+                    for (int k = 0; k < stateCount; ++k) {
+                        conditionalProbabilities[k] *= partials[j * stateCount + k];
                     }
                     reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
-                }
 
-                if (!returnMarginalLogLikelihood) {
-                    final int parentIndex = parentState[j] * stateCount;
-                    getMatrix(nodeNum, probabilities);
                     if (!returnMarginalLogLikelihood) {
                         double contrib = probabilities[parentIndex + reconstructedStates[nodeNum][j]];
                         jointLogLikelihood += Math.log(contrib);
+                    }
+                }
+
+            } else {
+
+                getTipStates(nodeNum, reconstructedStates[nodeNum]);
+
+                // Check for ambiguity codes and sample them
+
+                for (int j = 0; j < patternCount; j++) {
+
+                    final int thisState = reconstructedStates[nodeNum][j];
+
+                    if (dataType.isAmbiguousState(thisState)) {
+
+                        final int parentIndex = parentState[j] * stateCount;
+                        int category = rateCategory == null ? 0 : rateCategory[j];
+                        int matrixIndex = category * stateCount * stateCount;
+
+                        getMatrix(nodeNum, probabilities);
+                        System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
+
+                        if (useAmbiguities && !dataType.isUnknownState(thisState)) { // Not completely unknown
+                            boolean[] stateSet = dataType.getStateSet(thisState);
+
+                            for (int k = 0; k < stateCount; k++) {
+                                if (!stateSet[k]) {
+                                    conditionalProbabilities[k] = 0.0;
+                                }
+                            }
+                        }
+                        reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
+                    }
+
+                    if (!returnMarginalLogLikelihood) {
+                        final int parentIndex = parentState[j] * stateCount;
+                        getMatrix(nodeNum, probabilities);
+                        if (!returnMarginalLogLikelihood) {
+                            double contrib = probabilities[parentIndex + reconstructedStates[nodeNum][j]];
+                            jointLogLikelihood += Math.log(contrib);
+                        }
                     }
                 }
             }
@@ -515,6 +576,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
     private double storedJointLogLikelihood;
 
     private int[][] tipStates;
+    private double[][] tipPartials;
 
     private double[] probabilities;
     private double[] partials;

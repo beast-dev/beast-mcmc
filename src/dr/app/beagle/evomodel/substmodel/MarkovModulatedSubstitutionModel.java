@@ -120,7 +120,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
         if (numBaseModel > 1) {
             if (switchingRates.getDimension() != 2 * (numBaseModel - 1)) {
                 birthDeathModel = false;
-                throw new RuntimeException("Wrong dimension of switching rates in MarkovModulatedSubstitutionModel");
+//                throw new RuntimeException("Wrong dimension of switching rates in MarkovModulatedSubstitutionModel " + switchingRates.getDimension() + " " + 2 * (numBaseModel - 1) + " " + numBaseModel);
             }
         }
 

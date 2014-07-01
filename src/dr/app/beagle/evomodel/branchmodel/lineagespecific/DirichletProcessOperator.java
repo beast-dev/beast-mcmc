@@ -68,6 +68,9 @@ public class DirichletProcessOperator extends AbstractCoercableOperator {
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 				double prob = probs[i];
 				categoryProbabilitiesParameter.setParameterValue(i, prob);
+				
+//				System.out.println(prob);
+				
 			}
 
 		}// END: null check

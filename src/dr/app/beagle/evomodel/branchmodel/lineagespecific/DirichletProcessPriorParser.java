@@ -19,7 +19,6 @@ public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 	public static final String CONCENTRATION = "concentration";
 	public static final String CATEGORIES = "categories";
 	
-	public static final String REALIZED_VALUES = "realizedValues";
 	
 	@Override
 	public String getParserName() {
@@ -30,7 +29,7 @@ public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		Parameter categoriesParameter =  (Parameter)xo.getElementFirstChild(CATEGORIES);
-		CompoundParameter realizedParameters = (CompoundParameter)xo.getChild(CompoundParameter.class);
+		CompoundParameter uniquelyRealizedParameters = (CompoundParameter)xo.getChild(CompoundParameter.class);
 
 		XMLObject cxo = xo.getChild(BASE_MODELS);
 		List<ParametricMultivariateDistributionModel> baseModels = new ArrayList<ParametricMultivariateDistributionModel>();
@@ -44,7 +43,7 @@ public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 		Parameter gamma = (Parameter) xo.getElementFirstChild(CONCENTRATION);
 
 		return new DirichletProcessPrior(categoriesParameter, //
-				realizedParameters, //
+				uniquelyRealizedParameters, //
 				baseModels, //
 				gamma);
 	}//END: parseXMLObject

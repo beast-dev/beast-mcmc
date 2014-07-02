@@ -189,7 +189,7 @@ public class SequenceSimulator {
     		
         	for (int i  = 0; i < m_sequenceLength; i++) {
         		
-        		System.out.println("seqChar " + parentSequence[i]);
+        		//System.out.println("seqChar " + parentSequence[i]);
         		
         		System.arraycopy(m_probabilities[category[i]], parentSequence[i] * m_stateCount, cProb, 0, m_stateCount);
         		

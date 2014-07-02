@@ -167,7 +167,7 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 	@Override
 	public double getLogLikelihood() {
 
-		getMappings();
+//		getMappings();
 		
 		if (!likelihoodKnown) {
 			logLikelihood = calculateLogLikelihood();

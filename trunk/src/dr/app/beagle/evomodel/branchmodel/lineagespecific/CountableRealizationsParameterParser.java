@@ -23,12 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inferencexml.model;
+package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
+import dr.app.beagle.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
 import dr.app.beagle.evomodel.branchmodel.lineagespecific.DirichletProcessPriorParser;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.CountableRealizationsParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.ProductParameter;
 import dr.xml.*;

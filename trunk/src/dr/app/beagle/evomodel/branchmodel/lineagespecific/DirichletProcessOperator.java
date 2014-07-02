@@ -33,15 +33,14 @@ public class DirichletProcessOperator extends AbstractCoercableOperator {
 
 		super(mode);
 
-		this.categoryProbabilitiesParameter = categoryProbabilitiesParameter;
-
 		this.zParameter = zParameter;
-		realizationCount = zParameter.getDimension();
-
+		this.categoryProbabilitiesParameter = categoryProbabilitiesParameter;		
 		this.intensity = intensity;
 		this.uniqueRealizationCount = uniqueRealizationCount;
-
+		
+		realizationCount = zParameter.getDimension();
 		beta = new BetaDistribution(this.intensity, 1.0);
+
 	}// END: Constructor
 
 	@Override

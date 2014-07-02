@@ -1,5 +1,8 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
@@ -9,119 +12,111 @@ import dr.math.distributions.NormalDistribution;
 
 public class DppLogger implements Loggable {
 
-	public enum LogMode {
-		NEW_VALUE, NEW_CATEGORY, CATEGORY_PROBABILITIES;
-	}
-
 	private Parameter categoryProbabilitiesParameter;
 	private CompoundParameter uniquelyRealizedParameters;
-	private LogMode mode;
 
-	private double[] probs;
-	private int categoryIndex;
+	private double[] categoryProbabilities;
+	private int newCategoryIndex;
 	private double meanForCategory;
 	private double newX;
 
-	public DppLogger(Parameter categoryProbabilitiesParameter,
-			CompoundParameter uniquelyRealizedParameters, LogMode mode) {
+	public DppLogger(Parameter categoryProbabilitiesParameter, //
+			CompoundParameter uniquelyRealizedParameters //
+	) {
 
 		this.categoryProbabilitiesParameter = categoryProbabilitiesParameter;
 		this.uniquelyRealizedParameters = uniquelyRealizedParameters;
-		this.mode = mode;
 
 	}// END: Constructor
 
 	@Override
 	public LogColumn[] getColumns() {
 
-		doStuff();
-
-		LogColumn[] columns = null;
-		if (mode == LogMode.NEW_VALUE) {
-
-			columns = new LogColumn[] { new NewLogger() };
-
-		} else if (mode == LogMode.NEW_CATEGORY) {
-
-			columns = new LogColumn[] { new NewCategoryLogger() };
-
-		} else if (mode == LogMode.CATEGORY_PROBABILITIES) {
-
-			int dimension = categoryProbabilitiesParameter.getDimension();
-			columns = new LogColumn[dimension];
-			for (int i = 0; i < dimension; i++) {
-
-				columns[i] = new ProbabilitiesLogger(i);
-
-			}
-
-		} else {
-			// do nothing
+		List<LogColumn> columns = new ArrayList<LogColumn>();
+		
+		columns.add(new NewLogger("x.new"));
+		columns.add(new NewCategoryLogger("category.new"));
+		columns.add(new NewMeanLogger("mean.new"));
+		for (int i = 0; i < uniquelyRealizedParameters.getDimension(); i++) {
+			columns.add(new ProbabilitiesLogger("pi.", i));
 		}
 
-		return columns;
+		LogColumn[] rtnColumns = new LogColumn[columns.size()];
+		
+		return columns.toArray(rtnColumns);
 	}// END: getColumns
 
-	private void doStuff() {
+	private void getNew() {
 
-		this.probs = categoryProbabilitiesParameter.getParameterValues();
-		this.categoryIndex = dr.app.bss.Utils.sample(probs);
-		this.meanForCategory = uniquelyRealizedParameters
-				.getParameterValue(categoryIndex);
+		this.categoryProbabilities = categoryProbabilitiesParameter.getParameterValues();
+//		this.categoryProbabilities = new double[]{0.20, 0.20, 0.20, 0.20, 0.20};
+		
+		this.newCategoryIndex = dr.app.bss.Utils.sample(categoryProbabilities);
+		this.meanForCategory = uniquelyRealizedParameters.getParameterValue(newCategoryIndex);
 
-		double sd = 1.0;
+		double sd = 0.02857143;
 		NormalDistribution nd = new NormalDistribution(meanForCategory, sd);
-		this.newX = (double) nd.nextRandom();
+		this.newX = (Double) nd.nextRandom();
 
 	}
 
 	private class NewLogger extends NumberColumn {
 
-		public NewLogger() {
-			super("x.new");
+		public NewLogger(String label) {
+			super(label);
 		}
 
 		@Override
 		public double getDoubleValue() {
 
-			doStuff();
+			getNew();
 
 			return newX;
 		}// END: getDoubleValue
 
 	}// END: NewLogger class
 
+	private class NewMeanLogger extends NumberColumn {
+
+		public NewMeanLogger(String label) {
+			super(label);
+		}
+
+		@Override
+		public double getDoubleValue() {
+
+			return meanForCategory;
+		}// END: getDoubleValue
+
+	}// END: NewCategoryLogger class
+
 	private class ProbabilitiesLogger extends NumberColumn {
 
 		private int i;
 
-		public ProbabilitiesLogger(int i) {
-			super("category.prob." + i);
+		public ProbabilitiesLogger(String label, int i) {
+			super(label + i);
 			this.i = i;
 		}
 
 		@Override
 		public double getDoubleValue() {
 
-			doStuff();
-
-			return probs[i];
+			return categoryProbabilities[i];
 		}// END: getDoubleValue
 
 	}// END: NewCategoryLogger class
 
 	private class NewCategoryLogger extends NumberColumn {
 
-		public NewCategoryLogger() {
-			super("category.new");
+		public NewCategoryLogger(String label) {
+			super(label);
 		}
 
 		@Override
 		public double getDoubleValue() {
 
-			doStuff();
-
-			return categoryIndex;
+			return newCategoryIndex;
 		}// END: getDoubleValue
 
 	}// END: NewCategoryLogger class

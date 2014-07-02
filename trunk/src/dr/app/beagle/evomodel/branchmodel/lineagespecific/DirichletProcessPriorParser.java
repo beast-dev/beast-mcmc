@@ -1,8 +1,5 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
@@ -15,7 +12,7 @@ import dr.xml.XMLSyntaxRule;
 public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 
 	public static final String DIRICHLET_PROCESS_PRIOR = "dirichletProcessModel";
-	public static final String BASE_MODELS = "baseModels";
+	public static final String BASE_MODEL = "baseModel";
 	public static final String CONCENTRATION = "concentration";
 	public static final String CATEGORIES = "categories";
 	
@@ -29,21 +26,12 @@ public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 
 		Parameter categoriesParameter =  (Parameter)xo.getElementFirstChild(CATEGORIES);
 		CompoundParameter uniquelyRealizedParameters = (CompoundParameter)xo.getChild(CompoundParameter.class);
-
-		XMLObject cxo = xo.getChild(BASE_MODELS);
-		List<ParametricMultivariateDistributionModel> baseModels = new ArrayList<ParametricMultivariateDistributionModel>();
-				for (int i = 0; i < cxo.getChildCount(); i++) {
-
-					ParametricMultivariateDistributionModel baseModel = (ParametricMultivariateDistributionModel) cxo.getChild(i);
-					baseModels.add(baseModel);
-					
-				}//END: base models loop
-
+		ParametricMultivariateDistributionModel baseModel = (ParametricMultivariateDistributionModel) xo.getElementFirstChild(BASE_MODEL);
 		Parameter gamma = (Parameter) xo.getElementFirstChild(CONCENTRATION);
 
 		return new DirichletProcessPrior(categoriesParameter, //
 				uniquelyRealizedParameters, //
-				baseModels, //
+				baseModel, //
 				gamma);
 	}//END: parseXMLObject
 
@@ -56,7 +44,7 @@ public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 				
 				new ElementRule(CompoundParameter.class, false), // realized parameters
 				
-		        new ElementRule(BASE_MODELS,
+		        new ElementRule(BASE_MODEL,
                         new XMLSyntaxRule[] {
                                 new ElementRule(ParametricMultivariateDistributionModel.class, 1, Integer.MAX_VALUE),
                         }

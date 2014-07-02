@@ -22,14 +22,14 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 	private double logLikelihood;
 	private boolean mappingsKnown = false;
 	private CompoundParameter uniquelyRealizedParameters;
-	private List<ParametricMultivariateDistributionModel> baseModels;
+	private ParametricMultivariateDistributionModel baseModel;
 	private Parameter gamma;
 	private int[] counts;
 	private final List<Double> cachedLogFactorials;
 
 	public DirichletProcessPrior(Parameter categoriesParameter, //
 			CompoundParameter uniquelyRealizedParameters, //
-			List<ParametricMultivariateDistributionModel> baseModels, //
+			ParametricMultivariateDistributionModel baseModel, //
 			Parameter gamma //
 	) {
 
@@ -38,7 +38,7 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 		this.categoriesParameter = categoriesParameter;
 		getMappings();
 
-		this.baseModels = baseModels;
+		this.baseModel = baseModel;
 
 		this.uniquelyRealizedParameters = uniquelyRealizedParameters;
 
@@ -57,9 +57,7 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 		this.addVariable(this.gamma);
 		this.addVariable(this.uniquelyRealizedParameters);
 
-		for (ParametricMultivariateDistributionModel base : baseModels) {
-			addModel(base);
-		}
+		this.addModel(baseModel);
 
 		this.likelihoodKnown = false;
 	}// END: Constructor
@@ -120,8 +118,9 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 		return counts[whichDensity];
 	}
 
-	private double getLogDensity(Parameter param, int whichIndex) {
-		return baseModels.get(whichIndex).logPdf(param.getAttributeValue());
+	private double getLogDensity(Parameter parameter) {
+		return baseModel.logPdf(parameter.getAttributeValue());
+		
 	}
 
 	private double getRealizedValuesLogDensity() {
@@ -133,8 +132,7 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 			Parameter param = uniquelyRealizedParameters.getParameter(i);
 			int whichDensity = getMapping(i);
 
-			total += getCount(whichDensity)
-					* getLogDensity(param, whichDensity);
+			total += getCount(whichDensity) * getLogDensity(param);
 
 		}
 

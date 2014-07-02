@@ -23,13 +23,21 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.model;
+package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import javax.sound.midi.SysexMessage;
+
+import dr.inference.model.Bounds;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.inference.model.VariableListener;
+import dr.inference.model.Parameter.Abstract;
+import dr.inference.model.Variable.ChangeType;
 
 /**
  * @author Marc Suchard

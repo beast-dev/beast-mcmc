@@ -25,16 +25,13 @@
 
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import dr.app.beagle.evomodel.branchmodel.lineagespecific.CountableRealizationsParameter;
-import dr.app.beagle.evomodel.branchmodel.lineagespecific.DirichletProcessPriorParser;
-import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inference.model.ProductParameter;
-import dr.xml.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
 
 /**
  */

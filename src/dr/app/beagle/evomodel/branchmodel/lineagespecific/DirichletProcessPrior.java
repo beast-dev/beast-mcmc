@@ -3,13 +3,17 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.List;
 
+import dr.app.bss.Utils;
+import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
+import dr.math.MathUtils;
 
 @SuppressWarnings("serial")
 public class DirichletProcessPrior extends AbstractModelLikelihood {
@@ -64,8 +68,15 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 
 	private double getLogFactorial(int i) {
 
-		if (i <= cachedLogFactorials.size()) {
+		//TODO
+//		System.out.println("i:" + i);
+//		System.out.println("size:" + cachedLogFactorials.size());
+		
+		if ( cachedLogFactorials.size() <= i) {
 
+//			//TODO
+//			System.out.println("FUBAR");
+			
 			for (int j = cachedLogFactorials.size() - 1; j <= i; j++) {
 
 				double logfactorial = cachedLogFactorials.get(j) + Math.log(j + 1);
@@ -74,6 +85,8 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 
 		}
 
+//		System.out.println(i);
+		
 		return cachedLogFactorials.get(i);
 	}
 
@@ -132,6 +145,10 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 			Parameter param = uniquelyRealizedParameters.getParameter(i);
 			int whichDensity = getMapping(i);
 
+//			System.out.println("whichDensity:" + whichDensity);
+//			System.exit(-1);
+			
+			
 			total += getCount(whichDensity) * getLogDensity(param);
 
 		}
@@ -144,9 +161,19 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 		int[] counts = getCounts();
 		double loglike = categoryCount * Math.log(gamma.getParameterValue(0));
 
+		//TODO
+//		Utils.printArray(counts);
+		
 		for (int k = 0; k < categoryCount; k++) {
 
-			loglike += getLogFactorial(counts[k] - 1);
+			int eta = counts[k];
+
+			//TODO
+//			System.out.println("eta:" + eta);
+			
+			if (eta > 0) {
+				loglike += getLogFactorial(eta - 1);
+			}
 
 		}// END: k loop
 
@@ -165,9 +192,11 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 	@Override
 	public double getLogLikelihood() {
 
-//		getMappings();
+//		System.out.println("FUBAR");
+//		System.exit(-1);
 		
 		if (!likelihoodKnown) {
+			
 			logLikelihood = calculateLogLikelihood();
 			likelihoodKnown = true;
 		}
@@ -176,6 +205,8 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 	}
 
 	private double calculateLogLikelihood() {
+		
+		
 		return getCategoriesLogDensity() + getRealizedValuesLogDensity();
 	}
 
@@ -237,73 +268,57 @@ public class DirichletProcessPrior extends AbstractModelLikelihood {
 
 	}
 
-//	public static void main(String args[]) {
-//
-//		double[] mappings = new double[] { 0, 0, 1, 1, 2 };
-//		Parameter categoriesParameter = new Parameter.Default(mappings);
-//
-//		Parameter rTheta1 = new Parameter.Default(1.0);
-//		Parameter rTheta2 = new Parameter.Default(1.0);
-//		Parameter rTheta3 = new Parameter.Default(2.0);
-//		Parameter rTheta4 = new Parameter.Default(2.0);
-//		Parameter rTheta5 = new Parameter.Default(3.0);
-//
-//		CompoundParameter realizedThetas = new CompoundParameter(
-//				"realizedThetas");
-//		realizedThetas.addParameter(rTheta1);
-//		realizedThetas.addParameter(rTheta2);
-//		realizedThetas.addParameter(rTheta3);
-//		realizedThetas.addParameter(rTheta4);
-//		realizedThetas.addParameter(rTheta5);
-//
-//		int dim = 2;
-//		double[] mean = new double[dim];
-//		double[] precision = new double[dim * dim];
-//		// Parameter[] params = new Parameter[dim*dim];
-//
-//		MathUtils.setSeed(666);
-//
-//		for (int i = 0; i < dim; i++) {
-//			mean[i] = MathUtils.nextDouble();
-//			for (int j = i; j < dim; j++) {
-//				precision[i + j * dim] = MathUtils.nextDouble();
-//			}
-//		}
-//
-//		Parameter meanParameter = new Parameter.Default(mean);
-//
-//		Parameter prec1 = new Parameter.Default(new double[] { precision[0],
-//				precision[1] });
+	public static void main(String args[]) {
+
+		double[] mappings = new double[] { 0, 0, 1, 1, 2 };
+		Parameter categoriesParameter = new Parameter.Default(mappings);
+
+		Parameter rTheta1 = new Parameter.Default(1.0);
+		Parameter rTheta2 = new Parameter.Default(1.0);
+		Parameter rTheta3 = new Parameter.Default(2.0);
+		Parameter rTheta4 = new Parameter.Default(2.0);
+		Parameter rTheta5 = new Parameter.Default(3.0);
+
+		CompoundParameter realizedThetas = new CompoundParameter(
+				"realizedThetas");
+		realizedThetas.addParameter(rTheta1);
+		realizedThetas.addParameter(rTheta2);
+		realizedThetas.addParameter(rTheta3);
+		realizedThetas.addParameter(rTheta4);
+		realizedThetas.addParameter(rTheta5);
+
+		int dim = 1;
+		double[] mean = new double[dim];
+		double[] precision = new double[dim * dim];
+		// Parameter[] params = new Parameter[dim*dim];
+
+		MathUtils.setSeed(666);
+
+		for (int i = 0; i < dim; i++) {
+			mean[i] = MathUtils.nextDouble();
+			for (int j = i; j < dim; j++) {
+				precision[i + j * dim] = MathUtils.nextDouble();
+			}
+		}
+
+		Parameter meanParameter = new Parameter.Default(mean);
+
+		Parameter prec1 = new Parameter.Default(new double[] { precision[0] });
 //		Parameter prec2 = new Parameter.Default(new double[] { precision[2],
 //				precision[3] });
-//		Parameter[] params = new Parameter[] { prec1, prec2 };
-//		MatrixParameter precParameter = new MatrixParameter("name", params);
-//
-//		MultivariateNormalDistributionModel mvn1 = new MultivariateNormalDistributionModel(
-//				meanParameter, precParameter);
-//		MultivariateNormalDistributionModel mvn2 = new MultivariateNormalDistributionModel(
-//				meanParameter, precParameter);
-//		MultivariateNormalDistributionModel mvn3 = new MultivariateNormalDistributionModel(
-//				meanParameter, precParameter);
-//		MultivariateNormalDistributionModel mvn4 = new MultivariateNormalDistributionModel(
-//				meanParameter, precParameter);
-//		MultivariateNormalDistributionModel mvn5 = new MultivariateNormalDistributionModel(
-//				meanParameter, precParameter);
-//
-//		List<ParametricMultivariateDistributionModel> baseModels = new ArrayList<ParametricMultivariateDistributionModel>();
-//		baseModels.add(0, mvn1);
-//		baseModels.add(1, mvn2);
-//		baseModels.add(2, mvn3);
-//		baseModels.add(3, mvn4);
-//		baseModels.add(4, mvn5);
-//
-//		Parameter gamma = new Parameter.Default(0.9);
-//
-//		DirichletProcessPrior dpp = new DirichletProcessPrior(
-//				categoriesParameter, realizedThetas, baseModels, gamma);
-//		System.out.println(dpp.getLogLikelihood());
-//
-//	}// END: main
+		Parameter[] params = new Parameter[] { prec1 };
+		MatrixParameter precParameter = new MatrixParameter("name", params);
+
+		MultivariateNormalDistributionModel baseModel = new MultivariateNormalDistributionModel(
+				meanParameter, precParameter);
+
+		Parameter gamma = new Parameter.Default(0.9);
+
+		DirichletProcessPrior dpp = new DirichletProcessPrior(
+				categoriesParameter, realizedThetas, baseModel, gamma);
+		System.out.println(dpp.getLogLikelihood());
+
+	}// END: main
 
 }// END: class
 

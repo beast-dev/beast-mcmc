@@ -185,52 +185,52 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             changing.setParameterValueQuietly(j, random[j]);
         }
     }
-    private void drawI(int i, ListIterator<double[][]> currentPrecision, ListIterator<double[]> currentMidMean, ListIterator<double[]> currentMean)
-    {
-        double[] draws=null;
-        double[][] precision=null;
+    private void drawI(int i, ListIterator<double[][]> currentPrecision, ListIterator<double[]> currentMidMean, ListIterator<double[]> currentMean) {
+        double[] draws = null;
+        double[][] precision = null;
         double[][] variance;
-        double[] midMean=null;
-        double[] mean=null;
-        double[][] cholesky=null;
-    if(currentPrecision.hasNext())
-    {
-        precision = currentPrecision.next();
-    }
-
-    if(currentMidMean.hasNext())
-    {
-        midMean = currentMidMean.next();
-    }
-    if(currentMean.hasNext())
-    {
-        mean = currentMean.next();
-    }
-    getPrecision(i, precision);
-    variance=(new SymmetricMatrix(precision)).inverse().toComponents();
-
-    try
-    {
-        cholesky = new CholeskyDecomposition(variance).getL();
-    }
-
-    catch(IllegalDimension illegalDimension)
-    {
-        illegalDimension.printStackTrace();
-    }
-
-    getMean(i, variance, mean, midMean);
-
-    draws=MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean,cholesky);
-    if(i<draws.length)
-
-    {
-        while (draws[i] < 0) {
-            draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+        double[] midMean = null;
+        double[] mean = null;
+        double[][] cholesky = null;
+        if (currentPrecision.hasNext()) {
+            precision = currentPrecision.next();
         }
-    }
 
-    copy(i, draws);
+        if (currentMidMean.hasNext()) {
+            midMean = currentMidMean.next();
+        }
+        if (currentMean.hasNext()) {
+            mean = currentMean.next();
+        }
+        getPrecision(i, precision);
+        variance = (new SymmetricMatrix(precision)).inverse().toComponents();
+
+        try {
+            cholesky = new CholeskyDecomposition(variance).getL();
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
+
+        getMean(i, variance, mean, midMean);
+
+        draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+//    if(i<draws.length)
+//
+//    {
+//        while (draws[i] < 0) {
+//            draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
+//        }
+//    }
+        if (i < draws.length)
+        {   if (draws[i] > 0) {
+                copy(i, draws);
+            }
+        }
+        else{
+            copy(i, draws);
+        }
+
+//       copy(i, draws);
 
 }
 

@@ -19,7 +19,6 @@ public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 	public static final String CONCENTRATION = "concentration";
 	public static final String CATEGORIES = "categories";
 	
-	
 	@Override
 	public String getParserName() {
 		return DIRICHLET_PROCESS_PRIOR;

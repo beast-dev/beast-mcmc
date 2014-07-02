@@ -1236,7 +1236,7 @@ public class Utils {
 			
 			cumProb += probabilities[i];
 			
-			if (u < cumProb) {
+			if (u <= cumProb) {
 				samplePos = i;
 				break;
 			}

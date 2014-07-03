@@ -211,7 +211,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             illegalDimension.printStackTrace();
         }
 
-        getMean(i, variance, mean, midMean);
+        getMean(i, variance, midMean, mean);
 
         draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 //    if(i<draws.length)

@@ -27,9 +27,11 @@ package dr.evomodelxml.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evomodel.continuous.LatentFactorModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.*;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.DiagonalMatrix;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.List;
@@ -103,7 +105,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
-        boolean scaleData=xo.getAttribute(SCALE_DATA, true);
+        boolean scaleData=xo.getAttribute(SCALE_DATA, false);
  //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
         Parameter temp=null;
         for(int i=0; i<loadings.getRowDimension(); i++)
@@ -123,6 +125,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
             new ElementRule(MultivariateTraitTree.class),
             AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
+            AttributeRule.newBooleanRule(SCALE_DATA, true),
             new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),

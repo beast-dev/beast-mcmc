@@ -8,6 +8,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.evomodel.epidemiology.LogisticGrowthN0;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -26,20 +27,23 @@ public class TransmissionTreeToVirusTree {
     public static final String SAMPLES_FILE_NAME = "samplesfile";
     public static final String OUTPUT_NAME_ROOT = "outputroot";
 
+    public static final String INFECTION_IDENTIFIER = "INFECTION";
+    public static final String SAMPLING_IDENTIFIER = "SAMPLING";
+
     private DemographicFunction demFunct;
     private ArrayList<InfectedUnit> units;
     private HashMap<String, InfectedUnit> idMap;
     private String outputFileRoot;
 
-    public TransmissionTreeToVirusTree(String infectionEventsFileName, String samplingEventsFileName,
+    public TransmissionTreeToVirusTree(String fileName,
                                        DemographicFunction demFunct, String outputFileRoot){
         this.demFunct = demFunct;
         units = new ArrayList<InfectedUnit>();
         idMap = new HashMap<String, InfectedUnit>();
         this.outputFileRoot = outputFileRoot;
         try {
-            readInfectionEvents(infectionEventsFileName);
-            readSamplingEvents(samplingEventsFileName);
+            readInfectionEvents(fileName);
+            readSamplingEvents(fileName);
         } catch(IOException e){
             e.printStackTrace();
         }
@@ -64,33 +68,36 @@ public class TransmissionTreeToVirusTree {
     private void readInfectionEvents(String fileName) throws IOException{
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
-        ArrayList<String[]> lines = new ArrayList<String[]>();
+        ArrayList<String[]> keptLines = new ArrayList<String[]>();
         String line = reader.readLine();
 
         while(line!=null){
-            String[] entries = line.split(",");
-            lines.add(entries);
 
-            InfectedUnit unit = new InfectedUnit(entries[0]);
-            units.add(unit);
-            idMap.put(entries[0], unit);
+            String[] entries = line.split(",");
+            if(entries[0].equals(INFECTION_IDENTIFIER)) {
+                keptLines.add(entries);
+
+                InfectedUnit unit = new InfectedUnit(entries[3]);
+                units.add(unit);
+                idMap.put(entries[3], unit);
+            }
 
             line = reader.readLine();
         }
 
-        for(String[] repeatLine: lines){
+        for(String[] repeatLine: keptLines){
 
-            InfectedUnit infectee = idMap.get(repeatLine[0]);
-            if(!repeatLine[1].equals("none")){
-                InfectedUnit infector = idMap.get(repeatLine[1]);
-                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[2]), infector, infectee);
+            InfectedUnit infectee = idMap.get(repeatLine[3]);
+            if(!repeatLine[2].equals("NA")){
+                InfectedUnit infector = idMap.get(repeatLine[2]);
+                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[1]), infector, infectee);
 
                 infector.addInfectionEvent(infection);
                 infectee.setInfectionEvent(infection);
 
                 infectee.parent = infector;
             } else {
-                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[2]), null, infectee);
+                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[1]), null, infectee);
                 infectee.setInfectionEvent(infection);
             }
 
@@ -106,15 +113,17 @@ public class TransmissionTreeToVirusTree {
 
         while(line!=null){
             String[] entries = line.split(",");
+            if(entries[0].equals(SAMPLING_IDENTIFIER)) {
 
-            if(!idMap.containsKey(entries[0])){
-                throw new RuntimeException("Trying to add a sampling event to unit "+entries[0]+" but this unit" +
-                        "not previously defined");
+                if (!idMap.containsKey(entries[2])) {
+                    throw new RuntimeException("Trying to add a sampling event to unit " + entries[2] + " but this " +
+                            "unit not previously defined");
+                }
+
+                InfectedUnit unit = idMap.get(entries[2]);
+
+                unit.addSamplingEvent(Double.parseDouble(entries[1]));
             }
-
-            InfectedUnit unit = idMap.get(entries[0]);
-
-            unit.addSamplingEvent(Double.parseDouble(entries[1]));
 
             line = reader.readLine();
         }
@@ -257,14 +266,21 @@ public class TransmissionTreeToVirusTree {
         CoalescentSimulator simulator = new CoalescentSimulator();
         SimpleNode root;
 
-        SimpleNode[] simResults = simulator.simulateCoalescent(nodes.toArray(new SimpleNode[nodes.size()]),
-                demogFunct, -maxHeight, 0, true);
-        if(simResults.length==1){
-            root = simResults[0];
-        } else {
-            throw new RuntimeException("Multiple lineages still exist at time of infection (probably a rounding " +
-                    "problem)");
-        }
+        SimpleNode[] simResults;
+        int failCount = 0;
+
+        do {
+            simResults = simulator.simulateCoalescent(nodes.toArray(new SimpleNode[nodes.size()]),
+                    demogFunct, -maxHeight, 0, true);
+            if(simResults.length>1){
+                failCount++;
+                System.out.println("Failed to coalesce lineages: "+failCount);
+            }
+        } while(simResults.length!=1);
+
+        root = simResults[0];
+
+        System.out.println("Success!");
 
         SimpleTree simpleTreelet = new SimpleTree(root);
 
@@ -381,12 +397,13 @@ public class TransmissionTreeToVirusTree {
 
     public static void main(String[] args){
 
-        ExponentialGrowth testGrowth = new ExponentialGrowth(Units.Type.YEARS);
+        LogisticGrowthN0 testGrowth = new LogisticGrowthN0(Units.Type.YEARS);
         testGrowth.setN0(1);
         testGrowth.setGrowthRate(1);
+        testGrowth.setT50(-1);
 
-        TransmissionTreeToVirusTree instance = new TransmissionTreeToVirusTree("inf_test.csv", "samp_test.csv",
-                testGrowth, "test_out");
+        TransmissionTreeToVirusTree instance = new TransmissionTreeToVirusTree("demeSIR_lineList.csv", testGrowth,
+                "test_out");
 
         try{
             instance.run();

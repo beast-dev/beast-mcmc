@@ -305,7 +305,7 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
             }
             final double fullIntegral = demographicFunction.getIntegral(timeOfLastCoalescent,
                     earliestTimeOfFirstCoalescent);
-            final double normalisation = 1-Math.exp(-fullIntegral);
+            final double normalisation = 1-Math.exp(-Binomial.choose2(lineageCount)*fullIntegral);
             final double intensity = demographicFunction.getIntensity(timeOfLastCoalescent);
 
             double tmp = -Math.log(1-U*normalisation)/Binomial.choose2(lineageCount) + intensity;

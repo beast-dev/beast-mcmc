@@ -17,16 +17,16 @@ public class IndividualPrior extends AbstractPeriodPriorDistribution {
     public static final String ID = "id";
     public static final String DISTRIBUTION = "distribution";
 
-    public IndividualPrior(String name, boolean log, ParametricDistributionModel distribution){
-        super(name, log);
+    public IndividualPrior(String name, ParametricDistributionModel distribution){
+        super(name, false);
         this.distribution = distribution;
     }
 
     public double calculateLogLikelihood(double[] values) {
         double out = 0;
 
-        for(int i=0; i<values.length; i++){
-            out += distribution.pdf(values[i]);
+        for (double value : values) {
+            out += distribution.logPdf(value);
         }
 
         return out;
@@ -40,8 +40,10 @@ public class IndividualPrior extends AbstractPeriodPriorDistribution {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             String id = (String) xo.getAttribute(ID);
+            ParametricDistributionModel distribution =
+                    (ParametricDistributionModel)xo.getElementFirstChild(DISTRIBUTION);
 
-            return null;
+            return new IndividualPrior(id, distribution);
 
         }
 
@@ -51,15 +53,16 @@ public class IndividualPrior extends AbstractPeriodPriorDistribution {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(ID, false),
+                new ElementRule(DISTRIBUTION, ParametricDistributionModel.class)
         };
 
         public String getParserDescription() {
-            return "Calculates the probability of a set of doubles being drawn from the prior posterior distribution" +
-                    "of a normal distribution of unknown mean and variance";
+            return "Calculates the probability of a set of doubles all being drawn from the specified prior " +
+                    "distribution";
         }
 
         public Class getReturnType() {
-            return NormalPeriodPriorDistribution.class;
+            return IndividualPrior.class;
         }
     };
 }

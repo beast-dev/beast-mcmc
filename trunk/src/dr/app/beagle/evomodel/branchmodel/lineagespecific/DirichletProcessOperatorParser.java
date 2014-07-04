@@ -38,7 +38,7 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 		return new XMLSyntaxRule[] {
 
 				new ElementRule(CATEGORY_PROBABILITIES,
-	                    new XMLSyntaxRule[] { new ElementRule(Parameter.class, true) }), // 
+	                    new XMLSyntaxRule[] { new ElementRule(Parameter.class, false) }, true), // 
 				
 		new ElementRule(Parameter.class, false), //
 				AttributeRule.newDoubleRule(INTENSITY), //

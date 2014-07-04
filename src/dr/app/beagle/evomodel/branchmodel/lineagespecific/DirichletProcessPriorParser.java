@@ -11,7 +11,7 @@ import dr.xml.XMLSyntaxRule;
 
 public class DirichletProcessPriorParser extends AbstractXMLObjectParser {
 
-	public static final String DIRICHLET_PROCESS_PRIOR = "dirichletProcessModel";
+	public static final String DIRICHLET_PROCESS_PRIOR = "dirichletProcessPrior";
 	public static final String BASE_MODEL = "baseModel";
 	public static final String CONCENTRATION = "concentration";
 	public static final String CATEGORIES = "categories";

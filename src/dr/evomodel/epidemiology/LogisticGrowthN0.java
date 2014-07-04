@@ -47,7 +47,7 @@ public class LogisticGrowthN0 extends ExponentialGrowth {
         double r = getGrowthRate();
         double T50 = getT50();
 		
-		return N0 * (1 + Math.exp(-r * T50)) / (1 + Math.exp(r * (t-T50)));
+		return N0 * (1 + Math.exp(-r * T50)) / (1 + Math.exp(-r * (T50-t)));
     }
 
     public double getLogDemographic(double t) {
@@ -70,7 +70,7 @@ public class LogisticGrowthN0 extends ExponentialGrowth {
     /**
      * Returns the inverse function of getIntensity
      *
-     * If exp(-qt) = a(x-k) then t = k + (1/q) * W(q*exp(-q*k)/a) where W(x) is the Lambert W function.
+     * If exp(-qt) = a(t-k) then t = k + (1/q) * W(q*exp(-q*k)/a) where W(x) is the Lambert W function.
      *
      * for our purposes:
      *

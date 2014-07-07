@@ -11,9 +11,6 @@ import dr.inference.model.Likelihood;
 
 public class ExponentialProductLikelihood extends Likelihood.Abstract {
 	
-	//not used at the moment
-	public final static boolean FIXED_TREE = false;
-	
 	private TreeModel treeModel;
 	private double logPopSize;
 

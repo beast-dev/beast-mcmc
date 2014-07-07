@@ -58,4 +58,9 @@ public class CoalescentIntervalStatistic extends Statistic.Abstract {
 
         return interval;
     }
+    
+    public String getStatisticName() {
+    	return "coalescentIntervalStatistic";
+    }
+    
 }

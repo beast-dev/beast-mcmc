@@ -97,6 +97,7 @@ public class GeneralizedSteppingStoneSamplingAnalysis {
         	internalSum /= map.get(orderedTheta.get(i-1)).size();
         	//System.out.print(orderedTheta.get(i) + "-" + orderedTheta.get(i-1) + ": ");
         	//System.out.println(Math.log(internalSum));
+        	mlContribution.set(i-1, mlContribution.get(i-1) + Math.log(internalSum));
         	logBayesFactor += Math.log(internalSum);
         }
         

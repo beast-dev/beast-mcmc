@@ -351,7 +351,7 @@ public class TreeWorkingPriorParsers {
     /**
      * Parser that aims to use the posterior means of the time between coalescent events.
      */
-    public static XMLObjectParser PRODUCT_OF_EXPONENTIALS_WITH_POSTERIOR_MEANS_LOESS_PARSER = new AbstractXMLObjectParser() {
+    public static XMLObjectParser PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS_PARSER = new AbstractXMLObjectParser() {
     	
     	public String getParserName() {
             return PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS;

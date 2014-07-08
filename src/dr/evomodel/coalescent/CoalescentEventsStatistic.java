@@ -75,7 +75,11 @@ public class CoalescentEventsStatistic extends Statistic.Abstract {
     			//System.err.println(coalescent.getCoalescentIntervalType(j) + "   " + coalescent.getCoalescentInterval(j));
     			if (coalescent.getCoalescentIntervalType(j) == IntervalType.COALESCENT) {
     				if (LOG_COMBINATIONS) {
-    					this.coalescentValues[counter] += coalescent.getCoalescentInterval(j)*(coalescent.getCoalescentIntervalLineageCount(j)*coalescent.getCoalescentIntervalLineageCount(j)-1.0)/2.0;
+    					this.coalescentValues[counter] += coalescent.getCoalescentInterval(j)*(coalescent.getCoalescentIntervalLineageCount(j)*(coalescent.getCoalescentIntervalLineageCount(j)-1.0))/2.0;
+    					//System.err.println("interval length: " + coalescent.getCoalescentInterval(j));
+    					//System.err.println("lineage count: " + coalescent.getCoalescentIntervalLineageCount(j));
+    					//System.err.println("factorial: " + (coalescent.getCoalescentIntervalLineageCount(j)*coalescent.getCoalescentIntervalLineageCount(j)-1.0)/2.0);
+    					//System.err.println("counter " + counter + ": " + this.coalescentValues[counter] + "\n");
     					//this.coalescentValues[counter] += coalescent.getCoalescentInterval(j);
     					//this.coalescentValues[counter] = (coalescent.getCoalescentIntervalLineageCount(j)*coalescent.getCoalescentIntervalLineageCount(j)-1.0)/(2.0*this.coalescentValues[counter]);
     				} else {
@@ -85,8 +89,12 @@ public class CoalescentEventsStatistic extends Statistic.Abstract {
     			} else if (!FULL_FINAL_INTERVAL) {
     				if (coalescent.getCoalescentIntervalType(j) == IntervalType.SAMPLE && counter != 0) {
     					if (LOG_COMBINATIONS) {
-    						this.coalescentValues[counter] += coalescent.getCoalescentInterval(j)*(coalescent.getCoalescentIntervalLineageCount(j)*coalescent.getCoalescentIntervalLineageCount(j)-1.0)/2.0;
-        					//this.coalescentValues[counter] += coalescent.getCoalescentInterval(j);
+    						this.coalescentValues[counter] += coalescent.getCoalescentInterval(j)*(coalescent.getCoalescentIntervalLineageCount(j)*(coalescent.getCoalescentIntervalLineageCount(j)-1.0))/2.0;
+    						//System.err.println("interval length: " + coalescent.getCoalescentInterval(j));
+        					//System.err.println("lineage count: " + coalescent.getCoalescentIntervalLineageCount(j));
+        					//System.err.println("factorial: " + (coalescent.getCoalescentIntervalLineageCount(j)*coalescent.getCoalescentIntervalLineageCount(j)-1.0)/2.0);
+        					//System.err.println("counter " + counter + ": " + this.coalescentValues[counter] + "\n");
+    						//this.coalescentValues[counter] += coalescent.getCoalescentInterval(j);
     					} else {
     						this.coalescentValues[counter] += coalescent.getCoalescentInterval(j);
     					}
@@ -94,7 +102,11 @@ public class CoalescentEventsStatistic extends Statistic.Abstract {
     			} else {
     				if (coalescent.getCoalescentIntervalType(j) == IntervalType.SAMPLE) {
     					if (LOG_COMBINATIONS) {
-    						this.coalescentValues[counter] += coalescent.getCoalescentInterval(j)*(coalescent.getCoalescentIntervalLineageCount(j)*coalescent.getCoalescentIntervalLineageCount(j)-1.0)/2.0;
+    						//System.err.println("interval length: " + coalescent.getCoalescentInterval(j));
+        					//System.err.println("lineage count: " + coalescent.getCoalescentIntervalLineageCount(j));
+        					//System.err.println("factorial: " + (coalescent.getCoalescentIntervalLineageCount(j)*coalescent.getCoalescentIntervalLineageCount(j)-1.0)/2.0);
+        					//System.err.println("counter " + counter + ": " + this.coalescentValues[counter] + "\n");
+    						this.coalescentValues[counter] += coalescent.getCoalescentInterval(j)*(coalescent.getCoalescentIntervalLineageCount(j)*(coalescent.getCoalescentIntervalLineageCount(j)-1.0))/2.0;
         					//this.coalescentValues[counter] += coalescent.getCoalescentInterval(j);
     					} else {
     						this.coalescentValues[counter] += coalescent.getCoalescentInterval(j);

@@ -82,12 +82,8 @@ public interface Transform {
             return "log";
         }
 
-//        public double getLogJacobian(double oldValue, double newValue) {
-//            return Math.log(newValue * (1.0 / oldValue));
-//        }
-
         public double getLogJacobian(double value) {
-            return Math.log(value);
+            return -Math.log(value);
         }
 
         public List<Citation> getCitations() {
@@ -99,7 +95,7 @@ public interface Transform {
                             new Author("P", "Lemey"),
                     },
                     Citation.Status.IN_PREPARATION
-            ));
+                    ));
             return citations;
         }
     }
@@ -120,11 +116,6 @@ public interface Transform {
         public String getTransformName() {
             return "logit";
         }
-
-//        public double getLogJacobian(double oldValue, double newValue) {
-//            // TODO Code review; this seems wrong, as it is lacking symmetric in old/newValue
-//            return Math.log((1.0 - newValue) * (1.0 / oldValue - 1.0 / (1.0 - oldValue)));
-//        }
 
         //TODO: double check this log Jacobian, but I think it is correct now
         public double getLogJacobian(double value) {

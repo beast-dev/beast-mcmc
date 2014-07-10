@@ -25,14 +25,14 @@
 
 package dr.inference.operators;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.RandomWalkOperatorParser;
 import dr.math.MathUtils;
 import dr.util.Transform;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * A random walk operator that takes a (list of) parameter(s) and corresponding transformations.
@@ -50,7 +50,7 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
 
     private final Double lowerOperatorBound;
     private final Double upperOperatorBound;
-    
+
     public enum BoundaryCondition {
         reflecting,
         absorbing
@@ -61,12 +61,12 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
     }
 
     public TransformedRandomWalkOperator(Parameter parameter, Transform[] transformations, Parameter updateIndex, double windowSize, BoundaryCondition bc,
-                              double weight, CoercionMode mode) {
+            double weight, CoercionMode mode) {
         this(parameter, transformations, updateIndex, windowSize, bc, weight, mode, null, null);
     }
 
     public TransformedRandomWalkOperator(Parameter parameter, Transform[] transformations, Parameter updateIndex, double windowSize, BoundaryCondition bc,
-                              double weight, CoercionMode mode, Double lowerOperatorBound, Double upperOperatorBound) {
+            double weight, CoercionMode mode, Double lowerOperatorBound, Double upperOperatorBound) {
         super(mode);
         this.parameter = parameter;
         this.transformations = transformations;
@@ -105,7 +105,7 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
 
         //store MH-ratio in logq
         double logJacobian = 0.0;
-        
+
         // a random dimension to perturb
         int index;
         if (updateMap == null) {
@@ -113,32 +113,32 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
         } else {
             index = updateMap.get(MathUtils.nextInt(updateMapSize));
         }
-        
+
         //System.err.println("index: " + index);
 
         // a random point around old value within windowSize * 2
         double draw = (2.0 * MathUtils.nextDouble() - 1.0) * windowSize;
-        
+
         //System.err.println("draw: " + draw);
-        
+
         //transform parameter values first
         double[] x = parameter.getParameterValues();
         int dim = parameter.getDimension();
 
         //System.err.println("parameter " + index + ": " + x[index]);
-        
+
         double[] transformedX = new double[dim];
         for (int i = 0; i < dim; i++) {
             transformedX[i] = transformations[i].transform(x[i]);
         }
-        
+
         //System.err.println("transformed parameter " + index + ": " + transformedX[index]);
-        
+
         //double newValue = parameter.getParameterValue(index) + draw;
         double newValue = transformedX[index] + draw;
-        
+
         //System.err.println("new value: " + newValue);
-        
+
         final Bounds<Double> bounds = parameter.getBounds();
         final double lower = (lowerOperatorBound == null ? bounds.getLowerLimit(index) : Math.max(bounds.getLowerLimit(index), lowerOperatorBound));
         final double upper = (upperOperatorBound == null ? bounds.getUpperLimit(index) : Math.min(bounds.getUpperLimit(index), upperOperatorBound));
@@ -151,11 +151,14 @@ public class TransformedRandomWalkOperator extends AbstractCoercableOperator {
 
         //parameter.setParameterValue(index, newValue);
         parameter.setParameterValue(index, transformations[index].inverse(newValue));
-        
+
         //System.err.println("set parameter to: " + parameter.getValue(index));
-        
-        logJacobian += transformations[index].getLogJacobian(parameter.getParameterValue(index)) - transformations[index].getLogJacobian(x[index]);
-        
+
+        //this should be correct
+        //logJacobian += transformations[index].getLogJacobian(parameter.getParameterValue(index)) - transformations[index].getLogJacobian(x[index]);
+
+        logJacobian += transformations[index].getLogJacobian(x[index]) - transformations[index].getLogJacobian(parameter.getParameterValue(index));  
+
         //return 0.0;
         return logJacobian;
     }

@@ -370,6 +370,8 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         public final static String THRESHOLD_PARAMETER = "threshold";
         public final static String NUM_CLASSES = "numClasses";
         public static final String IS_UNORDERED = "isUnordered";
+        public final static String N_DATA="NData";
+        public final static String N_TRAITS="NTraits";
 
 
         public String getParserName() {
@@ -377,9 +379,20 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            AbstractMultivariateTraitLikelihood traitLikelihood = (AbstractMultivariateTraitLikelihood)
-                    xo.getChild(AbstractMultivariateTraitLikelihood.class);
+            int numData;
+            int dimTrait;
+            if(xo.hasAttribute(N_DATA)&&xo.hasAttribute(N_TRAITS)){
+                String numDataTemp=(String) xo.getAttribute(N_DATA);
+                String dimTraitTemp=(String) xo.getAttribute(N_TRAITS);
+                numData= Integer.parseInt(numDataTemp);
+                dimTrait= Integer.parseInt(dimTraitTemp);
+            }
+            else {
+                AbstractMultivariateTraitLikelihood traitLikelihood = (AbstractMultivariateTraitLikelihood)
+                        xo.getChild(AbstractMultivariateTraitLikelihood.class);
+                numData = traitLikelihood.getNumData();
+                dimTrait = traitLikelihood.getDimTrait();
+            }
             PatternList patternList = (PatternList) xo.getChild(PatternList.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
@@ -389,8 +402,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
 
 
             int numTaxa = treeModel.getTaxonCount();
-            int numData = traitLikelihood.getNumData();
-            int dimTrait = traitLikelihood.getDimTrait();
 
 
 
@@ -424,7 +435,10 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         }
 
         private final XMLSyntaxRule[] rules = {
+                new OrRule(
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, "The model for the latent random variables"),
+                new AndRule(AttributeRule.newIntegerRule(N_DATA), AttributeRule.newIntegerRule(N_TRAITS))
+                        ),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree"),
                 new ElementRule(THRESHOLD_PARAMETER, CompoundParameter.class, "The parameter with nonzero thershold values"),
                 new ElementRule(NUM_CLASSES, Parameter.class, "Number of multinomial classes in each dimention"),

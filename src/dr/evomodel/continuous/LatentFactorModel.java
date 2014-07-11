@@ -145,6 +145,23 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         storedResidual=new double[residual.length];
         storedLxF=new double[LxF.length];
 
+        if(!isDataScaled & !scaleData){
+            sData=this.data;
+            isDataScaled=true;
+        }
+        if(!isDataScaled){
+            sData = computeScaledData();
+            isDataScaled=true;
+            for (int i = 0; i <sData.getRowDimension() ; i++) {
+                for (int j = 0; j <sData.getColumnDimension() ; j++) {
+                        this.data.setParameterValue(i,j,sData.getParameterValue(i,j));
+                    System.out.println(this.data.getParameterValue(i,j));
+                }
+
+            }
+            data.fireParameterChangedEvent();
+        }
+
 //       computeResiduals();
 //        System.out.print(new Matrix(residual.toComponents()));
 //        System.out.print(calculateLogLikelihood());
@@ -178,7 +195,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public MatrixParameter getData(){return data;}
 
-    public MatrixParameter getScaledData(){return sData;}
+    public MatrixParameter getScaledData(){return data;}
 
     public int getFactorDimension(){return factors.getRowDimension();}
 
@@ -297,14 +314,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
-        if(!isDataScaled & !scaleData){
-            sData=data;
-            isDataScaled=true;
-        }
-        if(!isDataScaled){
-        sData = computeScaledData();
-            isDataScaled=true;
-        }
+
     if(!LxFKnown){
     transposeThenMultiply(loadings, factors, LxF);
         LxFKnown=true;

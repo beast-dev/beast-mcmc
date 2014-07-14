@@ -29,6 +29,7 @@ import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
@@ -57,7 +58,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String FORM_XTX = "formXtXInverse";
     public static final String COEFFICIENT = "coefficient";
 
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
 
     private double scaleFactor;
     private double beta;
@@ -167,7 +168,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         iterations++;
 
         if (DEBUG) {
-            System.err.println("\nIteration: " + iterations);
+            System.err.println("\nAVMVN Iteration: " + iterations);
         }
         //System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());
         /*System.err.println("Old parameter values:");
@@ -190,7 +191,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         if (iterations > 1 && iterations > burnin) {
 
             if (DEBUG) {
-                System.err.println("  iterations > burnin");
+                System.err.println("  AVMVN iterations > burnin");
             }
 
             if (iterations > (burnin+1)) {
@@ -353,8 +354,16 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
     }
 
+    public String toString() {
+        return AVMVN_OPERATOR + "(" + parameter.getParameterName() + ")";
+    }
 
     public static final boolean MULTI = true;
+
+    //Methods needed when using TwoPhaseOperator(Parser)
+    public Parameter getParameter() {
+        return this.parameter;
+    }
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {

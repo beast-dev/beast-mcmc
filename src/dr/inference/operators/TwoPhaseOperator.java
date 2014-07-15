@@ -25,7 +25,10 @@
 
 package dr.inference.operators;
 
+import java.util.ArrayList;
 import java.util.List;
+
+import dr.inference.model.Parameter;
 
 /**
  * This class allows to use two different sets of operators.
@@ -51,12 +54,17 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
     private SimpleOperatorSchedule phaseTwoScheduler;
     private SimpleOperatorSchedule currentOperatorScheduler;
     
+    private List<Parameter> parameters;
+    private ArrayList<ArrayList<Double>> storedValues;
+    
     private int initial;
     private int burnin;
     private int numberOfCalls;
     private int currentOperatorIndex;
     
-    public TwoPhaseOperator(List<AbstractCoercableOperator> phaseOneOperators, List<AdaptableVarianceMultivariateNormalOperator> phaseTwoOperators, int initial, int burnin, double weight, CoercionMode mode) {
+    private boolean switchOperators;
+    
+    public TwoPhaseOperator(List<AbstractCoercableOperator> phaseOneOperators, List<AdaptableVarianceMultivariateNormalOperator> phaseTwoOperators, List<Parameter> parameters, int initial, int burnin, double weight, CoercionMode mode) {
         
         super(mode);
         
@@ -82,8 +90,16 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
         this.burnin = burnin;
         this.numberOfCalls = 0;
         
+        this.switchOperators = false;
+        
         this.phaseOneOperators = phaseOneOperators;
         this.phaseTwoOperators = phaseTwoOperators;
+        
+        this.parameters = parameters;
+        this.storedValues = new ArrayList<ArrayList<Double>>();
+        for (int i = 0; i < phaseOneOperators.size(); i++) {
+            this.storedValues.add(new ArrayList<Double>());
+        }
         
         phaseOneScheduler = new SimpleOperatorSchedule();
         for (MCMCOperator operator : phaseOneOperators) {
@@ -119,35 +135,70 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
             System.err.println("Number of times called: " + numberOfCalls);
         }
         
-        //SHOULD THIS BE PLACED HERE? WHEN IN DOOPERATION() DOES AVMVN STORE VALUES?
-        /*if (numberOfCalls > burnin) {
-            if (DEBUG) {
-                System.err.println("Start passing values to phase two operator(s) if operator(s) allow(s) this");
-            }
-        }*/
+        currentOperatorIndex = currentOperatorScheduler.getNextOperatorIndex();
+        if (DEBUG) {
+            System.err.println("current operator index: " + currentOperatorIndex);
+        }
         
-        if (numberOfCalls > initial) {
-            if (DEBUG) {
-                System.err.println("Initialize AVMVN operator(s) with stored samples");
+        //don't store anything in the first set of operators themselves
+        //store everything in this class to not clutter AVMVN operator with excessive code
+        if (numberOfCalls > burnin && !switchOperators) {
+          //assume a 1-on-1 relationship between the parameter list and the first phase of operators
+            //i.e. each parameter has 1 operator acting on it
+            //now we can use currentOperatorIndex to help with the bookkeeping
+            
+            //first decide to which of the phase two operators the parameter value needs to be written to
+            int phaseTwoCounter = 0;
+            
+            //at the same time decide where it actually came from in order to determine its actual value
+            //i.e. Parameter might be a CompoundParameter, which complicates things
+            int parameterIndex = currentOperatorIndex;
+            for (int i = 0; i < phaseTwoOperators.size(); i++) {
+                //TODO: this may rely on the AVMVN operator only having 1 CompoundParameter
+                if (currentOperatorIndex < phaseTwoOperators.get(i).getParameter().getSize()) {
+                    break;
+                } else {
+                    parameterIndex -= phaseTwoOperators.get(i).getParameter().getSize();
+                    phaseTwoCounter++;
+                }
             }
-            //copy stored samples to the AVMVN operator(s)
+            storedValues.get(currentOperatorIndex).add(parameters.get(phaseTwoCounter).getParameterValue(parameterIndex));
             
+            if (DEBUG) {
+                System.err.println("Storing values in TwoPhaseOperator");
+                System.err.println("currentOperatorIndex: " + currentOperatorIndex);
+                System.err.println("parameterIndex: " + parameterIndex);
+                System.err.print("storage dimensions: " + storedValues.size());
+                for (int i = 0; i < storedValues.size(); i++) {
+                    System.err.print(" -> " + storedValues.get(i).size());
+                }
+                System.err.println();
+            }
             
-            
-            
-            
+            /*if (DEBUG) {
+                System.err.println("Passing values to phase two operator(s)");
+                System.err.println("currentOperatorIndex: " + currentOperatorIndex);
+                System.err.println("AVMVN operator assigned: " + phaseTwoCounter);
+                System.err.println("parameterIndex: " + parameterIndex);
+            }
+            phaseTwoOperators.get(phaseTwoCounter).setSample(parameterIndex, parameters.get(phaseTwoCounter).getParameterValue(parameterIndex));
+            */
+        }
+        
+        if (numberOfCalls > initial && !switchOperators) {
             if (DEBUG) {
                 System.err.println("Switch from phase one scheduler to phase two scheduler");
             }
             currentOperatorScheduler = phaseTwoScheduler;
             //TODO: fix Java type safety problem below
             currentOperators = (List<AbstractCoercableOperator>)(List<?>) phaseTwoOperators;
-        }
-        
-        currentOperatorIndex = currentOperatorScheduler.getNextOperatorIndex();
-        
-        if (DEBUG) {
-            System.err.println("current operator index: " + currentOperatorIndex);
+            //an extra draw is needed here
+            currentOperatorIndex = currentOperatorScheduler.getNextOperatorIndex();
+            
+            //call methods to calculate means and covariance matrix and pass them on to AVMVN operator(s)
+            
+            
+            switchOperators = true;
         }
         
         double logJacobian = (currentOperators.get(currentOperatorIndex)).doOperation();

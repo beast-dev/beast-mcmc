@@ -28,6 +28,7 @@ package dr.inferencexml.operators;
 import java.util.ArrayList;
 import java.util.List;
 
+import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.AdaptableVarianceMultivariateNormalOperator;
 import dr.inference.operators.CoercableMCMCOperator;
@@ -120,7 +121,21 @@ public class TwoPhaseOperatorParser extends AbstractXMLObjectParser {
             }
         }
         
-        return new TwoPhaseOperator(phaseOneOperators, phaseTwoOperators, initial, burnin, weight, mode);
+        //keep track of the parameters of phase one here, as apparently we can't get to them afterwards
+        //let's just get them from phase two, as there I can implement whatever I want
+        List<Parameter> parameters = new ArrayList<Parameter>();
+        for (int i = 0; i < phaseTwoCount; i++) {
+            parameters.add(phaseTwoOperators.get(i).getParameter());
+        }
+        
+        if (DEBUG) {
+            System.err.println("parameter list size: " + parameters.size());
+            for (int i = 0; i < parameters.size(); i++) {
+                System.err.println("  " + parameters.get(i));
+            }
+        }
+        
+        return new TwoPhaseOperator(phaseOneOperators, phaseTwoOperators, parameters, initial, burnin, weight, mode);
     }
 
     //************************************************************************

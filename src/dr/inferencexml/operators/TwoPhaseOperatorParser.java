@@ -48,7 +48,7 @@ import dr.xml.XMLSyntaxRule;
  */
 public class TwoPhaseOperatorParser extends AbstractXMLObjectParser {
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     public static final String TWO_PHASE_OPERATOR = "twoPhaseOperator";
     public static final String WEIGHT = "weight";

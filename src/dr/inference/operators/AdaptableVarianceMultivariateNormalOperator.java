@@ -25,11 +25,12 @@
 
 package dr.inference.operators;
 
+import java.util.ArrayList;
+
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.inferencexml.operators.ScaleOperatorParser;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
@@ -58,7 +59,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     public static final String FORM_XTX = "formXtXInverse";
     public static final String COEFFICIENT = "coefficient";
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     private double scaleFactor;
     private double beta;
@@ -323,9 +324,11 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         }
 
-        /*for (int i = 0; i < dim; i++) {
-                System.err.println(oldX[i] + " -> " + parameter.getValue(i));
-        }*/
+        if (DEBUG) {
+            for (int i = 0; i < dim; i++) {
+                System.err.println(x[i] + " -> " + parameter.getValue(i));
+            }
+        }
 
         if (MULTI) {
             parameter.fireParameterChangedEvent(); // Signal once.
@@ -363,6 +366,64 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     //Methods needed when using TwoPhaseOperator(Parser)
     public Parameter getParameter() {
         return this.parameter;
+    }
+
+    public void provideSamples(ArrayList<ArrayList<Double>> parameterSamples) {
+        if (DEBUG) {
+            System.err.println("AVMVN operator parameter length: " + parameter.getDimension());
+            System.err.println("provideSamples argument length: " + parameterSamples.size());
+        }
+        if (parameter.getDimension() != parameterSamples.size()) {
+            throw new RuntimeException("Dimension mismatch in AVMVN Operator: inconsistent parameter dimensions");
+        } else {
+            int lowestNumberOfSamples = parameterSamples.get(0).size();
+            for (int i = 0; i < parameterSamples.size(); i++) {
+                if (parameterSamples.get(i).size() < lowestNumberOfSamples) {
+                    lowestNumberOfSamples = parameterSamples.get(i).size();
+                }
+            }
+            if (DEBUG) {
+                System.err.println("lowest number of samples: " + lowestNumberOfSamples);
+            }
+            //set number of iterations of AVMVN operator
+            this.iterations = lowestNumberOfSamples;
+            this.updates = lowestNumberOfSamples;
+            this.beta = 0.0;
+            //set means based on provided samples, but take into account transformation(s)
+            for (int i = 0; i < parameterSamples.size(); i++) {
+                for (int j = 0; j < lowestNumberOfSamples; j++) {
+                    newMeans[i] += transformations[i].transform(parameterSamples.get(i).get(j));
+                    //parameterSamples.get(i).get(j);
+                }
+                newMeans[i] /= (double)lowestNumberOfSamples;
+            }
+            if (DEBUG) {
+                System.err.println();
+                for (int i = 0; i < parameterSamples.size(); i++) {
+                    System.err.println("Mean " + i + ": " + newMeans[i]);
+                }
+            }
+            //set covariance matrix based on provided samples, but take into account transformation(s)
+            for (int i = 0; i < dim; i++) {
+                for (int j = i; j < dim; j++) {
+                    for (int k = 0; k < lowestNumberOfSamples; k++) {
+                        empirical[i][j] += transformations[i].transform(parameterSamples.get(i).get(k))*transformations[i].transform(parameterSamples.get(j).get(k));
+                    }
+                    empirical[i][j] /= (double)lowestNumberOfSamples;
+                    empirical[i][j] -= newMeans[i]*newMeans[j];
+                    empirical[j][i] = empirical[i][j];
+                }
+            }
+            if (DEBUG) {
+                System.err.println();
+                for (int i = 0; i < dim; i++) {
+                    for (int j = 0; j < dim; j++) {
+                        System.err.print(empirical[i][j] + "  ");
+                    }
+                    System.err.println();
+                }
+            }
+        }
     }
 
     //MCMCOperator INTERFACE

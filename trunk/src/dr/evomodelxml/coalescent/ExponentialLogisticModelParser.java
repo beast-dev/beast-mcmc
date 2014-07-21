@@ -55,11 +55,11 @@ public class ExponentialLogisticModelParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "A demographic model of constant population size followed by logistic growth.";
+        return "A demographic model of exponential growth followed by logistic growth.";
     }
 
     public Class getReturnType() {
-        return ConstantLogisticModel.class;
+        return ExponentialLogisticModel.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

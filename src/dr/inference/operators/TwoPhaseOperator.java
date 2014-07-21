@@ -38,7 +38,8 @@ import dr.inference.model.Parameter;
 
 public class TwoPhaseOperator extends AbstractCoercableOperator {
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
+    public static final boolean PROVIDE_SAMPLES = false;
 
     /*private AbstractCoercableOperator[] phaseOneOperators;
     private AbstractCoercableOperator[] phaseTwoOperators;
@@ -195,19 +196,21 @@ public class TwoPhaseOperator extends AbstractCoercableOperator {
             //an extra draw is needed here
             currentOperatorIndex = currentOperatorScheduler.getNextOperatorIndex();
 
-            //call methods to calculate means and covariance matrix and pass them on to AVMVN operator(s)
-            //need to create the appropriate list of lists to pass on to AVMVN operator
-            for (int i = 0; i < phaseTwoOperators.size(); i++) {
+            if (PROVIDE_SAMPLES) {
+                //call methods to calculate means and covariance matrix and pass them on to AVMVN operator(s)
+                //need to create the appropriate list of lists to pass on to AVMVN operator
+                for (int i = 0; i < phaseTwoOperators.size(); i++) {
 
-                int listSize = phaseTwoOperators.get(i).getParameter().getDimension();
+                    int listSize = phaseTwoOperators.get(i).getParameter().getDimension();
 
-                ArrayList<ArrayList<Double>> temp = new ArrayList<ArrayList<Double>>();
-                for (int j = 0; j < listSize; j++) {
-                    temp.add(new ArrayList<Double>());
-                    temp.set(j, storedValues.get(i*phaseTwoOperators.get(i).getParameter().getSize()+j));
+                    ArrayList<ArrayList<Double>> temp = new ArrayList<ArrayList<Double>>();
+                    for (int j = 0; j < listSize; j++) {
+                        temp.add(new ArrayList<Double>());
+                        temp.set(j, storedValues.get(i*phaseTwoOperators.get(i).getParameter().getSize()+j));
+                    }
+
+                    phaseTwoOperators.get(i).provideSamples(temp);
                 }
-
-                phaseTwoOperators.get(i).provideSamples(temp);
             }
 
             switchOperators = true;

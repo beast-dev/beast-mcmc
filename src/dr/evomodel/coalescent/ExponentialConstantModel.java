@@ -1,0 +1,110 @@
+/*
+ * ExponentialLogisticModel.java
+ *
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.evomodel.coalescent;
+
+import dr.evolution.coalescent.DemographicFunction;
+import dr.evolution.coalescent.ExpConstant;
+import dr.evolution.coalescent.ExponentialLogistic;
+import dr.evomodelxml.coalescent.ExponentialConstantModelParser;
+import dr.evomodelxml.coalescent.ExponentialLogisticModelParser;
+import dr.inference.model.Parameter;
+
+/**
+ * Exponential growth followed by constant size.
+ *
+ * @author Matthew Hall
+ */
+public class ExponentialConstantModel extends DemographicModel {
+
+    //
+    // Public stuff
+    //
+
+    /**
+     * Construct demographic model with default settings
+     */
+    public ExponentialConstantModel(Parameter N0Parameter,
+                                    Parameter growthRateParameter,
+                                    Parameter transitionTimeParameter,
+                                    Type units) {
+
+        this(ExponentialConstantModelParser.EXPONENTIAL_CONSTANT_MODEL,
+                N0Parameter,
+                growthRateParameter,
+                transitionTimeParameter,
+                units);
+    }
+
+    /**
+     * Construct demographic model with default settings
+     */
+    public ExponentialConstantModel(String name, Parameter N0Parameter,
+                                    Parameter growthRateParameter,
+                                    Parameter transitionTimeParameter,
+                                    Type units) {
+
+        super(name);
+
+        exponentialConstant = new ExpConstant(units);
+
+        this.N0Parameter = N0Parameter;
+        addVariable(N0Parameter);
+        N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.growthRateParameter = growthRateParameter;
+        addVariable(growthRateParameter);
+        growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.transitionTimeParameter = transitionTimeParameter;
+        addVariable(transitionTimeParameter);
+        transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
+                Double.NEGATIVE_INFINITY, 1));
+
+        setUnits(units);
+    }
+
+
+    // general functions
+
+    public DemographicFunction getDemographicFunction() {
+        exponentialConstant.setN0(N0Parameter.getParameterValue(0));
+
+        exponentialConstant.setGrowthRate(growthRateParameter.getParameterValue(0));
+
+        exponentialConstant.setTransitionTime(transitionTimeParameter.getParameterValue(0));
+
+        return exponentialConstant;
+    }
+
+    //
+    // protected stuff
+    //
+
+    Parameter N0Parameter = null;
+    Parameter growthRateParameter = null;
+    Parameter transitionTimeParameter = null;
+    ExpConstant exponentialConstant = null;
+}

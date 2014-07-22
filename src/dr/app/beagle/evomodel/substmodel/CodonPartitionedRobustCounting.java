@@ -89,10 +89,11 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean includeInternalBranches,
                                           boolean doUnconditionalPerBranch,
                                           boolean saveCompleteHistory,
+                                          boolean tryNewNeutralModel,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
         this(name, tree, partition, codons, codonLabeling, useUniformization, includeExternalBranches,
-                includeInternalBranches, doUnconditionalPerBranch, saveCompleteHistory, false,
+                includeInternalBranches, doUnconditionalPerBranch, saveCompleteHistory, false, tryNewNeutralModel,
                 branchFormat, logFormat);
     }
 
@@ -106,6 +107,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean doUnconditionalPerBranch,
                                           boolean saveCompleteHistory,
                                           boolean forceAverageRate,
+                                          boolean tryNewNeutralModel,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
         super(name);
@@ -160,6 +162,10 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.includeExternalBranches = includeExternalBranches;
         this.includeInternalBranches = includeInternalBranches;
         this.doUnconditionedPerBranch = doUnconditionalPerBranch;
+
+        this.tryNewNeutralModel = tryNewNeutralModel;
+
+        //this.neutralSubstitutionModel = null; // new ComplexSubstitutionModel();
 
         setupTraits();
     }
@@ -567,10 +573,14 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         fillInUnconditionalTraitValues(treeLength, rootDistribution, unconditionedCounts);
     }
 
+    private void fillInUnconditionalQMatrix(double[] lambda) {
+        productChainModel.getInfinitesimalMatrix(lambda);
+    }
+
     private void fillInUnconditionalTraitValues(double expectedLength, double[] freq, double[] out) {
         final int stateCount = 64;
         double[] lambda = new double[stateCount * stateCount];
-        productChainModel.getInfinitesimalMatrix(lambda);
+        fillInUnconditionalQMatrix(lambda);
         for (int i = 0; i < numCodons; i++) {
             final int startingState = MathUtils.randomChoicePDF(freq);
             StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
@@ -594,7 +604,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     public Double getUnconditionedTraitValue() {
         if (!TRIAL) {
-            return markovJumps.getMarginalRate() * getExpectedTreeLength();
+            throw new RuntimeException("Believed broken for neutral models");
+//            return markovJumps.getMarginalRate() * getExpectedTreeLength();
         } else {
             final double treeLength = getExpectedTreeLength();
             double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
@@ -696,5 +707,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     private static final boolean TRIAL = true;
 
     private boolean saveCompleteHistory = false;
+
+    private boolean tryNewNeutralModel = false;
 
 }

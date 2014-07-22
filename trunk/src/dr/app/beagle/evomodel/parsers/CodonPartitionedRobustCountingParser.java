@@ -53,6 +53,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
     public static final String DO_UNCONDITIONED_PER_BRANCH = "unconditionedPerBranch";
     public static final String SAVE_HISTORY = "saveCompleteHistory";
     public static final String AVERAGE_RATES = "averageRates";
+    public static final String USE_NEW_NEUTRAL_MODEL = "useNewNeutralModel";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -122,6 +123,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         boolean doUnconditionedPerBranch = xo.getAttribute(DO_UNCONDITIONED_PER_BRANCH, false);
         boolean averageRates = xo.getAttribute(AVERAGE_RATES, false);
         boolean saveCompleteHistory = xo.getAttribute(SAVE_HISTORY, false);
+        boolean useNewNeutralModel = xo.getAttribute(USE_NEW_NEUTRAL_MODEL, false);
 
         return new CodonPartitionedRobustCounting(
                 xo.getId(),
@@ -135,6 +137,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
                 doUnconditionedPerBranch,
                 saveCompleteHistory,
                 averageRates,
+                useNewNeutralModel,
                 branchFormat,
                 logFormat);
     }
@@ -163,6 +166,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             AttributeRule.newBooleanRule(AVERAGE_RATES, true),
             AttributeRule.newStringRule(LABELING),
             AttributeRule.newBooleanRule(SAVE_HISTORY, true),
+            AttributeRule.newBooleanRule(USE_NEW_NEUTRAL_MODEL, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

@@ -1,5 +1,5 @@
 /*
- * SubstitutionModel.java
+ * SubstitutionProcess.java
  *
  * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,16 +25,50 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.inference.model.Model;
+import dr.evolution.datatype.DataType;
 
 /**
  * <b>model of sequence substitution (rate matrix)</b>.
  * provides a convenient interface for the computation of transition probabilities
- *
- * @author Andrew Rambaut
- * @author Alexei Drummond
- * @version $Id: SubstitutionModel.java,v 1.13 2005/05/24 20:25:58 rambaut Exp $
  */
-public interface SubstitutionModel extends SubstitutionProcess, Model {
-    // Combines SubstitutionProcess and Model
+public interface SubstitutionProcess {
+
+    /**
+     * Get the complete transition probability matrix for the given distance.
+     *
+     * @param distance the time (branch length)
+     * @param matrix   an array to store the matrix
+     */
+    void getTransitionProbabilities(double distance, double[] matrix);
+
+    /**
+     * This function returns the Eigen vectors.
+     *
+     * @return the array
+     */
+    EigenDecomposition getEigenDecomposition();
+
+    /**
+     * get the state frequencies
+     *
+     * @return the frequencies
+     */
+    FrequencyModel getFrequencyModel();
+
+    /**
+     * Get the infinitesimal rate matrix
+     *
+     * @return the rates
+     */
+    public void getInfinitesimalMatrix(double[] matrix);
+
+    /**
+     * @return the data type
+     */
+    DataType getDataType();
+
+    /**
+     * @return if substitution model can return complex diagonalizations
+     */
+    boolean canReturnComplexDiagonalization();
 }

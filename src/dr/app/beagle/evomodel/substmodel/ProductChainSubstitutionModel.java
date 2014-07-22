@@ -140,6 +140,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         super.handleModelChangedEvent(model, object, index);
         // Propogate change to higher models
         fireModelChanged(model);
+        averageModel = null;
     }
 
     private String[] recursivelyAppendCharacterStates(DataType dataType, String[] inSubStates) {
@@ -195,12 +196,72 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         return out;
     }
 
-    SubstitutionModel getBaseModel(int index) {
-//        if (!forceAverageModel) {
-        return baseModels.get(index);
-//        } else {
-//            throw new IllegalArgumentException("Not yet implemented");
-//        }
+    private SubstitutionProcess computeAverageModel() {
+
+        return new SubstitutionProcess() {
+            @Override
+            public void getTransitionProbabilities(double distance, double[] matrix) {
+                throw new RuntimeException("Should not be called");
+            }
+
+            @Override
+            public EigenDecomposition getEigenDecomposition() {
+                throw new RuntimeException("Should not be called");
+            }
+
+            @Override
+            public FrequencyModel getFrequencyModel() {
+                throw new RuntimeException("Should not be called");
+            }
+
+            @Override
+            public void getInfinitesimalMatrix(double[] matrix) {
+                if (averageMatrix == null) {
+                    final int dim = matrix.length;
+                    averageMatrix = new double[dim];
+
+                    double[][] allMatrices = new double[baseModels.size()][dim];
+                    for (int i = 0; i < baseModels.size(); ++i) {
+                        baseModels.get(i).getInfinitesimalMatrix(allMatrices[i]);
+                    }
+
+                    for (int i = 0; i < dim; ++i) {
+                        double total = 0.0;
+                        for (int j = 0; j < baseModels.size(); ++j) {
+                            total += allMatrices[j][i];
+                        }
+                        total /= baseModels.size();
+                        averageMatrix[i] = total;
+                    }
+                }
+                System.arraycopy(averageMatrix, 0, matrix, 0, averageMatrix.length);
+            }
+
+            @Override
+            public DataType getDataType() {
+                throw new RuntimeException("Should not be called");
+            }
+
+            @Override
+            public boolean canReturnComplexDiagonalization() {
+                throw new RuntimeException("Should not be called");
+            }
+
+            double[] averageMatrix = null;
+        };
+    }
+
+    ;
+
+    private SubstitutionProcess getBaseModel(int index) {
+        if (!forceAverageModel) {
+            return baseModels.get(index);
+        } else {
+            if (averageModel == null) {
+                averageModel = computeAverageModel();
+            }
+            return averageModel;
+        }
     }
 
     private void computeKroneckerSumsAndProducts() {
@@ -216,7 +277,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         double[] currentIevcT = transpose(currentED.getInverseEigenVectors(), currentStateSize);
 
         for (int i = 1; i < numBaseModel; i++) {
-            SubstitutionModel nextModel = getBaseModel(i);
+            SubstitutionProcess nextModel = getBaseModel(i);
             int nextStateSize = stateSizes[i];
             double[] nextRate = new double[nextStateSize * nextStateSize];
             nextModel.getInfinitesimalMatrix(nextRate);
@@ -292,4 +353,6 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     protected final ProductChainFrequencyModel pcFreqModel;
     protected double[] rateMatrix = null;
     private final boolean forceAverageModel;
+    private SubstitutionProcess averageModel = null;
+
 }

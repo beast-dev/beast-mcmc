@@ -25,6 +25,7 @@
 
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.AbstractModel;
@@ -32,6 +33,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
+import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.RandomGenerator;
 
@@ -164,6 +166,57 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
     public Object nextRandom() {
         checkDistribution();
         return distribution.nextMultivariateNormal();
+    }
+
+//    boolean firstTime=true;
+    public double[] nextRandomFast(int i){
+
+        double[] random=new double[traitModel.getTreeModel().getExternalNodeCount()];
+        NodeRef root=traitModel.getTreeModel().getRoot();
+//        if(traitModel.getTreeModel().isExternal(root)) {
+//            random[0] = traitModel.getTreeModel().getMultivariateNodeTrait(root, traitModel.getTraitName())[i];
+//        }
+//        else{
+
+
+        double[][] var=MultivariateTraitUtils.computeTreeVariance(traitModel, true);
+//        if(firstTime) {
+//            for (int j = 0; j < var[0].length; j++) {
+//                for (int k = 0; k < var[0].length; k++) {
+//                    if(j!=k)
+//                        var[j][k] = var[j][k] / Math.sqrt(var[k][k] * var[j][j]);
+//                }
+//            }
+//
+//
+//
+//            for (int j = 0; j < var[0].length; j++) {
+//                String empty = "";
+//                for (int k = 0; k < var[0].length; k++) {
+//                    empty += Double.toString(var[j][k]) + "\t";
+//                }
+//                System.out.println(empty);
+//            }
+//            firstTime=false;
+//        }
+        nextRandomFast(rootValue[0], root, random);
+//        }
+        return random;
+    }
+
+    private void nextRandomFast(double currentValue, NodeRef currentNode, double[] random){
+        double rescaledLength;
+        rescaledLength=traitModel.getRescaledBranchLengthForPrecision(currentNode);
+        if(traitModel.getTreeModel().isExternal(currentNode)){
+            random[currentNode.getNumber()]=currentValue+ MathUtils.nextGaussian()*Math.sqrt(rescaledLength);
+        }
+        else{
+            int childCount=traitModel.getTreeModel().getChildCount(currentNode);
+            double newValue=currentValue+Math.sqrt(rescaledLength)*MathUtils.nextGaussian();
+            for (int i = 0; i <childCount ; i++) {
+                nextRandomFast(newValue, traitModel.getTreeModel().getChild(currentNode, i), random);
+            }
+        }
     }
 
     public double logPdf(Object x) {

@@ -31,10 +31,7 @@ import dr.app.beagle.evomodel.substmodel.MG94HKYCodonModel;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 import dr.xml.*;
-
-import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
@@ -132,8 +129,8 @@ public class MG94CodonModelParser extends AbstractXMLObjectParser {
 
 
         if (!xo.getAttribute(NORMALIZED, true)) {
-            codonModel.setNormalization(false);
-            Logger.getLogger("dr.app.beagle.evomodel").info("MG94CodonModel normalization: false");
+//            codonModel.setNormalization(false);
+//            Logger.getLogger("dr.app.beagle.evomodel").info("MG94CodonModel normalization: false");
         }
 
         return codonModel;

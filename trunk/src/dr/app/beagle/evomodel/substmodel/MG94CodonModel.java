@@ -91,8 +91,9 @@ public class MG94CodonModel extends AbstractCodonModel {
     protected double getNormalizationValue(double[][] matrix, double[] pi) {
         double norm = 1.0;
         if (doNormalization) {
-            double ratio = (numSynTransitions * getAlpha() + numNonsynTransitions * getBeta())
-                    / (numSynTransitions + numNonsynTransitions);
+            double ratio =
+                    getAlpha() + getBeta();
+            //(numSynTransitions * getAlpha() + numNonsynTransitions * getBeta()) / (numSynTransitions + numNonsynTransitions);
             norm = super.getNormalizationValue(matrix, pi) / ratio;
         }
         return norm;
@@ -108,8 +109,8 @@ public class MG94CodonModel extends AbstractCodonModel {
 
     protected void setupRelativeRates(double[] rates) {
 
-        double alpha = getAlpha();
-        double beta = getBeta();
+        double alpha = getAlpha() / numSynTransitions;
+        double beta = getBeta() / numNonsynTransitions;
         for (int i = 0; i < rateCount; i++) {
             switch (rateMap[i]) {
                 case 0:

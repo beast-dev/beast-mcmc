@@ -67,7 +67,7 @@ import dr.xml.XMLSyntaxRule;
  * @author Marc A. Suchard
  */
 public class TreeWorkingPriorParsers {
-	
+
     public final static boolean DEBUG = true;
 
     public static final String CONSTANT_TREE_TOPOLOGY_PRIOR = "constantTreeTopologyPrior";
@@ -80,24 +80,25 @@ public class TreeWorkingPriorParsers {
     public static final String PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS = "productOfExponentialsPosteriorMeansLoess";
     public static final String PRODUCT_OF_EXPONENTIALS_SUFFICIENT_STATISTICS = "productOfExponentialsSufficientStatistics";
     public static final String PRODUCT_OF_GAMMAS = "productOfGammas";
+    public static final String CONSTANT_DECREASED_VARIANCE_PRIOR = "constantDecreasedVariancePrior";
     public final static String BURNIN = "burnin";
     public final static String EPSILON = "epsilon";
     public static final String PARAMETER_COLUMN = "parameterColumn";
-    
+
     public static final double epsilon = 0.1;
-    
+
     /**
      * 
      */
     public static XMLObjectParser COALESCENT_CONSTANT_LIKELIHOOD_PARSER = new AbstractXMLObjectParser () {
-    
-    	public String getParserName() {
+
+        public String getParserName() {
             return COALESCENT_CONSTANT_LIKELIHOOD;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		//only use as test class, will require separate likelihood function
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            //only use as test class, will require separate likelihood function
             /*Tree tree = (Tree) xo.getChild(Tree.class);
     		TreeIntervals intervals = new TreeIntervals(tree);
     		final int nIntervals = intervals.getIntervalCount();
@@ -111,14 +112,14 @@ public class TreeWorkingPriorParsers {
             }
             System.err.println("logPDF = " + logPDF);
             return new ConstantLikelihood(-logPDF);*/
-    		
-    		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-    		//System.err.println(tree);
-    		return new CoalescentConstantLikelihood(tree);
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+            TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+            //System.err.println(tree);
+            return new CoalescentConstantLikelihood(tree);
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
@@ -133,31 +134,31 @@ public class TreeWorkingPriorParsers {
         public Class getReturnType() {
             return Likelihood.class;
         }
-    	
+
     };
-    
+
     /**
      * 
      */
     public static XMLObjectParser CONTEMPORANEOUS_COALESCENT_CONSTANT_PARSER = new AbstractXMLObjectParser () {
-    
-    	public String getParserName() {
+
+        public String getParserName() {
             return CONTEMPORANEOUS_COALESCENT_CONSTANT;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-    		final int nTaxa = treeModel.getExternalNodeCount();
-    		double logPDF = 0.0;
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            final int nTaxa = treeModel.getExternalNodeCount();
+            double logPDF = 0.0;
             for (int i = nTaxa; i > 2; --i) {
                 logPDF += Math.log(Binomial.choose2(i));
             }
             return new ConstantLikelihood(-logPDF);
 
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
@@ -172,34 +173,34 @@ public class TreeWorkingPriorParsers {
         public Class getReturnType() {
             return Likelihood.class;
         }
-    	
+
     };
 
     /**
      * Parser that aims to mimic the behaviour of the GMRF Skyride for fixed log population sizes.
      */
     public static XMLObjectParser PRODUCT_OF_EXPONENTIALS_PARSER = new AbstractXMLObjectParser() {
-    	
-    	public String getParserName() {
+
+        public String getParserName() {
             return PRODUCT_OF_EXPONENTIALS;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		double logPopSize = xo.getDoubleAttribute("logPopSize");
-    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-    		
-    		return new ExponentialProductLikelihood(treeModel, logPopSize);
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double logPopSize = xo.getDoubleAttribute("logPopSize");
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+
+            return new ExponentialProductLikelihood(treeModel, logPopSize);
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
         private final XMLSyntaxRule[] rules = {
-        		AttributeRule.newDoubleRule("logPopSize"),
-        		new ElementRule(TreeModel.class)
+                AttributeRule.newDoubleRule("logPopSize"),
+                new ElementRule(TreeModel.class)
         };
 
         public String getParserDescription() {
@@ -207,28 +208,132 @@ public class TreeWorkingPriorParsers {
         }
 
         public Class getReturnType() {
-        	return Likelihood.class;
+            return Likelihood.class;
         }
-    	
+
     };
-    
+
+    /**
+     * Parser that aims to use the posterior means of the time between coalescent events.
+     */
+    public static XMLObjectParser CONSTANT_DECREASED_VARIANCE_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return CONSTANT_DECREASED_VARIANCE_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            try {
+
+                File file = new File(fileName);
+                String parent = file.getParent();
+
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
+                }
+                file = new File(parent, fileName);
+                fileName = file.getAbsolutePath();
+
+                String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
+                int dimension = xo.getIntegerAttribute("dimension");
+
+                LogFileTraces traces = new LogFileTraces(fileName, file);
+                traces.loadTraces();
+                int maxState = traces.getMaxState();
+
+                // leaving the burnin attribute off will result in 10% being used
+                int burnin = xo.getAttribute("burnin", maxState / 10);
+                if (burnin < 0 || burnin >= maxState) {
+                    burnin = maxState / 10;
+                    System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
+                }
+                traces.setBurnIn(burnin);
+
+                int traceIndexParameter = -1;
+
+                System.out.println("Looking for the following column:" + parameterName);
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    if (traceName.trim().equals(parameterName)) {
+                        traceIndexParameter = i;
+                        break;
+                    }
+                }
+                System.out.println("Overview of traceIndexParameter:");
+                if (traceIndexParameter == -1) {
+                    throw new XMLParseException("Not all traces could be linked to the required columns.");
+                } else {
+                    System.out.println("  traceIndexParameter: " + traceIndexParameter);
+                }
+
+                Double[] parameterSamples = new Double[traces.getStateCount()];
+                traces.getValues(traceIndexParameter).toArray(parameterSamples);
+
+                //not necessary to work with flags, assume that we are using coalescentEventsStatistic
+                double posteriorMean = 0.0;
+                for (int i = 0; i < parameterSamples.length; i++) {
+                    posteriorMean += parameterSamples[i];
+                }
+                posteriorMean /= ((double)parameterSamples.length);
+                System.err.println("Variable column -> " + posteriorMean);
+                //posteriorMean = Math.log(posteriorMean);
+                //System.err.println("Log transformed: " + posteriorMean);
+
+                //return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
+                return new GammaProductLikelihood(treeModel, posteriorMean, dimension);
+
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+            } catch (java.io.IOException ioe) {
+                throw new XMLParseException(ioe.getMessage());
+            } catch (TraceException e) {
+                throw new XMLParseException(e.getMessage());
+            }
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule("fileName"),
+                AttributeRule.newStringRule("parameterColumn"),
+                AttributeRule.newIntegerRule("dimension"),
+                new ElementRule(TreeModel.class)
+        };
+
+        public String getParserDescription() {
+            return "Calculates a product of exponentials based on a set of posterior sample means.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+
+    }; 
+
     /**
      * Parser that aims to use the posterior means of the time between coalescent events.
      */
     public static XMLObjectParser PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_PARSER = new AbstractXMLObjectParser() {
-    	
-    	public String getParserName() {
+
+        public String getParserName() {
             return PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-    		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-    		
-    		try {
-    			
-    			File file = new File(fileName);
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            try {
+
+                File file = new File(fileName);
                 String parent = file.getParent();
 
                 if (!file.isAbsolute()) {
@@ -254,58 +359,58 @@ public class TreeWorkingPriorParsers {
 
                 int[] traceIndexParameter = new int[dimension];
                 for (int i = 0; i < traceIndexParameter.length; i++) {
-					traceIndexParameter[i] = -1;
-				}
+                    traceIndexParameter[i] = -1;
+                }
 
                 String[] columnNames = new String[dimension];
-				for (int i = 1; i <= columnNames.length; i++) {
-					columnNames[i-1] = parameterName + i;
-				}
-				System.out.println("Looking for the following columns:");
-				for (int i = 0; i < columnNames.length; i++) {
-					System.out.println("  " + columnNames[i]);
-				}
-				for (int i = 0; i < traces.getTraceCount(); i++) {
-					String traceName = traces.getTraceName(i);
-					for (int j = 0; j < columnNames.length; j++) {
-						if (traceName.trim().equals(columnNames[j])) {
-							traceIndexParameter[j] = i;
-							break;
-						}
-					}
-				}
-				System.out.println("Overview of traceIndexParameter:");
-				for (int i = 0; i < traceIndexParameter.length; i++) {
-					if (traceIndexParameter[i] == -1) {
-						throw new XMLParseException("Not all traces could be linked to the required columns.");
-					}
-					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
-				}
-				
-				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
-				for (int i = 0; i < dimension; i++) {
-					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
-				}
-				
-				//not necessary to work with flags, assume that we are using coalescentEventsStatistic
-				double[] posteriorMeans = new double[dimension];
+                for (int i = 1; i <= columnNames.length; i++) {
+                    columnNames[i-1] = parameterName + i;
+                }
+                System.out.println("Looking for the following columns:");
+                for (int i = 0; i < columnNames.length; i++) {
+                    System.out.println("  " + columnNames[i]);
+                }
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    for (int j = 0; j < columnNames.length; j++) {
+                        if (traceName.trim().equals(columnNames[j])) {
+                            traceIndexParameter[j] = i;
+                            break;
+                        }
+                    }
+                }
+                System.out.println("Overview of traceIndexParameter:");
+                for (int i = 0; i < traceIndexParameter.length; i++) {
+                    if (traceIndexParameter[i] == -1) {
+                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                    }
+                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                }
 
-				for (int i = 0; i < posteriorMeans.length; i++) {
-					//variable column
+                Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
+                for (int i = 0; i < dimension; i++) {
+                    traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
+                }
+
+                //not necessary to work with flags, assume that we are using coalescentEventsStatistic
+                double[] posteriorMeans = new double[dimension];
+
+                for (int i = 0; i < posteriorMeans.length; i++) {
+                    //variable column
                     double mean = 0.0;
                     for (int j = 0; j < parameterSamples[i].length; j++) {
                         mean += parameterSamples[i][j];
                     }
                     mean /= ((double)parameterSamples[i].length);
-                    
+
                     //mean = 1.0/mean;
-                    
+
                     System.err.println("Variable column: " + i + " -> " + mean);
                     posteriorMeans[i] = Math.log(mean);
-				}
-				
-				//Test: hard coding posterior means
-				/*posteriorMeans[0] = 3.667;
+                }
+
+                //Test: hard coding posterior means
+                /*posteriorMeans[0] = 3.667;
 				posteriorMeans[1] = 3.245;
 				posteriorMeans[2] = 3.196;
 				posteriorMeans[3] = 3.167;
@@ -314,28 +419,28 @@ public class TreeWorkingPriorParsers {
 				posteriorMeans[6] = 3.422;
 				posteriorMeans[7] = 3.412;
 				posteriorMeans[8] = 3.058;*/
-				
-				return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
-    			
-    		} catch (FileNotFoundException fnfe) {
+
+                return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
+
+            } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
             } catch (TraceException e) {
                 throw new XMLParseException(e.getMessage());
             }
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
         private final XMLSyntaxRule[] rules = {
-        		AttributeRule.newStringRule("fileName"),
+                AttributeRule.newStringRule("fileName"),
                 AttributeRule.newStringRule("parameterColumn"),
                 AttributeRule.newIntegerRule("dimension"),
-        		new ElementRule(TreeModel.class)
+                new ElementRule(TreeModel.class)
         };
 
         public String getParserDescription() {
@@ -343,28 +448,28 @@ public class TreeWorkingPriorParsers {
         }
 
         public Class getReturnType() {
-        	return Likelihood.class;
+            return Likelihood.class;
         }
-    	
+
     }; 
-    
+
     /**
      * Parser that aims to use the posterior means of the time between coalescent events.
      */
     public static XMLObjectParser PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS_PARSER = new AbstractXMLObjectParser() {
-    	
-    	public String getParserName() {
+
+        public String getParserName() {
             return PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-    		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-    		
-    		try {
-    			
-    			File file = new File(fileName);
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            try {
+
+                File file = new File(fileName);
                 String parent = file.getParent();
 
                 if (!file.isAbsolute()) {
@@ -390,107 +495,108 @@ public class TreeWorkingPriorParsers {
 
                 int[] traceIndexParameter = new int[dimension];
                 for (int i = 0; i < traceIndexParameter.length; i++) {
-					traceIndexParameter[i] = -1;
-				}
+                    traceIndexParameter[i] = -1;
+                }
 
                 String[] columnNames = new String[dimension];
-				for (int i = 1; i <= columnNames.length; i++) {
-					columnNames[i-1] = parameterName + i;
-				}
-				System.out.println("Looking for the following columns:");
-				for (int i = 0; i < columnNames.length; i++) {
-					System.out.println("  " + columnNames[i]);
-				}
-				for (int i = 0; i < traces.getTraceCount(); i++) {
-					String traceName = traces.getTraceName(i);
-					for (int j = 0; j < columnNames.length; j++) {
-						if (traceName.trim().equals(columnNames[j])) {
-							traceIndexParameter[j] = i;
-							break;
-						}
-					}
-				}
-				System.out.println("Overview of traceIndexParameter:");
-				for (int i = 0; i < traceIndexParameter.length; i++) {
-					if (traceIndexParameter[i] == -1) {
-						throw new XMLParseException("Not all traces could be linked to the required columns.");
-					}
-					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
-				}
-				
-				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
-				for (int i = 0; i < dimension; i++) {
-					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
-				}
-				
-				//not necessary to work with flags, assume that we are using coalescentEventsStatistic
-				double[] posteriorMeans = new double[dimension];
+                for (int i = 1; i <= columnNames.length; i++) {
+                    columnNames[i-1] = parameterName + i;
+                }
+                System.out.println("Looking for the following columns:");
+                for (int i = 0; i < columnNames.length; i++) {
+                    System.out.println("  " + columnNames[i]);
+                }
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    for (int j = 0; j < columnNames.length; j++) {
+                        if (traceName.trim().equals(columnNames[j])) {
+                            traceIndexParameter[j] = i;
+                            break;
+                        }
+                    }
+                }
+                System.out.println("Overview of traceIndexParameter:");
+                for (int i = 0; i < traceIndexParameter.length; i++) {
+                    if (traceIndexParameter[i] == -1) {
+                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                    }
+                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                }
 
-				for (int i = 0; i < posteriorMeans.length; i++) {
-					//variable column
+                Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
+                for (int i = 0; i < dimension; i++) {
+                    traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
+                }
+
+                //not necessary to work with flags, assume that we are using coalescentEventsStatistic
+                double[] posteriorMeans = new double[dimension];
+
+                for (int i = 0; i < posteriorMeans.length; i++) {
+                    //variable column
                     double mean = 0.0;
                     for (int j = 0; j < parameterSamples[i].length; j++) {
                         mean += parameterSamples[i][j];
                     }
                     mean /= ((double)parameterSamples[i].length);
-                    
+
                     //mean = 1.0/mean;
-                    
+
                     System.err.println("Variable column: " + i + " -> " + mean);
                     posteriorMeans[i] = Math.log(mean);
-				}
-				
-				try {
-					//Print log posterior means
-					System.err.println("Log Posterior Means:");
-					for (int i = 0; i < posteriorMeans.length; i++) {
-						System.err.println(posteriorMeans[i]);
-					}
-					//Call Loess interpolator here
-					LoessInterpolator loess = new LoessInterpolator(1.0, 2);
-					double[] xvalues = new double[posteriorMeans.length];
-					for (int i = 0; i < posteriorMeans.length; i++) {
-						xvalues[i] = i;
-					}
+                }
 
-					double[] loessOutput = loess.smooth(xvalues, posteriorMeans);
-					System.err.println("Loess output:");
-					for (int i = 0; i < loessOutput.length; i++) {
-						System.err.println(loessOutput[i]);
-					}
-					
-					posteriorMeans = loessOutput;
-				} catch (MathException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				
-				return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
-				
-				/*for (int i = 0; i < posteriorMeans.length; i++) {
+                try {
+                    //Print log posterior means
+                    System.err.println("Log Posterior Means:");
+                    for (int i = 0; i < posteriorMeans.length; i++) {
+                        System.err.println(posteriorMeans[i]);
+                    }
+                    //Call Loess interpolator here
+                    LoessInterpolator loess = new LoessInterpolator(1.0, 2);
+                    double[] xvalues = new double[posteriorMeans.length];
+                    for (int i = 0; i < posteriorMeans.length; i++) {
+                        xvalues[i] = i;
+                    }
+
+                    double[] loessOutput = loess.smooth(xvalues, posteriorMeans);
+                    System.err.println("Loess output:");
+                    for (int i = 0; i < loessOutput.length; i++) {
+                        System.err.println(loessOutput[i]);
+                    }
+
+                    posteriorMeans = loessOutput;
+
+                } catch (MathException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+
+                return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
+
+                /*for (int i = 0; i < posteriorMeans.length; i++) {
 					posteriorMeans[i] = Math.exp(posteriorMeans[i]);
 				}
 				return new GammaIntervalProductLikelihood(treeModel, 0.0, posteriorMeans, posteriorMeans);*/
-    			
-    		} catch (FileNotFoundException fnfe) {
+
+            } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
             } catch (TraceException e) {
                 throw new XMLParseException(e.getMessage());
             }
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
         private final XMLSyntaxRule[] rules = {
-        		AttributeRule.newStringRule("fileName"),
+                AttributeRule.newStringRule("fileName"),
                 AttributeRule.newStringRule("parameterColumn"),
                 AttributeRule.newIntegerRule("dimension"),
-        		new ElementRule(TreeModel.class)
+                new ElementRule(TreeModel.class)
         };
 
         public String getParserDescription() {
@@ -498,28 +604,28 @@ public class TreeWorkingPriorParsers {
         }
 
         public Class getReturnType() {
-        	return Likelihood.class;
+            return Likelihood.class;
         }
-    	
+
     }; 
-    
+
     /**
      * Parser that aims to use the posterior means of the time between coalescent events, using sufficient statistics.
      */
     public static XMLObjectParser PRODUCT_OF_EXPONENTIALS_SUFFICIENT_STATISTICS_PARSER = new AbstractXMLObjectParser() {
-    	
-    	public String getParserName() {
+
+        public String getParserName() {
             return PRODUCT_OF_EXPONENTIALS_SUFFICIENT_STATISTICS;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-    		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-    		
-    		try {
-    			
-    			File file = new File(fileName);
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            try {
+
+                File file = new File(fileName);
                 String parent = file.getParent();
 
                 if (!file.isAbsolute()) {
@@ -545,44 +651,44 @@ public class TreeWorkingPriorParsers {
 
                 int[] traceIndexParameter = new int[dimension];
                 for (int i = 0; i < traceIndexParameter.length; i++) {
-					traceIndexParameter[i] = -1;
-				}
+                    traceIndexParameter[i] = -1;
+                }
 
                 String[] columnNames = new String[dimension];
-				for (int i = 1; i <= columnNames.length; i++) {
-					columnNames[i-1] = parameterName + i;
-				}
-				System.out.println("Looking for the following columns:");
-				for (int i = 0; i < columnNames.length; i++) {
-					System.out.println("  " + columnNames[i]);
-				}
-				for (int i = 0; i < traces.getTraceCount(); i++) {
-					String traceName = traces.getTraceName(i);
-					for (int j = 0; j < columnNames.length; j++) {
-						if (traceName.trim().equals(columnNames[j])) {
-							traceIndexParameter[j] = i;
-							break;
-						}
-					}
-				}
-				System.out.println("Overview of traceIndexParameter:");
-				for (int i = 0; i < traceIndexParameter.length; i++) {
-					if (traceIndexParameter[i] == -1) {
-						throw new XMLParseException("Not all traces could be linked to the required columns.");
-					}
-					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
-				}
-				
-				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
-				for (int i = 0; i < dimension; i++) {
-					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
-				}
-				
-				//not necessary to work with flags, assume that we are using coalescentEventsStatistic
-				double[] posteriorMeans = new double[dimension];
+                for (int i = 1; i <= columnNames.length; i++) {
+                    columnNames[i-1] = parameterName + i;
+                }
+                System.out.println("Looking for the following columns:");
+                for (int i = 0; i < columnNames.length; i++) {
+                    System.out.println("  " + columnNames[i]);
+                }
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    for (int j = 0; j < columnNames.length; j++) {
+                        if (traceName.trim().equals(columnNames[j])) {
+                            traceIndexParameter[j] = i;
+                            break;
+                        }
+                    }
+                }
+                System.out.println("Overview of traceIndexParameter:");
+                for (int i = 0; i < traceIndexParameter.length; i++) {
+                    if (traceIndexParameter[i] == -1) {
+                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                    }
+                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                }
 
-				for (int i = 0; i < posteriorMeans.length; i++) {
-					//variable column
+                Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
+                for (int i = 0; i < dimension; i++) {
+                    traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
+                }
+
+                //not necessary to work with flags, assume that we are using coalescentEventsStatistic
+                double[] posteriorMeans = new double[dimension];
+
+                for (int i = 0; i < posteriorMeans.length; i++) {
+                    //variable column
                     double mean = 0.0;
                     for (int j = 0; j < parameterSamples[i].length; j++) {
                         mean += parameterSamples[i][j];
@@ -590,29 +696,29 @@ public class TreeWorkingPriorParsers {
                     mean /= ((double)parameterSamples[i].length);
                     System.err.println("Variable column: " + i + " -> " + mean);
                     posteriorMeans[i] = Math.log(mean);
-				}
-				
-				return new ExponentialProductSufficientStatisticsLikelihood(treeModel, posteriorMeans);
-    			
-    		} catch (FileNotFoundException fnfe) {
+                }
+
+                return new ExponentialProductSufficientStatisticsLikelihood(treeModel, posteriorMeans);
+
+            } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
             } catch (TraceException e) {
                 throw new XMLParseException(e.getMessage());
             }
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
         private final XMLSyntaxRule[] rules = {
-        		AttributeRule.newStringRule("fileName"),
+                AttributeRule.newStringRule("fileName"),
                 AttributeRule.newStringRule("parameterColumn"),
                 AttributeRule.newIntegerRule("dimension"),
-        		new ElementRule(TreeModel.class)
+                new ElementRule(TreeModel.class)
         };
 
         public String getParserDescription() {
@@ -620,29 +726,29 @@ public class TreeWorkingPriorParsers {
         }
 
         public Class getReturnType() {
-        	return Likelihood.class;
+            return Likelihood.class;
         }
-    	
+
     }; 
-    
+
     /**
      * Parser that forms a product of gamma distributions to decrease model testing variance 
      */
     public static XMLObjectParser PRODUCT_OF_GAMMAS_PARSER = new AbstractXMLObjectParser() {
-    	
-    	public String getParserName() {
+
+        public String getParserName() {
             return PRODUCT_OF_GAMMAS;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-    		double popSize = xo.getDoubleAttribute("popSize");
-    		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-    		
-    		try {
-    			
-    			File file = new File(fileName);
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            double popSize = xo.getDoubleAttribute("popSize");
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+
+            try {
+
+                File file = new File(fileName);
                 String parent = file.getParent();
 
                 if (!file.isAbsolute()) {
@@ -668,98 +774,98 @@ public class TreeWorkingPriorParsers {
 
                 int[] traceIndexParameter = new int[dimension];
                 for (int i = 0; i < traceIndexParameter.length; i++) {
-					traceIndexParameter[i] = -1;
-				}
+                    traceIndexParameter[i] = -1;
+                }
 
                 String[] columnNames = new String[dimension];
-				for (int i = 1; i <= columnNames.length; i++) {
-					columnNames[i-1] = parameterName + i;
-				}
-				System.out.println("Looking for the following columns:");
-				for (int i = 0; i < columnNames.length; i++) {
-					System.out.println("  " + columnNames[i]);
-				}
-				for (int i = 0; i < traces.getTraceCount(); i++) {
-					String traceName = traces.getTraceName(i);
-					for (int j = 0; j < columnNames.length; j++) {
-						if (traceName.trim().equals(columnNames[j])) {
-							traceIndexParameter[j] = i;
-							break;
-						}
-					}
-				}
-				System.out.println("Overview of traceIndexParameter:");
-				for (int i = 0; i < traceIndexParameter.length; i++) {
-					if (traceIndexParameter[i] == -1) {
-						throw new XMLParseException("Not all traces could be linked to the required columns.");
-					}
-					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
-				}
+                for (int i = 1; i <= columnNames.length; i++) {
+                    columnNames[i-1] = parameterName + i;
+                }
+                System.out.println("Looking for the following columns:");
+                for (int i = 0; i < columnNames.length; i++) {
+                    System.out.println("  " + columnNames[i]);
+                }
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    for (int j = 0; j < columnNames.length; j++) {
+                        if (traceName.trim().equals(columnNames[j])) {
+                            traceIndexParameter[j] = i;
+                            break;
+                        }
+                    }
+                }
+                System.out.println("Overview of traceIndexParameter:");
+                for (int i = 0; i < traceIndexParameter.length; i++) {
+                    if (traceIndexParameter[i] == -1) {
+                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                    }
+                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                }
 
-				boolean[] flags = new boolean[dimension];
-				for (int i = 0; i < dimension; i++) {
-					flags[i] = true;
-				}
+                boolean[] flags = new boolean[dimension];
+                for (int i = 0; i < dimension; i++) {
+                    flags[i] = true;
+                }
 
-				//this is code to identify constant columns
-				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
-				for (int i = 0; i < dimension; i++) {
-					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
-					double initial = parameterSamples[i][0];
-					boolean tempFlag = false;
-					for (int j = 0; j < parameterSamples[i].length; j++) {
-						if (parameterSamples[i][j] != initial) {
-							tempFlag = true;
-							break;
-						}
-					}
-					flags[i] = tempFlag;
-				}
-            
-				//double[] shapes = new double[dimension];
-				//double[] scales = new double[dimension];
-				double[] means = new double[dimension];
-				double[] variances = new double[dimension];
+                //this is code to identify constant columns
+                Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
+                for (int i = 0; i < dimension; i++) {
+                    traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
+                    double initial = parameterSamples[i][0];
+                    boolean tempFlag = false;
+                    for (int j = 0; j < parameterSamples[i].length; j++) {
+                        if (parameterSamples[i][j] != initial) {
+                            tempFlag = true;
+                            break;
+                        }
+                    }
+                    flags[i] = tempFlag;
+                }
 
-				for (int i = 0; i < flags.length; i++) {
-                       if (flags[i]) {
-                    	   //variable column
-                           double mean = 0.0;
-                           for (int j = 0; j < parameterSamples[i].length; j++) {
-                               mean += parameterSamples[i][j];
-                           }
-                           mean /= ((double)parameterSamples[i].length);
-                           means[i] = mean;
-                           double variance = 0.0;
-                           for (int j = 0; j < parameterSamples[i].length; j++) {
-                               variance += Math.pow(parameterSamples[i][j] - mean, 2);
-                           }
-                           variance /= ((double)(parameterSamples[i].length-1));
-                           variances[i] = variance;
-                           //scales[i] = variance/mean;
-                           //shapes[i] = mean/scales[i];
-                           //System.err.println("Variable column: " + i + " -> " + shapes[i] + "   " + scales[i]);
-                           System.err.println("Variable column: " + i + " -> " + means[i] + "   " + variances[i]);
-                       } else {
-                    	   //constant column
-                    	   double mean = 0.0;
-                           for (int j = 0; j < parameterSamples[i].length; j++) {
-                               mean += parameterSamples[i][j];
-                           }
-                           mean /= ((double)parameterSamples[i].length);
-                           means[i] = mean;
-                           //variance will be 0.0, so add epsilon
-                           variances[i] = 0.0;
-                           variances[i] = epsilon;
-                           //System.err.println("mean = " + mean + "   variance = " + variance);
-                           //scales[i] = variance/mean;
-                           //shapes[i] = mean/scales[i];
-                    	   System.err.println("Constant column: " + i + " -> " + means[i] + "   " + variances[i]);
-                       } 
-                   }
-				
-				//only provide the actual intervals, from the root downwards
-				/*int newLength = 0;
+                //double[] shapes = new double[dimension];
+                //double[] scales = new double[dimension];
+                double[] means = new double[dimension];
+                double[] variances = new double[dimension];
+
+                for (int i = 0; i < flags.length; i++) {
+                    if (flags[i]) {
+                        //variable column
+                        double mean = 0.0;
+                        for (int j = 0; j < parameterSamples[i].length; j++) {
+                            mean += parameterSamples[i][j];
+                        }
+                        mean /= ((double)parameterSamples[i].length);
+                        means[i] = mean;
+                        double variance = 0.0;
+                        for (int j = 0; j < parameterSamples[i].length; j++) {
+                            variance += Math.pow(parameterSamples[i][j] - mean, 2);
+                        }
+                        variance /= ((double)(parameterSamples[i].length-1));
+                        variances[i] = variance;
+                        //scales[i] = variance/mean;
+                        //shapes[i] = mean/scales[i];
+                        //System.err.println("Variable column: " + i + " -> " + shapes[i] + "   " + scales[i]);
+                        System.err.println("Variable column: " + i + " -> " + means[i] + "   " + variances[i]);
+                    } else {
+                        //constant column
+                        double mean = 0.0;
+                        for (int j = 0; j < parameterSamples[i].length; j++) {
+                            mean += parameterSamples[i][j];
+                        }
+                        mean /= ((double)parameterSamples[i].length);
+                        means[i] = mean;
+                        //variance will be 0.0, so add epsilon
+                        variances[i] = 0.0;
+                        variances[i] = epsilon;
+                        //System.err.println("mean = " + mean + "   variance = " + variance);
+                        //scales[i] = variance/mean;
+                        //shapes[i] = mean/scales[i];
+                        System.err.println("Constant column: " + i + " -> " + means[i] + "   " + variances[i]);
+                    } 
+                }
+
+                //only provide the actual intervals, from the root downwards
+                /*int newLength = 0;
 				for (int i = 0; i < flags.length; i++) {
 					if (means[i] == 0.0 && variances[i] == epsilon) {
 						//do nothing at the moment
@@ -782,36 +888,36 @@ public class TreeWorkingPriorParsers {
 					}
 				}*/
 
-				//return new GammaProductLikelihood(treeModel, popSize, newMeans, newVariances);
-				//return new GammaIntervalProductLikelihood(treeModel, popSize, means, variances);
-				//return new GammaIntervalProductLikelihood(treeModel, popSize, newMeans, newVariances);
-				
-				
-				return new GammaProductLikelihood(treeModel, popSize, means, variances);
-				
-				
-    		} catch (FileNotFoundException fnfe) {
+                //return new GammaProductLikelihood(treeModel, popSize, newMeans, newVariances);
+                //return new GammaIntervalProductLikelihood(treeModel, popSize, means, variances);
+                //return new GammaIntervalProductLikelihood(treeModel, popSize, newMeans, newVariances);
+
+
+                return new GammaProductLikelihood(treeModel, popSize, means, variances);
+
+
+            } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
             } catch (java.io.IOException ioe) {
                 throw new XMLParseException(ioe.getMessage());
             } catch (TraceException e) {
                 throw new XMLParseException(e.getMessage());
             }
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
         private final XMLSyntaxRule[] rules = {
-        		//AttributeRule.newDoubleRule("popSize"),
-        		AttributeRule.newStringRule("fileName"),
+                //AttributeRule.newDoubleRule("popSize"),
+                AttributeRule.newStringRule("fileName"),
                 AttributeRule.newStringRule("parameterColumn"),
                 AttributeRule.newIntegerRule("dimension"),
                 AttributeRule.newDoubleRule("popSize"),
                 //new ElementRule(Parameter.class),
-        		new ElementRule(TreeModel.class)
+                new ElementRule(TreeModel.class)
         };
 
         public String getParserDescription() {
@@ -819,11 +925,11 @@ public class TreeWorkingPriorParsers {
         }
 
         public Class getReturnType() {
-        	return Likelihood.class;
+            return Likelihood.class;
         }
-        
+
     };
-    
+
     /**
      * A special parser that reads coalescent heights and builds reference priors for them.
      */
@@ -865,72 +971,72 @@ public class TreeWorkingPriorParsers {
 
                 int[] traceIndexParameter = new int[dimension];
                 for (int i = 0; i < traceIndexParameter.length; i++) {
-					traceIndexParameter[i] = -1;
-				}
+                    traceIndexParameter[i] = -1;
+                }
 
                 String[] columnNames = new String[dimension];
-				for (int i = 1; i <= columnNames.length; i++) {
-					columnNames[i-1] = parameterName + i;
-				}
-				System.out.println("Looking for the following columns:");
-				for (int i = 0; i < columnNames.length; i++) {
-					System.out.println("  " + columnNames[i]);
-				}
-				for (int i = 0; i < traces.getTraceCount(); i++) {
-					String traceName = traces.getTraceName(i);
-					for (int j = 0; j < columnNames.length; j++) {
-						if (traceName.trim().equals(columnNames[j])) {
-							traceIndexParameter[j] = i;
-							break;
-						}
-					}
-				}
-				System.out.println("Overview of traceIndexParameter:");
-				for (int i = 0; i < traceIndexParameter.length; i++) {
-					if (traceIndexParameter[i] == -1) {
-						throw new XMLParseException("Not all traces could be linked to the required columns.");
-					}
-					System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
-				}
+                for (int i = 1; i <= columnNames.length; i++) {
+                    columnNames[i-1] = parameterName + i;
+                }
+                System.out.println("Looking for the following columns:");
+                for (int i = 0; i < columnNames.length; i++) {
+                    System.out.println("  " + columnNames[i]);
+                }
+                for (int i = 0; i < traces.getTraceCount(); i++) {
+                    String traceName = traces.getTraceName(i);
+                    for (int j = 0; j < columnNames.length; j++) {
+                        if (traceName.trim().equals(columnNames[j])) {
+                            traceIndexParameter[j] = i;
+                            break;
+                        }
+                    }
+                }
+                System.out.println("Overview of traceIndexParameter:");
+                for (int i = 0; i < traceIndexParameter.length; i++) {
+                    if (traceIndexParameter[i] == -1) {
+                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                    }
+                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                }
 
-				boolean[] flags = new boolean[dimension];
-				for (int i = 0; i < dimension; i++) {
-					flags[i] = true;
-				}
+                boolean[] flags = new boolean[dimension];
+                for (int i = 0; i < dimension; i++) {
+                    flags[i] = true;
+                }
 
-				Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
-				for (int i = 0; i < dimension; i++) {
-					traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
-					double initial = parameterSamples[i][0];
-					boolean tempFlag = false;
-					for (int j = 0; j < parameterSamples[i].length; j++) {
-						if (parameterSamples[i][j] != initial) {
-							tempFlag = true;
-							break;
-						}
-					}
-					flags[i] = tempFlag;
-				}
-            
-				double[] shapes = new double[dimension];
-				double[] scales = new double[dimension];
+                Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
+                for (int i = 0; i < dimension; i++) {
+                    traces.getValues(traceIndexParameter[i]).toArray(parameterSamples[i]);
+                    double initial = parameterSamples[i][0];
+                    boolean tempFlag = false;
+                    for (int j = 0; j < parameterSamples[i].length; j++) {
+                        if (parameterSamples[i][j] != initial) {
+                            tempFlag = true;
+                            break;
+                        }
+                    }
+                    flags[i] = tempFlag;
+                }
 
-				for (int i = 0; i < flags.length; i++) {
-                       if (flags[i]) {
-                           double mean = 0.0;
-                           for (int j = 0; j < parameterSamples[i].length; j++) {
-                               mean += parameterSamples[i][j];
-                           }
-                           mean /= ((double)parameterSamples[i].length);
-                           double variance = 0.0;
-                           for (int j = 0; j < parameterSamples[i].length; j++) {
-                               variance += Math.pow(parameterSamples[i][j] - mean, 2);
-                           }
-                           variance /= ((double)(parameterSamples[i].length-1));
-                           scales[i] = variance/mean;
-                           shapes[i] = mean/scales[i];
-                           System.err.println("Variable column: " + i + " -> " + shapes[i] + "   " + scales[i]);
-                       } /*else {
+                double[] shapes = new double[dimension];
+                double[] scales = new double[dimension];
+
+                for (int i = 0; i < flags.length; i++) {
+                    if (flags[i]) {
+                        double mean = 0.0;
+                        for (int j = 0; j < parameterSamples[i].length; j++) {
+                            mean += parameterSamples[i][j];
+                        }
+                        mean /= ((double)parameterSamples[i].length);
+                        double variance = 0.0;
+                        for (int j = 0; j < parameterSamples[i].length; j++) {
+                            variance += Math.pow(parameterSamples[i][j] - mean, 2);
+                        }
+                        variance /= ((double)(parameterSamples[i].length-1));
+                        scales[i] = variance/mean;
+                        shapes[i] = mean/scales[i];
+                        System.err.println("Variable column: " + i + " -> " + shapes[i] + "   " + scales[i]);
+                    } /*else {
                     	   double mean = 0.0;
                            for (int j = 0; j < parameterSamples[i].length; j++) {
                                mean += parameterSamples[i][j];
@@ -943,27 +1049,27 @@ public class TreeWorkingPriorParsers {
                            shapes[i] = mean/scales[i];
                     	   System.err.println("Constant column: " + i + " -> " + shapes[i] + "   " + scales[i]);
                        } */
-                   }
+                }
 
-				System.err.println("Columns to be evaluated:");
-				for (int i = 0; i < flags.length; i++) {
-					if (flags[i]) {
-						System.err.println("Column " + i);
-					}
-				}
+                System.err.println("Columns to be evaluated:");
+                for (int i = 0; i < flags.length; i++) {
+                    if (flags[i]) {
+                        System.err.println("Column " + i);
+                    }
+                }
 
-				MultivariateGammaDistribution mvgd = new MultivariateGammaDistribution(shapes, scales, flags);
+                MultivariateGammaDistribution mvgd = new MultivariateGammaDistribution(shapes, scales, flags);
 
-				MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(mvgd);
-				for (int j = 0; j < xo.getChildCount(); j++) {
-					if (xo.getChild(j) instanceof Statistic) {
-						likelihood.addData((Statistic) xo.getChild(j));
-					} else {
-						throw new XMLParseException("illegal element in " + xo.getName() + " element");
-					}
-				}
+                MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(mvgd);
+                for (int j = 0; j < xo.getChildCount(); j++) {
+                    if (xo.getChild(j) instanceof Statistic) {
+                        likelihood.addData((Statistic) xo.getChild(j));
+                    } else {
+                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    }
+                }
 
-				return likelihood;
+                return likelihood;
 
             } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
@@ -1000,24 +1106,24 @@ public class TreeWorkingPriorParsers {
     /**
      * A simple parser to provide a constant prior on the tree topology
      */
-    
+
     public static XMLObjectParser CONSTANT_TREE_TOPOLOGY_PRIOR_PARSER = new AbstractXMLObjectParser() {
-    	
-    	public String getParserName() {
+
+        public String getParserName() {
             return CONSTANT_TREE_TOPOLOGY_PRIOR;
         }
-    	
-    	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    		
-    		TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-    		final int nTaxa = treeModel.getExternalNodeCount();
-    		double combinations = GammaFunction.factorial(2*nTaxa-3)/(GammaFunction.factorial(nTaxa-2)*Math.pow(2.0,nTaxa-2));
-    		double logPDF = Math.log(1.0/combinations);
-    		return new ConstantLikelihood(logPDF);
-    		
-    	}
-    	
-    	public XMLSyntaxRule[] getSyntaxRules() {
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+            final int nTaxa = treeModel.getExternalNodeCount();
+            double combinations = GammaFunction.factorial(2*nTaxa-3)/(GammaFunction.factorial(nTaxa-2)*Math.pow(2.0,nTaxa-2));
+            double logPDF = Math.log(1.0/combinations);
+            return new ConstantLikelihood(logPDF);
+
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
             return rules;
         }
 
@@ -1032,7 +1138,7 @@ public class TreeWorkingPriorParsers {
         public Class getReturnType() {
             return Likelihood.class;
         }
-    	
+
     };
 
     /**
@@ -1049,52 +1155,52 @@ public class TreeWorkingPriorParsers {
             //Coalescent.TREEPRIOR = true;
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-            
-                String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
-                try {
+            String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
-                    File file = new File(fileName);
-                    String name = file.getName();
-                    String parent = file.getParent();
+            try {
 
-                    if (!file.isAbsolute()) {
-                        parent = System.getProperty("user.dir");
-                    }
-                    file = new File(parent, fileName);
-                    fileName = file.getAbsolutePath();
+                File file = new File(fileName);
+                String name = file.getName();
+                String parent = file.getParent();
 
-                    Reader reader = new FileReader(new File(parent, name));
-
-                    // the burn-in is used as the number of trees discarded
-                    int burnin = -1;
-                    if (xo.hasAttribute(BURNIN)) {
-                        // leaving the burnin attribute off will result in 10% being used
-                        burnin = xo.getIntegerAttribute(BURNIN);
-                    }
-
-                    // the epsilon value which represents the number of occurrences for every not observed clade
-                    double e = 1.0;
-                    if (xo.hasAttribute(EPSILON)) {
-                        // leaving the epsilon attribute off will result in 1.0 being used
-                        e = xo.getDoubleAttribute(EPSILON);
-                    }
-
-                    TreeTrace trace = TreeTrace.loadTreeTrace(reader);
-
-                    ConditionalCladeFrequency ccf = new ConditionalCladeFrequency(new TreeTrace[]{trace}, e, burnin, false);
-
-                    ConditionalCladeProbability ccp = new ConditionalCladeProbability(ccf, treeModel);
-
-                    return ccp;
-
-                } catch (FileNotFoundException fnfe) {
-                    throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
-                } catch (java.io.IOException ioe) {
-                    throw new XMLParseException(ioe.getMessage());
-                } catch (ImportException ie) {
-                    throw new XMLParseException(ie.getMessage());
+                if (!file.isAbsolute()) {
+                    parent = System.getProperty("user.dir");
                 }
+                file = new File(parent, fileName);
+                fileName = file.getAbsolutePath();
+
+                Reader reader = new FileReader(new File(parent, name));
+
+                // the burn-in is used as the number of trees discarded
+                int burnin = -1;
+                if (xo.hasAttribute(BURNIN)) {
+                    // leaving the burnin attribute off will result in 10% being used
+                    burnin = xo.getIntegerAttribute(BURNIN);
+                }
+
+                // the epsilon value which represents the number of occurrences for every not observed clade
+                double e = 1.0;
+                if (xo.hasAttribute(EPSILON)) {
+                    // leaving the epsilon attribute off will result in 1.0 being used
+                    e = xo.getDoubleAttribute(EPSILON);
+                }
+
+                TreeTrace trace = TreeTrace.loadTreeTrace(reader);
+
+                ConditionalCladeFrequency ccf = new ConditionalCladeFrequency(new TreeTrace[]{trace}, e, burnin, false);
+
+                ConditionalCladeProbability ccp = new ConditionalCladeProbability(ccf, treeModel);
+
+                return ccp;
+
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
+            } catch (java.io.IOException ioe) {
+                throw new XMLParseException(ioe.getMessage());
+            } catch (ImportException ie) {
+                throw new XMLParseException(ie.getMessage());
+            }
 
             /*final int nTaxa = treeModel.getExternalNodeCount();
             double logPDF = 0.0;

@@ -25,22 +25,18 @@
 
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
-
-import javax.sound.midi.SysexMessage;
 
 import dr.inference.model.Bounds;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.model.VariableListener;
-import dr.inference.model.Parameter.Abstract;
-import dr.inference.model.Variable.ChangeType;
 
 /**
  * @author Marc Suchard
+ * @author Filip Bielejec
+ * 
  */
 @SuppressWarnings("serial")
 public class CountableRealizationsParameter extends Parameter.Abstract implements VariableListener {
@@ -80,7 +76,7 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
     	
     	uniqueRealizationCount = uniquelyRealizedParameters.getDimension();
     
-    }
+    }//END: Constructor
 
     public int getDimension() {
     	return dim * realizationCount; //  paramList.get(0).getDimension(); // Unwritten contract
@@ -117,14 +113,6 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
     	
     	int whichCategoryIndex = categoriesParameter.getValue(index).intValue();//
     	int whichDimIndex = 0;
-    	
-//    	int idx = categoriesParameter.getValue(index).intValue();
-//    	if(idx > (uniqueRealizationCount - 1)) {
-//    	
-//    	System.out.println("index: " + index);
-//    	System.out.println("category: " + categoriesParameter.getValue(index).intValue());
-//    	System.exit(-1);
-//    	}
     	
     	Parameter param = uniquelyRealizedParameters.getParameter(whichCategoryIndex);
     	

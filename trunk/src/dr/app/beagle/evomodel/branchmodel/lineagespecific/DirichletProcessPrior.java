@@ -110,7 +110,6 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		double value[] = parameter.getAttributeValue();
 		
 //		try {
-		//TODO
 //			Utils.printArray(value);
 //			Thread.sleep(1000);
 //		} catch (InterruptedException e) {
@@ -126,24 +125,12 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		int counts[] = getCounts();
 		double total = 0.0;
 
-		try {
-		
-			//TODO
-//			Utils.printArray(counts);
-//			System.out.println(counts[whichCluster] + " " + param.getAttributeValue());
-//			Thread.sleep(100);
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
 		for (int i = 0; i < categoryCount; ++i) {
 
 			Parameter param = uniquelyRealizedParameters.getParameter(i);
 			int whichCluster = getMapping(i);
 
 			total += counts[whichCluster] * getLogDensity(param);
-//			total += getCount(whichCluster) * getLogDensity(param);
 
 		}
 
@@ -191,9 +178,8 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 	}
 
 	private double calculateLogLikelihood() {
-		
 		return getCategoriesLogDensity() + getRealizedValuesLogDensity();
-	}
+	}//END: calculateLogLikelihood
 
 	@Override
 	public void makeDirty() {

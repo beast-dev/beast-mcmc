@@ -13,6 +13,8 @@ import dr.math.distributions.BetaDistribution;
 
 public class DirichletProcessOperator extends AbstractCoercableOperator {
 
+//	http://xiaodong-yu.blogspot.be/2009/09/gibbs-sampling-for-dp-mixtures.html
+	
 	private Parameter zParameter;
 	private Parameter categoryProbabilitiesParameter;
 	private int realizationCount;

@@ -15,9 +15,9 @@ public class DppLoggerParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		CompoundParameter uniquelyRealizedParameters = (CompoundParameter)xo.getChild(CompoundParameter.class);
-		Parameter categoryProbabilitiesParameter = (Parameter) xo.getElementFirstChild(DirichletProcessOperatorParser.CATEGORY_PROBABILITIES); 
+		Parameter categoriesParameter = (Parameter)xo.getElementFirstChild(DirichletProcessPriorParser.CATEGORIES); 
 		
-		return new DppLogger(categoryProbabilitiesParameter, uniquelyRealizedParameters);
+		return new DppLogger(categoriesParameter, uniquelyRealizedParameters);
 	}// END: parseXMLObject
 
 	@Override

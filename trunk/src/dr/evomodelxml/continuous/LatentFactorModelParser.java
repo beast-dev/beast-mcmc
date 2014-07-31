@@ -50,6 +50,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public static final String ROW_PRECISION = "rowPrecision";
     public static final String COLUMN_PRECISION = "columnPrecision";
     public static final String SCALE_DATA="scaleData";
+    public static final String CONTINUOUS="continuous";
 
 
     public String getParserName() {
@@ -105,6 +106,11 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
+        Parameter continuous=null;
+        if(xo.getChild(CONTINUOUS)!=null)
+            continuous=(Parameter) xo.getChild(CONTINUOUS).getChild(Parameter.class);
+        else
+            continuous=new Parameter.Default(colPrecision.getRowDimension(), 1.0);
         boolean scaleData=xo.getAttribute(SCALE_DATA, false);
  //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
         Parameter temp=null;
@@ -118,7 +124,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         }
 
 
-        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData);
+        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous);
     }
 
     private static final XMLSyntaxRule[] rules = {
@@ -141,6 +147,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             new ElementRule(COLUMN_PRECISION, new XMLSyntaxRule[]{
                     new ElementRule(DiagonalMatrix.class)
             }),
+            new ElementRule(CONTINUOUS, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }, true),
     };
 
 //    <latentFactorModel>

@@ -49,6 +49,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private MatrixParameter sData;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
+    private final Parameter continuous;
 
     private final boolean scaleData;
 
@@ -81,7 +82,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
-                             boolean scaleData
+                             boolean scaleData, Parameter continuous
     ) {
         super("");
 //        data = new Matrix(dataIn.getParameterAsMatrix());
@@ -96,7 +97,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             System.err.println(p.getId() + " " + p.getDimension());
             p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, p.getDimension()));
         }
-
+        this.continuous=continuous;
 
         this.loadings = loadings;
 
@@ -240,16 +241,19 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         int innerDim=middle.getRowDimension();
         int outerDim=array.length/innerDim;
         double sum=0;
-        for (int i = 0; i <outerDim; i++) {
-            for (int j = 0; j <innerDim ; j++) {
-                double s1=array[j*outerDim+i];
-                double s2=middle.getParameterValue(j, j);
-                sum+=s1*s1*s2;
+        for (int j = 0; j <innerDim ; j++){
+            if(continuous.getParameterValue(j)!=0) {
+                for (int i = 0; i < outerDim; i++) {
+                    double s1 = array[j * outerDim + i];
+                    double s2 = middle.getParameterValue(j, j);
+                    sum += s1 * s1 * s2;
+                }
             }
-
         }
         return sum;
     }
+
+    private void getLatentLiability(){}
 
     private MatrixParameter computeScaledData(){
         MatrixParameter answer=new MatrixParameter(data.getParameterName() + ".scaled");
@@ -385,20 +389,22 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if(variable==data){
-            isDataScaled=false;
-            residualKnown=false;
-            traceKnown=false;
-        }
+//        if(variable==data){
+//            isDataScaled=false;
+//            residualKnown=false;
+//            traceKnown=false;
+//        }
         if(variable==factors){
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
+            getLatentLiability();
         }
         if(variable==loadings){
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
+            getLatentLiability();
         }
         if(variable==colPrecision){
             logDetColKnown=false;

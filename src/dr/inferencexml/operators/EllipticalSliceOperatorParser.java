@@ -25,6 +25,8 @@
 
 package dr.inferencexml.operators;
 
+import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.evomodel.continuous.TreeTraitNormalDistributionModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.EllipticalSliceOperator;
@@ -37,6 +39,7 @@ import dr.xml.*;
 public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
 
     public static final String ELLIPTICAL_SLICE_SAMPLER = "ellipticalSliceSampler";
+    public static final String DRAW_BY_ROW="drawByRow";
 
     public String getParserName() {
         return ELLIPTICAL_SLICE_SAMPLER;
@@ -46,20 +49,39 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
 
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         final Parameter variable = (Parameter) xo.getChild(Parameter.class);
+        boolean drawByRowTemp=false;
+        if(xo.hasAttribute(DRAW_BY_ROW))
+            drawByRowTemp=xo.getBooleanAttribute(DRAW_BY_ROW);
+        final boolean drawByRow=drawByRowTemp;
 
         final MultivariateDistributionLikelihood likelihood =
                 (MultivariateDistributionLikelihood) xo.getChild(MultivariateDistributionLikelihood.class);
 
-        if (!(likelihood.getDistribution() instanceof MultivariateNormalDistribution)) {
-            throw new XMLParseException("Elliptical slice sampling only works for multivariate normally distributed random variables");
+
+        if(likelihood!=null) {
+            if (!(likelihood.getDistribution() instanceof MultivariateNormalDistribution)) {
+                throw new XMLParseException("Elliptical slice sampling only works for multivariate normally distributed random variables");
+            }
+
+
+            final MultivariateNormalDistribution normalPrior =
+                    (MultivariateNormalDistribution) likelihood.getDistribution();
+
+            EllipticalSliceOperator operator = new EllipticalSliceOperator(variable, normalPrior, drawByRow);
+            operator.setWeight(weight);
+            return operator;
+        }
+        else
+        {
+            final FullyConjugateMultivariateTraitLikelihood treePrior=(FullyConjugateMultivariateTraitLikelihood) xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
+            Parameter rootValue=new Parameter.Default(0.0);
+//            boolean conditionOnRoot=true;
+            final TreeTraitNormalDistributionModel treeTraitNormalDistributionModel=new TreeTraitNormalDistributionModel(treePrior, rootValue, true);
+            EllipticalSliceOperator operator =new EllipticalSliceOperator(variable, treeTraitNormalDistributionModel, drawByRow);
+            operator.setWeight(weight);
+            return operator;
         }
 
-        final MultivariateNormalDistribution normalPrior =
-                (MultivariateNormalDistribution) likelihood.getDistribution();
-
-        EllipticalSliceOperator operator = new EllipticalSliceOperator(variable, normalPrior);
-        operator.setWeight(weight);
-        return operator;
     }
 
     //************************************************************************
@@ -81,7 +103,10 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
             new ElementRule(Parameter.class),
-            new ElementRule(MultivariateDistributionLikelihood.class),
+            new OrRule(new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+            new ElementRule(MultivariateDistributionLikelihood.class)
+                    ),
+            AttributeRule.newBooleanRule(DRAW_BY_ROW, true),
 //            new ElementRule(MultivariateNormalDistribution.class),
     };
 }

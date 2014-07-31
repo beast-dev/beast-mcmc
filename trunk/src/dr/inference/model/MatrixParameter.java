@@ -209,14 +209,9 @@ public class MatrixParameter extends CompoundParameter {
         fireParameterChangedEvent();
     }
 
-    public void setParameterValue(int row, int column, double a)
-    {
-        getParameter(column).setParameterValue(row, a);
-    }
 
-    public void setParameterValueQuietly(int row, int column, double a){
-        getParameter(column).setParameterValueQuietly(row, a);
-    }
+
+
 
     public TransposedMatrixParameter transpose(){
         return TransposedMatrixParameter.recast(null, this);

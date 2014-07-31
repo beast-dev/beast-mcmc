@@ -199,7 +199,7 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
 //            }
 //            firstTime=false;
 //        }
-        nextRandomFast(rootValue[0], root, random);
+        nextRandomFast(rootValue[i], root, random);
 //        }
         return random;
     }

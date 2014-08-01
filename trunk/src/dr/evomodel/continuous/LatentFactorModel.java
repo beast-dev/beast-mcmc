@@ -229,12 +229,23 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private void subtract(MatrixParameter Left, double[] Right, double[] answer){
         int row=Left.getRowDimension();
         int col=Left.getColumnDimension();
+        boolean containsDiscrete=false;
         for (int i = 0; i <row ; i++) {
-            for (int j = 0; j < col; j++) {
-                answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
+            if(continuous.getParameterValue(i)!=0){
+                for (int j = 0; j < col; j++) {
+                    answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
+                }
+            }
+            else{
+                for (int j = 0; j <col; j++) {
+                    Left.setParameterValueQuietly(i,j, Right[i*col+j]);
+                }
+                containsDiscrete=true;
             }
 
         }
+        if(containsDiscrete){
+            Left.fireParameterChangedEvent();}
     }
 
     private double TDTTrace(double[] array, DiagonalMatrix middle){
@@ -253,7 +264,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         return sum;
     }
 
-    private void getLatentLiability(){}
+
 
     private MatrixParameter computeScaledData(){
         MatrixParameter answer=new MatrixParameter(data.getParameterName() + ".scaled");
@@ -323,7 +334,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     transposeThenMultiply(loadings, factors, LxF);
         LxFKnown=true;
     }
-        subtract(sData, LxF, residual);
+        subtract(data, LxF, residual);
     }
 
 
@@ -398,13 +409,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
-            getLatentLiability();
+//            computeResiduals();
         }
         if(variable==loadings){
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
-            getLatentLiability();
+ //           computeResiduals();
         }
         if(variable==colPrecision){
             logDetColKnown=false;

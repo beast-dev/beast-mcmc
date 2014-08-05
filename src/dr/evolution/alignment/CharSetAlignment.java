@@ -55,7 +55,11 @@ public class CharSetAlignment extends SimpleAlignment {
     private String filter(NexusApplicationImporter.CharSet charset, String sequenceString) {
         StringBuilder filtered = new StringBuilder();
         for (NexusApplicationImporter.CharSetBlock block : charset.getBlocks()) {
-            for (int i = block.getFromSite(); i <= block.getToSite(); i += block.getEvery()) {
+            int toSite = block.getToSite();
+            if (toSite <= 0) {
+                toSite = sequenceString.length();
+            }
+            for (int i = block.getFromSite(); i <= toSite; i += block.getEvery()) {
                 // the -1 comes from the fact that charsets are indexed from 1 whereas strings are indexed from 0
                 filtered.append(sequenceString.charAt(i - 1));
             }

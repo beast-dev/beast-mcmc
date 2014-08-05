@@ -65,8 +65,11 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
 
             String description = "Random walk for the age of this tip";
 
+            OperatorType type = OperatorType.RANDOM_WALK_ABSORBING;
+
             if (tipDateSamplingType == TipDateSamplingType.SAMPLE_PRECISION) {
-                description = "Random walk bounded by precision of age of this tip";
+                description = "Uniform sample from precision of age of this tip";
+                type = OperatorType.UNIFORM;
             }
 
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
@@ -78,7 +81,7 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
                     Parameter parameter = getTipDateParameter(taxon);
 
 //                    operator = new Operator("age(" + taxon.getId() + ")", "", parameter, OperatorType.SCALE, 0.75, 1.0);
-                    operator = new Operator.Builder("age(" + taxon.getId() + ")", description, parameter, OperatorType.RANDOM_WALK_REFLECTING, 1.0, 1.0).build();
+                    operator = new Operator.Builder("age(" + taxon.getId() + ")", description, parameter, type, 1.0, 1.0).build();
                     tipDateOperators.put(taxon, operator);
                 }
                 ops.add(operator);

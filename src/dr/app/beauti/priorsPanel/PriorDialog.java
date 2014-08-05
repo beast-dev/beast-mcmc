@@ -72,6 +72,7 @@ public class PriorDialog {
     public PriorDialog(JFrame frame) {
         this.frame = frame;
 
+        optionsPanels.put(PriorType.NONE_IMPROPER, PriorOptionsPanel.INFINITE_UNIFORM);
         optionsPanels.put(PriorType.UNIFORM_PRIOR, PriorOptionsPanel.UNIFORM);
         optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, PriorOptionsPanel.EXPONENTIAL);
         optionsPanels.put(PriorType.LAPLACE_PRIOR, PriorOptionsPanel.LAPLACE);

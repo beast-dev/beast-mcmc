@@ -319,7 +319,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void setArguments(Parameter parameter, PriorType priorType) {
         this.isCalibratedYule = parameter.isCalibratedYule;
-        this.isInitializable = !parameter.isStatistic;
+        this.isInitializable = priorType.isInitializable;
         if (!parameter.isStatistic) {
             setFieldRange(initialField, parameter.isNonNegative, parameter.isZeroOne);
             initialField.setValue(parameter.initial);
@@ -338,7 +338,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     }
 
     void getArguments(Parameter parameter, PriorType priorType) {
-        if (!parameter.isStatistic) {
+        if (priorType.isInitializable) {
             parameter.initial = initialField.getValue();
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();
@@ -361,6 +361,26 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     abstract boolean isInputValid();
 
     private static final String OFFSET = "Offset";
+
+    static final PriorOptionsPanel INFINITE_UNIFORM = new PriorOptionsPanel(false) {
+        void setup() {
+        }
+
+        Distribution getDistribution() {
+            return null;
+        }
+
+        void setArguments(Parameter parameter) {
+        }
+
+        void getArguments(Parameter parameter) {
+        }
+
+        @Override
+        boolean isInputValid() {
+            return getValue(0) > getValue(1);
+        }
+    };
 
     static final PriorOptionsPanel UNIFORM = new PriorOptionsPanel(false) {
         void setup() {

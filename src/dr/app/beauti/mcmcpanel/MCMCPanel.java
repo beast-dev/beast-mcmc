@@ -326,15 +326,15 @@ public class MCMCPanel extends BeautiPanel {
 
         for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
             if (options.substTreeLog) {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
+                treeFileName = getTreeFileName(tree.getPrefix() + "(time).");
             } else {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
+                treeFileName = getTreeFileName(tree.getPrefix());
             }
             if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
             options.treeFileName.add(treeFileName);
 
             if (options.substTreeLog) {
-                treeFileName = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + STARBEASTOptions.TREE_FILE_NAME;
+                treeFileName = getTreeFileName(tree.getPrefix() + "(subst).");
                 if (addTxt.isSelected()) treeFileName = treeFileName + ".txt";
                 options.substTreeFileName.add(treeFileName);
             }
@@ -348,17 +348,16 @@ public class MCMCPanel extends BeautiPanel {
         }
     }
 
+    private String getTreeFileName(String treeName) {
+        return options.fileNameStem + "." + treeName + STARBEASTOptions.TREE_FILE_NAME;
+    }
+
     private String displayTreeList(List<String> treeList) {
-        String text = "";
-
-        for (String t : treeList) {
-            text = text + t;
-            if (treeList.indexOf(t) < treeList.size() - 1) {
-                text = text + "; ";
-            }
+        if (treeList.size() > 1) {
+            return getTreeFileName("[tree name].");
+        } else {
+            return getTreeFileName("");
         }
-
-        return text;
     }
 
     public void setOptions(BeautiOptions options) {

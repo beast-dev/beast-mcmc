@@ -10,26 +10,27 @@ import dr.math.distributions.*;
  */
 public enum PriorType {
 
-    UNDEFINED("undefined", false, false),
-    NONE_TREE_PRIOR("None (Tree Prior Only)", false, false),
-    NONE_STATISTIC("None (Statistic)", false, false),
-    NONE_IMPROPER("Infinite Uniform (Improper)", false, false),
-    UNIFORM_PRIOR("Uniform", false, false),
-    EXPONENTIAL_PRIOR("Exponential", true, true),
-    LAPLACE_PRIOR("Laplace", true, true),
-    NORMAL_PRIOR("Normal", true, true),
-    LOGNORMAL_PRIOR("Lognormal", true, true),
-    GAMMA_PRIOR("Gamma", true, true),
-    INVERSE_GAMMA_PRIOR("Inverse Gamma", true, true),
-    BETA_PRIOR("Beta", true, true),
-    ONE_OVER_X_PRIOR("1/x", true, false),
-    CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", false, false),
-    LOGNORMAL_HPM_PRIOR("Lognormal HPM", false, false),
-    NORMAL_HPM_PRIOR("Normal HPM", false, false),
-    POISSON_PRIOR("Poisson", false, false);
+    UNDEFINED("undefined", false, false, false),
+    NONE_TREE_PRIOR("None (Tree Prior Only)", false, false, false),
+    NONE_STATISTIC("None (Statistic)", false, false, false),
+    NONE_IMPROPER("Infinite Uniform (Improper)", true, false, false),
+    UNIFORM_PRIOR("Uniform", true, false, false),
+    EXPONENTIAL_PRIOR("Exponential", true, true, true),
+    LAPLACE_PRIOR("Laplace", true, true, true),
+    NORMAL_PRIOR("Normal", true, true, true),
+    LOGNORMAL_PRIOR("Lognormal", true, true, true),
+    GAMMA_PRIOR("Gamma", true, true, true),
+    INVERSE_GAMMA_PRIOR("Inverse Gamma", true, true, true),
+    BETA_PRIOR("Beta", true, true, true),
+    ONE_OVER_X_PRIOR("1/x", true, true, false),
+    CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
+    LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
+    NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
+    POISSON_PRIOR("Poisson", true, false, false);
 
-    PriorType(final String name, final boolean isTruncatable, final boolean isPlottable) {
+    PriorType(final String name, final boolean isInitializable, final boolean isTruncatable, final boolean isPlottable) {
         this.name = name;
+        this.isInitializable = isInitializable;
         this.isTruncatable = isTruncatable;
         this.isPlottable = isPlottable;
     }
@@ -215,7 +216,7 @@ public enum PriorType {
         }
 
 
-        if (parameter.priorType != PriorType.NONE_TREE_PRIOR && (!parameter.isStatistic) && parameter.initial != Double.NaN) {
+        if (parameter.priorType.isInitializable && parameter.initial != Double.NaN) {
             buffer.append(", initial=").append(NumberUtil.formatDecimal(parameter.initial, 10, 6));
         }
 
@@ -358,7 +359,8 @@ public enum PriorType {
     }
 
     private final String name;
-    private final boolean isTruncatable;
-    private final boolean isPlottable;
+    public final boolean isInitializable;
+    public final boolean isTruncatable;
+    public final boolean isPlottable;
 
 }

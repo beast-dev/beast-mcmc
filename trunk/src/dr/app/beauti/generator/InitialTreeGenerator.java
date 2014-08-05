@@ -88,11 +88,15 @@ public class InitialTreeGenerator extends Generator {
                         Double height = options.taxonSetsHeights.get(taxa);
                         if (height != null) {
                             writer.writeOpenTag(RescaledTreeParser.CLADE, new Attribute.Default<String>(RescaledTreeParser.HEIGHT, height.toString()));
-                        } else {
+                            writer.writeTag("taxa", new Attribute.Default<String>(XMLParser.IDREF, taxa.getId()), true);
+                            writer.writeCloseTag(RescaledTreeParser.CLADE);
+                        } else if (options.taxonSetsMono.get(taxa)) {
+                            // if monophyly is enforced then placing this clade element here will force BEAST to check
+                            // the clade exists in the tree.
                             writer.writeOpenTag(RescaledTreeParser.CLADE);
+                            writer.writeTag("taxa", new Attribute.Default<String>(XMLParser.IDREF, taxa.getId()), true);
+                            writer.writeCloseTag(RescaledTreeParser.CLADE);
                         }
-                        writer.writeTag("taxa", new Attribute.Default<String>(XMLParser.IDREF, taxa.getId()), true);
-                        writer.writeCloseTag(RescaledTreeParser.CLADE);
                     }
                 }
 

@@ -571,7 +571,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            throw new GeneratorException("Branch rates model generation is failed:\n" + e.getMessage());
+            throw new GeneratorException("Branch rates model generation has failed:\n" + e.getMessage());
         }
 
         //++++++++++++++++ Substitution Model & Site Model ++++++++++++++++++

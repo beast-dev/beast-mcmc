@@ -347,7 +347,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         ContinuousComponentOptions component = (ContinuousComponentOptions) options
                 .getComponentOptions(ContinuousComponentOptions.class);
 
-        if (component.useLambda(partitionData.getPartitionSubstitutionModel())) {
+        PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
+
+        if (component.useLambda(model)) {
             writer.writeOpenTag("transformedTreeModel");
             writer.writeIDref("treeModel", treeModelId);
             writer.writeTag("parameter", new Attribute[] {
@@ -364,6 +366,19 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag("traitParameter");
         writer.writeTag("parameter", new Attribute.Default<String>("id", "leaf." + partitionData.getName()), true);
         writer.writeCloseTag("traitParameter");
+
+        if (model.getJitterWindow() > 0.0) {
+            StringBuilder sb = new StringBuilder(Double.toString(model.getJitterWindow()));
+            for (int i = 1; i < model.getContinuousTraitCount(); i++) {
+                sb.append(" ").append(Double.toString(model.getJitterWindow()));
+            }
+            writer.writeOpenTag("jitter", new Attribute[] {
+                    new Attribute.Default<String>("window", sb.toString()),
+                    new Attribute.Default<String>("duplicatesOnly", "true")
+            });
+            writer.writeTag("parameter", new Attribute.Default<String>("id", "leaf." + partitionData.getName()), true);
+            writer.writeCloseTag("jitter");
+        }
 
         writer.writeOpenTag("conjugateRootPrior");
 

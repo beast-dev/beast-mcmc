@@ -34,6 +34,7 @@ import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
@@ -43,6 +44,7 @@ import dr.evomodel.substmodel.NucModelType;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.logging.Logger;
@@ -109,6 +111,11 @@ public class PartitionModelPanel extends OptionsPanel {
 
     private JCheckBox useLambdaCheck = new JCheckBox(
             "Estimate phylogenetic signal using tree transform");
+
+    private JCheckBox addJitterCheck = new JCheckBox(
+            "Add random jitter to tips");
+    private JLabel jitterWindowLabel = new JLabel("Jitter window size:");
+    private RealNumberField jitterWindowText = new RealNumberField(0, Double.POSITIVE_INFINITY);
 
     private JTextArea citationText;
 
@@ -337,6 +344,34 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         latLongCheck.setEnabled(false);
+
+        PanelUtils.setupComponent(addJitterCheck);
+        addJitterCheck
+                .setToolTipText("<html>Specify if the tip values should have some added random<br>" +
+                                       "noise. This can be useful if some tips have precisely<br>" +
+                        "the same location.</html>");
+
+        jitterWindowText.setValue(model.getJitterWindow());
+        jitterWindowText.setColumns(10);
+
+        addJitterCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                jitterWindowLabel.setEnabled(addJitterCheck.isSelected());
+                jitterWindowText.setEnabled(addJitterCheck.isSelected());
+                model.setJitterWindow(addJitterCheck.isSelected() ? jitterWindowText.getValue() : 0.0);
+            }
+        });
+        jitterWindowText.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                model.setJitterWindow(addJitterCheck.isSelected() ? jitterWindowText.getValue() : 0.0);
+            }
+        });
 
         PanelUtils.setupComponent(useLambdaCheck);
         useLambdaCheck.addItemListener(new ItemListener() {
@@ -651,6 +686,14 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("Continuous Trait Model:",
                         continuousTraitSiteModelCombo);
                 addComponent(latLongCheck);
+                addSeparator();
+                addComponent(addJitterCheck);
+                OptionsPanel panel = new OptionsPanel();
+                panel.addComponents(jitterWindowLabel, jitterWindowText);
+                addComponent(panel);
+                jitterWindowLabel.setEnabled(false);
+                jitterWindowText.setEnabled(false);
+
                 addSeparator();
                 addComponent(useLambdaCheck);
                 break;

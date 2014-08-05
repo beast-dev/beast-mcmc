@@ -79,6 +79,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private MicroSatModelType.Phase phase = MicroSatModelType.Phase.ONE_PHASE;
     private Microsatellite microsatellite = null;
     private boolean isLatitudeLongitude = false;
+    private double jitterWindow = 0.0;
 
     public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
 //        this(options, partition.getName(),(partition.getTrait() == null)
@@ -896,6 +897,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public boolean isLatitudeLongitude() {
         return isLatitudeLongitude;
+    }
+
+    public void setJitterWindow(double jitterWindow) {
+        this.jitterWindow = jitterWindow;
+    }
+
+    public double getJitterWindow() {
+        return jitterWindow;
     }
 
     public int getContinuousTraitCount() {

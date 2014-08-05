@@ -1342,7 +1342,7 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean unlinkPartitionRates = true;
 
-    public Units.Type units = Units.Type.SUBSTITUTIONS;
+    public Units.Type units = Units.Type.YEARS;
 
     // Operator schedule options
     public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;

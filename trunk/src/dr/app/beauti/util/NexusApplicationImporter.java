@@ -156,12 +156,15 @@ public class NexusApplicationImporter extends NexusImporter {
         while (getLastDelimiter() != ';') {
 
             String token = readToken(";,");
-            while (getLastDelimiter() != ';' && getLastDelimiter() != ',') {
-                token += readToken(";,");
-            }
+
+            // This was to remove spaces within each partition definition. But that means
+            // we can't read multiple definitions separated by spaces.
+//            while (getLastDelimiter() != ';' && getLastDelimiter() != ',') {
+//                token += readToken(";,");
+//            }
 
             String[] parts = token.split("-");
-            System.out.print(token + " ");
+//            System.out.print(token + " ");
 
             try {
 
@@ -170,7 +173,11 @@ public class NexusApplicationImporter extends NexusImporter {
 
                     String[] toParts = parts[1].split("\\\\");
 
-                    to = Integer.parseInt(toParts[0].trim());
+                    if (toParts[0].trim().equals(".")) {
+                        to = -1;
+                    } else {
+                        to = Integer.parseInt(toParts[0].trim());
+                    }
 
                     every = 1;
                     if (toParts.length > 1) every = Integer.parseInt(toParts[1].trim());
@@ -187,7 +194,7 @@ public class NexusApplicationImporter extends NexusImporter {
             charSet.addCharSetBlock(new CharSetBlock(from, to, every));
 
         }
-        System.out.println();
+//        System.out.println();
 
         return charSet;
     }

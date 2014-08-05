@@ -70,9 +70,6 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
                 XMLObject cxo = (XMLObject)xo.getChild(i);
                 if (cxo.getName().equals(CLADE)) {
                     TaxonList taxa = (TaxonList)cxo.getChild(TaxonList.class);
-                    double height = cxo.getDoubleAttribute(HEIGHT);
-
-                    Map<String, SimpleNode> leafNodes = new HashMap<String, SimpleNode>();
 
                     Set<String> leafSet = new HashSet<String>();
                     for (Taxon taxon : taxa) {
@@ -84,7 +81,10 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("Clade defined by taxon Set, " + taxa.getId() + ", is not found in the guide tree");
                     }
 
-                    rescaledTree.setNodeHeight(mrca, height);
+                    if (cxo.hasAttribute(HEIGHT)) {
+                        double height = cxo.getDoubleAttribute(HEIGHT);
+                        rescaledTree.setNodeHeight(mrca, height);
+                    }
                 }
             }
         }
@@ -149,7 +149,7 @@ public class RescaledTreeParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(HEIGHT, true),
             new ElementRule(Tree.class),
             new ElementRule(CLADE, new XMLSyntaxRule[] {
-                    AttributeRule.newDoubleRule(HEIGHT),
+                    AttributeRule.newDoubleRule(HEIGHT, true),
                     new ElementRule(TaxonList.class)
             }, 0, Integer.MAX_VALUE)
     };

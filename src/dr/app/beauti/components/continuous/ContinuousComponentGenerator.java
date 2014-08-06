@@ -467,7 +467,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref("matrixParameter", precisionMatrixId);
         writer.writeCloseTag("matrixInverse");
 
-        writer.writeOpenTag("diffusionRateStatistic", (partitionData.getPartitionSubstitutionModel().isLatitudeLongitude() ?
+        writer.writeOpenTag("continuousDiffusionStatistic", (partitionData.getPartitionSubstitutionModel().isLatitudeLongitude() ?
                 new Attribute[] {
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
                         new Attribute.Default<String>("greatCircleDistance", "true")
@@ -476,7 +476,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
                 }));
         writer.writeIDref("multivariateTraitLikelihood", traitLikelihoodId);
-        writer.writeCloseTag("diffusionRateStatistic");
+        writer.writeCloseTag("continuousDiffusionStatistic");
     }
 
     private void writePrecisionGibbsOperators(XMLWriter writer,

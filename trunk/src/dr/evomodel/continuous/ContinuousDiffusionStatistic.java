@@ -81,10 +81,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String NOISE = "noise";
 
     public ContinuousDiffusionStatistic(String name, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
-                                       boolean greatCircleDistances, Mode mode,
-                                       summaryStatistic statistic, double heightUpper, double heightLower,
-                                       double[] lowerHeights, boolean cumulative, boolean trueNoise, int dimension,
-                                       String stateString, MarkovJumpsBeagleTreeLikelihood markovJumpLikelihood) {
+                                        boolean greatCircleDistances, Mode mode,
+                                        summaryStatistic statistic, double heightUpper, double heightLower,
+                                        double[] lowerHeights, boolean cumulative, boolean trueNoise, int dimension,
+                                        String stateString, MarkovJumpsBeagleTreeLikelihood markovJumpLikelihood) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
         this.useGreatCircleDistances = greatCircleDistances;
@@ -126,7 +126,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         //double[] rates =  null;
         List<Double> rates = new ArrayList<Double>();
         List<Double> traits = new ArrayList<Double>();
-         //double[] diffusionCoefficients =  null;
+        //double[] diffusionCoefficients =  null;
         List<Double> diffusionCoefficients = new ArrayList<Double>();
         double waDiffusionCoefficient =  0;
 
@@ -173,7 +173,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
                         History history = null;
                         if (stateString != null) {
-                           history = setUpHistory(markovJumpLikelihood.getHistoryForNode(tree,node,SITE),markovJumpLikelihood.getStatesForNode(tree,node)[SITE],markovJumpLikelihood.getStatesForNode(tree,parentNode)[SITE],timeLow,timeUp);
+                            history = setUpHistory(markovJumpLikelihood.getHistoryForNode(tree,node,SITE),markovJumpLikelihood.getStatesForNode(tree,node)[SITE],markovJumpLikelihood.getStatesForNode(tree,parentNode)[SITE],timeLow,timeUp);
                         }
 
                         if (tree.getNodeHeight(parentNode) > upperHeight) {
@@ -320,7 +320,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             } else if (summaryMode == Mode.COEFFICIENT_OF_VARIATION) {
                 final double mean = DiscreteStatistics.mean(toArray(rates));
                 return Math.sqrt(DiscreteStatistics.variance(toArray(rates), mean)) / mean;
-            //weighted average
+                //weighted average
             } else {
                 return treeDistance / treeLength;
             }
@@ -331,7 +331,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 // don't compute mean twice
                 final double mean = DiscreteStatistics.mean(toArray(traits));
                 return Math.sqrt(DiscreteStatistics.variance(toArray(traits), mean)) / mean;
-            // default is average. A warning is thrown by the parser when trying to use WEIGHTED_AVERAGE
+                // default is average. A warning is thrown by the parser when trying to use WEIGHTED_AVERAGE
             } else {
                 return DiscreteStatistics.mean(toArray(traits));
             }
@@ -347,8 +347,8 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             } else {
                 return waDiffusionCoefficient / treeLength;
             }
-        //wavefront distance
-        //TODO: restrict to non state-specific wavefrontDistance/rate
+            //wavefront distance
+            //TODO: restrict to non state-specific wavefrontDistance/rate
         }  else if (summaryStat == summaryStatistic.WAVEFRONT_DISTANCE) {
             return maxDistanceFromRoot;
 //            return maxBranchDistanceFromRoot;
@@ -358,7 +358,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 //            return maxBranchDistanceOverTimeFromRootWA;
         }  else if (summaryStat == summaryStatistic.DIFFUSION_DISTANCE)  {
             return treeDistance;
-        //DIFFUSION_TIME
+            //DIFFUSION_TIME
         }  else {
             return treeLength;
         }
@@ -803,7 +803,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 if (xo.getChild(i) instanceof AbstractMultivariateTraitLikelihood) {
                     AbstractMultivariateTraitLikelihood amtl = (AbstractMultivariateTraitLikelihood) xo.getChild(i);
                     traitLikelihoods.add(amtl);
-                 }
+                }
                 if (xo.getChild(i) instanceof MarkovJumpsBeagleTreeLikelihood) {
                     mjtl = (MarkovJumpsBeagleTreeLikelihood) xo.getChild(i);
                 }
@@ -846,7 +846,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                         stateString = null;
                     }
                 }
-          }
+            }
 
 
 
@@ -883,13 +883,13 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 AttributeRule.newBooleanRule(NOISE, true),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, 1, Integer.MAX_VALUE),
                 new ElementRule(MarkovJumpsBeagleTreeLikelihood.class, true)
-         };
+        };
     };
 
     private boolean useGreatCircleDistances;
     private List<AbstractMultivariateTraitLikelihood> traitLikelihoods;
     private MarkovJumpsBeagleTreeLikelihood markovJumpLikelihood;
-//    private int stateInt;
+    //    private int stateInt;
     private String stateString;
     private Mode summaryMode;
     private summaryStatistic summaryStat;

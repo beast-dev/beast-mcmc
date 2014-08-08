@@ -52,12 +52,19 @@ public class JointParameter extends Parameter.Abstract implements VariableListen
 
         if (dimension == 0) {
             dimension = param.getDimension();
-        }
-        if (param.getDimension() != dimension) {
-            throw new RuntimeException("subsequent parameters do not match the dimensionality of the first");
+        } else {
+            for (int dim = 0; dim < dimension; dim++) {
+                param.setParameterValue(dim, parameters.get(0).getParameterValue(dim));
+            }
+            if (param.getDimension() != dimension) {
+                throw new RuntimeException("subsequent parameters do not match the dimensionality of the first");
+            }
         }
 
-        param.addParameterListener(this);
+        // AR - I think we ignore the messages from the containing parameters. Possibly would be a good
+        // idea to check they don't change independently of this one.
+//        param.addParameterListener(this);
+
         parameters.add(param);
     }
 

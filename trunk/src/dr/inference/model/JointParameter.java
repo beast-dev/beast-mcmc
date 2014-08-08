@@ -26,17 +26,16 @@
 package dr.inference.model;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
- * A parameter which is the sum of a set of other parameters
+ * A parameter which controls the values of a set of other parameters
  *
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class CompositeParameter extends Parameter.Abstract implements VariableListener {
+public class JointParameter extends Parameter.Abstract implements VariableListener {
 
-    public CompositeParameter(String name, Parameter[] params) {
+    public JointParameter(String name, Parameter[] params) {
         this(name);
 
         for (Parameter parameter : params) {
@@ -44,7 +43,7 @@ public class CompositeParameter extends Parameter.Abstract implements VariableLi
         }
     }
 
-    public CompositeParameter(String name) {
+    public JointParameter(String name) {
         this.name = name;
         dimension = 0;
     }
@@ -54,8 +53,8 @@ public class CompositeParameter extends Parameter.Abstract implements VariableLi
         if (dimension == 0) {
             dimension = param.getDimension();
         }
-        if (param.getDimension() != dimension && param.getDimension() != 1) {
-            throw new RuntimeException("subsequent parameters do not match the dimensionality of the first (or 1)");
+        if (param.getDimension() != dimension) {
+            throw new RuntimeException("subsequent parameters do not match the dimensionality of the first");
         }
 
         param.addParameterListener(this);
@@ -83,7 +82,7 @@ public class CompositeParameter extends Parameter.Abstract implements VariableLi
     }
 
     public void addBounds(Bounds<Double> bounds) {
-        throw new RuntimeException("Can't add bounds to a composite parameter, only its components");
+        throw new RuntimeException("Can't add bounds to a joint parameter, only its components");
     }
 
     public Bounds<Double> getBounds() {
@@ -100,27 +99,25 @@ public class CompositeParameter extends Parameter.Abstract implements VariableLi
 
 
     public double getParameterValue(int dim) {
-        double value = parameters.get(0).getParameterValue(dim);
-        for (int i = 1; i < parameters.size(); i++) {
-            if (parameters.get(i).getDimension() == 1) {
-                value += parameters.get(i).getParameterValue(0);
-            } else {
-                value += parameters.get(i).getParameterValue(dim);
-            }
-        }
-        return value;
+        return parameters.get(0).getParameterValue(dim);
     }
 
     public void setParameterValue(int dim, double value) {
-        throw new RuntimeException("Can't operate on a composite parameter, only its components");
+        for (Parameter parameter : parameters) {
+            parameter.setParameterValue(dim, value);
+        }
     }
 
     public void setParameterValueQuietly(int dim, double value) {
-        throw new RuntimeException("Can't operate on a composite parameter, only its components");
+        for (Parameter parameter : parameters) {
+            parameter.setParameterValueQuietly(dim, value);
+        }
     }
 
     public void setParameterValueNotifyChangedAll(int dim, double value){
-        throw new RuntimeException("Can't operate on a composite parameter, only its components");
+        for (Parameter parameter : parameters) {
+            parameter.setParameterValueNotifyChangedAll(dim, value);
+        }
     }
 
     protected void storeValues() {

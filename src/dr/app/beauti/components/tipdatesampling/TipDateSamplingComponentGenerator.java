@@ -40,6 +40,7 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
             case IN_FILE_LOG_PARAMETERS:
                 return true;
             case AFTER_TREE_MODEL:
+                return options.getPartitionTreeModels().size() > 1 || comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT;
             case IN_MCMC_PRIOR:
                 return comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT;
             default:
@@ -54,34 +55,15 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
 
         switch (point) {
             case IN_TREE_MODEL: {
-                PartitionTreeModel treeModel = (PartitionTreeModel)item;
-
-                Set<Taxon> taxonSet = new HashSet<Taxon>();
-                for (AbstractPartitionData data : options.getDataPartitions(treeModel)) {
-                    for (Taxon taxon : data.getTaxonList()) {
-                        taxonSet.add(taxon);
-                    }
-                }
-
-                // only include this taxon as a leaf height if it found in this partition.
-
-                for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                    Taxon taxon = taxa.getTaxon(i);
-
-                    if (taxonSet.contains(taxon)) {
-                        // if we are sampling within precisions then only include this leaf if precision > 0
-
-                        writer.writeOpenTag("leafHeight",
-                                new Attribute[]{
-                                        new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
-                                }
-                        );
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
-                        writer.writeCloseTag("leafHeight");
-                    }
-                }
+                writeLeafHeightParameters(writer, (PartitionTreeModel)item, taxa);
             } break;
             case AFTER_TREE_MODEL:
+                if (options.getPartitionTreeModels().size() > 1) {
+                    // we have multiple treeModels with some or all the same taxa - create a JointParameter for each...
+
+                    writeJointParameters(writer, taxa);
+                }
+
                 if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
                     writer.writeOpenTag("compoundParameter",
                             new Attribute[]{
@@ -119,6 +101,65 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
         }
 
+    }
+
+    private void writeJointParameters(XMLWriter writer, TaxonList taxa) {
+        for (int i = 0; i < taxa.getTaxonCount(); i++) {
+            Taxon taxon = taxa.getTaxon(i);
+
+            Set<PartitionTreeModel> treeModels = new HashSet<PartitionTreeModel>();
+            for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+                for (AbstractPartitionData data : options.getDataPartitions(treeModel)) {
+                    if (data.getTaxonList().asList().contains(taxon)) {
+                        treeModels.add(treeModel);
+                    }
+                }
+            }
+
+            // if we are sampling within precisions then only include this leaf if precision > 0
+            if (treeModels.size() > 0) {
+                writer.writeOpenTag("jointParameter",
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")")
+                        }
+                );
+
+                for (PartitionTreeModel treeModel : treeModels) {
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, treeModel.getPrefix() + "age(" + taxon.getId() + ")"), true);
+                }
+
+                writer.writeCloseTag("jointParameter");
+            }
+        }
+    }
+
+
+    private void writeLeafHeightParameters(XMLWriter writer, PartitionTreeModel item, TaxonList taxa) {
+        // only include this taxon as a leaf height if it found in this partition.
+        PartitionTreeModel treeModel = (PartitionTreeModel)item;
+
+        Set<Taxon> taxonSet = new HashSet<Taxon>();
+        for (AbstractPartitionData data : options.getDataPartitions(treeModel)) {
+            for (Taxon taxon : data.getTaxonList()) {
+                taxonSet.add(taxon);
+            }
+        }
+
+        for (int i = 0; i < taxa.getTaxonCount(); i++) {
+            Taxon taxon = taxa.getTaxon(i);
+
+            if (taxonSet.contains(taxon)) {
+                // if we are sampling within precisions then only include this leaf if precision > 0
+
+                writer.writeOpenTag("leafHeight",
+                        new Attribute[]{
+                                new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
+                        }
+                );
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, treeModel.getPrefix() + "age(" + taxon.getId() + ")"), true);
+                writer.writeCloseTag("leafHeight");
+            }
+        }
     }
 
     protected String getCommentLabel() {

@@ -29,6 +29,7 @@ import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
@@ -105,13 +106,13 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writeCodonPartitionedRobustCounting(writer, component);
                 break;
             case IN_TREE_LIKELIHOOD:
-                writeCountingParameter(writer, (AbstractPartitionData) item);
+                writeCountingParameter(writer, (AbstractPartitionData) item, prefix);
                 break;
             case IN_FILE_LOG_PARAMETERS:
                 writeLogs(writer, component);
                 break;
             case IN_TREES_LOG:
-                writeTreeLogs(writer, component);
+                writeTreeLogs(writer, component, (PartitionTreeModel)item);
                 break;
             case AFTER_TREES_LOG:
                 writeAncestralStateLoggers(writer, component);
@@ -127,7 +128,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     }// END: generate
 
-    private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition) {
+    private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition, String prefix) {
         AncestralStatesComponentOptions component = (AncestralStatesComponentOptions) options
                 .getComponentOptions(AncestralStatesComponentOptions.class);
         if (!component.isCountingStates(partition)) {
@@ -135,8 +136,6 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         }
 
         StringBuilder matrix = new StringBuilder();
-
-        String prefix = partition.getName() + ".";
 
         DataType dataType = partition.getDataType();
         int stateCount = dataType.getStateCount();
@@ -261,57 +260,59 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    private void writeTreeLogs(XMLWriter writer, AncestralStatesComponentOptions component) {
+    private void writeTreeLogs(XMLWriter writer, AncestralStatesComponentOptions component, PartitionTreeModel treeModel) {
 
         for (AbstractPartitionData partition : options.getDataPartitions()) {
 
-            if (component.dNdSRobustCounting(partition)) {
-                String prefix = partition.getName() + ".";
+            if (partition.getPartitionTreeModel() == treeModel) {
+                if (component.dNdSRobustCounting(partition)) {
+                    String prefix = partition.getName() + ".";
 
-                writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
-                writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
-            }
+                    writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
+                    writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
+                }
 
-            if (component.reconstructAtNodes(partition)) {
+                if (component.reconstructAtNodes(partition)) {
 
-                // is an alignment data partition
-                PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-                int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
+                    // is an alignment data partition
+                    PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+                    int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
 
-                if (cpCount > 1) {
-                    for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                        String prefix = partition.getPrefix() + substModel.getPrefix(i);
-                        String name = partition.getName() + "." + substModel.getPrefix(i);
-                        if (name.endsWith(".")) {
-                            name = name.substring(0, name.length() - 1);
+                    if (cpCount > 1) {
+                        for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
+                            String prefix = partition.getPrefix() + substModel.getPrefix(i);
+                            String name = partition.getName() + "." + substModel.getPrefix(i);
+                            if (name.endsWith(".")) {
+                                name = name.substring(0, name.length() - 1);
+                            }
+                            writeTrait(writer, partition, prefix, AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG, name);
                         }
-                        writeTrait(writer, partition, prefix, AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG, name);
+                    } else {
+                        writeTrait(writer, partition, partition.getPrefix(), AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG, partition.getName());
+
                     }
-                } else {
-                    writeTrait(writer, partition, partition.getPrefix(), AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG, partition.getName());
-
-                }
-            }
-
-            if (component.isCountingStates(partition)) {
-                if (partition.getDataType().getType() == DataType.CONTINUOUS) {
-                    throw new RuntimeException("Can't do counting on Continuous data partition");
                 }
 
-                PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-                int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
-
-                if (cpCount > 1) {
-                    for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                        String prefix = partition.getPrefix() + substModel.getPrefix(i);
-                        String name = partition.getName() + "." + substModel.getPrefix(i) + "count";
-                        writeTrait(writer, partition, prefix, "count", name);
+                if (component.isCountingStates(partition)) {
+                    if (partition.getDataType().getType() == DataType.CONTINUOUS) {
+                        throw new RuntimeException("Can't do counting on Continuous data partition");
                     }
-                } else {
-                    writeTrait(writer, partition, partition.getPrefix(), "count", partition.getName() + ".count");
+
+                    PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+                    int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
+
+                    if (cpCount > 1) {
+                        for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
+                            String prefix = partition.getPrefix() + substModel.getPrefix(i);
+                            String name = partition.getName() + "." + substModel.getPrefix(i) + "count";
+                            writeTrait(writer, partition, prefix, "count", name);
+                        }
+                    } else {
+                        writeTrait(writer, partition, partition.getPrefix(), "count", partition.getName() + ".count");
+
+                    }
 
                 }
-
             }
         }
     }

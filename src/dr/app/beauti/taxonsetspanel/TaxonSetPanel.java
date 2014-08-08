@@ -41,6 +41,8 @@ import jam.table.TableRenderer;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
@@ -87,13 +89,19 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     protected final List<Taxon> includedTaxa = new ArrayList<Taxon>();
     protected final List<Taxon> excludedTaxa = new ArrayList<Taxon>();
 
+    private JTextField excludedTaxaSearchField = new JTextField();
+
     protected JTable excludedTaxaTable = null;
     protected TaxaTableModel excludedTaxaTableModel = null;
+    private JLabel excludedTaxaLabel = new JLabel();
     protected JComboBox excludedTaxonSetsComboBox = null;
     protected boolean excludedSelectionChanging = false;
 
+    private JTextField includedTaxaSearchField = new JTextField();
+
     protected JTable includedTaxaTable = null;
     protected TaxaTableModel includedTaxaTableModel = null;
+    private JLabel includedTaxaLabel = new JLabel();
     protected JComboBox includedTaxonSetsComboBox = null;
     protected boolean includedSelectionChanging = false;
 
@@ -162,6 +170,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         includedTaxonSetsComboBox = new JComboBox(new String[]{TAXON.toLowerCase() + "..."});
         excludedTaxonSetsComboBox = new JComboBox(new String[]{TAXON.toLowerCase() + "..."});
 
+        includedTaxaLabel.setText("");
+        excludedTaxaLabel.setText("");
+
         Box panel1 = new Box(BoxLayout.X_AXIS);
         panel1.add(new JLabel("Select: "));
         panel1.setOpaque(false);
@@ -210,31 +221,59 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder(""));
         taxonSetEditingPanel.setOpaque(false);
         taxonSetEditingPanel.setLayout(new GridBagLayout());
+
+        excludedTaxaSearchField.setColumns(12);
+        excludedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
+        excludedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+        includedTaxaSearchField.setColumns(12);
+        includedTaxaSearchField.putClientProperty("JTextField.variant", "search");
+        includedTaxaSearchField.putClientProperty("Quaqua.TextField.style","search");
+        includedTaxaSearchField.putClientProperty("Quaqua.TextField.sizeVariant","small");
+
         GridBagConstraints c = new GridBagConstraints();
 
         c.gridx = 0;
         c.gridy = 0;
         c.weightx = 0.5;
-        c.weighty = 1;
-        c.fill = GridBagConstraints.BOTH;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(12, 12, 4, 0);
-        taxonSetEditingPanel.add(scrollPane2, c);
+        c.insets = new Insets(3, 6, 3, 0);
+        taxonSetEditingPanel.add(excludedTaxaSearchField, c);
 
         c.gridx = 0;
         c.gridy = 1;
         c.weightx = 0.5;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(0, 6, 0, 0);
+        taxonSetEditingPanel.add(scrollPane2, c);
+
+        c.gridx = 0;
+        c.gridy = 2;
+        c.weightx = 0.5;
         c.weighty = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(0, 12, 12, 0);
+        c.insets = new Insets(0, 6, 3, 0);
+        taxonSetEditingPanel.add(excludedTaxaLabel, c);
+
+        c.gridx = 0;
+        c.gridy = 3;
+        c.weightx = 0.5;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(0, 6, 3, 0);
         taxonSetEditingPanel.add(panel1, c);
 
         c.gridx = 1;
         c.gridy = 0;
         c.weightx = 0;
         c.weighty = 1;
-        c.gridheight = 2;
+        c.gridheight = 4;
         c.fill = GridBagConstraints.NONE;
         c.anchor = GridBagConstraints.CENTER;
         c.insets = new Insets(12, 2, 12, 4);
@@ -243,20 +282,38 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         c.gridx = 2;
         c.gridy = 0;
         c.weightx = 0.5;
-        c.weighty = 1;
+        c.weighty = 0;
         c.gridheight = 1;
-        c.fill = GridBagConstraints.BOTH;
+        c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(12, 0, 4, 12);
-        taxonSetEditingPanel.add(scrollPane3, c);
+        c.insets = new Insets(3, 0, 3, 6);
+        taxonSetEditingPanel.add(includedTaxaSearchField, c);
 
         c.gridx = 2;
         c.gridy = 1;
         c.weightx = 0.5;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(0, 0, 0, 6);
+        taxonSetEditingPanel.add(scrollPane3, c);
+
+        c.gridx = 2;
+        c.gridy = 2;
+        c.weightx = 0.5;
         c.weighty = 0;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.anchor = GridBagConstraints.CENTER;
-        c.insets = new Insets(0, 0, 12, 12);
+        c.insets = new Insets(0, 0, 3, 6);
+        taxonSetEditingPanel.add(includedTaxaLabel, c);
+
+        c.gridx = 2;
+        c.gridy = 3;
+        c.weightx = 0.5;
+        c.weighty = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.anchor = GridBagConstraints.CENTER;
+        c.insets = new Insets(0, 0, 3, 6);
         taxonSetEditingPanel.add(panel2, c);
 
         JPanel panel3 = new JPanel();
@@ -306,6 +363,36 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 //			}
 //		});
 
+        includedTaxaSearchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                selectIncludedTaxa(includedTaxaSearchField.getText());
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                selectIncludedTaxa(includedTaxaSearchField.getText());
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                selectIncludedTaxa(includedTaxaSearchField.getText());
+            }
+        }
+        );
+        excludedTaxaSearchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                selectExcludedTaxa(excludedTaxaSearchField.getText());
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                selectExcludedTaxa(excludedTaxaSearchField.getText());
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                selectExcludedTaxa(excludedTaxaSearchField.getText());
+            }
+        }
+        );
+
+
         includedTaxaTable.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -334,8 +421,11 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         includedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
-                if (!includedSelectionChanging && includedTaxonSetsComboBox.getSelectedIndex() != 0) {
-                    includedTaxonSetsComboBox.setSelectedIndex(0);
+                if (!includedSelectionChanging) {
+                    if (includedTaxonSetsComboBox.getSelectedIndex() != 0) {
+                        includedTaxonSetsComboBox.setSelectedIndex(0);
+                    }
+                    includedTaxaSearchField.setText("");
                 }
             }
         });
@@ -363,9 +453,13 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         excludedTaxaTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
-                if (!excludedSelectionChanging && excludedTaxonSetsComboBox.getSelectedIndex() != 0) {
-                    excludedTaxonSetsComboBox.setSelectedIndex(0);
+                if (!excludedSelectionChanging) {
+                    if (excludedTaxonSetsComboBox.getSelectedIndex() != 0) {
+                        excludedTaxonSetsComboBox.setSelectedIndex(0);
+                    }
+                    excludedTaxaSearchField.setText("");
                 }
+
             }
         });
         excludedTaxonSetsComboBox.addItemListener(new ItemListener() {
@@ -392,6 +486,35 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         includedTaxaTable.doLayout();
         excludedTaxaTable.doLayout();
+    }
+
+    private void selectIncludedTaxa(String text) {
+        includedSelectionChanging = true;
+        includedTaxaTable.clearSelection();
+        int index = 0;
+        for (Taxon taxon : includedTaxa) {
+            if (taxon.getId().contains(text)) {
+                includedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
+            }
+            index ++;
+
+        }
+        includedSelectionChanging = false;
+    }
+
+    private void selectExcludedTaxa(String text) {
+        excludedSelectionChanging = true;
+        excludedTaxaTable.clearSelection();
+        int index = 0;
+        for (Taxon taxon : excludedTaxa) {
+            if (taxon.getId().contains(text)) {
+                excludedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
+            }
+            index ++;
+
+        }
+        excludedSelectionChanging = false;
+
     }
 
     protected void initTableColumn() {
@@ -446,6 +569,9 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         }
 
         setupTaxonSetsComboBoxes();
+
+        includedTaxaLabel.setText("" + includedTaxa.size() + " taxa included");
+        excludedTaxaLabel.setText("" + excludedTaxa.size() + " taxa excluded");
 
         if (options.taxonSetsMono.get(currentTaxonSet) != null &&
                 options.taxonSetsMono.get(currentTaxonSet) &&

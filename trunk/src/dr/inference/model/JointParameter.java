@@ -93,7 +93,7 @@ public class JointParameter extends Parameter.Abstract implements VariableListen
     }
 
     public Bounds<Double> getBounds() {
-        return null;
+        return parameters.get(0).getBounds();
     }
 
     public void addDimension(int index, double value) {

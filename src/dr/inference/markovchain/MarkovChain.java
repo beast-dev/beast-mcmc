@@ -249,7 +249,12 @@ public final class MarkovChain {
                             ((CompoundLikelihood) likelihood).getDiagnosis() : "";
                 }
 
-                if (score == Double.POSITIVE_INFINITY || Double.isNaN(score)) {
+                if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
+                    Logger.getLogger("error").severe("State " + currentState + ": A Gibbs opertor, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
+                }
+
+                if (score == Double.POSITIVE_INFINITY ||
+                        Double.isNaN(score) ) {
                     if (likelihood instanceof CompoundLikelihood) {
                         Logger.getLogger("error").severe("State "+currentState+": A likelihood returned with a numerical error:\n" +
                                 ((CompoundLikelihood)likelihood).getDiagnosis());

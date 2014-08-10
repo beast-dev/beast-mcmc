@@ -132,10 +132,10 @@ public class BeastMain {
             // This is a special logger that is for logging numerical and statistical errors
             // during the MCMC run. It will tolerate up to maxErrorCount before throwing a
             // RuntimeException to shut down the run.
-            //Logger errorLogger = Logger.getLogger("error");
+            Logger errorLogger = Logger.getLogger("error");
             messageHandler = new ErrorLogHandler(maxErrorCount);
             messageHandler.setLevel(Level.WARNING);
-            logger.addHandler(messageHandler);
+            errorLogger.addHandler(messageHandler);
 
             for (String pluginName : PluginLoader.getAvailablePlugins()) {
                 Plugin plugin = PluginLoader.loadPlugin(pluginName);

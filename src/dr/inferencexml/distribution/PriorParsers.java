@@ -28,16 +28,7 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
-import dr.math.distributions.BetaDistribution;
-import dr.math.distributions.ExponentialDistribution;
-import dr.math.distributions.GammaDistribution;
-import dr.math.distributions.HalfTDistribution;
-import dr.math.distributions.InverseGammaDistribution;
-import dr.math.distributions.LaplaceDistribution;
-import dr.math.distributions.LogNormalDistribution;
-import dr.math.distributions.NormalDistribution;
-import dr.math.distributions.PoissonDistribution;
-import dr.math.distributions.UniformDistribution;
+import dr.math.distributions.*;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -55,6 +46,7 @@ public class PriorParsers {
     public static final String UNIFORM_PRIOR = "uniformPrior";
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";
+    public static final String NEGATIVE_BINOMIAL_PRIOR = "negativeBinomialPrior";
     public static final String NORMAL_PRIOR = "normalPrior";
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
@@ -256,6 +248,51 @@ public class PriorParsers {
 
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given poisson distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+    /**
+     * A special parser that reads a convenient short form of priors on parameters.
+     */
+    public static XMLObjectParser NEGATIVE_BINOMIAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return NEGATIVE_BINOMIAL_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double mean = xo.getDoubleAttribute(MEAN);
+            double stdev = xo.getDoubleAttribute(STDEV);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new NegativeBinomialDistribution(mean, stdev));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(MEAN),
+                AttributeRule.newDoubleRule(STDEV),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given negative binomial distribution.";
         }
 
         public Class getReturnType() {

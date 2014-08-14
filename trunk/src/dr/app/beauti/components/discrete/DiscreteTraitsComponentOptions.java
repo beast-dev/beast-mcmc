@@ -63,8 +63,8 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.createDiscreteStatistic(prefix + "nonZeroRates", "the number of non-zero rates for BSSVS");
 
                 modelOptions.createScaleOperator(prefix + "frequencies", 0.75, 1.0);
-                modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 1.0);
-                modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 1.0);
+                modelOptions.createOperator(prefix + "rates", OperatorType.SCALE_INDEPENDENTLY, 0.75, 15.0);
+                modelOptions.createOperator(prefix + "indicators", OperatorType.BITFLIP, -1.0, 7.0);
 //                modelOptions.createScaleOperator(prefix + "mu", demoTuning, 10);
 
                 modelOptions.createZeroOneParameterUniformPrior(prefix + "root.frequencies", "discrete state root frequencies", 0.25);
@@ -76,7 +76,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 modelOptions.createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME,
                         "(indicators, rates)",
                         "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
-                        prefix + "indicators", prefix + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
+                        prefix + "indicators", prefix + "rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 7.0);
 
             }
         }

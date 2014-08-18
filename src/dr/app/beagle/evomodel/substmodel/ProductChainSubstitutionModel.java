@@ -206,7 +206,20 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
 
             @Override
             public EigenDecomposition getEigenDecomposition() {
-                throw new RuntimeException("Should not be called");
+                if (eigenDecomposition == null) {
+
+//                    System.err.println("Statecount = " + stateSizes[0]);
+//                    System.exit(-1);
+
+                    double[][] mat = new double[stateSizes[0]][stateSizes[0]];
+                    double[] vec = new double[stateSizes[0] * stateSizes[0]];
+                    getInfinitesimalMatrix(vec);
+                    for (int i = 0; i < stateSizes[0]; ++i) {
+                        System.arraycopy(vec, i * stateSizes[0], mat[i], 0, stateSizes[0]);
+                    }
+                    eigenDecomposition = getDefaultEigenSystem(stateSizes[0]).decomposeMatrix(mat);
+                }
+                return eigenDecomposition;
             }
 
             @Override
@@ -234,6 +247,8 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
                         averageMatrix[i] = total;
                     }
                 }
+//                System.err.println("averageMatrix.length " + averageMatrix.length);
+//                System.err.println("matrix.length " + matrix.length);
                 System.arraycopy(averageMatrix, 0, matrix, 0, averageMatrix.length);
             }
 
@@ -247,11 +262,20 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
                 throw new RuntimeException("Should not be called");
             }
 
-            double[] averageMatrix = null;
+            private double[] averageMatrix = null;
+            private EigenDecomposition eigenDecomposition = null;
         };
     }
 
-    ;
+//    private SubstitutionProcess getAverageModel() {
+//        if (!forceAverageModel) {
+//            throw new RuntimeException("Error getting averaged model with non-averaged product chain");
+//        }
+//        if (averageModel == null) {
+//            averageModel = computeAverageModel();
+//        }
+//        return averageModel;
+//    }
 
     private SubstitutionProcess getBaseModel(int index) {
         if (!forceAverageModel) {
@@ -265,6 +289,22 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     }
 
     private void computeKroneckerSumsAndProducts() {
+
+//        if (forceAverageModel) {
+//            if (averageModel == null) {
+//                averageModel = computeAverageModel();
+//            }
+//            eigenDecomposition = averageModel.getEigenDecomposition();
+//            if (rateMatrix == null) {
+//                rateMatrix = new double[stateCount * stateCount];
+//            }
+//            averageModel.getInfinitesimalMatrix(rateMatrix);
+//            updateMatrix = false;
+//
+//            System.err.println("lambda = " + new Vector(rateMatrix));
+//
+//            return;
+//        }
 
         int currentStateSize = stateSizes[0];
         double[] currentRate = new double[currentStateSize * currentStateSize];

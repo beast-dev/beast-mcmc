@@ -54,7 +54,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
     public static final String CONTINUOUS_DIFFUSION_STATISTIC = "continuousDiffusionStatistic";
     public static final String DIFFUSION_RATE_STATISTIC = "diffusionRateStatistic";
-//    public static final String TREE_DISPERSION_STATISTIC = "treeDispersionStatistic";
+    public static final String TREE_DISPERSION_STATISTIC = "treeDispersionStatistic";
 
     public static final String USE_GREATCIRCLEDISTANCES = "greatCircleDistance";
     public static final String MODE = "mode";
@@ -693,7 +693,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
         @Override
         public String[] getParserNames() {
-            return new String[]{getParserName(), DIFFUSION_RATE_STATISTIC};
+            return new String[]{getParserName(), DIFFUSION_RATE_STATISTIC, TREE_DISPERSION_STATISTIC};
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {

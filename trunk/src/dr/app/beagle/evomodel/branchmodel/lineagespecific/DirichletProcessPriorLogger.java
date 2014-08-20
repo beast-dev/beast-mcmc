@@ -4,72 +4,68 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dr.app.bss.Utils;
+import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.inference.model.Variable.ChangeType;
-import dr.inference.model.VariableListener;
 import dr.math.distributions.NormalDistribution;
 
-public class DppLogger implements Loggable, VariableListener {
+public class DirichletProcessPriorLogger implements Loggable {
 
+//	private ParametricMultivariateDistributionModel baseModel;
+	private Parameter precisionParameter;
 	private Parameter categoriesParameter;
 	private CompoundParameter uniquelyRealizedParameters;
+	
+	private int uniqueRealizationCount;
+	private int realizationCount;
 
 	private double[] categoryProbabilities;
 	private int newCategoryIndex;
 	private double meanForCategory;
 	private double newX;
 
-	private int categoryCount;
-	private int N;
-
-	public DppLogger(Parameter categoriesParameter, //
+	public DirichletProcessPriorLogger(
+			Parameter precisionParameter, //
+			Parameter categoriesParameter, //
 			CompoundParameter uniquelyRealizedParameters //
 	) {
 
+		this.precisionParameter = precisionParameter;
 		this.uniquelyRealizedParameters = uniquelyRealizedParameters;
 		this.categoriesParameter = categoriesParameter;
-		this.categoryCount = uniquelyRealizedParameters.getDimension();
-		this.N = categoriesParameter.getDimension();
 		
+		this.uniqueRealizationCount = uniquelyRealizedParameters.getDimension();
+		this.realizationCount = categoriesParameter.getDimension();
+
 	}// END: Constructor
 
 	private double[] getCategoryProbs() {
 
-		// int N = categoriesParameter.getDimension();
-		double[] categoryProbabilities = new double[categoryCount];
+		double[] probs = new double[uniqueRealizationCount];
 
-		for (int i = 0; i < N; i++) {
-			categoryProbabilities[(int) categoriesParameter
-					.getParameterValue(i)]++;
+		for (int i = 0; i < realizationCount; i++) {
+			probs[(int) categoriesParameter.getParameterValue(i)]++;
 		}// END: N loop
 
-//		Utils.printArray(categoryProbabilities);
-//		try {
-//		    Thread.sleep(1000);
-//		} catch(InterruptedException ex) {
-//		    Thread.currentThread().interrupt();
-//		}
+//		Utils.printArray(probs);
 		
-		
-		for (int i = 0; i < categoryCount; i++) {
-			categoryProbabilities[i] = categoryProbabilities[i] / N;
+		for (int i = 0; i < uniqueRealizationCount; i++) {
+			probs[i] = probs[i] / realizationCount;
 		}// END: categoryCount loop
 
-		// categoryProbabilities = new double[]{0.10, 0.10, 0.10, 0.10, 0.10,
+		// probs = new double[]{0.10, 0.10, 0.10, 0.10, 0.10,
 		// 0.10, 0.10, 0.10, 0.10, 0.10};
 
-		return categoryProbabilities;
+		return probs;
 	}// END: getCategoryProbs
 
 	@Override
 	public LogColumn[] getColumns() {
 
-//		this.categoryProbabilities = getCategoryProbs();
+		// this.categoryProbabilities = getCategoryProbs();
 
 		List<LogColumn> columns = new ArrayList<LogColumn>();
 
@@ -87,15 +83,17 @@ public class DppLogger implements Loggable, VariableListener {
 
 	private void getNew() {
 
-		 this.categoryProbabilities = getCategoryProbs();
+		this.categoryProbabilities = getCategoryProbs();
 
 		this.newCategoryIndex = Utils.sample(categoryProbabilities);
 		this.meanForCategory = uniquelyRealizedParameters
 				.getParameterValue(newCategoryIndex);
 
-		// baseModel.
-
-		double sd = 1.0;// 0.02857143;
+		//TODO: generalize
+		double sd = precisionParameter.getParameterValue(0);
+		
+//		System.out.println("FUBAR:" + sd);
+		
 		NormalDistribution nd = new NormalDistribution(meanForCategory, sd);
 		this.newX = (Double) nd.nextRandom();
 
@@ -161,14 +159,5 @@ public class DppLogger implements Loggable, VariableListener {
 		}// END: getDoubleValue
 
 	}// END: NewCategoryLogger class
-
-	@Override
-	public void variableChangedEvent(Variable variable, int index,
-			ChangeType type) {
-	
-
-		System.out.println("FUBAR");
-		
-	}
 
 }// END: class

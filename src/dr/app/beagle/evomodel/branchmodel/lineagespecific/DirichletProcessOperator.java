@@ -1,48 +1,47 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.ArrayList;
-
 import org.apache.commons.math.MathException;
 
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.distributions.BetaDistribution;
 
-public class DirichletProcessOperator extends AbstractCoercableOperator {
+public class DirichletProcessOperator extends SimpleMCMCOperator
+//AbstractCoercableOperator
+{
 
 //	http://xiaodong-yu.blogspot.be/2009/09/gibbs-sampling-for-dp-mixtures.html
+//	http://www.arbylon.net/resources.html
+
+	private DirichletProcessPrior dpp;
 	
 	private Parameter zParameter;
-	private Parameter categoryProbabilitiesParameter;
 	private int realizationCount;
 	private int uniqueRealizationCount;
-	private double intensity;
-	private BetaDistribution beta;
+//	private double intensity;
 
-	public DirichletProcessOperator(Parameter zParameter, double intensity, int uniqueRealizationCount) {
-		this(zParameter, null, null, intensity, uniqueRealizationCount);
+	public DirichletProcessOperator(DirichletProcessPrior dpp, Parameter zParameter, int uniqueRealizationCount, double weight) {
+		this(dpp, zParameter, null,
+				uniqueRealizationCount, weight);
 	}// END: Constructor
 
-	public DirichletProcessOperator(Parameter zParameter, Parameter categoryProbabilitiesParameter, double intensity, int uniqueRealizationCount) {
-		this(zParameter, categoryProbabilitiesParameter, null, intensity, uniqueRealizationCount);
-	}// END: Constructor
+	public DirichletProcessOperator(DirichletProcessPrior dpp, Parameter zParameter, CoercionMode mode, 
+			int uniqueRealizationCount, double weight) {
 
-	public DirichletProcessOperator(Parameter zParameter, Parameter categoryProbabilitiesParameter, CoercionMode mode, double intensity, 
-			int uniqueRealizationCount) {
+//		super(mode);
 
-		super(mode);
-
-		this.zParameter = zParameter;
-		this.categoryProbabilitiesParameter = categoryProbabilitiesParameter;		
-		this.intensity = intensity;
-		this.uniqueRealizationCount = uniqueRealizationCount;
+		this.dpp = dpp;
 		
-		realizationCount = zParameter.getDimension();
-		beta = new BetaDistribution(this.intensity, 1.0);
+		this.zParameter = zParameter;
+//		this.intensity = intensity;
+		this.uniqueRealizationCount = uniqueRealizationCount;
+		this.realizationCount = zParameter.getDimension();
 
+		setWeight(weight);
+		
 	}// END: Constructor
 
 	@Override
@@ -58,120 +57,151 @@ public class DirichletProcessOperator extends AbstractCoercableOperator {
 
 		return 0;
 	}// END: doOperation
+	
+	
+//	private void doOperate() throws MathException {
+//		
+//		int index = MathUtils.nextInt(realizationCount);
+//		
+//		// compute configuration probabilities
+//		double[] probs = new double[uniqueRealizationCount];
+//
+//		for (int i = 0; i < realizationCount; i++) {
+//			probs[(int) zParameter.getParameterValue(i)]++;
+//		}// END: i loop
+//		
+//		for (int i = 0; i < uniqueRealizationCount; i++) {
+//			probs[i] = probs[i] / realizationCount;
+//		}// END: i loop
+//		
+////		dr.app.bss.Utils.printArray(probs);
+//		
+//		
+//		int categoryIndex = MathUtils.randomChoicePDF(probs);
+//		
+//		System.out.println("z[" + index + "]=" + categoryIndex);
+//		
+//		zParameter.setParameterValue(index, categoryIndex);
+//		
+//		
+//	}//END: doOperate
 
 	private void doOperate() throws MathException {
 
-		beta = new BetaDistribution(0.9, 1.0);
-		double[] probs = stickBreak(uniqueRealizationCount);
+		int index = MathUtils.nextInt(realizationCount);
+		
+//		for (int index = 0; index < realizationCount; index++) {
 
-		if (categoryProbabilitiesParameter != null) {
+       double intensity = dpp.getGamma();     
+		
+//       System.out.println("intensity: " + intensity);
+       
+			int unoccupied = uniqueRealizationCount;
+			int[] occupancy = new int[uniqueRealizationCount];
+
+			for (int i = 0; i < realizationCount; i++) {
+
+				if (i != index) {
+
+					int j = (int) zParameter.getParameterValue(i);
+					occupancy[j]++;
+
+					if (occupancy[j] == 1) {
+
+						unoccupied--;
+
+					}// END: first check
+
+				}// END: i check
+
+			}// END: i loop
+
+//			dr.app.bss.Utils.printArray(occupancy);
+//			System.out.println(unoccupied);
+			
+			double p1 = intensity / ((realizationCount - 1 + intensity) * unoccupied);
+			double p = 0;
+			double[] probs = new double[uniqueRealizationCount];
 
 			for (int i = 0; i < uniqueRealizationCount; i++) {
-				double prob = probs[i];
-				categoryProbabilitiesParameter.setParameterValue(i, prob);
-				
-//				System.out.println(prob);
-				
-			}
 
-		}// END: null check
+				if (occupancy[i] == 0) {
 
-		for (int i = 0; i < realizationCount; i++) {
+					p = p1;
 
-			int categoryIndex = dr.app.bss.Utils.sample(probs);
-			zParameter.setParameterValue(i, categoryIndex);
+				} else {
 
-		}// END: realizationCount loop
-
-	}// END: doOperate
-
-	public double[] stickBreak(int K) throws MathException {
-
-		double[] probabilities = new double[K];
-
-		double stickLength = 1.0;
-		int i = 0;
-		for (int x = 1; x <= K; x++) {
-
-			double beta = rBeta();
-			probabilities[i] = beta * stickLength;
-			stickLength *= (1 - beta);
-
-			i = i + 1;
-
-		}// END: K loop
-
-		double fallThrough = 1 - dr.app.bss.Utils.sumArray(probabilities);
-		probabilities[K - 1] += fallThrough;
-
-		return probabilities;
-	}// END: stickBreak
-
-	private double rBeta() throws MathException {
-		return beta.inverseCumulativeProbability(MathUtils.nextDouble());
-	}// END: rbeta
-
-	public ArrayList<Integer> chinRest(int N, double gamma) {
-
-		ArrayList<Integer> mapping = new ArrayList<Integer>();
-
-		mapping.add(0, 0);
-		int nextFree = 1;
-
-		for (int i = 1; i < N; i++) {
-
-			double u1 = Math.random();
-			if (u1 < (gamma / (gamma + i))) {
-
-				// sit at new table
-				mapping.add(i, nextFree);
-				nextFree++;
-
-			} else {
-
-				// choose existing table with weights by number of customers
-				int samplePos = -Integer.MAX_VALUE;
-				double cumProb = 0.0;
-				double u2 = Math.random();
-				double size = (double) mapping.size();
-
-				for (int j : mapping) {
-
-					cumProb += 1 / size;
-
-					if (u2 < cumProb) {
-						samplePos = j;
-						break;
-					}
+					p = occupancy[i] / (realizationCount - 1 + intensity);
 
 				}
 
-				mapping.add(i, samplePos);
+				probs[i] = Math.log(p);
 
-			}// END: u1 check
+			}// END: i loop
 
-		}// END: i loop
+			
+            for (int i = 0; i < uniqueRealizationCount; i++) {
+                zParameter.setParameterValue(index, i);
+                probs[i] +=  dpp.getLogLikelihood();
+            }
+			
+			
+			
+			this.rescale(probs);
+			this.exp(probs);
 
-		return mapping;
-	}// END: chinProc
+			int categoryIndex = MathUtils.randomChoicePDF(probs);
+			zParameter.setParameterValue(index, categoryIndex);
 
-	@Override
-	public double getCoercableParameter() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+//			 System.out.println("z[" + index + "]=" + categoryIndex);
+			// System.out.println(zParameter.getParameterValue(index));
 
-	@Override
-	public void setCoercableParameter(double value) {
-		// TODO Auto-generated method stub
+			// System.exit(0);
 
-	}
+//		}// END: index loop
 
-	@Override
-	public double getRawParameter() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	}// END: doOperate
+	
+    private void exp(double[] logX) {
+        for (int i = 0; i < logX.length; ++i) {
+            logX[i] = Math.exp(logX[i]);
+        }
+    }
+
+    private void rescale(double[] logX) {
+        double max = this.max(logX);
+        for (int i = 0; i < logX.length; ++i) {
+            logX[i] -= max;
+        }
+    }
+
+    private double max(double[] x) {
+        double max = x[0];
+        for (double xi : x) {
+            if (xi > max) {
+                max = xi;
+            }
+        }
+        return max;
+    }
+	
+//	@Override
+//	public double getCoercableParameter() {
+//		// TODO Auto-generated method stub
+//		return 0;
+//	}
+//
+//	@Override
+//	public void setCoercableParameter(double value) {
+//		// TODO Auto-generated method stub
+//
+//	}
+//
+//	@Override
+//	public double getRawParameter() {
+//		// TODO Auto-generated method stub
+//		return 0;
+//	}
 
 	@Override
 	public String getPerformanceSuggestion() {
@@ -183,9 +213,5 @@ public class DirichletProcessOperator extends AbstractCoercableOperator {
 	public String getOperatorName() {
 		return zParameter.getParameterName();
 	}
-
-	public static void main(String args[]) {
-
-	}// END: main
 
 }// END: class

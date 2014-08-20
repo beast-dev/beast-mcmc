@@ -93,7 +93,7 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		return counts;
 	}// END: getCounts
 
-	private double getGamma() {
+	public double getGamma() {
 		return gamma.getParameterValue(0);
 	}
 	

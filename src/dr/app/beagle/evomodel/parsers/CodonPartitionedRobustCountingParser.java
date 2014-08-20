@@ -121,7 +121,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         boolean includeExternalBranches = xo.getAttribute(INCLUDE_EXTERNAL, true);
         boolean includeInternalBranches = xo.getAttribute(INCLUDE_INTERNAL, true);
         boolean doUnconditionedPerBranch = xo.getAttribute(DO_UNCONDITIONED_PER_BRANCH, false);
-        boolean averageRates = xo.getAttribute(AVERAGE_RATES, false);
+        boolean averageRates = xo.getAttribute(AVERAGE_RATES, true);
         boolean saveCompleteHistory = xo.getAttribute(SAVE_HISTORY, false);
         boolean useNewNeutralModel = xo.getAttribute(USE_NEW_NEUTRAL_MODEL, false);
 

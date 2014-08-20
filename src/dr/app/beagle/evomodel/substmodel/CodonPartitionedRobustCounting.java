@@ -106,7 +106,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean includeInternalBranches,
                                           boolean doUnconditionalPerBranch,
                                           boolean saveCompleteHistory,
-                                          boolean forceAverageRate,
+                                          boolean forceUnconditionalAverageRate,
                                           boolean tryNewNeutralModel,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
@@ -139,16 +139,33 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.saveCompleteHistory = saveCompleteHistory;
 
         productChainModel =
-                new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList, forceAverageRate);
+                new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList, false);
         addModel(productChainModel);
+
+        this.forceUnconditionalAverageRate = forceUnconditionalAverageRate;
+
+        if (forceUnconditionalAverageRate) {
+            averagedProductChainModel = new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList, true);
+            addModel(averagedProductChainModel);
+        }
 
         this.useUniformization = useUniformization;
         if (useUniformization) {
             markovJumps = new UniformizedSubstitutionModel(productChainModel);
             ((UniformizedSubstitutionModel) markovJumps).setSaveCompleteHistory(saveCompleteHistory);
+
+            if (forceUnconditionalAverageRate) {
+                averagedMarkovJumps = new UniformizedSubstitutionModel(averagedProductChainModel);
+                ((UniformizedSubstitutionModel) averagedMarkovJumps).setSaveCompleteHistory(saveCompleteHistory);
+            }
         } else {
             markovJumps = new MarkovJumpsSubstitutionModel(productChainModel);
+
+            if (forceUnconditionalAverageRate) {
+                averagedMarkovJumps = new MarkovJumpsSubstitutionModel(averagedProductChainModel);
+            }
         }
+
         double[] synRegMatrix = CodonLabeling.getRegisterMatrix(codonLabeling, codons, true);
         markovJumps.setRegistration(synRegMatrix);
 
@@ -540,7 +557,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         if (unconditionedCountsPerBranch == null) {
             unconditionedCountsPerBranch = new double[tree.getNodeCount()][numCodons];
         }
-        double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+        double[] rootDistribution = getUnconditionalRootDistribution();
         for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             if (!tree.isRoot(node)) {
@@ -555,7 +572,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             unconditionedCounts = new double[numCodons];
         }
         final double treeLength = getExpectedTreeLength();
-        double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+        double[] rootDistribution = getUnconditionalRootDistribution();
 //        final int stateCount = 64;
 //        double[] lambda = new double[stateCount * stateCount];
 //        productChainModel.getInfinitesimalMatrix(lambda);
@@ -573,8 +590,20 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         fillInUnconditionalTraitValues(treeLength, rootDistribution, unconditionedCounts);
     }
 
+    private double[] getUnconditionalRootDistribution() {
+        if (forceUnconditionalAverageRate) {
+            return averagedProductChainModel.getFrequencyModel().getFrequencies();
+        } else {
+            return productChainModel.getFrequencyModel().getFrequencies();
+        }
+    }
+
     private void fillInUnconditionalQMatrix(double[] lambda) {
-        productChainModel.getInfinitesimalMatrix(lambda);
+        if (forceUnconditionalAverageRate) {
+            averagedProductChainModel.getInfinitesimalMatrix(lambda);
+        } else {
+            productChainModel.getInfinitesimalMatrix(lambda);
+        }
     }
 
     private void fillInUnconditionalTraitValues(double expectedLength, double[] freq, double[] out) {
@@ -608,11 +637,11 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 //            return markovJumps.getMarginalRate() * getExpectedTreeLength();
         } else {
             final double treeLength = getExpectedTreeLength();
-            double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+            double[] rootDistribution = getUnconditionalRootDistribution();
             final int startingState = MathUtils.randomChoicePDF(rootDistribution);
             final int stateCount = 64;
             double[] lambda = new double[stateCount * stateCount];
-            productChainModel.getInfinitesimalMatrix(lambda);
+            fillInUnconditionalQMatrix(lambda);
             StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
                     0.0,
                     startingState,
@@ -674,9 +703,14 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private final AncestralStateBeagleTreeLikelihood[] partition;
     private final MarkovJumpsSubstitutionModel markovJumps;
+    private MarkovJumpsSubstitutionModel averagedMarkovJumps = null;
+
+    private final boolean forceUnconditionalAverageRate;
+
     private final boolean useUniformization;
     private final BranchRateModel branchRateModel;
     private final ProductChainSubstitutionModel productChainModel;
+    private ProductChainSubstitutionModel averagedProductChainModel = null;
 
     private final CodonLabeling codonLabeling;
     private final Tree tree;

@@ -171,11 +171,11 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         double start = System.nanoTime();
         for (int i = 0; i < calibrate; i++) {
             if (DEBUG) {
-                double debugStart = System.nanoTime();
+                //double debugStart = System.nanoTime();
                 compound.makeDirty();
                 compound.getLogLikelihood();
-                double debugEnd = System.nanoTime();
-                System.err.println(debugEnd - debugStart);
+                //double debugEnd = System.nanoTime();
+                //System.err.println(debugEnd - debugStart);
             } else {
                 compound.makeDirty();
                 compound.getLogLikelihood();
@@ -431,11 +431,11 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
             start = System.nanoTime();
             for (int i = 0; i < calibrate; i++) {
                 if (DEBUG) {
-                    double debugStart = System.nanoTime();
+                    //double debugStart = System.nanoTime();
                     compound.makeDirty();
                     compound.getLogLikelihood();
-                    double debugEnd = System.nanoTime();
-                    System.err.println(debugEnd - debugStart);
+                    //double debugEnd = System.nanoTime();
+                    //System.err.println(debugEnd - debugStart);
                 } else {
                     compound.makeDirty();
                     compound.getLogLikelihood();
@@ -463,7 +463,53 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
             if (newResult < baseResult) {
                 //new partitioning is faster, so partition further
                 baseResult = newResult;
+                //reorder split list
+                if (DEBUG) {
+                    System.err.print("Current split list: ");
+                    for (int i = 0; i < splitList.size(); i++) {
+                        System.err.print(splitList.get(i) + "  ");
+                    }
+                    System.err.println();
+                    System.err.print("Current pattern counts: ");
+                    for (int i = 0; i < splitList.size(); i++) {
+                        System.err.print(siteCounts[splitList.get(i)] + "  ");
+                    }
+                    System.err.println();
+                }
+                int currentPatternCount = siteCounts[longestIndex];
+                int findIndex = 0;
+                for (int i = 0; i < splitList.size(); i++) {
+                    if (siteCounts[splitList.get(i)] > currentPatternCount) {
+                        findIndex = i;
+                    }
+                }
+                if (DEBUG) {
+                    System.err.println("Current pattern count: " + currentPatternCount);
+                    System.err.println("Index found: " + findIndex + " with pattern count: " + siteCounts[findIndex]);
+                    System.err.println("Moving 0 to " + findIndex);
+                }
+                for (int i = 0; i < findIndex; i++) {
+                    int temp = splitList.get(i);
+                    splitList.set(i, splitList.get(i+1));
+                    splitList.set(i+1, temp);
+                }
+                if (DEBUG) {
+                    System.err.print("New split list: ");
+                    for (int i = 0; i < splitList.size(); i++) {
+                        System.err.print(splitList.get(i) + "  ");
+                    }
+                    System.err.println();
+                    System.err.print("New pattern counts: ");
+                    for (int i = 0; i < splitList.size(); i++) {
+                        System.err.print(siteCounts[splitList.get(i)] + "  ");
+                    }
+                    System.err.println();
+                }
+                timesRetried = 0;
             } else {
+                if (DEBUG) {
+                    System.err.println("timesRetried = " + timesRetried + " vs. retry = " + retry);
+                }
                 //new partitioning is slower, so reinstate previous state unless RETRY is specified
                 if (timesRetried < retry) {
                     //try splitting further any way

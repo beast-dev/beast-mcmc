@@ -152,13 +152,19 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         return matrix;
     }
 
+    //act as if population mean is known
     private double calculateCovariance(int number, double currentMatrixEntry, double[] values, int firstIndex, int secondIndex) {
 
         // number will always be > 1 here
-        double result = currentMatrixEntry * (number - 1);
+        /*double result = currentMatrixEntry * (number - 1);
         result += (values[firstIndex] * values[secondIndex]);
         result += ((number - 1) * oldMeans[firstIndex] * oldMeans[secondIndex] - number * newMeans[firstIndex] * newMeans[secondIndex]);
-        result /= ((double) number);
+        result /= ((double) number);*/
+
+        double result = currentMatrixEntry * (number - 2);
+        result += (values[firstIndex] * values[secondIndex]);
+        result += ((number - 1) * oldMeans[firstIndex] * oldMeans[secondIndex] - number * newMeans[firstIndex] * newMeans[secondIndex]);
+        result /= ((double)(number - 1));
 
         return result;
 
@@ -170,12 +176,12 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         if (DEBUG) {
             System.err.println("\nAVMVN Iteration: " + iterations);
-        }
-        //System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());
-        /*System.err.println("Old parameter values:");
-        for (int i = 0; i < dim; i++) {
+            System.err.println("Using AdaptableVarianceMultivariateNormalOperator: " + iterations + " for " + parameter.getParameterName());
+            System.err.println("Old parameter values:");
+            for (int i = 0; i < dim; i++) {
                 System.err.println(parameter.getParameterValue(i));
-        }*/
+            }
+        }
 
         double[] x = parameter.getParameterValues();
 
@@ -183,6 +189,13 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         double[] transformedX = new double[dim];
         for (int i = 0; i < dim; i++) {
             transformedX[i] = transformations[i].transform(x[i]);
+        }
+
+        if (DEBUG) {
+            System.err.println("Old transformed parameter values:");
+            for (int i = 0; i < dim; i++) {
+                System.err.println(transformedX[i]);
+            }
         }
 
         //store MH-ratio in logq
@@ -201,40 +214,60 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
                     updates++;
 
+                    if (DEBUG) {
+                        System.err.println("updates = " + updates);
+                    }
+
                     //first recalculate the means using recursion
                     for (int i = 0; i < dim; i++) {
                         newMeans[i] = ((oldMeans[i] * (updates - 1)) + transformedX[i]) / updates;
                     }
 
-                    //here we can simply use the double[][] matrix
-                    for (int i = 0; i < dim; i++) {
-                        for (int j = i; j < dim; j++) {
-                            empirical[i][j] = calculateCovariance(updates, empirical[i][j], transformedX, i, j);
-                            empirical[j][i] = empirical[i][j];
+                    if (updates > 1) {
+                        //here we can simply use the double[][] matrix
+                        for (int i = 0; i < dim; i++) {
+                            for (int j = i; j < dim; j++) {
+                                empirical[i][j] = calculateCovariance(updates, empirical[i][j], transformedX, i, j);
+                                empirical[j][i] = empirical[i][j];
+                            }
                         }
                     }
 
-                    /*System.err.println("Empirical covariance matrix:");
-                   for (int i = 0; i < dim; i++) {
-                       for (int j = 0; j < dim; j++) {
-                           System.err.print(empirical[i][j] + " ");
-                       }
-                       System.err.println();
-                   }*/
+                    if (DEBUG) {
+                        System.err.println("Old means:");
+                        for (int i = 0; i < dim; i++) {
+                            System.err.println(oldMeans[i]);
+                        }
+                        System.err.println("New means:");
+                        for (int i = 0; i < dim; i++) {
+                            System.err.println(newMeans[i]);
+                        }
+                        System.err.println("Empirical covariance matrix:");
+                        for (int i = 0; i < dim; i++) {
+                            for (int j = 0; j < dim; j++) {
+                                System.err.print(empirical[i][j] + " ");
+                            }
+                            System.err.println();
+                        }
+                    }
+
                 }
+
+                /*if (iterations == 17) {
+                    System.exit(0);
+                }*/
 
             } else if (iterations == (burnin+1)) {
 
-                updates++;
-                //System.err.println("Iteration: " + iterations);
+                //updates++;
 
                 //i.e. iterations == burnin+1, i.e. first sample for C_t
                 //this will not be reached when burnin is set to 0
                 for (int i = 0; i < dim; i++) {
-                    oldMeans[i] = transformedX[i];
-                    newMeans[i] = transformedX[i];
-                    //System.err.println("oldMean " + i + ": " + oldMeans[i]);
-                    //System.err.println("newMean " + i + ": " + oldMeans[i]);
+                    //oldMeans[i] = transformedX[i];
+                    //newMeans[i] = transformedX[i];
+                    oldMeans[i] = 0.0;
+                    newMeans[i] = 0.0;
                 }
 
                 for (int i = 0; i < dim; i++) {
@@ -254,17 +287,19 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
             //iterations == 1
             for (int i = 0; i < dim; i++) {
-                oldMeans[i] = transformedX[i];
-                newMeans[i] = transformedX[i];
-                //System.err.println("oldMean " + i + ": " + oldMeans[i]);
-                //System.err.println("newMean " + i + ": " + oldMeans[i]);
+                //oldMeans[i] = transformedX[i];
+                //newMeans[i] = transformedX[i];
+                oldMeans[i] = 0.0;
+                newMeans[i] = 0.0;
             }
 
             for (int i = 0; i < dim; i++) {
                 for (int j = 0; j < dim; j++) {
                     empirical[i][j] = 0.0;
+                    proposal[i][j] = matrix[i][j];
                 }
             }
+
         }
 
         for (int i = 0; i < dim; i++) {
@@ -489,7 +524,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            //System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
+            if (DEBUG) {
+                System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
+            }
 
             CoercionMode mode = CoercionMode.parseMode(xo);
 
@@ -513,7 +550,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             }
 
             if (every <= 0) {
-                throw new XMLParseException("sample needs to be taken at least every single iteration");
+                throw new XMLParseException("covariance matrix needs to be updated at least every single iteration");
             }
 
             if (scaleFactor <= 0.0) {
@@ -559,18 +596,20 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                 if (child instanceof Transform.ParsedTransform) {
                     Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
 
-                    System.err.println("Transformations:");
+                    if (DEBUG) {
+                        System.err.println("Transformations:");
+                    }
                     for (int j = thisObject.start; j < thisObject.end; ++j) {
                         transformations[j] = thisObject.transform;
-                        System.err.print(transformations[j].getTransformName() + " ");
+                        if (DEBUG) {
+                            System.err.print(transformations[j].getTransformName() + " ");
+                        }
                     }
-                    System.err.println();
+                    if (DEBUG) {
+                        System.err.println();
+                    }
                 }
             }
-
-            /*for (int i = 0; i < dim; i++) {
-                System.err.println(transformations[i]);
-            }*/
 
             // Make sure varMatrix is square and dim(varMatrix) = dim(parameter)
 

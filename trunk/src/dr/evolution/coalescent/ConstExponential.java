@@ -85,21 +85,20 @@ public class ConstExponential extends ExponentialGrowth {
   	}
 
 	public double getInverseIntensity(double x) {
-		
-	/* AER - I think this is right but until someone checks it... 
-		double nZero = getN0();
-		double nOne = getN1();
-		double r = getGrowthRate();
-		
-		if (r == 0) {
-			return nZero*x;
-		} else if (alpha == 0) {
-			return Math.log(1.0+nZero*x*r)/r;
-		} else {
-			return Math.log(-(nOne/nZero) + Math.exp(nOne*x*r))/r;
-		}
-	*/
-		throw new RuntimeException("Not implemented!");
+
+        double r = getGrowthRate();
+        double time = Math.log(getN0()/getN1())/r;
+        double N0 = getN0();
+        double N1 = getN1();
+
+        double integralToChangePoint = (Math.exp(time*r)-1)/(r*N0);
+
+        if(x<integralToChangePoint){
+            return Math.log(x*r*N0+1)/r;
+        } else {
+            return N1*(x-integralToChangePoint) + time;
+        }
+
 	}
 	
 	public int getNumArguments() {

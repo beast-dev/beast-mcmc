@@ -115,7 +115,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
         double integral = 0;
 
         for(int i=0; i<noPoints; i++){
-            integral+=coefficients[i]*f.evaluate(abscissae[i]/B+min);
+            integral+=coefficients[i]*f.evaluate(abscissae[i]/B + min);
         }
 
         integral *= 1/Math.pow(B, alpha+1);

@@ -138,19 +138,17 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 				probs[i] = Math.log(p);
 
 			}// END: i loop
-
 			
             for (int i = 0; i < uniqueRealizationCount; i++) {
                 zParameter.setParameterValue(index, i);
-                probs[i] +=  dpp.getLogLikelihood();
+//                probs[i] +=  dpp.getLogLikelihood();
             }
-			
-			
 			
 			this.rescale(probs);
 			this.exp(probs);
 
 			int categoryIndex = MathUtils.randomChoicePDF(probs);
+			
 			zParameter.setParameterValue(index, categoryIndex);
 
 //			 System.out.println("z[" + index + "]=" + categoryIndex);

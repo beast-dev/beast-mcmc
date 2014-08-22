@@ -4,20 +4,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dr.app.bss.Utils;
-import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
-import dr.math.MathUtils;
 
 @SuppressWarnings("serial")
 public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
+	private static boolean VERBOSE = false;
+	
 	private Parameter categoriesParameter;
 	private CompoundParameter uniquelyRealizedParameters;
 	private ParametricMultivariateDistributionModel baseModel;
@@ -46,6 +45,7 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		
 		// K clusters
 		this.categoryCount = uniquelyRealizedParameters.getDimension();
+//		this.categoryCount=Utils.findMaximum(categoriesParameter.getParameterValues()) + 1;
         this.N = categoriesParameter.getDimension();
 		
 		cachedLogFactorials = new ArrayList<Double>();
@@ -54,10 +54,13 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		// add all
 		this.addVariable(this.categoriesParameter);
 		this.addVariable(this.gamma);
+		
 		this.addVariable(this.uniquelyRealizedParameters);
-
+		
+		if(baseModel != null) {
 		this.addModel(baseModel);
-
+		}
+		
 		this.likelihoodKnown = false;
 	}// END: Constructor
 
@@ -106,41 +109,49 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 //	}
 
 	private double getLogDensity(Parameter parameter) {
-		
 		double value[] = parameter.getAttributeValue();
-		
-//		try {
-//			Utils.printArray(value);
-//			Thread.sleep(1000);
-//		} catch (InterruptedException e) {
-//			e.printStackTrace();
-//		}
-		
 		return baseModel.logPdf(value);
-		
 	}
 
-	private double getRealizedValuesLogDensity() {
+	public double getRealizedValuesLogDensity() {
 
 		int counts[] = getCounts();
 		double total = 0.0;
 
-		for (int i = 0; i < categoryCount; ++i) {
+		//TODO
+//		Utils.printArray(counts);
+		
+		for (int i = 0; i < categoryCount; i++) {
 
 			Parameter param = uniquelyRealizedParameters.getParameter(i);
-			int whichCluster = getMapping(i);
+			int whichCluster = i;
 
 			total += counts[whichCluster] * getLogDensity(param);
 
+			//TODO
+//			System.out.println("[" + param.getParameterValue(0) + ", "
+//					+ baseModel.getMean()[0] + ", "
+//					+ baseModel.getScaleMatrix()[0][0] + "]"
+//					+ getLogDensity(param) + " * " + counts[whichCluster]);
+			
 		}
-
-		return total;
+		
+//		System.out.println("total =" + total);
+//		System.exit(0);
+		
+//		return  total;
+		return  0;
 	}
 
-	private double getCategoriesLogDensity() {
+	public double getCategoriesLogDensity() {
 
 		int[] counts = getCounts();
-		double loglike = categoryCount * Math.log(gamma.getParameterValue(0));
+		
+		if (VERBOSE) {
+			Utils.printArray(counts);
+		}
+		
+		double loglike = categoryCount * Math.log(getGamma());
 
 		for (int k = 0; k < categoryCount; k++) {
 
@@ -167,6 +178,7 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 	@Override
 	public double getLogLikelihood() {
 
+		this.fireModelChanged();
 		likelihoodKnown = false;
 		if (!likelihoodKnown) {
 			
@@ -174,6 +186,8 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 			likelihoodKnown = true;
 		}
 
+//		System.out.println(logLikelihood);
+		
 		return logLikelihood;
 	}
 
@@ -202,7 +216,9 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		} else if (variable == gamma) {
 
 			// do nothing
-
+			
+			this.fireModelChanged();
+			
 		} else if (variable == uniquelyRealizedParameters) {
 
 			likelihoodKnown = false;
@@ -216,6 +232,10 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
 	}// END: handleVariableChangedEvent
 
+	public void setVerbose() {
+		VERBOSE = true;
+	}
+	
 	@Override
 	protected void storeState() {
 
@@ -233,53 +253,33 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
 	public static void main(String args[]) {
 
-		double[] mappings = new double[] { 0, 0, 1, 1, 2 };
-		Parameter categoriesParameter = new Parameter.Default(mappings);
-
-		Parameter rTheta1 = new Parameter.Default(1.0);
-		Parameter rTheta2 = new Parameter.Default(1.0);
-		Parameter rTheta3 = new Parameter.Default(2.0);
-		Parameter rTheta4 = new Parameter.Default(2.0);
-		Parameter rTheta5 = new Parameter.Default(3.0);
-
-		CompoundParameter realizedThetas = new CompoundParameter(
-				"realizedThetas");
-		realizedThetas.addParameter(rTheta1);
-		realizedThetas.addParameter(rTheta2);
-		realizedThetas.addParameter(rTheta3);
-		realizedThetas.addParameter(rTheta4);
-		realizedThetas.addParameter(rTheta5);
-
-		int dim = 1;
-		double[] mean = new double[dim];
-		double[] precision = new double[dim * dim];
-
-		MathUtils.setSeed(666);
-
-		for (int i = 0; i < dim; i++) {
-			mean[i] = MathUtils.nextDouble();
-			for (int j = i; j < dim; j++) {
-				precision[i + j * dim] = MathUtils.nextDouble();
-			}
-		}
-
-		Parameter meanParameter = new Parameter.Default(mean);
-
-		Parameter prec1 = new Parameter.Default(new double[] { precision[0] });
-		Parameter[] params = new Parameter[] { prec1 };
-		MatrixParameter precParameter = new MatrixParameter("precision", params);
-
-		MultivariateNormalDistributionModel baseModel = new MultivariateNormalDistributionModel(
-				meanParameter, precParameter);
-
-		Parameter gamma = new Parameter.Default(0.9);
-
-		DirichletProcessPrior dpp = new DirichletProcessPrior(
-				categoriesParameter, realizedThetas, baseModel, gamma);
+		testDirichletProcess(new double[] { 0, 1, 2 }, 3, 1.0, -Math.log(6.0));
 		
-		System.out.println("lnL:" + dpp.getLogLikelihood());
-
+		testDirichletProcess(new double[] { 0, 0, 1 }, 3, 1.0, -Math.log(6.0));
+		
+		testDirichletProcess(new double[] { 0, 1, 2, 3, 4 }, 5, 0.5, -6.851184927493743);
+		
 	}// END: main
 
+	private static void testDirichletProcess(double[] mapping, int categoryCount,double gamma,
+			double expectedLogL) {
+
+		Parameter categoriesParameter = new Parameter.Default(mapping);
+		Parameter gammaParameter = new Parameter.Default(gamma);
+
+		CompoundParameter dummy = new CompoundParameter("dummy");
+
+		for (int i = 0; i < categoryCount; i++) {
+			dummy.addParameter(new Parameter.Default(1.0));
+		}
+
+		DirichletProcessPrior dpp = new DirichletProcessPrior(
+				categoriesParameter, dummy, null, gammaParameter);
+		dpp.setVerbose();
+		
+		System.out.println("lnL:          " + dpp.getCategoriesLogDensity());
+		System.out.println("expected lnL: " + expectedLogL);
+	}// END: testDirichletProcess
+	
 }// END: class
 

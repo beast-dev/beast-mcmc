@@ -54,8 +54,9 @@ public class Utils {
 	// ////////////////////////////////
 	// ---RANDOM NUMB3R GENERATION---//
 	// ////////////////////////////////
-	private static MersenneTwister random = new MersenneTwister(MathUtils.nextLong());
-	
+	private static MersenneTwister random = new MersenneTwister(
+			MathUtils.nextLong());
+
 	// /////////////////
 	// ---CONSTANTS---//
 	// /////////////////
@@ -66,7 +67,7 @@ public class Utils {
 	public static final int BRANCH_RATE_MODEL_ELEMENT = 3;
 	public static final int FREQUENCY_MODEL_ELEMENT = 4;
 	public static final int DEMOGRAPHIC_MODEL_ELEMENT = 5;
-	
+
 	public static final String TOPOLOGY = "topology";
 	public static final String ABSOLUTE_HEIGHT = "absoluteHeight";
 	public static final String TREE_FILENAME = "treeFilename";
@@ -77,7 +78,7 @@ public class Utils {
 	public static final String CHOOSE_FILE = "Choose file...";
 	public static final String EDIT_TAXA_SET = "Edit taxa set...";
 	public static final String ANCESTRAL_SEQUENCE = "ancestralSequence";
-	
+
 	public static final String BSS_ICON = "icons/bss.png";
 	public static final String CHECK_ICON = "icons/check.png";
 	public static final String ERROR_ICON = "icons/error.png";
@@ -87,7 +88,7 @@ public class Utils {
 	public static final String BUBBLE_BLUE_ICON = "icons/bubble-blue.png";
 	public static final String SAVE_ICON = "icons/save.png";
 	public static final String TEXT_FILE_ICON = "icons/file.png";
-	
+
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
@@ -101,18 +102,19 @@ public class Utils {
 
 		return logfactor;
 	}
-	
+
 	public static double map(double value, double low1, double high1,
 			double low2, double high2) {
 		/**
 		 * maps a single value from its range into another interval
 		 * 
-		 * @param low1, high1 - range of value; low2, high2 - interval
+		 * @param low1
+		 *            , high1 - range of value; low2, high2 - interval
 		 * @return the mapped value
 		 */
 		return (value - low1) / (high1 - low1) * (high2 - low2) + low2;
 	}// END: map
-	
+
 	public static String[] loadStrings(String filename) throws IOException {
 
 		int linesCount = countLines(filename);
@@ -161,7 +163,7 @@ public class Utils {
 		return (count == 0 && !empty) ? 1 : count;
 
 	}// END: countLines
-	
+
 	public static Taxa importTaxaFromFile(File file) throws IOException {
 
 		Taxa taxa = new Taxa();
@@ -182,7 +184,7 @@ public class Utils {
 
 		return taxa;
 	}// END: importTaxaFromFile
-	
+
 	public static Tree importTreeFromFile(File file) throws IOException,
 			ImportException {
 
@@ -207,23 +209,24 @@ public class Utils {
 
 		return tree;
 	}// END: importTreeFromFile
-	
+
 	public static void removeTaxaWithAttributeValue(PartitionDataList dataList,
 			String attribute, String value) {
-		
-			for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
 
-				Taxon taxon = dataList.allTaxa.getTaxon(i);
-				if (taxon.getAttribute(attribute).toString().equalsIgnoreCase(value)) {
-					
-					dataList.allTaxa.removeTaxon(taxon);
-					i--;
-					
-				}
+		for (int i = 0; i < dataList.allTaxa.getTaxonCount(); i++) {
+
+			Taxon taxon = dataList.allTaxa.getTaxon(i);
+			if (taxon.getAttribute(attribute).toString()
+					.equalsIgnoreCase(value)) {
+
+				dataList.allTaxa.removeTaxon(taxon);
+				i--;
+
 			}
+		}
 
 	}// END: removeTaxaWithAttributeValue
-	
+
 	public static void centreLine(String line, int pageWidth) {
 		int n = pageWidth - line.length();
 		int n1 = n / 2;
@@ -274,9 +277,10 @@ public class Utils {
 		boolean exists = false;
 		for (Taxon taxon2 : taxonList) {
 
-			if (taxon.equals(taxon2) 
-//					&& taxon.getAttribute(Utils.TREE_FILENAME).toString().equalsIgnoreCase(taxon2.getAttribute(Utils.TREE_FILENAME).toString())
-					) {
+			if (taxon.equals(taxon2)
+			// &&
+			// taxon.getAttribute(Utils.TREE_FILENAME).toString().equalsIgnoreCase(taxon2.getAttribute(Utils.TREE_FILENAME).toString())
+			) {
 				exists = true;
 				break;
 			}
@@ -286,21 +290,21 @@ public class Utils {
 		return exists;
 	}// END: taxonExists
 
-//	 private boolean isFileInList(File file) {
-//	 boolean exists = false;
-//	
-//	 for (File file2 : dataList.treesList) {
-//	
-//	 if (file.getName().equalsIgnoreCase(file2.getName())) {
-//	 exists = true;
-//	 break;
-//	 }
-//	
-//	 }
-//	
-//	 return exists;
-//	 }// END: isFileInList
-	
+	// private boolean isFileInList(File file) {
+	// boolean exists = false;
+	//
+	// for (File file2 : dataList.treesList) {
+	//
+	// if (file.getName().equalsIgnoreCase(file2.getName())) {
+	// exists = true;
+	// break;
+	// }
+	//
+	// }
+	//
+	// return exists;
+	// }// END: isFileInList
+
 	public static double getAbsoluteTaxonHeight(Taxon taxon, Tree tree) {
 
 		double height = 0.0;
@@ -333,15 +337,15 @@ public class Utils {
 
 		return exists;
 	}// END: isRecordInList
-	
-	public static boolean isTaxaInList(Taxa taxa,
-			ArrayList<Taxa> taxaList) {
+
+	public static boolean isTaxaInList(Taxa taxa, ArrayList<Taxa> taxaList) {
 
 		boolean exists = false;
 
 		for (Taxa taxa2 : taxaList) {
 
-			if (taxaToString(taxa,true).equalsIgnoreCase(taxaToString(taxa2,true))) {
+			if (taxaToString(taxa, true).equalsIgnoreCase(
+					taxaToString(taxa2, true))) {
 				exists = true;
 				break;
 			}
@@ -350,15 +354,15 @@ public class Utils {
 
 		return exists;
 	}// END: isTaxaInList
-	
-	public static int taxaIsIdenticalWith(Taxa taxa,
-			ArrayList<Taxa> taxaList) {
+
+	public static int taxaIsIdenticalWith(Taxa taxa, ArrayList<Taxa> taxaList) {
 
 		int index = -Integer.MAX_VALUE;
 
 		for (Taxa taxa2 : taxaList) {
 
-			if (taxaToString(taxa, true).equalsIgnoreCase(taxaToString(taxa2, true))) {
+			if (taxaToString(taxa, true).equalsIgnoreCase(
+					taxaToString(taxa2, true))) {
 				index = taxaList.indexOf(taxa2);
 				break;
 			}
@@ -367,7 +371,7 @@ public class Utils {
 
 		return index;
 	}// END: treeModelIsIdenticalWith
-	
+
 	public static boolean isTreeModelInList(TreeModel treeModel,
 			ArrayList<TreeModel> treeModelList) {
 
@@ -420,7 +424,7 @@ public class Utils {
 			}
 
 			break;
-		
+
 		case BRANCH_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
@@ -496,7 +500,7 @@ public class Utils {
 			}
 
 			break;
-		
+
 		case BRANCH_RATE_MODEL_ELEMENT:
 
 			for (PartitionData data2 : partitionList) {
@@ -553,7 +557,6 @@ public class Utils {
 
 		return index;
 	}// END: isIdenticalWith
-
 
 	// /////////////////
 	// ---GUI UTILS---//
@@ -618,8 +621,7 @@ public class Utils {
 	}
 
 	public static String getMultipleWritePath(File outFile,
-			String defaultExtension, 
-			int i) {
+			String defaultExtension, int i) {
 
 		String path = outFile.getParent();
 		String[] nameArray = outFile.getName().split("\\.", 2);
@@ -740,40 +742,40 @@ public class Utils {
 	// ///////////////////
 
 	public static void printMap(Map<?, ?> mp) {
-		
+
 		Iterator<?> it = mp.entrySet().iterator();
 		while (it.hasNext()) {
-			
+
 			Entry<?, ?> pairs = (Entry<?, ?>) it.next();
 			Object obj = pairs.getValue();
-			
+
 			if (obj instanceof int[]) {
-				
+
 				int[] seq = (int[]) obj;
 				System.out.print(pairs.getKey() + " =");
-				
+
 				for (int i = 0; i < seq.length; ++i) {
 					System.out.print(" " + seq[i]);
 				}
 				System.out.println();
-				
-			} else if(obj instanceof double[]) { 
-			
+
+			} else if (obj instanceof double[]) {
+
 				double[] seq = (double[]) obj;
 				System.out.print(pairs.getKey() + " =");
-				
+
 				for (int i = 0; i < seq.length; ++i) {
 					System.out.print(" " + seq[i]);
 				}
 				System.out.println();
-			
+
 			} else {
 				System.out.println(pairs.getKey() + " = " + pairs.getValue());
-			}//END: obj class check
-			
+			}// END: obj class check
+
 		}
 	}// END: printMap
-	
+
 	public static void printHashMap(ConcurrentHashMap<?, ?> hashMap) {
 
 		Iterator<?> iterator = hashMap.entrySet().iterator();
@@ -811,7 +813,7 @@ public class Utils {
 		}
 		System.out.println();
 	}// END: printArray
-	
+
 	public static void printArray(String[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);
@@ -826,28 +828,27 @@ public class Utils {
 			System.out.print("\n");
 		}
 	}// END: print2DArray
-	
+
 	public static void print2Arrays(int[] array1, double[] array2, int nrow) {
 		for (int row = 0; row < nrow; row++) {
-				System.out.print(array1[row] + " " + array2[row] + " ");
+			System.out.print(array1[row] + " " + array2[row] + " ");
 			System.out.print("\n");
 		}
 	}// END: print2DArray
-	
-	
+
 	public static void print2DArray(double[][] array, int formatEvery) {
-		
+
 		int i = 0;
 		for (int row = 0; row < array.length; row++) {
 			for (int col = 0; col < array[row].length; col++) {
-				
-				if(i == formatEvery) {
+
+				if (i == formatEvery) {
 					System.out.print("\n");
-					i=0;
+					i = 0;
 				}
-				
+
 				System.out.print(array[row][col] + " ");
-			i++;
+				i++;
 			}
 			System.out.print("\n");
 		}
@@ -888,7 +889,7 @@ public class Utils {
 		System.out.print(dataTypeToString(data));
 		System.out.print("\n");
 	}// END: printDataType
-	
+
 	public static void printTaxaSet(Taxa taxa) {
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {
 			Taxon taxon = taxa.getTaxon(i);
@@ -900,21 +901,21 @@ public class Utils {
 		System.out.print(record.getTree().toString());
 		System.out.print("\n");
 	}// END: printTree
-	
+
 	public static void printRecord(TreesTableRecord record) {
-		
+
 		if (record == null) {
 
 			System.out.println("\tRecord: NOT SET");
 
 		} else if (record.isTreeSet()) {
 
-			System.out.print("\t"+record.getName() + ": ");
+			System.out.print("\t" + record.getName() + ": ");
 			printTree(record);
 
 		} else if (record.isTaxaSet()) {
 
-			System.out.println("\t"+record.getName() + ":");
+			System.out.println("\t" + record.getName() + ":");
 			printTaxaSet(record.getTaxa());
 
 		} else {
@@ -927,9 +928,9 @@ public class Utils {
 			printRecord(record);
 		}// END: record loop
 	}// END: printRecords
-	
+
 	public static void printPartitionData(PartitionData data) {
-        printRecord(data.record);
+		printRecord(data.record);
 		printDataType(data);
 		printDemographicModel(data);
 		System.out.println("\tFrom: " + data.from);
@@ -943,16 +944,17 @@ public class Utils {
 
 	public static void printPartitionDataList(PartitionDataList dataList) {
 
-//		System.out.println(dataList.get(0).from + " " + dataList.get(1).from);
-		
+		// System.out.println(dataList.get(0).from + " " +
+		// dataList.get(1).from);
+
 		if (BeagleSequenceSimulatorApp.DEBUG) {
 			System.out.println("Possible records: ");
 			printRecords(dataList);
 		}
-		
+
 		System.out.println("\tSite count: " + getSiteCount(dataList));
 		System.out.println("\tOutput type: " + dataList.outputFormat);
-		
+
 		if (dataList.setSeed) {
 			System.out.println("\tStarting seed: " + dataList.startingSeed);
 		}
@@ -972,11 +974,12 @@ public class Utils {
 		System.out.println(taxaToString(dataList.allTaxa, true));
 	}// END: printTaxonList
 
-	public static Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag, DataType dataType) {
+	public static Sequence intArray2Sequence(Taxon taxon, int[] seq,
+			int gapFlag, DataType dataType) {
 
 		StringBuilder sSeq = new StringBuilder();
-        int partitionSiteCount = seq.length;
-		
+		int partitionSiteCount = seq.length;
+
 		if (dataType instanceof Codons) {
 
 			for (int i = 0; i < partitionSiteCount; i++) {
@@ -1009,85 +1012,92 @@ public class Utils {
 
 		return new Sequence(taxon, sSeq.toString());
 	}// END: intArray2Sequence
-	
+
 	// //////////////////////
 	// ---TOSTRING UTILS---//
 	// //////////////////////
 
 	public static String taxonToString(Taxon taxon, boolean printNames) {
-		
+
 		String string = null;
-		
-		if(printNames) {
-		 string = taxon.getId() + " ("
-				+ taxon.getAttribute(Utils.ABSOLUTE_HEIGHT) + ","
-				+ taxon.getAttribute(Utils.TREE_FILENAME) + ")";
-		
+
+		if (printNames) {
+			string = taxon.getId() + " ("
+					+ taxon.getAttribute(Utils.ABSOLUTE_HEIGHT) + ","
+					+ taxon.getAttribute(Utils.TREE_FILENAME) + ")";
+
 		} else {
-			 string = taxon.getId() + " ("
-					+ taxon.getAttribute(Utils.ABSOLUTE_HEIGHT)+")";
+			string = taxon.getId() + " ("
+					+ taxon.getAttribute(Utils.ABSOLUTE_HEIGHT) + ")";
 		}
-		
+
 		return string;
 	}// END: taxonToString
-	
+
 	public static String taxaToString(Taxa taxa, boolean printNames) {
 
 		String string = "";
 
 		for (int i = 0; i < taxa.getTaxonCount(); i++) {
-			
+
 			Taxon taxon = taxa.getTaxon(i);
 			string += taxonToString(taxon, printNames) + ("\n");
-			
+
 		}
-		
+
 		return string;
 	}// END: taxaToString
-	
-	public static String partitionDataToString(PartitionData data, TreeModel simulatedTreeModel
-//			,  LinkedHashMap<NodeRef, int[]> sequencesMap
-			) {
+
+	public static String partitionDataToString(PartitionData data,
+			TreeModel simulatedTreeModel
+	// , LinkedHashMap<NodeRef, int[]> sequencesMap
+	) {
 
 		String string = "";
-		
-		
-//		if (data.record.isTreeSet()) {
-//
-//			string += ("Tree: " + data.record.getTree().toString())+ ("\n");
-//			
-//		} else if (data.record.isTaxaSet()) {
-//
-//			string += ("Taxa Set: \n" + taxaToString(data.record.getTaxa(), false));//+ ("\n");
-//
-//		} else {
-//			//
-//		}
-		
+
+		// if (data.record.isTreeSet()) {
+		//
+		// string += ("Tree: " + data.record.getTree().toString())+ ("\n");
+		//
+		// } else if (data.record.isTaxaSet()) {
+		//
+		// string += ("Taxa Set: \n" + taxaToString(data.record.getTaxa(),
+		// false));//+ ("\n");
+		//
+		// } else {
+		// //
+		// }
+
 		string += ("Tree model: " + simulatedTreeModel.toString()) + ("\n");
-//		string += ("Tree model: " +annotatedTreeModelToString(simulatedTreeModel, sequencesMap, data.createDataType()) ) + ("\n");
-		string += ("From: " + data.from)+ ("\n");
-		string += ("To: " + data.to)+ ("\n");
-		string += ("Every: " + data.every)+ ("\n");
+		// string += ("Tree model: "
+		// +annotatedTreeModelToString(simulatedTreeModel, sequencesMap,
+		// data.createDataType()) ) + ("\n");
+		string += ("From: " + data.from) + ("\n");
+		string += ("To: " + data.to) + ("\n");
+		string += ("Every: " + data.every) + ("\n");
 		string += ("Data type: ") + dataTypeToString(data) + ("\n");
-		string += ("Demographic model: ") + demographicModelToString(data) + ("\n");
-		string += ("Branch Substitution model: ") + branchSubstitutionModelToString(data) + ("\n");
+		string += ("Demographic model: ") + demographicModelToString(data)
+				+ ("\n");
+		string += ("Branch Substitution model: ")
+				+ branchSubstitutionModelToString(data) + ("\n");
 		string += ("Frequency model: ") + frequencyModelToString(data) + ("\n");
 		string += ("Site Rate model: ") + siteRateModelToString(data) + ("\n");
-		string += ("Clock Rate model: ") + clockRateModelToString(data) + ("\n");
+		string += ("Clock Rate model: ") + clockRateModelToString(data)
+				+ ("\n");
 
 		return string;
 	}// END: partitionDataToString
-	
+
 	public static String partitionDataListToString(PartitionDataList dataList, //
 			ArrayList<TreeModel> simulatedTreeModelList
-//			,LinkedHashMap<Integer,LinkedHashMap<NodeRef, int[]>> partitionSequencesMap
-			) {
+	// ,LinkedHashMap<Integer,LinkedHashMap<NodeRef, int[]>>
+	// partitionSequencesMap
+	) {
 
 		String string = "";
 		TreeModel simulatedTreeModel;
-//		LinkedHashMap<NodeRef, int[]> sequencesMap;
-		
+		// LinkedHashMap<NodeRef, int[]> sequencesMap;
+
 		string += ("Site count: " + getSiteCount(dataList)) + ("\n");
 		if (dataList.setSeed) {
 			string += ("Starting seed: " + dataList.startingSeed) + ("\n");
@@ -1097,12 +1107,12 @@ public class Utils {
 		for (PartitionData data : dataList) {
 
 			simulatedTreeModel = simulatedTreeModelList.get(row);
-//			sequencesMap = partitionSequencesMap.get(row);
-			
+			// sequencesMap = partitionSequencesMap.get(row);
+
 			string += ("Partition: " + (row + 1)) + ("\n");
 			string += partitionDataToString(data, simulatedTreeModel
-//					, sequencesMap
-					);
+			// , sequencesMap
+			);
 			string += ("\n");
 			row++;
 
@@ -1110,17 +1120,19 @@ public class Utils {
 
 		return string;
 	}// END: partitionDataListToString
-	
-	//TODO: doesn't work
-	public static String annotatedTreeModelToString(TreeModel treeModel, LinkedHashMap<NodeRef, int[]> sequencesMap, DataType dataType) {
-		
+
+	// TODO: doesn't work
+	public static String annotatedTreeModelToString(TreeModel treeModel,
+			LinkedHashMap<NodeRef, int[]> sequencesMap, DataType dataType) {
+
 		StringBuffer buffer = new StringBuffer();
 		NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
 		boolean useTipLabels = true;
-		
-		AncestralSequenceTrait ancestralSequence = new AncestralSequenceTrait(sequencesMap, dataType);
+
+		AncestralSequenceTrait ancestralSequence = new AncestralSequenceTrait(
+				sequencesMap, dataType);
 		TreeTraitProvider[] treeTraitProviders = new TreeTraitProvider[] { ancestralSequence };
-		
+
 		Tree.Utils.newick(treeModel, //
 				treeModel.getRoot(), //
 				useTipLabels, //
@@ -1129,15 +1141,15 @@ public class Utils {
 				null, //
 				treeTraitProviders, //
 				null, buffer);
-		
+
 		return buffer.toString();
 	}
-	
+
 	private static String dataTypeToString(PartitionData data) {
 		String string = PartitionData.dataTypes[data.dataTypeIndex];
 		return string;
 	}
-	
+
 	public static String demographicModelToString(PartitionData data) {
 
 		String string = PartitionData.demographicModels[data.demographicModelIndex];
@@ -1151,7 +1163,7 @@ public class Utils {
 
 		return string;
 	}
-	
+
 	public static String clockRateModelToString(PartitionData data) {
 
 		String string = PartitionData.clockModels[data.clockModelIndex];
@@ -1207,7 +1219,7 @@ public class Utils {
 
 		return string;
 	}
-	
+
 	public static String demographyModelToString(PartitionData data) {
 
 		String string = PartitionData.demographicModels[data.demographicModelIndex];
@@ -1221,21 +1233,71 @@ public class Utils {
 
 		return string;
 	}
-	
+
 	// ////////////////////
 	// ---ARRAYS UTILS---//
 	// ////////////////////
-	
+
+	public static int rMultinom(double[] probabilities) {
+
+		int range = probabilities.length + 1;
+		double[] distribution = new double[range];
+		double sumProb = 0;
+
+		for (double value : probabilities) {
+			sumProb += value;
+		}// END: probabilities loop
+
+		distribution[0] = 0;
+		for (int i = 1; i < range; ++i) {
+
+			distribution[i] = distribution[i - 1]
+					+ (probabilities[i - 1] / sumProb);
+
+		}// END: i loop
+
+		distribution[range - 1] = 1.0;
+
+		double key = random.nextDouble();
+
+		int mindex = 1;
+		int maxdex = range - 1;
+		int midpoint = mindex + (maxdex - mindex) / 2;
+		while (mindex <= maxdex) {
+
+			if (key < distribution[midpoint - 1]) {
+				
+				maxdex = midpoint - 1;
+				
+			} else if (key > distribution[midpoint]) {
+				
+				mindex = midpoint + 1;
+				
+			} else {
+				
+				return midpoint - 1;
+
+			}
+			
+			midpoint = mindex + (int) Math.ceil((maxdex - mindex) / 2);
+
+		}//END: mindex loop
+		
+		System.out.println("Error in rMultinom!");
+		
+		return range - 1;
+	}//END: rMultinom
+
 	public static int sample(double[] probabilities) {
 
 		int samplePos = -Integer.MAX_VALUE;
 		double cumProb = 0.0;
 		double u = random.nextDouble();
-		
+
 		for (int i = 0; i < probabilities.length; i++) {
-			
+
 			cumProb += probabilities[i];
-			
+
 			if (u <= cumProb) {
 				samplePos = i;
 				break;
@@ -1244,24 +1306,41 @@ public class Utils {
 
 		return samplePos;
 	}// END: randomChoicePDF
+
+	public static int findMaximum(double[] array) {
+
+		int max = -Integer.MAX_VALUE;
+
+		for (int i=0; i< array.length;i++) {
+		
+			if (array[i] > max) {
+
+				max = (int)array[i];
+
+			}// END: if check
+
+		}// END: i loop
+
+		return max;
+	}// END: findMaximum
 	
 	public static int findMaximum(ArrayList<Integer> array) {
-		
+
 		int max = -Integer.MAX_VALUE;
-		
-		for(Integer element: array) {
-			
-			if(element > max) {
-				
+
+		for (Integer element : array) {
+
+			if (element > max) {
+
 				max = element;
-				
-			}//END: if check
-			
-		}//END: i loop
-		
+
+			}// END: if check
+
+		}// END: i loop
+
 		return max;
-	}//END: findMaximum
-	
+	}// END: findMaximum
+
 	public static double sumArray(double[] array) {
 
 		double sum = 0.0;
@@ -1285,5 +1364,5 @@ public class Utils {
 
 		return sum;
 	}// END: sumArray
-	
+
 }// END: class

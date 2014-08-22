@@ -54,6 +54,8 @@ import java.util.List;
  */
 public class MCMCMC implements Runnable {
 
+    public final static boolean DEBUG = false;
+
     public MCMCMC(MCMC[] mcmcs, MCMCMCOptions mcmcmcOptions) {
 
         this.mcmcmcOptions = mcmcmcOptions;
@@ -226,6 +228,21 @@ public class MCMCMC implements Runnable {
 
     private int swapChainTemperatures() {
 
+        if(DEBUG){
+            System.out.print("Current scores: ");
+            for(int i=0; i<chains.length; i++){
+                System.out.print("\t");
+                if(i==coldChain){
+                    System.out.print("[");
+                }
+                System.out.print(chains[i].getCurrentScore());
+                if(i==coldChain){
+                    System.out.print("]");
+                }
+            }
+            System.out.println();
+        }
+
         int newColdChain = coldChain;
 
         int index1 = MathUtils.nextInt(chains.length);
@@ -245,6 +262,10 @@ public class MCMCMC implements Runnable {
         boolean swap = (Math.log(MathUtils.nextDouble()) < logRatio);
 
         if (swap) {
+            if(DEBUG){
+                System.out.println("Swapping chain "+index1+" and chain "+index2);
+            }
+
             acceptor1.setTemperature(temperature2);
             acceptor2.setTemperature(temperature1);
 

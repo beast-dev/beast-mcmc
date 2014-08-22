@@ -422,10 +422,6 @@ public class BeastMC3 {
                 System.exit(1);
             }
         }
-
-        if (!window) {
-            System.exit(0);
-        }
     }
 }
 

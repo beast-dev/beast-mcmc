@@ -34,6 +34,9 @@ public class KnownVarianceNormalPeriodPriorDistribution extends AbstractPeriodPr
     private Parameter posteriorVariance;
     private double sigma;
 
+    private ArrayList<Double> dataValues;
+    private double[] currentParameters;
+
     public KnownVarianceNormalPeriodPriorDistribution(String name, boolean log, double sigma,
                                                       NormalDistribution hyperprior){
         super(name, log);
@@ -49,6 +52,66 @@ public class KnownVarianceNormalPeriodPriorDistribution extends AbstractPeriodPr
                                                       double mu_0, double sigma_0){
         this(name, log, sigma, new NormalDistribution(mu_0, sigma_0));
     }
+
+    public void reset(){
+        dataValues = new ArrayList<Double>();
+        currentParameters[0] = hyperprior.getMean();
+        currentParameters[1] = hyperprior.getSD();
+        logL = 0;
+    }
+
+    public double calculateLogPosteriorProbability(double newValue, double minValue){
+        double out = calculateLogPosteriorPredictiveProbability(newValue);
+        if(minValue != Double.NEGATIVE_INFINITY){
+            out -= calculateLogPosteriorPredictiveCDF(minValue, true);
+        }
+        logL += out;
+        update(newValue);
+        return out;
+    }
+
+    public double calculateLogPosteriorCDF(double limit, boolean upper) {
+        return calculateLogPosteriorPredictiveCDF(limit, upper);
+    }
+
+    public double calculateLogPosteriorPredictiveProbability(double value){
+        double mean = currentParameters[0];
+        double sd = currentParameters[1];
+
+        return NormalDistribution.logPdf(value, mean, Math.sqrt(Math.pow(sd, 2) + Math.pow(sigma, 2)));
+    }
+
+    public double calculateLogPosteriorPredictiveCDF(double value, boolean upperTail){
+        double mean = currentParameters[0];
+        double sd = currentParameters[1];
+
+        double scaledValue = (value - mean)/Math.sqrt(Math.pow(sd, 2) + Math.pow(sigma, 2));
+
+        return upperTail ?  NormalDistribution.standardCDF(-scaledValue, true) :
+                NormalDistribution.standardCDF(scaledValue, true);
+    }
+
+    private void update(double newData){
+        dataValues.add(newData);
+
+        double originalMean = hyperprior.getMean();
+        double originalSD = hyperprior.getSD();
+
+        double count = dataValues.size();
+
+        double dataMean = 0;
+        for(double value: dataValues){
+            dataMean += value;
+        }
+        dataMean /= count;
+
+        double newSD = Math.sqrt(1/(count/Math.pow(sigma,2) + 1/Math.pow(originalSD,2)));
+
+        double newMean = Math.pow(newSD,2)*(originalMean/Math.pow(originalSD,2) + count*dataMean/Math.pow(sigma,2));
+
+        currentParameters = new double[]{newMean, newSD};
+    }
+
 
     public double calculateLogLikelihood(double[] values){
 
@@ -70,7 +133,6 @@ public class KnownVarianceNormalPeriodPriorDistribution extends AbstractPeriodPr
 
         posteriorMean.setParameterValue(0, ((mu_0/var_0) + sum/var)/(1/var_0 + count/var));
         posteriorVariance.setParameterValue(0, 1/(1/var_0 + count/var));
-
 
         logL = Math.log(sigma)
                 - count * Math.log(Math.sqrt(2*Math.PI)*sigma)

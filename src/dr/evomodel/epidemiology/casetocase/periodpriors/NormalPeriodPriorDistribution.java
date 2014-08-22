@@ -1,11 +1,14 @@
 package dr.evomodel.epidemiology.casetocase.periodpriors;
 
-import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
+import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.NormalGammaDistribution;
 import dr.math.functionEval.GammaFunction;
 import dr.xml.*;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.TDistribution;
+import org.apache.commons.math.distribution.TDistributionImpl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,6 +35,11 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
     private Parameter posteriorBeta;
     private Parameter posteriorExpectedPrecision;
 
+    double normalApproximationThreshold = 30;
+
+    private ArrayList<Double> dataValues;
+    private double[] currentParameters;
+
     public NormalPeriodPriorDistribution(String name, boolean log, NormalGammaDistribution hyperprior){
         super(name, log);
         this.hyperprior = hyperprior;
@@ -46,6 +54,104 @@ public class NormalPeriodPriorDistribution extends AbstractPeriodPriorDistributi
     public NormalPeriodPriorDistribution(String name, boolean log, double mu_0, double lambda_0,
                                          double alpha_0, double beta_0){
         this(name, log, new NormalGammaDistribution(mu_0, lambda_0, alpha_0, beta_0));
+        reset();
+    }
+
+    public void reset(){
+        dataValues = new ArrayList<Double>();
+        currentParameters = hyperprior.getParameters();
+        logL = 0;
+    }
+
+    // this returns the posterior predictive probability of the new value, and updates the total
+
+    public double calculateLogPosteriorProbability(double newValue, double minValue){
+        double out = calculateLogPosteriorPredictiveProbability(newValue);
+        if(minValue != Double.NEGATIVE_INFINITY){
+            out -= calculateLogPosteriorPredictiveCDF(minValue, true);
+        }
+        logL += out;
+        update(newValue);
+        return out;
+    }
+
+    public double calculateLogPosteriorCDF(double limit, boolean upper) {
+        return calculateLogPosteriorPredictiveCDF(limit, upper);
+    }
+
+
+    public double calculateLogPosteriorPredictiveProbability(double value){
+        double mean = currentParameters[0];
+        double sd = Math.sqrt(currentParameters[3]*(currentParameters[1]+1)
+                /(currentParameters[2]*currentParameters[1]));
+        double scaledValue = (value - mean)/sd;
+        double out;
+
+        if(2*currentParameters[2]<=normalApproximationThreshold) {
+            TDistributionImpl tDist = new TDistributionImpl(2 * currentParameters[2]);
+
+            out = Math.log(tDist.density(scaledValue));
+
+
+        } else {
+
+            out = NormalDistribution.logPdf(scaledValue, 0, 1);
+
+        }
+
+        return out;
+    }
+
+    public double calculateLogPosteriorPredictiveCDF(double value, boolean upperTail){
+        double mean = currentParameters[0];
+        double sd = Math.sqrt(currentParameters[3]*(currentParameters[1]+1)
+                /(currentParameters[2]*currentParameters[1]));
+        double scaledValue = (value - mean)/sd;
+        double out;
+
+        if(2*currentParameters[2]<=normalApproximationThreshold) {
+            TDistributionImpl tDist = new TDistributionImpl(2 * currentParameters[2]);
+
+            try {
+                out = upperTail ? Math.log(tDist.cumulativeProbability(-scaledValue))
+                        : Math.log(tDist.cumulativeProbability(scaledValue));
+            } catch (MathException e){
+                throw new RuntimeException(e.toString());
+            }
+
+        } else {
+
+            out =  upperTail ? NormalDistribution.standardCDF(-scaledValue, true) :
+                    NormalDistribution.standardCDF(scaledValue, true);
+
+        }
+        return out;
+    }
+
+
+    private void update(double newData){
+        dataValues.add(newData);
+
+        double[] originalParameters=hyperprior.getParameters();
+        double lambda_0 = originalParameters[1];
+
+        double oldMu = currentParameters[0];
+        double oldLambda = currentParameters[1];
+        double oldAlpha = currentParameters[2];
+        double oldBeta = currentParameters[3];
+
+        double count = dataValues.size();
+
+        double newMu = (newData - oldMu)/(lambda_0 + count) + oldMu;
+        double newLambda = oldLambda + 1;
+        double newAlpha = oldAlpha + 0.5;
+        double newBeta = oldBeta + oldLambda*Math.pow(newData - oldMu, 2)/(2*(oldLambda+1));
+
+        posteriorMean.setParameterValue(0, newMu);
+        posteriorBeta.setParameterValue(0, newBeta);
+        posteriorExpectedPrecision.setParameterValue(0, newAlpha/newBeta);
+
+        currentParameters = new double[]{newMu, newLambda, newAlpha, newBeta};
     }
 
 

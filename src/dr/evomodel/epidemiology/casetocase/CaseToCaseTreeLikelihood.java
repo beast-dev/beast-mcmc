@@ -51,7 +51,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     protected TreeTraitProvider.Helper treeTraits = new Helper();
 
     /**
-     * The set of outbreak
+     * The set of cases
      */
     protected AbstractOutbreak outbreak;
 
@@ -228,7 +228,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     /* Get the date of the last tip */
 
     private double getLatestTaxonTime(){
-        double latestTime = -100000;
+        double latestTime = Double.NEGATIVE_INFINITY;
         for(AbstractCase thisCase : outbreak.getCases()){
             if(thisCase.getExamTime()>latestTime){
                 latestTime = thisCase.getExamTime();
@@ -1203,6 +1203,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         makeDirty();
         TreeModel.Node root = (TreeModel.Node) treeModel.getRoot();
         randomlyAssignNode(root, map, checkNonZero);
+
         return map;
     }
 
@@ -1213,6 +1214,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         if(node.isExternal()){
             return map.get(node.getNumber());
         } else {
+
             AbstractCase[] choices = new AbstractCase[2];
             for(int i=0; i<node.getChildCount(); i++){
                 if((map.get(node.getChild(i).getNumber())==null)){
@@ -1308,6 +1310,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 infectionNode.setHeight(heightToBreakBranch);
                 infectionNode.setLength(oldParent.getHeight() - heightToBreakBranch);
                 infectionNode.setAttribute(PARTITIONS_KEY, getNodePartition(treeModel, originalParent));
+                newNode.setLength(nodeTime - infectionTime);
+
                 outTree.addChild(oldParent, infectionNode);
                 outTree.addChild(infectionNode, newNode);
                 outTree.endTreeEdit();
@@ -1499,6 +1503,26 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                             .getSummaryStatistics(getInfectedPeriods(false))[3]);
                 }
             });
+            for(int i=0; i< outbreak.size(); i++){
+                final int finalI = i;
+                final AbstractCase infected = outbreak.getCase(i);
+                columns.add(new LogColumn.Abstract(infected.toString()+"_ibp"){
+                    protected String getFormattedValue() {
+                        return String.valueOf(infectionTimeBranchPositions.getParameterValue(finalI));
+                    }
+                });
+            }
+            if(hasLatentPeriods) {
+                for (int i = 0; i < outbreak.size(); i++) {
+                    final int finalI = i;
+                    final AbstractCase infected = outbreak.getCase(i);
+                    columns.add(new LogColumn.Abstract(infected.toString() + "_itp") {
+                        protected String getFormattedValue() {
+                            return String.valueOf(infectiousTimePositions.getParameterValue(finalI));
+                        }
+                    });
+                }
+            }
         }
 
         return columns.toArray(new LogColumn[columns.size()]);

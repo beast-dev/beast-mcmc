@@ -2,6 +2,7 @@ package dr.app.tools;
 
 import dr.app.util.Arguments;
 import dr.evolution.coalescent.CoalescentSimulator;
+import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evolution.tree.*;
@@ -23,17 +24,26 @@ import java.util.HashMap;
 
 public class TransmissionTreeToVirusTree {
 
-    public static final String INFECTIONS_FILE_NAME = "infectionsfile";
-    public static final String SAMPLES_FILE_NAME = "samplesfile";
-    public static final String OUTPUT_NAME_ROOT = "outputroot";
+    protected static PrintStream progressStream = System.out;
 
-    public static final String INFECTION_IDENTIFIER = "INFECTION";
-    public static final String SAMPLING_IDENTIFIER = "SAMPLING";
+    private enum ModelType{CONSTANT, EXPONENTIAL, LOGISTIC}
+
+    public static final String HELP = "help";
+
+    public static final String DEMOGRAPHIC_MODEL = "demoModel";
+
+    public static final String[] demographics = {"Constant", "Exponential", "Logistic"};
+
+    public static final String STARTING_POPULATION_SIZE = "N0";
+    public static final String GROWTH_RATE = "growthRate";
+    public static final String T50 = "t50";
 
     private DemographicFunction demFunct;
     private ArrayList<InfectedUnit> units;
     private HashMap<String, InfectedUnit> idMap;
     private String outputFileRoot;
+
+    private double coalescentProbability;
 
     public TransmissionTreeToVirusTree(String fileName,
                                        DemographicFunction demFunct, String outputFileRoot){
@@ -41,6 +51,7 @@ public class TransmissionTreeToVirusTree {
         units = new ArrayList<InfectedUnit>();
         idMap = new HashMap<String, InfectedUnit>();
         this.outputFileRoot = outputFileRoot;
+        coalescentProbability = 1;
         try {
             readInfectionEvents(fileName);
             readSamplingEvents(fileName);
@@ -49,80 +60,113 @@ public class TransmissionTreeToVirusTree {
         }
     }
 
+    public TransmissionTreeToVirusTree(String sampFileName, String transFileName,
+                                       DemographicFunction demFunct, String outputFileRoot){
+        this.demFunct = demFunct;
+        units = new ArrayList<InfectedUnit>();
+        idMap = new HashMap<String, InfectedUnit>();
+        this.outputFileRoot = outputFileRoot;
+        try {
+            readInfectionEvents(transFileName);
+            readSamplingEvents(sampFileName);
+        } catch(IOException e){
+            e.printStackTrace();
+        }
+    }
+
+
+
     private enum EventType{
         INFECTION, SAMPLE
     }
 
 
     private void run() throws IOException{
-        FlexibleTree detailedTree = makeTree();
-        FlexibleTree simpleTree = makeWellBehavedTree(detailedTree);
+        ArrayList<FlexibleTree> detailedTrees = makeTrees();
+        ArrayList<FlexibleTree> simpleTrees = new ArrayList<FlexibleTree>();
 
-        NexusExporter exporter1 = new NexusExporter(new PrintStream(outputFileRoot+"_detailed.nex"));
-        exporter1.exportTree(detailedTree);
+        for(FlexibleTree tree : detailedTrees) {
+            FlexibleTree wbTree = makeWellBehavedTree(tree);
+            wbTree.setAttribute("firstCase", tree.getAttribute("firstCase"));
 
-        NexusExporter exporter2 = new NexusExporter(new PrintStream(outputFileRoot+"_simple.nex"));
-        exporter2.exportTree(simpleTree);
+            simpleTrees.add(wbTree);
+        }
+
+
+        for(FlexibleTree tree: detailedTrees){
+            NexusExporter exporter = new NexusExporter(new PrintStream(outputFileRoot
+                    + tree.getAttribute("firstCase") + "_detailed.nex"));
+            exporter.exportTree(tree);
+        }
+
+        for(FlexibleTree tree: simpleTrees){
+            NexusExporter exporter = new NexusExporter(new PrintStream(outputFileRoot
+                    + tree.getAttribute("firstCase") + "_simple.nex"));
+            exporter.exportTree(tree);
+        }
+
     }
 
     private void readInfectionEvents(String fileName) throws IOException{
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
         ArrayList<String[]> keptLines = new ArrayList<String[]>();
+
+        reader.readLine();
+
         String line = reader.readLine();
 
         while(line!=null){
 
             String[] entries = line.split(",");
-            if(entries[0].equals(INFECTION_IDENTIFIER)) {
-                keptLines.add(entries);
+            keptLines.add(entries);
 
-                InfectedUnit unit = new InfectedUnit(entries[3]);
-                units.add(unit);
-                idMap.put(entries[3], unit);
-            }
+            InfectedUnit unit = new InfectedUnit("ID_"+entries[1]);
+            units.add(unit);
+            idMap.put("ID_"+entries[1], unit);
 
             line = reader.readLine();
         }
 
         for(String[] repeatLine: keptLines){
 
-            InfectedUnit infectee = idMap.get(repeatLine[3]);
-            if(!repeatLine[2].equals("NA")){
-                InfectedUnit infector = idMap.get(repeatLine[2]);
-                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[1]), infector, infectee);
+            InfectedUnit infectee = idMap.get("ID_"+repeatLine[1]);
+            if(!repeatLine[2].equals("-1")){
+                InfectedUnit infector = idMap.get("ID_"+repeatLine[2]);
+                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[3]), infector, infectee);
 
                 infector.addInfectionEvent(infection);
                 infectee.setInfectionEvent(infection);
 
                 infectee.parent = infector;
             } else {
-                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[1]), null, infectee);
+                Event infection = new Event(EventType.INFECTION, Double.parseDouble(repeatLine[3]), null, infectee);
                 infectee.setInfectionEvent(infection);
             }
-
-
-
         }
     }
 
     private void readSamplingEvents(String fileName) throws IOException{
         BufferedReader reader = new BufferedReader(new FileReader(fileName));
 
+        reader.readLine();
+
         String line = reader.readLine();
 
         while(line!=null){
-            String[] entries = line.split(",");
-            if(entries[0].equals(SAMPLING_IDENTIFIER)) {
 
-                if (!idMap.containsKey(entries[2])) {
+            String[] entries = line.split(",");
+
+            if(!entries[7].equals("NA")) {
+
+                if (!idMap.containsKey("ID_"+entries[1])) {
                     throw new RuntimeException("Trying to add a sampling event to unit " + entries[2] + " but this " +
                             "unit not previously defined");
                 }
 
-                InfectedUnit unit = idMap.get(entries[2]);
+                InfectedUnit unit = idMap.get("ID_"+entries[1]);
 
-                unit.addSamplingEvent(Double.parseDouble(entries[1]));
+                unit.addSamplingEvent(Double.parseDouble(entries[7]));
             }
 
             line = reader.readLine();
@@ -141,7 +185,15 @@ public class TransmissionTreeToVirusTree {
 
         unit.sortEvents();
 
-        double activeTime = unit.childEvents.get(0).time - unit.infectionEvent.time;
+        double lastRelevantEventTime = Double.NEGATIVE_INFINITY;
+
+        for(Event event : relevantEvents){
+            if(event.time > lastRelevantEventTime){
+                lastRelevantEventTime = event.time;
+            }
+        }
+
+        double activeTime = lastRelevantEventTime - unit.infectionEvent.time;
 
         for(Event event : relevantEvents){
             Taxon taxon;
@@ -185,28 +237,48 @@ public class TransmissionTreeToVirusTree {
         return outTree;
     }
 
-    private FlexibleTree makeTree(){
+    private ArrayList<FlexibleTree> makeTrees(){
 
         // find the first case
 
-        InfectedUnit firstCase = null;
+        ArrayList<InfectedUnit> introducedCases = new ArrayList<InfectedUnit>();
 
         for(InfectedUnit unit : units){
             if(unit.parent==null){
-                firstCase = unit;
+                introducedCases.add(unit);
             }
         }
 
-        if(firstCase==null){
+        if(introducedCases.size()==0){
             throw new RuntimeException("Can't find a first case");
         }
 
-        FlexibleNode outTreeRoot = makeSubtree(firstCase);
+        ArrayList<FlexibleTree> out = new ArrayList<FlexibleTree>();
 
-        FlexibleTree finalTree = new FlexibleTree(outTreeRoot, false, true);
+        for(InfectedUnit introduction : introducedCases) {
+            coalescentProbability = 1;
 
-        return finalTree;
+            System.out.println("Building tree for descendants of " + introduction.id);
+            FlexibleNode outTreeRoot = makeSubtree(introduction);
 
+            if (outTreeRoot != null) {
+                FlexibleTree finalTree = new FlexibleTree(outTreeRoot, false, true);
+                finalTree.setAttribute("firstCase", introduction.id);
+                out.add(finalTree);
+
+                if(coalescentProbability<0.9){
+                    progressStream.println("WARNING: any phylogeny for descendants of "+introduction.id+" is quite " +
+                            "improbable (p<"+(coalescentProbability)+") given this demographic function. Consider " +
+                            "another.");
+                }
+            } else {
+                progressStream.println("This individual has no sampled descendants");
+            }
+            System.out.println();
+
+
+        }
+        return out;
     }
 
     // make the tree from this unit up
@@ -262,6 +334,19 @@ public class TransmissionTreeToVirusTree {
     private FlexibleNode simulateCoalescent(ArrayList<SimpleNode> nodes, DemographicFunction demogFunct,
                                             double maxHeight){
 
+        double earliestNodeHeight = Double.NEGATIVE_INFINITY;
+
+        for(SimpleNode node : nodes){
+            if(node.getHeight()>earliestNodeHeight){
+                earliestNodeHeight = node.getHeight();
+            }
+        }
+        double maxLastInterval = earliestNodeHeight;
+        double probNoCoalesenceInTime = Math.exp(demogFunct.getIntensity(maxLastInterval));
+
+        coalescentProbability *= (1-probNoCoalesenceInTime);
+
+
 
         CoalescentSimulator simulator = new CoalescentSimulator();
         SimpleNode root;
@@ -279,8 +364,6 @@ public class TransmissionTreeToVirusTree {
         } while(simResults.length!=1);
 
         root = simResults[0];
-
-        System.out.println("Success!");
 
         SimpleTree simpleTreelet = new SimpleTree(root);
 
@@ -358,7 +441,8 @@ public class TransmissionTreeToVirusTree {
 
         private void addInfectionEvent(Event event){
             if(infectionEvent!=null && event.time < infectionEvent.time){
-                throw new RuntimeException("Adding an event to case "+id+" before its infection time");
+                throw new RuntimeException("Adding an infection event to case "+id+" at "+event.time+" before its " +
+                        "infection time at "+infectionEvent.time);
             }
             childEvents.add(event);
         }
@@ -395,15 +479,108 @@ public class TransmissionTreeToVirusTree {
         }
     }
 
+    public static void printUsage(Arguments arguments) {
+
+        arguments.printUsage("virusTreeBuilder", "<infections-file-name> <sample-file-name> <output-file-name-root>");
+    }
+
+
+
     public static void main(String[] args){
 
-        LogisticGrowthN0 testGrowth = new LogisticGrowthN0(Units.Type.YEARS);
-        testGrowth.setN0(1);
-        testGrowth.setGrowthRate(1);
-        testGrowth.setT50(-1);
+        ModelType model = ModelType.CONSTANT;
+        double startNe = 1;
+        double growthRate = 0;
+        double t50 = 0;
 
-        TransmissionTreeToVirusTree instance = new TransmissionTreeToVirusTree("demeSIR_lineList.csv", testGrowth,
-                "test_out");
+        Arguments arguments = new Arguments(
+                new Arguments.Option[]{
+                        new Arguments.StringOption(DEMOGRAPHIC_MODEL, demographics, false, "The type of within-host" +
+                                " demographic function to use, default = constant"),
+                        new Arguments.RealOption(STARTING_POPULATION_SIZE,"The effective population size at time zero" +
+                                " (used in all models), default = 1"),
+                        new Arguments.RealOption(GROWTH_RATE,"The effective population size growth rate (used in" +
+                                " exponential and logistic models), default = 0"),
+                        new Arguments.RealOption(T50,"The time point, relative to the time of infection in backwards " +
+                                "time, at which the population is equal to half its final asymptotic value, in the " +
+                                "logistic model default = 0")
+                });
+
+
+        try {
+            arguments.parseArguments(args);
+        } catch (Arguments.ArgumentException ae) {
+            System.out.println(ae);
+            printUsage(arguments);
+            System.exit(1);
+        }
+
+        if (arguments.hasOption(HELP)) {
+            printUsage(arguments);
+            System.exit(0);
+        }
+
+        if (arguments.hasOption(DEMOGRAPHIC_MODEL)) {
+            String modelString = arguments.getStringOption(DEMOGRAPHIC_MODEL);
+            if(modelString.toLowerCase().startsWith("c")){
+                model = ModelType.CONSTANT;
+            } else if(modelString.toLowerCase().startsWith("e")){
+                model = ModelType.EXPONENTIAL;
+            } else if(modelString.toLowerCase().startsWith("l")){
+                model = ModelType.LOGISTIC;
+            } else {
+                progressStream.print("Unrecognised demographic model type");
+                System.exit(1);
+            }
+        }
+
+
+        if(arguments.hasOption(STARTING_POPULATION_SIZE)){
+            startNe = arguments.getRealOption(STARTING_POPULATION_SIZE);
+        }
+
+        if(arguments.hasOption(GROWTH_RATE) && model!=ModelType.CONSTANT){
+            growthRate = arguments.getRealOption(GROWTH_RATE);
+        }
+
+        if(arguments.hasOption(T50) && model==ModelType.LOGISTIC){
+            t50 = arguments.getRealOption(T50);
+        }
+
+        DemographicFunction demoFunction = null;
+
+        switch(model){
+            case CONSTANT: {
+                demoFunction = new ConstantPopulation(Units.Type.YEARS);
+                ((ConstantPopulation)demoFunction).setN0(startNe);
+            }
+            case EXPONENTIAL: {
+                demoFunction = new ExponentialGrowth(Units.Type.YEARS);
+                ((ExponentialGrowth)demoFunction).setN0(startNe);
+                ((ExponentialGrowth)demoFunction).setGrowthRate(growthRate);
+            }
+            case LOGISTIC: {
+                demoFunction = new LogisticGrowthN0(Units.Type.YEARS);
+                ((LogisticGrowthN0)demoFunction).setN0(startNe);
+                ((LogisticGrowthN0)demoFunction).setGrowthRate(growthRate);
+                ((LogisticGrowthN0)demoFunction).setT50(t50);
+            }
+        }
+
+        final String[] args2 = arguments.getLeftoverArguments();
+
+        if(args2.length!=3){
+            printUsage(arguments);
+            System.exit(1);
+        }
+
+        String infectionsFileName = args2[0];
+        String samplesFileName = args2[1];
+        String outputFileRoot = args2[2];
+
+
+        TransmissionTreeToVirusTree instance = new TransmissionTreeToVirusTree(samplesFileName,
+                infectionsFileName, demoFunction, outputFileRoot);
 
         try{
             instance.run();

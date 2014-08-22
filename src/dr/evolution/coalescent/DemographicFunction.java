@@ -299,12 +299,12 @@ public interface DemographicFunction extends UnivariateRealFunction, Units {
         }
 
         private static double getInterval(double U, DemographicFunction demographicFunction, int lineageCount,
-                                          double timeOfLastCoalescent, double earliestTimeOfFirstCoalescent){
-            if(timeOfLastCoalescent>earliestTimeOfFirstCoalescent){
-                throw new IllegalArgumentException("Given maximum height is smaller than given last coalescent time");
+                                          double timeOfLastCoalescent, double earliestTimeOfFinalCoalescent){
+            if(timeOfLastCoalescent>earliestTimeOfFinalCoalescent){
+                throw new IllegalArgumentException("Given maximum height is smaller than given final coalescent time");
             }
             final double fullIntegral = demographicFunction.getIntegral(timeOfLastCoalescent,
-                    earliestTimeOfFirstCoalescent);
+                    earliestTimeOfFinalCoalescent);
             final double normalisation = 1-Math.exp(-Binomial.choose2(lineageCount)*fullIntegral);
             final double intensity = demographicFunction.getIntensity(timeOfLastCoalescent);
 

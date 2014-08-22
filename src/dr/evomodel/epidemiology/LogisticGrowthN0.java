@@ -15,6 +15,7 @@ import dr.evolution.coalescent.*;
  * @author Daniel Wilson
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @author Matthew Hall
  * @version $Id: LogisticGrowth.java,v 1.15 2008/03/21 20:25:56 rambaut Exp $
  */
 public class LogisticGrowthN0 extends ExponentialGrowth {
@@ -95,9 +96,9 @@ public class LogisticGrowthN0 extends ExponentialGrowth {
 
         if(lambertInput==Double.POSITIVE_INFINITY){
 
-            //use the asymptote
+            //use the asymptote; note q/a = exp(q*T50)
 
-            double logInput = Math.log(-q)-Math.log(-a)-q*k;
+            double logInput = q*T50-q*k;
             lambertResult = logInput - Math.log(logInput);
 
         } else {

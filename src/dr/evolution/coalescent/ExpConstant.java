@@ -1,28 +1,3 @@
-/*
- * ConstExponential.java
- *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.evolution.coalescent;
 
 /**
@@ -73,6 +48,8 @@ public class ExpConstant extends ExponentialGrowth {
         double r = getGrowthRate();
         double changeTime = getTransitionTime();
 
+        double plateauLevel = N0*Math.exp(-r*changeTime);
+
         if (r == 0.0) return t/getN0();
 
         if(t==0){
@@ -82,13 +59,13 @@ public class ExpConstant extends ExponentialGrowth {
             if(t >= changeTime){
                 return super.getIntensity(t);
             } else {
-                return (1/(N0*r)) * (Math.exp(r*changeTime) - 1) + (t-changeTime)/N0;
+                return (1/(N0*r)) * (Math.exp(r*changeTime) - 1) + (t-changeTime)/plateauLevel;
             }
         } else {
             if(t <= changeTime){
-                return (t/N0);
+                return (t/plateauLevel);
             } else {
-                return (changeTime/N0) + (1/(N0*r)) * (Math.exp(r*t) - Math.exp(r*changeTime));
+                return (changeTime/plateauLevel) + (1/(N0*r)) * (Math.exp(r*t) - Math.exp(r*changeTime));
             }
         }
   	}
@@ -98,6 +75,8 @@ public class ExpConstant extends ExponentialGrowth {
         double r = getGrowthRate();
         double changeTime = getTransitionTime();
 
+        double plateauLevel = N0*Math.exp(-r*changeTime);
+
         if (r == 0.0) {
             return getN0()*x;
         } else
@@ -106,13 +85,13 @@ public class ExpConstant extends ExponentialGrowth {
             if(x > (1/(N0*r)) * (Math.exp(r*changeTime) - 1)){
                 return super.getInverseIntensity(x);
             } else {
-                return N0*x - (Math.exp(r*changeTime)-1)/r + changeTime;
+                return Math.exp(-r*changeTime)*(N0*x - (Math.exp(r*changeTime)-1)/r) + changeTime;
             }
         } else {
-            if(x < changeTime/N0){
-                return getN0()*x;
+            if(x < changeTime/plateauLevel){
+                return plateauLevel*x;
             } else {
-                return Math.log(r*(N0*x - changeTime)+Math.exp(r*changeTime))/r;
+                return Math.log(r*(N0*x - changeTime*Math.exp(r*changeTime))+Math.exp(r*changeTime))/r;
             }
         }
 	}

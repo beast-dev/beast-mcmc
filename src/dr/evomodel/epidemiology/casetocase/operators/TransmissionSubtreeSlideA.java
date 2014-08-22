@@ -31,7 +31,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
     private final boolean swapInRandomTrait;
     private final boolean resampleInfectionTimes;
     private CoercionMode mode = CoercionMode.DEFAULT;
-    private final static boolean DEBUG = false;
+    private boolean DEBUG = false;
     public static final String TRANSMISSION_SUBTREE_SLIDE_A = "transmissionSubtreeSlideA";
     public static final String SWAP_RATES = "swapInRandomRate";
     public static final String SWAP_TRAITS = "swapInRandomTrait";
@@ -76,7 +76,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
-        double logq;
+        double logq = 0;
 
         final NodeRef root = tree.getRoot();
         final double oldTreeHeight = tree.getNodeHeight(root);
@@ -214,13 +214,13 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                         branchMap.get(iP.getNumber()), null);
                 //System.out.println("possible sources = " + possibleSources);
 
-                logq = -Math.log(possibleSources);
+                logq -= Math.log(possibleSources);
 
             } else {
                 // just change the node height
 
                 tree.setNodeHeight(iP, newHeight);
-                logq = 0.0;
+                logq += 0.0;
             }
         }
         // 4 if we are sliding the subtree up.
@@ -305,12 +305,12 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
 
 
-                logq = Math.log(possibleDestinations);
+                logq += Math.log(possibleDestinations);
 
             } else {
 
                 tree.setNodeHeight(iP, newHeight);
-                logq = 0.0;
+                logq += 0.0;
             }
         }
 

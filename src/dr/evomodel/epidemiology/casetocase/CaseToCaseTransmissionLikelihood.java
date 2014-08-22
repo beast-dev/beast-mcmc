@@ -6,6 +6,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.math.*;
+import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
 import java.util.*;
@@ -215,6 +216,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                                             spatialKernel));
                                 }
                             }
+
                             geographyLogProb += Math.log(numerator/denominator);
                         }
                     } else {
@@ -301,8 +303,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
         }
 
-        logD += -transmissionRatePrior.getShape()*Math.log(transmissionRatePrior.getScale());
-        logD += -GammaFunction.lnGamma(transmissionRatePrior.getShape());
+        if(transmissionRatePrior!=null) {
+            logD += -transmissionRatePrior.getShape() * Math.log(transmissionRatePrior.getScale());
+            logD += -GammaFunction.lnGamma(transmissionRatePrior.getShape());
+        }
 
         return logD;
 
@@ -351,14 +355,20 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
         }
 
-        E += 1/(transmissionRatePrior.getScale());
+        if(transmissionRatePrior!=null) {
+            E += 1 / (transmissionRatePrior.getScale());
+        }
 
         return E;
 
     }
 
     private double getK(){
-        return (transmissionRatePrior.getShape()-1);
+        if(transmissionRatePrior != null) {
+            return (transmissionRatePrior.getShape() - 1);
+        } else {
+            return 0;
+        }
     }
 
     private class F extends UnivariateFunction.AbstractLogEvaluatableUnivariateFunction {
@@ -448,8 +458,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             SpatialKernel kernel = (SpatialKernel) xo.getChild(SpatialKernel.class);
             Parameter transmissionRate = (Parameter) xo.getElementFirstChild(TRANSMISSION_RATE);
 
-            GammaDistributionModel transmissionRatePrior
-                    = (GammaDistributionModel) xo.getElementFirstChild(TRANSMISSION_RATE_PRIOR);
+            GammaDistributionModel transmissionRatePrior = null;
+
+            if(xo.hasChildNamed(TRANSMISSION_RATE_PRIOR)) {
+                transmissionRatePrior = (GammaDistributionModel) xo.getElementFirstChild(TRANSMISSION_RATE_PRIOR);
+            }
 
             int steps = 2;
 
@@ -482,7 +495,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 new ElementRule(CaseToCaseTreeLikelihood.class, "The tree likelihood"),
                 new ElementRule(SpatialKernel.class, "The spatial kernel", 0, 1),
                 new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate"),
-                new ElementRule(TRANSMISSION_RATE_PRIOR, GammaDistributionModel.class),
+                new ElementRule(TRANSMISSION_RATE_PRIOR, GammaDistributionModel.class, "A gamma prior on the base" +
+                        "transmission rate", true),
                 AttributeRule.newIntegerRule(INTEGRATOR_STEPS, true)
         };
 

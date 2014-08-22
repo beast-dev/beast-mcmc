@@ -18,6 +18,21 @@ public class OneOverStDevPeriodPriorDistribution extends AbstractPeriodPriorDist
         super(name, log);
     }
 
+    @Override
+    public void reset() {
+
+    }
+
+    @Override
+    public double calculateLogPosteriorProbability(double newValue, double minValue) {
+        return 0;
+    }
+
+    @Override
+    public double calculateLogPosteriorCDF(double limit, boolean upper) {
+        return 0;
+    }
+
     public double calculateLogLikelihood(double[] values){
 
         DescriptiveStatistics stats = new DescriptiveStatistics(values);

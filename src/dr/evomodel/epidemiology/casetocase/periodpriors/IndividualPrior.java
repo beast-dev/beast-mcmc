@@ -1,7 +1,11 @@
 package dr.evomodel.epidemiology.casetocase.periodpriors;
 
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
+import dr.math.distributions.LogNormalDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 import java.util.HashMap;
@@ -20,6 +24,63 @@ public class IndividualPrior extends AbstractPeriodPriorDistribution {
     public IndividualPrior(String name, ParametricDistributionModel distribution){
         super(name, false);
         this.distribution = distribution;
+    }
+
+    public void reset() {
+        // nothing to do.
+    }
+
+    public double calculateLogPosteriorProbability(double newValue, double minValue) {
+        double logNumerator = distribution.logPdf(newValue);
+        double logDenominator = Math.log(1-distribution.cdf(minValue));
+
+        if(logDenominator == Double.NEGATIVE_INFINITY){
+            if(distribution instanceof LogNormalDistributionModel){
+                double mean = ((LogNormalDistributionModel)distribution).getM();
+                double stdev = ((LogNormalDistributionModel)distribution).getS();
+
+                double scaledValue = (Math.log(minValue)-mean)/stdev;
+
+                logDenominator = NormalDistribution.standardCDF(-scaledValue, true);
+
+            } else if (distribution instanceof NormalDistributionModel){
+                double mean = ((NormalDistributionModel)distribution).getMean().getValue(0);
+                double stdev = ((NormalDistributionModel)distribution).getStdev();
+
+                double scaledValue = (minValue-mean)/stdev;
+
+                logDenominator = NormalDistribution.standardCDF(-scaledValue, true);
+            }
+        }
+        return logNumerator - logDenominator;
+    }
+
+    public double calculateLogPosteriorCDF(double limit, boolean upper) {
+        double out;
+        if(upper) {
+            out = Math.log(1-distribution.cdf(limit));
+        } else {
+            out = Math.log(distribution.cdf(limit));
+        }
+        if(out == Double.NEGATIVE_INFINITY){
+            if(distribution instanceof LogNormalDistributionModel){
+                double mean = ((LogNormalDistributionModel)distribution).getM();
+                double stdev = ((LogNormalDistributionModel)distribution).getS();
+
+                double scaledValue = (Math.log(limit)-mean)/stdev;
+
+                out = NormalDistribution.standardCDF(-scaledValue, true);
+
+            } else if (distribution instanceof NormalDistributionModel){
+                double mean = ((NormalDistributionModel)distribution).getMean().getValue(0);
+                double stdev = ((NormalDistributionModel)distribution).getStdev();
+
+                double scaledValue = (limit-mean)/stdev;
+
+                out = NormalDistribution.standardCDF(-scaledValue, true);
+            }
+        }
+        return out;
     }
 
     public double calculateLogLikelihood(double[] values) {

@@ -473,10 +473,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             boolean done = frame.doImportTraits();
             if (done) {
                 if (isSpeciesTrait) {
-                // check that we did indeed import a 'species' trait
+                    // check that we did indeed import a 'species' trait
                     if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
                         JOptionPane.showMessageDialog(this,
-                                        "The imported trait file didn't contain a trait\n" +
+                                "The imported trait file didn't contain a trait\n" +
                                         "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
                                         "Please edit it or select a different file.",
                                 "Reserved trait name",
@@ -493,6 +493,47 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         return true;
+    }
+
+    public void createTraitPartition() {
+        int[] selRows = traitsTable.getSelectedRows();
+        java.util.List<TraitData> traits = new ArrayList<TraitData>();
+        int discreteCount = 0;
+        int continuousCount = 0;
+        for (int row : selRows) {
+            TraitData trait = options.traits.get(row);
+            traits.add(trait);
+
+            if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                discreteCount ++;
+            }
+            if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
+                continuousCount ++;
+            }
+        }
+
+        boolean success = false;
+        if (discreteCount > 0) {
+            if (continuousCount > 0)  {
+                JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // with discrete traits, create a separate partition for each
+            for (TraitData trait : traits) {
+                java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
+                singleTrait.add(trait);
+                if (dataPanel.createFromTraits(singleTrait)) {
+                    success = true;
+                }
+            }
+        } else {
+            // with
+            success = dataPanel.createFromTraits(traits);
+        }
+        if (success) {
+            frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
+        }
     }
 
     public void addTrait(TraitData newTrait) {
@@ -575,6 +616,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             setTraitValue();
+        }
+    }
+
+    public class CreateTraitPartitionAction extends AbstractAction {
+        public CreateTraitPartitionAction() {
+            super("Create partition from trait ...");
+            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            createTraitPartition();
         }
     }
 
@@ -749,54 +801,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             }
 
             return buffer.toString();
-        }
-    }
-
-    public class CreateTraitPartitionAction extends AbstractAction {
-        public CreateTraitPartitionAction() {
-            super("Create partition from trait ...");
-            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            int[] selRows = traitsTable.getSelectedRows();
-            java.util.List<TraitData> traits = new ArrayList<TraitData>();
-            int discreteCount = 0;
-            int continuousCount = 0;
-            for (int row : selRows) {
-                TraitData trait = options.traits.get(row);
-                traits.add(trait);
-
-                if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                    discreteCount ++;
-                }
-                if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
-                    continuousCount ++;
-                }
-            }
-
-            boolean success = false;
-            if (discreteCount > 0) {
-                if (continuousCount > 0)  {
-                    JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                // with discrete traits, create a separate partition for each
-                for (TraitData trait : traits) {
-                    java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
-                    singleTrait.add(trait);
-                    if (dataPanel.createFromTraits(singleTrait)) {
-                        success = true;
-                }
-                }
-            } else {
-                // with
-                success = dataPanel.createFromTraits(traits);
-            }
-            if (success) {
-                frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
-            }
         }
     }
 

@@ -40,6 +40,22 @@ public abstract class AbstractPeriodPriorDistribution extends AbstractModel impl
         }
     }
 
+    public double getLogPosteriorProbability(double newValue, double minValue){
+        if(!log){
+            return calculateLogPosteriorProbability(newValue, minValue);
+        } else {
+            return calculateLogPosteriorProbability(Math.log(newValue), Math.log(minValue));
+        }
+    }
+
+    public double getLogPosteriorCDF(double limit, boolean upper){
+        if(!log){
+            return calculateLogPosteriorCDF(limit, upper);
+        } else {
+            return calculateLogPosteriorCDF(Math.log(limit), upper);
+        }
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         //generally nothing to do
     }
@@ -73,7 +89,15 @@ public abstract class AbstractPeriodPriorDistribution extends AbstractModel impl
         return columns.toArray(new LogColumn[columns.size()]);
     }
 
+    public abstract void reset();
+
+    public abstract double calculateLogPosteriorProbability(double newValue, double minValue);
+
+    public abstract double calculateLogPosteriorCDF(double limit, boolean upper);
+
     public abstract double calculateLogLikelihood(double[] values);
+
+
 
 
 }

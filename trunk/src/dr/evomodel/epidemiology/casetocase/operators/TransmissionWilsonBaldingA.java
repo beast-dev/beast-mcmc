@@ -79,18 +79,18 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         Integer[] pd = possibleDestinations.toArray(new Integer[possibleDestinations.size()]);
 
         NodeRef j = tree.getNode(pd[MathUtils.nextInt(pd.length)]);
-        NodeRef k = tree.getParent(j);
+        NodeRef jP = tree.getParent(j);
 
-        while ((k != null && (tree.getNodeHeight(k) <= tree.getNodeHeight(i))) || (i == j)) {
+        while ((jP != null && (tree.getNodeHeight(jP) <= tree.getNodeHeight(i))) || (i == j)) {
             j = tree.getNode(pd[MathUtils.nextInt(pd.length)]);
-            k = tree.getParent(j);
+            jP = tree.getParent(j);
         }
 
         if (iP == tree.getRoot() || j == tree.getRoot()) {
             throw new OperatorFailedException("Root changes not allowed!");
         }
 
-        if (k == iP || j == iP || k == i) throw new OperatorFailedException("move failed");
+        if (jP == iP || j == iP || jP == i) throw new OperatorFailedException("Move failed");
 
         final NodeRef CiP = getOtherChild(tree, iP, i);
         NodeRef PiP = tree.getParent(iP);
@@ -125,7 +125,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
 
 
             AbstractCase jCase = branchMap.get(j.getNumber());
-            AbstractCase kCase = branchMap.get(k.getNumber());
+            AbstractCase kCase = branchMap.get(jP.getNumber());
 
             if(iPCase != jCase && iPCase != kCase){
                 throw new RuntimeException("TWBA misbehaving.");
@@ -138,7 +138,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         }
 
         newMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(j));
-        newRange = tree.getNodeHeight(k) - newMinAge;
+        newRange = tree.getNodeHeight(jP) - newMinAge;
         newAge = newMinAge + (MathUtils.nextDouble() * newRange);
         oldMinAge = Math.max(tree.getNodeHeight(i), tree.getNodeHeight(CiP));
         oldRange = tree.getNodeHeight(PiP) - oldMinAge;
@@ -162,25 +162,25 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         } else if (iP == tree.getRoot()) {
 
             // 1. remove edges <k, j>, <iP, CiP>, <PiP, iP>
-            tree.removeChild(k, j);
+            tree.removeChild(jP, j);
             tree.removeChild(iP, CiP);
 
             // 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
             tree.addChild(iP, j);
-            tree.addChild(k, iP);
+            tree.addChild(jP, iP);
 
             //CiP is the new root
             tree.setRoot(CiP);
 
         } else {
             // 1. remove edges <k, j>, <iP, CiP>, <PiP, iP>
-            tree.removeChild(k, j);
+            tree.removeChild(jP, j);
             tree.removeChild(iP, CiP);
             tree.removeChild(PiP, iP);
 
             // 2. add edges <k, iP>, <iP, j>, <PiP, CiP>
             tree.addChild(iP, j);
-            tree.addChild(k, iP);
+            tree.addChild(jP, iP);
             tree.addChild(PiP, CiP);
         }
 

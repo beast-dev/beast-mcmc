@@ -184,14 +184,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         explodeTree();
 
-        boolean recalculateTimings = false;
-
         coalescencesLogLikelihood = 0;
 
 
         for(AbstractCase aCase : outbreak.getCases()){
-
-            //todo weights (and remember if a weight is zero then the return value should be -INF)
 
             int number = outbreak.getCaseIndex(aCase);
 
@@ -206,9 +202,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     MaxTMRCACoalescent coalescent = new MaxTMRCACoalescent(treelet, demoModel,
                             treelet.getRootHeight()+treelet.getRootBranchLength());
                     partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
-                    recalculateCoalescentFlags[number] = false;
                     coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
-                    if(partitionTreeLogLikelihoods[number]==Double.POSITIVE_INFINITY){
+                    if(DEBUG && partitionTreeLogLikelihoods[number]==Double.POSITIVE_INFINITY){
                         debugOutputTree("infCoalescent.nex", false);
                         debugTreelet(treelet, aCase+"_partition.nex");
                     }

@@ -145,10 +145,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         boolean first = true;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             if (!first) {
-            writer.writeBlankLine();
+                writer.writeBlankLine();
             } else {
                 first = false;
-        }
+            }
             writeGeneralDataType(model, writer);
         }
 
@@ -191,15 +191,22 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
      * @param writer    XMLWriter
      */
     private void writeAttributePatterns(AbstractPartitionData partition, XMLWriter writer) {
-        writer.writeComment("Data pattern for discrete trait, '" + partition.getTraits().get(0).getName() + "'");
+        String traitName = partition.getTraits().get(0).getName();
+
+        writer.writeComment("Data pattern for discrete trait, '" + traitName + "'");
 
         String prefix = partition.getName() + ".";
         // <attributePatterns>
         writer.writeOpenTag(AttributePatternsParser.ATTRIBUTE_PATTERNS, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + "pattern"),
-                new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, partition.getTraits().get(0).getName())});
-        writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
-        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
+                new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, traitName)});
+        String prefix2 = "";
+        if (!options.hasIdenticalTaxa()) {
+            prefix2 = partition.getPartitionTreeModel().getPrefix();
+        }
+        writer.writeIDref(TaxaParser.TAXA, prefix2 + TaxaParser.TAXA);
+        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE,
+                partition.getPartitionSubstitutionModel().getName() + ".dataType");
         writer.writeCloseTag(AttributePatternsParser.ATTRIBUTE_PATTERNS);
     }
 
@@ -225,7 +232,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeDiscreteFrequencyModel(model, "", stateCount, true, writer);
+            writeDiscreteFrequencyModel(prefix, prefix, stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -244,7 +251,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeDiscreteFrequencyModel(model, "", stateCount, true, writer);
+            writeDiscreteFrequencyModel(prefix, prefix, stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -256,7 +263,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         }
 
-        if (model.isActivateBSSVS()) // If "BSSVS" is not activated, rateIndicator should not be there.
+        if (model.isActivateBSSVS()) // If "BSSVS" is not activated, rateIndicator should not b§e there.
             writeStatisticModel(model, writer);
     }
 
@@ -274,21 +281,20 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         return false;
     }
 
-    private void writeDiscreteFrequencyModel(PartitionSubstitutionModel model, String name, int stateCount, Boolean normalize, XMLWriter writer) {
-        String prefix = model.getName() + ".";
+    private void writeDiscreteFrequencyModel(String prefix, String dataTypePrefix, int stateCount, Boolean normalize, XMLWriter writer) {
         if (normalize == null) {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + name + FrequencyModelParser.FREQUENCY_MODEL)});
+                    new Attribute.Default<String>(XMLParser.ID, prefix + FrequencyModelParser.FREQUENCY_MODEL)});
         } else {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, prefix + name + FrequencyModelParser.FREQUENCY_MODEL),
+                    new Attribute.Default<String>(XMLParser.ID, prefix + FrequencyModelParser.FREQUENCY_MODEL),
                     new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
         }
 
-        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
+        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, dataTypePrefix + "dataType");
 
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-        writeParameter(prefix + name + "frequencies", stateCount, Double.NaN, Double.NaN, Double.NaN, writer);
+        writeParameter(prefix + "frequencies", stateCount, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
         writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
@@ -352,7 +358,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeTreeLikelihoods(XMLWriter writer,
-                                               DiscreteTraitsComponentOptions component) {
+                                      DiscreteTraitsComponentOptions component) {
         // generate tree likelihoods for discrete trait partitions
         if (options.hasDiscreteTraitPartition()) {
             writer.writeComment("Likelihood for tree given discrete trait data");
@@ -421,7 +427,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         if (substModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             int stateCount = options.getStatesForDiscreteModel(substModel).size();
             writer.writeComment("The root state frequencies");
-            writeDiscreteFrequencyModel(substModel, "root.", stateCount, true, writer);
+            writeDiscreteFrequencyModel(partition.getPrefix() + "root.", substModel.getName() + ".", stateCount, true, writer);
         }
 
         getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
@@ -506,7 +512,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeLogEntries(PartitionSubstitutionModel model, XMLWriter writer) {
         String prefix = model.getName() + ".";
 
-           writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");

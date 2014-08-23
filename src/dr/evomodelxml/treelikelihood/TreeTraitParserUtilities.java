@@ -51,6 +51,7 @@ public class TreeTraitParserUtilities {
     public static final String RANDOMIZE_LOWER = "lower";
     public static final String RANDOMIZE_UPPER = "upper";
 
+    public static final String ALLOW_IDENTICAL = "allowIdentical";
     public static final String JITTER = "jitter";
     public static final String WINDOW = "window";
     public static final String DUPLICATES = "duplicatesOnly";
@@ -137,6 +138,27 @@ public class TreeTraitParserUtilities {
             }
             return 0;
         }
+    }
+
+    public boolean hasIdenticalTraits(Parameter trait, int dim) {
+        int numTraits = trait.getDimension() / dim;
+
+        DoubleArray[] traitArray = new DoubleArray[numTraits];
+        for (int i = 0; i < numTraits; i++) {
+            double[] x = new double[dim];
+            for (int j = 0; j < dim; j++) {
+                x[j] = trait.getParameterValue(i * dim + j);
+            }
+            traitArray[i] = new DoubleArray(x, i);
+        }
+        Arrays.sort(traitArray);
+        // Mark duplicates
+        for (int i = 1; i < numTraits; i++) {
+            if (traitArray[i].compareTo(traitArray[i - 1]) == 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void jitter(Parameter trait, int dim, List<Integer> missingIndices, double[] window, boolean duplicates, boolean verbose) {

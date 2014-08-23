@@ -879,6 +879,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 like.check(check);
             }
 
+            if (!xo.hasAttribute(TreeTraitParserUtilities.ALLOW_IDENTICAL) &&
+                    utilities.hasIdenticalTraits(traitParameter, diffusionModel.getPrecisionmatrix().length)) {
+                throw new XMLParseException("For multivariate trait analyses, all trait values should be unique.\n" +
+                        "Check data or add random noise using 'jitter' option.");
+            }
+
             if (xo.hasChildNamed(ASCERTAINMENT)) {
                 XMLObject cxo = xo.getChild(ASCERTAINMENT);
                 Taxon taxon = (Taxon) cxo.getChild(Taxon.class);

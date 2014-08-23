@@ -411,7 +411,7 @@ public class BeastGenerator extends Generator {
                 }
             }
         } catch (Exception e) {
-            System.err.println(e);
+            e.printStackTrace(System.err);
             throw new GeneratorException("Taxon list generation has failed:\n" + e.getMessage());
         }
 
@@ -829,7 +829,7 @@ public class BeastGenerator extends Generator {
     public void writeDifferentTaxa(AbstractPartitionData dataPartition, XMLWriter writer) {
         TaxonList taxonList = dataPartition.getTaxonList();
 
-        String name = dataPartition.getName();
+        String name = dataPartition.getPartitionTreeModel().getName();
 
         writer.writeComment("gene name = " + name + ", ntax= " + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, name + "." + TaxaParser.TAXA)});

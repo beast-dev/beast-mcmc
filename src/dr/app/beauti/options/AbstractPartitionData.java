@@ -126,12 +126,12 @@ public abstract class AbstractPartitionData implements Serializable {
     }
 
     public int getTaxonCount() {
-        if (getTaxonList() != null) {
-            return getTaxonList().getTaxonCount();
-        } else {
-            // is a trait
-            return -1;
-        }
+        return getPartitionTreeModel().getTaxonCount();
+//        if (getTaxonList() != null) {
+//            return getTaxonList().getTaxonCount();
+//        } else {
+//            return getPartitionTreeModel().getTaxonCount();
+//        }
     }
 
     public boolean isCreatedFromTrait() {

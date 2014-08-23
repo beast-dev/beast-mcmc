@@ -35,6 +35,7 @@ import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
@@ -971,14 +972,18 @@ public class BeautiOptions extends ModelOptions {
                 taxa = partition.getTaxonList();
             } else {
                 final TaxonList taxa1 = partition.getTaxonList();
-                if (taxa1.getTaxonCount() != taxa.getTaxonCount()) {
-                    return false;
-                }
-                for (int k = 0; k < taxa1.getTaxonCount(); ++k) {
-                    if (taxa.getTaxonIndex(taxa1.getTaxonId(k)) == -1) {
+                if (taxa1 != null) {
+                    // Trait partitions are assumed to have the same taxon list as the
+                    // tree they are using and so will return null.
+                    if (taxa1.getTaxonCount() != taxa.getTaxonCount()) {
+                        return false;
+                    }
+                    for (int k = 0; k < taxa1.getTaxonCount(); ++k) {
+                        if (taxa.getTaxonIndex(taxa1.getTaxonId(k)) == -1) {
 //                for (Taxon taxon : taxa1) {
 //                    if (taxa.getTaxonIndex(taxon) == -1) { // this is wrong code
-                        return false;
+                            return false;
+                        }
                     }
                 }
             }
@@ -1010,18 +1015,20 @@ public class BeautiOptions extends ModelOptions {
      * @return  num of taxon
      */
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
-        if (partitionDataList == null) return 0;
+        if (partitionDataList == null || partitionDataList.size() == 0) return 0;
 
         List<String> taxonNameList = new ArrayList<String>();
         for (AbstractPartitionData partition : partitionDataList) {
-            for (Taxon t : partition.getTaxonList()) {
-                if (!taxonNameList.contains(t.getId())) {
-                    if (partition instanceof PartitionPattern) {
-                        Patterns patterns = ((PartitionPattern) partition).getPatterns();
-                        if (!patterns.isMasked(patterns.getTaxonIndex(t)))
+            if (partition.getTaxonList() != null) { // not a trait partition
+                for (Taxon t : partition.getTaxonList()) {
+                    if (!taxonNameList.contains(t.getId())) {
+                        if (partition instanceof PartitionPattern) {
+                            Patterns patterns = ((PartitionPattern) partition).getPatterns();
+                            if (!patterns.isMasked(patterns.getTaxonIndex(t)))
+                                taxonNameList.add(t.getId());
+                        } else {
                             taxonNameList.add(t.getId());
-                    } else {
-                        taxonNameList.add(t.getId());
+                        }
                     }
                 }
             }
@@ -1123,6 +1130,12 @@ public class BeautiOptions extends ModelOptions {
 //            getPartitionTreeModels().get(0).addPartitionData(newTrait);
         }
 
+        updateTraitParameters(partition);
+
+        return selRow; // only for trait panel
+    }
+
+    private void updateTraitParameters(AbstractPartitionData partition) {
         ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
         comp.createParameters(this);
 
@@ -1132,8 +1145,11 @@ public class BeautiOptions extends ModelOptions {
         AncestralStatesComponentOptions comp3 = (AncestralStatesComponentOptions) getComponentOptions(AncestralStatesComponentOptions.class);
         comp3.setReconstructAtNodes(partition, true);
         comp3.setReconstructAtMRCA(partition, false);
+    }
 
-        return selRow; // only for trait panel
+    public void renameTrait(AbstractPartitionData partition, String newName) {
+        partition.setName(newName);
+        updateTraitParameters(partition);
     }
 
     public void removeTrait(String traitName) {

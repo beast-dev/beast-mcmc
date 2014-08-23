@@ -45,6 +45,7 @@ import java.io.IOException;
  * @author Philippe Lemey
  * @author Andrew Rambaut
  */
+@Deprecated
 public class DiffusionRateStatistic extends Statistic.Abstract {
 
     public static final String DIFFUSION_RATE_STATISTIC = "diffusionRateStatistic";

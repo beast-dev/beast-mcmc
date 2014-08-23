@@ -83,19 +83,19 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
     }
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
-        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
-            String prefix = partitionData.getName() + ".";
+        for (PartitionSubstitutionModel substitutionModel : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            String prefix = substitutionModel.getName() + ".";
 
-            if (partitionData.getPartitionSubstitutionModel().isActivateBSSVS()) {
+            if (substitutionModel.isActivateBSSVS()) {
                 modelOptions.getParameter(prefix + "indicators");
                 Parameter nonZeroRates = modelOptions.getParameter(prefix + "nonZeroRates");
 
-                Set<String> states = partitionData.getPartitionSubstitutionModel().getDiscreteStateSet();
+                Set<String> states = substitutionModel.getDiscreteStateSet();
                 int K = states.size();
-                if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
+                if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
                     nonZeroRates.mean = Math.log(2); // mean = 0.693 and offset = K-1
                     nonZeroRates.offset = K - 1;
-                } else if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+                } else if (substitutionModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
                     nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
                     nonZeroRates.offset = 0.0;
                 } else {
@@ -107,8 +107,12 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
             params.add(modelOptions.getParameter(prefix + "frequencies"));
             params.add(modelOptions.getParameter(prefix + "rates"));
+        }
 
-            if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
+        for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
+            String prefix = partition.getPrefix();
+
+            if (partition.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
                 params.add(modelOptions.getParameter(prefix + "root.frequencies"));
             }
 
@@ -121,18 +125,19 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
     }
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
-        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
-            String prefix = partitionData.getName() + ".";
+        for (PartitionSubstitutionModel substitutionModel : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            String prefix = substitutionModel.getName() + ".";
 
 //            ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed
             ops.add(modelOptions.getOperator(prefix + "rates"));
 
-            if (partitionData.getPartitionSubstitutionModel().isActivateBSSVS()) {
+            if (substitutionModel.isActivateBSSVS()) {
                 ops.add(modelOptions.getOperator(prefix + "indicators"));
             }
-
+        }
+        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
-                ops.add(modelOptions.getOperator(prefix + "root.frequencies"));
+                ops.add(modelOptions.getOperator(partitionData.getName() + ".root.frequencies"));
             }
         }
     }

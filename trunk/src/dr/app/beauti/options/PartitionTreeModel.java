@@ -224,4 +224,8 @@ public class PartitionTreeModel extends PartitionOptions {
     public int getDimension() { // n-1
         return options.getTaxonCount(options.getDataPartitions(this)) - 1;
     }
+
+    public int getTaxonCount() {
+        return options.getTaxonCount(options.getDataPartitions(this));
+    }
 }

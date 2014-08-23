@@ -312,8 +312,9 @@ public class BeautiFrame extends DocumentFrame {
             mcmcPanel.setOptions(options);
 
             setStatusMessage();
-        } catch (IllegalArgumentException illegEx) {
-            JOptionPane.showMessageDialog(this, illegEx.getMessage(),
+        } catch (IllegalArgumentException iae) {
+            iae.printStackTrace(System.err);
+            JOptionPane.showMessageDialog(this, iae.getMessage(),
                     "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
         }
 
@@ -346,8 +347,9 @@ public class BeautiFrame extends DocumentFrame {
             priorsPanel.getOptions(options);
             operatorsPanel.getOptions(options);
             mcmcPanel.getOptions(options);
-        } catch (IllegalArgumentException illegEx) {
-            JOptionPane.showMessageDialog(this, illegEx.getMessage(),
+        } catch (IllegalArgumentException iae) {
+            iae.printStackTrace(System.err);
+            JOptionPane.showMessageDialog(this, iae.getMessage(),
                     "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
         }
     }
@@ -547,6 +549,7 @@ public class BeautiFrame extends DocumentFrame {
                             JOptionPane.ERROR_MESSAGE);
                     return false;
                 } catch (Exception ex) {
+                    ex.printStackTrace(System.err);
                     JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
@@ -702,6 +705,7 @@ public class BeautiFrame extends DocumentFrame {
         try {
             generator.checkOptions();
         } catch (Generator.GeneratorException ge) {
+            ge.printStackTrace(System.err);
             JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid BEAUti setting : ",
                     JOptionPane.ERROR_MESSAGE);
             if (ge.getSwitchToPanel() != null) {
@@ -723,14 +727,17 @@ public class BeautiFrame extends DocumentFrame {
                 generator.generateXML(file);
 
             } catch (IOException ioe) {
+                ioe.printStackTrace(System.err);
                 JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
                         "Unable to generate file", JOptionPane.ERROR_MESSAGE);
                 return false;
             } catch (Generator.GeneratorException e) {
+                e.printStackTrace(System.err);
                 JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
                         "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
                 return false;
             } catch (Exception e) {
+                e.printStackTrace(System.err);
                 JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
                         "Unable to generate file", JOptionPane.ERROR_MESSAGE);
                 return false;

@@ -215,6 +215,7 @@ public class BeastMain {
                     dome.getMessage());
             throw new RuntimeException("Terminate");
         } catch (dr.xml.XMLParseException pxe) {
+            pxe.printStackTrace(System.err);
             if (pxe.getMessage() != null && pxe.getMessage().equals("Unknown root document element, beauti")) {
                 infoLogger.severe("Error running file: " + fileName);
                 infoLogger.severe(
@@ -721,11 +722,14 @@ public class BeastMain {
         try {
             new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers, useMC3, chainTemperatures, swapChainsEvery);
         } catch (RuntimeException rte) {
+            rte.printStackTrace(System.err);
             if (window) {
                 System.out.println();
                 System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
                 // logger.severe will throw a RTE but we want to keep the console visible
             } else {
+                System.out.flush();
+                System.err.flush();
                 System.exit(1);
             }
         }
@@ -735,6 +739,8 @@ public class BeastMain {
         }
 
         if (!window) {
+            System.out.flush();
+            System.err.flush();
             System.exit(0);
         }
     }

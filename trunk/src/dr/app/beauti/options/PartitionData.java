@@ -98,9 +98,10 @@ public class PartitionData extends AbstractPartitionData {
 
     public TaxonList getTaxonList() {
         if (traits != null) {
-            // if this is a trait then just give the complete taxon list (taxa without specified
-            // traits are treated as missing data.
-            return options.taxonList;
+//            // if this is a trait then just give the complete taxon list (taxa without specified
+//            // traits are treated as missing data.
+//            return options.taxonList;
+            return null;
         }
         return getAlignment();
     }

@@ -715,7 +715,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                         return;
                     }
                     if (name.length() > 0) {
-                        partition.setName(name);
+                        options.renameTrait(partition, name);
                     }
                     break;
                 case 5:

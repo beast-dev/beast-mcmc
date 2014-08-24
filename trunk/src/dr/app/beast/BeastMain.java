@@ -322,13 +322,15 @@ public class BeastMain {
                         new Arguments.Option("java", "Use Java only, no native implementations"),
                         new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 1E-6)"),
 
-                        new Arguments.Option("beagle", "Use beagle library if available"),
+                        new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
+                        new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
                         new Arguments.Option("beagle_CPU", "BEAGLE: use CPU instance"),
                         new Arguments.Option("beagle_GPU", "BEAGLE: use GPU instance if available"),
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
+                        new Arguments.Option("beagle_SSE_off", "BEAGLE: turn off use of SSE extensions"),
                         new Arguments.Option("beagle_cuda", "BEAGLE: use CUDA parallization if available"),
                         new Arguments.Option("beagle_opencl", "BEAGLE: use OpenCL parallization if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
@@ -448,20 +450,7 @@ public class BeastMain {
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
 
         // if any beagle flag is specified then use beagle...
-        boolean useBeagle = arguments.hasOption("beagle") ||
-                arguments.hasOption("beagle_CPU") ||
-                arguments.hasOption("beagle_GPU") ||
-                arguments.hasOption("beagle_SSE") ||
-                arguments.hasOption("beagle_cuda") ||
-                arguments.hasOption("beagle_opencl") ||
-                arguments.hasOption("beagle_double") ||
-                arguments.hasOption("beagle_single") ||
-                arguments.hasOption("beagle_order") ||
-                arguments.hasOption("beagle_scaling") ||
-                arguments.hasOption("beagle_rescale") ||
-                arguments.hasOption("beagle_instances") ||
-                arguments.hasOption("beagle_async") ||
-                beagleShowInfo;
+        boolean useBeagle = !arguments.hasOption("beagle_off");
 
         if (arguments.hasOption("beagle_CPU")) {
             beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
@@ -475,7 +464,7 @@ public class BeastMain {
         if (arguments.hasOption("beagle_opencl")) {
             beagleFlags |= BeagleFlag.FRAMEWORK_OPENCL.getMask();
         }
-        if (arguments.hasOption("beagle_SSE")) {
+        if (!arguments.hasOption("beagle_SSE_off")) {
             beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
         }
         if (arguments.hasOption("beagle_double")) {
@@ -642,7 +631,7 @@ public class BeastMain {
 
             if (BeagleInfo.getVersion().startsWith("1.")) {
                 System.err.println("WARNING: You are currenly using BEAGLE v1.x. For best performance and compatibility\n" +
-                        "with models in BEAST, please upgrade to BEAGLE v2.0 at http://beagle-lib.googlecode.com/\n");
+                        "with models in BEAST, please upgrade to BEAGLE v2.x at http://beagle-lib.googlecode.com/\n");
             }
         }
 

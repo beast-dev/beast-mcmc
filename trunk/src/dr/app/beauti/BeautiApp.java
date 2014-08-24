@@ -239,11 +239,14 @@ public class BeautiApp extends MultiDocApplication {
 
                 final String nameString = "BEAUti";
                 final String versionString = version.getVersionString();
-                String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
-                        "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Utility<br>" +
+
+                String aboutString = "<html>" +
+                        "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                        "<center>" +
+                        "<div style=\"font-size:13\"><p>Bayesian Evolutionary Analysis Utility<br>" +
                         "Version " + versionString + ", " + version.getDateString() + "</p>" +
                         "<p>by Alexei J. Drummond, Andrew Rambaut, Marc A. Suchard and Walter Xie</p></div>" +
-                        "<hr><div style=\"font-size:10;\">Part of the BEAST package:" +
+                        "<hr><div style=\"font-size:11;\">Part of the BEAST package:" +
                         version.getHTMLCredits() +
                         "</div></center></div></html>";
 

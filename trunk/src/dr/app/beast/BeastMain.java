@@ -59,8 +59,8 @@ public class BeastMain {
     static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
 
-        public BeastConsoleApp(String nameString, String aboutString, javax.swing.Icon icon) throws IOException {
-            super(nameString, aboutString, icon, false);
+        public BeastConsoleApp(String nameString, String titleString, String aboutString, javax.swing.Icon icon) throws IOException {
+            super(nameString, titleString, aboutString, icon, false);
             getDefaultFrame().setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         }
 
@@ -550,15 +550,20 @@ public class BeastMain {
 
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
+            String titleString = "<html>" +
+                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
+                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
+                    "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
+                    "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                    "</div></html>";
+
             String aboutString = "<html>" +
                     "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
                     "<center>" +
-                    "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
-                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
                     version.getHTMLCredits() +
                     "</div></center></div></html>";
 
-            consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
+            consoleApp = new BeastConsoleApp(nameString, titleString, aboutString, icon);
             consoleApp.initialize();
 
         }
@@ -569,8 +574,12 @@ public class BeastMain {
 
         if (options && !beagleShowInfo) {
 
-            String titleString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
-                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p></center></html>";
+            String titleString = "<html>" +
+                    "<div style=\"font: HelveticaNeue, Helvetica, Arial, sans-serif\">" +
+                    "<p style=\"font-weight: 100; font-size: 42px\">BEAST</p>" +
+                    "<p style=\"font-weight: 200; font-size: 12px\">Bayesian Evolutionary Analysis Sampling Trees</p>" +
+                    "<p style=\"font-weight: 300; font-size: 11px\">Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                    "</div></html>";
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);

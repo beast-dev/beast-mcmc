@@ -550,13 +550,17 @@ public class BeastMain {
 
             javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
-            String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
+            String aboutString = "<html>" +
+                    "<div style=\"font-family:HelveticaNeue-Light, 'Helvetica Neue Light', Helvetica, Arial, 'Lucida Grande',sans-serif; font-weight: 100\">" +
+                    "<center>" +
                     "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
                     "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
                     version.getHTMLCredits() +
                     "</div></center></div></html>";
 
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
+            consoleApp.initialize();
+
         }
 
         printTitle();

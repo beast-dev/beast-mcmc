@@ -66,7 +66,8 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             menu.add(subMenu);
         }
 
-        if (frame instanceof BeautiFrame) {
+
+        if (frame != null && frame instanceof BeautiFrame) {
             menu.addSeparator();
 
             item = new JMenuItem(frame.getImportAction());
@@ -121,23 +122,48 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
 
         menu.addSeparator();
 
-        item = new JMenuItem(frame.getCloseWindowAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+        if (frame != null) {
+            item = new JMenuItem(frame.getCloseWindowAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
+            menu.add(item);
 
-        item = new JMenuItem(frame.getSaveAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+            item = new JMenuItem(frame.getSaveAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+            menu.add(item);
 
-        item = new JMenuItem(frame.getSaveAsAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
-        menu.add(item);
+            item = new JMenuItem(frame.getSaveAsAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
+            menu.add(item);
 
-        menu.addSeparator();
+            menu.addSeparator();
 
-        item = new JMenuItem(frame.getPrintAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+            item = new JMenuItem(frame.getPrintAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK));
+            menu.add(item);
+        } else {
+            item = new JMenuItem("Close");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Save");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Save As...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            menu.addSeparator();
+
+            item = new JMenuItem("Print...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+        }
 
         item = new JMenuItem(application.getPageSetupAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));

@@ -41,6 +41,7 @@ import dr.evomodel.substmodel.LinearBiasModel;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.LocalClockModelParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
@@ -185,6 +186,11 @@ public class TreeLikelihoodGenerator extends Generator {
                 writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, clockModel.getPrefix()
                         + BranchRateModel.BRANCH_RATES);
                 break;
+            case FIXED_LOCAL_CLOCK:
+                writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, clockModel.getPrefix()
+                        + BranchRateModel.BRANCH_RATES);
+                break;
+
 
             case AUTOCORRELATED:
                 throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");

@@ -34,6 +34,7 @@ public enum OldClockType {
     UNCORRELATED_CAUCHY("Cauchy relaxed clock (Uncorrelated)", ClockType.UNCORRELATED, ClockDistributionType.CAUCHY),
     UNCORRELATED_EXPONENTIAL("Exponential relaxed clock (Uncorrelated)", ClockType.UNCORRELATED, ClockDistributionType.EXPONENTIAL),
     RANDOM_LOCAL_CLOCK("Random local clock", ClockType.RANDOM_LOCAL_CLOCK),
+    FIXED_LOCAL_CLOCK("Fixed local clock", ClockType.FIXED_LOCAL_CLOCK),
     AUTOCORRELATED("Autocorrelated relaxed clock", ClockType.AUTOCORRELATED, ClockDistributionType.LOGNORMAL);
 
     OldClockType(String displayName, ClockType clockType) {
@@ -64,6 +65,8 @@ public enum OldClockType {
                 return STRICT_CLOCK;
             case RANDOM_LOCAL_CLOCK:
                 return RANDOM_LOCAL_CLOCK;
+            case FIXED_LOCAL_CLOCK:
+                return FIXED_LOCAL_CLOCK;
             case UNCORRELATED:
                 switch (clockDistributionType) {
                     case LOGNORMAL:

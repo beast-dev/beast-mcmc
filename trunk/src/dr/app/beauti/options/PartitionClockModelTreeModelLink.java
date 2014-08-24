@@ -27,6 +27,7 @@ import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.Taxa;
 import dr.evomodelxml.tree.RateStatisticParser;
 
 import java.util.List;
@@ -220,6 +221,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //                    break;
 
                     case RANDOM_LOCAL_CLOCK:
+                    case FIXED_LOCAL_CLOCK:
                         op = getOperator("upDownRateHeights");
                         op.setClockModelGroup(model.getClockModelGroup());
                         ops.add(op);

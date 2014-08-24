@@ -25,6 +25,7 @@
 
 package dr.app.beauti;
 
+import jam.mac.MacEditMenuFactory;
 import jam.mac.MacHelpMenuFactory;
 import jam.mac.MacWindowMenuFactory;
 import jam.framework.DefaultMenuBarFactory;
@@ -39,7 +40,7 @@ public class BeautiMenuBarFactory extends DefaultMenuBarFactory {
 	public BeautiMenuBarFactory() {
 		if (OSType.isMac()) {
 			registerMenuFactory(new BeautiMacFileMenuFactory());
-			registerMenuFactory(new DefaultEditMenuFactory());
+			registerMenuFactory(new MacEditMenuFactory());
 			registerMenuFactory(new MacWindowMenuFactory());
 			registerMenuFactory(new MacHelpMenuFactory());
 		} else {

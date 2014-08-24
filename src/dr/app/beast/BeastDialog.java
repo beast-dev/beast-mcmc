@@ -187,7 +187,7 @@ public class BeastDialog {
 
         dialog.setVisible(true);
 
-        return optionPane.getValue().equals("Run");
+        return (optionPane.getValue() != null ? optionPane.getValue().equals("Run") : false);
     }
 
     public long getSeed() {

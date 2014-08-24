@@ -70,10 +70,19 @@ public class BeastDialog {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setOpaque(false);
 
+        final OptionsPanel optionPanel3 = new OptionsPanel(0, 3);
+
+        final JLabel titleIcon = new JLabel();
+        titleIcon.setIcon(icon);
+
         final JLabel titleText = new JLabel(titleString);
-        titleText.setIcon(icon);
-        optionPanel.addSpanningComponent(titleText);
-        titleText.setFont(new Font("sans-serif", 0, 12));
+        optionPanel3.addComponent(titleText);
+
+//        final JButton aboutButton = new JButton("About BEAST...");
+//        //aboutButton.setAction();
+//        optionPanel3.addComponent(aboutButton);
+
+        optionPanel.addComponents(titleIcon, optionPanel3);
 
         final JButton inputFileButton = new JButton("Choose File...");
         final JTextField inputFileNameText = new JTextField("not selected", 16);
@@ -100,6 +109,12 @@ public class BeastDialog {
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.add(inputFileNameText, BorderLayout.CENTER);
         panel1.add(inputFileButton, BorderLayout.EAST);
+        inputFileNameText.setToolTipText(
+                "<html>Drag a BEAST XML file here or use the button to<br>" +
+                        "select one from a file dialog box.</html>");
+        inputFileButton.setToolTipText(
+                "<html>Drag a BEAST XML file here or use the button to<br>" +
+                        "select one from a file dialog box.</html>");
         optionPanel.addComponentWithLabel("BEAST XML File: ", panel1);
 
         Color focusColor = UIManager.getColor("Focus.color");
@@ -111,12 +126,27 @@ public class BeastDialog {
             }   // end filesDropped
         }); // end FileDrop.Listener
 
+        overwriteCheckBox.setToolTipText(
+                "<html>Specify whether BEAST will overwrite existing log files<br>" +
+                      "with the same name.</html>");
         optionPanel.addComponent(overwriteCheckBox);
 
         optionPanel.addSeparator();
 
         seedText.setColumns(12);
+        seedText.setToolTipText(
+                "<html>Specify a particular random number seed to replicate<br>" +
+                "precisely the sequence of steps in the MCMC chain. By<br>" +
+                "default this uses system information to provide a new<br>" +
+                        "seed each run.</html>");
+
         optionPanel.addComponentWithLabel("Random number seed: ", seedText);
+
+        threadsCombo.setToolTipText(
+                "<html>Specify how large a thread pool to use.<br>" +
+                      "In most circumstances this should be set to 'automatic'<br>" +
+                      "but in some circumstances it may be desirable to restict<br>" +
+                      "the number of cores being used. 0 will turn off threading</html>");
 
         optionPanel.addComponentWithLabel("Thread pool size: ", threadsCombo);
 
@@ -125,11 +155,11 @@ public class BeastDialog {
         optionPanel.addSpanningComponent(beagleCheckBox);
         beagleCheckBox.setSelected(true);
 
-        final OptionsPanel optionPanel1 = new OptionsPanel(0, 12);
+        final OptionsPanel optionPanel1 = new OptionsPanel(0, 6);
 //        optionPanel1.setBorder(BorderFactory.createEmptyBorder());
         optionPanel1.setBorder(new TitledBorder(""));
 
-        OptionsPanel optionPanel2 = new OptionsPanel(0, 12);
+        OptionsPanel optionPanel2 = new OptionsPanel(0, 3);
         optionPanel2.setBorder(BorderFactory.createEmptyBorder());
         final JLabel label1 = optionPanel2.addComponentWithLabel("Prefer use of: ", beagleResourceCombo);
         optionPanel2.addComponent(beagleSSECheckBox);
@@ -137,11 +167,12 @@ public class BeastDialog {
         final JLabel label2 = optionPanel2.addComponentWithLabel("Prefer precision: ", beaglePrecisionCombo);
         final JLabel label3 = optionPanel2.addComponentWithLabel("Rescaling scheme: ", beagleScalingCombo);
         optionPanel2.addComponent(beagleInfoCheckBox);
+        optionPanel2.setBorder(BorderFactory.createEmptyBorder());
 
         optionPanel1.addComponent(optionPanel2);
 
         final JEditorPane beagleInfo = new JEditorPane("text/html",
-                "<html><div style=\"font-family:sans-serif;font-size:12;\"><p>BEAGLE is a high-performance phylogenetic library that can make use of<br>" +
+                "<html><div style=\"font-family:'helvetica neue light',helvetica,sans-serif;font-size:12;\"><p>BEAGLE is a high-performance phylogenetic library that can make use of<br>" +
                         "additional computational resources such as graphics boards. It must be<br>" +
                         "downloaded and installed independently of BEAST:</p>" +
                         "<pre><a href=\"http://beagle-lib.googlecode.com/\">http://beagle-lib.googlecode.com/</a></pre></div>");
@@ -149,7 +180,7 @@ public class BeastDialog {
         beagleInfo.setEditable(false);
         beagleInfo.addHyperlinkListener(new SimpleLinkListener());
         optionPanel1.addComponent(beagleInfo);
-
+        optionPanel1.setBorder(BorderFactory.createEmptyBorder());
         optionPanel.addSpanningComponent(optionPanel1);
 
         beagleInfoCheckBox.setEnabled(false);

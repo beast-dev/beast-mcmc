@@ -26,11 +26,15 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.LocalClockModel;
 import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.LocalClockModelParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
@@ -414,6 +418,87 @@ public class BranchRatesModelGenerator extends Generator {
 
                 break;
 
+            case FIXED_LOCAL_CLOCK:
+                writer.writeComment("The a priori local clock model (Yoder & Yang, 2000)");
+
+                for (PartitionTreeModel tree : activeTrees) {
+                    treePrefix = tree.getPrefix();
+
+                    PartitionClockModelTreeModelLink clockTree = options.getPartitionClockTreeLink(model, tree);
+                    if (clockTree == null) {
+                        throw new IllegalArgumentException("Cannot find PartitionClockTreeLink, given clock model = " + model.getName()
+                                + ", tree model = " + tree.getName());
+                    }
+
+                    writer.writeOpenTag(
+                            LocalClockModelParser.LOCAL_CLOCK_MODEL,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + BranchRateModel.BRANCH_RATES)                        }
+                    );
+
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+
+                    writeParameter(LocalClockModelParser.RATE, "clock.rate", model, writer);
+
+                    for (Taxa taxonSet : options.taxonSets) {
+                        if (options.taxonSetsMono.get(taxonSet)) {
+                            String parameterName = taxonSet.getId() + ".rate";
+                            writer.writeOpenTag(
+                                    LocalClockModelParser.CLADE,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("includeStem", options.taxonSetsIncludeStem.get(taxonSet).toString())
+                                    }
+                            );
+                            writeParameter(parameterName, model, writer);
+                        }
+                    }
+
+                    writer.writeCloseTag(LocalClockModelParser.LOCAL_CLOCK_MODEL);
+
+                    writer.writeText("");
+
+                    writer.writeOpenTag(
+                            RateStatisticParser.RATE_STATISTIC,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
+                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
+                                    new Attribute.Default<String>("mode", "mean"),
+                                    new Attribute.Default<String>("internal", "true"),
+                                    new Attribute.Default<String>("external", "true")
+                            }
+                    );
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                    writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, modelPrefix + BranchRateModel.BRANCH_RATES);
+                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+
+                    writer.writeText("");
+                    writer.writeOpenTag(
+                            RateStatisticParser.RATE_STATISTIC,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                                    new Attribute.Default<String>("mode", RateStatisticParser.COEFFICIENT_OF_VARIATION),
+                                    new Attribute.Default<String>("internal", "true"),
+                                    new Attribute.Default<String>("external", "true")
+                            }
+                    );
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                    writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, modelPrefix + BranchRateModel.BRANCH_RATES);
+                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+
+                    writer.writeText("");
+                    writer.writeOpenTag(
+                            RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance"),
+                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "covariance")
+                            }
+                    );
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                    writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, modelPrefix + BranchRateModel.BRANCH_RATES);
+                    writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
+                }
+                break;
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }
@@ -430,6 +515,7 @@ public class BranchRatesModelGenerator extends Generator {
         switch (model.getClockType()) {
             case STRICT_CLOCK:
             case RANDOM_LOCAL_CLOCK:
+            case FIXED_LOCAL_CLOCK:
                 return modelPrefix + "clock.rate";
 
             case UNCORRELATED:
@@ -466,6 +552,16 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
                 break;
 
+            case FIXED_LOCAL_CLOCK:
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                for (Taxa taxonSet : options.taxonSets) {
+                    if (options.taxonSetsMono.get(taxonSet)) {
+                        String parameterName = taxonSet.getId() + ".rate";
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + parameterName);
+                    }
+                }
+                break;
+
             case UNCORRELATED:
                 switch (model.getClockDistributionType()) {
                     case LOGNORMAL:
@@ -499,6 +595,7 @@ public class BranchRatesModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
+            case FIXED_LOCAL_CLOCK:
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);

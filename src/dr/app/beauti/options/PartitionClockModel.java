@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
+import dr.evolution.util.Taxa;
 
 import java.util.List;
 
@@ -86,9 +87,9 @@ public class PartitionClockModel extends PartitionOptions {
     protected void initModelParametersAndOpererators() {
         rate = 1.0;
 
-        if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR) {
-            new Parameter.Builder("clock.rate", "substitution rate").
-                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+        if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR || dataLength <= 10) { // TODO Discuss threshold
+            new Parameter.Builder("clock.rate", "substitution rate")
+                    .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                     .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
             new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
@@ -98,32 +99,18 @@ public class PartitionClockModel extends PartitionOptions {
             new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
                     prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                     .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
-
         } else {
-            if (dataLength <= 10) { // TODO Discuss threshold
-                new Parameter.Builder("clock.rate", "substitution rate").prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+            new Parameter.Builder("clock.rate", "substitution rate").
+                    prior(PriorType.UNDEFINED).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
-                new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
-                        prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+            new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
+                    prior(PriorType.UNDEFINED).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
 
-                new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
-                        prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
-            } else {
-                new Parameter.Builder("clock.rate", "substitution rate").
-                        prior(PriorType.UNDEFINED).initial(rate)
-                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
-
-                new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
-                        prior(PriorType.UNDEFINED).initial(rate)
-                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
-
-                new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
-                        prior(PriorType.UNDEFINED).initial(rate)
-                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
-            }
+            new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
+                    prior(PriorType.UNDEFINED).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
         }
 
         new Parameter.Builder(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev").
@@ -164,6 +151,21 @@ public class PartitionClockModel extends PartitionOptions {
                     getParameter(ClockType.LOCAL_CLOCK + ".changes");
                     params.add(getParameter("rateChanges"));
                     params.add(getParameter(ClockType.LOCAL_CLOCK + ".relativeRates"));
+                    break;
+
+                case FIXED_LOCAL_CLOCK:
+                    for (Taxa taxonSet : options.taxonSets) {
+                        if (options.taxonSetsMono.get(taxonSet)) {
+                            String parameterName = taxonSet.getId() + ".rate";
+                            if (!hasParameter(parameterName)) {
+                                new Parameter.Builder(parameterName, "substitution rate")
+                                        .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+                                createScaleOperator(parameterName, demoTuning, rateWeights);
+                            }
+                            params.add(getParameter(taxonSet.getId() + ".rate"));
+                        }
+                    }
                     break;
 
                 case UNCORRELATED:
@@ -231,6 +233,7 @@ public class PartitionClockModel extends PartitionOptions {
         switch (clockType) {
             case STRICT_CLOCK:
             case RANDOM_LOCAL_CLOCK:
+            case FIXED_LOCAL_CLOCK:
                 rateParam = getParameter("clock.rate");
                 break;
 
@@ -282,6 +285,15 @@ public class PartitionClockModel extends PartitionOptions {
                     case RANDOM_LOCAL_CLOCK:
                         ops.add(getOperator("clock.rate"));
                         addRandomLocalClockOperators(ops);
+                        break;
+
+                    case FIXED_LOCAL_CLOCK:
+                        ops.add(getOperator("clock.rate"));
+                        for (Taxa taxonSet : options.taxonSets) {
+                            if (options.taxonSetsMono.get(taxonSet)) {
+                                ops.add(getOperator(taxonSet.getId() + ".rate"));
+                            }
+                        }
                         break;
 
                     case UNCORRELATED:
@@ -342,6 +354,13 @@ public class PartitionClockModel extends PartitionOptions {
                         addRandomLocalClockOperators(ops);
                         break;
 
+                    case FIXED_LOCAL_CLOCK:
+                        for (Taxa taxonSet : options.taxonSets) {
+                            if (options.taxonSetsMono.get(taxonSet)) {
+                                ops.add(getOperator(taxonSet.getId() + ".rate"));
+                            }
+                        }
+                        break;
 
                     default:
                         throw new IllegalArgumentException("Unknown clock model");

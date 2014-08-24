@@ -124,6 +124,10 @@ public abstract class PartitionOptions extends ModelOptions {
         return parameter;
     }
 
+    public boolean hasParameter(String name) {
+        return parameters.get(name) != null;
+    }
+
     public Operator getOperator(String name) {
 
         Operator operator = operators.get(name);

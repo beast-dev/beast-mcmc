@@ -314,6 +314,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 OldClockType.UNCORRELATED_EXPONENTIAL,
 //                OldClockType.AUTOCORRELATED
                 OldClockType.RANDOM_LOCAL_CLOCK,
+                OldClockType.FIXED_LOCAL_CLOCK
         })));
 
         col = clockModelTable.getColumnModel().getColumn(4);

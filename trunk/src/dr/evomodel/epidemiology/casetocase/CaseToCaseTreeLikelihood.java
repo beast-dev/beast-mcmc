@@ -807,6 +807,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return infectionTimeBranchPositions;
     }
 
+    public Parameter getInfectiousnessPositions(){
+        return infectiousTimePositions;
+    }
+
     public double getInfectiousTime(AbstractCase thisCase){
         if(!hasLatentPeriods){
             return getInfectionTime(thisCase);

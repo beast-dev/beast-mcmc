@@ -26,7 +26,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     private final boolean resampleInfectionTimes;
 
-    static final boolean DEBUG = false;
+    private static final boolean DEBUG = false;
 
     public InfectionBranchMovementOperator(CaseToCaseTreeLikelihood c2cLikelihood, double weight,
                                            boolean resampleInfectionTimes){

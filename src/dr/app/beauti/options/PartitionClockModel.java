@@ -159,8 +159,8 @@ public class PartitionClockModel extends PartitionOptions {
                             String parameterName = taxonSet.getId() + ".rate";
                             if (!hasParameter(parameterName)) {
                                 new Parameter.Builder(parameterName, "substitution rate")
-                                        .prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
-                                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+                                        .prior(PriorType.UNDEFINED).initial(rate)
+                                        .isCMTCRate(false).isNonNegative(true).partitionOptions(this).build(parameters);
                                 createScaleOperator(parameterName, demoTuning, rateWeights);
                             }
                             params.add(getParameter(taxonSet.getId() + ".rate"));

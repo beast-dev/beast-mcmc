@@ -140,8 +140,10 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
 
         Set<Taxon> taxonSet = new HashSet<Taxon>();
         for (AbstractPartitionData data : options.getDataPartitions(treeModel)) {
-            for (Taxon taxon : data.getTaxonList()) {
-                taxonSet.add(taxon);
+            if (data.getTaxonList() != null) {
+                for (Taxon taxon : data.getTaxonList()) {
+                    taxonSet.add(taxon);
+                }
             }
         }
 

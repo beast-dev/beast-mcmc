@@ -36,6 +36,7 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.LocalClockModelParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
@@ -582,6 +583,10 @@ public class LogGenerator extends Generator {
                         id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
 
+                    case FIXED_LOCAL_CLOCK:
+                        tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
+                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                        break;
                     case AUTOCORRELATED:
                         tag = ACLikelihoodParser.AC_LIKELIHOOD;
                         id =  options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES;
@@ -619,6 +624,12 @@ public class LogGenerator extends Generator {
                 case RANDOM_LOCAL_CLOCK:
                     writeTreeTrait(writer, RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
                             model.getPrefix() + BranchRateModel.BRANCH_RATES,
+                            BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
+                    break;
+
+                case FIXED_LOCAL_CLOCK:
+                    writeTreeTrait(writer, LocalClockModelParser.LOCAL_CLOCK_MODEL,
+                            options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
                     break;
 

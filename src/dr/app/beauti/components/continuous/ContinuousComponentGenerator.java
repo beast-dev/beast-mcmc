@@ -6,6 +6,7 @@ import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxon;
+import dr.evomodel.continuous.ContinuousDiffusionStatistic;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
@@ -467,7 +468,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref("matrixParameter", precisionMatrixId);
         writer.writeCloseTag("matrixInverse");
 
-        writer.writeOpenTag("continuousDiffusionStatistic", (partitionData.getPartitionSubstitutionModel().isLatitudeLongitude() ?
+        writer.writeOpenTag(ContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC, (partitionData.getPartitionSubstitutionModel().isLatitudeLongitude() ?
                 new Attribute[] {
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
                         new Attribute.Default<String>("greatCircleDistance", "true")
@@ -476,7 +477,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "diffusionRate"),
                 }));
         writer.writeIDref("multivariateTraitLikelihood", traitLikelihoodId);
-        writer.writeCloseTag("continuousDiffusionStatistic");
+        writer.writeCloseTag(ContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC);
     }
 
     private void writePrecisionGibbsOperators(XMLWriter writer,
@@ -514,7 +515,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 //            writer.writeIDref("productStatistic", prefix + "treeLengthPrecision2");
             }
             writer.writeIDref("matrixInverse", prefix + "varCovar");
-            writer.writeIDref("diffusionRateStatistic", prefix + "diffusionRate");
+            writer.writeIDref(ContinuousDiffusionStatistic.CONTINUOUS_DIFFUSION_STATISTIC, prefix + "diffusionRate");
 
             if (component.useLambda(model)) {
                 writer.writeIDref("parameter", model.getName() + "." + ContinuousComponentOptions.LAMBDA);

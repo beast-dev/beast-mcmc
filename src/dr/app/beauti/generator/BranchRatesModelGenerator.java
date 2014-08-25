@@ -41,6 +41,7 @@ import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.tree.RateCovarianceStatisticParser;
 import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
+import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
@@ -450,6 +451,8 @@ public class BranchRatesModelGenerator extends Generator {
                                     }
                             );
                             writeParameter(parameterName, model, writer);
+                            writer.writeIDref(TaxaParser.TAXA, taxonSet.getId());
+                            writer.writeCloseTag(LocalClockModelParser.CLADE);
                         }
                     }
 

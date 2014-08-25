@@ -740,11 +740,12 @@ public class BeastMain {
             BeastMPI.Finalize();
         }
 
-        if (!window) {
-            System.out.flush();
-            System.err.flush();
-            System.exit(0);
-        }
+        // AR - there is no reason to force an exit here - there may still be threads running...
+//        if (!window) {
+//            System.out.flush();
+//            System.err.flush();
+//            System.exit(0);
+//        }
     }
 }
 

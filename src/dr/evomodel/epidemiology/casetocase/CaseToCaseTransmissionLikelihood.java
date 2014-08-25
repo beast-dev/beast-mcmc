@@ -164,32 +164,34 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if (!transProbKnown) {
                 double rate = transmissionRate.getParameterValue(0);
 
-                double K = getK();
-                double logD = getLogD();
-                double E = getE();
-                double logF = f.logEvaluate(rate);
-
                 try {
+                    double K = getK();
+                    double logD = getLogD();
+                    double E = getE();
+                    double logF = f.logEvaluate(rate);
+
                     transLogProb = logD + K * Math.log(rate) - E * rate + logF;
 
+                    transProbKnown = true;
+
+                    if (!normalisationKnown) {
+
+                        integrator.setAlphaAndB(K,E);
+
+                        normalisation = integrator.logIntegrate(f, transmissionRate.getBounds().getLowerLimit(0));
+
+                        normalisation += logD;
+
+                        normalisationKnown = true;
+                    }
                 } catch (BadPartitionException e) {
                     transLogProb = Double.NEGATIVE_INFINITY;
                     logLikelihood = Double.NEGATIVE_INFINITY;
                     likelihoodKnown = true;
                     return logLikelihood;
                 }
-                transProbKnown = true;
 
-                if (!normalisationKnown) {
 
-                    integrator.setAlphaAndB(K,E);
-
-                    normalisation = integrator.logIntegrate(f, transmissionRate.getBounds().getLowerLimit(0));
-
-                    normalisation += logD;
-
-                    normalisationKnown = true;
-                }
             }
             if(!geographyProbKnown){
                 geographyLogProb = 0;
@@ -286,22 +288,24 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             sortCases();
         }
         double logD = 0;
-        if(!hasGeography) {
-            for (AbstractCase infectee : sortedCases) {
-                AbstractCase infector = treeLikelihood.getInfector(infectee);
-                if (infector != null) {
-                    double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
-                    double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
-                    double infectorNoninfectious = infector.getCullTime();
 
-                    if(infecteeInfected < infectorInfectious || infecteeInfected > infectorNoninfectious){
-                        throw new BadPartitionException("Illegal partition given known timings");
-                    }
+        for (AbstractCase infectee : sortedCases) {
+            AbstractCase infector = treeLikelihood.getInfector(infectee);
+            if (infector != null) {
+                double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
+                double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
+                double infectorNoninfectious = infector.getCullTime();
 
+                if(infecteeInfected < infectorInfectious || infecteeInfected > infectorNoninfectious){
+                    throw new BadPartitionException("Illegal partition given known timings");
+                }
+
+                if(hasGeography) {
                     logD += Math.log(outbreak.getKernelValue(infectee, infector, spatialKernel));
                 }
             }
         }
+
 
         if(transmissionRatePrior!=null) {
             logD += -transmissionRatePrior.getShape() * Math.log(transmissionRatePrior.getScale());
@@ -391,41 +395,44 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
             double logF = 0;
 
+
+
             for(AbstractCase infectee : sortedCases){
-                double sum = 0;
 
-                double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
+                AbstractCase infector = treeLikelihood.getInfector(infectee);
 
-                double infecteeExamined = infectee.getExamTime();
+                if(infector != null) {
+                    double sum = 0;
 
-                for(AbstractCase possibleInfector : sortedCases){
-                    if(possibleInfector!=infectee) {
+                    double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
 
-                        double nonInfectorInfected = treeLikelihood.getInfectionTime(possibleInfector);
-                        double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
-                        double nonInfectorNoninfectious = possibleInfector.getCullTime();
+                    double infecteeExamined = infectee.getExamTime();
 
-                        if (nonInfectorInfected > infecteeExamined) {
-                            break;
+                    for (AbstractCase possibleInfector : sortedCases) {
+                        if (possibleInfector != infectee) {
+
+                            double nonInfectorInfected = treeLikelihood.getInfectionTime(possibleInfector);
+                            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
+                            double nonInfectorNoninfectious = possibleInfector.getCullTime();
+
+                            if (nonInfectorInfected > infecteeExamined) {
+                                break;
+                            }
+
+                            double rate = hasGeography ? kernelValues[outbreak.getCaseIndex(possibleInfector)] : 1;
+
+                            if (nonInfectorInfectious <= infecteeExamined) {
+                                double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeExamined);
+                                sum += -rate * (lastPossibleInfectionTime - nonInfectorInfectious);
+                            }
                         }
 
-                        double rate = hasGeography ? kernelValues[outbreak.getCaseIndex(possibleInfector)] : 1;
-
-                        if (nonInfectorInfectious <= infecteeExamined) {
-                            double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeExamined);
-                            sum += -rate * (lastPossibleInfectionTime - nonInfectorInfectious);
-                        }
                     }
+                    sum *= argument;
 
+                    logF += Math.log1p(-Math.exp(sum));
                 }
-                sum *= argument;
-
-                logF += Math.log1p(-Math.exp(sum));
-
             }
-
-
-
             return (outbreak.size()-1)*Math.log(argument)-logF;
         }
 

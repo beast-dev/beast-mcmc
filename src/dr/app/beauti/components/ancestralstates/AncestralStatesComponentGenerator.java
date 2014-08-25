@@ -449,7 +449,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("report");
 
-        writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + partition.getName() + DNDS_LOG_SUFFIX + '\"' + "/> \n");
+        writer.write("<dNdSPerSiteAnalysis fileName=\"" + options.fileNameStem + "." + partition.getName() + DNDS_LOG_SUFFIX + "\"/> \n");
 
         writer.writeCloseTag("report");
 

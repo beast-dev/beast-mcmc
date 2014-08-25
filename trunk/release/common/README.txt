@@ -1,4 +1,4 @@
-                    BEAST v1.8.0 2002-2013
+                    BEAST v1.8.0 2002-2014
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 16th October 2013
+Last updated: a.rambaut@ed.ac.uk - 25th August 2014
 
 Contents:
 1) INTRODUCTION
@@ -52,7 +52,7 @@ tools for the diagnosis of problems and suggestions on how to fix them:
 BEAST is not a black-box into which you can put your data and expect an
 easily interpretable answer. It requires careful inspection of the output
 to check that it has performed correctly and usually will need tweaking,
-adjustment and a number of runs to get a valid answer. Sorry.
+adjustment and a number of runs to get a valid answer. 
 
 ___________________________________________________________________________
 2) INSTALLING BEAST
@@ -129,7 +129,8 @@ BEAST arguments:
      -errors         "Specify maximum number of numerical errors before stopping"
      -threads        "The number of computational threads to use (default auto)"
      -java           "Use Java only, no native implementations"
-     -beagle         "Use beagle library if available"
+     -beagle         "Use BEAGLE library if available (default on)"
+     -beagle_off     "Don't use BEAGLE library"
      -beagle_info          "BEAGLE: show information on available resources"
      -beagle_order         "BEAGLE: set order of resource use"
      -beagle_instances     "BEAGLE: divide site patterns amongst instances"

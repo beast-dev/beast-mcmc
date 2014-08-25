@@ -117,7 +117,6 @@ public interface Transform {
             return "logit";
         }
 
-        //TODO: double check this log Jacobian, but I think it is correct now
         public double getLogJacobian(double value) {
             return -Math.log(1.0 - value) - Math.log(value);
         }
@@ -141,7 +140,7 @@ public interface Transform {
         }
 
         public double getLogJacobian(double value) {
-            throw new RuntimeException("Not yet implemented.");
+            return -Math.log(1 - value) - Math.log(1 + value);
         }
     }
 

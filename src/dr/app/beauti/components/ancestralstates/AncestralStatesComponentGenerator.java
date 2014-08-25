@@ -359,7 +359,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag("log", new Attribute[]{
                 new Attribute.Default<String>("id", "fileLog_" + partition.getName()),
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
-                new Attribute.Default<String>("fileName", partition.getName() + STATE_LOG_SUFFIX)});
+                new Attribute.Default<String>("fileName",  options.fileNameStem + "." + partition.getName() + STATE_LOG_SUFFIX)});
 
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
@@ -418,7 +418,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag("log", new Attribute[]{
                 new Attribute.Default<String>("id", "fileLog_dNdS"),
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
-                new Attribute.Default<String>("fileName", partition.getName() + DNDS_LOG_SUFFIX)});
+                new Attribute.Default<String>("fileName", options.fileNameStem + "." + partition.getName() + DNDS_LOG_SUFFIX)});
 
         writer.writeOpenTag("dNdSLogger", new Attribute[]{new Attribute.Default<String>("id",
                 "dNdS")});

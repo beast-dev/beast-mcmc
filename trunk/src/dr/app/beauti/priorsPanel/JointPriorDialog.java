@@ -28,6 +28,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.*;
+import java.util.List;
 
 /**
  * A dialog which acts as a base for linking parameters together under joint priors such
@@ -205,12 +207,12 @@ public class JointPriorDialog {
         return result;
     }
 
-    private void setArguments(PriorType priorType) {
-
+    public String getName() {
+        return nameField.getText();
     }
 
-    public void getArguments() {
-
+    public List<Parameter> getParameterList() {
+        return parameterList;
     }
 
     private void setupComponents() {
@@ -295,6 +297,7 @@ public class JointPriorDialog {
     }
 
     private AddParameterAction addParameterAction = new AddParameterAction();
+
     public class AddParameterAction extends AbstractAction {
 
         public AddParameterAction() {

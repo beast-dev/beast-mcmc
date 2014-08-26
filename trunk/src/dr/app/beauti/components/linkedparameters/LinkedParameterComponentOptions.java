@@ -1,13 +1,10 @@
 package dr.app.beauti.components.linkedparameters;
 
-import dr.app.beauti.components.hpm.HierarchicalModelComponentGenerator;
-import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,11 +15,11 @@ import java.util.Map;
  * @author Marc A. Suchard
  * @version $Id$
  */
-public class LinkedParametersComponentOptions implements ComponentOptions {
+public class LinkedParameterComponentOptions implements ComponentOptions {
 
-    public LinkedParametersComponentOptions(final BeautiOptions options) {
+    public LinkedParameterComponentOptions(final BeautiOptions options) {
         this.options = options;
-        linkedParametersMap = new HashMap<Parameter, LinkedParameters>();
+        linkedParameterMap = new HashMap<Parameter, LinkedParameter>();
     }
 
     public void createParameters(final ModelOptions modelOptions) {
@@ -30,8 +27,8 @@ public class LinkedParametersComponentOptions implements ComponentOptions {
     }
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
-        for (LinkedParameters linkedParameters : getLinkedParametersList()) {
-            params.addAll(linkedParameters.getArgumentParameterList());
+        for (LinkedParameter linkedParameter : getLinkedParameterList()) {
+            params.addAll(linkedParameter.getArgumentParameterList());
         }
     }
 
@@ -40,8 +37,8 @@ public class LinkedParametersComponentOptions implements ComponentOptions {
     }
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
-        for (LinkedParameters linkedParameters : getLinkedParametersList()) {
-            for (Parameter parameter : linkedParameters.getArgumentParameterList()) {
+        for (LinkedParameter linkedParameter : getLinkedParameterList()) {
+            for (Parameter parameter : linkedParameter.getArgumentParameterList()) {
             }
         }
     }
@@ -53,8 +50,8 @@ public class LinkedParametersComponentOptions implements ComponentOptions {
             return true;
         }
 
-        for (LinkedParameters linkedParameters : getLinkedParametersList()) {
-            if (linkedParameters.getName().equalsIgnoreCase(name)) {
+        for (LinkedParameter linkedParameter : getLinkedParameterList()) {
+            if (linkedParameter.getName().equalsIgnoreCase(name)) {
                 found = true;
                 break;
             }
@@ -62,39 +59,45 @@ public class LinkedParametersComponentOptions implements ComponentOptions {
         return found;
     }
 
-    public LinkedParameters addLinkedParameters(String name, List<Parameter> parameterList) {
+    public LinkedParameter addLinkedParameter(String name, List<Parameter> parameterList) {
         List<Parameter> argumentList = new ArrayList<Parameter>();
 
         Parameter sourceParameter = parameterList.get(0);
+        Parameter newParameter = options.createDuplicate(name, "Linked parameter", sourceParameter);
 
-        //argumentList.add();
+        options.createScaleOperator(name, options.demoTuning, 1.0);
 
-        LinkedParameters linkedParameters = new LinkedParameters(name, argumentList);
+        argumentList.add(newParameter);
+
+        LinkedParameter linkedParameter = new LinkedParameter(name, argumentList);
         for (Parameter parameter : parameterList) {
-            linkedParametersMap.put(parameter, linkedParameters);
+            linkedParameterMap.put(parameter, linkedParameter);
+            parameter.isLinked = true;
+            parameter.linkedName = name;
         }
 
-        return linkedParameters;
+        return linkedParameter;
     }
 
     public void removeParameters(PriorsPanel priorsPanel, List<Parameter> parametersToRemove, boolean caution) {
         for (Parameter parameter : parametersToRemove) {
-            linkedParametersMap.remove(parameter);
+            linkedParameterMap.remove(parameter);
+            parameter.isLinked = false;
         }
     }
 
-    public List<LinkedParameters> getLinkedParametersList() {
-        return new ArrayList<LinkedParameters>(linkedParametersMap.values());
+    public List<LinkedParameter> getLinkedParameterList() {
+        return new ArrayList<LinkedParameter>(linkedParameterMap.values());
     }
 
-    public LinkedParameters getLinkedParametersForParameter(Parameter parameter) {
-        return linkedParametersMap.get(parameter);
+    public LinkedParameter getLinkedParameter(Parameter parameter) {
+        return linkedParameterMap.get(parameter);
     }
 
-    public List<Parameter> getLinkedParameters(LinkedParameters linkedParameters) {
+    public List<Parameter> getParameters(LinkedParameter linkedParameter) {
         List<Parameter> parameters = new ArrayList<Parameter>();
-        for (Parameter parameter : linkedParametersMap.keySet()) {
-            if (linkedParametersMap.get(parameter) == linkedParameters) {
+        for (Parameter parameter : linkedParameterMap.keySet()) {
+            if (linkedParameterMap.get(parameter) == linkedParameter) {
                 parameters.add(parameter);
             }
         }
@@ -104,7 +107,7 @@ public class LinkedParametersComponentOptions implements ComponentOptions {
 
 
     final private BeautiOptions options;
-    final private Map<Parameter, LinkedParameters> linkedParametersMap;
+    final private Map<Parameter, LinkedParameter> linkedParameterMap;
 
 
 //    public void generatePriors(final XMLWriter writer) {
@@ -114,6 +117,6 @@ public class LinkedParametersComponentOptions implements ComponentOptions {
 //    }
 
     public boolean isEmpty() {
-        return linkedParametersMap.isEmpty();
+        return linkedParameterMap.isEmpty();
     }
 }

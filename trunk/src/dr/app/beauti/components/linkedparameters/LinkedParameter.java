@@ -9,12 +9,12 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class LinkedParameters {
+public class LinkedParameter {
 
     final private String name;
     final private List<Parameter> argumentParameterList;
 
-    public LinkedParameters(String name, List<Parameter> argumentParameterList) {
+    public LinkedParameter(String name, List<Parameter> argumentParameterList) {
         this.name = name;
         this.argumentParameterList = argumentParameterList;
     }

@@ -680,6 +680,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Operators ++++++++++++++++++
         try {
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_OPERATORS, writer);
+
             List<Operator> operators = options.selectOperators();
             operatorsGenerator.writeOperatorSchedule(operators, writer);
             writer.writeText("");

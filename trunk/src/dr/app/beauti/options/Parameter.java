@@ -85,7 +85,8 @@ public class Parameter implements Serializable {
     public double uniformUpper;
     public double uniformLower;
 
-    public String hpmModelName;
+    public boolean isLinked;
+    public String linkedName;
 
     public static class Builder {
         // Required para
@@ -134,6 +135,37 @@ public class Parameter implements Serializable {
         public Builder(String name, String description) {
             this.baseName = name;
             this.description = description;
+        }
+
+        public Builder duplicate(Parameter source) {
+            scaleType = source.scaleType;
+            taxaId = source.taxaId;
+            isNodeHeight = source.isNodeHeight;
+            isDiscrete = source.isDiscrete;
+            isHierarchical = source.isHierarchical;
+            isCMTCRate = source.isCMTCRate;
+            isNonNegative = source.isNonNegative;
+            isZeroOne = source.isZeroOne;
+            isStatistic = source.isStatistic;
+            isCached = source.isCached;
+            options = source.options;
+            priorType = source.priorType;
+            isPriorFixed = source.isPriorFixed;
+            initial = source.initial;
+            isTruncated = source.isTruncated;
+            truncationUpper = source.truncationUpper;
+            truncationLower = source.truncationLower;
+            mean = source.mean;
+            stdev = source.stdev;
+            shape = source.shape;
+            shapeB = source.shapeB;
+            scale = source.scale;
+            offset = source.offset;
+            precision = source.precision;
+            uniformUpper = source.uniformUpper;
+            uniformLower = source.uniformLower;
+            isFixed = source.isFixed;
+            return this;
         }
 
         public Builder scaleType(PriorScaleType scaleType) {
@@ -404,7 +436,7 @@ public class Parameter implements Serializable {
             // might be appropriate:
             /* priorType == PriorType.ONE_OVER_X_PRIOR || */
                 (priorType == PriorType.NONE_IMPROPER) ||
-                (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(getLowerBound()) || Double.isInfinite(getUpperBound())))) {
+                        (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(getLowerBound()) || Double.isInfinite(getUpperBound())))) {
             return true;
         }
         return false;

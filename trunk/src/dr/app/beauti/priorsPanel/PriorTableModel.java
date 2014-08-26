@@ -33,7 +33,7 @@ class PriorTableModel extends AbstractTableModel {
             case 0:
                 return param.getName();
             case 1:
-                return param.priorType.getPriorString(param);
+                return (param.isLinked ? "Linked as [" + param.linkedName + "]" : param.priorType.getPriorString(param));
             case 2:
                 return param.priorType.getPriorBoundString(param);
             case 3:
@@ -51,7 +51,8 @@ class PriorTableModel extends AbstractTableModel {
     }
 
     public boolean isCellEditable(int row, int col) {
-        return col == 1;
+        Parameter param = priorsPanel.parameters.get(row);
+        return col == 1 && !param.isLinked && !param.isPriorFixed;
     }
 
     public String toString() {

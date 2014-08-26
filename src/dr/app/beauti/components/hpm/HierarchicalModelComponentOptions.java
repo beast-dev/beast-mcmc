@@ -80,7 +80,7 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         hpmList.add(hpm);
 
         for (Parameter parameter : parameterList) {
-            parameter.hpmModelName = hpm.getName();
+            parameter.linkedName = hpm.getName();
         }
         return hpm;
     }

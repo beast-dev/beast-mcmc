@@ -16,6 +16,7 @@ import dr.app.beauti.components.continuous.ContinuousComponentFactory;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentFactory;
 import dr.app.beauti.components.dollo.DolloComponentFactory;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
+import dr.app.beauti.components.linkedparameters.LinkedParametersComponentFactory;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationComponentFactory;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
@@ -131,6 +132,7 @@ public class BeautiFrame extends DocumentFrame {
                 DiscreteTraitsComponentFactory.INSTANCE,
 //                DnDsComponentFactory.INSTANCE,
                 DolloComponentFactory.INSTANCE,
+                LinkedParametersComponentFactory.INSTANCE,
                 HierarchicalModelComponentFactory.INSTANCE,
                 MarginalLikelihoodEstimationComponentFactory.INSTANCE,
                 SequenceErrorModelComponentFactory.INSTANCE,

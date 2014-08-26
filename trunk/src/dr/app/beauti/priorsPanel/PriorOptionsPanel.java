@@ -19,6 +19,7 @@ import java.util.Set;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @author Walter Xie
  */
 abstract class PriorOptionsPanel extends OptionsPanel {

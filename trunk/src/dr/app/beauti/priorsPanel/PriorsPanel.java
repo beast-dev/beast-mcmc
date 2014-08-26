@@ -63,6 +63,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     PriorTableModel priorTableModel = null;
     JLabel messageLabel = new JLabel();
     JButton linkButton = null;
+    JButton hpmButton = null;
 
     public ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
@@ -74,8 +75,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     boolean hasRate = false;
 
     private final boolean isDefaultOnly;
-
-    private final static boolean HIERARCHICAL_ENABLED = true; // Change to false to disable
 
     public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
@@ -116,6 +115,19 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         scrollPane.setOpaque(false);
 
+        Action setLinkedParametersAction = new AbstractAction("Link parameters together") {
+            public void actionPerformed(ActionEvent actionEvent) {
+                // Make list of selected parameters;
+                int[] rows = priorTable.getSelectedRows();
+                linkButtonPressed(rows);
+            }
+        };
+
+        linkButton = new JButton(setLinkedParametersAction);
+        linkButton.setVisible(true);
+        linkButton.setEnabled(false);
+        linkButton.setToolTipText("");
+
         Action setHierarchicalAction = new AbstractAction("Link parameters into a phylogenetic hierarchical model") {
             public void actionPerformed(ActionEvent actionEvent) {
                 // Make list of selected parameters;
@@ -124,10 +136,11 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
         };
 
-        linkButton = new JButton(setHierarchicalAction);
-        linkButton.setVisible(true);
-        linkButton.setEnabled(false);
-        linkButton.setToolTipText(HierarchicalPhylogeneticModel.TIP_TOOL);
+
+        hpmButton = new JButton(setHierarchicalAction);
+        hpmButton.setVisible(true);
+        hpmButton.setEnabled(false);
+        hpmButton.setToolTipText(HierarchicalPhylogeneticModel.TIP_TOOL);
 
         messageLabel.setText(getMessage());
 
@@ -141,7 +154,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         add(scrollPane, BorderLayout.CENTER);
 
-        if (HIERARCHICAL_ENABLED && !isDefaultOnly) {
+        if (!isDefaultOnly) {
             JPanel southPanel = new JPanel();
             southPanel.setLayout(new BorderLayout(0, 0));
             JToolBar toolBar1 = new JToolBar();
@@ -151,6 +164,10 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
             PanelUtils.setupComponent(linkButton);
             toolBar1.add(linkButton);
+
+            PanelUtils.setupComponent(hpmButton);
+            toolBar1.add(hpmButton);
+
             southPanel.add(toolBar1, BorderLayout.NORTH);
             southPanel.add(messageLabel, BorderLayout.SOUTH);
             add(southPanel, BorderLayout.SOUTH);
@@ -170,6 +187,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         int[] selRows = priorTable.getSelectedRows();
         boolean hasSelection = (selRows != null && selRows.length != 0);
         linkButton.setEnabled(hasSelection);
+        hpmButton.setEnabled(hasSelection);
     }
 
 
@@ -249,6 +267,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private PriorDialog priorDialog = null;
     private HierarchicalPriorDialog hierarchicalPriorDialog = null;
+    private JointPriorDialog linkParameterDialog = null;
 
     private JButton continueButton = null;
 
@@ -259,11 +278,121 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
     }
 
+    private void linkButtonPressed(int[] rows) {
+
+        if (rows.length < 2) {
+            JOptionPane.showMessageDialog(frame,
+                    "Fewer than two parameters selected.",
+                    "Parameter linking error",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        Double lowerBound = null;
+        Double upperBound = null;
+
+        List<Parameter> paramList = new ArrayList<Parameter>();
+        for (int i = 0; i < rows.length; ++i) {
+            Parameter parameter = parameters.get(rows[i]);
+            if (parameter.isStatistic) {
+                JOptionPane.showMessageDialog(frame,
+                        "Statistics cannot be linked.",
+                        "Parameter linking error",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            boolean sameBounds = true;
+            if (lowerBound == null) {
+                lowerBound = parameter.truncationLower;
+            } else {
+                if (lowerBound != parameter.truncationLower) {
+                    sameBounds = false;
+                }
+            }
+            if (upperBound == null) {
+                upperBound = parameter.truncationUpper;
+            } else {
+                if (upperBound != parameter.truncationUpper) {
+                    sameBounds = false;
+                }
+            }
+
+            if (!sameBounds) {
+                JOptionPane.showMessageDialog(frame,
+                        "Only parameters that share the same bounds\n" +
+                                "can be linked.",
+                        "Parameter linking error",
+                        JOptionPane.WARNING_MESSAGE);
+                return; // Bail out
+            }
+
+            paramList.add(parameter);
+        }
+
+        // Check to see if selected parameters are already in a HPM
+//            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+//                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
+//            boolean anyConflicts = false;
+//            for (Parameter parameter : paramList) {
+//                if (comp.isHierarchicalParameter(parameter)) {
+//                    anyConflicts = true;
+//                    break;
+//                }
+//            }
+//            if (anyConflicts) {
+//                int option = JOptionPane.showConfirmDialog(this,
+//                        "At one selected parameter already exists in a HPM.\n" +
+//                                "Constructing a new prior will remove these parameter\n" +
+//                                "from the original model. Continue?",
+//                        "HPM warning",
+//                        JOptionPane.YES_NO_OPTION,
+//                        JOptionPane.WARNING_MESSAGE);
+//                if (option == JOptionPane.NO_OPTION) {
+//                    return;
+//                }
+//            }
+
+        if (linkParameterDialog == null) {
+            linkParameterDialog = new JointPriorDialog(frame, options);
+        }
+
+        boolean done = false;
+
+        while (!done) {
+            int result = linkParameterDialog.showDialog(paramList);
+            if (result == JOptionPane.OK_OPTION && linkParameterDialog.validateModelName()) {
+                linkParameterDialog.getArguments();
+                done = true;
+            }
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+        }
+
+        // Remove parameters from old list
+//        for (Parameter parameter : paramList) {
+//            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+//                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
+//            if (comp.isHierarchicalParameter(parameter)) {
+//                comp.removeParameter(this, parameter, false);
+//            }
+//
+//        }
+
+        // Add HPM to component manager
+//        hierarchicalPriorDialog.addHPM(paramList);
+
+        for (Parameter parameter : paramList) {
+            parameter.setPriorEdited(true);
+        }
+        priorTableModel.fireTableDataChanged();
+    }
+
     private void hierarchicalButtonPressed(int[] rows) {
 
         if (rows.length < 2) {
             JOptionPane.showMessageDialog(frame,
-                    "Less than two parameters selected.",
+                    "Fewer than two parameters selected.",
                     "Parameter linking error",
                     JOptionPane.WARNING_MESSAGE);
             return;
@@ -374,7 +503,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     private void priorButtonPressed(int row) {
         Parameter param = parameters.get(row);
 
-        if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
+        if (hierarchicalPriorDialog != null) {
             // Check that parameter is not already in a HPM
             HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
                     options.getComponentOptions(HierarchicalModelComponentOptions.class);
@@ -407,7 +536,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             priorDialog.getArguments(param);
             // Only do this if OK button is pressed (not cancel):
 
-            if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
+            if (hierarchicalPriorDialog != null) {
                 // Possibly remove parameter from its HPM
                 HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
                         options.getComponentOptions(HierarchicalModelComponentOptions.class);

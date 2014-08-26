@@ -26,6 +26,7 @@ public enum PriorType {
     CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
+    LINKED_PARAMETER("Linked Parameter", false, false, false),
     POISSON_PRIOR("Poisson", true, false, false);
 
     PriorType(final String name, final boolean isInitializable, final boolean isTruncatable, final boolean isPlottable) {
@@ -81,6 +82,8 @@ public enum PriorType {
             case ONE_OVER_X_PRIOR:
                 break;
             case CTMC_RATE_REFERENCE_PRIOR:
+                break;
+            case LINKED_PARAMETER:
                 break;
             case NORMAL_HPM_PRIOR:
                 break;
@@ -194,14 +197,19 @@ public enum PriorType {
             case CTMC_RATE_REFERENCE_PRIOR:
                 buffer.append("Approx. Reference Prior");
                 break;
+            case LINKED_PARAMETER:
+                buffer.append("Linked [");
+                buffer.append(parameter.linkedName);
+                buffer.append("]");
+                break;
             case NORMAL_HPM_PRIOR:
                 buffer.append("Normal HPM [");
-                buffer.append(parameter.hpmModelName);
+                buffer.append(parameter.linkedName);
                 buffer.append("]");
                 break;
             case LOGNORMAL_HPM_PRIOR:
                 buffer.append("Lognormal HPM [");
-                buffer.append(parameter.hpmModelName);
+                buffer.append(parameter.linkedName);
                 buffer.append("]");
                 break;
             default:

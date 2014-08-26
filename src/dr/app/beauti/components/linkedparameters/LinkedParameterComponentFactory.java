@@ -9,19 +9,19 @@ import dr.app.beauti.options.ComponentOptions;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class LinkedParametersComponentFactory implements ComponentFactory {
+public class LinkedParameterComponentFactory implements ComponentFactory {
 
-    private LinkedParametersComponentFactory() {
+    private LinkedParameterComponentFactory() {
         // singleton pattern - private constructor
     }
 
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
-        return new LinkedParametersComponentGenerator(beautiOptions);
+        return new LinkedParameterComponentGenerator(beautiOptions);
     }
 
     public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
-        return new LinkedParametersComponentOptions(beautiOptions);
+        return new LinkedParameterComponentOptions(beautiOptions);
     }
 
-    public static ComponentFactory INSTANCE = new LinkedParametersComponentFactory();
+    public static ComponentFactory INSTANCE = new LinkedParameterComponentFactory();
 }

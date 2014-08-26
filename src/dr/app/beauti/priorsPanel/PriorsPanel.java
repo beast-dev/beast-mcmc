@@ -29,6 +29,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;
+import dr.app.beauti.components.linkedparameters.LinkedParameterComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Parameter;
@@ -361,7 +362,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         while (!done) {
             int result = linkParameterDialog.showDialog(paramList);
             if (result == JOptionPane.OK_OPTION && linkParameterDialog.validateModelName()) {
-                linkParameterDialog.getArguments();
                 done = true;
             }
             if (result == JOptionPane.CANCEL_OPTION) {
@@ -369,22 +369,14 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
         }
 
-        // Remove parameters from old list
-//        for (Parameter parameter : paramList) {
-//            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-//                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
-//            if (comp.isHierarchicalParameter(parameter)) {
-//                comp.removeParameter(this, parameter, false);
-//            }
-//
-//        }
+        LinkedParameterComponentOptions comp = (LinkedParameterComponentOptions)
+                options.getComponentOptions(LinkedParameterComponentOptions.class);
+        comp.addLinkedParameter(linkParameterDialog.getName(), linkParameterDialog.getParameterList());
 
-        // Add HPM to component manager
-//        hierarchicalPriorDialog.addHPM(paramList);
-
-        for (Parameter parameter : paramList) {
+        for (Parameter parameter : linkParameterDialog.getParameterList()) {
             parameter.setPriorEdited(true);
         }
+
         priorTableModel.fireTableDataChanged();
     }
 

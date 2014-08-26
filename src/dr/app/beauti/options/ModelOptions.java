@@ -44,115 +44,119 @@ public class ModelOptions implements Serializable {
 
     protected final Map<String, Parameter> parameters = new HashMap<String, Parameter>();
     protected final Map<String, Operator> operators = new HashMap<String, Operator>();
-   	protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
+    protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
     public static final double demoTuning = 0.75;
     public static final double demoWeights = 3.0;
 
-	protected static final double branchWeights = 30.0;
-	protected static final double treeWeights = 15.0;
-	protected static final double rateWeights = 3.0;
+    protected static final double branchWeights = 30.0;
+    protected static final double treeWeights = 15.0;
+    protected static final double rateWeights = 3.0;
 
-	private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
+    private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
 
     //+++++++++++++++++++ Create Parameter ++++++++++++++++++++++++++++++++
-    public void createParameter(String name, String description) {
-        new Parameter.Builder(name, description).build(parameters);
+    public Parameter createParameter(String name, String description) {
+        return new Parameter.Builder(name, description).build(parameters);
     }
 
-    public void createParameter(String name, String description, double initial) {
-        new Parameter.Builder(name, description).initial(initial).isFixed(true).build(parameters);
+    public Parameter createParameter(String name, String description, double initial) {
+        return new Parameter.Builder(name, description).initial(initial).isFixed(true).build(parameters);
     }
 
-    public void createZeroOneParameterUniformPrior(String name, String description, double initial) {
-        new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
-                  .initial(initial).isZeroOne(true).build(parameters);
+    public Parameter createZeroOneParameterUniformPrior(String name, String description, double initial) {
+        return new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
+                .initial(initial).isZeroOne(true).build(parameters);
     }
 
-    public void createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NONE_IMPROPER).isNonNegative(true)
-                  .initial(initial).build(parameters);
+    public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NONE_IMPROPER).isNonNegative(true)
+                .initial(initial).build(parameters);
     }
 
-    public void createNonNegativeParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                            double uniformLower, double uniformUpper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).isNonNegative(true)
-                  .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
+    public Parameter createNonNegativeParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                            double uniformLower, double uniformUpper) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).isNonNegative(true)
+                .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
     }
 
-    public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                            double uniformLower, double uniformUpper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)
-                  .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
+    public Parameter createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                 double uniformLower, double uniformUpper) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)
+                .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
     }
 
     public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                          double shape, double scale, boolean priorFixed) {
+                                               double shape, double scale, boolean priorFixed) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
-                  .initial(initial).shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).build(parameters);
+                .initial(initial).shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).build(parameters);
     }
 
-    public void createCachedGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                          double shape, double scale, boolean priorFixed) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial)
-                  .shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).isCached(true).build(parameters);
+    public Parameter createCachedGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                            double shape, double scale, boolean priorFixed) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial)
+                .shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).isCached(true).build(parameters);
     }
 
-    public void createParameterOneOverXPrior(String name, String description, PriorScaleType scaleType, double initial) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.ONE_OVER_X_PRIOR)
+    public Parameter createParameterOneOverXPrior(String name, String description, PriorScaleType scaleType, double initial) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.ONE_OVER_X_PRIOR)
                 .initial(initial).isNonNegative(true).build(parameters);
     }
 
-    public void createParameterExponentialPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                                double mean, double offset) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
+    public Parameter createParameterExponentialPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                     double mean, double offset) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
                 .initial(initial).mean(mean).offset(offset).isNonNegative(true).build(parameters);
     }
 
-    public void createParameterLognormalPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                                double mean, double stdev, double offset, double lower, double upper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LOGNORMAL_PRIOR)
-                  .initial(initial).mean(mean).stdev(stdev).offset(offset).isNonNegative(true).build(parameters);
+    public Parameter createParameterLognormalPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                   double mean, double stdev, double offset, double lower, double upper) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LOGNORMAL_PRIOR)
+                .initial(initial).mean(mean).stdev(stdev).offset(offset).isNonNegative(true).build(parameters);
     }
 
     public Parameter createParameterNormalPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                 double mean, double stdev, double offset) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NORMAL_PRIOR)
-                  .initial(initial).mean(mean).stdev(stdev).offset(offset).build(parameters);
+                .initial(initial).mean(mean).stdev(stdev).offset(offset).build(parameters);
     }
 
-    public void createParameterLaplacePrior(String name, String description, PriorScaleType scaleType, double initial,
-                                                double mean, double scale) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LAPLACE_PRIOR)
-                  .initial(initial).mean(mean).scale(scale).build(parameters);
+    public Parameter createParameterLaplacePrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                 double mean, double scale) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LAPLACE_PRIOR)
+                .initial(initial).mean(mean).scale(scale).build(parameters);
     }
 
-    public void createParameterBetaDistributionPrior(String name, String description, double initial,
-                                          double shape, double shapeB, double offset) {
-        new Parameter.Builder(name, description).prior(PriorType.BETA_PRIOR).initial(initial)
-                  .isZeroOne(true).shape(shape).shapeB(shapeB).offset(offset).build(parameters);
+    public Parameter createParameterBetaDistributionPrior(String name, String description, double initial,
+                                                          double shape, double shapeB, double offset) {
+        return new Parameter.Builder(name, description).prior(PriorType.BETA_PRIOR).initial(initial)
+                .isZeroOne(true).shape(shape).shapeB(shapeB).offset(offset).build(parameters);
+    }
+
+    public Parameter createDuplicate(String name, String description, Parameter source) {
+        return new Parameter.Builder(name, description).duplicate(source).build(parameters);
     }
 
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
-    public void createDiscreteStatistic(String name, String description) { // Poisson Prior
-        new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)
-                 .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
+    public Parameter createDiscreteStatistic(String name, String description) { // Poisson Prior
+        return new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)
+                .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
 
-    protected void createStatistic(String name, String description) {
-        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).build(parameters);
+    protected Parameter createStatistic(String name, String description) {
+        return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).build(parameters);
     }
 
-    protected void createNonNegativeStatistic(String name, String description) {
-        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).isNonNegative(true).build(parameters);
+    protected Parameter createNonNegativeStatistic(String name, String description) {
+        return new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).isNonNegative(true).build(parameters);
     }
     //+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
-    public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
+    public Operator createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight).build(operators);
+        return new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight).build(operators);
     }
 
-    public void createScaleOperator(String parameterName, double tuning, double weight) {
+    public Operator createScaleOperator(String parameterName, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
         String description;
         if (parameter.getDescription() == null) {
@@ -160,12 +164,12 @@ public class ModelOptions implements Serializable {
         } else {
             description = parameter.getDescription();
         }
-        new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
+        return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
     }
 
-    public void createScaleOperator(String parameterName, String description, double tuning, double weight) {
+    public Operator createScaleOperator(String parameterName, String description, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
+        return new Operator.Builder(parameterName, description, parameter, OperatorType.SCALE, tuning, weight).build(operators);
     }
 
 //    public void createScaleAllOperator(String parameterName, double tuning, double weight) { // tuning = 0.75
@@ -173,40 +177,40 @@ public class ModelOptions implements Serializable {
 //        new Operator.Builder(parameterName, parameterName, parameter, OperatorType.SCALE_ALL, tuning, weight).build(operators);
 //    }
 
-    public void createOperator(String key, String name, String description, String parameterName, OperatorType type,
-                               double tuning, double weight) {
+    public Operator createOperator(String key, String name, String description, String parameterName, OperatorType type,
+                                   double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight).build()); // key != name
+        return operators.put(key, new Operator.Builder(name, description, parameter, type, tuning, weight).build()); // key != name
     }
 
-    public void createOperatorUsing2Parameters(String key, String name, String description, String parameterName1, String parameterName2,
-                                         OperatorType type, double tuning, double weight) {
+    public Operator createOperatorUsing2Parameters(String key, String name, String description, String parameterName1, String parameterName2,
+                                                   OperatorType type, double tuning, double weight) {
         Parameter parameter1 = getParameter(parameterName1);
         Parameter parameter2 = getParameter(parameterName2);
-        operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight).parameter2(parameter2).build());
+        return operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight).parameter2(parameter2).build());
     }
 
-    public void createUpDownOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2,
-                                     OperatorType type, boolean isPara1Up, double tuning, double weight) {
+    public Operator createUpDownOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2,
+                                         OperatorType type, boolean isPara1Up, double tuning, double weight) {
         if (isPara1Up) {
-           operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
-                   .parameter2(parameter2).build());
+            return operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
+                    .parameter2(parameter2).build());
         } else {
-           operators.put(key, new Operator.Builder(name, description, parameter2, type, tuning, weight)
-                   .parameter2(parameter1).build());
+            return operators.put(key, new Operator.Builder(name, description, parameter2, type, tuning, weight)
+                    .parameter2(parameter1).build());
         }
     }
 
-    public void createBitFlipInSubstitutionModelOperator(String key, String name, String description, Parameter parameter,
-                   PartitionOptions options, double tuning, double weight) {
+    public Operator createBitFlipInSubstitutionModelOperator(String key, String name, String description, Parameter parameter,
+                                                             PartitionOptions options, double tuning, double weight) {
 //        Parameter parameter = getParameter(parameterName);
-        operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFIP_IN_SUBST, tuning, weight)
+        return operators.put(key, new Operator.Builder(name, description, parameter, OperatorType.BITFIP_IN_SUBST, tuning, weight)
                 .partitionOptions(options).build());
     }
 
-    public void createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
+    public Operator createUpDownAllOperator(String paraName, String opName, String description, double tuning, double weight) {
         final Parameter parameter = new Parameter.Builder(paraName, description).build();
-        operators.put(paraName, new Operator.Builder(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS,
+        return operators.put(paraName, new Operator.Builder(opName, description, parameter, OperatorType.UP_DOWN_ALL_RATES_HEIGHTS,
                 tuning, weight).build());
     }//TODO a switch like createUpDownOperator?
 
@@ -282,16 +286,16 @@ public class ModelOptions implements Serializable {
     }
 
     public Map<String, Parameter> getParameters() {
-		return parameters;
-	}
+        return parameters;
+    }
 
-	public Map<TaxonList, Parameter> getStatistics() {
-		return statistics;
-	}
+    public Map<TaxonList, Parameter> getStatistics() {
+        return statistics;
+    }
 
-	public Map<String, Operator> getOperators() {
-		return operators;
-	}
+    public Map<String, Operator> getOperators() {
+        return operators;
+    }
 
     public String noDuplicatedPrefix(String a , String b) {
         if (a.equals(b)) {

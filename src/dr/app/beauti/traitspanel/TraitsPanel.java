@@ -207,7 +207,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(addTraitAction);
         actionPanel1.setRemoveAction(removeTraitAction);
-//        actionPanel1.getAddActionButton().setTooltipText(ADD_TRAITS_TOOLTIP);
+        actionPanel1.setAddToolTipText(ADD_TRAITS_TOOLTIP);
 
         removeTraitAction.setEnabled(false);
 
@@ -568,7 +568,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public ClearTraitAction() {
             super("Clear trait values");
-            setToolTipText("Use this tool to remove trait values from each taxon");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -581,7 +580,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public GuessTraitsAction() {
             super("Guess trait values");
-            setToolTipText("Use this tool to guess the trait values from the taxon labels");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -593,7 +591,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public AddTraitAction() {
             super("Add trait");
-            setToolTipText("Use this button to add a new trait");
         }
 
         public void actionPerformed(ActionEvent ae) {
@@ -616,17 +613,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             setTraitValue();
-        }
-    }
-
-    public class CreateTraitPartitionAction extends AbstractAction {
-        public CreateTraitPartitionAction() {
-            super("Create partition from trait ...");
-            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            createTraitPartition();
         }
     }
 
@@ -801,6 +787,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             }
 
             return buffer.toString();
+        }
+    }
+
+    public class CreateTraitPartitionAction extends AbstractAction {
+        public CreateTraitPartitionAction() {
+            super("Create partition from trait ...");
+            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+
         }
     }
 

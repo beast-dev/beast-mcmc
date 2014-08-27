@@ -378,6 +378,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
 
         priorTableModel.fireTableDataChanged();
+        frame.setAllOptions();
     }
 
     private void hierarchicalButtonPressed(int[] rows) {

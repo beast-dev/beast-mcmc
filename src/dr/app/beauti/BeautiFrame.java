@@ -29,7 +29,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.options.TraitData;
-import dr.app.beauti.priorsPanel.DefaultPriorDialog;
+import dr.app.beauti.priorsPanel.DefaultPriorTableDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
 import dr.app.beauti.taxonsetspanel.SpeciesSetPanel;
@@ -716,7 +716,7 @@ public class BeautiFrame extends DocumentFrame {
             return false;
         }
 
-        DefaultPriorDialog defaultPriorDialog = new DefaultPriorDialog(this);
+        DefaultPriorTableDialog defaultPriorDialog = new DefaultPriorTableDialog(this);
         if (!defaultPriorDialog.showDialog(options)) {
             return false;
         }

@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class JointPriorDialog implements AbstractPriorDialog {
 
-    private static final int MINIMUM_TABLE_WIDTH = 140;
+    private static final int MINIMUM_TABLE_WIDTH = 60;
 
     private JFrame frame;
 
@@ -231,6 +231,7 @@ public class JointPriorDialog implements AbstractPriorDialog {
         panel1.setOpaque(false);
         panel1.add(scrollPane1, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.SOUTH);
+        panel1.setPreferredSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
         panel1.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
 
         OptionsPanel optionsPanel = new OptionsPanel(0,6);

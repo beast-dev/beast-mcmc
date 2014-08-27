@@ -5,10 +5,7 @@ import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -20,6 +17,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
     public LinkedParameterComponentOptions(final BeautiOptions options) {
         this.options = options;
         linkedParameterMap = new HashMap<Parameter, LinkedParameter>();
+        argumentParameterMap = new HashMap<Parameter, LinkedParameter>();
     }
 
     public void createParameters(final ModelOptions modelOptions) {
@@ -59,7 +57,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
         return found;
     }
 
-    public LinkedParameter addLinkedParameter(String name, List<Parameter> parameterList) {
+    public LinkedParameter createLinkedParameter(String name, List<Parameter> parameterList) {
         List<Parameter> argumentList = new ArrayList<Parameter>();
 
         Parameter sourceParameter = parameterList.get(0);
@@ -70,10 +68,21 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
         argumentList.add(newParameter);
 
         LinkedParameter linkedParameter = new LinkedParameter(name, argumentList);
+
+        return linkedParameter;
+    }
+
+
+
+    public LinkedParameter addLinkedParameter(LinkedParameter linkedParameter, List<Parameter> parameterList) {
         for (Parameter parameter : parameterList) {
             linkedParameterMap.put(parameter, linkedParameter);
             parameter.isLinked = true;
-            parameter.linkedName = name;
+            parameter.linkedName = linkedParameter.getName();
+        }
+
+        for (Parameter parameter : linkedParameter.getArgumentParameterList()) {
+            argumentParameterMap.put(parameter, linkedParameter);
         }
 
         return linkedParameter;
@@ -86,12 +95,16 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
         }
     }
 
-    public List<LinkedParameter> getLinkedParameterList() {
-        return new ArrayList<LinkedParameter>(linkedParameterMap.values());
+    public Collection<LinkedParameter> getLinkedParameterList() {
+        return new LinkedHashSet<LinkedParameter>(linkedParameterMap.values());
     }
 
     public LinkedParameter getLinkedParameter(Parameter parameter) {
         return linkedParameterMap.get(parameter);
+    }
+
+    public LinkedParameter getLinkedParameterForArgument(Parameter parameter) {
+        return argumentParameterMap.get(parameter);
     }
 
     public List<Parameter> getParameters(LinkedParameter linkedParameter) {
@@ -108,7 +121,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
 
     final private BeautiOptions options;
     final private Map<Parameter, LinkedParameter> linkedParameterMap;
-
+    final private Map<Parameter, LinkedParameter> argumentParameterMap;
 
 //    public void generatePriors(final XMLWriter writer) {
 //        for (HierarchicalPhylogeneticModel hpm : hpmList) {

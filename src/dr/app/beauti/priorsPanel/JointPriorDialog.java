@@ -8,6 +8,7 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
+import dr.app.beauti.components.linkedparameters.LinkedParameter;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.TraitData;
@@ -38,7 +39,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class JointPriorDialog {
+public class JointPriorDialog implements AbstractPriorDialog {
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
 
@@ -47,9 +48,10 @@ public class JointPriorDialog {
     private final JTable parametersTable;
     private final ParametersTableModel parametersTableModel;
 
-    private RealNumberField initialField = new RealNumberField();
     private JTextField nameField = new JTextField();
     private JPanel panel;
+
+    private final PriorSettingsPanel priorSettingsPanel;
 
     private java.util.List<Parameter> parameterList;
     private Parameter parameter;
@@ -58,10 +60,13 @@ public class JointPriorDialog {
 
     public JointPriorDialog(JFrame frame, BeautiOptions options) {
         this.frame = frame;
+
         this.options = options;
 
+        priorSettingsPanel = new PriorSettingsPanel(frame);
+
         nameField.setColumns(10);
-        initialField.setColumns(10);
+        nameField.setText("Untitled");
 
         parametersTableModel = new ParametersTableModel();
 //        TableSorter sorter = new TableSorter(traitsTableModel);
@@ -135,11 +140,7 @@ public class JointPriorDialog {
         return comp.modelExists(modelName);
     }
 
-    public int showDialog(final java.util.List<Parameter> parameterList) {
-
-        this.parameterList = parameterList;
-        this.parameter = parameterList.get(0);
-
+    public int showDialog() {
         panel = new JPanel(new GridBagLayout());
 
         double lower = Double.NEGATIVE_INFINITY;
@@ -152,18 +153,11 @@ public class JointPriorDialog {
             lower = 0.0;
         }
 
-        initialField.setRange(lower, upper);
-        initialField.setValue(parameter.initial);
-
         panel = new JPanel(new GridBagLayout());
 
         setupComponents();
 
-        JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setBorder(null);
-        scrollPane.getViewport().setOpaque(false);
-
-        JOptionPane optionPane = new JOptionPane(scrollPane,
+        JOptionPane optionPane = new JOptionPane(panel,
                 JOptionPane.PLAIN_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
                 null,
@@ -171,10 +165,11 @@ public class JointPriorDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Phylogenetic Hierarchical Model Setup");
+        final JDialog dialog = optionPane.createDialog(frame, "Linked Parameter Setup");
 
+        priorSettingsPanel.setDialog(dialog);
+        priorSettingsPanel.setParameter(parameter);
 
-        dialog.pack();
         if (OSType.isMac()) {
             dialog.setMinimumSize(new Dimension(dialog.getBounds().width, 300));
         } else {
@@ -191,6 +186,7 @@ public class JointPriorDialog {
 //            System.out.println("panel height = " + panel.getHeight());
         }
 
+        dialog.pack();
         dialog.setResizable(true);
         dialog.setVisible(true);
 
@@ -199,10 +195,6 @@ public class JointPriorDialog {
         if (value != null && value != -1) {
             result = value;
         }
-
-//        if (result == JOptionPane.OK_OPTION) {
-//            getArguments();
-//        }
 
         return result;
     }
@@ -243,28 +235,26 @@ public class JointPriorDialog {
 
         OptionsPanel optionsPanel = new OptionsPanel(0,6);
         optionsPanel.addComponentWithLabel("Unique Name: ", nameField);
-        optionsPanel.addComponentWithLabel("Initial Value: ", initialField);
-
-        //panel2.add(toolBar1, BorderLayout.NORTH);
-        //panel2.add(scrollPane2, BorderLayout.CENTER);
-
-//        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-//                panel1, panel2);
-//        splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
-//        splitPane.setContinuousLayout(true);
-//        splitPane.setBorder(BorderFactory.createEmptyBorder());
-//        splitPane.setOpaque(false);
+//        optionsPanel.addComponentWithLabel("Initial Value: ", initialField);
 
         panel.setOpaque(false);
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         panel.setLayout(new BorderLayout(0, 0));
-        panel.add(optionsPanel, BorderLayout.CENTER);
-        panel.add(panel1, BorderLayout.EAST);
-        //panel.add(toolBar1, BorderLayout.NORTH);
+        panel.add(priorSettingsPanel, BorderLayout.CENTER);
+        panel.add(panel1, BorderLayout.WEST);
+        panel.add(optionsPanel, BorderLayout.NORTH);
     }
 
     protected JPanel createPriorPanel() {
         return new JPanel();
+    }
+
+    public void getArguments(Parameter parameter) {
+        priorSettingsPanel.getArguments(parameter);
+    }
+
+    public boolean hasInvalidInput(boolean showError) {
+        return priorSettingsPanel.hasInvalidInput(showError);
     }
 
     public boolean addParameter() {
@@ -297,6 +287,14 @@ public class JointPriorDialog {
     }
 
     private AddParameterAction addParameterAction = new AddParameterAction();
+
+    public void setLinkedParameter(LinkedParameter linkedParameter) {
+        parameter = linkedParameter.getArgumentParameterList().get(0);
+    }
+
+    public void setParameterList(List<Parameter> parameterList) {
+        this.parameterList = parameterList;
+    }
 
     public class AddParameterAction extends AbstractAction {
 

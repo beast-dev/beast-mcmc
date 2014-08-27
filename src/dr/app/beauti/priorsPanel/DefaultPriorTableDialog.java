@@ -34,17 +34,19 @@ import java.awt.*;
 
 
 /**
+ * A dialog box that shows a table of priors that are still set to their default values. Intended
+ * for review before generating the XML.
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
  * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
-public class DefaultPriorDialog {
+public class DefaultPriorTableDialog {
 
     private BeautiFrame frame;
     private PriorsPanel priorsPanel;
 
-    public DefaultPriorDialog(BeautiFrame frame) {
+    public DefaultPriorTableDialog(BeautiFrame frame) {
         this.frame = frame;
         priorsPanel = new PriorsPanel(frame, true);
     }

@@ -214,8 +214,6 @@ public class PriorSettingsPanel extends JPanel {
 
         add(panel1, gbc);
 
-        optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
-
         PriorType priorType = (PriorType) priorCombo.getSelectedItem();
 
         if (!parameter.isPriorFixed) {

@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class LinkedParameter {
 
-    final private String name;
+    private String name;
     final private List<Parameter> argumentParameterList;
 
     /**
@@ -32,4 +32,7 @@ public class LinkedParameter {
         return name;
     }
 
+    public void setName(String name) {
+        this.name = name;
+    }
 }

@@ -51,7 +51,7 @@ import java.util.Map;
  * @author Walter Xie
  * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
-public class PriorDialog {
+public class PriorDialog implements AbstractPriorDialog {
 
     private final JFrame frame;
 
@@ -76,7 +76,12 @@ public class PriorDialog {
     }
 
     public int showDialog() {
-        JScrollPane scrollPane = new JScrollPane(priorSettingsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        JPanel panel = new JPanel(new BorderLayout(0, 6));
+        panel.add(new JLabel("Select prior distribution for " + parameter.getName()), BorderLayout.NORTH);
+        panel.add(priorSettingsPanel, BorderLayout.CENTER);
+
+        JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setOpaque(false);
 
@@ -92,7 +97,6 @@ public class PriorDialog {
 
         priorSettingsPanel.setDialog(dialog);
 
-        dialog.pack();
         if (OSType.isMac()) {
             dialog.setMinimumSize(new Dimension(dialog.getBounds().width, 300));
         } else {
@@ -109,6 +113,7 @@ public class PriorDialog {
 //            System.out.println("panel height = " + panel.getHeight());
         }
 
+        dialog.pack();
         dialog.setResizable(true);
         dialog.setVisible(true);
 

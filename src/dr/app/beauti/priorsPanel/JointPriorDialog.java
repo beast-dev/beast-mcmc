@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class JointPriorDialog implements AbstractPriorDialog {
 
-    private static final int MINIMUM_TABLE_WIDTH = 60;
+    private static final int MINIMUM_TABLE_WIDTH = 120;
 
     private JFrame frame;
 
@@ -65,7 +65,7 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
         priorSettingsPanel = new PriorSettingsPanel(frame);
 
-        nameField.setColumns(10);
+        nameField.setColumns(30);
         nameField.setText("Untitled");
 
         parametersTableModel = new ParametersTableModel();
@@ -240,10 +240,25 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
         panel.setOpaque(false);
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-        panel.setLayout(new BorderLayout(0, 0));
-        panel.add(priorSettingsPanel, BorderLayout.CENTER);
-        panel.add(panel1, BorderLayout.WEST);
-        panel.add(optionsPanel, BorderLayout.NORTH);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 0;
+        c.gridy = 0;
+        c.fill = GridBagConstraints.BOTH;
+        c.gridwidth = 2;
+        panel.add(optionsPanel, c);
+
+        c.gridx = 0;
+        c.gridy = 1;
+        c.gridwidth = 1;
+        panel.add(panel1, c);
+
+        c.gridx = 1;
+        c.gridy = 1;
+        c.anchor = GridBagConstraints.PAGE_START;
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        panel.add(priorSettingsPanel, c);
+
     }
 
     protected JPanel createPriorPanel() {

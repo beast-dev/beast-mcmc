@@ -250,6 +250,7 @@ public class PriorSettingsPanel extends JPanel {
             optionsPanel.addSeparator();
 
             setupChart();
+            chart.setMinimumSize(new Dimension(120, 120));
             chart.setPreferredSize(new Dimension(300, 200));
             chart.setFontSize(8);
 

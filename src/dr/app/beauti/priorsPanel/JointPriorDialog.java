@@ -22,6 +22,7 @@ import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
@@ -42,6 +43,9 @@ import java.util.List;
 public class JointPriorDialog implements AbstractPriorDialog {
 
     private static final int MINIMUM_TABLE_WIDTH = 120;
+    private static final int MINIMUM_TABLE_HEIGHT = 160;
+    private static final int PREFERRED_TABLE_WIDTH = 180;
+    private static final int PREFERRED_TABLE_HEIGHT = 320;
 
     private JFrame frame;
 
@@ -231,8 +235,9 @@ public class JointPriorDialog implements AbstractPriorDialog {
         panel1.setOpaque(false);
         panel1.add(scrollPane1, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.SOUTH);
-        panel1.setPreferredSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
-        panel1.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
+        panel1.setSize(new Dimension(PREFERRED_TABLE_WIDTH, PREFERRED_TABLE_HEIGHT));
+        panel1.setPreferredSize(new Dimension(PREFERRED_TABLE_WIDTH, PREFERRED_TABLE_HEIGHT));
+        panel1.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, MINIMUM_TABLE_HEIGHT));
 
         OptionsPanel optionsPanel = new OptionsPanel(0,6);
         optionsPanel.addComponentWithLabel("Unique Name: ", nameField);
@@ -244,17 +249,25 @@ public class JointPriorDialog implements AbstractPriorDialog {
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 0;
         c.gridy = 0;
-        c.fill = GridBagConstraints.BOTH;
+        c.weightx = 0;
+        c.weighty = 0;
+        c.anchor = GridBagConstraints.PAGE_START;
+        c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 2;
         panel.add(optionsPanel, c);
 
         c.gridx = 0;
         c.gridy = 1;
+        c.anchor = GridBagConstraints.PAGE_START;
+        c.fill = GridBagConstraints.VERTICAL;
         c.gridwidth = 1;
         panel.add(panel1, c);
 
         c.gridx = 1;
         c.gridy = 1;
+        c.weightx = 1;
+        c.weighty = 1;
+        c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.PAGE_START;
         c.gridwidth = GridBagConstraints.REMAINDER;
         panel.add(priorSettingsPanel, c);

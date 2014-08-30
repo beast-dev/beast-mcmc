@@ -39,7 +39,7 @@ public class LinkedParameterComponentGenerator extends BaseComponentGenerator {
         switch (point) {
             case BEFORE_OPERATORS:
                 for (LinkedParameter linkedParameter : comp.getLinkedParameterList()) {
-                    generateJointParameter(linkedParameter, comp.getParameters(linkedParameter), writer);
+                    generateJointParameter(linkedParameter, comp.getDependentParameters(linkedParameter), writer);
                 }
                 break;
             default:

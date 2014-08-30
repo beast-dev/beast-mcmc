@@ -26,24 +26,11 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.types.PriorType;
-import dr.app.gui.chart.Axis;
-import dr.app.gui.chart.JChart;
-import dr.app.gui.chart.LinearAxis;
-import dr.app.gui.chart.PDFPlot;
 import dr.app.util.OSType;
-import dr.math.distributions.Distribution;
-import dr.util.NumberFormatter;
-import jam.panels.OptionsPanel;
-import sun.jvm.hotspot.runtime.ia64.cInterpreter;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut

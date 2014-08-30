@@ -62,6 +62,9 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
     final private BeautiOptions options;
 
+    private SelectParametersDialog selectParametersDialog = null;
+    private List<Parameter> compatibleParameterList;
+
     public JointPriorDialog(JFrame frame, BeautiOptions options) {
         this.frame = frame;
 
@@ -103,42 +106,49 @@ public class JointPriorDialog implements AbstractPriorDialog {
         }
     }
 
-
-    public void addParameters(java.util.List<Parameter> parameterList) {
-    }
-
     public boolean validateModelName() {
         return validateModelName(nameField.getText());
     }
 
-    private boolean validateModelName(String modelName) {
+    private boolean validateModelName(String name) {
 //        System.err.println("Validating: " + modelName);
         // check that the name is valid
-        if (modelName.trim().length() == 0) {
+        if (name.trim().length() == 0) {
             Toolkit.getDefaultToolkit().beep();
             return false;
         }
 
-        // check that the trait name doesn't exist
-        if (modelExists(modelName)) {
+        // check that a parameter with this name doesn't exist
+        if (parameterExists(name)) {
+            JOptionPane.showMessageDialog(frame,
+                    "A parameter with this name already exists.",
+                    "Linked parameter error",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+
+        // check that a model with this name doesn't exist
+        if (modelExists(name)) {
             JOptionPane.showMessageDialog(frame,
                     "A model with this name already exists.",
-                    "HPM name error",
-//                    JOptionPane.YES_NO_OPTION,
+                    "Linked parameter error",
                     JOptionPane.WARNING_MESSAGE);
-//            System.err.println("Model name exists");
             return false;
-
-//            if (option == JOptionPane.NO_OPTION) {
-//                return false;
-//            }
         }
 
         return true;
     }
 
-    private boolean modelExists(String modelName) {
+    private boolean parameterExists(String name) {
+        for (Parameter parameter : options.selectParameters()) {
+            if (parameter.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    private boolean modelExists(String modelName) {
         HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
                 options.getComponentOptions(HierarchicalModelComponentOptions.class);
         return comp.modelExists(modelName);
@@ -274,10 +284,6 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
     }
 
-    protected JPanel createPriorPanel() {
-        return new JPanel();
-    }
-
     public void getArguments(Parameter parameter) {
         priorSettingsPanel.getArguments(parameter);
     }
@@ -287,42 +293,51 @@ public class JointPriorDialog implements AbstractPriorDialog {
     }
 
     public boolean addParameter() {
-//        if (addParametersDialog == null) {
-//            addParametersDialog = new AddParametersDialog(frame);
-//        }
-//
-//        addParametersDialog.setSpeciesTrait(isSpeciesTrait);
-//        addParametersDialog.setTraitName(traitName);
-//        addParametersDialog.setMessage(message);
-//
-//        int result = addParametersDialog.showDialog();
-//        if (result == JOptionPane.OK_OPTION) {
-//            fireParametersChanged();
-//            updateButtons();
-//
-//        } else if (result == JOptionPane.CANCEL_OPTION) {
-//            return false;
-//        }
+        if (selectParametersDialog == null) {
+            selectParametersDialog = new SelectParametersDialog(frame);
+        }
+        List<Parameter> availableParameters = new ArrayList<Parameter>(compatibleParameterList);
+        availableParameters.removeAll(parameterList);
+        int result = selectParametersDialog.showDialog("Select parameter to add to this Linked Parameter", availableParameters);
+        if (result == JOptionPane.OK_OPTION) {
+            Parameter parameter = selectParametersDialog.getSelectedParameter();
+            parameterList.add(parameter);
+            parametersTableModel.fireTableDataChanged();
+        } else if (result == JOptionPane.CANCEL_OPTION) {
+            return false;
+        }
 
         return true;
     }
 
-    private void removeParameter() {
-        int selRow = parametersTable.getSelectedRow();
-        removeParameter((Parameter)parametersTable.getValueAt(selRow, 0));
+    private void removeSelectedParameters() {
+        int[] selRows = parametersTable.getSelectedRows();
+        List<Parameter> parametersToRemove = new ArrayList<Parameter>();
+        for (int row : selRows) {
+            parametersToRemove.add((Parameter)parametersTable.getValueAt(row, 0));
+        }
+        removeParameters(parametersToRemove);
     }
 
-    private void removeParameter(Parameter parameter) {
+    private void removeParameters(List<Parameter> parametersToRemove) {
+        for (Parameter parameter : parametersToRemove) {
+            parameterList.remove(parameter);
+        }
+        parametersTableModel.fireTableDataChanged();
     }
 
     private AddParameterAction addParameterAction = new AddParameterAction();
 
     public void setLinkedParameter(LinkedParameter linkedParameter) {
         parameter = linkedParameter.getArgumentParameterList().get(0);
+        parameterList = linkedParameter.getDependentParameterList();
     }
 
     public void setParameterList(List<Parameter> parameterList) {
-        this.parameterList = parameterList;
+    }
+
+    public void setCompatibleParameterList(List<Parameter> compatibleParameterList) {
+        this.compatibleParameterList = compatibleParameterList;
     }
 
     public class AddParameterAction extends AbstractAction {
@@ -338,7 +353,7 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
     AbstractAction removeParameterAction = new AbstractAction() {
         public void actionPerformed(ActionEvent ae) {
-            removeParameter();
+            removeSelectedParameters();
         }
     };
 
@@ -365,7 +380,7 @@ public class JointPriorDialog implements AbstractPriorDialog {
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return parameterList.get(row).getName();
+                    return parameterList.get(row);
             }
             return null;
         }

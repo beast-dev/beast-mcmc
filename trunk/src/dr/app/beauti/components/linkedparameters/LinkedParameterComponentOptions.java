@@ -67,32 +67,45 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
 
         argumentList.add(newParameter);
 
-        LinkedParameter linkedParameter = new LinkedParameter(name, argumentList);
+        LinkedParameter linkedParameter = new LinkedParameter(name, argumentList, this);
 
         return linkedParameter;
     }
 
+    public void setDependentParameters(LinkedParameter linkedParameter, List<Parameter> parameterList) {
+        // remove any old links to this linked parameter.
+        removeDependentParameters(linkedParameter);
 
-
-    public LinkedParameter addLinkedParameter(LinkedParameter linkedParameter, List<Parameter> parameterList) {
+        // add new links back
         for (Parameter parameter : parameterList) {
             linkedParameterMap.put(parameter, linkedParameter);
             parameter.isLinked = true;
             parameter.linkedName = linkedParameter.getName();
         }
 
+        for (Parameter key : linkedParameter.getArgumentParameterList()) {
+            if (argumentParameterMap.get(key) == linkedParameter) {
+                argumentParameterMap.remove(key);
+            }
+        }
+
         for (Parameter parameter : linkedParameter.getArgumentParameterList()) {
             argumentParameterMap.put(parameter, linkedParameter);
         }
-
-        return linkedParameter;
     }
 
-    public void removeParameters(PriorsPanel priorsPanel, List<Parameter> parametersToRemove, boolean caution) {
-        for (Parameter parameter : parametersToRemove) {
-            linkedParameterMap.remove(parameter);
-            parameter.isLinked = false;
+    public void removeDependentParameters(LinkedParameter linkedParameter) {
+        for (Parameter key : linkedParameterMap.keySet()) {
+            if (linkedParameterMap.get(key) == linkedParameter) {
+                removeDependentParameter(key);
+            }
         }
+    }
+
+    public void removeDependentParameter(Parameter parameter) {
+        linkedParameterMap.remove(parameter);
+        parameter.isLinked = true;
+        parameter.linkedName = null;
     }
 
     public Collection<LinkedParameter> getLinkedParameterList() {
@@ -107,7 +120,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
         return argumentParameterMap.get(parameter);
     }
 
-    public List<Parameter> getParameters(LinkedParameter linkedParameter) {
+    public List<Parameter> getDependentParameters(LinkedParameter linkedParameter) {
         List<Parameter> parameters = new ArrayList<Parameter>();
         for (Parameter parameter : linkedParameterMap.keySet()) {
             if (linkedParameterMap.get(parameter) == linkedParameter) {
@@ -132,4 +145,5 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
     public boolean isEmpty() {
         return linkedParameterMap.isEmpty();
     }
+
 }

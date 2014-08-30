@@ -47,6 +47,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -111,6 +112,32 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTable.getColumnModel().getColumn(3).setMinWidth(410);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
+
+        DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
+            // override renderer preparation
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                           boolean hasFocus,
+                                                           int row, int column)
+            {
+                // allow default preparation
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                Parameter parameter = parameters.get(row);
+
+                if (isSelected) {
+                    setForeground(parameter.isLinked ? Color.LIGHT_GRAY : SystemColor.textHighlightText);
+                } else {
+                    setForeground(parameter.isLinked ? Color.GRAY : SystemColor.controlText);
+                }
+//                if (parameter.isLinked) {
+//                    setFont(getFont().deriveFont(Font.ITALIC));
+//                }
+                return this;
+            }
+        };
+        priorTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
+        priorTable.getColumnModel().getColumn(2).setCellRenderer(renderer);
+        priorTable.getColumnModel().getColumn(3).setCellRenderer(renderer);
 
         scrollPane = new JScrollPane(priorTable,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -282,20 +309,13 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     private void linkButtonPressed(int[] rows) {
+        Parameter firstParameter = parameters.get(rows[0]);
 
-        if (rows.length < 2) {
-            JOptionPane.showMessageDialog(frame,
-                    "Fewer than two parameters selected.",
-                    "Parameter linking error",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Double lowerBound = null;
-        Double upperBound = null;
-
-        List<Parameter> paramList = new ArrayList<Parameter>();
+        // gather the selected parameters...
+        List<Parameter> selectedParameters = new ArrayList<Parameter>();
+        boolean isLinked = false;
         for (int i = 0; i < rows.length; ++i) {
+
             Parameter parameter = parameters.get(rows[i]);
             if (parameter.isStatistic) {
                 JOptionPane.showMessageDialog(frame,
@@ -304,23 +324,9 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            boolean sameBounds = true;
-            if (lowerBound == null) {
-                lowerBound = parameter.truncationLower;
-            } else {
-                if (lowerBound != parameter.truncationLower) {
-                    sameBounds = false;
-                }
-            }
-            if (upperBound == null) {
-                upperBound = parameter.truncationUpper;
-            } else {
-                if (upperBound != parameter.truncationUpper) {
-                    sameBounds = false;
-                }
-            }
+            if (parameter.truncationLower != firstParameter.truncationLower ||
+                    parameter.truncationUpper != firstParameter.truncationUpper) {
 
-            if (!sameBounds) {
                 JOptionPane.showMessageDialog(frame,
                         "Only parameters that share the same bounds\n" +
                                 "can be linked.",
@@ -329,66 +335,32 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 return; // Bail out
             }
 
-            paramList.add(parameter);
+            if (parameter.isLinked) {
+                isLinked = true;
+            }
+            selectedParameters.add(parameters.get(rows[i]));
         }
 
-        // Check to see if selected parameters are already in a HPM
-//            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-//                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
-//            boolean anyConflicts = false;
-//            for (Parameter parameter : paramList) {
-//                if (comp.isHierarchicalParameter(parameter)) {
-//                    anyConflicts = true;
-//                    break;
-//                }
-//            }
-//            if (anyConflicts) {
-//                int option = JOptionPane.showConfirmDialog(this,
-//                        "At one selected parameter already exists in a HPM.\n" +
-//                                "Constructing a new prior will remove these parameter\n" +
-//                                "from the original model. Continue?",
-//                        "HPM warning",
-//                        JOptionPane.YES_NO_OPTION,
-//                        JOptionPane.WARNING_MESSAGE);
-//                if (option == JOptionPane.NO_OPTION) {
-//                    return;
-//                }
-//            }
-
-        if (linkParameterDialog == null) {
-            linkParameterDialog = new JointPriorDialog(frame, options);
+        if (isLinked) {
+            int option = JOptionPane.showConfirmDialog(this,
+                    "At one or more selected parameters are already linked or\n" +
+                            "part of a hierarchical model.\n\n" +
+                            "Constructing a new prior will remove these parameter\n" +
+                            "from the original model. Continue?",
+                    "Link warning",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (option == JOptionPane.NO_OPTION) {
+                return;
+            }
         }
 
         LinkedParameterComponentOptions comp = (LinkedParameterComponentOptions)
                 options.getComponentOptions(LinkedParameterComponentOptions.class);
 
-        LinkedParameter linkedParameter = comp.createLinkedParameter("Untitled", paramList);
+        LinkedParameter linkedParameter = comp.createLinkedParameter("Untitled", selectedParameters);
 
-        linkParameterDialog.setLinkedParameter(linkedParameter);
-        linkParameterDialog.setParameterList(paramList);
-
-        boolean done = false;
-
-        while (!done) {
-            int result = linkParameterDialog.showDialog();
-            if (result == JOptionPane.OK_OPTION && linkParameterDialog.validateModelName()) {
-                done = true;
-            }
-            if (result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-        }
-
-        linkedParameter.setName(linkParameterDialog.getName());
-
-        comp.addLinkedParameter(linkedParameter, linkParameterDialog.getParameterList());
-
-        for (Parameter parameter : linkParameterDialog.getParameterList()) {
-            parameter.setPriorEdited(true);
-        }
-
-        priorTableModel.fireTableDataChanged();
-        frame.setAllOptions();
+        editLinkedParameter(linkedParameter);
     }
 
     private void hierarchicalButtonPressed(int[] rows) {
@@ -504,41 +476,19 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     private void priorButtonPressed(int row) {
-        Parameter param = parameters.get(row);
-
-//        if (hierarchicalPriorDialog != null) {
-//            // Check that parameter is not already in a HPM
-//            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-//                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
-//            if (comp.isHierarchicalParameter(param)) {
-//                int option = JOptionPane.showConfirmDialog(this,
-//                        "Parameter already exists in a HPM. Selecting a\n" +
-//                                "new prior will remove the parameter. Continue?",
-//                        "HPM warning",
-//                        JOptionPane.YES_NO_OPTION,
-//                        JOptionPane.WARNING_MESSAGE);
-//                if (option == JOptionPane.NO_OPTION) {
-//                    return;
-//                }
-//            }
-//        }
-
-        AbstractPriorDialog dialog;
+        Parameter parameter = parameters.get(row);
 
         LinkedParameterComponentOptions comp = (LinkedParameterComponentOptions)
                 options.getComponentOptions(LinkedParameterComponentOptions.class);
 
-        LinkedParameter linkedParameter = comp.getLinkedParameterForArgument(param);
+        LinkedParameter linkedParameter = comp.getLinkedParameterForArgument(parameter);
 
         if (linkedParameter != null) {
-            linkParameterDialog.setLinkedParameter(linkedParameter);
-            linkParameterDialog.setParameterList(comp.getParameters(linkedParameter));
-
-            dialog = linkParameterDialog;
+            editLinkedParameter(linkedParameter);
         } else {
-            if (param.isLinked) {
+            if (parameter.isLinked) {
                 int option = JOptionPane.showConfirmDialog(this,
-                        "Parameter linked to other parameter (as a joint\n" +
+                        "Parameter linked to other parameter (as a linked\n" +
                                 "parameter or an HPM). Selecting a new prior will\n" +
                                 "remove the parameter from this link.\nContinue?",
                         "Linked parameter warning",
@@ -549,53 +499,114 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 }
             }
 
-            if (priorDialog == null) {
-                priorDialog = new PriorDialog(frame);
+            editPrior(parameter);
+        }
+    }
+
+    private void editLinkedParameter(LinkedParameter linkedParameter) {
+        Parameter sourceParameter = linkedParameter.getArgumentParameterList().get(0);
+
+        List<Parameter> compatibleParameters = new ArrayList<Parameter>();
+        for (Parameter parameter : parameters) {
+            boolean isCompatible = true;
+            if (parameter.isStatistic) {
+                isCompatible = false;
+            }
+            if (parameter.truncationLower != sourceParameter.truncationLower) {
+                isCompatible = false;
+            }
+            if (parameter.truncationUpper != sourceParameter.truncationUpper) {
+                isCompatible = false;
             }
 
-            priorDialog.setParameter(param);
-            dialog = priorDialog;
+            if (isCompatible) {
+                compatibleParameters.add(parameter);
+            }
+
         }
+
+
+        if (linkParameterDialog == null) {
+            linkParameterDialog = new JointPriorDialog(frame, options);
+        }
+
+        linkParameterDialog.setLinkedParameter(linkedParameter);
+        linkParameterDialog.setCompatibleParameterList(compatibleParameters);
+
+
+        boolean done = false;
+
+        while (!done) {
+            int result = linkParameterDialog.showDialog();
+            if (result == JOptionPane.OK_OPTION && linkParameterDialog.validateModelName()) {
+                done = true;
+            }
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+        }
+
+        linkedParameter.setName(linkParameterDialog.getName());
+
+        linkedParameter.linkDependentParameters(linkParameterDialog.getParameterList());
+
+        for (Parameter parameter : linkParameterDialog.getParameterList()) {
+            parameter.setPriorEdited(true);
+        }
+
+        priorTableModel.fireTableDataChanged();
+        frame.setAllOptions();
+    }
+
+    private void editPrior(Parameter parameter) {
+        if (parameter.isLinked) {
+            int option = JOptionPane.showConfirmDialog(this,
+                    "Parameter linked to other parameter (as a linked\n" +
+                            "parameter or an HPM). Selecting a new prior will\n" +
+                            "remove the parameter from this link.\nContinue?",
+                    "Linked parameter warning",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            if (option == JOptionPane.NO_OPTION) {
+                return;
+            }
+        }
+
+        if (priorDialog == null) {
+            priorDialog = new PriorDialog(frame);
+        }
+
+        priorDialog.setParameter(parameter);
 
         int result;
 
         do {
-            result = dialog.showDialog();
-        } while (result == JOptionPane.OK_OPTION && dialog.hasInvalidInput(true));
+            result = priorDialog.showDialog();
+        } while (result == JOptionPane.OK_OPTION && priorDialog.hasInvalidInput(true));
 
         if (result == JOptionPane.OK_OPTION) {
             // move to individual Dialog, otherwise it will change if Cancel
-            dialog.getArguments(param);
+            priorDialog.getArguments(parameter);
+
             // Only do this if OK button is pressed (not cancel):
 
-            if (hierarchicalPriorDialog != null) {
-                // Possibly remove parameter from its HPM
-                HierarchicalModelComponentOptions hmco = (HierarchicalModelComponentOptions)
-                        options.getComponentOptions(HierarchicalModelComponentOptions.class);
-                if (hmco.isHierarchicalParameter(param)) {
-                    if (hmco.removeParameter(this, param, true) == JOptionPane.NO_OPTION) {
-                        // Bail out
-                        System.err.println("Bailing out of modification");
-                        return;
-                    }
-                    System.err.println("Parameter removed from an HPM");
-                }
-            }
+            // If this was part of a linked parameter, remove it from that...
+            removeFromJointPrior(parameter);
 
-            param.setPriorEdited(true);
+            parameter.setPriorEdited(true);
 
             if (isDefaultOnly) {
                 setParametersList(options);
             }
 
-            if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
+            if (parameter.getBaseName().endsWith("treeModel.rootHeight") || parameter.taxaId != null) { // param.taxa != null is TMRCA
 
-                if (options.treeModelOptions.isNodeCalibrated(param)) {
+                if (options.treeModelOptions.isNodeCalibrated(parameter)) {
                     List<ClockModelGroup> groupList;
                     if (options.useStarBEAST) {
                         groupList = options.clockModelOptions.getClockModelGroups();
                     } else {
-                        groupList = options.clockModelOptions.getClockModelGroups(options.getDataPartitions(param.getOptions()));
+                        groupList = options.clockModelOptions.getClockModelGroups(options.getDataPartitions(parameter.getOptions()));
                     }
 
                     for (ClockModelGroup clockModelGroup : groupList) {
@@ -609,6 +620,29 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
             priorTableModel.fireTableDataChanged();
         }
+    }
+
+    private void removeFromJointPrior(Parameter parameter) {
+        LinkedParameterComponentOptions comp = (LinkedParameterComponentOptions)
+                options.getComponentOptions(LinkedParameterComponentOptions.class);
+
+        LinkedParameter linkedParameter = comp.getLinkedParameterForArgument(parameter);
+        if (linkedParameter != null) {
+            comp.removeDependentParameter(parameter);
+        }
+
+        // Possibly remove parameter from its HPM
+        HierarchicalModelComponentOptions hmco = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+        if (hmco.isHierarchicalParameter(parameter)) {
+            if (hmco.removeParameter(this, parameter, true) == JOptionPane.NO_OPTION) {
+                // Bail out
+                System.err.println("Bailing out of modification");
+                return;
+            }
+            System.err.println("Parameter removed from an HPM");
+        }
+
     }
 
     public void getOptions(BeautiOptions options) {

@@ -486,4 +486,8 @@ public class Parameter implements Serializable {
         this.meanInRealSpace = meanInRealSpace;
     }
 
+    @Override
+    public String toString() {
+        return getName();
+    }
 }

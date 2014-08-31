@@ -57,13 +57,13 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
     private final PriorSettingsPanel priorSettingsPanel;
 
-    private java.util.List<Parameter> parameterList;
     private Parameter parameter;
 
     final private BeautiOptions options;
 
     private SelectParametersDialog selectParametersDialog = null;
     private List<Parameter> compatibleParameterList;
+    private List<Parameter> dependentParameterList;
 
     public JointPriorDialog(JFrame frame, BeautiOptions options) {
         this.frame = frame;
@@ -101,7 +101,7 @@ public class JointPriorDialog implements AbstractPriorDialog {
             removeParameterAction.setEnabled(true);
         }
 
-        if (parameterList.size() <= 0) {
+        if (dependentParameterList.size() <= 0) {
             removeParameterAction.setEnabled(false);
         }
     }
@@ -217,8 +217,8 @@ public class JointPriorDialog implements AbstractPriorDialog {
         return nameField.getText();
     }
 
-    public List<Parameter> getParameterList() {
-        return parameterList;
+    public List<Parameter> getDependentParameterList() {
+        return dependentParameterList;
     }
 
     private void setupComponents() {
@@ -243,8 +243,12 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
+        panel1.add(new JLabel("Linked parameters:"), BorderLayout.NORTH);
         panel1.add(scrollPane1, BorderLayout.CENTER);
-        panel1.add(controlPanel1, BorderLayout.SOUTH);
+
+        // removing the control panel for now. Not sure whether we really want adding and
+        // removing of parameteres in this dialog.
+//        panel1.add(controlPanel1, BorderLayout.SOUTH);
         panel1.setSize(new Dimension(PREFERRED_TABLE_WIDTH, PREFERRED_TABLE_HEIGHT));
         panel1.setPreferredSize(new Dimension(PREFERRED_TABLE_WIDTH, PREFERRED_TABLE_HEIGHT));
         panel1.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, MINIMUM_TABLE_HEIGHT));
@@ -297,11 +301,11 @@ public class JointPriorDialog implements AbstractPriorDialog {
             selectParametersDialog = new SelectParametersDialog(frame);
         }
         List<Parameter> availableParameters = new ArrayList<Parameter>(compatibleParameterList);
-        availableParameters.removeAll(parameterList);
+        availableParameters.removeAll(dependentParameterList);
         int result = selectParametersDialog.showDialog("Select parameter to add to this Linked Parameter", availableParameters);
         if (result == JOptionPane.OK_OPTION) {
             Parameter parameter = selectParametersDialog.getSelectedParameter();
-            parameterList.add(parameter);
+            dependentParameterList.add(parameter);
             parametersTableModel.fireTableDataChanged();
         } else if (result == JOptionPane.CANCEL_OPTION) {
             return false;
@@ -321,7 +325,7 @@ public class JointPriorDialog implements AbstractPriorDialog {
 
     private void removeParameters(List<Parameter> parametersToRemove) {
         for (Parameter parameter : parametersToRemove) {
-            parameterList.remove(parameter);
+            dependentParameterList.remove(parameter);
         }
         parametersTableModel.fireTableDataChanged();
     }
@@ -329,11 +333,11 @@ public class JointPriorDialog implements AbstractPriorDialog {
     private AddParameterAction addParameterAction = new AddParameterAction();
 
     public void setLinkedParameter(LinkedParameter linkedParameter) {
-        parameter = linkedParameter.getArgumentParameterList().get(0);
-        parameterList = linkedParameter.getDependentParameterList();
+        parameter = linkedParameter.getArgumentParameter();
     }
 
-    public void setParameterList(List<Parameter> parameterList) {
+    public void setDependentParameterList(List<Parameter> dependentParameterList) {
+        this.dependentParameterList = dependentParameterList;
     }
 
     public void setCompatibleParameterList(List<Parameter> compatibleParameterList) {
@@ -371,16 +375,16 @@ public class JointPriorDialog implements AbstractPriorDialog {
         }
 
         public int getRowCount() {
-            if (parameterList == null) {
+            if (dependentParameterList == null) {
                 return 0;
             }
-            return parameterList.size();
+            return dependentParameterList.size();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return parameterList.get(row);
+                    return dependentParameterList.get(row);
             }
             return null;
         }

@@ -26,6 +26,7 @@ public class LinkedParameterComponentGenerator extends BaseComponentGenerator {
 
         switch (point) {
             case BEFORE_OPERATORS:
+            case IN_FILE_LOG_PARAMETERS:
                 return !comp.isEmpty();
             default:
                 return false;
@@ -40,6 +41,11 @@ public class LinkedParameterComponentGenerator extends BaseComponentGenerator {
             case BEFORE_OPERATORS:
                 for (LinkedParameter linkedParameter : comp.getLinkedParameterList()) {
                     generateJointParameter(linkedParameter, comp.getDependentParameters(linkedParameter), writer);
+                }
+                break;
+            case IN_FILE_LOG_PARAMETERS:
+                for (LinkedParameter linkedParameter : comp.getLinkedParameterList()) {
+                    writer.writeIDref(ParameterParser.PARAMETER, linkedParameter.getName());
                 }
                 break;
             default:

@@ -76,10 +76,6 @@ public class JointParameter extends Parameter.Abstract implements VariableListen
         return getId();
     }
 
-    public final String getDimensionName(int dim) {
-        return parameters.get(0).getDimensionName(dim);
-    }
-
     public int getDimension() {
         return dimension;
     }

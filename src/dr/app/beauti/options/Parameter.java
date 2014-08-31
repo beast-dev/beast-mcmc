@@ -45,7 +45,7 @@ public class Parameter implements Serializable {
     private boolean meanInRealSpace = false;
 
     // Required para
-    private final String baseName;
+    private String baseName;
     private final String description;
 
     // final Builder para
@@ -379,6 +379,11 @@ public class Parameter implements Serializable {
             return getFullName();
         }
     }
+
+    public void setName(String name) {
+        this.baseName = name;
+    }
+
 
     public String getXMLName() { // only for BeautiTemplate
         if (taxaId != null) {

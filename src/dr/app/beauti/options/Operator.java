@@ -39,7 +39,7 @@ public class Operator implements Serializable {
     private String prefix = null;
 
     // final
-    private final String baseName;
+    private String baseName;
     private final String description;
     public final OperatorType operatorType;
     public final Parameter parameter1;
@@ -176,6 +176,10 @@ public class Operator implements Serializable {
             name = prefix + baseName;
         }
         return name;
+    }
+
+    public void setName(String name) {
+        this.baseName = name;
     }
 
     public String getBaseName() {

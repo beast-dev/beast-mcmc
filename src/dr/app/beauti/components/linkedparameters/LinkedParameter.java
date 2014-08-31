@@ -1,5 +1,6 @@
 package dr.app.beauti.components.linkedparameters;
 
+import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.PriorType;
 
@@ -12,22 +13,29 @@ import java.util.List;
 public class LinkedParameter {
 
     private String name;
-    final private List<Parameter> argumentParameterList;
+    final private Parameter argumentParameter;
+    final private Operator argumentOperator;
     final private LinkedParameterComponentOptions options;
 
     /**
      * A simple data class to store the definition of a linked parameter.
      * @param name the name of the parameter
-     * @param argumentParameterList the list of 'control' parameters
+     * @param argumentParameter the control parameter
+     * @param argumentOperator the control parameter's operator
      */
-    public LinkedParameter(String name, List<Parameter> argumentParameterList, LinkedParameterComponentOptions options) {
+    public LinkedParameter(String name, Parameter argumentParameter, Operator argumentOperator, LinkedParameterComponentOptions options) {
         this.name = name;
-        this.argumentParameterList = argumentParameterList;
+        this.argumentParameter = argumentParameter;
+        this.argumentOperator = argumentOperator;
         this.options = options;
     }
 
-    public List<Parameter> getArgumentParameterList() {
-        return argumentParameterList;
+    public Parameter getArgumentParameter() {
+        return argumentParameter;
+    }
+
+    public Operator getArgumentOperator() {
+        return argumentOperator;
     }
 
     public List<Parameter> getDependentParameterList() {
@@ -43,7 +51,10 @@ public class LinkedParameter {
     }
 
     public void setName(String name) {
+        argumentParameter.setName(name);
+        argumentOperator.setName(name);
         this.name = name;
+
     }
 
 }

@@ -26,7 +26,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
         for (LinkedParameter linkedParameter : getLinkedParameterList()) {
-            params.addAll(linkedParameter.getArgumentParameterList());
+            params.add(linkedParameter.getArgumentParameter());
         }
     }
 
@@ -36,8 +36,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
         for (LinkedParameter linkedParameter : getLinkedParameterList()) {
-            for (Parameter parameter : linkedParameter.getArgumentParameterList()) {
-            }
+            ops.add(linkedParameter.getArgumentOperator());
         }
     }
 
@@ -58,16 +57,14 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
     }
 
     public LinkedParameter createLinkedParameter(String name, List<Parameter> parameterList) {
-        List<Parameter> argumentList = new ArrayList<Parameter>();
-
         Parameter sourceParameter = parameterList.get(0);
         Parameter newParameter = options.createDuplicate(name, "Linked parameter", sourceParameter);
 
-        options.createScaleOperator(name, options.demoTuning, 1.0);
+        Operator sourceOperator = options.getOperator(sourceParameter);
 
-        argumentList.add(newParameter);
+        Operator newOperator = options.createDuplicate(name, "Linked parameter", newParameter, sourceOperator);
 
-        LinkedParameter linkedParameter = new LinkedParameter(name, argumentList, this);
+        LinkedParameter linkedParameter = new LinkedParameter(name, newParameter, newOperator, this);
 
         return linkedParameter;
     }
@@ -83,28 +80,24 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
             parameter.linkedName = linkedParameter.getName();
         }
 
-        for (Parameter key : linkedParameter.getArgumentParameterList()) {
-            if (argumentParameterMap.get(key) == linkedParameter) {
-                argumentParameterMap.remove(key);
-            }
-        }
-
-        for (Parameter parameter : linkedParameter.getArgumentParameterList()) {
-            argumentParameterMap.put(parameter, linkedParameter);
-        }
+        argumentParameterMap.put(linkedParameter.getArgumentParameter(), linkedParameter);
     }
 
     public void removeDependentParameters(LinkedParameter linkedParameter) {
+        List<Parameter> toRemove = new ArrayList<Parameter>();
         for (Parameter key : linkedParameterMap.keySet()) {
             if (linkedParameterMap.get(key) == linkedParameter) {
-                removeDependentParameter(key);
+                toRemove.add(key);
             }
+        }
+        for (Parameter parameter : toRemove) {
+            removeDependentParameter(parameter);
         }
     }
 
     public void removeDependentParameter(Parameter parameter) {
         linkedParameterMap.remove(parameter);
-        parameter.isLinked = true;
+        parameter.isLinked = false;
         parameter.linkedName = null;
     }
 
@@ -135,6 +128,7 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
     final private BeautiOptions options;
     final private Map<Parameter, LinkedParameter> linkedParameterMap;
     final private Map<Parameter, LinkedParameter> argumentParameterMap;
+
 
 //    public void generatePriors(final XMLWriter writer) {
 //        for (HierarchicalPhylogeneticModel hpm : hpmList) {

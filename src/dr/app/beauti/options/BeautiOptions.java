@@ -334,8 +334,31 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentOperators(this, ops);
 
+        // no remove operators for parameters that are part of a joint prior...
+        List<Operator> toRemove = new ArrayList<Operator>();
+        for (Operator operator : ops) {
+            if ((operator.parameter1 != null && operator.parameter1.isLinked) ||
+                    (operator.parameter2 != null && operator.parameter2.isLinked)) {
+                toRemove.add(operator);
+            }
+        }
+
+        ops.removeAll(toRemove);
+
         return ops;
     }
+
+    public Operator getOperator(Parameter parameter) {
+        for (Operator operator : selectOperators()) {
+            if (operator.parameter1 == parameter || operator.parameter2 == parameter) {
+                return operator;
+            }
+        }
+        return null;
+    }
+
+
+
 
     public boolean hasData() {
         return dataPartitions.size() > 0;

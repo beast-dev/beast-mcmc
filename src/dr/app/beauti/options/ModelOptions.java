@@ -214,6 +214,11 @@ public class ModelOptions implements Serializable {
                 tuning, weight).build());
     }//TODO a switch like createUpDownOperator?
 
+    public Operator createDuplicate(String name, String description, Parameter parameter, Operator source) {
+        return new Operator.Builder(name, description, parameter, source.operatorType, source.tuning, source.weight).build(operators);
+    }
+
+
     //+++++++++++++++++++ Methods ++++++++++++++++++++++++++++++++
     public Parameter getParameter(String name) {
         Parameter parameter = parameters.get(name);
@@ -249,8 +254,6 @@ public class ModelOptions implements Serializable {
         }
         return operator;
     }
-
-//    abstract public String getPrefix();
 
     protected void addComponent(ComponentOptions component) {
         components.add(component);

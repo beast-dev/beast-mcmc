@@ -123,21 +123,20 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
         return parameters;
     }
 
+    public boolean isEmpty() {
+        return linkedParameterMap.isEmpty();
+    }
+
+    public boolean isArgumentParameter(Parameter parameter) {
+        return linkedParameterMap.containsKey(parameter);
+    }
+
+    public boolean isDependentParameter(Parameter parameter) {
+        return argumentParameterMap.containsKey(parameter);
+    }
 
 
     final private BeautiOptions options;
     final private Map<Parameter, LinkedParameter> linkedParameterMap;
     final private Map<Parameter, LinkedParameter> argumentParameterMap;
-
-
-//    public void generatePriors(final XMLWriter writer) {
-//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
-//            hpm.generatePriors(writer);
-//        }
-//    }
-
-    public boolean isEmpty() {
-        return linkedParameterMap.isEmpty();
-    }
-
 }

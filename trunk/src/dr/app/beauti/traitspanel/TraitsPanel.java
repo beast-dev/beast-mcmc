@@ -616,6 +616,15 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
+    public class CreateTraitPartitionAction extends AbstractAction {
+        public CreateTraitPartitionAction() {
+            super("Create partition from trait ...");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            createTraitPartition();
+        }
+    }
 
     class TraitsTableModel extends AbstractTableModel {
 
@@ -790,15 +799,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public class CreateTraitPartitionAction extends AbstractAction {
-        public CreateTraitPartitionAction() {
-            super("Create partition from trait ...");
-            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-
-        }
-    }
 
 }
+

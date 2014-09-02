@@ -1,7 +1,7 @@
 /*
  * PartitionTreePrior.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -125,7 +125,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterUniformPrior("skygrid.logPopSize", "GMRF Bayesian SkyGrid population sizes (log unit)",
                 PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
         createParameterGammaPrior("skygrid.precision", "GMRF Bayesian SkyGrid precision",
-                PriorScaleType.NONE, 1.0, 0.001, 1000, true);
+                PriorScaleType.NONE, 0.1, 0.001, 1000, true);
         createParameterUniformPrior("skygrid.numGridPoints", "GMRF Bayesian SkyGrid number of grid points)",
                 PriorScaleType.NONE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
         createParameterUniformPrior("skygrid.cutOff", "GMRF Bayesian SkyGrid cut-off time",
@@ -216,7 +216,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 "skyride.precision", OperatorType.GMRF_GIBBS_OPERATOR, 2, 2);
         createOperatorUsing2Parameters("gmrfSkyGridGibbsOperator", "gmrfGibbsOperator", "Gibbs sampler for Bayesian SkyGrid", "skygrid.logPopSize",
                 "skygrid.precision", OperatorType.SKY_GRID_GIBBS_OPERATOR, 2, 2);
-        createScaleOperator("skygrid.precision","description", 0.75, 0.1);
+        createScaleOperator("skygrid.precision", "description", 0.75, 1.0);
 
         createScaleOperator("yule.birthRate", demoTuning, demoWeights);
 

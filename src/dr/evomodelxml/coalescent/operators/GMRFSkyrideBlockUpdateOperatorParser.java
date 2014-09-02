@@ -1,7 +1,7 @@
 /*
  * GMRFSkyrideBlockUpdateOperatorParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -95,6 +95,9 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
         double scaleFactor = xo.getDoubleAttribute(SCALE_FACTOR);
+        if (scaleFactor == 1.0) {
+            mode = CoercionMode.COERCION_OFF;
+        }
 
 //            if (scaleFactor <= 0.0) {
 //                throw new XMLParseException("scaleFactor must be greater than 0.0");

@@ -80,7 +80,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                                            double cutOff,
                                            int numGridPoints,
                                            Parameter phi,
-                                           Parameter ploidyFactors) {
+                                           Parameter ploidyFactorsParameter) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
@@ -96,7 +96,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         this.cutOff = cutOff;
         this.numGridPoints = numGridPoints;
         this.phiParameter = phi;
-        this.ploidyFactors = ploidyFactors;
+        this.ploidyFactors = ploidyFactorsParameter;
 
         setupGridPoints();
 
@@ -534,7 +534,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         double[] currentGamma = popSizeParameter.getParameterValues();
 
         for (int i = 0; i < fieldLength; i++) {
-            currentLike += -numCoalEvents[i] * currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
+            currentLike += -numCoalEvents[i] * currentGamma[i] + ploidySums[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
         }
 
         return currentLike;

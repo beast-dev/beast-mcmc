@@ -42,19 +42,19 @@ import java.util.logging.Logger;
  */
 public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
-	public static final String SKYLINE_LIKELIHOOD = "gmrfSkyrideLikelihood";
+    public static final String SKYLINE_LIKELIHOOD = "gmrfSkyrideLikelihood";
     public static final String SKYRIDE_LIKELIHOOD = "skyrideLikelihood";
     public static final String SKYGRID_LIKELIHOOD = "gmrfSkyGridLikelihood";
 
-	public static final String POPULATION_PARAMETER = "populationSizes";
-	public static final String GROUP_SIZES = "groupSizes";
-	public static final String PRECISION_PARAMETER = "precisionParameter";
-	public static final String POPULATION_TREE = "populationTree";
-	public static final String LAMBDA_PARAMETER = "lambdaParameter";
-	public static final String BETA_PARAMETER = "betaParameter";
-	public static final String COVARIATE_MATRIX = "covariateMatrix";
-	public static final String RANDOMIZE_TREE = "randomizeTree";
-	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
+    public static final String POPULATION_PARAMETER = "populationSizes";
+    public static final String GROUP_SIZES = "groupSizes";
+    public static final String PRECISION_PARAMETER = "precisionParameter";
+    public static final String POPULATION_TREE = "populationTree";
+    public static final String LAMBDA_PARAMETER = "lambdaParameter";
+    public static final String BETA_PARAMETER = "betaParameter";
+    public static final String COVARIATE_MATRIX = "covariateMatrix";
+    public static final String RANDOMIZE_TREE = "randomizeTree";
+    public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
 
     public static final String RESCALE_BY_ROOT_ISSUE = "rescaleByRootHeight";
     public static final String GRID_POINTS = "gridPoints";
@@ -62,13 +62,14 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
     public static final String PHI_PARAMETER = "phiParameter";
-    
+    public static final String PLOIDY = "ploidy";
+
 
     public String getParserName() {
         return SKYLINE_LIKELIHOOD;
     }
 
-    public String[] getParserNames(){
+    public String[] getParserNames() {
         return new String[]{getParserName(), SKYRIDE_LIKELIHOOD, SKYGRID_LIKELIHOOD}; // cannot duplicate
     }
 
@@ -96,7 +97,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         Parameter groupParameter = null;
         if (cxo != null) {
             groupParameter = (Parameter) cxo.getChild(Parameter.class);
-        
+
             if (popParameter.getDimension() != groupParameter.getDimension())
                 throw new XMLParseException("Population and group size parameters must have the same length");
         }
@@ -133,6 +134,17 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             phi = (Parameter) cxo.getChild(Parameter.class);
         }
 
+
+        Parameter ploidyFactors = null;
+        if (xo.getChild(PLOIDY) != null) {
+            cxo = xo.getChild(PLOIDY);
+            ploidyFactors = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            ploidyFactors = new Parameter.Default(treeList.size());
+            for (int i = 0; i < treeList.size(); i++) {
+                ploidyFactors.setParameterValue(i, 1.0);
+            }
+        }
 
         Parameter beta = null;
         if (xo.getChild(BETA_PARAMETER) != null) {
@@ -178,13 +190,13 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
 
-             return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
+            return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                    lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
 
         } else {
 
-             return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                lambda, beta, dMatrix, timeAwareSmoothing,cutOff.getParameterValue(0),(int) numGridPoints.getParameterValue(0), phi);
+            return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                    lambda, beta, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
 
         }
     }

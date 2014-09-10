@@ -45,7 +45,8 @@ public class TreeAnnotatorDialog {
 
 	private OptionsPanel optionPanel;
 
-    private WholeNumberField burninText = new WholeNumberField(0, Integer.MAX_VALUE);
+    private WholeNumberField burninStatesText = new WholeNumberField(0, Long.MAX_VALUE);
+    private WholeNumberField burninTreesText = new WholeNumberField(0, Long.MAX_VALUE);
 	private RealNumberField limitText = new RealNumberField(0.0, 1.0);
 
     private JComboBox summaryTreeCombo = new JComboBox(TreeAnnotator.Target.values());
@@ -65,13 +66,42 @@ public class TreeAnnotatorDialog {
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.setOpaque(false);
 
-        burninText.setColumns(12);
-        burninText.setValue(0);
-        optionPanel.addComponentWithLabel("Burnin: ", burninText);
+        final JRadioButton burninStatesRadio = new JRadioButton("Specify the burnin as the number of states");
+        optionPanel.addSpanningComponent(burninStatesRadio);
+        burninStatesText.setColumns(12);
+        burninStatesText.setValue(0);
+        burninStatesText.setToolTipText("<html>Specify the burnin as the number of states<br> in the MCMC chain</html>");
+        final JLabel burninStatesLabel = optionPanel.addComponentWithLabel("Burnin (as states): ", burninStatesText);
 
-		limitText.setColumns(12);
+        final JRadioButton burninTreesRadio = new JRadioButton("Specify the burnin as the number of trees");
+        optionPanel.addSpanningComponent(burninTreesRadio);
+        burninTreesText.setColumns(12);
+        burninTreesText.setValue(0);
+        burninTreesText.setToolTipText("<html>Specify the burnin as the number of trees<br> in the tree file</html>");
+        final JLabel burninTreesLabel = optionPanel.addComponentWithLabel("Burnin (as trees): ", burninTreesText);
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(burninStatesRadio);
+        group.add(burninTreesRadio);
+
+        //Register a listener for the radio buttons.
+        burninStatesRadio.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                burninStatesLabel.setEnabled(burninStatesRadio.isSelected());
+                burninStatesText.setEnabled(burninStatesRadio.isSelected());
+
+                burninTreesLabel.setEnabled(!burninStatesRadio.isSelected());
+                burninTreesText.setEnabled(!burninStatesRadio.isSelected());
+            }
+        });
+        burninStatesRadio.setSelected(true);
+
+        limitText.setColumns(12);
 		limitText.setValue(0.0);
-		optionPanel.addComponentWithLabel("Posterior probability limit: ", limitText);
+        limitText.setToolTipText("<html>Specify a lower limit on the posterior probability<br>" +
+                "below which a clade will not be annotated</html>");
+        optionPanel.addComponentWithLabel("Posterior probability limit: ", limitText);
 
         optionPanel.addComponentWithLabel("Target tree type: ", summaryTreeCombo);
         optionPanel.addComponentWithLabel("Node heights: ", nodeHeightsCombo);
@@ -200,11 +230,15 @@ public class TreeAnnotatorDialog {
 		return optionPane.getValue().equals("Run");
 	}
 
-    public int getBurnin() {
-        return burninText.getValue();
+    public int getBurninStates() {
+        return burninStatesText.getValue();
     }
 
-	public double getPosteriorLimit() {
+    public int getBurninTrees() {
+        return burninTreesText.getValue();
+    }
+
+    public double getPosteriorLimit() {
 		return limitText.getValue();
 	}
 

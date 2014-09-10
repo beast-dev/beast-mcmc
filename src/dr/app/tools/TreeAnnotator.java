@@ -107,7 +107,22 @@ public class TreeAnnotator {
     private final String location2Attribute = "longLat2";
     private final String locationOutputAttribute = "location";
 
-    public TreeAnnotator(final int burnin,
+    /**
+     * Burnin can be specified as the number of trees or the number of states
+     * (one or other should be zero).
+     * @param burninTrees
+     * @param burninStates
+     * @param heightsOption
+     * @param posteriorLimit
+     * @param hpd2D
+     * @param targetOption
+     * @param targetTreeFileName
+     * @param inputFileName
+     * @param outputFileName
+     * @throws IOException
+     */
+    public TreeAnnotator(final int burninTrees,
+                         final int burninStates,
                          HeightsSummary heightsOption,
                          double posteriorLimit,
                          double hpd2D,
@@ -124,6 +139,8 @@ public class TreeAnnotator {
         attributeNames.add("length");
 
         CladeSystem cladeSystem = new CladeSystem();
+
+        int burnin = -1;
 
         totalTrees = 10000;
         totalTreesUsed = 0;
@@ -144,7 +161,26 @@ public class TreeAnnotator {
                 while (importer.hasTree()) {
                     Tree tree = importer.importNextTree();
 
-                    if (totalTrees >= burnin) {
+                    int state = Integer.MAX_VALUE;
+
+                    if (burninStates > 0) {
+                        // if burnin has been specified in states, try to parse it out...
+                        String name = tree.getId().trim();
+
+                        if (name != null && name.length() > 0 && name.startsWith("STATE_")) {
+                            state = Integer.parseInt(name.split("_")[1]);
+                        }
+                    }
+
+                    if (totalTrees >= burninTrees && state >= burninStates) {
+                        // if either of the two burnin thresholds have been reached...
+
+                        if (burnin < 0) {
+                            // if this is the first time this point has been reached,
+                            // record the number of trees this represents for future use...
+                            burnin = totalTrees;
+                        }
+
                         cladeSystem.add(tree, false);
 
                         totalTreesUsed += 1;
@@ -178,8 +214,11 @@ public class TreeAnnotator {
             cladeSystem.calculateCladeCredibilities(totalTreesUsed);
 
             progressStream.println("Total trees read: " + totalTrees);
-            if (burnin > 0) {
-                progressStream.println("Ignoring first " + burnin + " trees.");
+            if (burninTrees > 0) {
+                progressStream.println("Ignoring first " + burninTrees + " trees" +
+                        (burninStates > 0 ? " (" + burninStates + " states)." : "." ));
+            } else if (burninStates > 0) {
+                progressStream.println("Ignoring first " + burninStates + " states (" + burnin + " trees).");
             }
 
             progressStream.println("Total unique clades: " + cladeSystem.getCladeMap().keySet().size());
@@ -1279,7 +1318,8 @@ public class TreeAnnotator {
                 return;
             }
 
-            int burnin = dialog.getBurnin();
+            int burninStates = dialog.getBurninStates();
+            int burninTrees = dialog.getBurninTrees();
             double posteriorLimit = dialog.getPosteriorLimit();
             double hpd2D = 0.80;
             Target targetOption = dialog.getTargetOption();
@@ -1304,7 +1344,9 @@ public class TreeAnnotator {
             }
 
             try {
-                new TreeAnnotator(burnin,
+                new TreeAnnotator(
+                        burninTrees,
+                        burninStates,
                         heightsOption,
                         posteriorLimit,
                         hpd2D,
@@ -1335,6 +1377,7 @@ public class TreeAnnotator {
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean", "ca"}, false,
                                 "an option of 'keep' (default), 'median', 'mean' or 'ca'"),
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
+                        new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
@@ -1374,9 +1417,13 @@ public class TreeAnnotator {
             }
         }
 
-        int burnin = -1;
+        int burninStates = -1;
+        int burninTrees = -1;
         if (arguments.hasOption("burnin")) {
-            burnin = arguments.getIntegerOption("burnin");
+            burninStates = arguments.getIntegerOption("burnin");
+        }
+        if (arguments.hasOption("burninTrees")) {
+            burninTrees = arguments.getIntegerOption("burninTrees");
         }
 
         double posteriorLimit = 0.0;
@@ -1412,7 +1459,7 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burnin, heights, posteriorLimit, hpd2D, target, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burninTrees, burninStates, heights, posteriorLimit, hpd2D, target, targetTreeFileName, inputFileName, outputFileName);
 
         System.exit(0);
     }

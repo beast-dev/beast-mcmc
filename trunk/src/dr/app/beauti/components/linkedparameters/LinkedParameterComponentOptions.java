@@ -128,11 +128,11 @@ public class LinkedParameterComponentOptions implements ComponentOptions {
     }
 
     public boolean isArgumentParameter(Parameter parameter) {
-        return linkedParameterMap.containsKey(parameter);
+        return argumentParameterMap.containsKey(parameter);
     }
 
     public boolean isDependentParameter(Parameter parameter) {
-        return argumentParameterMap.containsKey(parameter);
+        return linkedParameterMap.containsKey(parameter);
     }
 
 

@@ -157,7 +157,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeTag("parameter",
                 new Attribute[]{
-                        new Attribute.Default<String>("id", partition.getName() + ".count"),
+                        new Attribute.Default<String>("id", prefix + "count"),
                         new Attribute.Default<String>("value", matrix.toString())},
                 true);
 
@@ -281,8 +281,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
                     if (cpCount > 1) {
                         for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                            String prefix = partition.getPrefix() + substModel.getPrefix(i);
-                            String name = partition.getName() + "." + substModel.getPrefix(i);
+                            String prefix = partition.getPrefix() + substModel.getPrefixCodon(i);
+                            String name = partition.getName() + "." + substModel.getPrefixCodon(i);
                             if (name.endsWith(".")) {
                                 name = name.substring(0, name.length() - 1);
                             }
@@ -290,7 +290,6 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                         }
                     } else {
                         writeTrait(writer, partition, partition.getPrefix(), AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG, partition.getName());
-
                     }
                 }
 
@@ -304,8 +303,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
                     if (cpCount > 1) {
                         for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                            String prefix = partition.getPrefix() + substModel.getPrefix(i);
-                            String name = partition.getName() + "." + substModel.getPrefix(i) + "count";
+                            String prefix = partition.getPrefix() + substModel.getPrefixCodon(i);
+                            String name = partition.getName() + "." + substModel.getPrefixCodon(i) + "count";
                             writeTrait(writer, partition, prefix, "count", name);
                         }
                     } else {
@@ -367,8 +366,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         if (cpCount > 1) {
             for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                String prefix = partition.getPrefix() + substModel.getPrefix(i);
-                String name = partition.getName() + "." + substModel.getPrefix(i);
+                String prefix = partition.getPrefix() + substModel.getPrefixCodon(i);
+                String name = partition.getName() + "." + substModel.getPrefixCodon(i);
                 if (name.endsWith(".")) {
                     name = name.substring(0, name.length() - 1);
                 }

@@ -67,7 +67,7 @@ public class PatternListGenerator extends Generator {
                 writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon positions 1 & 2");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
+                                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + model.getPrefixCodon(1) + SitePatternsParser.PATTERNS),
                         }
                 );
                 writePatternList(partition, 0, 3, null, unique, strip, writer);
@@ -76,14 +76,14 @@ public class PatternListGenerator extends Generator {
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
                 writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position 3");
-                writePatternList(partition, 2, 3, model.getPrefix(2), unique, strip, writer);
+                writePatternList(partition, 2, 3, model.getPrefixCodon(2), unique, strip, writer);
 
             } else {
 
                 // pattern is 123
                 for (int i = 1; i <= 3; i++) {
                     writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position " + i);
-                    writePatternList(partition, i - 1, 3, model.getPrefix(i), unique, strip, writer);
+                    writePatternList(partition, i - 1, 3, model.getPrefixCodon(i), unique, strip, writer);
                 }
 
             }// END: pattern is 123
@@ -124,7 +124,7 @@ public class PatternListGenerator extends Generator {
 
         // no 11 of 112 codon, which uses mergePatterns id instead
         if (codonPrefix != null) {
-            attributes.add(new Attribute.Default<String>(XMLParser.ID, codonPrefix + partition.getPrefix() + SitePatternsParser.PATTERNS));
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + codonPrefix + SitePatternsParser.PATTERNS));
         }
 
         attributes.add(new Attribute.Default<String>("from", "" + from));

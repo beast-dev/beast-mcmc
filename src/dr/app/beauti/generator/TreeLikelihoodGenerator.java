@@ -123,7 +123,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         String prefix;
         if (num > 0) {
-            prefix = partition.getPrefix() + substModel.getPrefix(num);
+            prefix = partition.getPrefix() + substModel.getPrefixCodon(num);
         } else {
             prefix = partition.getPrefix();
         }
@@ -156,9 +156,9 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (!options.samplePriorOnly) {
             if (num > 0) {
-                writeCodonPatternsRef(substModel.getPrefix(num) + partition.getPrefix(), num, substModel.getCodonPartitionCount(), writer);
+                writeCodonPatternsRef(prefix, num, substModel.getCodonPartitionCount(), writer);
             } else {
-                writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + SitePatternsParser.PATTERNS);
+                writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
             }
         } else {
             // We just need to use the dummy alignment
@@ -230,7 +230,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
                     if (substModel.getDataType().getType() == DataType.NUCLEOTIDES && substModel.getCodonHeteroPattern() != null) {
                         for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                            writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + substModel.getPrefix(i) + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                            writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + substModel.getPrefixCodon(i) + TreeLikelihoodParser.TREE_LIKELIHOOD);
                         }
                     } else {
                         writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);

@@ -169,7 +169,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
         };
 
-
         hpmButton = new JButton(setHierarchicalAction);
         hpmButton.setVisible(true);
         hpmButton.setEnabled(false);
@@ -351,19 +350,17 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         for (int i = 0; i < rows.length; ++i) {
 
             Parameter parameter = parameters.get(rows[i]);
-            boolean isCompatible = true;
             if (parameter.isStatistic) {
-                isCompatible = false;
+                JOptionPane.showMessageDialog(frame,
+                        "Statistics cannot be linked together or\n" +
+                                "linked with parameter.",
+                        "Parameter linking error",
+                        JOptionPane.WARNING_MESSAGE);
+                return; // Bail out
             }
             if (parameter.truncationLower != firstParameter.truncationLower ||
-                    parameter.truncationUpper != firstParameter.truncationUpper) {
-                isCompatible = false;
-            }
-            if (options.getOperator(parameter).operatorType != options.getOperator(firstParameter).operatorType) {
-                isCompatible = false;
-            }
-            if (!isCompatible) {
-
+                    parameter.truncationUpper != firstParameter.truncationUpper ||
+                    options.getOperator(parameter).operatorType != options.getOperator(firstParameter).operatorType) {
                 JOptionPane.showMessageDialog(frame,
                         "Only parameters that share the same bounds\n" +
                                 "and have the same operator types can be linked.",
@@ -395,7 +392,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         LinkedParameterComponentOptions comp = (LinkedParameterComponentOptions)
                 options.getComponentOptions(LinkedParameterComponentOptions.class);
 
-        LinkedParameter linkedParameter = comp.createLinkedParameter("Untitled", selectedParameters);
+        LinkedParameter linkedParameter = comp.createLinkedParameter(null, selectedParameters);
 
         editLinkedParameter(linkedParameter, selectedParameters);
     }
@@ -541,7 +538,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             if (hmco.isHierarchicalParameter(parameter)) {
                 int option = JOptionPane.showConfirmDialog(this,
                         "This parameter forms part of an Hierarchical Model.\n" +
-                        "Selecting a new prior will remove the parameter from\n" +
+                                "Selecting a new prior will remove the parameter from\n" +
                                 "this HPM.\nContinue?",
                         "Hierarchical parameter warning",
                         JOptionPane.YES_NO_OPTION,
@@ -553,7 +550,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             if (parameter.isLinked) {
                 int option = JOptionPane.showConfirmDialog(this,
                         "Parameter linked to other parameter. Selecting a\n" +
-                        "new prior will remove the link.\nContinue?",
+                                "new prior will remove the link.\nContinue?",
                         "Linked parameter warning",
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.WARNING_MESSAGE);
@@ -704,134 +701,134 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         return priorTable;
     }
 
-NumberFormatter formatter = new NumberFormatter(4);
+    NumberFormatter formatter = new NumberFormatter(4);
 
-class DoubleRenderer extends TableRenderer {
+    class DoubleRenderer extends TableRenderer {
 
-    private static final long serialVersionUID = -2614341608257369805L;
+        private static final long serialVersionUID = -2614341608257369805L;
 
-    public DoubleRenderer(int alignment, Insets insets) {
+        public DoubleRenderer(int alignment, Insets insets) {
 
-        super(true, alignment, insets);
-    }
-
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                   boolean hasFocus, int row, int column) {
-
-        String s;
-        if (((Double) value).isNaN()) {
-            s = "random";
-        } else {
-            s = formatter.format((Double) value);
+            super(true, alignment, insets);
         }
-        return super.getTableCellRendererComponent(table, s, isSelected, hasFocus, row, column);
 
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                                                       boolean hasFocus, int row, int column) {
+
+            String s;
+            if (((Double) value).isNaN()) {
+                s = "random";
+            } else {
+                s = formatter.format((Double) value);
+            }
+            return super.getTableCellRendererComponent(table, s, isSelected, hasFocus, row, column);
+
+        }
     }
-}
 
-public class ButtonRenderer extends JButton implements TableCellRenderer {
-    protected Color undefinedColour = new Color(0xE4, 0x22, 0x17);
-    protected Color improperColour = new Color(0xB4, 0xB4, 0x17);
+    public class ButtonRenderer extends JButton implements TableCellRenderer {
+        protected Color undefinedColour = new Color(0xE4, 0x22, 0x17);
+        protected Color improperColour = new Color(0xB4, 0xB4, 0x17);
 
 
-    private static final long serialVersionUID = -2416184092883649169L;
+        private static final long serialVersionUID = -2416184092883649169L;
 
-    public ButtonRenderer(int alignment, Insets insets) {
-        setOpaque(true);
-        setHorizontalAlignment(alignment);
-        setMargin(insets);
+        public ButtonRenderer(int alignment, Insets insets) {
+            setOpaque(true);
+            setHorizontalAlignment(alignment);
+            setMargin(insets);
 
 //            setFont(UIManager.getFont("SmallSystemFont"));
 //            putClientProperty("JComponent.sizeVariant", "small");
 //            putClientProperty("JButton.buttonType", "square");
-    }
-
-    public Component getTableCellRendererComponent(JTable table, Object value,
-                                                   boolean isSelected, boolean hasFocus, int row, int column) {
-        setEnabled(table.isEnabled());
-        setFont(table.getFont());
-        if (isSelected) {
-            //setForeground(table.getSelectionForeground());
-            setBackground(table.getSelectionBackground());
-        } else {
-            //setForeground(table.getForeground());
-            setBackground(UIManager.getColor("Button.background"));
         }
 
-        String text = (value == null) ? "" : value.toString();
-        if (text.toString().startsWith("?")) {
-            setForeground(undefinedColour);
-        } else if (text.toString().startsWith("!")) {
-            setForeground(improperColour);
-        } else {
-            setForeground(UIManager.getColor("Button.foreground"));
-        }
-
-        setText(text);
-
-        return this;
-    }
-}
-
-public class ButtonEditor extends DefaultCellEditor {
-
-    private static final long serialVersionUID = 6372738480075411674L;
-    protected JButton button;
-    private String label;
-    private boolean isPushed;
-    private int row;
-
-    public ButtonEditor(int alignment, Insets insets) {
-        super(new JCheckBox());
-        button = new JButton();
-        button.setOpaque(true);
-        button.setHorizontalAlignment(alignment);
-        button.setMargin(insets);
-        button.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                fireEditingStopped();
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                                       boolean isSelected, boolean hasFocus, int row, int column) {
+            setEnabled(table.isEnabled());
+            setFont(table.getFont());
+            if (isSelected) {
+                //setForeground(table.getSelectionForeground());
+                setBackground(table.getSelectionBackground());
+            } else {
+                //setForeground(table.getForeground());
+                setBackground(UIManager.getColor("Button.background"));
             }
-        });
+
+            String text = (value == null) ? "" : value.toString();
+            if (text.toString().startsWith("?")) {
+                setForeground(undefinedColour);
+            } else if (text.toString().startsWith("!")) {
+                setForeground(improperColour);
+            } else {
+                setForeground(UIManager.getColor("Button.foreground"));
+            }
+
+            setText(text);
+
+            return this;
+        }
+    }
+
+    public class ButtonEditor extends DefaultCellEditor {
+
+        private static final long serialVersionUID = 6372738480075411674L;
+        protected JButton button;
+        private String label;
+        private boolean isPushed;
+        private int row;
+
+        public ButtonEditor(int alignment, Insets insets) {
+            super(new JCheckBox());
+            button = new JButton();
+            button.setOpaque(true);
+            button.setHorizontalAlignment(alignment);
+            button.setMargin(insets);
+            button.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    fireEditingStopped();
+                }
+            });
 //            button.setFont(UIManager.getFont("SmallSystemFont"));
 //            button.putClientProperty("JComponent.sizeVariant", "small");
 //            button.putClientProperty("JButton.buttonType", "square");
-    }
+        }
 
-    public Component getTableCellEditorComponent(JTable table, Object value,
-                                                 boolean isSelected, int row, int column) {
-        button.setEnabled(table.isEnabled());
-        button.setFont(table.getFont());
-        if (isSelected) {
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected, int row, int column) {
+            button.setEnabled(table.isEnabled());
+            button.setFont(table.getFont());
+            if (isSelected) {
 //                button.setForeground(table.getSelectionForeground());
-            button.setBackground(table.getSelectionBackground());
-        } else {
+                button.setBackground(table.getSelectionBackground());
+            } else {
 //                button.setForeground(table.getForeground());
-            button.setBackground(UIManager.getColor("Button.background"));
+                button.setBackground(UIManager.getColor("Button.background"));
+            }
+            label = (value == null) ? "" : value.toString();
+            button.setText(label);
+            isPushed = true;
+            this.row = row;
+            return button;
         }
-        label = (value == null) ? "" : value.toString();
-        button.setText(label);
-        isPushed = true;
-        this.row = row;
-        return button;
-    }
 
-    public Object getCellEditorValue() {
-        if (isPushed) {
-            priorButtonPressed(row);
+        public Object getCellEditorValue() {
+            if (isPushed) {
+                priorButtonPressed(row);
+            }
+            isPushed = false;
+            return label;
         }
-        isPushed = false;
-        return label;
-    }
 
-    public boolean stopCellEditing() {
-        isPushed = false;
-        return super.stopCellEditing();
-    }
+        public boolean stopCellEditing() {
+            isPushed = false;
+            return super.stopCellEditing();
+        }
 
-    protected void fireEditingStopped() {
-        super.fireEditingStopped();
+        protected void fireEditingStopped() {
+            super.fireEditingStopped();
+        }
     }
-}
 
 
 }

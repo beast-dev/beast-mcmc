@@ -73,7 +73,6 @@ public class JointPriorDialog implements AbstractPriorDialog {
         priorSettingsPanel = new PriorSettingsPanel(frame);
 
         nameField.setColumns(30);
-        nameField.setText("Untitled");
 
         parametersTableModel = new ParametersTableModel();
 //        TableSorter sorter = new TableSorter(traitsTableModel);
@@ -113,6 +112,11 @@ public class JointPriorDialog implements AbstractPriorDialog {
     private boolean validateModelName(String name) {
 //        System.err.println("Validating: " + modelName);
         // check that the name is valid
+
+        if (name.equals(parameter.getName())) {
+            return true;
+        }
+
         if (name.trim().length() == 0) {
             Toolkit.getDefaultToolkit().beep();
             return false;
@@ -254,6 +258,11 @@ public class JointPriorDialog implements AbstractPriorDialog {
         panel1.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, MINIMUM_TABLE_HEIGHT));
 
         OptionsPanel optionsPanel = new OptionsPanel(0,6);
+        if (parameter.getName() != null) {
+            nameField.setText(parameter.getName());
+        } else {
+            nameField.setText("Untitled");
+        }
         optionsPanel.addComponentWithLabel("Unique Name: ", nameField);
 //        optionsPanel.addComponentWithLabel("Initial Value: ", initialField);
 

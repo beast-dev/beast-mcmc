@@ -32,6 +32,8 @@ Version 1.8.1 released 25th August 2014
 		Improved robust counting under null distribution for measuring selection.
 
 	Bug Fixes:
+	    Issue 747:  Robust counting with multiple partitions generates unique
+	                reference IDs in BEAUti and unique total counts for Tracer.
 		Issue 743:	Partitions in BEAUti should have the same number of taxa as 
 					the tree they are using.	
 		Issue 741:	Fix negative branch length issues when sampling taxa ages 

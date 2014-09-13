@@ -54,6 +54,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
     public static final String SAVE_HISTORY = "saveCompleteHistory";
     public static final String AVERAGE_RATES = "averageRates";
     public static final String USE_NEW_NEUTRAL_MODEL = "useNewNeutralModel";
+    public static final String PREFIX = "prefix";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -125,6 +126,8 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         boolean saveCompleteHistory = xo.getAttribute(SAVE_HISTORY, false);
         boolean useNewNeutralModel = xo.getAttribute(USE_NEW_NEUTRAL_MODEL, false);
 
+        String prefix = xo.hasAttribute(PREFIX) ? xo.getStringAttribute(PREFIX) : null;
+
         return new CodonPartitionedRobustCounting(
                 xo.getId(),
                 tree,
@@ -139,7 +142,8 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
                 averageRates,
                 useNewNeutralModel,
                 branchFormat,
-                logFormat);
+                logFormat,
+                prefix);
     }
 
     private static final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{

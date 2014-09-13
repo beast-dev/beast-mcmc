@@ -91,10 +91,11 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean saveCompleteHistory,
                                           boolean tryNewNeutralModel,
                                           StratifiedTraitOutputFormat branchFormat,
-                                          StratifiedTraitOutputFormat logFormat) {
+                                          StratifiedTraitOutputFormat logFormat,
+                                          String prefix) {
         this(name, tree, partition, codons, codonLabeling, useUniformization, includeExternalBranches,
                 includeInternalBranches, doUnconditionalPerBranch, saveCompleteHistory, false, tryNewNeutralModel,
-                branchFormat, logFormat);
+                branchFormat, logFormat, prefix);
     }
 
     public CodonPartitionedRobustCounting(String name, TreeModel tree,
@@ -109,7 +110,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean forceUnconditionalAverageRate,
                                           boolean tryNewNeutralModel,
                                           StratifiedTraitOutputFormat branchFormat,
-                                          StratifiedTraitOutputFormat logFormat) {
+                                          StratifiedTraitOutputFormat logFormat,
+                                          String prefix) {
         super(name);
         this.tree = tree;
         addModel(tree);
@@ -183,6 +185,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.tryNewNeutralModel = tryNewNeutralModel;
 
         //this.neutralSubstitutionModel = null; // new ComplexSubstitutionModel();
+
+        this.prefix = prefix;
 
         setupTraits();
     }
@@ -450,8 +454,10 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         };
 
         // This should be the default output in columns logs
+        String name = prefix != null ? prefix + TOTAL_PREFIX + codonLabeling.getText() :
+                TOTAL_PREFIX + codonLabeling.getText();
         TreeTrait sumOverSitesAndTreeTrait = new TreeTrait.SumOverTreeD(
-                TOTAL_PREFIX + codonLabeling.getText(),
+                name,
                 sumOverSitesTrait,
                 includeExternalBranches,
                 includeInternalBranches) {
@@ -502,8 +508,10 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 }
             };
 
+            String nameU = prefix != null ? prefix + UNCONDITIONED_TOTAL_PREFIX + codonLabeling.getText() :
+                    UNCONDITIONED_TOTAL_PREFIX + codonLabeling.getText();
             TreeTrait sumUnconditionedOverSitesAndTreeTrait = new TreeTrait.SumOverTreeD(
-                    UNCONDITIONED_TOTAL_PREFIX + codonLabeling.getText(),
+                    nameU,
                     sumUnconditionedOverSitesTrait,
                     includeExternalBranches,
                     includeInternalBranches) {
@@ -714,6 +722,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private final CodonLabeling codonLabeling;
     private final Tree tree;
+
+    private final String prefix;
 
     private final StratifiedTraitOutputFormat branchFormat;
     private final StratifiedTraitOutputFormat logFormat;

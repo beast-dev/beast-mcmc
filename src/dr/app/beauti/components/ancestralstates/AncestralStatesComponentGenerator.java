@@ -1,7 +1,7 @@
 /*
  * AncestralStatesComponentGenerator.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -197,6 +197,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 new Attribute[]{
                         new Attribute.Default<String>("id", prefix + "robustCounting1"),
                         new Attribute.Default<String>("labeling", "S"),
+                        new Attribute.Default<String>("prefix", prefix),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",
@@ -224,6 +225,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 new Attribute[]{
                         new Attribute.Default<String>("id", prefix + "robustCounting2"),
                         new Attribute.Default<String>("labeling", "N"),
+                        new Attribute.Default<String>("prefix", prefix),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",
@@ -416,12 +418,12 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeComment("Robust counting for: " + partition.getName());
 
         writer.writeOpenTag("log", new Attribute[]{
-                new Attribute.Default<String>("id", "fileLog_dNdS"),
+                new Attribute.Default<String>("id", "fileLog_dNdS_" + partition.getName()),
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
                 new Attribute.Default<String>("fileName", options.fileNameStem + "." + partition.getName() + DNDS_LOG_SUFFIX)});
 
         writer.writeOpenTag("dNdSLogger", new Attribute[]{new Attribute.Default<String>("id",
-                "dNdS")});
+                partition.getName() + ".dNdS")});
         writer.writeIDref("treeModel", "treeModel");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");

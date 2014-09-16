@@ -1,7 +1,7 @@
 /*
  * DiscretizedBranchRates.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -32,9 +32,9 @@ import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
-import dr.inference.model.ModelListener;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MathUtils;
 
 /**
  * @author Alexei Drummond
@@ -78,7 +78,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             Parameter rateCategoryParameter,
             ParametricDistributionModel model,
             int overSampling) {
-        this(tree, rateCategoryParameter, model, overSampling, false, Double.NaN);
+        this(tree, rateCategoryParameter, model, overSampling, false, Double.NaN, false, false);
 
     }
 
@@ -88,7 +88,9 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             ParametricDistributionModel model,
             int overSampling,
             boolean normalize,
-            double normalizeBranchRateTo) {
+            double normalizeBranchRateTo,
+            boolean randomizeRates,
+            boolean keepRates) {
 
         super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 
@@ -110,8 +112,12 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         rateCategoryParameter.addBounds(bound);
 
         for (int i = 0; i < rateCategoryParameter.getDimension(); i++) {
-            int index = (int) Math.floor((i + 0.5) * overSampling);
-            rateCategoryParameter.setParameterValue(i, index);
+            if (!keepRates) {
+                int index = (randomizeRates) ?
+                        MathUtils.nextInt(rateCategoryParameter.getDimension() * overSampling) : // random rate
+                        (int) Math.floor((i + 0.5) * overSampling); // default behavior
+                rateCategoryParameter.setParameterValue(i, index);
+            }
         }
 
         addModel(model);

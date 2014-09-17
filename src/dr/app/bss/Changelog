@@ -15,7 +15,13 @@ February 2014: PIBUSS version 1.3.5
 * Sequences in the alignment are now in the tree traversal order
 * Added MG94 codon model
 
-April 2014: PIBUSS version 1.3.6 release candidate
+April 2014: PIBUSS version 1.3.6
 ------------------------------------------------
 * Option to output ancestral sequences
 * Starting sequence is now called root sequence to avoid confusion
+
+September 2014: PIBUSS version 1.3.7 release candidate
+------------------------------------------------
+* Fixed bug that cause non-randomized draws from relaxed clock models 
+* XML generator adds "randomizeRates=true" attribute to DiscretizedBranchRates elements
+* Sensible starting values for UCLD clock

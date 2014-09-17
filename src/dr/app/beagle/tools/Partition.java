@@ -45,6 +45,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.distribution.LogNormalDistributionModel;
+import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.math.MathUtils;
 
 /**
@@ -54,7 +56,8 @@ import dr.math.MathUtils;
 public class Partition {
 
 	private static final boolean DEBUG = false;
-
+	private static final boolean DEBUG_RATES = false;
+	
 	// Constructor fields
 	public int from;
 	public int to;
@@ -371,18 +374,34 @@ public class Partition {
 		matrixBufferHelper.flipOffset(nodeNum);
 		int branchIndex = nodeNum;
 
-		double branchRate = branchRateModel.getBranchRate(treeModel, node);
-		double branchLength = treeModel.getBranchLength(node);
+		// TODO: dr.evomodel.branchratemodel.DiscretizedBranchRates
 		
-	        if(DEBUG){
+		double branchRate = 0;
+//		String modelName = branchRateModel.getModel(0).getModelName();
+//
+//		if(modelName.equalsIgnoreCase(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL)) {
+//		   
+//		double mean = (Double)branchRateModel.getModel(0).getVariable(0).getValue(0);
+//		double stdev = (Double)branchRateModel.getModel(0).getVariable(1).getValue(0);
+//		
+//		    branchRate = Utils.rLogNormal(mean, stdev);
+//		   
+//	   } else {
+		   
+		   branchRate = branchRateModel.getBranchRate(treeModel, node);
+		   
+//	   }
+	   
+		   double branchLength = treeModel.getBranchLength(node);
+		   double branchTime = branchLength * branchRate;// * siteRate;
+		   
+	        if(DEBUG || DEBUG_RATES){
 	        	synchronized (this) {
-	        	System.out.println("Branch length: " + branchLength + " branch rate: " + branchRate);// + " site rate: " + siteRate);
+	        	System.out.println("Branch length: " + branchLength + " branch rate: " + branchRate + " branch time: " + branchTime);// + " site rate: " + siteRate);
 	        	}
 	        }//END: DEBUG
 	        
-//			double siteRate = 1;//siteModel.getRateForCategory(siteRateCat);
-            double branchTime = branchLength * branchRate;// * siteRate;			
-			
+
 			int count = 1;
 			substitutionModelDelegate.updateTransitionMatrices(beagle,
 					new int[] { branchIndex }, new double[] { branchTime },

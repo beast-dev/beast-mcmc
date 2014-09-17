@@ -57,6 +57,14 @@ public class Utils {
 	private static MersenneTwister random = new MersenneTwister(
 			MathUtils.nextLong());
 
+    public static double rLogNormal(double stdev, double mean) {
+    	
+    	double rNorm = random.nextGaussian() * stdev + mean;
+    	double rLognormal = Math.exp(rNorm);
+    	
+    	return rLognormal;
+	}// END: drawRandom
+	
 	// /////////////////
 	// ---CONSTANTS---//
 	// /////////////////

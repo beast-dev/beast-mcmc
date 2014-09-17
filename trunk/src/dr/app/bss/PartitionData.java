@@ -947,8 +947,15 @@ public class PartitionData implements Serializable {
 			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
 	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], true, true);
 	        
-	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-	                distributionModel, 1, false, Double.NaN);
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
+	        		rateCategoryParameter, //
+	                distributionModel, //
+	                1, // 
+	                false, // 
+	                Double.NaN, //
+	                true, //randomizeRates
+	                false // keepRates
+	                );
 
 		} else if(this.clockModelIndex == 2) { // Exponential relaxed clock
 		
@@ -958,9 +965,19 @@ public class PartitionData implements Serializable {
 			Parameter mean = new Parameter.Default(DistributionModelParser.MEAN, 1, clockParameterValues[4]);
 	        ParametricDistributionModel distributionModel = new ExponentialDistributionModel(mean, clockParameterValues[5]);
 			
-	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-	                distributionModel, 1, false, Double.NaN);
+//	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
+//	                distributionModel, 1, false, Double.NaN);
 			
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
+	        		rateCategoryParameter, //
+	                distributionModel, //
+	                1, // 
+	                false, // 
+	                Double.NaN, //
+	                true, //randomizeRates
+	                false // keepRates
+	                );
+	        
 		} else if(this.clockModelIndex == 3) { // Inverse Gaussian
 
 			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
@@ -971,8 +988,18 @@ public class PartitionData implements Serializable {
 	        ParametricDistributionModel distributionModel = new InverseGaussianDistributionModel(
 					mean, stdev, clockParameterValues[8], false);
      
-	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-	                distributionModel, 1, false, Double.NaN);
+//	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
+//	                distributionModel, 1, false, Double.NaN);
+	        
+	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
+	        		rateCategoryParameter, //
+	                distributionModel, //
+	                1, // 
+	                false, // 
+	                Double.NaN, //
+	                true, //randomizeRates
+	                false // keepRates
+	                );
 	        
 		} else {
 

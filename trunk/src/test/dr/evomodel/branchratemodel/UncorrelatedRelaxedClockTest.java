@@ -179,7 +179,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         rateCategoryParameter.setId(DiscretizedBranchRates.BRANCH_RATES); 
 
         DiscretizedBranchRates branchRateModel = new DiscretizedBranchRates(treeModel, rateCategoryParameter, 
-                distributionModel, 1, false, Double.NaN);
+                distributionModel, 1, false, Double.NaN, false, false);
 
         RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatisticParser.MEAN);
         RateStatistic coefficientOfVariation = new RateStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, treeModel, branchRateModel,

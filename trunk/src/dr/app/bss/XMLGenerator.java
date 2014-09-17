@@ -779,8 +779,14 @@ public class XMLGenerator {
 
 			writer.writeOpenTag(
 					DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, data.clockModelIdref) });
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.clockModelIdref),
+							new Attribute.Default<String>(
+									DiscretizedBranchRatesParser.RANDOMIZE_RATES,
+									"true") }
+
+			);
 
 			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
 
@@ -823,8 +829,14 @@ public class XMLGenerator {
 
 			writer.writeOpenTag(
 					DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, data.clockModelIdref) });
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.clockModelIdref),
+							new Attribute.Default<String>(
+									DiscretizedBranchRatesParser.RANDOMIZE_RATES,
+									"true") }
+
+			);
 
 			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
 
@@ -860,8 +872,14 @@ public class XMLGenerator {
 			
 			writer.writeOpenTag(
 					DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, data.clockModelIdref) });
+					new Attribute[] {
+							new Attribute.Default<String>(XMLParser.ID,
+									data.clockModelIdref),
+							new Attribute.Default<String>(
+									DiscretizedBranchRatesParser.RANDOMIZE_RATES,
+									"true") }
+
+			);
 
 			writer.writeIDref(TreeModel.TREE_MODEL, data.treeModelIdref);
 

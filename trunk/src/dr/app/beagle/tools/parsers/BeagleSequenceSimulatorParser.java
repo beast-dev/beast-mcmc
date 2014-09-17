@@ -64,10 +64,14 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
 
+    	
+    	
         return new XMLSyntaxRule[]{
                 AttributeRule.newBooleanRule(PARALLEL, true, "Whether to use multiple Beagle instances for simulation, default is false (sequential execution)."),
                 new StringAttributeRule(OUTPUT, "Possible output formats",
-                        SimpleAlignment.OutputType.values(), false),
+                        
+                		SimpleAlignment.OutputType.values(), //TODO: this should ignore upper/lower cas
+                        false),
                 new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
         };
     }// END: getSyntaxRules

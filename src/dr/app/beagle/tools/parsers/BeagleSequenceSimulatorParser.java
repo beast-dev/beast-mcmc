@@ -72,6 +72,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
                         
                 		SimpleAlignment.OutputType.values(), //TODO: this should ignore upper/lower cas
                         false),
+                        
                 new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
         };
     }// END: getSyntaxRules

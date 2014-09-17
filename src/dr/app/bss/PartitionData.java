@@ -918,8 +918,8 @@ public class PartitionData implements Serializable {
 	};
 
 	public double[] clockParameterValues = new double[] { 1.0, // clockrate
-			1.0, // ucld.mean
-			2.0, // ucld.stdev
+			0.001, // ucld.mean
+			1.0, // ucld.stdev
 			0.0, // ucld.offset
 			1.0, // uced.mean
             0.0, // uced.offset

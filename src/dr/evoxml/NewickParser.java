@@ -47,10 +47,13 @@ public class NewickParser extends AbstractXMLObjectParser {
     public static final String UNITS = "units";
     public static final String RESCALE_HEIGHT = "rescaleHeight";
     public static final String RESCALE_LENGTH = "rescaleLength";
-
+    public static final String USING_DATES = SimpleTreeParser.USING_DATES;
+    public static final String USING_HEIGHTS = "usingHeights";
+    
     public NewickParser() {
         rules = new XMLSyntaxRule[]{
-                AttributeRule.newBooleanRule(SimpleTreeParser.USING_DATES, true),
+                AttributeRule.newBooleanRule(USING_DATES, true),
+                AttributeRule.newBooleanRule(USING_HEIGHTS, true),
                 AttributeRule.newDoubleRule(RESCALE_HEIGHT, true, "Attempt to rescale the tree to the given root height"),
                 AttributeRule.newDoubleRule(RESCALE_LENGTH, true, "Attempt to rescale the tree to the given total length"),
                 new StringAttributeRule(UNITS, "The branch length units of this tree", Units.UNIT_NAMES, true),
@@ -66,8 +69,27 @@ public class NewickParser extends AbstractXMLObjectParser {
 
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
-        boolean usingDates = xo.getAttribute(SimpleTreeParser.USING_DATES, true);
+//        boolean usingDates = xo.getAttribute(USING_DATES, true);
 
+		boolean usingDates = true;
+		if (xo.hasAttribute(USING_DATES)) {
+			usingDates = xo.getAttribute(USING_DATES, true);
+		}
+        
+        boolean usingHeights = false;
+        if(xo.hasAttribute(USING_HEIGHTS)) {
+        	 usingHeights = xo.getAttribute(USING_HEIGHTS, true);
+        }
+        
+//        System.out.println("UsingDates=" + usingDates + " usingHeights= " + usingHeights);
+        
+		if (usingDates && usingHeights) {
+			throw new XMLParseException("Unable to use both dates and node heights. Specify value of usingDates attribute.");
+		} 
+//		else if (!usingDates && !usingHeights) {
+//			System.out.println("Tree is assumed to be ultrametric");
+//		}
+        
         StringBuffer buffer = new StringBuffer();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
@@ -124,8 +146,6 @@ public class NewickParser extends AbstractXMLObjectParser {
             }
         }
 
-//        System.out.println("FUBAR: " + usingDates);
-        
         if (usingDates) {
 
             for (int i = 0; i < tree.getTaxonCount(); i++) {
@@ -157,25 +177,33 @@ public class NewickParser extends AbstractXMLObjectParser {
                     double height = Taxon.getHeightFromDate(date);
                     tree.setNodeHeight(tree.getInternalNode(i), height);
                 }
-            }
 
+			}// END: i loop
 
             MutableTree.Utils.correctHeightsForTips(tree);
-        } else {
+            
+        } else if(!usingDates && !usingHeights) {
         	
-//        	System.out.println("FUBAR " + usingDates);
+        	System.out.println("Tree is assumed to be ultrametric");
         	
-            // not using dates
+            // not using dates or heights
             for (int i = 0; i < tree.getTaxonCount(); i++) {
                 final NodeRef leaf = tree.getExternalNode(i);
                 final double h = tree.getNodeHeight(leaf);
+                
                 if (h != 0.0) {
                 	double zero = 0.0;
                 	System.out.println("  Changing height of leaf node " + tree.getTaxon(leaf.getNumber()) + " from " + h + " to " + zero);
                     tree.setNodeHeight(leaf, zero);
                 }
-            }
-        }
+
+			}// END: i loop
+            
+		} else {
+			
+			System.out.println("Using node heights.");
+			
+		}// END: usingDates check
 
         if (xo.hasAttribute(RESCALE_HEIGHT)) {
             double rescaleHeight = xo.getDoubleAttribute(RESCALE_HEIGHT);

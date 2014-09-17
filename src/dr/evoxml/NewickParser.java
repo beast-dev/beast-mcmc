@@ -124,6 +124,8 @@ public class NewickParser extends AbstractXMLObjectParser {
             }
         }
 
+//        System.out.println("FUBAR: " + usingDates);
+        
         if (usingDates) {
 
             for (int i = 0; i < tree.getTaxonCount(); i++) {
@@ -142,6 +144,7 @@ public class NewickParser extends AbstractXMLObjectParser {
                     height = Taxon.getHeightFromDate(date);
                 }
                 if (Math.abs(nodeHeight - height) > 1e-5) {
+                	
                     System.out.println("  Changing height of node " + tree.getTaxon(node.getNumber()) + " from " + nodeHeight + " to " + height);
                     tree.setNodeHeight(node, height);
                 }
@@ -159,12 +162,17 @@ public class NewickParser extends AbstractXMLObjectParser {
 
             MutableTree.Utils.correctHeightsForTips(tree);
         } else {
+        	
+//        	System.out.println("FUBAR " + usingDates);
+        	
             // not using dates
             for (int i = 0; i < tree.getTaxonCount(); i++) {
                 final NodeRef leaf = tree.getExternalNode(i);
                 final double h = tree.getNodeHeight(leaf);
                 if (h != 0.0) {
-                    tree.setNodeHeight(leaf, 0.0);
+                	double zero = 0.0;
+                	System.out.println("  Changing height of leaf node " + tree.getTaxon(leaf.getNumber()) + " from " + h + " to " + zero);
+                    tree.setNodeHeight(leaf, zero);
                 }
             }
         }

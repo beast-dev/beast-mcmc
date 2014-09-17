@@ -621,7 +621,12 @@ public class XMLGenerator {
 
 		writer.writeOpenTag(NewickParser.NEWICK,
 				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
-						Utils.TOPOLOGY + suffix) });
+						Utils.TOPOLOGY + suffix), //
+						new Attribute.Default<String>(NewickParser.USING_DATES,
+								"false"), //
+								new Attribute.Default<String>(NewickParser.USING_HEIGHTS,
+										"true") //
+		});
 
 		writer.writeText(Tree.Utils.newick(tree));
 

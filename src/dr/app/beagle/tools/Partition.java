@@ -45,8 +45,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.distribution.LogNormalDistributionModel;
-import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.math.MathUtils;
 
 /**
@@ -56,7 +54,6 @@ import dr.math.MathUtils;
 public class Partition {
 
 	private static final boolean DEBUG = false;
-	private static final boolean DEBUG_RATES = false;
 	
 	// Constructor fields
 	public int from;
@@ -374,50 +371,33 @@ public class Partition {
 		matrixBufferHelper.flipOffset(nodeNum);
 		int branchIndex = nodeNum;
 
-		// TODO: dr.evomodel.branchratemodel.DiscretizedBranchRates
-		
-		double branchRate = 0;
-//		String modelName = branchRateModel.getModel(0).getModelName();
-//
-//		if(modelName.equalsIgnoreCase(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL)) {
-//		   
-//		double mean = (Double)branchRateModel.getModel(0).getVariable(0).getValue(0);
-//		double stdev = (Double)branchRateModel.getModel(0).getVariable(1).getValue(0);
-//		
-//		    branchRate = Utils.rLogNormal(mean, stdev);
-//		   
-//	   } else {
-		   
-		   branchRate = branchRateModel.getBranchRate(treeModel, node);
-		   
-//	   }
-	   
-		   double branchLength = treeModel.getBranchLength(node);
-		   double branchTime = branchLength * branchRate;// * siteRate;
-		   
-	        if(DEBUG || DEBUG_RATES){
-	        	synchronized (this) {
-	        	System.out.println("Branch length: " + branchLength + " branch rate: " + branchRate + " branch time: " + branchTime);// + " site rate: " + siteRate);
-	        	}
-	        }//END: DEBUG
-	        
+		double branchRate = branchRateModel.getBranchRate(treeModel, node);
 
-			int count = 1;
-			substitutionModelDelegate.updateTransitionMatrices(beagle,
-					new int[] { branchIndex }, new double[] { branchTime },
-					count);
+		double branchLength = treeModel.getBranchLength(node);
+		double branchTime = branchLength * branchRate;// * siteRate;
 
-			double transitionMatrix[] = new double[siteRateCategoryCount * stateCount * stateCount];
+		if (DEBUG) {
+			synchronized (this) {
+				System.out.println("Branch length: " + branchLength
+						+ " branch rate: " + branchRate + " branch time: "
+						+ branchTime);// + " site rate: " + siteRate);
+			}
+		}// END: DEBUG
 
-			beagle.getTransitionMatrix(branchIndex, //
-					transitionMatrix //
-			);
+		int count = 1;
+		substitutionModelDelegate.updateTransitionMatrices(beagle,
+				new int[] { branchIndex }, new double[] { branchTime }, count);
 
-//			Utils.printArray(transitionMatrix);
-			
+		double transitionMatrix[] = new double[siteRateCategoryCount
+				* stateCount * stateCount];
+
+		beagle.getTransitionMatrix(branchIndex, //
+				transitionMatrix //
+		);
+
 		for (int siteRateCat = 0; siteRateCat < siteRateCategoryCount; siteRateCat++) {
-			
-			System.arraycopy(transitionMatrix, siteRateCat * stateCount * stateCount,
+
+			System.arraycopy(transitionMatrix, siteRateCat * stateCount * stateCount, 
 					probabilities[siteRateCat], 0, stateCount * stateCount);
 
 		}// END: i loop

@@ -50,7 +50,7 @@ public class BeastVersion implements Version {
 
     private static final String DATE_STRING = "2002-2014";
 
-    private static final boolean IS_PRERELEASE = false;
+    private static final boolean IS_PRERELEASE = true;
 
     private static final String REVISION = "$Rev$";
 

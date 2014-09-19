@@ -15,6 +15,11 @@ public class DiscreteTraitsComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
+    @Override
+    public Class getOptionsClass() {
+        return DiscreteTraitsComponentOptions.class;
+    }
+
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
         return new DiscreteTraitsComponentGenerator(beautiOptions);
     }

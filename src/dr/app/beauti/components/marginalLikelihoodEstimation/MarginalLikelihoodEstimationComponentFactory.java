@@ -42,6 +42,11 @@ public class MarginalLikelihoodEstimationComponentFactory implements ComponentFa
         // singleton pattern - private constructor
     }
 
+    @Override
+    public Class getOptionsClass() {
+        return MarginalLikelihoodEstimationOptions.class;
+    }
+
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
         return new MarginalLikelihoodEstimationGenerator(beautiOptions);
     }

@@ -15,6 +15,11 @@ public class HierarchicalModelComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
+    @Override
+    public Class getOptionsClass() {
+        return HierarchicalModelComponentOptions.class;
+    }
+
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
         return new HierarchicalModelComponentGenerator(beautiOptions);
     }

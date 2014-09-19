@@ -23,6 +23,7 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
@@ -258,6 +259,15 @@ public class ModelOptions implements Serializable {
     protected void addComponent(ComponentOptions component) {
         components.add(component);
         component.createParameters(this);
+    }
+
+    protected boolean hasComponent(ComponentFactory factory) {
+        for (ComponentOptions component : components) {
+            if (factory.getOptionsClass().isAssignableFrom(component.getClass())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public ComponentOptions getComponentOptions(Class<?> theClass) {

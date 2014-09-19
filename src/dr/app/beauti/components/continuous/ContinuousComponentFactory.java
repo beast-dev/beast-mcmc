@@ -14,7 +14,12 @@ public class ContinuousComponentFactory implements ComponentFactory {
 
 	public static ComponentFactory INSTANCE = new ContinuousComponentFactory();
 
-	public ComponentGenerator createGenerator(BeautiOptions beautiOptions) {
+    @Override
+    public Class getOptionsClass() {
+        return ContinuousComponentOptions.class;
+    }
+
+    public ComponentGenerator createGenerator(BeautiOptions beautiOptions) {
 		return new ContinuousComponentGenerator(beautiOptions);
 	}
 

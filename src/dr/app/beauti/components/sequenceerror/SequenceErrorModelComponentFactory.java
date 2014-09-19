@@ -15,6 +15,11 @@ public class SequenceErrorModelComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
+    @Override
+    public Class getOptionsClass() {
+        return SequenceErrorModelComponentOptions.class;
+    }
+
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
         return new SequenceErrorModelComponentGenerator(beautiOptions);
     }

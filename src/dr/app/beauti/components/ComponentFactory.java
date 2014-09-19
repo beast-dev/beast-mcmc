@@ -8,6 +8,7 @@ import dr.app.beauti.options.*;
  * @version $Id$
  */
 public interface ComponentFactory {
+    Class getOptionsClass();
     ComponentGenerator createGenerator(BeautiOptions beautiOptions);
     ComponentOptions createOptions(BeautiOptions beautiOptions);
 }

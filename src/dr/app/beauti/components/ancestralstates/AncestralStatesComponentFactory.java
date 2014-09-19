@@ -15,10 +15,17 @@ public class AncestralStatesComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
+    @Override
+    public Class getOptionsClass() {
+        return AncestralStatesComponentOptions.class;
+    }
+
+    @Override
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
         return new AncestralStatesComponentGenerator(beautiOptions);
     }
 
+    @Override
     public ComponentOptions createOptions(final BeautiOptions beautiOptions) {
         return new AncestralStatesComponentOptions();
     }

@@ -11,6 +11,7 @@ import dr.xml.XMLParser;
 import java.util.List;
 
 /**
+ * @author Andrew Rambaut
  * @author Marc A. Suchard
  * @version $Id$
  */

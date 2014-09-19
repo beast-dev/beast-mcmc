@@ -13,6 +13,7 @@ import java.util.*;
  * @version $Id$
  */
 public class LinkedParameterComponentOptions implements ComponentOptions {
+    private static final long serialVersionUID = 1L;
 
     public LinkedParameterComponentOptions(final BeautiOptions options) {
         this.options = options;

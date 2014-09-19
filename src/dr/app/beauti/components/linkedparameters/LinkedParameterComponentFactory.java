@@ -15,6 +15,11 @@ public class LinkedParameterComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
+    @Override
+    public Class getOptionsClass() {
+        return LinkedParameterComponentOptions.class;
+    }
+
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
         return new LinkedParameterComponentGenerator(beautiOptions);
     }

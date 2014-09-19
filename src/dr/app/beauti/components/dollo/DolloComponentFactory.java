@@ -14,7 +14,12 @@ public class DolloComponentFactory implements ComponentFactory {
 
 	public static ComponentFactory INSTANCE = new DolloComponentFactory();
 
-	public ComponentGenerator createGenerator(BeautiOptions beautiOptions) {
+    @Override
+    public Class getOptionsClass() {
+        return DolloComponentOptions.class;
+    }
+
+    public ComponentGenerator createGenerator(BeautiOptions beautiOptions) {
         return new DolloComponentGenerator(beautiOptions);
 	}
 

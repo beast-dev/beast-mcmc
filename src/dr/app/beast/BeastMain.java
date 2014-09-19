@@ -110,19 +110,19 @@ public class BeastMain {
             });
             logger.addHandler(messageHandler);
 
-//            // Add a handler to handle warnings and errors. This is a ConsoleHandler
-//            // so the messages will go to StdErr..
-//            handler = new ConsoleHandler();
-//            handler.setFilter(new Filter() {
-//                public boolean isLoggable(LogRecord record) {
-//                    if (verbose) {
-//                        return record.getLevel().intValue() >= Level.WARNING.intValue();
-//                    } else {
-//                        return record.getLevel().intValue() >= Level.SEVERE.intValue();
-//                    }
-//                }
-//            });
-//            logger.addHandler(handler);
+            // Add a handler to handle warnings and errors. This is a ConsoleHandler
+            // so the messages will go to StdErr..
+            Handler errorHandler = new ConsoleHandler();
+            errorHandler.setFilter(new Filter() {
+                public boolean isLoggable(LogRecord record) {
+                    if (verbose) {
+                        return record.getLevel().intValue() >= Level.WARNING.intValue();
+                    } else {
+                        return record.getLevel().intValue() >= Level.SEVERE.intValue();
+                    }
+                }
+            });
+            infoLogger.addHandler(errorHandler);
 
             logger.setUseParentHandlers(false);
 
@@ -232,8 +232,9 @@ public class BeastMain {
             }
             throw new RuntimeException("Terminate");
         } catch (RuntimeException rex) {
+
             if (rex.getMessage() != null && rex.getMessage().startsWith("The initial posterior is zero")) {
-                infoLogger.warning("Error running file: " + fileName);
+                infoLogger.severe("Error running file: " + fileName);
                 infoLogger.severe(
                         "The initial model is invalid because state has a zero probability.\n\n" +
                                 "If the log likelihood of the tree is -Inf, his may be because the\n" +
@@ -253,6 +254,7 @@ public class BeastMain {
                 infoLogger.warning("Error running file: " + fileName);
                 System.err.println("Fatal exception: " + rex.getMessage());
                 rex.printStackTrace(System.err);
+                System.err.flush();
             }
             throw new RuntimeException("Terminate");
         } catch (Exception ex) {
@@ -260,6 +262,7 @@ public class BeastMain {
             infoLogger.severe("Fatal exception: " + ex.getMessage());
             System.err.println("Fatal exception: " + ex.getMessage());
             ex.printStackTrace(System.err);
+            System.err.flush();
             throw new RuntimeException("Terminate");
         }
     }

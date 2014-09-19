@@ -15,6 +15,11 @@ public class TipDateSamplingComponentFactory implements ComponentFactory {
         // singleton pattern - private constructor
     }
 
+    @Override
+    public Class getOptionsClass() {
+        return TipDateSamplingComponentOptions.class;
+    }
+
     public ComponentGenerator createGenerator(final BeautiOptions beautiOptions) {
         return new TipDateSamplingComponentGenerator(beautiOptions);
     }

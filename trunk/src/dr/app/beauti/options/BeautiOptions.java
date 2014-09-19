@@ -64,12 +64,26 @@ public class BeautiOptions extends ModelOptions {
     public BeautiOptions(ComponentFactory[] components) {
 
         // Install all the component's options from the given list of factories:
-        for (ComponentFactory component : components) {
-            addComponent(component.createOptions(this));
-        }
+        registerComponents(components);
     }
 
     /**
+     * This will register the list of components if not already there...
+     * @param components
+     */
+    public void registerComponents(ComponentFactory[] components) {
+
+        // Install all the component's options from the given list of factories:
+        for (ComponentFactory component : components) {
+            if (!hasComponent(component)) {
+                addComponent(component.createOptions(this));
+            }
+        }
+    }
+
+
+    /**
+     *
      * resets the options to the initial conditions
      */
     public void reset() {

@@ -449,6 +449,7 @@ public class BeautiFrame extends DocumentFrame {
         }
         fileIn.close();
 
+        options.registerComponents(components);
         generator = new BeastGenerator(options, components);
 
         return true;

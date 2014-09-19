@@ -291,7 +291,7 @@
     </target>
 
 
-    <property name="version" value="1.8.1"/>
+    <property name="version" value="1.8.1pre8"/>
     <property name="version_number" value="1.8.1"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
@@ -512,6 +512,14 @@
             </jarfileset>
         </jarbundler>
 
+        <!-- remove code signing -->
+        <exec executable="/usr/bin/codesign">
+            <arg value="-s"/>
+            <arg value="-"/>
+            <arg value="--force"/>
+            <arg value="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
+        </exec>
+
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
@@ -539,6 +547,14 @@
             <javaproperty name="java.library.path" value="$JAVAROOT"/>
         </jarbundler>
 
+        <!-- remove code signing -->
+        <exec executable="/usr/bin/codesign">
+            <arg value="-s"/>
+            <arg value="-"/>
+            <arg value="--force"/>
+            <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
+        </exec>
+
         <jarbundler dir="${Mac_package_dir}"
                     name="${LogCombiner_name} v${version}"
                     mainclass="dr.app.tools.LogCombiner"
@@ -555,6 +571,14 @@
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
         </jarbundler>
+
+        <!-- remove code signing -->
+        <exec executable="/usr/bin/codesign">
+            <arg value="-s"/>
+            <arg value="-"/>
+            <arg value="--force"/>
+            <arg value="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
+        </exec>
 
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeAnnotator_name} v${version}"
@@ -573,6 +597,14 @@
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
         </jarbundler>
 
+        <!-- remove code signing -->
+        <exec executable="/usr/bin/codesign">
+            <arg value="-s"/>
+            <arg value="-"/>
+            <arg value="--force"/>
+            <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
+        </exec>
+
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeStat_name} v${version}"
                     mainclass="dr.app.treestat.TreeStatApp"
@@ -589,6 +621,14 @@
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
         </jarbundler>
+
+        <!-- remove code signing -->
+        <exec executable="/usr/bin/codesign">
+            <arg value="-s"/>
+            <arg value="-"/>
+            <arg value="--force"/>
+            <arg value="${Mac_package_dir}/${TreeStat_name} v${version}.app"/>
+        </exec>
 
         <echo message="Building disk image."/>
 

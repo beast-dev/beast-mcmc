@@ -156,11 +156,11 @@ public class CountableMixtureBranchRatesParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new XORRule(
                     new ElementRule(RATES, Parameter.class, "The molecular evolutionary rate parameter", false),
-                    new ElementRule(RANDOM_EFFECTS,
+                    new ElementRule(FIXED_EFFECTS,
                             new XMLSyntaxRule[] {
                                     new ElementRule(AbstractBranchRateModel.class, 0, Integer.MAX_VALUE),
                             },
-                            "Fixed effects", true)
+                            "Fixed effects", false)
             ),
             new ElementRule(ALLOCATION, Parameter.class, "Allocation parameter", false),
             new ElementRule(RANDOM_EFFECTS,

@@ -1,0 +1,165 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+
+    <!-- random data generated in r via:
+    > set.seed(777)
+    > rmultinom(20, size = 12, prob=c(0.01,0.29,0.7))
+         [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14] [,15] [,16] [,17] [,18] [,19] [,20]
+    [1,]    0    0    0    0    1    0    0    0    0     0     0     0     0     0     1     0     0     0     0     0
+    [2,]    3    8    0    2    2    4    4    2    5     3     4     2     5     4     4     4     3     3     3     4
+    [3,]    9    4   12   10    9    8    8   10    7     9     8    10     7     8     7     8     9     9     9     8
+
+    -->
+
+    <taxa id="taxa">
+        <taxon id="OTU1"/>
+        <taxon id="OTU2"/>
+        <taxon id="OTU3"/>
+    </taxa>
+
+    <matrixParameter id="bkg.OTU.abundance.matrix">
+        <parameter id="bkg.OTU1.abundanceCol2"
+                   value="1    0    0    0    1    0    0    0    0     0     0     0     0     0     1     0     0     0     0     0"/>
+        <parameter id="bkg.OTU2.abundanceCol2"
+                   value="3    8    0    2    2    4    4    2    5     3     4     2     5     4     4     4     3     3     3     4"/>
+        <parameter id="bkg.OTU3.abundanceCol2"
+                   value="9    4   12   10    9    8    8   10    7     9     8    10     7     8     7     8     9     9     9     8"/>
+    </matrixParameter>
+
+    <matrixParameter id="OTU.abundance.matrix">
+        <parameter id="OTU1.abundanceCol"
+                   value="10"/>
+        <parameter id="OTU2.abundanceCol"
+                   value="3"/>
+        <parameter id="OTU3.abundanceCol"
+                   value="9"/>
+    </matrixParameter>
+
+
+
+    <mvPolyaLikelihood id="bkg.mvPolyaLike.fit">
+               <data>
+                   <matrixParameter idref="bkg.OTU.abundance.matrix"/>
+               </data>
+               <dispersion>
+                   <parameter id="bkg.rate" value="1"/>
+               </dispersion>
+               <frequencies>
+                   <parameter id="bkg.freqs" value="0.01 0.29 0.7"/>
+               </frequencies>
+       </mvPolyaLikelihood>
+
+
+    <mvPolyaLikelihood id="bkg.mvPolyaLike">
+            <data>
+                <matrixParameter idref="OTU.abundance.matrix"/>
+            </data>
+            <dispersion>
+                <parameter idref="bkg.rate"/>
+            </dispersion>
+            <frequencies>
+                <parameter idref="bkg.freqs"/>
+            </frequencies>
+    </mvPolyaLikelihood>
+
+
+    <mvPolyaLikelihood id="mvPolyaLike">
+        <data>
+            <matrixParameter idref="OTU.abundance.matrix"/>
+        </data>
+        <dispersion>
+            <parameter id="rate" value="5"/>
+        </dispersion>
+        <frequencies>
+            <parameter id="freqs" value="0.3 0.3 0.4"/>
+        </frequencies>
+    </mvPolyaLikelihood>
+
+    <parameter id="MVPolya.mix" value="0.5 0.5"/>
+
+    <operators id="operators">
+       <deltaMixOperator delta=".5" weight="1">
+            <parameter idref="freqs"/>
+       </deltaMixOperator>
+
+       <scaleOperator scaleFactor="0.54" weight="1">
+            <parameter idref="rate"/>
+       </scaleOperator>
+
+        <deltaMixOperator delta=".1" weight="1">
+            <parameter idref="bkg.freqs"/>
+        </deltaMixOperator>
+
+        <scaleOperator scaleFactor="0.54" weight="1">
+            <parameter idref="bkg.rate"/>
+        </scaleOperator>
+
+
+        <deltaMixOperator delta="0.5" weight="1">
+            <parameter idref="MVPolya.mix"/>
+        </deltaMixOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+        <posterior id="posterior">
+            <likelihood id="likelihood">
+                <mvPolyaLikelihood idref="bkg.mvPolyaLike.fit"/>
+                <mixtureModelLikelihood normalize="true">
+                    <mvPolyaLikelihood idref="mvPolyaLike"/>
+                    <mvPolyaLikelihood idref="bkg.mvPolyaLike"/>
+                    <parameter idref="MVPolya.mix"/>
+                </mixtureModelLikelihood>
+            </likelihood>
+            <prior id="prior">
+                <gammaPrior id="prior.Gamma" shape="0.001" scale="1000" offset="0.0">
+                    <parameter idref="rate"/>
+                    <parameter idref="bkg.rate"/>
+                </gammaPrior>
+
+            </prior>
+        </posterior>
+        <operators idref="operators"/>
+        <log logEvery="1000">
+            <column>
+                <parameter idref="MVPolya.mix"/>
+            </column>
+            <column label="Abundances" sf="4" width="12">
+                <parameter idref="rate"/>
+            </column>
+            <column label="Mean.freq" sf="4" width="12">
+                <parameter idref="freqs"/>
+            </column>
+            <column label="Abundances" sf="4" width="12">
+                <parameter idref="bkg.rate"/>
+            </column>
+            <column label="Mean.freq" sf="4" width="12">
+                <parameter idref="bkg.freqs"/>
+            </column>
+            <column dp="8" label="Likelihood" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+            <column label="Prior" dp="8" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Posterior" dp="8" width="12">
+                <posterior idref="posterior"/>
+            </column>
+        </log>
+        <log logEvery="1000" fileName="testMVPolyaLike.log">
+            <likelihood idref="likelihood"/>
+            <prior idref="prior"/>
+            <parameter idref="rate"/>
+            <parameter idref="freqs"/>
+            <parameter idref="bkg.rate"/>
+            <parameter idref="bkg.freqs"/>
+            <parameter idref="MVPolya.mix"/>
+        </log>
+    </mcmc>
+    <traceAnalysis fileName="testMVPolyaLike.log" stdError="true"/>
+
+    <report>
+        True multinomial frequencies 0.01 0.29 0.7
+    </report>
+
+</beast>

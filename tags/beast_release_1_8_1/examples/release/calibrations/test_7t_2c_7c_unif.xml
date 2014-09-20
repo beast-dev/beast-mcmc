@@ -1,0 +1,114 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- Test calibration implementation: 5 taxa - prior on root, uniform prior  -->
+<beast>
+  <taxa id="taxa">
+    <taxon id="a"/>
+    <taxon id="b"/>
+    <taxon id="c"/>
+    <taxon id="d"/>
+    <taxon id="e"/>
+    <taxon id="f"/>
+    <taxon id="g"/>
+  </taxa>
+
+  <taxa id="cal1">
+    <taxon idref="a"/>
+    <taxon idref="b"/>
+  </taxa>
+
+  <yuleModel id="yule" units="substitutions">
+    <birthRate>
+      <parameter id="yule.birthRate" value="1.0" lower="0.1" upper="10.0"/>
+    </birthRate>
+  </yuleModel>
+
+  <treeModel id="tree">
+    <newick>
+      ((((((a:2.5,b:2.5):2.5,c:5):1,d:6):1,e:7):1,f:8):1,g:9)
+    </newick>
+    <rootHeight>
+      <parameter id="tree.rootHeight"/>
+    </rootHeight>
+    <nodeHeights rootNode="false" internalNodes="true">
+      <parameter id="tree.internalNodeHeights"/>
+    </nodeHeights>
+    <nodeHeights rootNode="true" internalNodes="true">
+      <parameter id="tree.allNodeHeights"/>
+    </nodeHeights>
+  </treeModel>
+	
+  <speciationLikelihood id="speciation">
+    <model>
+      <yuleModel idref="yule"/>
+    </model>
+    <speciesTree>
+      <treeModel idref="tree"/>
+    </speciesTree>
+    <calibration>
+      <point>
+	<uniformDistributionModel>
+	  <lower>2</lower>
+	  <upper>3</upper>
+	</uniformDistributionModel>
+	<taxa idref="cal1"/>
+      </point>
+      <point>
+	<uniformDistributionModel>
+	  <lower>8.5</lower>
+	  <upper>9.5</upper>
+	</uniformDistributionModel>
+	<taxa idref="taxa"/>
+      </point>
+    </calibration>
+    </speciationLikelihood>
+
+    <tmrcaStatistic id="tmrca(ab)">
+      <treeModel idref="tree"/>
+      <mrca>
+	<taxa idref="cal1"/>
+      </mrca>
+    </tmrcaStatistic>
+
+    <mcmc id="mcmc" chainLength="10000000" minOpsFullEvaluations="0" fullEvaluation="0" autoOptimize="true">
+        <posterior>
+	  <prior>
+            <speciationLikelihood idref="speciation"/>
+	  </prior>
+        </posterior>
+	
+        <log id="screen" logEvery="100000">
+            <column dp="4">
+                <speciationLikelihood idref="speciation"/>
+		<statistic idref="tmrca(ab)"/>
+                <parameter idref="tree.rootHeight"/>
+            </column>
+        </log>
+
+	<log id="log" logEvery="100" fileName="test_7t_2c_7c_unif.log">
+            <speciationLikelihood idref="speciation"/>
+	    <statistic idref="tmrca(ab)"/>
+            <parameter idref="tree.rootHeight"/>
+	    <!-- <parameter idref="yule.birthRate"/> -->
+        </log>
+	
+        <logTree id="logTree" logEvery="100" nexusFormat="true" fileName="test_7t_2c_7c_unif.trees">
+            <treeModel idref="tree"/>
+        </logTree>
+	
+        <operators>
+            <subtreeSlide weight="1" gaussian="true" size="3">
+                <treeModel idref="tree"/>
+            </subtreeSlide>
+
+	    <!-- <scaleOperator scaleFactor="0.75" weight="1"> -->
+	    <!--   <parameter idref="yule.birthRate"/> -->
+	    <!-- </scaleOperator> -->
+        </operators>
+    </mcmc>
+
+    <traceAnalysis fileName="test_7t_2c_7c_unif.log" burnIn="1000">
+        <expectation name="tmrca(ab)" value="2.5"/>
+        <expectation name="tree.rootHeight" value="9"/>
+    </traceAnalysis>
+    
+</beast>

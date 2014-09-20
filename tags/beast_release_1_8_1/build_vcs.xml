@@ -1,0 +1,67 @@
+<project name="VariableCoalescentSimulator" default="all" basedir=".">
+    <description>
+        Build file for VariableCoalescentSimulator
+    </description>
+    <!-- set global properties for this build -->
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="lib" location="lib"/>
+    <property name="dist" location="dist"/>
+
+    <property environment="env"/>
+
+    <target name="init">
+        <!-- Create the time stamp -->
+        <tstamp/>
+        <!-- Create the build directory structure used by compile -->
+        <mkdir dir="${build}"/>
+        <mkdir dir="${dist}"/>
+    </target>
+
+    <target name="all"
+            depends="compile-all"
+            description="Build all run-time stuff">
+    </target>
+
+    <target name="compile-all"
+            depends="compile-basic">
+    </target>
+
+    <target name="compile-basic" depends="init">
+        <!-- Compile the java code from ${src} into ${build} -->
+        <javac source="1.5" srcdir="${src}" destdir="${build}"
+               classpath="${lib}/options.jar:${lib}/jebl.jar:${lib}/commons-math-1.2.jar">
+            <include name="dr/app/vcs/**"/>
+            <include name="dr/evolution/coalescent/**"/>
+            <include name="dr/evolution/tree/**"/>
+            <include name="dr/evolution/util/**"/>
+            <include name="dr/math/**"/>
+            <include name="dr/util/**"/>
+        </javac>
+    </target>
+
+    <target name="dist" depends="compile-all"
+            description="generate the distribution">
+        <!-- Create the distribution directory -->
+        <mkdir dir="${dist}"/>
+
+        <!-- Put everything in ${build} into the treestat.jar file -->
+        <jar jarfile="${dist}/vcs.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="dr.app.vcs.VariableCoalescentSimulator"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/vcs/**/*.class"/>
+                <include name="dr/evolution/coalescent/**/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/math/**"/>
+                <include name="dr/util/**"/>
+            </fileset>
+            <zipgroupfileset dir="${lib}" includes="**/options.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-math-1.2.jar"/>
+        </jar>
+    </target>
+</project>

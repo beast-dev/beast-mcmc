@@ -1,0 +1,152 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+
+    <taxa id="taxa">
+        <taxon id="LINEAGE1"/>
+        <taxon id="LINEAGE2"/>
+        <taxon id="LINEAGE3"/>
+    </taxa>
+
+    <alignment id="alignment" dataType="binary">
+    <sequence>
+        <taxon idref="LINEAGE1"/>
+        0001110000
+    </sequence>
+    <sequence>
+        <taxon idref="LINEAGE2"/>
+        0000011111
+    </sequence>
+    <sequence>
+        <taxon idref="LINEAGE3"/>
+        1110011010
+    </sequence>
+    </alignment>
+
+      <matrixParameter id="mixtureMatrix" transpose="true">
+          <parameter id="sample.1"
+                     value="0.2    0.2    0.8"/>
+          <parameter id="sample.2"
+                     value="0.33    0.34    0.33"/>
+          <parameter id="sample.3"
+                     value="0.9    0.05   0.05"/>
+          <parameter id="sample.4"
+                     value="0.5    0.2   0.3"/>
+          <parameter id="sample.5"
+                     value="0.3    0.6   0.1"/>
+      </matrixParameter>
+
+      <matrixParameter id="REFERENCE" transpose="true">
+          <parameter id="SNP1.ref.counts"
+                     value="12    37    46    35    43"/>
+          <parameter id="SNP2.ref.counts"
+                     value="12    38    49    37    46"/>
+          <parameter id="SNP3.ref.counts"
+                     value="8    37    48    40    43"/>
+          <parameter id="SNP4.ref.counts"
+                     value="50    50    49    50    50"/>
+          <parameter id="SNP5.ref.counts"
+                     value="50    50    50    49    47"/>
+          <parameter id="SNP6.ref.counts"
+                     value="8    33    48    38    41"/>
+          <parameter id="SNP7.ref.counts"
+                     value="7    34    45    38    43"/>
+          <parameter id="SNP8.ref.counts"
+                     value="50    50    49    49    50"/>
+          <parameter id="SNP9.ref.counts"
+                     value="12    35    46    38    45"/>
+          <parameter id="SNP10.ref.counts"
+                     value="49    50    49    50    50"/>
+      </matrixParameter>
+
+      <matrixParameter id="NON_REFERENCE" transpose="true">
+          <parameter id="SNP1.non.counts"
+                     value="38    13    4    15    7"/>
+          <parameter id="SNP2.non.counts"
+                     value="38    12    1    13    4"/>
+          <parameter id="SNP3.non.counts"
+                     value="42    13    2    10    7"/>
+          <parameter id="SNP4.non.counts"
+                     value="0    0    1    0    0"/>
+          <parameter id="SNP5.non.counts"
+                     value="0    0    0    1    3"/>
+          <parameter id="SNP6.non.counts"
+                     value="42    17    2    12    9"/>
+          <parameter id="SNP7.non.counts"
+                     value="43    16    5    12    7"/>
+          <parameter id="SNP8.non.counts"
+                     value="0    0    1    1    0"/>
+          <parameter id="SNP9.non.counts"
+                     value="38    15    4    12    5"/>
+          <parameter id="SNP10.non.counts"
+                     value="1    0    1    0    0"/>
+      </matrixParameter>
+
+      <lineageSNPS id="lineageSites">
+         <alignment idref="alignment"/>
+      </lineageSNPS>
+
+
+
+      <lineageModel id="lineageModelLike">
+          <parameter id="errorRate" value="0.01"/>
+          <lineageSNPS idref="lineageSites"/>
+          <ref>
+              <matrixParameter idref="REFERENCE"/>
+          </ref>
+          <non>
+              <matrixParameter idref="NON_REFERENCE"/>
+          </non>
+          <mixture><matrixParameter idref="mixtureMatrix"/> </mixture>
+      </lineageModel>
+
+      <operators id="operators">
+          <uniformOperator upper="0.05" lower = "0.0" weight="1">
+              <parameter idref="errorRate"/>
+          </uniformOperator>
+      </operators>
+
+     <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+          <posterior id="posterior">
+              <likelihood id="likelihood">
+                  <lineageModel idref="lineageModelLike"/>
+              </likelihood>
+              <prior id="prior">
+                  <uniformPrior id="prior.uniform" lower="0" upper="1">
+                      <parameter idref="errorRate"/>
+                  </uniformPrior>
+              </prior>
+          </posterior>
+          <operators idref="operators"/>
+          <log logEvery="1000" fileName = "lineageTest.log">
+              <column label="errorRate" sf="4" width="12">
+                  <parameter idref="errorRate"/>
+              </column>
+              <column label="Mixture" sf="4" width="12">
+                  <parameter idref="mixtureMatrix"/>
+              </column>
+              <column label="Prior" dp="8" width="12">
+                  <prior idref="prior"/>
+              </column>
+              <column label="Posterior" dp="8" width="12">
+                  <posterior idref="posterior"/>
+              </column>
+          </log>
+          <log logEvery="1000">
+              <column label="errorRate" sf="4" width="12">
+                  <parameter idref="errorRate"/>
+              </column>
+              <column label="Mixture" sf="4" width="12">
+                  <parameter idref="mixtureMatrix"/>
+              </column>
+              <column label="Prior" dp="8" width="12">
+                  <prior idref="prior"/>
+              </column>
+              <column label="Posterior" dp="8" width="12">
+                  <posterior idref="posterior"/>
+              </column>
+          </log>
+      </mcmc>
+      <traceAnalysis fileName="lineageTest.log" stdError="true"/>
+
+  </beast>

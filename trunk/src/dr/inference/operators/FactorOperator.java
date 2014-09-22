@@ -138,7 +138,7 @@ public class FactorOperator extends AbstractCoercableOperator{
         }
 
         LFM.getFactors().fireParameterChangedEvent();
-        LFM.computeResiduals();
+//        LFM.computeResiduals();
 
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }

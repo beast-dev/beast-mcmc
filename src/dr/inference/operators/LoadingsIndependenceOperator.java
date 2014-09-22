@@ -227,12 +227,12 @@ public class LoadingsIndependenceOperator extends AbstractCoercableOperator {
         if (i < draws.length)
         {   if (draws[i] > 0) {
             copy(i, draws);
-            LFM.computeResiduals();
+//            LFM.computeResiduals();
         }
         }
         else{
             copy(i, draws);
-            LFM.computeResiduals();
+//            LFM.computeResiduals();
         }
 
 //       copy(i, draws);

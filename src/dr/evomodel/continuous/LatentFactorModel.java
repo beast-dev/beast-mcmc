@@ -316,7 +316,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             }
         }
 //        System.out.println(new Matrix(answerTemp));
-
+        computeResiduals();
         return answer;
     }
 
@@ -336,10 +336,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
-LxFKnown=false;
+
     if(!LxFKnown){
     transposeThenMultiply(loadings, factors, LxF);
-//        LxFKnown=true;
+        LxFKnown=true;
     }
         subtract(data, LxF, residual);
         residualKnown=true;
@@ -417,13 +417,13 @@ LxFKnown=false;
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
-//            computeResiduals();
+            computeResiduals();
         }
         if(variable==loadings){
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
-//            computeResiduals();
+            computeResiduals();
         }
         if(variable==colPrecision){
             logDetColKnown=false;
@@ -482,10 +482,16 @@ LxFKnown=false;
         }
 //        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
 //        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
-        if(!residualKnown){
 
-            computeResiduals();
-        }
+
+
+//        if(!residualKnown){
+//
+//            computeResiduals();
+//        }
+
+
+
 //        expPart = residual.productInPlace(rowPrecision.productInPlace(residual.transposeThenProductInPlace(colPrecision, TResidualxC), RxTRxC), expPart);
 //            logDetRow=StrictMath.log(rowPrecision.getDeterminant());
         if(!logDetColKnown){

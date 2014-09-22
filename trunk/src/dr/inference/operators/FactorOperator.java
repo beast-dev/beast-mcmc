@@ -136,7 +136,9 @@ public class FactorOperator extends AbstractCoercableOperator{
         for (int i = 0; i <LFM.getFactors().getColumnDimension() ; i++) {
             randomDraw(i, variance);
         }
+
         LFM.getFactors().fireParameterChangedEvent();
+        LFM.computeResiduals();
 
         return 0;  //To change body of implemented methods use File | Settings | File Templates.
     }

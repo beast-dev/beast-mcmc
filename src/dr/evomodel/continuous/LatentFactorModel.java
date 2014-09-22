@@ -342,6 +342,7 @@ LxFKnown=false;
 //        LxFKnown=true;
     }
         subtract(data, LxF, residual);
+        residualKnown=true;
     }
 
 
@@ -414,13 +415,13 @@ LxFKnown=false;
 //        }
         if(variable==factors){
             LxFKnown=false;
-//            residualKnown=false;
+            residualKnown=false;
             traceKnown=false;
 //            computeResiduals();
         }
         if(variable==loadings){
             LxFKnown=false;
-//            residualKnown=false;
+            residualKnown=false;
             traceKnown=false;
 //            computeResiduals();
         }
@@ -482,7 +483,7 @@ LxFKnown=false;
 //        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
 //        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());
         if(!residualKnown){
-            residualKnown=true;
+
             computeResiduals();
         }
 //        expPart = residual.productInPlace(rowPrecision.productInPlace(residual.transposeThenProductInPlace(colPrecision, TResidualxC), RxTRxC), expPart);

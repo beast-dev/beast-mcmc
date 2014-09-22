@@ -279,7 +279,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             }
         }
         for(int i=0; i<data.getRowDimension(); i++){
-            meanList[i]=meanList[i]/data.getColumnDimension();
+            if(continuous.getParameterValue(i)==1)
+                meanList[i]=meanList[i]/data.getColumnDimension();
+            else
+                meanList[i]=0;
         }
 
         double[][] answerTemp=new double[data.getRowDimension()][data.getColumnDimension()];
@@ -297,8 +300,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         }
 
         for(int i=0; i<data.getRowDimension(); i++){
+            if(continuous.getParameterValue(i)==1){
             varList[i]=varList[i]/(data.getColumnDimension()-1);
-            varList[i]=StrictMath.sqrt(varList[i]);
+            varList[i]=StrictMath.sqrt(varList[i]);}
+            else{
+                varList[i]=1;
+            }
         }
 //        System.out.println(data.getColumnDimension());
 //        System.out.println(data.getRowDimension());
@@ -317,7 +324,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         return new Matrix(parameter.getParameterValues(), dimMajor, dimMinor);
     }
 
-    private void computeResiduals() {
+    public void computeResiduals() {
 //        Parameter[] dataTemp=new Parameter[nTaxa];
 //        for(int i=0; i<nTaxa; i++)
 //        {
@@ -329,10 +336,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //
 //        }
 //        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
-
+LxFKnown=false;
     if(!LxFKnown){
     transposeThenMultiply(loadings, factors, LxF);
-        LxFKnown=true;
+//        LxFKnown=true;
     }
         subtract(data, LxF, residual);
     }
@@ -407,15 +414,15 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        }
         if(variable==factors){
             LxFKnown=false;
-            residualKnown=false;
+//            residualKnown=false;
             traceKnown=false;
 //            computeResiduals();
         }
         if(variable==loadings){
             LxFKnown=false;
-            residualKnown=false;
+//            residualKnown=false;
             traceKnown=false;
- //           computeResiduals();
+//            computeResiduals();
         }
         if(variable==colPrecision){
             logDetColKnown=false;

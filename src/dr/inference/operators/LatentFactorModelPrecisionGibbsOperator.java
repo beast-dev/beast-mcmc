@@ -3,6 +3,7 @@ package dr.inference.operators;
 import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.DiagonalMatrix;
+import dr.inference.model.MaskedParameter;
 import dr.inference.model.MatrixParameter;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
@@ -54,7 +55,7 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
         }
         double scale=1.0/(1.0/prior.getScale()+di*.5);
         double nextPrecision=GammaDistribution.nextGamma(shape, scale);
-        precision.getParameter(0).setParameterValueQuietly(i, nextPrecision);
+        precision.setParameterValueQuietly(i, nextPrecision);
     }
 
     @Override
@@ -75,12 +76,18 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
     @Override
     public double doOperation() throws OperatorFailedException {
 
-        if(!randomScan){
-        for (int i = 0; i <LFM.getColumnPrecision().getColumnDimension(); i++) {
-            setPrecision(i);
-        }}
+        if(!randomScan) for (int i = 0; i < LFM.getColumnPrecision().getColumnDimension(); i++) {
+            if (!(LFM.getColumnPrecision().getParameter(0) instanceof MaskedParameter))
+             setPrecision(i);
+            else{
+                if((((MaskedParameter) LFM.getColumnPrecision().getParameter(0)).getParameterMaskValue(i))!=0)
+                    setPrecision(i);
+            }
+        }
         else{
             int i= MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
+            while((((MaskedParameter) LFM.getColumnPrecision().getParameter(0)).getParameterMaskValue(i))==0)
+                i= MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
             setPrecision(i);
         }
         LFM.getColumnPrecision().getParameter(0).fireParameterChangedEvent();

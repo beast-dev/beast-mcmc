@@ -255,9 +255,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         for (int j = 0; j <innerDim ; j++){
             if(continuous.getParameterValue(j)!=0) {
                 for (int i = 0; i < outerDim; i++) {
-                    double s1 = array[j * outerDim + i];
-                    double s2 = middle.getParameterValue(j, j);
-                    sum += s1 * s1 * s2;
+                    if(continuous.getParameterValue(j)!=0)
+                    {
+                        double s1 = array[j * outerDim + i];
+                        double s2 = middle.getParameterValue(j, j);
+                        sum += s1 * s1 * s2;
+                    }
                 }
             }
         }
@@ -324,7 +327,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         return new Matrix(parameter.getParameterValues(), dimMajor, dimMinor);
     }
 
-    public void computeResiduals() {
+    private void computeResiduals() {
 //        Parameter[] dataTemp=new Parameter[nTaxa];
 //        for(int i=0; i<nTaxa; i++)
 //        {
@@ -417,19 +420,22 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
+            likelihoodKnown = false;
             computeResiduals();
         }
         if(variable==loadings){
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
+            likelihoodKnown = false;
             computeResiduals();
         }
         if(variable==colPrecision){
             logDetColKnown=false;
             traceKnown=false;
+            likelihoodKnown = false;
         }
-        likelihoodKnown = false;
+
     }
 
     /**

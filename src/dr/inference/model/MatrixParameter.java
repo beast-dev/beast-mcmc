@@ -470,6 +470,7 @@ public class MatrixParameter extends CompoundParameter {
     private static final String COLUMN_DIMENSION = "columns";
     private static final String TRANSPOSE = "transpose";
     private static final String AS_COMPOUND = "asCompoundParameter";
+    private static final String BEHAVIOR = "test";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -501,14 +502,20 @@ public class MatrixParameter extends CompoundParameter {
                 matrixParameter = new TransposedMatrixParameter(name);
             }
 
-            if (xo.hasAttribute(ROW_DIMENSION)) {
-                int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
-                matrixParameter.setRowDimension(rowDimension);
-            }
+            if (xo.getAttribute(BEHAVIOR, false) && xo.hasAttribute(ROW_DIMENSION) && xo.hasAttribute(COLUMN_DIMENSION)) {
+                int rowDim = xo.getIntegerAttribute(ROW_DIMENSION);
+                int colDim = xo.getIntegerAttribute(COLUMN_DIMENSION);
+                matrixParameter.setDimensions(rowDim, colDim);
+            } else {
+                if (xo.hasAttribute(ROW_DIMENSION)) {
+                    int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
+                    matrixParameter.setRowDimension(rowDimension);
+                }
 
-            if (xo.hasAttribute(COLUMN_DIMENSION)) {
-                int columnDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
-                matrixParameter.setColumnDimension(columnDimension);
+                if (xo.hasAttribute(COLUMN_DIMENSION)) {
+                    int columnDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
+                    matrixParameter.setColumnDimension(columnDimension);
+                }
             }
 
             int dim = 0;
@@ -542,6 +549,7 @@ public class MatrixParameter extends CompoundParameter {
                 AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
                 AttributeRule.newBooleanRule(TRANSPOSE, true),
                 AttributeRule.newBooleanRule(AS_COMPOUND, true),
+                AttributeRule.newBooleanRule(BEHAVIOR, true),
         };
 
         public Class getReturnType() {

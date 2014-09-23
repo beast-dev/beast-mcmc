@@ -1,7 +1,7 @@
 /*
  * TreeTraitParserUtilities.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,6 +27,7 @@ package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.math.MathUtils;
@@ -246,6 +247,13 @@ public class TreeTraitParserUtilities {
         CompoundParameter traitParameter;
         List<Integer> missingIndices = null;
 
+        boolean isMatrixParameter = false;
+        if (parameter instanceof MatrixParameter) {
+            traitParameter = (CompoundParameter) parameter;
+            isMatrixParameter = true;
+        } else
+
+
         if (parameter instanceof CompoundParameter) {
             // if we have been passed a CompoundParameter, this will be a leaf trait
             // parameter from a tree model so use this to allow for individual sampling
@@ -290,9 +298,14 @@ public class TreeTraitParserUtilities {
                             }
                         }
                     } else {
-                        // Make multidimensional, in earlier revisions only first dimension was stored
-                        traitParam = new Parameter.Default(paramName, count);
-                        traitParameter.addParameter(traitParam);
+                        if (isMatrixParameter) {
+                            traitParam = traitParameter.getParameter(i);
+                            traitParam.setId(paramName);
+                        } else {
+                            // Make multidimensional, in earlier revisions only first dimension was stored
+                            traitParam = new Parameter.Default(paramName, count);
+                            traitParameter.addParameter(traitParam);
+                        }
                     }
 
 

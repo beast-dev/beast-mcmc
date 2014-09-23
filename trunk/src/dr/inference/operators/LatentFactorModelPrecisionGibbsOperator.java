@@ -86,8 +86,9 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
         }
         else{
             int i= MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
+            if ((LFM.getColumnPrecision().getParameter(0) instanceof MaskedParameter)){
             while((((MaskedParameter) LFM.getColumnPrecision().getParameter(0)).getParameterMaskValue(i))==0)
-                i= MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
+                i= MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());     }
             setPrecision(i);
         }
         LFM.getColumnPrecision().getParameter(0).fireParameterChangedEvent();

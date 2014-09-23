@@ -198,6 +198,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public MatrixParameter getScaledData(){return data;}
 
+    public Parameter getContinuous(){return continuous;}
+
     public int getFactorDimension(){return factors.getRowDimension();}
 
     private void transposeThenMultiply(MatrixParameter Left, MatrixParameter Right, double[] answer){
@@ -499,7 +501,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //            logDetRow=StrictMath.log(rowPrecision.getDeterminant());
         if(!logDetColKnown){
             logDetColKnown=true;
-            logDetCol=StrictMath.log(colPrecision.getDeterminant());
+            double product=1;
+            for (int i = 0; i <colPrecision.getRowDimension() ; i++) {
+                if (continuous.getParameterValue(i)!=0)
+                    product*=colPrecision.getParameterValue(i,i);
+            }
+
+            logDetCol=StrictMath.log(product);
         }
 //            System.out.println(logDetCol);
 //            System.out.println(logDetRow);

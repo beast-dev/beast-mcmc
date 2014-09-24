@@ -23,7 +23,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     protected GeneralDataType caseDataType;
     protected TaxonList taxa;
-    protected final boolean hasLatentPeriods;
+    private boolean hasLatentPeriods;
     protected final boolean hasGeography;
     private final String CASE_NAME = "caseID";
     protected ArrayList<AbstractCase> cases;
@@ -48,7 +48,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return new ArrayList<AbstractCase>(cases);
     }
 
-    public boolean hasLatentPeriods(){
+    public boolean hasLatentPeriods() {
         return hasLatentPeriods;
     }
 
@@ -57,6 +57,8 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     }
 
     // todo this should be in terms of arbitary distance functions, not kernels
+
+    public abstract double getLatentPeriod(AbstractCase aCase);
 
 
     public double getKernelValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){

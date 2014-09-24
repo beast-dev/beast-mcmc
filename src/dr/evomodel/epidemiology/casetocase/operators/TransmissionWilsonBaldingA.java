@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
@@ -133,7 +134,6 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
 
             branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(jCase),
                         MathUtils.nextDouble());
-
 
         }
 

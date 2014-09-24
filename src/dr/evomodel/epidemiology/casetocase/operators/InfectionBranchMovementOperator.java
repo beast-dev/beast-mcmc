@@ -1,10 +1,7 @@
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
-import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.BranchMapModel;
-import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
-import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
+import dr.evomodel.epidemiology.casetocase.*;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -106,14 +103,15 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             }
         }
 
-        if(!extended || c2cLikelihood.tipLinked(parent)){
+        AbstractCase infectorCase = map.get(parent.getNumber());
 
-            AbstractCase infectorCase = map.get(parent.getNumber());
+        if(!extended || c2cLikelihood.tipLinked(parent)){
 
             if(resampleInfectionTimes){
                 Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
                 branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectorCase),
                         MathUtils.nextDouble());
+
             }
 
             NodeRef grandparent = tree.getParent(parent);
@@ -145,6 +143,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
             branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectedCase),
                     MathUtils.nextDouble());
+
         }
 
         return hr;
@@ -159,6 +158,8 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         double out = 0;
 
         NodeRef parent = tree.getParent(node);
+
+        AbstractCase infectorCase = map.get(parent.getNumber());
 
         assert map.get(parent.getNumber())==map.get(node.getNumber()) : "Partition problem";
         // check if either child is not tip-linked (at most one is not, and if so it must have been in the same

@@ -1,10 +1,12 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
-import dr.inference.model.*;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.ProductStatistic;
+import dr.inference.model.Variable;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -30,14 +32,14 @@ public class CategoryOutbreak extends AbstractOutbreak {
     public static final String CATEGORY_OUTBREAK = "categoryOutbreak";
     private final HashSet<String> latentCategories;
     private final HashSet<String> infectiousCategories;
-    private final HashMap<String, AbstractPeriodPriorDistribution> latentMap;
+    private final HashMap<String, Parameter> latentMap;
     private final HashMap<String, AbstractPeriodPriorDistribution> infectiousMap;
     private double[][] distances;
 
 
     public CategoryOutbreak(String name, Taxa taxa, boolean hasGeography, boolean hasLatentPeriods,
                             HashMap<String, AbstractPeriodPriorDistribution> infectiousMap,
-                            HashMap<String, AbstractPeriodPriorDistribution> latentMap){
+                            HashMap<String, Parameter> latentMap){
         super(name, taxa, hasLatentPeriods, hasGeography);
         cases = new ArrayList<AbstractCase>();
         latentCategories = new HashSet<String>();
@@ -47,11 +49,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
         for(AbstractPeriodPriorDistribution hyperprior : infectiousMap.values()){
             addModel(hyperprior);
         }
-        for(AbstractPeriodPriorDistribution hyperprior : latentMap.values()){
-            addModel(hyperprior);
+        for(Parameter hyperprior : latentMap.values()){
+            addVariable(hyperprior);
         }
-
-
     }
 
 
@@ -89,7 +89,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         return infectiousCategories.size();
     }
 
-    public HashMap<String, AbstractPeriodPriorDistribution> getLatentMap(){
+    public HashMap<String, Parameter> getLatentMap(){
         return latentMap;
     }
 
@@ -97,7 +97,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         return infectiousMap;
     }
 
-    public AbstractPeriodPriorDistribution getLatentCategoryPrior(String category){
+    public Parameter getLatentPeriod(String category){
         return latentMap.get(category);
     }
 
@@ -111,6 +111,10 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
     public String getLatentCategory(AbstractCase aCase){
         return ((CategoryCase)aCase).getLatentCategory();
+    }
+
+    public double getLatentPeriod(AbstractCase aCase) {
+        return latentMap.get(((CategoryCase)aCase).getLatentCategory()).getParameterValue(0);
     }
 
     public double getDistance(AbstractCase a, AbstractCase b) {
@@ -138,7 +142,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        fireModelChanged();
+        if(!(model instanceof AbstractPeriodPriorDistribution)) {
+            fireModelChanged();
+        }
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -186,14 +192,15 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
                              Taxa associatedTaxa, String infectiousCategory){
-            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa, infectiousCategory);
+            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa,
+                    infectiousCategory);
         }
 
 
         private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
                              Taxa associatedTaxa, String infectiousCategory, String latentCategory){
-            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa, infectiousCategory,
-                    latentCategory);
+            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa,
+                    infectiousCategory, latentCategory);
         }
 
         public String getLatentCategory(){
@@ -238,140 +245,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
     }
 
-// for integrating out infectiousness dates, if this is preferred:
-
-//    private class CombinedPeriodFunction implements IntegrableUnivariateFunction {
-//
-//        private ParametricDistributionModel infectious;
-//        private ParametricDistributionModel latent;
-//        private Integral numIntergrator;
-//        private PdfByPdf pdfByPdf;
-//        private CdfByPdf cdfByPdf;
-//
-//        private CombinedPeriodFunction(ParametricDistributionModel infectious, ParametricDistributionModel latent,
-//                                       int numSteps){
-//            this.infectious = infectious;
-//            this.latent = latent;
-//            this.numIntergrator = new RiemannApproximation(numSteps);
-//            cdfByPdf = new CdfByPdf(1);
-//            pdfByPdf = new PdfByPdf(1);
-//        }
-//
-//        public double evaluateIntegral(double a, double b) {
-//            cdfByPdf.setTotal(b);
-//            double out = numIntergrator.integrate(cdfByPdf, 0, b);
-//            if(a>0){
-//                cdfByPdf.setTotal(a);
-//                out -= numIntergrator.integrate(cdfByPdf, 0, a);
-//            }
-//            return out;
-//        }
-//
-//        public double evaluateIntegral(double a, double b, double maxLatent){
-//            double out;
-//            cdfByPdf.setTotal(b);
-//            if(maxLatent > b){
-//                out = numIntergrator.integrate(cdfByPdf, 0, b);
-//                out /= latent.cdf(maxLatent);
-//            } else {
-//                out = numIntergrator.integrate(cdfByPdf, 0, maxLatent);
-//                out /= latent.cdf(maxLatent);
-//            }
-//            if(a>0){
-//                cdfByPdf.setTotal(a);
-//                if(maxLatent > a){
-//                    out -= numIntergrator.integrate(cdfByPdf, 0, a)/latent.cdf(maxLatent);
-//                } else {
-//                    out -= numIntergrator.integrate(cdfByPdf, 0, maxLatent)/latent.cdf(maxLatent);
-//                }
-//
-//            }
-//            return out;
-//        }
-//
-//        public double evaluate(double argument) {
-//            pdfByPdf.setTotal(argument);
-//            return numIntergrator.integrate(pdfByPdf, 0, argument);
-//        }
-//
-//        public double evaluate(double argument, double maxLatent){
-//            if(maxLatent>argument){
-//                return evaluate(argument)/latent.cdf(maxLatent);
-//            }
-//            pdfByPdf.setTotal(argument);
-//            return numIntergrator.integrate(pdfByPdf, 0, maxLatent)/latent.cdf(maxLatent);
-//        }
-//
-//
-//        public double getLowerBound() {
-//            return 0;
-//        }
-//
-//        public double getUpperBound() {
-//            return Double.POSITIVE_INFINITY;
-//        }
-//
-//        private class PdfByPdf implements UnivariateFunction {
-//
-//            double total;
-//
-//            private PdfByPdf(double total){
-//                this.total = total;
-//            }
-//
-//            public double evaluate(double argument) {
-//                return infectious.pdf(total-argument)*latent.pdf(argument);
-//            }
-//
-//            public double getLowerBound() {
-//                return 0;
-//            }
-//
-//            public double getUpperBound() {
-//                return Double.POSITIVE_INFINITY;
-//            }
-//
-//            public void setTotal(double total){
-//                this.total = total;
-//            }
-//
-//            public double getTotal(){
-//                return total;
-//            }
-//
-//        }
-//
-//        private class CdfByPdf implements UnivariateFunction{
-//
-//            double total;
-//
-//            private CdfByPdf(double total){
-//                this.total = total;
-//            }
-//
-//            public double evaluate(double argument) {
-//                return infectious.cdf(total-argument)*latent.pdf(argument);
-//            }
-//
-//            public double getLowerBound() {
-//                return 0;
-//            }
-//
-//            public double getUpperBound() {
-//                return Double.POSITIVE_INFINITY;
-//            }
-//
-//            public void setTotal(double total){
-//                this.total = total;
-//            }
-//
-//            public double getTotal(){
-//                return total;
-//            }
-//
-//        }
-//    }
-
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         //for the outbreak
@@ -379,7 +252,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String HAS_GEOGRAPHY = "hasGeography";
         public static final String HAS_LATENT_PERIODS = "hasLatentPeriods";
         public static final String INFECTIOUS_PERIOD_PRIOR = "infectiousPeriodPrior";
-        public static final String LATENT_PERIOD_PRIOR = "latentPeriodPrior";
+        public static final String LATENT_PERIODS = "latentPeriods";
         public static final String DISTANCE_MATRIX = "distanceMatrix";
 
         //for the cases
@@ -389,7 +262,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String EXAMINATION_TIME = "examTime";
         public static final String COORDINATES = "spatialCoordinates";
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
-        public static final String INFECTIOUS_TIME_POSITION = "infectiousTimePosition";
         public static final String LATENT_CATEGORY = "latentCategory";
         public static final String INFECTIOUS_CATEGORY = "infectiousCategory";
 
@@ -404,8 +276,8 @@ public class CategoryOutbreak extends AbstractOutbreak {
             HashMap<String, AbstractPeriodPriorDistribution> infMap
                     = new HashMap<String, AbstractPeriodPriorDistribution>();
 
-            HashMap<String, AbstractPeriodPriorDistribution> latMap
-                    = new HashMap<String, AbstractPeriodPriorDistribution>();
+            HashMap<String, Parameter> latMap
+                    = new HashMap<String, Parameter>();
 
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
@@ -415,17 +287,18 @@ public class CategoryOutbreak extends AbstractOutbreak {
                                 = (AbstractPeriodPriorDistribution)
                                 ((XMLObject)cxo).getChild(AbstractPeriodPriorDistribution.class);
                         infMap.put(hyperprior.getModelName(), hyperprior);
-                    } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIOD_PRIOR))){
-                        AbstractPeriodPriorDistribution hyperprior
-                                = (AbstractPeriodPriorDistribution)
-                                ((XMLObject)cxo).getChild(AbstractPeriodPriorDistribution.class);
-                        latMap.put(hyperprior.getModelName(), hyperprior);
+                    } else if ((((XMLObject)cxo).getName().equals(LATENT_PERIODS))){
+                        Parameter latentPeriod
+                                = (Parameter)
+                                ((XMLObject)cxo).getChild(Parameter.class);
+                        latMap.put(latentPeriod.getParameterName(), latentPeriod);
                     }
                 }
             }
 
-            CategoryOutbreak cases = new CategoryOutbreak(null, taxa, hasGeography,
-                    hasLatentPeriods, infMap, latMap);
+
+            CategoryOutbreak cases = new CategoryOutbreak(null, taxa,
+                    hasGeography, hasLatentPeriods, infMap, latMap);
             for(int i=0; i<xo.getChildCount(); i++){
                 Object cxo = xo.getChild(i);
                 if(cxo instanceof XMLObject && ((XMLObject)cxo).getName()
@@ -490,10 +363,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
             } else if(expectLatentPeriods){
                 throw new XMLParseException("Case "+farmID+" not assigned a latent periods distribution");
             }
-            if(expectLatentPeriods && !xo.hasChildNamed(INFECTIOUS_TIME_POSITION)){
-                throw new XMLParseException("Latent periods specified, but case "+farmID+" not assigned a time of " +
-                        "infectiousness");
-            }
 
             final Parameter coords = xo.hasChildNamed(COORDINATES) ?
                     (Parameter) xo.getElementFirstChild(COORDINATES) : null;
@@ -512,7 +381,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         public Class getReturnType(){
-            return SimpleOutbreak.class;
+            return CategoryOutbreak.class;
         }
 
         public String getParserName(){
@@ -530,9 +399,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
                         " along which the infection of this case occurs that it actually does occur"),
-                new ElementRule(INFECTIOUS_TIME_POSITION, Parameter.class, "Parameter taking a value between 0 and" +
-                        "1, indicating when from infection (0) to first caused infection (or cull if the outbreak" +
-                        "causes no infections) (1) the case became infectious", true),
                 new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true),
                 new StringAttributeRule(LATENT_CATEGORY, "The category of latent period", true),
                 new StringAttributeRule(INFECTIOUS_CATEGORY, "The category of infectious period")
@@ -546,7 +412,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(Taxa.class),
                 new ElementRule(INFECTIOUS_PERIOD_PRIOR, AbstractPeriodPriorDistribution.class, "blah", 1,
                         Integer.MAX_VALUE),
-                new ElementRule(LATENT_PERIOD_PRIOR, AbstractPeriodPriorDistribution.class, "blah", 0,
+                new ElementRule(LATENT_PERIODS, Parameter.class, "blah", 0,
                         Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true),
                 new ElementRule(DISTANCE_MATRIX, Parameter.class, "A matrix of distances between the cases in this " +

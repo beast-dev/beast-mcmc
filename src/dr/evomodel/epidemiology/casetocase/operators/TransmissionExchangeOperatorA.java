@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
@@ -88,19 +89,19 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
             BranchMapModel branchMap = c2cLikelihood.getBranchMap();
             Parameter branchPostitions = c2cLikelihood.getInfectionTimeBranchPositions();
             AbstractCase iCase = branchMap.get(i.getNumber());
-            AbstractCase iPCase = branchMap.get(iP.getNumber());
             AbstractCase jCase = branchMap.get(j.getNumber());
-            AbstractCase jPCase = branchMap.get(jP.getNumber());
+            AbstractCase parentCase = branchMap.get(iP.getNumber());
 
-            if(iCase!=iPCase){
+            if(iCase!=parentCase){
                 branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
                         MathUtils.nextDouble());
             }
 
-            if(jCase!=jPCase){
+            if(jCase!=parentCase){
                 branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(jCase),
                         MathUtils.nextDouble());
             }
+
         }
 
 /*

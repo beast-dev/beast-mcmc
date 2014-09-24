@@ -772,12 +772,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             Parameter virusDrift = null;
             if (xo.hasChildNamed(VIRUS_DRIFT)) {
-                locationDrift = (Parameter) xo.getElementFirstChild(VIRUS_DRIFT);
+                virusDrift = (Parameter) xo.getElementFirstChild(VIRUS_DRIFT);
             }
 
             Parameter serumDrift = null;
             if (xo.hasChildNamed(SERUM_DRIFT)) {
-                locationDrift = (Parameter) xo.getElementFirstChild(SERUM_DRIFT);
+                serumDrift = (Parameter) xo.getElementFirstChild(SERUM_DRIFT);
             }
 
             Parameter virusOffsetsParameter = null;

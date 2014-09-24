@@ -44,26 +44,15 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     private double infectiousPeriodsLogLikelihood;
     private double storedInfectiousPeriodsLogLikelihood;
-    private double latentPeriodsLogLikelihood;
-    private double storedLatentPeriodsLogLikelihood;
     private double coalescencesLogLikelihood;
     private double storedCoalescencesLogLikelihood;
+
 
     public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
                                 String startingNetworkFileName, Parameter infectionTimeBranchPositions,
                                 Parameter maxFirstInfToRoot, DemographicModel demoModel)
             throws TaxonList.MissingTaxonException {
-        this(virusTree, caseData, startingNetworkFileName, infectionTimeBranchPositions, null,
-                maxFirstInfToRoot, demoModel);
-    }
-
-    public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
-                                String startingNetworkFileName, Parameter infectionTimeBranchPositions,
-                                Parameter infectiousTimePositions, Parameter maxFirstInfToRoot,
-                                DemographicModel demoModel)
-            throws TaxonList.MissingTaxonException {
-        super(WITHIN_CASE_COALESCENT, virusTree, caseData, infectionTimeBranchPositions, infectiousTimePositions,
-                maxFirstInfToRoot);
+        super(WITHIN_CASE_COALESCENT, virusTree, caseData, infectionTimeBranchPositions, maxFirstInfToRoot);
         this.demoModel = demoModel;
         addModel(demoModel);
         addModel(outbreak);
@@ -82,7 +71,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     protected double calculateLogLikelihood(){
 
-        checkPartitions();
+        //checkPartitions();
 
         if(DEBUG){
 
@@ -100,11 +89,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         // todo do this only once? Using indexes?
 
-        for(AbstractCase aCase : outbreak.getCases()){
+        for (AbstractCase aCase : outbreak.getCases()) {
 
             String category = ((CategoryOutbreak) outbreak).getInfectiousCategory(aCase);
 
-            if(!infectiousPeriodsByCategory.keySet().contains(category)){
+            if (!infectiousPeriodsByCategory.keySet().contains(category)) {
                 infectiousPeriodsByCategory.put(category, new ArrayList<Double>());
             }
 
@@ -116,17 +105,17 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         infectiousPeriodsLogLikelihood = 0;
 
-        for(String category : ((CategoryOutbreak) outbreak).getInfectiousCategories()){
+        for (String category : ((CategoryOutbreak) outbreak).getInfectiousCategories()) {
 
             Double[] infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category)
                     .toArray(new Double[infectiousPeriodsByCategory.size()]);
 
             AbstractPeriodPriorDistribution hyperprior = ((CategoryOutbreak) outbreak)
-                            .getInfectiousCategoryPrior(category);
+                    .getInfectiousCategoryPrior(category);
 
             double[] values = new double[infPeriodsInThisCategory.length];
 
-            for(int i=0; i<infPeriodsInThisCategory.length; i++){
+            for (int i = 0; i < infPeriodsInThisCategory.length; i++) {
                 values[i] = infPeriodsInThisCategory[i];
             }
 
@@ -134,53 +123,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         }
 
-
-        if(hasLatentPeriods){
-
-            HashMap<String, ArrayList<Double>> latentPeriodsByCategory
-                    = new HashMap<String, ArrayList<Double>>();
-
-            // todo do this only once?
-
-            for(AbstractCase aCase : outbreak.getCases()){
-
-                String category = ((CategoryOutbreak) outbreak).getLatentCategory(aCase);
-
-                if(!latentPeriodsByCategory.keySet().contains(category)){
-                    latentPeriodsByCategory.put(category, new ArrayList<Double>());
-                }
-
-                ArrayList<Double> correspondingList
-                        = latentPeriodsByCategory.get(category);
-
-                correspondingList.add(getLatentPeriod(aCase));
-            }
-
-
-            latentPeriodsLogLikelihood = 0;
-
-            for(String category : ((CategoryOutbreak) outbreak).getLatentCategories()){
-
-                Double[] latPeriodsInThisCategory = latentPeriodsByCategory.get(category)
-                        .toArray(new Double[latentPeriodsByCategory.size()]);
-
-                AbstractPeriodPriorDistribution hyperprior = ((CategoryOutbreak) outbreak)
-                        .getLatentCategoryPrior(category);
-
-                double[] values = new double[latPeriodsInThisCategory.length];
-
-                for(int i=0; i<latPeriodsInThisCategory.length; i++){
-                    values[i] = latPeriodsInThisCategory[i];
-                }
-
-                latentPeriodsLogLikelihood += hyperprior.getLogLikelihood(values);
-
-            }
-
-        }
-
         logL += infectiousPeriodsLogLikelihood;
-        logL += latentPeriodsLogLikelihood;
 
         explodeTree();
 
@@ -238,10 +181,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         storedCoalescencesLogLikelihood = coalescencesLogLikelihood;
         storedInfectiousPeriodsLogLikelihood = infectiousPeriodsLogLikelihood;
 
-
-        if(hasLatentPeriods){
-            storedLatentPeriodsLogLikelihood = latentPeriodsLogLikelihood;
-        }
     }
 
     public void restoreState(){
@@ -253,10 +192,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         coalescencesLogLikelihood = storedCoalescencesLogLikelihood;
         infectiousPeriodsLogLikelihood = storedInfectiousPeriodsLogLikelihood;
 
-
-        if(hasLatentPeriods){
-            latentPeriodsLogLikelihood = storedLatentPeriodsLogLikelihood;
-        }
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -548,42 +483,60 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     public LogColumn[] passColumns(){
         ArrayList<LogColumn> columns = new ArrayList<LogColumn>(Arrays.asList(super.passColumns()));
 
-        for(AbstractPeriodPriorDistribution hyperprior : ((CategoryOutbreak)outbreak).getInfectiousMap().values()){
-            columns.addAll(Arrays.asList(hyperprior.getColumns()));
-        }
-        if(hasLatentPeriods){
-            for(AbstractPeriodPriorDistribution hyperprior : ((CategoryOutbreak)outbreak).getLatentMap().values()){
+        if(outbreak instanceof CategoryOutbreak) {
+
+            for (AbstractPeriodPriorDistribution hyperprior : ((CategoryOutbreak) outbreak).getInfectiousMap().values()) {
                 columns.addAll(Arrays.asList(hyperprior.getColumns()));
             }
-        }
 
-        columns.add(new LogColumn.Abstract("inf_LL"){
-            protected String getFormattedValue() {
-                return String.valueOf(infectiousPeriodsLogLikelihood);
-            }
-        });
-        if(hasLatentPeriods){
-            columns.add(new LogColumn.Abstract("lat_LL"){
+            columns.add(new LogColumn.Abstract("inf_LL") {
                 protected String getFormattedValue() {
-                    return String.valueOf(latentPeriodsLogLikelihood);
+                    return String.valueOf(infectiousPeriodsLogLikelihood);
                 }
             });
-        }
-        for(int i=0; i<outbreak.size(); i++){
-            final int finalI = i;
-            columns.add(new LogColumn.Abstract("coal_LL_"+i){
+            for (int i = 0; i < outbreak.size(); i++) {
+                final int finalI = i;
+                columns.add(new LogColumn.Abstract("coal_LL_" + i) {
+                    protected String getFormattedValue() {
+                        return String.valueOf(partitionTreeLogLikelihoods[finalI]);
+                    }
+                });
+            }
+            columns.add(new LogColumn.Abstract("total_coal_LL") {
                 protected String getFormattedValue() {
-                    return String.valueOf(partitionTreeLogLikelihoods[finalI]);
+                    return String.valueOf(coalescencesLogLikelihood);
                 }
             });
-        }
-        columns.add(new LogColumn.Abstract("total_coal_LL"){
-            protected String getFormattedValue() {
-                return String.valueOf(coalescencesLogLikelihood);
-            }
-        });
 
-        return columns.toArray(new LogColumn[columns.size()]);
+            return columns.toArray(new LogColumn[columns.size()]);
+        } else if(outbreak instanceof CategoryOutbreak){
+
+            for (AbstractPeriodPriorDistribution hyperprior : ((CategoryOutbreak) outbreak).getInfectiousMap().values()) {
+                columns.addAll(Arrays.asList(hyperprior.getColumns()));
+            }
+
+            columns.add(new LogColumn.Abstract("inf_LL") {
+                protected String getFormattedValue() {
+                    return String.valueOf(infectiousPeriodsLogLikelihood);
+                }
+            });
+            for (int i = 0; i < outbreak.size(); i++) {
+                final int finalI = i;
+                columns.add(new LogColumn.Abstract("coal_LL_" + i) {
+                    protected String getFormattedValue() {
+                        return String.valueOf(partitionTreeLogLikelihoods[finalI]);
+                    }
+                });
+            }
+            columns.add(new LogColumn.Abstract("total_coal_LL") {
+                protected String getFormattedValue() {
+                    return String.valueOf(coalescencesLogLikelihood);
+                }
+            });
+
+            return columns.toArray(new LogColumn[columns.size()]);
+        }
+        return null;
 
     }
 
@@ -595,7 +548,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public static final String STARTING_NETWORK = "startingNetwork";
         public static final String INFECTION_TIMES = "infectionTimeBranchPositions";
-        public static final String INFECTIOUS_TIMES = "infectiousTimePositions";
         public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
         public static final String DEMOGRAPHIC_MODEL = "demographicModel";
 
@@ -619,16 +571,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
 
-            Parameter infectiousTimes = xo.hasChildNamed(INFECTIOUS_TIMES)
-                    ? (Parameter) xo.getElementFirstChild(INFECTIOUS_TIMES) : null;
-
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
             DemographicModel demoModel = (DemographicModel) xo.getElementFirstChild(DEMOGRAPHIC_MODEL);
 
             try {
                 likelihood = new WithinCaseCoalescent(virusTree, caseSet, startingNetworkFileName, infectionTimes,
-                        infectiousTimes, earliestFirstInfection, demoModel);
+                        earliestFirstInfection, demoModel);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -651,15 +600,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(PartitionedTreeModel.class, "The tree"),
-                new ElementRule(CategoryOutbreak.class, "The set of outbreak"),
+                new ElementRule(CategoryOutbreak.class, "The set of cases", 0,1),
+                new ElementRule(CategoryOutbreak.class, "The set of cases", 0,1),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
                         "the root node"),
                 new ElementRule(INFECTION_TIMES, Parameter.class),
-                new ElementRule(INFECTIOUS_TIMES, Parameter.class, "For each case, proportions of the time between " +
-                        "infection and first event that requires infectiousness (further infection or cull)" +
-                        "that has elapsed before infectiousness", true),
                 new ElementRule(DEMOGRAPHIC_MODEL, DemographicModel.class, "The demographic model for within-case" +
                         "evolution")
         };

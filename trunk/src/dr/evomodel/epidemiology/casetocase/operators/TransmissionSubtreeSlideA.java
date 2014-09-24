@@ -3,6 +3,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
@@ -124,6 +125,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(CiPCase),
                         MathUtils.nextDouble());
             }
+
         }
 
         // 3. if the move is down
@@ -149,20 +151,6 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
                 // if iP is now the earliest node in its subtree
 
-                if(resampleInfectionTimes){
-                    if(newParent==null){
-                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iPCase),
-                                MathUtils.nextDouble());
-
-                    } else {
-                        AbstractCase newParentCase = branchMap.get(newParent.getNumber());
-                        if(newParentCase!=iPCase){
-                            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iPCase),
-                                    MathUtils.nextDouble());
-                        }
-                    }
-
-                }
 
                 tree.beginTreeEdit();
 
@@ -252,11 +240,12 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 // if newChild was the earliest node in its subtree it has a new infection time
 
                 if(resampleInfectionTimes){
-                        AbstractCase newChildCase = branchMap.get(newChild.getNumber());
-                        if(newChildCase!=iPCase){
-                            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
-                                    MathUtils.nextDouble());
-                        }
+                    AbstractCase newChildCase = branchMap.get(newChild.getNumber());
+                    if(newChildCase!=iPCase){
+                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
+                                MathUtils.nextDouble());
+                    }
+
                 }
 
 

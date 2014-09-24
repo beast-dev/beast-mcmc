@@ -46,7 +46,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
     private void setupArrays(){
         final int maxIterations = 10;
-        final double eps = 1E-10;
+        final double eps = 1E-14;
 
         double z = 0;
 
@@ -59,7 +59,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
                 z += (15.0+6.25*alpha)/(1.0+0.9*alpha+2.5*noPoints);
             } else {
                 double ai = i-1;
-                z += ((1.0+2.55*ai)/(1.9*ai) + 1.26*ai*alpha/(1.0+3.5*ai))*(z- abscissae[i-2])/(1.0+0.3*alpha);
+                z += ((1.0+2.55*ai)/(1.9*ai) + 1.26*ai*alpha/(1.0+3.5*ai))*(z-abscissae[i-2])/(1.0+0.3*alpha);
             }
 
             boolean failed = true;
@@ -115,7 +115,7 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
         double integral = 0;
 
         for(int i=0; i<noPoints; i++){
-            integral+=coefficients[i]*f.evaluate(abscissae[i]/B + min);
+            integral += coefficients[i]*f.evaluate(abscissae[i]/B + min);
         }
 
         integral *= 1/Math.pow(B, alpha+1);
@@ -130,7 +130,8 @@ public class GeneralisedGaussLaguerreQuadrature implements Integral {
 
             for (int i = 0; i < noPoints; i++) {
                 logIntegral = LogTricks.logSum(logIntegral, Math.log(coefficients[i]) +
-                        ((UnivariateFunction.AbstractLogEvaluatableUnivariateFunction)f).logEvaluate(min + abscissae[i] / B));
+                        ((UnivariateFunction.AbstractLogEvaluatableUnivariateFunction)f)
+                                .logEvaluate(min + abscissae[i] / B));
             }
 
             logIntegral += -(alpha + 1) * Math.log(B);

@@ -88,18 +88,24 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         if(model instanceof CaseToCaseTreeLikelihood){
 
             treeProbKnown = false;
-            if(!(object instanceof AbstractOutbreak) && !(object instanceof DemographicModel)){
+            if(!(object instanceof DemographicModel)){
                 transProbKnown = false;
                 normalisationKnown = false;
                 geographyProbKnown = false;
                 sortedCases = null;
             }
         } else if(model instanceof SpatialKernel){
+
             transProbKnown = false;
-
             normalisationKnown = false;
-
             geographyProbKnown = false;
+
+        } else if(model instanceof AbstractOutbreak){
+
+            transProbKnown = false;
+            normalisationKnown = false;
+            geographyProbKnown = false;
+
         }
         likelihoodKnown = false;
     }
@@ -109,7 +115,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if(variable==transmissionRate){
             transProbKnown = false;
-
             normalisationKnown = false;
         }
         likelihoodKnown = false;
@@ -156,6 +161,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public double getLogLikelihood() {
+
+        if(DEBUG){
+            treeLikelihood.debugOutputTree("blah.nex", true);
+        }
 
         if(!likelihoodKnown) {
             if (!treeProbKnown) {
@@ -234,6 +243,21 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 treeLogProb = treeLikelihood.getLogLikelihood();
                 treeProbKnown = true;
             }
+
+
+            if(transLogProb == Double.POSITIVE_INFINITY){
+                System.out.println("TransLogProb +INF");
+            }
+            if(geographyLogProb == Double.POSITIVE_INFINITY){
+                System.out.println("GeogLogProb +INF");
+            }
+            if(normalisation == Double.NEGATIVE_INFINITY){
+                System.out.println("Normalisation +INF");
+            }
+            if(treeLogProb == Double.POSITIVE_INFINITY){
+                System.out.println("TreeLogProb +INF");
+            }
+
             logLikelihood =  treeLogProb + geographyLogProb + transLogProb - normalisation;
             likelihoodKnown = true;
         }
@@ -395,8 +419,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
             double logF = 0;
 
-
-
             for(AbstractCase infectee : sortedCases){
 
                 AbstractCase infector = treeLikelihood.getInfector(infectee);
@@ -437,7 +459,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         public int getNumArguments() {
-            return 2;
+            return 1;
         }
 
         public double getLowerBound() {

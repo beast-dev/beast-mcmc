@@ -3,6 +3,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
+import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
@@ -196,6 +197,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
                 AbstractCase newiPCase;
 
+
                 AbstractCase newChildCase = branchMap.get(newChild.getNumber());
 
                 if(newParent != null && branchMap.get(newParent.getNumber())!=branchMap.get(newChild.getNumber())){
@@ -343,6 +345,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                     //upward, so don't have to worry about newParent being the root if the topology changed
 
                     newiPCase = newChildCase;
+
                 }
 
                 branchMap.set(iP.getNumber(), newiPCase, true);

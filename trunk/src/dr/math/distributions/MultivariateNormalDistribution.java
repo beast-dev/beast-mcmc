@@ -1,7 +1,7 @@
 /*
  * MultivariateNormalDistribution.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,7 +31,7 @@ import dr.math.matrixAlgebra.*;
 /**
  * @author Marc Suchard
  */
-public class MultivariateNormalDistribution implements MultivariateDistribution, RandomGenerator {
+public class MultivariateNormalDistribution implements MultivariateDistribution, GaussianProcessRandomGenerator {
 
     public static final String TYPE = "MultivariateNormal";
 

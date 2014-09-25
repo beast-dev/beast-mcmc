@@ -25,7 +25,6 @@
 
 package dr.inference.operators;
 
-import dr.evomodel.continuous.TreeTraitNormalDistributionModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.distribution.NormalDistributionModel;
@@ -34,6 +33,7 @@ import dr.inference.model.*;
 import dr.inference.prior.Prior;
 import dr.inferencexml.operators.EllipticalSliceOperatorParser;
 import dr.math.MathUtils;
+import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.Attribute;
 import dr.util.Transform;
@@ -51,21 +51,12 @@ import java.util.List;
 
 public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator implements GibbsOperator {
 
-    private final MultivariateNormalDistribution normalPrior;
-    private final TreeTraitNormalDistributionModel treePrior;
+    private final GaussianProcessRandomGenerator gaussianProcess;
 
-    public EllipticalSliceOperator(Parameter variable, MultivariateNormalDistribution normalPrior, boolean drawByRow) {
+    public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess, boolean drawByRow) {
         this.variable = variable;
-        this.normalPrior = normalPrior;
-        this.treePrior=null;
-        this.drawByRow=drawByRow;
-    }
-
-    public EllipticalSliceOperator(Parameter variable, TreeTraitNormalDistributionModel treePrior, boolean drawByRow) {
-        this.variable = variable;
-        this.treePrior = treePrior;
-        this.normalPrior=null;
-        this.drawByRow=drawByRow;
+        this.gaussianProcess = gaussianProcess;
+        this.drawByRow = drawByRow; // TODO Fix!
     }
 
     public Variable<Double> getVariable() {
@@ -93,51 +84,60 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     private void setVariable(double[] x) {
-        if(!(variable instanceof CompoundParameter))
-        {variable.setParameterValueNotifyChangedAll(0, x[0]);
+        variable.setParameterValueNotifyChangedAll(0, x[0]);
         for (int i = 1; i < x.length; ++i) {
             variable.setParameterValueQuietly(i, x[i]);
-        }}
-        else{
-            if(!drawByRow) {
-                ((CompoundParameter) variable).setParameterValueNotifyChangedAll(0, current, x[0]);
-                for (int i = 1; i < x.length; ++i) {
-                    ((CompoundParameter) variable).setParameterValueQuietly(i, current, x[i]);
-                }
-            }
-            else{
-                for (int i = 0; i < x.length; i++) {
-                    ((CompoundParameter) variable).setParameterValue(current, i, x[i]);
-                }
-            }
         }
-
     }
+//
+//        if(!(variable instanceof CompoundParameter))
+//        {variable.setParameterValueNotifyChangedAll(0, x[0]);
+//        for (int i = 1; i < x.length; ++i) {
+//            variable.setParameterValueQuietly(i, x[i]);
+//        }}
+//        else{
+//            if(!drawByRow) {
+//                ((CompoundParameter) variable).setParameterValueNotifyChangedAll(0, current, x[0]);
+//                for (int i = 1; i < x.length; ++i) {
+//                    ((CompoundParameter) variable).setParameterValueQuietly(i, current, x[i]);
+//                }
+//            }
+//            else{
+//                for (int i = 0; i < x.length; i++) {
+//                    ((CompoundParameter) variable).setParameterValue(current, i, x[i]);
+//                }
+//            }
+//        }
+
 
     private void drawFromSlice(Prior prior, Likelihood likelihood, double cutoffDensity) {
         // Do nothing
-        double[] x;
-        if(!(variable instanceof CompoundParameter))
-            x = variable.getParameterValues();
-        else{
-            if(drawByRow){
-                current=MathUtils.nextInt(((CompoundParameter) variable).getParameter(0).getDimension());
-                x=new double[((CompoundParameter) variable).getParameterCount()];
-                for (int i = 0; i <x.length ; i++) {
-                    x[i]=((CompoundParameter) variable).getParameter(i).getParameterValue(current);
-                }
-            }
-            else {
-                current = MathUtils.nextInt(((CompoundParameter) variable).getParameterCount());
-                x=((CompoundParameter) variable).getParameter(current).getParameterValues();
-            }
+        double[] x = variable.getParameterValues();
+        double[] nu = (double[]) gaussianProcess.nextRandom();
 
-        }
-        double[] nu;
-        if(normalPrior!=null)
-            nu = normalPrior.nextMultivariateNormal();
-        else
-            nu = treePrior.nextRandomFast(0);
+//        double[] x;
+//        if(!(variable instanceof CompoundParameter))
+//            x = variable.getParameterValues();
+//        else{
+//            if(drawByRow){
+//                current=MathUtils.nextInt(((CompoundParameter) variable).getParameter(0).getDimension());
+//                x=new double[((CompoundParameter) variable).getParameterCount()];
+//                for (int i = 0; i <x.length ; i++) {
+//                    x[i]=((CompoundParameter) variable).getParameter(i).getParameterValue(current);
+//                }
+//            }
+//            else {
+//                current = MathUtils.nextInt(((CompoundParameter) variable).getParameterCount());
+//                x=((CompoundParameter) variable).getParameter(current).getParameterValues();
+//            }
+//
+//        }
+
+//        double[] nu;
+//        if(normalPrior!=null)
+//            nu = normalPrior.nextMultivariateNormal();
+//        else
+//            nu = treePrior.nextRandomFast(0);
 
         double phi = MathUtils.nextDouble() * 2.0 * Math.PI;
         Interval phiInterval = new Interval(phi - 2.0 * Math.PI, phi);

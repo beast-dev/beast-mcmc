@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.operators;
+package dr.evomodel.continuous;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +36,9 @@ import dr.evomodel.coalescent.CoalescentLikelihood;
 import dr.evomodel.coalescent.CoalescentSimulator;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
+import dr.inference.operators.SimpleMCMCOperator;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;

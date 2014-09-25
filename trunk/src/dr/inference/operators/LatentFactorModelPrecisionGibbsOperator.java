@@ -1,8 +1,33 @@
+/*
+ * LatentFactorModelPrecisionGibbsOperator.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.operators;
 
-import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.DiagonalMatrix;
+import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
@@ -11,7 +36,7 @@ import dr.math.distributions.GammaDistribution;
  * Created by max on 6/12/14.
  */
 public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
-//    private double[] FacXLoad;
+    //    private double[] FacXLoad;
 //    private double[] residual;
     private LatentFactorModel LFM;
     private GammaDistribution prior;
@@ -20,31 +45,29 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
 
     public LatentFactorModelPrecisionGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan) {
         setWeight(weight);
-        this.LFM=LFM;
-        this.prior=(GammaDistribution)prior.getDistribution();
-        this.randomScan=randomScan;
+        this.LFM = LFM;
+        this.prior = (GammaDistribution) prior.getDistribution();
+        this.randomScan = randomScan;
 
 //        FacXLoad=new double[LFM.getFactors().getColumnDimension()];
 //        residual=new double[LFM.getFactors().getColumnDimension()];
-        shape=this.prior.getShape()+LFM.getFactors().getColumnDimension()*.5;
+        shape = this.prior.getShape() + LFM.getFactors().getColumnDimension() * .5;
     }
 
 
-
-
-    private void setPrecision(int i){
-        MatrixParameter factors=LFM.getFactors();
-        MatrixParameter loadings=LFM.getLoadings();
-        DiagonalMatrix precision= (DiagonalMatrix) LFM.getColumnPrecision();
-        MatrixParameter data=LFM.getScaledData();
-        double di=0;
-        for (int j = 0; j <factors.getColumnDimension(); j++) {
-            double sum=0;
+    private void setPrecision(int i) {
+        MatrixParameter factors = LFM.getFactors();
+        MatrixParameter loadings = LFM.getLoadings();
+        DiagonalMatrix precision = (DiagonalMatrix) LFM.getColumnPrecision();
+        MatrixParameter data = LFM.getScaledData();
+        double di = 0;
+        for (int j = 0; j < factors.getColumnDimension(); j++) {
+            double sum = 0;
             for (int k = 0; k < factors.getRowDimension(); k++) {
-                sum+=factors.getParameterValue(k,j)*loadings.getParameterValue(k,i);
+                sum += factors.getParameterValue(k, j) * loadings.getParameterValue(k, i);
             }
-            double temp=data.getParameterValue(i,j)-sum;
-            di+=temp*temp;
+            double temp = data.getParameterValue(i, j) - sum;
+            di += temp * temp;
 //            FacXLoad[j]=sum;
 //            residual[j]=data.getParameterValue(i,j)-FacXLoad[j];
 //        }
@@ -52,8 +75,8 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
 //        for (int j = 0; j <factors.getColumnDimension() ; j++) {
 //            sum+=residual[j]*residual[j];
         }
-        double scale=1.0/(1.0/prior.getScale()+di*.5);
-        double nextPrecision=GammaDistribution.nextGamma(shape, scale);
+        double scale = 1.0 / (1.0 / prior.getScale() + di * .5);
+        double nextPrecision = GammaDistribution.nextGamma(shape, scale);
         precision.setParameterValueQuietly(i, nextPrecision);
     }
 
@@ -75,19 +98,19 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
     @Override
     public double doOperation() throws OperatorFailedException {
 
-        if(!randomScan) for (int i = 0; i < LFM.getColumnPrecision().getColumnDimension(); i++) {
-                if(LFM.getContinuous().getParameterValue(i)!=0)
-                    setPrecision(i);
+        if (!randomScan) for (int i = 0; i < LFM.getColumnPrecision().getColumnDimension(); i++) {
+            if (LFM.getContinuous().getParameterValue(i) != 0)
+                setPrecision(i);
         }
-        else{
-            int i= MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
-            while(LFM.getContinuous().getParameterValue(i)==0)
-                i= MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
+        else {
+            int i = MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
+            while (LFM.getContinuous().getParameterValue(i) == 0)
+                i = MathUtils.nextInt(LFM.getColumnPrecision().getColumnDimension());
             setPrecision(i);
         }
         LFM.getColumnPrecision().getParameter(0).fireParameterChangedEvent();
-        
-        
+
+
         return 0;
     }
 }

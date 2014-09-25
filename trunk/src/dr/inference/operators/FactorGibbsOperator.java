@@ -1,15 +1,37 @@
+/*
+ * FactorGibbsOperator.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.operators;
 
-import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.model.DiagonalMatrix;
+import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
-import dr.math.MathUtils;
-import dr.math.matrixAlgebra.IllegalDimension;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.distributions.MultivariateNormalDistribution;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
-import org.apache.commons.math.stat.descriptive.moment.Mean;
 
 /**
  * Created with IntelliJ IDEA.
@@ -18,8 +40,8 @@ import org.apache.commons.math.stat.descriptive.moment.Mean;
  * Time: 12:49 PM
  * To change this template use File | Settings | File Templates.
  */
-public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOperator{
-    private static final String FACTOR_GIBBS_OPERATOR="factorGibbsOperator";
+public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
+    private static final String FACTOR_GIBBS_OPERATOR = "factorGibbsOperator";
     private LatentFactorModel LFM;
     private MatrixParameter diffusionPrecision;
     double[][] precision;
@@ -28,63 +50,63 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     private int numFactors;
     private boolean randomScan;
 
-    public FactorGibbsOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision){
-        this.LFM=LFM;
+    public FactorGibbsOperator(LatentFactorModel LFM, double weight, boolean randomScan, DiagonalMatrix diffusionPrecision) {
+        this.LFM = LFM;
         setWeight(weight);
-        this.randomScan=randomScan;
-        this.diffusionPrecision=diffusionPrecision;
+        this.randomScan = randomScan;
+        this.diffusionPrecision = diffusionPrecision;
         setupParameters();
 
     }
 
-    private void setupParameters(){
-        if(numFactors!=LFM.getFactorDimension()){
-        numFactors=LFM.getFactorDimension();
-        mean=new double[numFactors];
-        midMean=new double[numFactors];
-        precision=new double[numFactors][numFactors];}
+    private void setupParameters() {
+        if (numFactors != LFM.getFactorDimension()) {
+            numFactors = LFM.getFactorDimension();
+            mean = new double[numFactors];
+            midMean = new double[numFactors];
+            precision = new double[numFactors][numFactors];
+        }
     }
 
-    private void getPrecision(double[][] precision){
-        MatrixParameter Loadings=LFM.getLoadings();
-        MatrixParameter Precision=LFM.getColumnPrecision();
-        int outerDim=Loadings.getRowDimension();
-        int innerDim=Loadings.getColumnDimension();
-        for (int i = 0; i <outerDim ; i++) {
-            for (int j = i; j <outerDim ; j++) {
-                double sum=0;
-                for (int k = j; k <innerDim ; k++) {
-                    sum+=Loadings.getParameterValue(i,k)*Loadings.getParameterValue(j,k)*Precision.getParameterValue(k,k);
+    private void getPrecision(double[][] precision) {
+        MatrixParameter Loadings = LFM.getLoadings();
+        MatrixParameter Precision = LFM.getColumnPrecision();
+        int outerDim = Loadings.getRowDimension();
+        int innerDim = Loadings.getColumnDimension();
+        for (int i = 0; i < outerDim; i++) {
+            for (int j = i; j < outerDim; j++) {
+                double sum = 0;
+                for (int k = j; k < innerDim; k++) {
+                    sum += Loadings.getParameterValue(i, k) * Loadings.getParameterValue(j, k) * Precision.getParameterValue(k, k);
                 }
-                if(i==j){
-                    precision[i][j]=sum+diffusionPrecision.getParameterValue(i,j);
-                }
-                else{
-                    precision[i][j]=sum;
-                    precision[j][i]=sum;
+                if (i == j) {
+                    precision[i][j] = sum + diffusionPrecision.getParameterValue(i, j);
+                } else {
+                    precision[i][j] = sum;
+                    precision[j][i] = sum;
                 }
             }
 
         }
     }
 
-    private void getMean(int column, double[][] variance, double[]midMean, double[] mean){
-        MatrixParameter scaledData=LFM.getScaledData();
-        MatrixParameter Precision=LFM.getColumnPrecision();
-        MatrixParameter Loadings=LFM.getLoadings();
+    private void getMean(int column, double[][] variance, double[] midMean, double[] mean) {
+        MatrixParameter scaledData = LFM.getScaledData();
+        MatrixParameter Precision = LFM.getColumnPrecision();
+        MatrixParameter Loadings = LFM.getLoadings();
         for (int i = 0; i < Loadings.getRowDimension(); i++) {
-            double sum=0;
+            double sum = 0;
             for (int j = i; j < Loadings.getColumnDimension(); j++) {
-                sum+=Loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*scaledData.getParameterValue(j,column);
+                sum += Loadings.getParameterValue(i, j) * Precision.getParameterValue(j, j) * scaledData.getParameterValue(j, column);
             }
-            midMean[i]=sum;
+            midMean[i] = sum;
         }
-        for (int i = 0; i <numFactors ; i++) {
-            double sum=0;
+        for (int i = 0; i < numFactors; i++) {
+            double sum = 0;
             for (int j = 0; j < numFactors; j++) {
-                sum+=variance[i][j]*midMean[j];
+                sum += variance[i][j] * midMean[j];
             }
-            mean[i]=sum;
+            mean[i] = sum;
         }
 
 //        try {
@@ -94,10 +116,10 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
 //        }
     }
 
-    private void copy(double[] put, int i){
-        Parameter working=LFM.getFactors().getParameter(i);
+    private void copy(double[] put, int i) {
+        Parameter working = LFM.getFactors().getParameter(i);
         for (int j = 0; j < working.getSize(); j++) {
-           working.setParameterValueQuietly(j, put[j]);
+            working.setParameterValueQuietly(j, put[j]);
         }
         working.fireParameterChangedEvent();
     }
@@ -116,11 +138,11 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
         return FACTOR_GIBBS_OPERATOR;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
-    public void randomDraw(int i, double[][] variance){
+    public void randomDraw(int i, double[][] variance) {
         double[] nextValue;
         getMean(i, variance, midMean, mean);
 
-        nextValue=MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
+        nextValue = MultivariateNormalDistribution.nextMultivariateNormalVariance(mean, variance);
 
         copy(nextValue, i);
     }
@@ -129,12 +151,12 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     public double doOperation() throws OperatorFailedException {
         setupParameters();
         getPrecision(precision);
-        double[][] variance=(new SymmetricMatrix(precision)).inverse().toComponents();
-        if(randomScan){
-            int i= MathUtils.nextInt(LFM.getFactors().getColumnDimension());
+        double[][] variance = (new SymmetricMatrix(precision)).inverse().toComponents();
+        if (randomScan) {
+            int i = MathUtils.nextInt(LFM.getFactors().getColumnDimension());
             randomDraw(i, variance);
         }
-        for (int i = 0; i <LFM.getFactors().getColumnDimension() ; i++) {
+        for (int i = 0; i < LFM.getFactors().getColumnDimension(); i++) {
             randomDraw(i, variance);
         }
         LFM.getFactors().fireParameterChangedEvent();

@@ -23,18 +23,10 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.continuous;
+package dr.inferencexml.model;
 
-import dr.evolution.tree.MultivariateTraitTree;
-import dr.evomodel.continuous.LatentFactorModel;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.DiagonalMatrix;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
-
-import java.util.List;
 
 /**
  * @author Max Tolkoff
@@ -58,51 +50,10 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-//        Parameter latent  = null;
+
         MatrixParameter factors = MatrixParameter.recast("name",
                 (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class));
-
-//        MatrixParameter.DefaultBounds FactorBounds= new MatrixParameter.DefaultBounds(Double.MAX_VALUE,Double.MIN_VALUE, factors.getColumnDimension());
-//        factors.addBounds(null);
-
-        TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
-//        String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
-        String traitName = (String) xo.getAttribute(TreeTraitParserUtilities.TRAIT_NAME);
-
-        MultivariateTraitTree treeModel = (MultivariateTraitTree) xo.getChild(MultivariateTraitTree.class);
-//        System.err.println("TN: " + traitName);
-
-        TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, true);
-        MatrixParameter dataParameter = MatrixParameter.recast(returnValue.traitParameter.getId(),
-                returnValue.traitParameter);
-//        MatrixParameter.DefaultBounds DataBounds=new MatrixParameter.DefaultBounds(Double.MAX_VALUE, Double.MIN_VALUE, dataParameter.getColumnDimension());
-//        dataParameter.addBounds(null);
-        List<Integer> missingIndices = returnValue.missingIndices;
-        traitName = returnValue.traitName;
-//
-//
-//
-//
-//        MatrixParameter data = (MatrixParameter) xo.getChild(DATA).getChild(MatrixParameter.class);
-
-
-
-//        int colDim=treeModel.getTaxonCount();
-//        int rowDim=dataParameter.getDimension()/treeModel.getTaxonCount();
-//        Parameter[] dataTemp=new Parameter[colDim];
-//        for(int i=0; i<colDim; i++)
-//        {
-//            dataTemp[i] = new Parameter.Default(rowDim);
-//            for(int j=0; j<rowDim; j++)
-//            {
-//                dataTemp[i].setParameterValue(j, dataParameter.getParameterValue(i*rowDim+j));
-//            }
-//
-//        }
-//        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
-//        System.err.print(new Matrix(dataMatrix.getParameterAsMatrix()));
-//        System.err.print(dataMatrix.getRowDimension());
+        MatrixParameter dataParameter = (MatrixParameter) xo.getChild(DATA).getChild(MatrixParameter.class);
         MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
@@ -129,11 +80,9 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     private static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
-            new ElementRule(MultivariateTraitTree.class),
-            AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
             AttributeRule.newBooleanRule(SCALE_DATA, true),
-            new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                    new ElementRule(Parameter.class)
+            new ElementRule(DATA, new XMLSyntaxRule[]{
+                    new ElementRule(MatrixParameter.class),
             }),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
                     new ElementRule(CompoundParameter.class),
@@ -172,6 +121,4 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public Class getReturnType() {
         return LatentFactorModel.class;
     }
-
-
 }

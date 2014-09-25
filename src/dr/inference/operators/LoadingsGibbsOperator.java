@@ -1,7 +1,32 @@
+/*
+ * LoadingsGibbsOperator.java
+ *
+ * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.operators;
 
-import dr.evomodel.continuous.LatentFactorModel;
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -62,7 +87,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             }
         } else {
             for (int i = 0; i < LFM.getFactorDimension(); i++) {
-                temp = new double[LFM.getFactorDimension()-i][LFM.getFactorDimension() - i];
+                temp = new double[LFM.getFactorDimension() - i][LFM.getFactorDimension() - i];
                 precisionArray.add(temp);
             }
             for (int i = 0; i < LFM.getFactorDimension(); i++) {
@@ -185,6 +210,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
             changing.setParameterValueQuietly(j, random[j]);
         }
     }
+
     private void drawI(int i, ListIterator<double[][]> currentPrecision, ListIterator<double[]> currentMidMean, ListIterator<double[]> currentMean) {
         double[] draws = null;
         double[][] precision = null;
@@ -221,18 +247,17 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //            draws = MultivariateNormalDistribution.nextMultivariateNormalCholesky(mean, cholesky);
 //        }
 //    }
-        if (i < draws.length)
-        {   if (draws[i] > 0) {
+        if (i < draws.length) {
+            if (draws[i] > 0) {
                 copy(i, draws);
             }
-        }
-        else{
+        } else {
             copy(i, draws);
         }
 
 //       copy(i, draws);
 
-}
+    }
 
     @Override
     public int getStepCount() {
@@ -253,7 +278,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     public double doOperation() throws OperatorFailedException {
 
         int size = LFM.getLoadings().getColumnDimension();
-        if(!randomScan) {
+        if (!randomScan) {
             ListIterator<double[][]> currentPrecision = precisionArray.listIterator();
             ListIterator<double[]> currentMidMean = meanMidArray.listIterator();
             ListIterator<double[]> currentMean = meanArray.listIterator();
@@ -261,25 +286,23 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                 drawI(i, currentPrecision, currentMidMean, currentMean);
             }
             LFM.getLoadings().fireParameterChangedEvent();
-        }
-        else{
-            int i= MathUtils.nextInt(LFM.getLoadings().getColumnDimension());
-                ListIterator<double[][]> currentPrecision;
-                ListIterator<double[]> currentMidMean;
-                ListIterator<double[]> currentMean;
-                if(i<LFM.getFactorDimension()){
-                    currentPrecision = precisionArray.listIterator(LFM.getFactorDimension()-i-1);
-                    currentMidMean = meanMidArray.listIterator(LFM.getFactorDimension()-i-1);
-                    currentMean = meanArray.listIterator(LFM.getFactorDimension()-i-1);
-                }
-                else{
-                    currentPrecision = precisionArray.listIterator();
-                    currentMidMean = meanMidArray.listIterator();
-                    currentMean = meanArray.listIterator();
-                }
-                drawI(i, currentPrecision, currentMidMean, currentMean);
-                LFM.getLoadings().fireParameterChangedEvent();
+        } else {
+            int i = MathUtils.nextInt(LFM.getLoadings().getColumnDimension());
+            ListIterator<double[][]> currentPrecision;
+            ListIterator<double[]> currentMidMean;
+            ListIterator<double[]> currentMean;
+            if (i < LFM.getFactorDimension()) {
+                currentPrecision = precisionArray.listIterator(LFM.getFactorDimension() - i - 1);
+                currentMidMean = meanMidArray.listIterator(LFM.getFactorDimension() - i - 1);
+                currentMean = meanArray.listIterator(LFM.getFactorDimension() - i - 1);
+            } else {
+                currentPrecision = precisionArray.listIterator();
+                currentMidMean = meanMidArray.listIterator();
+                currentMean = meanArray.listIterator();
             }
-        return 0;
+            drawI(i, currentPrecision, currentMidMean, currentMean);
+            LFM.getLoadings().fireParameterChangedEvent();
         }
+        return 0;
+    }
 }

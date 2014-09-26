@@ -945,7 +945,8 @@ public class PartitionData implements Serializable {
 			
 			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
 			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
-	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], true, true);
+			//TODO: choose between log scale / real scale
+	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], false, false);
 	        
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
 	        		rateCategoryParameter, //

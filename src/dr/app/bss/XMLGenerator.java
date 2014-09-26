@@ -805,10 +805,10 @@ public class XMLGenerator {
 									String.valueOf(data.clockParameterValues[3]) ),
 							new Attribute.Default<String>(
 									LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE,
-									"true"),
+									"false"),
 							new Attribute.Default<String>(
 									LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE,
-									"true") });
+									"false") });
 
 			writeParameter(LogNormalDistributionModelParser.MEAN,
 					PartitionData.clockParameterNames[1] + suffix, 1,

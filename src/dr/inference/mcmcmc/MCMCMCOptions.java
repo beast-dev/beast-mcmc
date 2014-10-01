@@ -29,7 +29,7 @@ package dr.inference.mcmcmc;
 
 /**
  * A class that brings together the auxillary information associated
- * with an MCMCMC analysis.
+ * with an ParallelMCMC analysis.
  *
  * @version $Id: MCMCMCOptions.java,v 1.2 2005/01/06 14:46:36 rambaut Exp $
  *

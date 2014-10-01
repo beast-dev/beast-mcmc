@@ -78,7 +78,7 @@ public interface Variable<V> extends Identifiable {
     void removeVariableListener(VariableListener listener);
 
     /**
-     * stores the state of this parameter for subsquent restore
+     * stores the state of this parameter for subsequent restore
      */
     void storeVariableValues();
 

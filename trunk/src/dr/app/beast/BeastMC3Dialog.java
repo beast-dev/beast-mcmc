@@ -42,6 +42,7 @@ import java.io.File;
 import java.text.DecimalFormat;
 
 /**
+ * MCMCMC functionality now rolled into the BEAST Main class.
  * @deprecated
  */
 public class BeastMC3Dialog {

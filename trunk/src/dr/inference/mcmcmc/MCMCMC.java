@@ -50,7 +50,7 @@ import java.util.List;
  * An MCMC analysis that estimates parameters of a probabilistic model.
  *
  * @author Andrew Rambaut
- * @version $Id: MCMCMC.java,v 1.12 2005/01/10 10:56:59 rambaut Exp $
+ * @version $Id: ParallelMCMC.java,v 1.12 2005/01/10 10:56:59 rambaut Exp $
  */
 public class MCMCMC implements Runnable {
 

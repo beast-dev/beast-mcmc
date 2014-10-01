@@ -29,7 +29,7 @@ import dr.math.MathUtils;
 import dr.inference.markovchain.Acceptor;
 
 /**
- * This class encapsulates the acception criterion for an MCMC proposal.
+ * This class encapsulates the acceptance criterion for an MCMC proposal.
  *
  * @author Alexei Drummond
  *

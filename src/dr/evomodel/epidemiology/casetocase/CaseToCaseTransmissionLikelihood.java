@@ -9,6 +9,7 @@ import dr.math.*;
 import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -175,11 +176,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
                 try {
                     double K = getK();
-                    double logD = getLogD();
+
+                    // not necessary to actually add it in because it cancels, but need to check the exception
+                    getLogD();
                     double E = getE();
                     double logF = f.logEvaluate(rate);
 
-                    transLogProb = logD + K * Math.log(rate) - E * rate + logF;
+                    transLogProb = K * Math.log(rate) - E * rate + logF;
 
                     transProbKnown = true;
 
@@ -189,7 +192,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
                         normalisation = integrator.logIntegrate(f, transmissionRate.getBounds().getLowerLimit(0));
 
-                        normalisation += logD;
+                        // not necessary because it cancels
+                        //normalisation += logD;
 
                         normalisationKnown = true;
                     }
@@ -244,18 +248,23 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 treeProbKnown = true;
             }
 
+            // just reject states where these round to +INF
 
             if(transLogProb == Double.POSITIVE_INFINITY){
                 System.out.println("TransLogProb +INF");
+                return Double.NEGATIVE_INFINITY;
             }
             if(geographyLogProb == Double.POSITIVE_INFINITY){
                 System.out.println("GeogLogProb +INF");
+                return Double.NEGATIVE_INFINITY;
             }
             if(normalisation == Double.NEGATIVE_INFINITY){
                 System.out.println("Normalisation +INF");
+                return Double.NEGATIVE_INFINITY;
             }
             if(treeLogProb == Double.POSITIVE_INFINITY){
                 System.out.println("TreeLogProb +INF");
+                return Double.NEGATIVE_INFINITY;
             }
 
             logLikelihood =  treeLogProb + geographyLogProb + transLogProb - normalisation;
@@ -452,11 +461,25 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     }
                     sum *= argument;
 
-                    logF += Math.log1p(-Math.exp(sum));
+                    double normExp = Math.exp(sum);
+
+                    double logTerm;
+
+                    if(normExp!=1){
+                        logTerm = Math.log1p(-normExp);
+                    } else {
+                        logTerm = handleDenominatorUnderflow(sum);
+                    }
+
+
+
+                    logF += logTerm;
                 }
             }
             return (outbreak.size()-1)*Math.log(argument)-logF;
         }
+
+
 
         public int getNumArguments() {
             return 1;
@@ -473,6 +496,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         public double evaluateIntegral(double a, double b) {
             return integrator.integrate(this, a, b);
         }
+    }
+
+    private static double handleDenominatorUnderflow(double input){
+        BigDecimal bigDec = new BigDecimal(input);
+        BigDecimal expBigDec = BigDecimalUtils.exp(bigDec, bigDec.scale());
+        BigDecimal one = new BigDecimal(1.0);
+        BigDecimal oneMinusExpBigDec = one.subtract(expBigDec);
+        BigDecimal logOneMinusExpBigDec = BigDecimalUtils.ln(oneMinusExpBigDec, oneMinusExpBigDec.scale());
+        return logOneMinusExpBigDec.doubleValue();
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

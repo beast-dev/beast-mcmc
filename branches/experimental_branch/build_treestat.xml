@@ -1,0 +1,124 @@
+<project name="TreeStat" default="all" basedir=".">
+    <description>
+        Build file for BEAST release versions
+        $Id: build_release.xml,v 1.5 2006/09/09 18:16:17 rambaut Exp $
+    </description>
+    <!-- set global properties for this build -->
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="lib" location="lib"/>
+    <property name="dist" location="dist"/>
+
+    <property environment="env"/>
+
+    <target name="init">
+        <!-- Create the time stamp -->
+        <tstamp/>
+        <!-- Create the build directory structure used by compile -->
+        <mkdir dir="${build}"/>
+        <mkdir dir="${dist}"/>
+    </target>
+
+    <target name="all"
+            depends="compile-all"
+            description="Build all run-time stuff">
+    </target>
+
+    <target name="compile-all"
+            depends="compile-basic">
+    </target>
+
+    <target name="compile-basic" depends="init">
+        <!-- Compile the java code from ${src} into ${build} -->
+        <javac source="1.5" srcdir="${src}" destdir="${build}"
+               classpath="${lib}/jebl.jar:${lib}/jdom.jar:${lib}/commons-math-1.2.jar">
+            <include name="dr/app/treestat/**"/>
+            <include name="dr/app/util/**"/>
+            <include name="dr/evolution/alignment/**"/>
+            <include name="dr/evolution/coalescent/**"/>
+            <include name="dr/evolution/colouring/**"/>
+            <include name="dr/evolution/datatype/**"/>
+            <include name="dr/evolution/distance/**"/>
+            <include name="dr/evolution/io/**"/>
+            <include name="dr/evolution/parsimony/**"/>
+            <include name="dr/evolution/sequence/**"/>
+            <include name="dr/evolution/tree/**"/>
+            <include name="dr/evolution/util/**"/>
+            <include name="dr/evomodel/branchratemodel/**"/>
+            <include name="dr/evomodel/clock/**"/>
+            <include name="dr/evomodel/coalescent/**"/>
+            <include name="dr/evomodel/indel/**"/>
+            <include name="dr/evomodel/operators/**"/>
+            <include name="dr/evomodel/sitemodel/**"/>
+            <include name="dr/evomodel/speciation/**"/>
+            <include name="dr/evomodel/substmodel/**"/>
+            <include name="dr/evomodel/tree/**"/>
+            <include name="dr/evomodel/treelikelihood/**"/>
+            <include name="dr/evoxml/**"/>
+            <include name="dr/gui/chart/**"/>
+            <include name="dr/gui/tree/**"/>
+            <include name="dr/inference/**"/>
+            <include name="dr/math/**"/>
+            <include name="dr/matrix/**"/>
+            <include name="dr/stats/**"/>
+            <include name="dr/util/**"/>
+            <include name="dr/xml/**"/>
+            <include name="org/virion/jam/**"/>
+        </javac>
+    </target>
+
+    <target name="dist" depends="compile-all" description="generate the distribution">
+        <!-- Create the distribution directory -->
+        <mkdir dir="${dist}"/>
+
+        <!-- Put everything in ${build} into the treestat.jar file -->
+        <jar jarfile="${dist}/treestat.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="dr.app.treestat.TreeStatApp"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/treestat/**/*.class"/>
+                <include name="dr/app/util/**/*.class"/>
+                <include name="dr/evolution/alignment/**/*.class"/>
+                <include name="dr/evolution/coalescent/**/*.class"/>
+                <include name="dr/evolution/colouring/**/*.class"/>
+                <include name="dr/evolution/datatype/**/*.class"/>
+                <include name="dr/evolution/distance/**/*.class"/>
+                <include name="dr/evolution/io/**/*.class"/>
+                <include name="dr/evolution/parsimony/**/*.class"/>
+                <include name="dr/evolution/sequence/**/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/evomodel/branchratemodel/**/*.class"/>
+                <include name="dr/evomodel/clock/**/*.class"/>
+                <include name="dr/evomodel/coalescent/**/*.class"/>
+                <include name="dr/evomodel/indel/**/*.class"/>
+                <include name="dr/evomodel/operators/**/*.class"/>
+                <include name="dr/evomodel/sitemodel/**/*.class"/>
+                <include name="dr/evomodel/speciation/**/*.class"/>
+                <include name="dr/evomodel/substmodel/**/*.class"/>
+                <include name="dr/evomodel/tree/**/*.class"/>
+                <include name="dr/evomodel/treelikelihood/**/*.class"/>
+                <include name="dr/evoxml/**/*.class"/>
+                <include name="dr/gui/tree/**/*.class"/>
+                <include name="dr/inference/**/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/matrix/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+                <include name="dr/xml/**/*.class"/>
+            </fileset>
+            <fileset dir="">
+                <include name="images/*.png"/>
+            </fileset>
+            <fileset dir="${src}">
+                <include name="dr/**/*.png"/>
+                <include name="org/virion/jam/**/*.png"/>
+            </fileset>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jdom.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-math-1.2.jar"/>
+        </jar>
+    </target>
+</project>

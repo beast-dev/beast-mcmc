@@ -1,0 +1,208 @@
+<?xml version="1.0" ?>
+<beast>
+    <!-- DATA SPECIFICATION -->
+    <taxa id="taxa">
+        <taxon id="mm"/>
+        <taxon id="rn"/>
+        <taxon id="hg"/>
+        <taxon id="panTro"/>
+    </taxa>
+
+    <generalDataType id="binaryDataType">
+        <state code="1"/>
+        <!-- No splice sites -->
+        <state code="2"/>
+        <!-- Splice sites present -->
+        <ambiguity code="B" states="12"/>
+    </generalDataType>
+
+    <extendedDataType id="alsDataType">
+        <dataType idref="binaryDataType"/>
+        <deathState code="0"/>
+        <!-- Exon not present -->
+        <ambiguity code="U"/>
+    </extendedDataType>
+
+    <!-- <alignment id="short">
+   <dataType idref="alsDataType"/>
+   <sequence> <taxon idref="hg"/>    222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222</sequence>
+   <sequence> <taxon idref="panTro"/>U000000000000000000000000011111111111111111111111112222222222222222222222222BBBBBBBBBBBBBBBBBBBBBBBBBUUUUUUUUUUUUUUUUUUUUUUUUU</sequence>
+   <sequence> <taxon idref="mm"/>    U000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU</sequence>
+   <sequence> <taxon idref="rn"/>    U012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU</sequence>
+</alignment>     -->
+
+    <alignment id="short">
+        <dataType idref="alsDataType"/>
+        <sequence>
+            <taxon idref="hg"/>
+            12222
+        </sequence>
+        <sequence>
+            <taxon idref="panTro"/>
+            U212U
+        </sequence>
+        <sequence>
+            <taxon idref="mm"/>
+            U122U
+        </sequence>
+        <sequence>
+            <taxon idref="rn"/>
+            U012U
+        </sequence>
+    </alignment>
+
+    <newick id="shortTree"> <!-- rescaleHeight="0.1">   -->
+        ((hg:0.1,panTro:0.1):1.8,(rn:0.9,mm:0.9):1);
+    </newick>
+    <ascertainedPatterns from="2" id="shortPatterns">
+        <alignment idref="short"/>
+        <!--<excludePatterns from="5" to="6"/>-->
+        <excludePatterns from="1" to="2"/>
+    </ascertainedPatterns>
+
+    <frequencyModel id="binaryFreqModel">
+        <dataType idref="binaryDataType"/>
+        <frequencies>
+            <parameter dimension="2" value="0.5 0.5" id="binary.frequencies"/>
+        </frequencies>
+    </frequencyModel>
+
+    <generalSubstitutionModel id="binaryModel">
+        <frequencies>
+            <frequencyModel idref="binaryFreqModel"/>
+        </frequencies>
+        <rates relativeTo="1">
+            <parameter id="binary.rates" dimension="0"/>
+        </rates>
+    </generalSubstitutionModel>
+
+    <mutationDeathModel id="alsModel">
+        <parameter id="als.death" lower="0.0" value="1.0"/>
+        <substitutionModel idref="binaryModel"/>
+        <dataType idref="alsDataType"/>
+        <mutationRate>
+            <parameter id="substitutionRate" lower="0.0" value="2.0"/>
+        </mutationRate>
+    </mutationDeathModel>
+
+    <siteModel id="siteModel">
+        <substitutionModel>
+            <mutationDeathModel idref="alsModel"/>
+        </substitutionModel>
+        <mutationRate>
+            <parameter id="overallRate" lower="0.0" value="1.0"/>
+        </mutationRate>
+    </siteModel>
+
+    <treeModel id="treeModel">
+        <tree idref="shortTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true" rootNode="false">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <scaledTreeLengthModel id="treeLengthScaling">
+        <treeModel idref="treeModel"/>
+        <scalingFactor>
+            <parameter id="totalTreeLength" lower="0.0" value="1.0"/>
+        </scalingFactor>
+    </scaledTreeLengthModel>
+
+    <alsTreeLikelihood id="alsLikelihood" integrateGainRate="true">
+        <patterns idref="shortPatterns"/>
+        <treeModel idref="treeModel"/>
+        <siteModel idref="siteModel"/>
+        <scaledTreeLengthModel idref="treeLengthScaling"/>
+        <observationProcess type="singleTip" taxon="hg"/>
+    </alsTreeLikelihood>
+
+    <exponentialBranchLengthsPrior id="treePrior">
+        <treeModel idref="treeModel"/>
+    </exponentialBranchLengthsPrior>
+
+    <ctmcScalePrior id="scalePrior">
+        <ctmcScale>
+            <parameter idref="substitutionRate"/>
+        </ctmcScale>
+        <treeModel idref="treeModel"/>
+    </ctmcScalePrior>
+
+    <gammaPrior id="deathRatePrior" scale="1" shape="0.0001" offset="0">
+        <parameter idref="als.death"/>
+    </gammaPrior>
+
+    <operators id="operators">
+        <scaleOperator scaleFactor="0.54" weight="1">
+            <parameter idref="substitutionRate"/>
+        </scaleOperator>
+        <deltaMixOperator delta=".5" weight="1" autoOptimize="false">
+            <parameter idref="binary.frequencies"/>
+        </deltaMixOperator>
+
+        <!--  <deltaExchange delta=".1" weight="1" autoOptimize="true">
+      <parameter idref="binary.frequencies"/>
+  </deltaExchange>      -->
+
+        <scaleOperator scaleFactor="0.65" weight="1">
+            <parameter idref="als.death"/>
+        </scaleOperator>
+        <!--         <scaleOperator scaleFactor="0.5" weight="1">
+            <parameter idref="als.birth"/>
+        </scaleOperator>-->
+    </operators>
+
+    <mcmc id="mcmc" chainLength="300000" autoOptimize="false">
+        <posterior id="posterior">
+            <likelihood id="likelihood">
+                <treeLikelihood idref="alsLikelihood"/>
+            </likelihood>
+            <prior id="prior">
+                <likelihood idref="treePrior"/>
+                <likelihood idref="deathRatePrior"/>
+                <likelihood idref="scalePrior"/>
+            </prior>
+        </posterior>
+
+        <operators idref="operators"/>
+        <log logEvery="1000">
+            <!--            <column label="Lam" sf="4" width="12">
+           <parameter idref="als.birth"/>
+       </column>     -->
+            <column label="Del" sf="4" width="12">
+                <parameter idref="als.death"/>
+            </column>
+            <column label="P" sf="8" width="12">
+                <parameter idref="binary.frequencies"/>
+            </column>
+            <column label="Mrate" sf="4" width="12">
+                <parameter idref="substitutionRate"/>
+            </column>
+            <column dp="8" label="Likelihood" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+            <column label="Prior" dp="8" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Posterior" dp="8" width="12">
+                <posterior idref="posterior"/>
+            </column>
+        </log>
+        <log id="fileLog" logEvery="1" fileName="scalePrior.log">
+            <!--	<parameter idref="als.birth" />         -->
+            <parameter idref="als.death"/>
+            <parameter idref="binary.frequencies"/>
+            <parameter idref="substitutionRate"/>
+            <likelihood idref="likelihood"/>
+            <!--<alsTreeLikelihood idref="alsLikelihood"/>-->
+            <!--	<likelihood idref="prior"/>
+       <likelihood idref="posterior"/>-->
+        </log>
+    </mcmc>
+
+</beast>

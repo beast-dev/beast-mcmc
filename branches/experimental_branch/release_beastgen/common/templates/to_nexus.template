@@ -1,0 +1,11 @@
+#NEXUS
+
+BEGIN DATA;
+	DIMENSIONS NTAX=${taxon_count} NCHAR=${site_count};
+	FORMAT MISSING=? GAP=- DATATYPE=DNA;
+	MATRIX
+<#list alignment.sequences as sequence>
+${sequence.taxon.id}  ${sequence.data}
+</#list>
+	;
+END;

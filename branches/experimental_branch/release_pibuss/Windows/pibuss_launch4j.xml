@@ -1,0 +1,17 @@
+<launch4jConfig>
+  <headerType>gui</headerType>
+  <icon>icons/PiBuss.ico</icon>
+  <cmdLine/>
+  <jre>
+    <minVersion>1.6.0</minVersion>
+    <initialHeapSize>64</initialHeapSize>
+    <maxHeapSize>1024</maxHeapSize>
+  </jre>    
+  <versionInfo>
+    <fileDescription>PiBuss v1.0</fileDescription>
+    <copyright>2013</copyright>
+    <productName>PiBuss</productName>
+    <internalName>PiBuss</internalName>
+    <originalFilename>PiBuss.exe</originalFilename>    
+  </versionInfo>
+</launch4jConfig>

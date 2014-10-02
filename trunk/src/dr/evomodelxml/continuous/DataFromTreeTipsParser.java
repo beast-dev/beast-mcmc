@@ -75,7 +75,7 @@ public class DataFromTreeTipsParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserDescription() {
-        return "TODO";     // TODO
+        return "Takes the data from the tips of a tree and puts it into a MatrixParameter";
     }
 
     @Override

@@ -62,7 +62,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
             continuous=(Parameter) xo.getChild(CONTINUOUS).getChild(Parameter.class);
         else
             continuous=new Parameter.Default(colPrecision.getRowDimension(), 1.0);
-        boolean scaleData=xo.getAttribute(SCALE_DATA, false);
+        boolean scaleData=xo.getAttribute(SCALE_DATA, true);
  //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
         Parameter temp=null;
         for(int i=0; i<loadings.getRowDimension(); i++)

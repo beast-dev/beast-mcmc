@@ -42,6 +42,7 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
     private GammaDistribution prior;
     private boolean randomScan;
     private double shape;
+    double pathWeight=1.0;
 
     public LatentFactorModelPrecisionGibbsOperator(LatentFactorModel LFM, DistributionLikelihood prior, double weight, boolean randomScan) {
         setWeight(weight);
@@ -51,9 +52,12 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
 
 //        FacXLoad=new double[LFM.getFactors().getColumnDimension()];
 //        residual=new double[LFM.getFactors().getColumnDimension()];
-        shape = this.prior.getShape() + LFM.getFactors().getColumnDimension() * .5;
+        setShape();
     }
 
+    private void setShape(){
+        shape=this.prior.getShape()+LFM.getFactors().getColumnDimension()*.5 *pathWeight;
+    }
 
     private void setPrecision(int i) {
         MatrixParameter factors = LFM.getFactors();
@@ -75,9 +79,16 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
 //        for (int j = 0; j <factors.getColumnDimension() ; j++) {
 //            sum+=residual[j]*residual[j];
         }
-        double scale = 1.0 / (1.0 / prior.getScale() + di * .5);
+        if(pathWeight!=1.0)
+            setShape();
+        double scale = 1.0 / (1.0 / prior.getScale() + pathWeight*di * .5);
         double nextPrecision = GammaDistribution.nextGamma(shape, scale);
         precision.setParameterValueQuietly(i, nextPrecision);
+    }
+
+    public void setPathParameter(double beta)
+    {
+        pathWeight=beta;
     }
 
     @Override
@@ -87,12 +98,12 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
 
     @Override
     public String getPerformanceSuggestion() {
-        return null;
+        return "Only works for diagonal column precision matrices for a LatentFactorModel with a gamma prior";
     }
 
     @Override
     public String getOperatorName() {
-        return null;
+        return "Latent Factor Model Precision Gibbs Operator";
     }
 
     @Override

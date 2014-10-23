@@ -144,6 +144,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
     }
 
     public double getLogLikelihood() {
+        likelihoodKnown=false;
         if (!likelihoodKnown) {
             logLikelihood = computeLogLikelihood();
             likelihoodKnown = true;

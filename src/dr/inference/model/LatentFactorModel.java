@@ -30,6 +30,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.List;
+import java.util.Stack;
 
 
 /**
@@ -37,7 +38,7 @@ import java.util.List;
  * @author Marc Suchard
  */
 
-public class LatentFactorModel extends AbstractModelLikelihood implements Citable {
+public class LatentFactorModel extends IntermediateReturnLikelihood implements Citable {
 //    private Matrix data;
 //    private Matrix factors;
 //    private Matrix loadings;
@@ -56,6 +57,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private final int dimData;
     private final int nTaxa;
 
+    private boolean firstTime=true;
+
     private boolean likelihoodKnown = false;
     private boolean isDataScaled=false;
     private boolean storedLikelihoodKnown;
@@ -73,6 +76,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double storedLogLikelihood;
     private double logDetCol;
     private double storedLogDetCol;
+    private Stack<Integer> loadingVariablesChanged;
+    private Stack<Integer> factorVariablesChanged;
 
     private double[] residual;
     private double[] LxF;
@@ -202,7 +207,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public MatrixParameter getData(){return data;}
 
-    public Parameter getDataWithLatent(int PID)
+    public Parameter returnIntermediate(){
+        if(!residualKnown && checkLoadings()){
+            computeResiduals();
+        }
+        return data;
+    }
+
+    public Parameter returnIntermediate(int PID)
     {   //residualKnown=false;
         if(!residualKnown && checkLoadings()){
         computeResiduals();
@@ -342,24 +354,29 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     private void computeResiduals() {
-//        Parameter[] dataTemp=new Parameter[nTaxa];
-//        for(int i=0; i<nTaxa; i++)
-//        {
-//            dataTemp[i] = new Parameter.Default(dimData);
-//            for(int j=0; j<dimData; j++)
-//            {
-//                dataTemp[i].setParameterValue(j, data.getParameterValue(i*dimData+j));
-//            }
-//
-//        }
-//        MatrixParameter dataMatrix=new MatrixParameter(null, dataTemp);
 //    LxFKnown=false;
+
+
+
+//        if(firstTime || (!factorVariablesChanged.empty() && !loadingVariablesChanged.empty())){
     if(!LxFKnown){
     transposeThenMultiply(loadings, factors, LxF);
         LxFKnown=true;
     }
         subtract(data, LxF, residual);
         residualKnown=true;
+//        firstTime=false;}
+//        else{
+//            while(!factorVariablesChanged.empty()){
+//
+//            }
+//            while(!loadingVariablesChanged.empty()){
+//
+//            }
+//        }
+//
+
+
     }
 
 
@@ -374,6 +391,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     @Override
     protected void storeState() {
         data.storeParameterValues();
+        loadings.storeValues();
+        factors.storeValues();
         storedLogLikelihood = logLikelihood;
         storedLikelihoodKnown = likelihoodKnown;
         storedLogDetColKnown=logDetColKnown;
@@ -406,6 +425,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     @Override
     protected void restoreState() {
         data.restoreParameterValues();
+        loadings.restoreValues();
+        factors.restoreValues();
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = storedLikelihoodKnown;
         trace=storedTrace;
@@ -459,13 +480,27 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //            residualKnown=false;
 //            traceKnown=false;
 //        }
+//        if(variable==loadings){
+//        System.out.println(variable.getVariableName());
+//        System.out.println(index);
+//            System.out.println(loadings.getParameterValue(index));}
         if(variable==factors){
+
+
+//            factorVariablesChanged.push(index);
+
+
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;
             likelihoodKnown = false;
         }
         if(variable==loadings){
+
+
+//            factorVariablesChanged.push(index);
+
+
             LxFKnown=false;
             residualKnown=false;
             traceKnown=false;

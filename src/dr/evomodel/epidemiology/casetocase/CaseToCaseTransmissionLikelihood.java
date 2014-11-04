@@ -31,7 +31,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private AbstractOutbreak outbreak;
     private CaseToCaseTreeLikelihood treeLikelihood;
     private SpatialKernel spatialKernel;
-    private Parameter kernelAlpha;
     private Parameter transmissionRate;
     private GammaDistributionModel transmissionRatePrior;
     private boolean likelihoodKnown;
@@ -54,24 +53,25 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double storedGeographyLogProb;
     private double treeLogProb;
     private double storedTreeLogProb;
+
+    private double betaGammaThing;
+    private double storedBetaGammaThing;
+
     private final boolean hasGeography;
-    private final GeneralisedGaussLaguerreQuadrature integrator;
     private ArrayList<AbstractCase> sortedCases;
     private ArrayList<AbstractCase> storedSortedCases;
-    private F f;
+//    private F f;
 
     public static final String CASE_TO_CASE_TRANSMISSION_LIKELIHOOD = "caseToCaseTransmissionLikelihood";
 
     public CaseToCaseTransmissionLikelihood(String name, AbstractOutbreak outbreak,
                                             CaseToCaseTreeLikelihood treeLikelihood, SpatialKernel spatialKernal,
-                                            Parameter transmissionRate, GammaDistributionModel transmissionRatePrior,
-                                            int steps){
+                                            Parameter transmissionRate, GammaDistributionModel transmissionRatePrior){
         super(name);
         this.outbreak = outbreak;
         this.treeLikelihood = treeLikelihood;
         this.spatialKernel = spatialKernal;
         if(spatialKernal!=null){
-            kernelAlpha = spatialKernal.geta();
             this.addModel(spatialKernal);
         }
         this.transmissionRate = transmissionRate;
@@ -79,9 +79,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.addModel(treeLikelihood);
         this.addVariable(transmissionRate);
         likelihoodKnown = false;
-        integrator = new GeneralisedGaussLaguerreQuadrature(steps);
         hasGeography = spatialKernal!=null;
-        f = new F(hasGeography);
+//        f = new F(hasGeography);
         sortCases();
     }
 
@@ -132,6 +131,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         storedTreeProbKnown = treeProbKnown;
         storedGeographyLogProb = geographyLogProb;
         storedGeographyProbKnown = geographyProbKnown;
+        storedBetaGammaThing = betaGammaThing;
         storedSortedCases = new ArrayList<AbstractCase>(sortedCases);
     }
 
@@ -146,11 +146,16 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         normalisationKnown = storedNormalisationKnown;
         geographyLogProb = storedGeographyLogProb;
         geographyProbKnown = storedGeographyProbKnown;
+        betaGammaThing = storedBetaGammaThing;
         sortedCases = storedSortedCases;
     }
 
     protected void acceptState() {
         // nothing to do
+    }
+
+    public SpatialKernel getSpatialKernel(){
+        return spatialKernel;
     }
 
     public Model getModel() {
@@ -180,17 +185,21 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     // not necessary to actually add it in because it cancels, but need to check the exception
                     getLogD();
                     double E = getE();
-                    double logF = f.logEvaluate(rate);
+                    //double logF = f.logEvaluate(rate);
 
-                    transLogProb = K * Math.log(rate) - E * rate + logF;
+                    transLogProb = K * Math.log(rate) - E * rate; // + logF;
 
                     transProbKnown = true;
 
                     if (!normalisationKnown) {
 
-                        integrator.setAlphaAndB(K,E);
+                        normalisation = GammaFunction.lnGamma(K + 1) - (K+1)*Math.log(E);
 
-                        normalisation = integrator.logIntegrate(f, transmissionRate.getBounds().getLowerLimit(0));
+                        betaGammaThing = (K+1)/E;
+
+                        //integrator.setAlphaAndB(K,E);
+
+                        //normalisation = integrator.logIntegrate(f, transmissionRate.getBounds().getLowerLimit(0));
 
                         // not necessary because it cancels
                         //normalisation += logD;
@@ -323,9 +332,16 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         double logD = 0;
 
         for (AbstractCase infectee : sortedCases) {
+            double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
+            double infecteeInfectious = treeLikelihood.getInfectiousTime(infectee);
+            double infecteeNoninfectious = infectee.getCullTime();
+
+            if(infecteeInfected > infecteeInfectious || infecteeInfectious > infecteeNoninfectious){
+                throw new BadPartitionException("Illegal partition given known timings");
+            }
+
             AbstractCase infector = treeLikelihood.getInfector(infectee);
             if (infector != null) {
-                double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
                 double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
                 double infectorNoninfectious = infector.getCullTime();
 
@@ -366,7 +382,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
 
                 double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
-                double infecteeExamined = infectee.getExamTime();
 
                 for (AbstractCase possibleInfector : sortedCases) {
 
@@ -376,7 +391,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                         double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
                         double nonInfectorNoninfectious = possibleInfector.getCullTime();
 
-                        if (nonInfectorInfected > infecteeExamined) {
+                        if (nonInfectorInfected > infecteeInfected) {
                             break;
                         }
 
@@ -400,103 +415,106 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     }
 
-    private double getK(){
+    public double getK(){
         if(transmissionRatePrior != null) {
-            return (transmissionRatePrior.getShape() - 1);
+            return (transmissionRatePrior.getShape() - 1) + outbreak.size()-1;
         } else {
-            return 0;
+            return outbreak.size()-1;
         }
     }
 
-    private class F extends UnivariateFunction.AbstractLogEvaluatableUnivariateFunction {
-
-        final boolean hasGeography;
-
-        private F(boolean hasGeography){
-            this.hasGeography = hasGeography;
-        }
-
-        // index 0 is lambda, index 1 if present is alpha
-
-        public double evaluate(double argument) {
-            return Math.exp(logEvaluate(argument));
-        }
-
-        public double logEvaluate(double argument) {
-            if(sortedCases == null){
-                sortCases();
-            }
-            double logF = 0;
-
-            for(AbstractCase infectee : sortedCases){
-
-                AbstractCase infector = treeLikelihood.getInfector(infectee);
-
-                if(infector != null) {
-                    double sum = 0;
-
-                    double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
-
-                    double infecteeExamined = infectee.getExamTime();
-
-                    for (AbstractCase possibleInfector : sortedCases) {
-                        if (possibleInfector != infectee) {
-
-                            double nonInfectorInfected = treeLikelihood.getInfectionTime(possibleInfector);
-                            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
-                            double nonInfectorNoninfectious = possibleInfector.getCullTime();
-
-                            if (nonInfectorInfected > infecteeExamined) {
-                                break;
-                            }
-
-                            double rate = hasGeography ? kernelValues[outbreak.getCaseIndex(possibleInfector)] : 1;
-
-                            if (nonInfectorInfectious <= infecteeExamined) {
-                                double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeExamined);
-                                sum += -rate * (lastPossibleInfectionTime - nonInfectorInfectious);
-                            }
-                        }
-
-                    }
-                    sum *= argument;
-
-                    double normExp = Math.exp(sum);
-
-                    double logTerm;
-
-                    if(normExp!=1){
-                        logTerm = Math.log1p(-normExp);
-                    } else {
-                        logTerm = handleDenominatorUnderflow(sum);
-                    }
-
-
-
-                    logF += logTerm;
-                }
-            }
-            return (outbreak.size()-1)*Math.log(argument)-logF;
-        }
-
-
-
-        public int getNumArguments() {
-            return 1;
-        }
-
-        public double getLowerBound() {
-            return 0;
-        }
-
-        public double getUpperBound() {
-            return transmissionRate.getBounds().getUpperLimit(0);
-        }
-
-        public double evaluateIntegral(double a, double b) {
-            return integrator.integrate(this, a, b);
-        }
-    }
+//    private class F extends UnivariateFunction.AbstractLogEvaluatableUnivariateFunction {
+//
+//        final boolean hasGeography;
+//
+//        private F(boolean hasGeography){
+//            this.hasGeography = hasGeography;
+//        }
+//
+//        // index 0 is lambda, index 1 if present is alpha
+//
+//        public double evaluate(double argument) {
+//            return Math.exp(logEvaluate(argument));
+//        }
+//
+//        public double logEvaluate(double argument) {
+//            if(sortedCases == null){
+//                sortCases();
+//            }
+//            double logF = 0;
+//
+//            for(AbstractCase infectee : sortedCases){
+//
+//                AbstractCase infector = treeLikelihood.getInfector(infectee);
+//
+//                if(infector != null) {
+//                    double sum = 0;
+//
+//                    double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
+//
+//                    double infecteeExamined = infectee.getExamTime();
+//
+//                    for (AbstractCase possibleInfector : sortedCases) {
+//                        if (possibleInfector != infectee) {
+//
+//                            double nonInfectorInfected = treeLikelihood.getInfectionTime(possibleInfector);
+//                            double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
+//                            double nonInfectorNoninfectious = possibleInfector.getCullTime();
+//
+//                            if (nonInfectorInfected > infecteeExamined) {
+//                                break;
+//                            }
+//
+//                            double rate = hasGeography ? kernelValues[outbreak.getCaseIndex(possibleInfector)] : 1;
+//
+//                            if (nonInfectorInfectious <= infecteeExamined) {
+//                                double lastPossibleInfectionTime = Math.min(nonInfectorNoninfectious, infecteeExamined);
+//
+//                                sum += -rate * (lastPossibleInfectionTime - nonInfectorInfectious);
+//                            }
+//                        }
+//
+//                    }
+//                    sum *= argument;
+//
+//                    double normExp = Math.exp(sum);
+//
+//                    double logTerm;
+//
+//                    if(normExp!=1){
+//                        logTerm = Math.log1p(-normExp);
+//                    } else {
+//                        try {
+//                            logTerm = handleDenominatorUnderflow(sum);
+//                        } catch(IllegalArgumentException e){
+//                            throw new RuntimeException("HandleDenominatorUnderflow failed, input = "+sum);
+//                        }
+//                    }
+//
+//                    logF += logTerm;
+//                }
+//            }
+//            return (outbreak.size()-1)*Math.log(argument)-logF;
+//        }
+//
+//
+//
+//        public int getNumArguments() {
+//            return 1;
+//        }
+//
+//        public double getLowerBound() {
+//            return 0;
+//        }
+//
+//        public double getUpperBound() {
+//            return transmissionRate.getBounds().getUpperLimit(0);
+//        }
+//
+//        public double evaluateIntegral(double a, double b) {
+//            return integrator.integrate(this, a, b);
+//        }
+//    }
 
     private static double handleDenominatorUnderflow(double input){
         BigDecimal bigDec = new BigDecimal(input);
@@ -525,14 +543,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 transmissionRatePrior = (GammaDistributionModel) xo.getElementFirstChild(TRANSMISSION_RATE_PRIOR);
             }
 
-            int steps = 2;
-
-            if(xo.hasAttribute(INTEGRATOR_STEPS)){
-                steps = Integer.parseInt((String)xo.getAttribute(INTEGRATOR_STEPS));
-            }
 
             return new CaseToCaseTransmissionLikelihood(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, c2cTL.getOutbreak(),
-                    c2cTL, kernel, transmissionRate, transmissionRatePrior, steps);
+                    c2cTL, kernel, transmissionRate, transmissionRatePrior);
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -557,8 +570,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 new ElementRule(SpatialKernel.class, "The spatial kernel", 0, 1),
                 new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate"),
                 new ElementRule(TRANSMISSION_RATE_PRIOR, GammaDistributionModel.class, "A gamma prior on the base" +
-                        "transmission rate", true),
-                AttributeRule.newIntegerRule(INTEGRATOR_STEPS, true)
+                        "transmission rate", true)
         };
 
     };
@@ -579,6 +591,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         columns.add(new LogColumn.Abstract("geog_LL"){
             protected String getFormattedValue() {
                 return String.valueOf(geographyLogProb);
+            }
+        });
+
+        columns.add(new LogColumn.Abstract("betaGammaThing"){
+            protected String getFormattedValue() {
+                return String.valueOf(betaGammaThing);
             }
         });
 

@@ -69,13 +69,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         }
     }
 
-    public double getKernelValue(AbstractCase a, AbstractCase b, SpatialKernel kernel, double alpha){
-        if(!hasGeography){
-            return 1;
-        } else {
-            return kernel.value(getDistance(a,b), alpha);
-        }
-    }
 
     // all the kernel values going TO case a (this is symmetric, usually, but potentially might not be)
 

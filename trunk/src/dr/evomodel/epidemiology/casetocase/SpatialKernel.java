@@ -10,40 +10,46 @@ import dr.xml.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 
 /**
- * An abstract spatial kernel function class (and some examples) with single parameter aParam.
+ * An abstract spatial kernel function class (and some examples) with a list of parameters.
  *
  * @author Matthew Hall
  */
 
 public abstract class SpatialKernel extends AbstractModel implements IntegrableUnivariateFunction {
 
-    private Parameter aParam;
+    private ArrayList<Parameter> params;
 
-    public SpatialKernel(String name, Parameter a){
+    public SpatialKernel(String name){
         super(name);
-        this.aParam = a;
-        this.addVariable(a);
     }
 
-    public Parameter geta(){
-        return aParam;
+    public ArrayList<Parameter> getParams(){
+        return params;
     }
 
-    public void seta(Parameter value){
-        aParam = value;
+    public Parameter getParam(int index){
+        return params.get(index);
+    }
+
+    public void setParam(int index, Parameter value){
+        params.set(index, value);
     }
 
     public static final String SPATIAL_KERNEL_FUNCTION = "spatialKernelFunction";
-    public static final String A = "a";
+    public static final String PARAMETERS = "parameters";
     public static final String KERNEL_TYPE = "type";
     public static final String INTEGRATOR_STEPS = "integratorSteps";
+    public static final String ALPHA = "kernel.alpha";
+    public static final String R_0 = "kernel.r0";
 
     public enum Type{
         EXPONENTIAL ("exponential", Exponential.class),
         POWER_LAW ("powerLaw", PowerLaw.class),
-        GAUSSIAN ("gaussian", Gaussian.class);
+        GAUSSIAN ("gaussian", Gaussian.class),
+        LOGISTIC ("logistic", Logistic.class);
 
         private final String xmlName;
         private final Class kernelClass;
@@ -52,10 +58,13 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
             return xmlName;
         }
 
-        SpatialKernel makeKernelFunction(Parameter a) throws IllegalAccessException, InstantiationException,
-                InvocationTargetException {
+        SpatialKernel makeKernelFunction(ArrayList<Parameter> parameters)
+                throws IllegalAccessException, InstantiationException, InvocationTargetException {
             Constructor[] construct = kernelClass.getConstructors();
-            return (SpatialKernel)construct[1].newInstance(null, xmlName, a);
+
+            // the index of the element of construct should be 0 for Java 1.7 and 1 for 1.6. Don't ask me why.
+
+            return (SpatialKernel)construct[0].newInstance(null, xmlName, parameters);
         }
 
         Type(String xmlName, Class kernelClass){
@@ -90,10 +99,6 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         return evaluate(distance);
     }
 
-    public double value(double distance, double alpha){
-        return evaluate(distance, alpha);
-    }
-
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
         fireModelChanged();
     }
@@ -103,29 +108,46 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
     }
 
     public double evaluate(double argument){
-        return evaluate(argument, aParam.getParameterValue(0));
+        return evaluate(argument);
     }
 
     // no need to do this unless there is one...
 
     public void configureIntegrator(int sampleSize){}
 
-    public abstract double evaluate(double argument, double alpha);
+    public abstract SpatialKernel newInstance(ArrayList<Parameter> params) throws InstantiationException;
 
-    public abstract SpatialKernel newInstance(Parameter a);
+    public class Exponential extends SpatialKernel  {
 
-    public class Exponential extends SpatialKernel {
+        private Parameter alpha;
 
-        public SpatialKernel newInstance(Parameter a){
-            return new Exponential(Type.EXPONENTIAL.getXmlName(), a);
+        public SpatialKernel newInstance(ArrayList<Parameter> params) throws InstantiationException {
+            return new Exponential(Type.EXPONENTIAL.getXmlName(), params);
         }
 
-        public Exponential(){
+        public Exponential(String name, ArrayList<Parameter> params) throws InstantiationException {
+            super(name);
+
+            if(params.size()!=1){
+                throw new InstantiationException("Wrong number of parameters for this spatial kernal function");
+            }
+
+            if(!params.get(0).getId().equals(ALPHA)){
+                throw new InstantiationException("No parameter named alpha");
+            }
+
+            this.alpha = params.get(0);
+            addVariable(alpha);
+        }
+
+        public Exponential() throws InstantiationException {
             this(Type.EXPONENTIAL.getXmlName(), null);
         }
 
-        public Exponential(String name, Parameter a){
-            super(name, a);
+
+
+        public double evaluate(double argument) {
+            return evaluate(argument, alpha.getParameterValue(0));
         }
 
         public double evaluate(double argument, double alpha){
@@ -133,7 +155,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         }
 
         public double evaluateIntegral(double a, double b){
-            double aValue = aParam.getParameterValue(0);
+            double aValue = alpha.getParameterValue(0);
             return -(1/aValue)*Math.exp(-aValue*b) + (1/aValue)*Math.exp(-aValue*a);
         }
 
@@ -141,20 +163,33 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
     public class PowerLaw extends SpatialKernel {
 
-        public SpatialKernel newInstance(Parameter a){
-            return new PowerLaw(Type.POWER_LAW.getXmlName(), a);
+        private Parameter alpha;
+
+        public SpatialKernel newInstance(ArrayList<Parameter> params) throws InstantiationException{
+            return new PowerLaw(Type.POWER_LAW.getXmlName(), params);
         }
 
-        public PowerLaw(){
+        public PowerLaw(String name, ArrayList<Parameter> params) throws InstantiationException {
+            super(name);
+            if(params.size()!=1){
+                throw new InstantiationException("Wrong number of parameters for this spatial kernal function");
+            }
+
+            if(!params.get(0).getId().equals(ALPHA)){
+                throw new InstantiationException("No parameter named alpha");
+            }
+            this.alpha = params.get(0);
+            addVariable(alpha);
+        }
+
+        public PowerLaw() throws InstantiationException {
             this(Type.POWER_LAW.getXmlName(), null);
         }
 
-        public PowerLaw(String name, Parameter a){
-            super(name, a);
-        }
 
-        public double value(double[] point1, double[] point2){
-            return evaluate(EuclideanDistance(point1, point2));
+
+        public double evaluate(double argument) {
+            return evaluate(argument, alpha.getParameterValue(0));
         }
 
         public double evaluate(double argument, double alpha){
@@ -162,7 +197,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         }
 
         public double evaluateIntegral(double a, double b){
-            double aValue = aParam.getParameterValue(0);
+            double aValue = params.get(0).getParameterValue(0);
             return -aValue*Math.pow(b, -aValue-1) + -aValue*Math.pow(a, -aValue-1);
         }
 
@@ -170,27 +205,48 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
     public class Gaussian extends SpatialKernel {
 
+        private Parameter alpha;
+
         RiemannApproximation integrator;
 
-        public SpatialKernel newInstance(Parameter a){
-            return new Gaussian(Type.GAUSSIAN.getXmlName(), a);
+        public SpatialKernel newInstance(ArrayList<Parameter> params) throws InstantiationException{
+            return new Gaussian(Type.GAUSSIAN.getXmlName(), params);
         }
 
-        public Gaussian(){
+        public Gaussian(String name, ArrayList<Parameter> params) throws InstantiationException {
+            this(name, params, 25);
+        }
+
+        public Gaussian() throws InstantiationException {
             this(Type.GAUSSIAN.getXmlName(), null);
         }
 
-        public Gaussian(String name, Parameter a){
-            this(name, a, 25);
-        }
+
 
         public void configureIntegrator(int sampleSize){
             integrator = new RiemannApproximation(sampleSize);
         }
 
-        public Gaussian(String name, Parameter a, int steps){
-            super(name, a);
+        public Gaussian(String name, ArrayList<Parameter> params, int steps) throws InstantiationException {
+            super(name);
+
+            if(params.size()!=1){
+                throw new InstantiationException("Wrong number of parameters for this spatial kernal function");
+            }
+
+            if(!params.get(0).getId().equals(ALPHA)){
+                throw new InstantiationException("No parameter named alpha");
+            }
+
+            this.alpha = params.get(0);
+            addVariable(alpha);
+
+
             integrator = new RiemannApproximation(steps);
+        }
+
+        public double evaluate(double argument) {
+            return evaluate(argument, alpha.getParameterValue(0));
         }
 
         public double evaluate(double argument, double alpha){
@@ -203,6 +259,80 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
     }
 
+    public class Logistic extends SpatialKernel {
+
+        private Parameter alpha;
+        private Parameter r_0;
+
+        RiemannApproximation integrator;
+
+        public SpatialKernel newInstance(ArrayList<Parameter> params) throws InstantiationException{
+
+            return new Logistic(Type.LOGISTIC.getXmlName(), params);
+        }
+
+        public Logistic(String name, ArrayList<Parameter> params) throws InstantiationException {
+            this(name, params, 25);
+        }
+
+        public Logistic() throws InstantiationException {
+            this(Type.GAUSSIAN.getXmlName(), null);
+        }
+
+
+        public void configureIntegrator(int sampleSize){
+            integrator = new RiemannApproximation(sampleSize);
+        }
+
+        public Logistic(String name, ArrayList<Parameter> params, int steps) throws InstantiationException {
+            super(name);
+
+            if(params.size()!=2){
+                throw new InstantiationException("Wrong number of parameters for this spatial kernal function");
+            }
+
+            boolean hasAlpha = false;
+            boolean hasR0 = false;
+
+            for(Parameter parameter : params){
+                if(parameter.getId().equals(ALPHA)){
+                    hasAlpha = true;
+                    this.alpha = parameter;
+                }
+                if( parameter.getId().equals(R_0)){
+                    hasR0 = true;
+                    this.r_0 = parameter;
+                }
+            }
+
+            if(!hasAlpha || !hasR0){
+                throw new InstantiationException("Kernel function does not have the required parameters");
+            }
+
+            addVariable(alpha);
+            addVariable(r_0);
+
+            integrator = new RiemannApproximation(steps);
+        }
+
+        public double evaluate(double argument) {
+            return evaluate(argument, alpha.getParameterValue(0), r_0.getParameterValue(0));
+        }
+
+        public double evaluate(double argument, double alpha, double r_0){
+            return 1/(1+Math.pow((argument/r_0), alpha));
+        }
+
+        public double evaluateIntegral(double a, double b){
+            return integrator.integrate(this, a, b);
+        }
+
+    }
+
+
+
+
+
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName(){
@@ -212,11 +342,17 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
             try{
                 String type = (String)xo.getAttribute("type");
-                Parameter a = (Parameter)xo.getElementFirstChild(A);
+                XMLObject parameters = xo.getChild(PARAMETERS);
+                ArrayList<Parameter> params = new ArrayList<Parameter>();
+                for(int i=0; i<parameters.getChildCount(); i++){
+                    Parameter cxo = (Parameter)parameters.getChild(i);
+                    params.add(cxo);
+                }
+
                 SpatialKernel kernelFunction = null;
                 for(Type value : Type.values()){
                     if(value.getXmlName().equals(type)){
-                        kernelFunction = value.makeKernelFunction(a);
+                        kernelFunction = value.makeKernelFunction(params);
                     }
                 }
                 if(kernelFunction==null){
@@ -238,13 +374,13 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         }
 
 
-        public final XMLSyntaxRule[] rules;{
-            rules = new XMLSyntaxRule[]{
-                    new ElementRule(A, Parameter.class, "The single parameter of this kernel"),
-                    AttributeRule.newStringRule(KERNEL_TYPE),
-                    AttributeRule.newIntegerRule(INTEGRATOR_STEPS, true)
-            };
-        }
+        public final XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(PARAMETERS, new XMLSyntaxRule[]{
+                                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE)
+                        }, 1, 1),
+                AttributeRule.newStringRule(KERNEL_TYPE),
+                AttributeRule.newIntegerRule(INTEGRATOR_STEPS, true)
+        };
 
         public String getParserDescription() {
             return "This element represents a spatial kernel function with a single parameter.";

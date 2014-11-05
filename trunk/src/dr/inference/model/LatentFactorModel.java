@@ -38,7 +38,7 @@ import java.util.Stack;
  * @author Marc Suchard
  */
 
-public class LatentFactorModel extends IntermediateReturnLikelihood implements Citable {
+public class LatentFactorModel extends AbstractModelLikelihood implements Citable {
 //    private Matrix data;
 //    private Matrix factors;
 //    private Matrix loadings;

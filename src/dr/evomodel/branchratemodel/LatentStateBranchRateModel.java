@@ -357,13 +357,10 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
                     assert(latentProportion < 1.0);
 
-                    double reward = branchLength * latentProportion;
-                    double density = getBranchRewardDensity(reward, branchLength);
-                    branchLikelihoods[node.getNumber()] = Math.log(density); // TODO Test: + Math.log(branchLength);
+                    double density = getBranchRewardDensity(latentProportion, branchLength);
+                    branchLikelihoods[node.getNumber()] = Math.log(density);
                 }
                 logLike += branchLikelihoods[node.getNumber()];
-                // TODO More importantly, MH proposals on [0,1] may be missing a Jacobian for which we should adjust.
-                // TODO This is easy to test and we should do it when sampling appears to work.
             }
         }
 
@@ -381,7 +378,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         }
     }
 
-    public double getBranchRewardDensity(double reward, double branchLength) {
+    public double getBranchRewardDensity(double proportion, double branchLength) {
         if (markovReward == null) {
             markovReward = createMarkovReward();
         }
@@ -391,12 +388,19 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         // Therefore all nodes are in state 0
 //        double joint = markovReward.computePdf(reward, branchLength)[state];
 
-        double joint = markovReward.computePdf(reward, branchLength, 0, 0);
+        final double joint = markovReward.computePdf(proportion * branchLength, branchLength, 0, 0);
 
-        double marg = markovReward.computeConditionalProbability(branchLength, 0, 0);
+        final double marg = markovReward.computeConditionalProbability(branchLength, 0, 0);
+
+        final double rate = latentTransitionRateParameter.getParameterValue(0) *
+                latentTransitionFrequencyParameter.getParameterValue(0) * branchLength;
+        final double zeroJumps = Math.exp(-rate);
+
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 
-        return joint / marg; // conditional on ending state.
+        double density = joint / (marg - zeroJumps); // conditional on ending state and >= 2 jumps
+        density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
+        return density;
     }
 
     @Override

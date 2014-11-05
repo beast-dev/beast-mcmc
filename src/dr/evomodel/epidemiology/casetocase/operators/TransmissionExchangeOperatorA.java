@@ -14,6 +14,7 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Implements branch exchange operations that leave the transmission tree unchanged. As this already severely
@@ -87,19 +88,20 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
 
         if(resampleInfectionTimes){
             BranchMapModel branchMap = c2cLikelihood.getBranchMap();
-            Parameter branchPostitions = c2cLikelihood.getInfectionTimeBranchPositions();
+
+            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
+
+
             AbstractCase iCase = branchMap.get(i.getNumber());
             AbstractCase jCase = branchMap.get(j.getNumber());
             AbstractCase parentCase = branchMap.get(iP.getNumber());
 
             if(iCase!=parentCase){
-                branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
-                        MathUtils.nextDouble());
+                branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
             }
 
             if(jCase!=parentCase){
-                branchPostitions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(jCase),
-                        MathUtils.nextDouble());
+                branchPositions.get(jCase).setParameterValue(0, MathUtils.nextDouble());
             }
 
         }

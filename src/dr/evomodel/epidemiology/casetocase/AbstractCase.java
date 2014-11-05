@@ -22,6 +22,7 @@ public abstract class AbstractCase extends AbstractModel {
     protected Taxa associatedTaxa;
     protected double examTime;
     protected double endOfInfectiousTime;
+    protected boolean wasEverInfected;
 
     public String getName(){
         return caseID;
@@ -46,6 +47,14 @@ public abstract class AbstractCase extends AbstractModel {
     }
 
     public abstract double[] getCoords();
+
+    public boolean wasEverInfected(){
+        return wasEverInfected;
+    }
+
+    public void setEverInfected(boolean value){
+        wasEverInfected = value;
+    }
 
 
 }

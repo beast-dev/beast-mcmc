@@ -14,6 +14,7 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -102,7 +103,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         final double oldHeight = tree.getNodeHeight(iP);
         final double newHeight = oldHeight + delta;
 
-        Parameter branchPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+        HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
 
         AbstractCase iCase = branchMap.get(i.getNumber());
         AbstractCase iPCase = branchMap.get(iP.getNumber());
@@ -116,14 +117,12 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             // what happens on i's branch
 
             if (iCase != iPCase) {
-                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
-                        MathUtils.nextDouble());
+                branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
             }
 
             // what happens between PiP and CiP
             if (PiPCase == null || CiPCase != PiPCase) {
-                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(CiPCase),
-                        MathUtils.nextDouble());
+                branchPositions.get(CiPCase).setParameterValue(0, MathUtils.nextDouble());
             }
 
         }
@@ -242,8 +241,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 if(resampleInfectionTimes){
                     AbstractCase newChildCase = branchMap.get(newChild.getNumber());
                     if(newChildCase!=iPCase){
-                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
-                                MathUtils.nextDouble());
+                        branchPositions.get(newChildCase).setParameterValue(0, MathUtils.nextDouble());
                     }
 
                 }

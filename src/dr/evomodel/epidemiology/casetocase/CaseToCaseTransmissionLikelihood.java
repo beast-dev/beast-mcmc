@@ -332,25 +332,27 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         double logD = 0;
 
         for (AbstractCase infectee : sortedCases) {
-            double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
-            double infecteeInfectious = treeLikelihood.getInfectiousTime(infectee);
-            double infecteeNoninfectious = infectee.getCullTime();
+            if(infectee.wasEverInfected()) {
+                double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
+                double infecteeInfectious = treeLikelihood.getInfectiousTime(infectee);
+                double infecteeNoninfectious = infectee.getCullTime();
 
-            if(infecteeInfected > infecteeInfectious || infecteeInfectious > infecteeNoninfectious){
-                throw new BadPartitionException("Illegal partition given known timings");
-            }
-
-            AbstractCase infector = treeLikelihood.getInfector(infectee);
-            if (infector != null) {
-                double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
-                double infectorNoninfectious = infector.getCullTime();
-
-                if(infecteeInfected < infectorInfectious || infecteeInfected > infectorNoninfectious){
+                if (infecteeInfected > infecteeInfectious || infecteeInfectious > infecteeNoninfectious) {
                     throw new BadPartitionException("Illegal partition given known timings");
                 }
 
-                if(hasGeography) {
-                    logD += Math.log(outbreak.getKernelValue(infectee, infector, spatialKernel));
+                AbstractCase infector = treeLikelihood.getInfector(infectee);
+                if (infector != null) {
+                    double infectorInfectious = treeLikelihood.getInfectiousTime(infector);
+                    double infectorNoninfectious = infector.getCullTime();
+
+                    if (infecteeInfected < infectorInfectious || infecteeInfected > infectorNoninfectious) {
+                        throw new BadPartitionException("Illegal partition given known timings");
+                    }
+
+                    if (hasGeography) {
+                        logD += Math.log(outbreak.getKernelValue(infectee, infector, spatialKernel));
+                    }
                 }
             }
         }
@@ -376,16 +378,18 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             sortCases();
         }
         for(AbstractCase infectee : sortedCases){
+
             AbstractCase infector = treeLikelihood.getInfector(infectee);
-            if (infector != null) {
+            if (infector != treeLikelihood.getRootCase()) {
 
                 double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
 
                 double infecteeInfected = treeLikelihood.getInfectionTime(infectee);
 
                 for (AbstractCase possibleInfector : sortedCases) {
+                    if (possibleInfector.wasEverInfected() && possibleInfector != infectee) {
 
-                    if (possibleInfector != infectee) {
+
 
                         double nonInfectorInfected = treeLikelihood.getInfectionTime(possibleInfector);
                         double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
@@ -403,6 +407,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                         }
 
                     }
+
                 }
             }
         }

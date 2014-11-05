@@ -13,6 +13,8 @@ import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.HashMap;
+
 /**
  * Implements the Wilson-Balding branch swapping move if it moves an entire subtree of the transmission tree.
  *
@@ -91,7 +93,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         NodeRef PiP = tree.getParent(iP);
 
         if(resampleInfectionTimes) {
-            Parameter branchPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
 
             AbstractCase iCase = branchMap.get(i.getNumber());
             AbstractCase iPCase = branchMap.get(iP.getNumber());
@@ -104,22 +106,19 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
             // what happens on i's branch
 
             if (iCase != iPCase) {
-                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
-                        MathUtils.nextDouble());
+                branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
             }
 
             // what happens between PiP and CiP
             if (PiPCase == null || CiPCase != PiPCase) {
-                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(CiPCase),
-                        MathUtils.nextDouble());
+                branchPositions.get(CiPCase).setParameterValue(0, MathUtils.nextDouble());
             }
 
             // what happens between k and j
 
             AbstractCase jCase = branchMap.get(j.getNumber());
 
-            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(jCase),
-                    MathUtils.nextDouble());
+            branchPositions.get(jCase).setParameterValue(0, MathUtils.nextDouble());
 
         }
 

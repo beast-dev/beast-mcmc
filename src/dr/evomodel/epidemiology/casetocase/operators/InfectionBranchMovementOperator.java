@@ -8,6 +8,7 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -108,9 +109,9 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         if(!extended || c2cLikelihood.tipLinked(parent)){
 
             if(resampleInfectionTimes){
-                Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
-                branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectorCase),
-                        MathUtils.nextDouble());
+                HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
+
+                branchPositions.get(infectorCase).setParameterValue(0, MathUtils.nextDouble());
 
             }
 
@@ -140,9 +141,9 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         map.setAll(newMap, false);
 
         if(resampleInfectionTimes){
-            Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
-            branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectedCase),
-                    MathUtils.nextDouble());
+            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
+
+            branchPositions.get(infectedCase).setParameterValue(0, MathUtils.nextDouble());
 
         }
 
@@ -179,9 +180,10 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
 
         if(resampleInfectionTimes){
-            Parameter branchInfectionPositions = c2cLikelihood.getInfectionTimeBranchPositions();
-            branchInfectionPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(infectedCase),
-                    MathUtils.nextDouble());
+            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
+
+            branchPositions.get(infectedCase).setParameterValue(0, MathUtils.nextDouble());
+
         }
 
         newMap[node.getNumber()]=map.get(parent.getNumber());

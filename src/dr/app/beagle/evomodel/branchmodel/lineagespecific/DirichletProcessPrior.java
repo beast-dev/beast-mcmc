@@ -133,8 +133,8 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		}
 		
 		
-//		return  total;
-		return  0;
+		return  total;
+//		return  0;
 	}
 
 	public double getCategoriesLogDensity(int[] counts) {

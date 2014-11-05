@@ -176,6 +176,17 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 //		 printZ();
 	}// END: doOperate
 
+	@Override
+	public String getPerformanceSuggestion() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getOperatorName() {
+		return zParameter.getParameterName();
+	}
+
 	// @Override
 	// public double getCoercableParameter() {
 	// // TODO Auto-generated method stub
@@ -193,18 +204,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 	// // TODO Auto-generated method stub
 	// return 0;
 	// }
-
-	@Override
-	public String getPerformanceSuggestion() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getOperatorName() {
-		return zParameter.getParameterName();
-	}
-
+	
 	private void printZ() {
 
 		for (int i = 0; i < zParameter.getDimension(); i++) {

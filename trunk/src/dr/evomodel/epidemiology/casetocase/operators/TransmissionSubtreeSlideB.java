@@ -14,6 +14,7 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -99,7 +100,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         final double oldHeight = tree.getNodeHeight(iP);
         final double newHeight = oldHeight + delta;
 
-        Parameter branchPositions = c2cLikelihood.getInfectionTimeBranchPositions();
+        HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
 
         AbstractCase iCase = branchMap.get(i.getNumber());
         AbstractCase iPCase = branchMap.get(iP.getNumber());
@@ -112,14 +113,14 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         if(resampleInfectionTimes) {
             // what happens on i's branch (there has always been a change)
 
-            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(iCase),
-                    MathUtils.nextDouble());
+            branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
 
             // what happens between PiP and CiP
 
             if (PiPCase == null || CiPCase != PiPCase) {
-                branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(CiPCase),
-                        MathUtils.nextDouble());
+
+                branchPositions.get(CiPCase).setParameterValue(0, MathUtils.nextDouble());
+
             }
         }
 
@@ -211,8 +212,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                         //whichever we picked for iP, it's the new child's case whose infection branch is modified
                         // (even if this infection branch is iP's branch)
 
-                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
-                                MathUtils.nextDouble());
+                        branchPositions.get(newChildCase).setParameterValue(0, MathUtils.nextDouble());
 
                     }
 
@@ -226,8 +226,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
                     if(resampleInfectionTimes) {
                         if (newParent == null) {
-                            branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
-                                    MathUtils.nextDouble());
+                            branchPositions.get(newChildCase).setParameterValue(0, MathUtils.nextDouble());
                         }
                     }
                 }
@@ -335,8 +334,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                         //whichever we picked for iP, it's the new child's case whose infection branch is modified
                         // (even if this infection branch is iP's branch)
 
-                        branchPositions.setParameterValue(c2cLikelihood.getOutbreak().getCaseIndex(newChildCase),
-                                MathUtils.nextDouble());
+                        branchPositions.get(newChildCase).setParameterValue(0, MathUtils.nextDouble());
 
                     }
 

@@ -46,6 +46,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         infectiousCategories = new HashSet<String>();
         this.latentMap = latentMap;
         this.infectiousMap = infectiousMap;
+        ibpMap = new HashMap<AbstractCase, Parameter>();
         for(AbstractPeriodPriorDistribution hyperprior : infectiousMap.values()){
             addModel(hyperprior);
         }
@@ -56,7 +57,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
 
     private void addCase(String caseID, double examTime, double cullTime, Parameter coords, Taxa associatedTaxa,
-                         String infectiousCategory, String latentCategory){
+                         Parameter infectionPosition, String infectiousCategory, String latentCategory){
         CategoryCase thisCase;
 
         if(latentCategory==null){
@@ -64,14 +65,27 @@ public class CategoryOutbreak extends AbstractOutbreak {
                     infectiousCategory);
         } else {
             thisCase =
-                    new CategoryCase(caseID, examTime, cullTime, coords, associatedTaxa, infectiousCategory,
-                            latentCategory);
+                    new CategoryCase(caseID, examTime, cullTime, coords, associatedTaxa,
+                            infectiousCategory, latentCategory);
             latentCategories.add(latentCategory);
         }
+        ibpMap.put(thisCase, infectionPosition);
         infectiousCategories.add(infectiousCategory);
         cases.add(thisCase);
         addModel(thisCase);
     }
+
+    private void addNoninfectedCase(String caseID, Parameter coords){
+        CategoryCase thisCase = new CategoryCase(caseID, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, coords,
+                null, null);
+        thisCase.setEverInfected(false);
+
+        cases.add(thisCase);
+        addModel(thisCase);
+    }
+
+
+
 
     public HashSet<String> getLatentCategories(){
         return latentCategories;
@@ -170,9 +184,11 @@ public class CategoryOutbreak extends AbstractOutbreak {
         private String latentCategory;
         private Parameter coords;
 
+
         private CategoryCase(String name, String caseID, double examTime, double cullTime, Parameter coords,
                              Taxa associatedTaxa, String infectiousCategory){
             super(name);
+            wasEverInfected = true;
             this.caseID = caseID;
             this.infectiousCategory = infectiousCategory;
             this.examTime = examTime;
@@ -184,24 +200,27 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
 
         private CategoryCase(String name, String caseID, double examTime, double cullTime, Parameter coords,
-                             Taxa associatedTaxa, String infectiousCategory, String latentCategory){
+                             Taxa associatedTaxa, String infectiousCategory,
+                             String latentCategory){
             this(name, caseID, examTime, cullTime, coords, associatedTaxa, infectiousCategory);
             this.latentCategory = latentCategory;
         }
 
 
-        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
-                             Taxa associatedTaxa, String infectiousCategory){
+        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords, Taxa associatedTaxa,
+                             String infectiousCategory){
             this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa,
                     infectiousCategory);
         }
 
 
-        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
-                             Taxa associatedTaxa, String infectiousCategory, String latentCategory){
+        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords, Taxa associatedTaxa,
+                             String infectiousCategory, String latentCategory){
             this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa,
                     infectiousCategory, latentCategory);
         }
+
+        //noninfected susceptible constructor
 
         public String getLatentCategory(){
             return latentCategory;
@@ -210,6 +229,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public String getInfectiousCategory(){
             return infectiousCategory;
         }
+
 
 
         public boolean culledYet(double time) {
@@ -264,6 +284,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";
         public static final String LATENT_CATEGORY = "latentCategory";
         public static final String INFECTIOUS_CATEGORY = "infectiousCategory";
+        public static final String WAS_EVER_INFECTED = "wasEverInfected";
 
         //for the normal-gamma priors
 
@@ -353,26 +374,47 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         public void parseCase(XMLObject xo, CategoryOutbreak outbreak, boolean expectLatentPeriods)
                 throws XMLParseException {
+
+
             String farmID = (String) xo.getAttribute(CASE_ID);
-            String infectiousCategory = (String) xo.getAttribute(INFECTIOUS_CATEGORY);
-            final double cullTime = Double.parseDouble((String)xo.getAttribute(CULL_TIME));
-            final double examTime = Double.parseDouble((String)xo.getAttribute(EXAMINATION_TIME));
-            String latentCategory = null;
-            if(xo.hasAttribute(LATENT_CATEGORY)){
-                latentCategory = (String) xo.getAttribute(LATENT_CATEGORY);
-            } else if(expectLatentPeriods){
-                throw new XMLParseException("Case "+farmID+" not assigned a latent periods distribution");
-            }
 
             final Parameter coords = xo.hasChildNamed(COORDINATES) ?
                     (Parameter) xo.getElementFirstChild(COORDINATES) : null;
-            Taxa taxa = new Taxa();
-            for(int i=0; i<xo.getChildCount(); i++){
-                if(xo.getChild(i) instanceof Taxon){
-                    taxa.addTaxon((Taxon)xo.getChild(i));
+            boolean wasEverInfected = xo.getBooleanAttribute(WAS_EVER_INFECTED);
+            if(wasEverInfected) {
+
+                if(!xo.hasAttribute(INFECTIOUS_CATEGORY)
+                        || !xo.hasAttribute(CULL_TIME)
+                        || !xo.hasAttribute(EXAMINATION_TIME)
+                        || !xo.hasChildNamed(INFECTION_TIME_BRANCH_POSITION)){
+                    throw new XMLParseException("Case " + farmID + " wasEverInfected but lacks infection-related data");
                 }
+
+
+                String infectiousCategory = (String) xo.getAttribute(INFECTIOUS_CATEGORY);
+                final double cullTime = Double.parseDouble((String) xo.getAttribute(CULL_TIME));
+                final double examTime = Double.parseDouble((String) xo.getAttribute(EXAMINATION_TIME));
+                String latentCategory = null;
+                if (xo.hasAttribute(LATENT_CATEGORY)) {
+                    latentCategory = (String) xo.getAttribute(LATENT_CATEGORY);
+                } else if (expectLatentPeriods) {
+                    throw new XMLParseException("Case " + farmID + " not assigned a latent periods distribution");
+                }
+                final Parameter ibp = (Parameter) xo.getElementFirstChild(INFECTION_TIME_BRANCH_POSITION);
+
+
+                Taxa taxa = new Taxa();
+                for (int i = 0; i < xo.getChildCount(); i++) {
+                    if (xo.getChild(i) instanceof Taxon) {
+                        taxa.addTaxon((Taxon) xo.getChild(i));
+                    }
+                }
+                outbreak.addCase(farmID, examTime, cullTime, coords, taxa, ibp, infectiousCategory, latentCategory);
+            } else {
+                outbreak.addNoninfectedCase(farmID, coords);
+
+
             }
-            outbreak.addCase(farmID, examTime, cullTime, coords, taxa, infectiousCategory, latentCategory);
         }
 
 
@@ -393,15 +435,16 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         private final XMLSyntaxRule[] caseRules = {
+                AttributeRule.newBooleanRule(WAS_EVER_INFECTED),
                 new StringAttributeRule(CASE_ID, "The unique identifier for this farm"),
-                new StringAttributeRule(CULL_TIME, "The time this farm was culled"),
-                new StringAttributeRule(EXAMINATION_TIME, "The date this farm was examined"),
+                new StringAttributeRule(CULL_TIME, "The time this farm was culled", true),
+                new StringAttributeRule(EXAMINATION_TIME, "The date this farm was examined", true),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
                 new ElementRule(INFECTION_TIME_BRANCH_POSITION, Parameter.class, "The exact position on the branch" +
-                        " along which the infection of this case occurs that it actually does occur"),
+                        " along which the infection of this case occurs that it actually does occur", true),
                 new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true),
                 new StringAttributeRule(LATENT_CATEGORY, "The category of latent period", true),
-                new StringAttributeRule(INFECTIOUS_CATEGORY, "The category of infectious period")
+                new StringAttributeRule(INFECTIOUS_CATEGORY, "The category of infectious period", true)
         };
 
 

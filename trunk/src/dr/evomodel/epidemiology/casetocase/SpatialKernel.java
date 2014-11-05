@@ -221,8 +221,6 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
             this(Type.GAUSSIAN.getXmlName(), null);
         }
 
-
-
         public void configureIntegrator(int sampleSize){
             integrator = new RiemannApproximation(sampleSize);
         }

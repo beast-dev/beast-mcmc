@@ -359,7 +359,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
 
                     double reward = branchLength * latentProportion;
                     double density = getBranchRewardDensity(reward, branchLength);
-                    branchLikelihoods[node.getNumber()] = Math.log(density);
+                    branchLikelihoods[node.getNumber()] = Math.log(density); // TODO Test: + Math.log(branchLength);
                 }
                 logLike += branchLikelihoods[node.getNumber()];
                 // TODO More importantly, MH proposals on [0,1] may be missing a Jacobian for which we should adjust.

@@ -562,6 +562,32 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             }// END: makeOutputString
         };
 
+//        public static OutputType getValue(String str) {
+//			if (FASTA.name().equalsIgnoreCase(str)) {
+//				return FASTA;
+//			} else if (NEXUS.name().equalsIgnoreCase(str)) {
+//				return NEXUS;
+//			} else if (XML.name().equalsIgnoreCase(str)) {
+//				return XML;
+//			}
+//			return null;
+//		}// END: getValue
+//        
+//        public static Enum[] getValues() {
+//        	
+//        	Enum values[] = new Enum[values().length];
+//        	
+//        	int i = 0;
+//        	for(Enum value : OutputType.values()) {
+//        		
+//        		values[i] = getValue(value.toString());// value;
+//        		i++;
+//        		
+//        	}
+//        	
+//        	return values;
+//        }
+        
         private final String text;
         private final String extension;
 

@@ -54,6 +54,7 @@ public class Utils {
 	// ////////////////////////////////
 	// ---RANDOM NUMB3R GENERATION---//
 	// ////////////////////////////////
+	
 	private static MersenneTwister random = new MersenneTwister(
 			MathUtils.nextLong());
 
@@ -65,6 +66,154 @@ public class Utils {
     	return rLognormal;
 	}// END: drawRandom
 	
+	public static int rMultinom(double[] probabilities) {
+
+		int range = probabilities.length + 1;
+		double[] distribution = new double[range];
+		double sumProb = 0;
+
+		for (double value : probabilities) {
+			sumProb += value;
+		}// END: probabilities loop
+
+		distribution[0] = 0;
+		for (int i = 1; i < range; ++i) {
+
+			distribution[i] = distribution[i - 1]
+					+ (probabilities[i - 1] / sumProb);
+
+		}// END: i loop
+
+		distribution[range - 1] = 1.0;
+
+		double key = random.nextDouble();
+
+		int mindex = 1;
+		int maxdex = range - 1;
+		int midpoint = mindex + (maxdex - mindex) / 2;
+		while (mindex <= maxdex) {
+
+			if (key < distribution[midpoint - 1]) {
+				
+				maxdex = midpoint - 1;
+				
+			} else if (key > distribution[midpoint]) {
+				
+				mindex = midpoint + 1;
+				
+			} else {
+				
+				return midpoint - 1;
+
+			}
+			
+			midpoint = mindex + (int) Math.ceil((maxdex - mindex) / 2);
+
+		}//END: mindex loop
+		
+		System.out.println("Error in rMultinom!");
+		
+		return range - 1;
+	}//END: rMultinom
+    
+	// ////////////
+	// ---MATH---//
+	// ////////////
+    
+	public static int sample(double[] probabilities) {
+
+		int samplePos = -Integer.MAX_VALUE;
+		double cumProb = 0.0;
+		double u = random.nextDouble();
+
+		for (int i = 0; i < probabilities.length; i++) {
+
+			cumProb += probabilities[i];
+
+			if (u <= cumProb) {
+				samplePos = i;
+				break;
+			}
+		}
+
+		return samplePos;
+	}// END: randomChoicePDF
+	
+    public static void rescale(double[] logX) {
+        double max = max(logX);
+        for (int i = 0; i < logX.length; i++) {
+            logX[i] -= max;
+        }
+    }
+
+	// ////////////////////
+	// ---ARRAYS UTILS---//
+	// ////////////////////
+
+	public static int max(int[] array) {
+
+		int max = -Integer.MAX_VALUE;
+
+		for (int i=0; i< array.length;i++) {
+		
+			if (array[i] > max) {
+
+				max = (int)array[i];
+
+			}// END: if check
+
+		}// END: i loop
+
+		return max;
+	}// END: findMaximum
+	
+	public static int max(double[] array) {
+
+		int max = -Integer.MAX_VALUE;
+
+		for (int i=0; i< array.length;i++) {
+		
+			if (array[i] > max) {
+
+				max = (int)array[i];
+
+			}// END: if check
+
+		}// END: i loop
+
+		return max;
+	}// END: findMaximum
+	
+	public static int max(ArrayList<Integer> array) {
+
+		int max = -Integer.MAX_VALUE;
+
+		for (Integer element : array) {
+
+			if (element > max) {
+
+				max = element;
+
+			}// END: if check
+
+		}// END: i loop
+
+		return max;
+	}// END: findMaximum
+
+
+	public static double sumArray(int[] array) {
+
+		double sum = 0.0;
+		for (int i = 0; i < array.length; i++) {
+
+			sum += array[i];
+
+		}
+
+		return sum;
+	}// END: sumArray
+    
 	// /////////////////
 	// ---CONSTANTS---//
 	// /////////////////
@@ -1241,136 +1390,5 @@ public class Utils {
 
 		return string;
 	}
-
-	// ////////////////////
-	// ---ARRAYS UTILS---//
-	// ////////////////////
-
-	public static int rMultinom(double[] probabilities) {
-
-		int range = probabilities.length + 1;
-		double[] distribution = new double[range];
-		double sumProb = 0;
-
-		for (double value : probabilities) {
-			sumProb += value;
-		}// END: probabilities loop
-
-		distribution[0] = 0;
-		for (int i = 1; i < range; ++i) {
-
-			distribution[i] = distribution[i - 1]
-					+ (probabilities[i - 1] / sumProb);
-
-		}// END: i loop
-
-		distribution[range - 1] = 1.0;
-
-		double key = random.nextDouble();
-
-		int mindex = 1;
-		int maxdex = range - 1;
-		int midpoint = mindex + (maxdex - mindex) / 2;
-		while (mindex <= maxdex) {
-
-			if (key < distribution[midpoint - 1]) {
-				
-				maxdex = midpoint - 1;
-				
-			} else if (key > distribution[midpoint]) {
-				
-				mindex = midpoint + 1;
-				
-			} else {
-				
-				return midpoint - 1;
-
-			}
-			
-			midpoint = mindex + (int) Math.ceil((maxdex - mindex) / 2);
-
-		}//END: mindex loop
-		
-		System.out.println("Error in rMultinom!");
-		
-		return range - 1;
-	}//END: rMultinom
-
-	public static int sample(double[] probabilities) {
-
-		int samplePos = -Integer.MAX_VALUE;
-		double cumProb = 0.0;
-		double u = random.nextDouble();
-
-		for (int i = 0; i < probabilities.length; i++) {
-
-			cumProb += probabilities[i];
-
-			if (u <= cumProb) {
-				samplePos = i;
-				break;
-			}
-		}
-
-		return samplePos;
-	}// END: randomChoicePDF
-
-	public static int findMaximum(double[] array) {
-
-		int max = -Integer.MAX_VALUE;
-
-		for (int i=0; i< array.length;i++) {
-		
-			if (array[i] > max) {
-
-				max = (int)array[i];
-
-			}// END: if check
-
-		}// END: i loop
-
-		return max;
-	}// END: findMaximum
-	
-	public static int findMaximum(ArrayList<Integer> array) {
-
-		int max = -Integer.MAX_VALUE;
-
-		for (Integer element : array) {
-
-			if (element > max) {
-
-				max = element;
-
-			}// END: if check
-
-		}// END: i loop
-
-		return max;
-	}// END: findMaximum
-
-	public static double sumArray(double[] array) {
-
-		double sum = 0.0;
-		for (int i = 0; i < array.length; i++) {
-
-			sum += array[i];
-
-		}
-
-		return sum;
-	}// END: sumArray
-
-	public static double sumArray(int[] array) {
-
-		double sum = 0.0;
-		for (int i = 0; i < array.length; i++) {
-
-			sum += array[i];
-
-		}
-
-		return sum;
-	}// END: sumArray
 
 }// END: class

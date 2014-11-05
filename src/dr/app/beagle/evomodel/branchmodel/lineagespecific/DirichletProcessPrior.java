@@ -108,7 +108,7 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 //		return counts[whichCluster];
 //	}
 
-	private double getLogDensity(Parameter parameter) {
+	public double getLogDensity(Parameter parameter) {
 		double value[] = parameter.getAttributeValue();
 		return baseModel.logPdf(value);
 	}
@@ -118,9 +118,6 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		int counts[] = getCounts();
 		double total = 0.0;
 
-		//TODO
-//		Utils.printArray(counts);
-		
 		for (int i = 0; i < categoryCount; i++) {
 
 			Parameter param = uniquelyRealizedParameters.getParameter(i);
@@ -128,7 +125,6 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
 			total += counts[whichCluster] * getLogDensity(param);
 
-			//TODO
 //			System.out.println("[" + param.getParameterValue(0) + ", "
 //					+ baseModel.getMean()[0] + ", "
 //					+ baseModel.getScaleMatrix()[0][0] + "]"
@@ -136,16 +132,14 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 			
 		}
 		
-//		System.out.println("total =" + total);
-//		System.exit(0);
 		
 //		return  total;
 		return  0;
 	}
 
-	public double getCategoriesLogDensity() {
+	public double getCategoriesLogDensity(int[] counts) {
 
-		int[] counts = getCounts();
+//		int[] counts = getCounts();
 		
 		if (VERBOSE) {
 			Utils.printArray(counts);
@@ -192,7 +186,8 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 	}
 
 	private double calculateLogLikelihood() {
-		return getCategoriesLogDensity() + getRealizedValuesLogDensity();
+		int[] counts = getCounts();
+		return getCategoriesLogDensity(counts) + getRealizedValuesLogDensity();
 	}//END: calculateLogLikelihood
 
 	@Override
@@ -205,6 +200,10 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		likelihoodKnown = false;
 	}
 
+	public Parameter getUniqueParameter(int index) {
+		return uniquelyRealizedParameters.getParameter(index);
+	}
+	
 	@Override
 	protected void handleVariableChangedEvent(Variable variable, int index,
 			ChangeType type) {
@@ -277,7 +276,8 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 				categoriesParameter, dummy, null, gammaParameter);
 		dpp.setVerbose();
 		
-		System.out.println("lnL:          " + dpp.getCategoriesLogDensity());
+		int[] counts = dpp.getCounts();
+		System.out.println("lnL:          " + dpp.getCategoriesLogDensity(counts));
 		System.out.println("expected lnL: " + expectedLogL);
 	}// END: testDirichletProcess
 	

@@ -8,7 +8,7 @@ import dr.math.UnivariateFunction;
  */
 public class TDistribution implements Distribution {
 
-    TDistribution(double center, double scale, double df) {
+    public TDistribution(double center, double scale, double df) {
         this.center = center;
         this.scale = scale;
         this.df = df;

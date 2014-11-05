@@ -50,10 +50,9 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
 
     public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
-                                String startingNetworkFileName, Parameter infectionTimeBranchPositions,
-                                Parameter maxFirstInfToRoot, DemographicModel demoModel)
+                                String startingNetworkFileName, Parameter maxFirstInfToRoot, DemographicModel demoModel)
             throws TaxonList.MissingTaxonException {
-        super(WITHIN_CASE_COALESCENT, virusTree, caseData, infectionTimeBranchPositions, maxFirstInfToRoot);
+        super(WITHIN_CASE_COALESCENT, virusTree, caseData, maxFirstInfToRoot);
         this.demoModel = demoModel;
         addModel(demoModel);
         addModel(outbreak);
@@ -73,7 +72,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         prepareTree(startingNetworkFileName);
 
-        prepareTimings();
     }
 
     protected double calculateLogLikelihood(){
@@ -140,9 +138,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
 
         for(AbstractCase aCase : outbreak.getCases()){
-            if(aCase.wasEverInfected()) {
 
-                int number = outbreak.getCaseIndex(aCase);
+            int number = outbreak.getCaseIndex(aCase);
+
+            if(aCase.wasEverInfected()) {
 
                 // and then the little tree calculations
 
@@ -167,6 +166,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 } else {
                     coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
                 }
+            } else {
+                recalculateCoalescentFlags[number] = false;
             }
         }
 
@@ -240,34 +241,17 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             }
         } else if(model == demoModel){
             Arrays.fill(recalculateCoalescentFlags, true);
-        }
-    }
+        } else if(model == outbreak){
+            if(object instanceof AbstractCase){
+                AbstractCase thisCase = (AbstractCase)object;
 
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+                recalculateCaseWCC(thisCase);
 
+                AbstractCase parent = getInfector(thisCase);
 
-        super.handleVariableChangedEvent(variable, index, type);
-
-        if(variable == infectionTimeBranchPositions){
-
-            HashMap<AbstractCase, Parameter> map = outbreak.getIbpMap();
-
-            Parameter individualIBP = ((CompoundParameter)variable).getParameter(index);
-
-            AbstractCase relevantCase = null;
-
-            for(AbstractCase aCase : map.keySet()){
-                if(map.get(aCase)==individualIBP){
-                    relevantCase = aCase;
-                    recalculateCaseWCC(relevantCase);
+                if(parent!=null){
+                    recalculateCaseWCC(parent);
                 }
-            }
-
-
-
-            AbstractCase parent = getInfector(relevantCase);
-            if(parent!=null){
-                recalculateCaseWCC(parent);
             }
         }
     }
@@ -582,7 +566,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public static final String STARTING_NETWORK = "startingNetwork";
-        public static final String INFECTION_TIMES = "infectionTimeBranchPositions";
         public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
         public static final String DEMOGRAPHIC_MODEL = "demographicModel";
 
@@ -604,14 +587,12 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             CaseToCaseTreeLikelihood likelihood;
 
-            Parameter infectionTimes = (Parameter) xo.getElementFirstChild(INFECTION_TIMES);
-
             Parameter earliestFirstInfection = (Parameter) xo.getElementFirstChild(MAX_FIRST_INF_TO_ROOT);
 
             DemographicModel demoModel = (DemographicModel) xo.getElementFirstChild(DEMOGRAPHIC_MODEL);
 
             try {
-                likelihood = new WithinCaseCoalescent(virusTree, caseSet, startingNetworkFileName, infectionTimes,
+                likelihood = new WithinCaseCoalescent(virusTree, caseSet, startingNetworkFileName,
                         earliestFirstInfection, demoModel);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
@@ -641,7 +622,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                         true),
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
                         "the root node"),
-                new ElementRule(INFECTION_TIMES, Parameter.class),
                 new ElementRule(DEMOGRAPHIC_MODEL, DemographicModel.class, "The demographic model for within-case" +
                         "evolution")
         };

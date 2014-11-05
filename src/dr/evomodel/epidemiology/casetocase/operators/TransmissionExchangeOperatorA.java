@@ -89,7 +89,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         if(resampleInfectionTimes){
             BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
-            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
 
 
             AbstractCase iCase = branchMap.get(i.getNumber());
@@ -97,11 +96,11 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
             AbstractCase parentCase = branchMap.get(iP.getNumber());
 
             if(iCase!=parentCase){
-                branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
+                iCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
             if(jCase!=parentCase){
-                branchPositions.get(jCase).setParameterValue(0, MathUtils.nextDouble());
+                jCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
         }

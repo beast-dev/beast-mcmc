@@ -5,8 +5,8 @@ import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 /**
  * This is effectively the Jeffreys prior on the set of periods assuming that they are normally (or lognormally)
- * distributed; the probability is proportional to the reciprocal of their variance (or the variance of their
- * logarithms).
+ * distributed; the probability is proportional to the reciprocal of their standard deviation (or the standard deviation
+ * of their logarithms).
  */
 public class OneOverStDevPeriodPriorDistribution extends AbstractPeriodPriorDistribution {
 

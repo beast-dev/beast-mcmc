@@ -103,8 +103,6 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         final double oldHeight = tree.getNodeHeight(iP);
         final double newHeight = oldHeight + delta;
 
-        HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
-
         AbstractCase iCase = branchMap.get(i.getNumber());
         AbstractCase iPCase = branchMap.get(iP.getNumber());
         AbstractCase CiPCase = branchMap.get(CiP.getNumber());
@@ -117,12 +115,12 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             // what happens on i's branch
 
             if (iCase != iPCase) {
-                branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
+                iCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
             // what happens between PiP and CiP
             if (PiPCase == null || CiPCase != PiPCase) {
-                branchPositions.get(CiPCase).setParameterValue(0, MathUtils.nextDouble());
+                CiPCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
         }
@@ -241,7 +239,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
                 if(resampleInfectionTimes){
                     AbstractCase newChildCase = branchMap.get(newChild.getNumber());
                     if(newChildCase!=iPCase){
-                        branchPositions.get(newChildCase).setParameterValue(0, MathUtils.nextDouble());
+                        newChildCase.setInfectionBranchPosition(MathUtils.nextDouble());
                     }
 
                 }

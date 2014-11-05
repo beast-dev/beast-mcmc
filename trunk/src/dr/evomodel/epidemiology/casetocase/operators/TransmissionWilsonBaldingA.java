@@ -99,8 +99,6 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
 
         if(resampleInfectionTimes) {
 
-            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
-
             AbstractCase iCase = branchMap.get(i.getNumber());
             AbstractCase iPCase = branchMap.get(iP.getNumber());
             AbstractCase CiPCase = branchMap.get(CiP.getNumber());
@@ -113,12 +111,12 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
             // what happens on i's branch
 
             if (iCase != iPCase) {
-                branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
+                iCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
             // what happens between PiP and CiP
             if (PiPCase == null || CiPCase != PiPCase) {
-                branchPositions.get(CiPCase).setParameterValue(0, MathUtils.nextDouble());
+                CiPCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
             // what happens between k and j
@@ -131,7 +129,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
                 throw new RuntimeException("TWBA misbehaving.");
             }
 
-            branchPositions.get(jCase).setParameterValue(0, MathUtils.nextDouble());
+            jCase.setInfectionBranchPosition(MathUtils.nextDouble());
 
         }
 

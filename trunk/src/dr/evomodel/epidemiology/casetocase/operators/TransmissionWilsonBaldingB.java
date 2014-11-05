@@ -93,7 +93,6 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         NodeRef PiP = tree.getParent(iP);
 
         if(resampleInfectionTimes) {
-            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
 
             AbstractCase iCase = branchMap.get(i.getNumber());
             AbstractCase iPCase = branchMap.get(iP.getNumber());
@@ -106,19 +105,19 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
             // what happens on i's branch
 
             if (iCase != iPCase) {
-                branchPositions.get(iCase).setParameterValue(0, MathUtils.nextDouble());
+                iCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
             // what happens between PiP and CiP
             if (PiPCase == null || CiPCase != PiPCase) {
-                branchPositions.get(CiPCase).setParameterValue(0, MathUtils.nextDouble());
+                CiPCase.setInfectionBranchPosition(MathUtils.nextDouble());
             }
 
             // what happens between k and j
 
             AbstractCase jCase = branchMap.get(j.getNumber());
 
-            branchPositions.get(jCase).setParameterValue(0, MathUtils.nextDouble());
+            jCase.setInfectionBranchPosition(MathUtils.nextDouble());
 
         }
 

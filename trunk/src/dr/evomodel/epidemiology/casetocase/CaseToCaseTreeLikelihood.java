@@ -37,6 +37,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     /* The phylogenetic tree. */
 
     protected int noTips;
+    protected int noCases;
 
     /* Mapping of outbreak to branches on the tree; old version is stored before operators are applied */
 
@@ -52,11 +53,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
      * The set of cases
      */
     protected AbstractOutbreak outbreak;
-
-    // where along the relevant branches the infections happen. IMPORTANT: if extended=false then this should be
-    // all 0s.
-
-    protected Parameter infectionTimeBranchPositions;
 
     protected double[] infectionTimes;
     private double[] storedInfectionTimes;
@@ -88,15 +84,15 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     // Basic constructor.
 
     public CaseToCaseTreeLikelihood(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
-                                    Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot)
+                                    Parameter maxFirstInfToRoot)
             throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, infectionTimeBranchPositions, maxFirstInfToRoot);
+        this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, maxFirstInfToRoot);
     }
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTreeLikelihood(String name, PartitionedTreeModel virusTree, AbstractOutbreak caseData,
-                                    Parameter infectionTimeBranchPositions, Parameter maxFirstInfToRoot) {
+                                    Parameter maxFirstInfToRoot) {
         super(name, caseData, virusTree);
 
 
@@ -106,9 +102,13 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         noTips = virusTree.getExternalNodeCount();
 
+
         //subclasses should add outbreak as a model if it contains any information that ever changes
 
         outbreak = caseData;
+
+        noCases = outbreak.getCases().size();
+
         addModel(outbreak);
 
         estimatedLastSampleTime = getLatestTaxonTime();
@@ -138,9 +138,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         hasLatentPeriods = outbreak.hasLatentPeriods();
 
-        this.infectionTimeBranchPositions = infectionTimeBranchPositions;
-        addVariable(infectionTimeBranchPositions);
-
         infectionTimes = new double[outbreak.size()];
         infectiousPeriods = new double[outbreak.size()];
 
@@ -153,14 +150,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         recalculateCaseFlags = new boolean[outbreak.size()];
         Arrays.fill(recalculateCaseFlags, true);
 
-        if(DEBUG){
-            for(int i=0; i< outbreak.size(); i++){
-                if(!((CompoundParameter) infectionTimeBranchPositions).getParameter(i).getId()
-                        .startsWith(outbreak.getCase(i).getName())){
-                    throw new RuntimeException("Elements of outbreak and infectionTimeBranchPositions do not match up");
-                }
-            }
-        }
+
 
         this.maxFirstInfToRoot = maxFirstInfToRoot;
 
@@ -524,10 +514,14 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     throw new RuntimeException("Unanticipated model changed event from BranchMapModel");
                 }
             } else if (model == outbreak){
-                for(AbstractCase aCase : outbreak.getCases()){
-                    recalculateCase(aCase);
-                }
 
+                if(object instanceof AbstractCase){
+                    recalculateCase((AbstractCase)object);
+                } else {
+                    for (AbstractCase aCase : outbreak.getCases()) {
+                        recalculateCase(aCase);
+                    }
+                }
             }
 
             fireModelChanged(model);
@@ -553,27 +547,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-
-        if(variable == infectionTimeBranchPositions) {
-            HashMap<AbstractCase, Parameter> map = outbreak.getIbpMap();
-
-            Parameter individualIBP = ((CompoundParameter)variable).getParameter(index);
-
-            AbstractCase relevantCase = null;
-
-            for(AbstractCase aCase : map.keySet()){
-                if(map.get(aCase)==individualIBP){
-                    relevantCase = aCase;
-                    recalculateCase(relevantCase);
-                }
-            }
-
-            AbstractCase parent = getInfector(relevantCase);
-            if (parent != null) {
-                recalculateCase(parent);
-            }
-        }
-
 
         fireModelChanged();
 
@@ -790,13 +763,13 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     private double getInfectionTime(double min, double max, AbstractCase infected){
         final double branchLength = max-min;
-        return max - branchLength*outbreak.getIbpMap().get(infected).getParameterValue(0);
+        return max - branchLength*infected.getInfectionBranchPosition().getParameterValue(0);
     }
 
 
     public double[] getInfectionTimes(boolean recalculate){
         if(recalculate) {
-            for(int i=0; i<noTips; i++){
+            for(int i=0; i<noCases; i++){
                 if(recalculateCaseFlags[i]){
                     infectionTimes[i] = getInfectionTime(outbreak.getCase(i));
                 }
@@ -826,13 +799,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
             double branchPosition = (height - minHeight) / (maxHeight - minHeight);
 
-            infectionTimeBranchPositions.setParameterValue(outbreak.getCaseIndex(thisCase), branchPosition);
+            thisCase.setInfectionBranchPosition(branchPosition);
+
         }
 
-    }
-
-    public Parameter getInfectionTimeBranchPositions(){
-        return infectionTimeBranchPositions;
     }
 
     public double getInfectiousTime(AbstractCase thisCase){
@@ -857,7 +827,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public double[] getInfectiousTimes(boolean recalculate){
         if(recalculate){
-            for(int i=0; i<noTips; i++){
+            for(int i=0; i<noCases; i++){
                 if(recalculateCaseFlags[i]){
                     infectiousTimes[i] = getInfectiousTime(outbreak.getCase(i));
                 }
@@ -889,7 +859,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public double[] getInfectiousPeriods(boolean recalculate){
         if(recalculate){
-            for(int i=0; i<noTips; i++){
+            for(int i=0; i<noCases; i++){
                 if(recalculateCaseFlags[i]){
                     infectiousPeriods[i] = getInfectiousPeriod(outbreak.getCase(i));
                 }
@@ -911,7 +881,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public double[] getLatentPeriods(boolean recalculate){
         if(recalculate){
-            for(int i=0; i<noTips; i++){
+            for(int i=0; i<noCases; i++){
                 if(recalculateCaseFlags[i]){
                     latentPeriods[i] = getLatentPeriod(outbreak.getCase(i));
                 }
@@ -925,8 +895,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         if(!hasLatentPeriods){
             return getInfectiousPeriods(recalculate);
         } else {
-            double[] out = new double[noTips];
-            for(int i=0; i<noTips; i++){
+            double[] out = new double[noCases];
+            for(int i=0; i<noCases; i++){
                 out[i] = getInfectedPeriod(outbreak.getCase(i));
             }
             return out;
@@ -964,7 +934,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         final double branchLength = maxFirstInfToRoot.getParameterValue(0);
 
         return heightToTime(treeModel.getNodeHeight(root)
-                + branchLength * infectionTimeBranchPositions.getParameterValue(outbreak.getCaseIndex(rootCase)));
+                + branchLength * rootCase.getInfectionBranchPosition().getParameterValue(0));
 
     }
 
@@ -1270,7 +1240,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     AbstractCase infectee = choices[1-i];
 
                     branchLogLs[i] = !infector.culledYet(nodeTime
-                            + outbreak.getIbpMap().get(infectee).getParameterValue(0)*branchLength);
+                            + infectee.getInfectionBranchPosition().getParameterValue(0)*branchLength);
                 }
                 if(!branchLogLs[0] && !branchLogLs[1]){
                     throw new BadPartitionException("Both branch possibilities have zero likelihood: "
@@ -1554,7 +1524,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 if(infected.wasEverInfected()) {
                     columns.add(new LogColumn.Abstract(infected.toString() + "_ibp") {
                         protected String getFormattedValue() {
-                            return String.valueOf(outbreak.getIbpMap().get(infected).getParameterValue(0));
+                            return String.valueOf(infected.getInfectionBranchPosition().getParameterValue(0));
                         }
                     });
                 }

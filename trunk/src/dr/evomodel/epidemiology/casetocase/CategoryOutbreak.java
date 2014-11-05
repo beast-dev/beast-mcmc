@@ -46,7 +46,6 @@ public class CategoryOutbreak extends AbstractOutbreak {
         infectiousCategories = new HashSet<String>();
         this.latentMap = latentMap;
         this.infectiousMap = infectiousMap;
-        ibpMap = new HashMap<AbstractCase, Parameter>();
         for(AbstractPeriodPriorDistribution hyperprior : infectiousMap.values()){
             addModel(hyperprior);
         }
@@ -56,20 +55,20 @@ public class CategoryOutbreak extends AbstractOutbreak {
     }
 
 
-    private void addCase(String caseID, double examTime, double cullTime, Parameter coords, Taxa associatedTaxa,
-                         Parameter infectionPosition, String infectiousCategory, String latentCategory){
+    private void addCase(String caseID, double examTime, double cullTime, Parameter coords,
+                         Parameter infectionPosition, Taxa associatedTaxa, String infectiousCategory,
+                         String latentCategory){
         CategoryCase thisCase;
 
         if(latentCategory==null){
-            thisCase =  new CategoryCase(caseID, examTime, cullTime, coords, associatedTaxa,
+            thisCase =  new CategoryCase(caseID, examTime, cullTime, coords, infectionPosition, associatedTaxa,
                     infectiousCategory);
         } else {
             thisCase =
-                    new CategoryCase(caseID, examTime, cullTime, coords, associatedTaxa,
+                    new CategoryCase(caseID, examTime, cullTime, coords, infectionPosition, associatedTaxa,
                             infectiousCategory, latentCategory);
             latentCategories.add(latentCategory);
         }
-        ibpMap.put(thisCase, infectionPosition);
         infectiousCategories.add(infectiousCategory);
         cases.add(thisCase);
         addModel(thisCase);
@@ -77,7 +76,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
     private void addNoninfectedCase(String caseID, Parameter coords){
         CategoryCase thisCase = new CategoryCase(caseID, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, coords,
-                null, null);
+                null, null, null);
         thisCase.setEverInfected(false);
 
         cases.add(thisCase);
@@ -157,7 +156,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         if(!(model instanceof AbstractPeriodPriorDistribution)) {
-            fireModelChanged();
+            fireModelChanged(object);
         }
     }
 
@@ -186,11 +185,15 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
 
         private CategoryCase(String name, String caseID, double examTime, double cullTime, Parameter coords,
-                             Taxa associatedTaxa, String infectiousCategory){
+                             Parameter infectionBranchPosition, Taxa associatedTaxa, String infectiousCategory){
             super(name);
             wasEverInfected = true;
             this.caseID = caseID;
             this.infectiousCategory = infectiousCategory;
+            this.infectionBranchPosition = infectionBranchPosition;
+            if(infectionBranchPosition!=null) {
+                addVariable(infectionBranchPosition);
+            }
             this.examTime = examTime;
             endOfInfectiousTime = cullTime;
             this.associatedTaxa = associatedTaxa;
@@ -200,23 +203,24 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
 
         private CategoryCase(String name, String caseID, double examTime, double cullTime, Parameter coords,
-                             Taxa associatedTaxa, String infectiousCategory,
+                             Parameter infectionBranchPosition, Taxa associatedTaxa, String infectiousCategory,
                              String latentCategory){
-            this(name, caseID, examTime, cullTime, coords, associatedTaxa, infectiousCategory);
+            this(name, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa, infectiousCategory);
             this.latentCategory = latentCategory;
         }
 
 
-        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords, Taxa associatedTaxa,
-                             String infectiousCategory){
-            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa,
+        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
+                             Parameter infectionBranchPosition, Taxa associatedTaxa, String infectiousCategory){
+            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa,
                     infectiousCategory);
         }
 
 
-        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords, Taxa associatedTaxa,
+        private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
+                             Parameter infectionBranchPosition, Taxa associatedTaxa,
                              String infectiousCategory, String latentCategory){
-            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, associatedTaxa,
+            this(CATEGORY_CASE, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa,
                     infectiousCategory, latentCategory);
         }
 
@@ -245,7 +249,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
 
         protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-            fireModelChanged();
+            fireModelChanged(this);
         }
 
         protected void storeState() {
@@ -409,7 +413,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
                         taxa.addTaxon((Taxon) xo.getChild(i));
                     }
                 }
-                outbreak.addCase(farmID, examTime, cullTime, coords, taxa, ibp, infectiousCategory, latentCategory);
+                outbreak.addCase(farmID, examTime, cullTime, coords, ibp, taxa, infectiousCategory, latentCategory);
             } else {
                 outbreak.addNoninfectedCase(farmID, coords);
 

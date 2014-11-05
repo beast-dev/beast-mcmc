@@ -109,9 +109,8 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         if(!extended || c2cLikelihood.tipLinked(parent)){
 
             if(resampleInfectionTimes){
-                HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
 
-                branchPositions.get(infectorCase).setParameterValue(0, MathUtils.nextDouble());
+                infectorCase.setInfectionBranchPosition(MathUtils.nextDouble());
 
             }
 
@@ -141,10 +140,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         map.setAll(newMap, false);
 
         if(resampleInfectionTimes){
-            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
-
-            branchPositions.get(infectedCase).setParameterValue(0, MathUtils.nextDouble());
-
+            infectedCase.setInfectionBranchPosition(MathUtils.nextDouble());
         }
 
         return hr;
@@ -180,10 +176,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
 
         if(resampleInfectionTimes){
-            HashMap<AbstractCase,Parameter> branchPositions = c2cLikelihood.getOutbreak().getIbpMap();
-
-            branchPositions.get(infectedCase).setParameterValue(0, MathUtils.nextDouble());
-
+            infectedCase.setInfectionBranchPosition(MathUtils.nextDouble());
         }
 
         newMap[node.getNumber()]=map.get(parent.getNumber());

@@ -27,7 +27,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     protected final boolean hasGeography;
     private final String CASE_NAME = "caseID";
     protected ArrayList<AbstractCase> cases;
-    protected HashMap<AbstractCase, Parameter> ibpMap;
 
     public AbstractOutbreak(String name, Taxa taxa){
         this(name, taxa, false, true);
@@ -43,10 +42,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         caseDataType = new GeneralDataType(caseNames);
         this.hasLatentPeriods = hasLatentPeriods;
         this.hasGeography = hasGeography;
-    }
-
-    public HashMap<AbstractCase, Parameter> getIbpMap(){
-        return ibpMap;
     }
 
     public ArrayList<AbstractCase> getCases(){

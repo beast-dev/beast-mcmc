@@ -1,47 +1,55 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import org.apache.commons.math.MathException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.TDistributionImpl;
+
+import dr.app.bss.Utils;
+import dr.inference.distribution.TDistributionModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
+import dr.math.distributions.TDistribution;
 
 public class DirichletProcessOperator extends SimpleMCMCOperator
-//AbstractCoercableOperator
+// AbstractCoercableOperator
 {
 
-//	http://xiaodong-yu.blogspot.be/2009/09/gibbs-sampling-for-dp-mixtures.html
-//	http://www.arbylon.net/resources.html
+	private static final boolean DEBUG = false;
 
 	private DirichletProcessPrior dpp;
-	
+
 	private Parameter zParameter;
 	private int realizationCount;
 	private int uniqueRealizationCount;
-//	private double intensity;
+	private double intensity;
 
-	public DirichletProcessOperator(DirichletProcessPrior dpp, Parameter zParameter, int uniqueRealizationCount, double weight) {
-		this(dpp, zParameter, null,
-				uniqueRealizationCount, weight);
+	public DirichletProcessOperator(DirichletProcessPrior dpp,
+			Parameter zParameter, int uniqueRealizationCount, double weight) {
+		this(dpp, zParameter, null, uniqueRealizationCount, weight);
 	}// END: Constructor
 
-	public DirichletProcessOperator(DirichletProcessPrior dpp, Parameter zParameter, CoercionMode mode, 
+	public DirichletProcessOperator(DirichletProcessPrior dpp,
+			Parameter zParameter, CoercionMode mode,
 			int uniqueRealizationCount, double weight) {
 
-//		super(mode);
+		// super(mode);
 
 		this.dpp = dpp;
-		
+		this.intensity = dpp.getGamma();
 		this.zParameter = zParameter;
-//		this.intensity = intensity;
 		this.uniqueRealizationCount = uniqueRealizationCount;
 		this.realizationCount = zParameter.getDimension();
 
 		setWeight(weight);
-		
+
 	}// END: Constructor
 
 	@Override
@@ -57,48 +65,45 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 
 		return 0;
 	}// END: doOperation
-	
-	
-//	private void doOperate() throws MathException {
-//		
-//		int index = MathUtils.nextInt(realizationCount);
-//		
-//		// compute configuration probabilities
-//		double[] probs = new double[uniqueRealizationCount];
-//
-//		for (int i = 0; i < realizationCount; i++) {
-//			probs[(int) zParameter.getParameterValue(i)]++;
-//		}// END: i loop
-//		
-//		for (int i = 0; i < uniqueRealizationCount; i++) {
-//			probs[i] = probs[i] / realizationCount;
-//		}// END: i loop
-//		
-////		dr.app.bss.Utils.printArray(probs);
-//		
-//		
-//		int categoryIndex = MathUtils.randomChoicePDF(probs);
-//		
-//		System.out.println("z[" + index + "]=" + categoryIndex);
-//		
-//		zParameter.setParameterValue(index, categoryIndex);
-//		
-//		
-//	}//END: doOperate
 
 	private void doOperate() throws MathException {
 
-		int index = MathUtils.nextInt(realizationCount);
-		
-//		for (int index = 0; index < realizationCount; index++) {
+		// zParameter.setParameterValue(1, 1);
+		// zParameter.setParameterValue(0, 4);
+		// zParameter.setParameterValue(2, 4);
 
-       double intensity = dpp.getGamma();     
-		
-//       System.out.println("intensity: " + intensity);
-       
-			int unoccupied = uniqueRealizationCount;
+		for (int index = 0; index < realizationCount; index++) {
+
+			// if z[index] is currently a singleton remove
+			int zIndex = (int) zParameter.getParameterValue(index);
+			int occupied = 0;
+			for (int j = 0; j < realizationCount; j++) {
+
+				if (zIndex == zParameter.getParameterValue(j)) {
+					occupied++;
+				}// END: value check
+
+			}// END: z loop
+
+			if (DEBUG) {
+				System.out.println("index: " + index + " value: " + zIndex + " occupancy: " + occupied);
+			}
+
+			if (occupied == 1) {
+
+				for (int j = 0; j < zParameter.getDimension(); j++) {
+
+					int zj = (int) zParameter.getParameterValue(j);
+					if (zj > zIndex) {
+						zParameter.setParameterValue(j, zj - 1);
+					}
+				}// END: z loop
+
+				zParameter.setParameterValue(index, 0);
+
+			}// END: singleton check
+
 			int[] occupancy = new int[uniqueRealizationCount];
-
 			for (int i = 0; i < realizationCount; i++) {
 
 				if (i != index) {
@@ -106,100 +111,82 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 					int j = (int) zParameter.getParameterValue(i);
 					occupancy[j]++;
 
-					if (occupancy[j] == 1) {
-
-						unoccupied--;
-
-					}// END: first check
-
 				}// END: i check
 
 			}// END: i loop
 
-//			dr.app.bss.Utils.printArray(occupancy);
-//			System.out.println(unoccupied);
-			
-			double p1 = intensity / ((realizationCount - 1 + intensity) * unoccupied);
-			double p = 0;
-			double[] probs = new double[uniqueRealizationCount];
+			if (DEBUG) {
+				System.out.println("N[-index]: ");
+				dr.app.bss.Utils.printArray(occupancy);
+			}
 
+			double[] clusterProbs = new double[uniqueRealizationCount];
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
 				if (occupancy[i] == 0) {
+					// TODO: M-H step here if not conjugate
 
-					p = p1;
+					double center = 0;
+					double scale = 1;
+					double df = realizationCount - 1;
+
+					Parameter param = dpp.getUniqueParameter((int) zParameter.getParameterValue(index));
+					TDistribution t = new TDistribution(center, scale, df);
+					double predProb = t.pdf(param.getParameterValue(0));
+
+					// draw new
+					clusterProbs[i] = (intensity / (realizationCount - 1 + intensity));
 
 				} else {
 
-					p = occupancy[i] / (realizationCount - 1 + intensity);
+					Parameter param = dpp.getUniqueParameter((int) zParameter.getParameterValue(index));
+					double prob = dpp.getLogDensity(param);
+
+					// draw existing
+					clusterProbs[i] = (occupancy[i] / (realizationCount - 1 + intensity));
 
 				}
 
-				probs[i] = Math.log(p);
-
 			}// END: i loop
-			
-            for (int i = 0; i < uniqueRealizationCount; i++) {
-                zParameter.setParameterValue(index, i);
-//                probs[i] +=  dpp.getLogLikelihood();
-            }
-			
-			this.rescale(probs);
-			this.exp(probs);
 
-			int categoryIndex = MathUtils.randomChoicePDF(probs);
-			
-			zParameter.setParameterValue(index, categoryIndex);
+			if (DEBUG) {
+				System.out.println("P(z[index] | z[-index]): ");
+				dr.app.bss.Utils.printArray(clusterProbs);
+			}
 
-//			 System.out.println("z[" + index + "]=" + categoryIndex);
-			// System.out.println(zParameter.getParameterValue(index));
+			// sample
+			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
+			zParameter.setParameterValue(index, sampledCluster);
 
-			// System.exit(0);
+			if (DEBUG) {
+				System.out.println("sampled category: " + sampledCluster + "\n");
+			}
 
-//		}// END: index loop
+			// printZ();
+
+		}// END: realizations loop
+
+		// System.exit(-1);
 
 	}// END: doOperate
-	
-    private void exp(double[] logX) {
-        for (int i = 0; i < logX.length; ++i) {
-            logX[i] = Math.exp(logX[i]);
-        }
-    }
 
-    private void rescale(double[] logX) {
-        double max = this.max(logX);
-        for (int i = 0; i < logX.length; ++i) {
-            logX[i] -= max;
-        }
-    }
-
-    private double max(double[] x) {
-        double max = x[0];
-        for (double xi : x) {
-            if (xi > max) {
-                max = xi;
-            }
-        }
-        return max;
-    }
-	
-//	@Override
-//	public double getCoercableParameter() {
-//		// TODO Auto-generated method stub
-//		return 0;
-//	}
-//
-//	@Override
-//	public void setCoercableParameter(double value) {
-//		// TODO Auto-generated method stub
-//
-//	}
-//
-//	@Override
-//	public double getRawParameter() {
-//		// TODO Auto-generated method stub
-//		return 0;
-//	}
+	// @Override
+	// public double getCoercableParameter() {
+	// // TODO Auto-generated method stub
+	// return 0;
+	// }
+	//
+	// @Override
+	// public void setCoercableParameter(double value) {
+	// // TODO Auto-generated method stub
+	//
+	// }
+	//
+	// @Override
+	// public double getRawParameter() {
+	// // TODO Auto-generated method stub
+	// return 0;
+	// }
 
 	@Override
 	public String getPerformanceSuggestion() {
@@ -211,5 +198,14 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 	public String getOperatorName() {
 		return zParameter.getParameterName();
 	}
+
+	private void printZ() {
+
+		for (int i = 0; i < zParameter.getDimension(); i++) {
+			System.out.print(zParameter.getParameterValue(i) + " ");
+		}
+		System.out.println();
+
+	}// END: printZ
 
 }// END: class

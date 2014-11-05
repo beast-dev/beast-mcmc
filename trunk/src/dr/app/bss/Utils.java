@@ -150,6 +150,12 @@ public class Utils {
 	// ---ARRAYS UTILS---//
 	// ////////////////////
 
+	public static void exponentiate(double[] array) {
+		for (int i = 0; i < array.length; i++) {
+			array[i] = Math.exp(array[i]);
+		}
+	}// END: exponentiate
+    
 	public static int max(int[] array) {
 
 		int max = -Integer.MAX_VALUE;
@@ -201,7 +207,6 @@ public class Utils {
 		return max;
 	}// END: findMaximum
 
-
 	public static double sumArray(int[] array) {
 
 		double sum = 0.0;
@@ -214,6 +219,18 @@ public class Utils {
 		return sum;
 	}// END: sumArray
     
+	public static double sumArray(double[] array) {
+
+		double sum = 0.0;
+		for (int i = 0; i < array.length; i++) {
+
+			sum += array[i];
+
+		}
+
+		return sum;
+	}// END: sumArray
+	
 	// /////////////////
 	// ---CONSTANTS---//
 	// /////////////////

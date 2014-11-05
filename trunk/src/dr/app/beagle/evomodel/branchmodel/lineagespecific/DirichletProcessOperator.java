@@ -1,17 +1,8 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-
 import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.TDistributionImpl;
 
-import dr.app.bss.Utils;
-import dr.inference.distribution.TDistributionModel;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
@@ -72,6 +63,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 		// zParameter.setParameterValue(0, 4);
 		// zParameter.setParameterValue(2, 4);
 
+//		int index = MathUtils.nextInt(realizationCount);
+		
 		for (int index = 0; index < realizationCount; index++) {
 
 			// if z[index] is currently a singleton remove
@@ -121,8 +114,10 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 			}
 
 			double[] clusterProbs = new double[uniqueRealizationCount];
+			double sum = 0;
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
+				double prob = 0;
 				if (occupancy[i] == 0) {
 					// TODO: M-H step here if not conjugate
 
@@ -132,23 +127,34 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 
 					Parameter param = dpp.getUniqueParameter((int) zParameter.getParameterValue(index));
 					TDistribution t = new TDistribution(center, scale, df);
-					double predProb = t.pdf(param.getParameterValue(0));
+					double predDensity = t.pdf(param.getParameterValue(0));
 
 					// draw new
-					clusterProbs[i] = (intensity / (realizationCount - 1 + intensity));
+					prob = intensity / (realizationCount - 1 + intensity);
+					clusterProbs[i] = Math.log(prob);
 
 				} else {
 
 					Parameter param = dpp.getUniqueParameter((int) zParameter.getParameterValue(index));
-					double prob = dpp.getLogDensity(param);
+					double density = dpp.getLogDensity(param);
 
 					// draw existing
-					clusterProbs[i] = (occupancy[i] / (realizationCount - 1 + intensity));
+					prob = occupancy[i] / (realizationCount - 1 + intensity);
+					clusterProbs[i] = Math.log(prob);
 
 				}
 
+				sum+=prob;
 			}// END: i loop
 
+			// normalize (b in Neal 2000)
+			double logsum = Math.log(sum);
+			for (int i = 0; i < clusterProbs.length; i++) {
+				clusterProbs[i] -=  logsum;
+			}
+			
+			dr.app.bss.Utils.exponentiate(clusterProbs);
+			
 			if (DEBUG) {
 				System.out.println("P(z[index] | z[-index]): ");
 				dr.app.bss.Utils.printArray(clusterProbs);
@@ -162,12 +168,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 				System.out.println("sampled category: " + sampledCluster + "\n");
 			}
 
-			// printZ();
-
+//			 printZ();
+//			 System.exit(-1);
 		}// END: realizations loop
 
-		// System.exit(-1);
 
+//		 printZ();
 	}// END: doOperate
 
 	// @Override

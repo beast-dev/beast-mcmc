@@ -114,6 +114,10 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
 //        }
     }
 
+    public double computeCdf(double x, double time, int i, int j) {
+        return 0.0;
+    }
+
     public double computePdf(double x, double time, int i, int j) {
 
 //        if (jumpProbabilities == null) {

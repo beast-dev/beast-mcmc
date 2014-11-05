@@ -183,6 +183,10 @@ public class TwoStateSericolaSeriesMarkovReward implements MarkovReward {
         return W;
     }
 
+    public double computeCdf(double x, double time, int i, int j) {
+        return computeCdf(x, time)[i * dim + j];
+    }
+
     public double[] computeCdf(double x, double time) {
         return computeCdf(new double[]{x}, time)[0];
     }

@@ -7,6 +7,10 @@ package dr.inference.model;
 public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     private int rowDim;
 
+    public TransposedBlockUpperTriangularMatrixParameter transposeBlock(){
+        return TransposedBlockUpperTriangularMatrixParameter.recast(getVariableName(), this);
+    }
+
     public BlockUpperTriangularMatrixParameter(String name, Parameter[] params) {
         super(name);
 

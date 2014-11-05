@@ -1,6 +1,5 @@
 package dr.inferencexml.model;
 
-import com.sun.tools.internal.xjc.reader.xmlschema.bindinfo.BIConversion;
 import dr.inference.model.BlockUpperTriangularMatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -11,13 +10,13 @@ import dr.xml.*;
 public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObjectParser {
     private static final String BLOCK_UPPER_TRIANGULAR_MATRIX="blockUpperTriangularMatrixParameter";
     private static final String COLUMN_DIMENSION="columnDimension";
-
+    private static final String TRANSPOSE="transpose";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final String name = xo.hasId() ? xo.getId() : null;
-
+        final boolean transpose= xo.getAttribute(TRANSPOSE, false);
 //        int rowDim=xo.getChildCount();
 //        int colDim;
         Parameter temp=null;
@@ -39,8 +38,12 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
             params[i]=temp;}
 
         BlockUpperTriangularMatrixParameter ltmp=new BlockUpperTriangularMatrixParameter(name, params);
-
-        return ltmp;  //To change body of implemented methods use File | Settings | File Templates.
+        if(transpose){
+            return ltmp.transposeBlock();
+        }
+        else {
+            return ltmp;  //To change body of implemented methods use File | Settings | File Templates.
+        }
     }
 
     @Override
@@ -50,6 +53,7 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
+            AttributeRule.newBooleanRule(TRANSPOSE, true),
             AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
     };
 

@@ -27,6 +27,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     protected final boolean hasGeography;
     private final String CASE_NAME = "caseID";
     protected ArrayList<AbstractCase> cases;
+    protected int infectedSize = 0;
 
     public AbstractOutbreak(String name, Taxa taxa){
         this(name, taxa, false, true);
@@ -86,6 +87,10 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     public int size(){
         return cases.size();
+    }
+
+    public int infectedSize(){
+        return infectedSize;
     }
 
     public abstract double getDistance(AbstractCase a, AbstractCase b);

@@ -71,6 +71,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         }
         infectiousCategories.add(infectiousCategory);
         cases.add(thisCase);
+        infectedSize++;
         addModel(thisCase);
     }
 

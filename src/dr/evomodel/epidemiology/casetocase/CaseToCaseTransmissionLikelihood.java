@@ -219,34 +219,39 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 geographyLogProb = 0;
 
                 for(AbstractCase aCase : outbreak.getCases()){
-                    int number = outbreak.getCaseIndex(aCase);
+                    if(aCase.wasEverInfected()) {
 
-                    double infectionTime = treeLikelihood.getInfectionTime(aCase);
-                    AbstractCase parent = treeLikelihood.getInfector(aCase);
-                    if(parent!=null){
-                        if(treeLikelihood.getInfectiousTime(parent)>infectionTime
-                                || parent.culledYet(infectionTime)) {
-                            geographyLogProb += Double.NEGATIVE_INFINITY;
-                        } else {
-                            double numerator = outbreak.getKernelValue(aCase, parent, spatialKernel);
-                            double denominator = 0;
+                        int number = outbreak.getCaseIndex(aCase);
 
-                            for(int i=0; i< outbreak.size(); i++){
-                                AbstractCase parentCandidate = outbreak.getCase(i);
+                        double infectionTime = treeLikelihood.getInfectionTime(aCase);
+                        AbstractCase parent = treeLikelihood.getInfector(aCase);
+                        if (parent != null) {
+                            if (treeLikelihood.getInfectiousTime(parent) > infectionTime
+                                    || parent.culledYet(infectionTime)) {
+                                geographyLogProb += Double.NEGATIVE_INFINITY;
+                            } else {
+                                double numerator = outbreak.getKernelValue(aCase, parent, spatialKernel);
+                                double denominator = 0;
 
-                                if(i!=number && treeLikelihood.getInfectiousTime(parentCandidate)<infectionTime
-                                        && !parentCandidate.culledYet(infectionTime)){
-                                    denominator += (outbreak.getKernelValue(aCase, parentCandidate,
-                                            spatialKernel));
+                                for (int i = 0; i < outbreak.size(); i++) {
+                                    AbstractCase parentCandidate = outbreak.getCase(i);
+                                    if(parentCandidate.wasEverInfected()) {
+
+                                        if (i != number && treeLikelihood.getInfectiousTime(parentCandidate) < infectionTime
+                                                && !parentCandidate.culledYet(infectionTime)) {
+                                            denominator += (outbreak.getKernelValue(aCase, parentCandidate,
+                                                    spatialKernel));
+                                        }
+                                    }
                                 }
+
+                                geographyLogProb += Math.log(numerator / denominator);
                             }
+                        } else {
+                            // probability of first infection given all the timings is 1
 
-                            geographyLogProb += Math.log(numerator/denominator);
+                            geographyLogProb += 0;
                         }
-                    } else {
-                        // probability of first infection given all the timings is 1
-
-                        geographyLogProb += 0;
                     }
                 }
                 geographyProbKnown = true;
@@ -379,8 +384,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
         for(AbstractCase infectee : sortedCases){
 
-            AbstractCase infector = treeLikelihood.getInfector(infectee);
-            if (infector != treeLikelihood.getRootCase()) {
+            if (infectee != treeLikelihood.getRootCase()) {
 
                 double[] kernelValues = outbreak.getKernelValues(infectee, spatialKernel);
 
@@ -388,8 +392,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
                 for (AbstractCase possibleInfector : sortedCases) {
                     if (possibleInfector.wasEverInfected() && possibleInfector != infectee) {
-
-
 
                         double nonInfectorInfected = treeLikelihood.getInfectionTime(possibleInfector);
                         double nonInfectorInfectious = treeLikelihood.getInfectiousTime(possibleInfector);
@@ -422,9 +424,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public double getK(){
         if(transmissionRatePrior != null) {
-            return (transmissionRatePrior.getShape() - 1) + outbreak.size()-1;
+            return (transmissionRatePrior.getShape() - 1) + outbreak.infectedSize()-1;
         } else {
-            return outbreak.size()-1;
+            return outbreak.infectedSize()-1;
         }
     }
 

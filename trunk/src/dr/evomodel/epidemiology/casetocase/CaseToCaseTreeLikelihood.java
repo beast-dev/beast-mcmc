@@ -468,7 +468,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     public Integer[] getParentsArray(){
         Integer[] out = new Integer[outbreak.size()];
         for(AbstractCase thisCase : outbreak.getCases()){
-            out[outbreak.getCaseIndex(thisCase)]= outbreak.getCaseIndex(getInfector(thisCase));
+            if(thisCase.wasEverInfected()) {
+                out[outbreak.getCaseIndex(thisCase)] = outbreak.getCaseIndex(getInfector(thisCase));
+            } else {
+                out[outbreak.getCaseIndex(thisCase)] = null;
+            }
         }
         return out;
     }
@@ -1026,7 +1030,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 if(!splitLine[1].equals("Start")){
                     specificParentMap.put(outbreak.getCase(splitLine[0]), outbreak.getCase(splitLine[1]));
                 } else {
-                    specificParentMap.put(outbreak.getCase(splitLine[0]),null);
+                    specificParentMap.put(outbreak.getCase(splitLine[0]), null);
                 }
                 currentLine = reader.readLine();
             }
@@ -1042,7 +1046,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         AbstractCase firstCase=null;
         for(AbstractCase aCase : outbreak.getCases()){
-            if(map.get(aCase)==null){
+            if(aCase.wasEverInfected() && map.get(aCase)==null){
                 firstCase = aCase;
             }
         }

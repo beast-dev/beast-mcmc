@@ -514,38 +514,14 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 }
             });
             for (int i = 0; i < outbreak.size(); i++) {
-                final int finalI = i;
-                columns.add(new LogColumn.Abstract("coal_LL_" + i) {
-                    protected String getFormattedValue() {
-                        return String.valueOf(partitionTreeLogLikelihoods[finalI]);
-                    }
-                });
-            }
-            columns.add(new LogColumn.Abstract("total_coal_LL") {
-                protected String getFormattedValue() {
-                    return String.valueOf(coalescencesLogLikelihood);
+                if(outbreak.getCase(i).wasEverInfected()) {
+                    final int finalI = i;
+                    columns.add(new LogColumn.Abstract("coal_LL_" + i) {
+                        protected String getFormattedValue() {
+                            return String.valueOf(partitionTreeLogLikelihoods[finalI]);
+                        }
+                    });
                 }
-            });
-
-            return columns.toArray(new LogColumn[columns.size()]);
-        } else if(outbreak instanceof CategoryOutbreak){
-
-            for (AbstractPeriodPriorDistribution hyperprior : ((CategoryOutbreak) outbreak).getInfectiousMap().values()) {
-                columns.addAll(Arrays.asList(hyperprior.getColumns()));
-            }
-
-            columns.add(new LogColumn.Abstract("inf_LL") {
-                protected String getFormattedValue() {
-                    return String.valueOf(infectiousPeriodsLogLikelihood);
-                }
-            });
-            for (int i = 0; i < outbreak.size(); i++) {
-                final int finalI = i;
-                columns.add(new LogColumn.Abstract("coal_LL_" + i) {
-                    protected String getFormattedValue() {
-                        return String.valueOf(partitionTreeLogLikelihoods[finalI]);
-                    }
-                });
             }
             columns.add(new LogColumn.Abstract("total_coal_LL") {
                 protected String getFormattedValue() {

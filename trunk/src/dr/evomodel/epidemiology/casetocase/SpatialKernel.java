@@ -64,7 +64,7 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
             // the index of the element of construct should be 0 for Java 1.7 and 1 for 1.6. Don't ask me why.
 
-            return (SpatialKernel)construct[1].newInstance(null, xmlName, parameters);
+            return (SpatialKernel)construct[0].newInstance(null, xmlName, parameters);
         }
 
         Type(String xmlName, Class kernelClass){

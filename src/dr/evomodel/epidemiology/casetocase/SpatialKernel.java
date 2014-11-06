@@ -58,14 +58,11 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
             return xmlName;
         }
 
-        SpatialKernel makeKernelFunction(ArrayList<Parameter> parameters)
-                throws IllegalAccessException, InstantiationException, InvocationTargetException,
-                NoSuchMethodException {
+        SpatialKernel makeKernelFunction(ArrayList<Parameter> parameters) throws IllegalAccessException,
+                InstantiationException, InvocationTargetException, NoSuchMethodException {
 //            Constructor[] construct = kernelClass.getConstructors();
 
             Constructor constructor = kernelClass.getConstructor(SpatialKernel.class, String.class, ArrayList.class);
-
-            // the index of the element of construct should be 0 for Java 1.7 and 1 for 1.6. Don't ask me why.
 
             return (SpatialKernel)constructor.newInstance(null, xmlName, parameters);
         }
@@ -108,10 +105,6 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
 
     protected void acceptState(){
         // nothing to do?
-    }
-
-    public double evaluate(double argument){
-        return evaluate(argument);
     }
 
     // no need to do this unless there is one...

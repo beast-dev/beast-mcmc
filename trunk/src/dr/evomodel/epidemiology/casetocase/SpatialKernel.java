@@ -59,12 +59,15 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
         }
 
         SpatialKernel makeKernelFunction(ArrayList<Parameter> parameters)
-                throws IllegalAccessException, InstantiationException, InvocationTargetException {
-            Constructor[] construct = kernelClass.getConstructors();
+                throws IllegalAccessException, InstantiationException, InvocationTargetException,
+                NoSuchMethodException {
+//            Constructor[] construct = kernelClass.getConstructors();
+
+            Constructor constructor = kernelClass.getConstructor(SpatialKernel.class, String.class, ArrayList.class);
 
             // the index of the element of construct should be 0 for Java 1.7 and 1 for 1.6. Don't ask me why.
 
-            return (SpatialKernel)construct[0].newInstance(null, xmlName, parameters);
+            return (SpatialKernel)constructor.newInstance(null, xmlName, parameters);
         }
 
         Type(String xmlName, Class kernelClass){
@@ -269,12 +272,12 @@ public abstract class SpatialKernel extends AbstractModel implements IntegrableU
             return new Logistic(Type.LOGISTIC.getXmlName(), params);
         }
 
-        public Logistic(String name, ArrayList<Parameter> params) throws InstantiationException {
-            this(name, params, 25);
-        }
-
         public Logistic() throws InstantiationException {
             this(Type.GAUSSIAN.getXmlName(), null);
+        }
+
+        public Logistic(String name, ArrayList<Parameter> params) throws InstantiationException {
+            this(name, params, 25);
         }
 
 

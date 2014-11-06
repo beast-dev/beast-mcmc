@@ -3,13 +3,16 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import org.apache.commons.math.MathException;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.operators.CoercionMode;
+import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.math.distributions.TDistribution;
 
-public class DirichletProcessOperator extends SimpleMCMCOperator
+public class DirichletProcessOperator extends SimpleMCMCOperator implements GibbsOperator
+//extends //SimpleMCMCOperator
 // AbstractCoercableOperator
 {
 
@@ -23,12 +26,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 	private double intensity;
 
 	public DirichletProcessOperator(DirichletProcessPrior dpp,
-			Parameter zParameter, int uniqueRealizationCount, double weight) {
-		this(dpp, zParameter, null, uniqueRealizationCount, weight);
-	}// END: Constructor
-
-	public DirichletProcessOperator(DirichletProcessPrior dpp,
-			Parameter zParameter, CoercionMode mode,
+			Parameter zParameter, //CoercionMode mode,
 			int uniqueRealizationCount, double weight) {
 
 		// super(mode);
@@ -43,6 +41,14 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 
 	}// END: Constructor
 
+    public Parameter getParameter() {
+        return zParameter;
+    }//END: getParameter
+	
+    public Variable getVariable() {
+        return zParameter;
+    }//END: getVariable
+	
 	@Override
 	public double doOperation() throws OperatorFailedException {
 
@@ -161,6 +167,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 			}
 
 			// sample
+//			int sampledCluster = dr.app.bss.Utils.sample(clusterProbs);
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
 			zParameter.setParameterValue(index, sampledCluster);
 
@@ -172,39 +179,15 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 //			 System.exit(-1);
 		}// END: realizations loop
 
-
 //		 printZ();
+//		 System.exit(-1);
 	}// END: doOperate
 
 	@Override
-	public String getPerformanceSuggestion() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public String getOperatorName() {
-		return zParameter.getParameterName();
+		return DirichletProcessOperatorParser.DIRICHLET_PROCESS_OPERATOR;
 	}
 
-	// @Override
-	// public double getCoercableParameter() {
-	// // TODO Auto-generated method stub
-	// return 0;
-	// }
-	//
-	// @Override
-	// public void setCoercableParameter(double value) {
-	// // TODO Auto-generated method stub
-	//
-	// }
-	//
-	// @Override
-	// public double getRawParameter() {
-	// // TODO Auto-generated method stub
-	// return 0;
-	// }
-	
 	private void printZ() {
 
 		for (int i = 0; i < zParameter.getDimension(); i++) {
@@ -213,5 +196,15 @@ public class DirichletProcessOperator extends SimpleMCMCOperator
 		System.out.println();
 
 	}// END: printZ
+
+	@Override
+	public String getPerformanceSuggestion() {
+		return null;
+	}// END: getPerformanceSuggestion
+
+	@Override
+	public int getStepCount() {
+		return realizationCount;
+	}// END: getStepCount
 
 }// END: class

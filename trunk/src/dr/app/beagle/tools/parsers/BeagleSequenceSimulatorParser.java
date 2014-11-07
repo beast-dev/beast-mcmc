@@ -131,19 +131,28 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
             if (partition.getRootSequence() != null) {
 
-                if (partition.getRootSequence().getLength() != 3 * siteCount && partition.getFreqModel().getDataType() instanceof Codons) {
+//            	TODO: what about 'every'?
+            	
+            	int partitionSiteCount = (partition.to - partition.from) +1;
+            	
+//            	System.out.println("SCRAAAAAM:" + partitionSiteCount);
+            	
+                if (partition.getRootSequence().getLength() != 3 * partitionSiteCount && partition.getFreqModel().getDataType() instanceof Codons) {
 
-                    throw new RuntimeException("Root codon sequence has "
+                    throw new RuntimeException("Root codon sequence " + "for partition "+ (i+1) +" has "
                             + partition.getRootSequence().getLength() + " characters "
-                            + "expecting " + 3 * siteCount + " characters");
+                            + "expecting " + 3 * partitionSiteCount + " characters");
 
-                } else if (partition.getRootSequence().getLength() != siteCount && partition.getFreqModel().getDataType() instanceof Nucleotides) {
+                } else if (partition.getRootSequence().getLength() != partitionSiteCount && partition.getFreqModel().getDataType() instanceof Nucleotides) {
 
-                    throw new RuntimeException("Root nuleotide sequence has "
+                    throw new RuntimeException("Root nuleotide sequence "+ "for partition "+ (i+1) +" has "
                             + partition.getRootSequence().getLength() + " characters "
-                            + "expecting " + siteCount + " characters");
+                            + "expecting " + partitionSiteCount + " characters");
 
                 }// END: dataType check
+                
+//                System.exit(-1);
+                
             }// END: ancestralSequence check
 
             partitionsList.add(partition);

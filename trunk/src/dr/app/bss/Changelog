@@ -29,4 +29,6 @@ September 2014: PIBUSS version 1.3.7
 
 PIBUSS version 1.3.8 release candidate
 --------------------------------------
-* Parameters of the relaxed lognormal clock ar enow on the log scale by default and can be changed in XML only
+* Parameters of the relaxed lognormal clock are now on the log scale by default and can be changed in XML only
+* XML parser checks siteCounts per partition; previously this behaviour could throw an exception if using rootSequences with multiple partitions
+* Fixed a bug in SiteRate model XML generation; when using multiple partitions alpha parameter was not raised by suffix

@@ -14,6 +14,8 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
     private final int midDim;
     Parameter columnMask;
 
+    boolean[][] oldStoredValues;
+
     double[][] storedValues;
     boolean[][] areValuesStored;
     private Bounds bounds=null;
@@ -33,6 +35,7 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
         }
         storedValues=new double[left.getRowDimension()][right.getColumnDimension()];
         areValuesStored=new boolean[left.getRowDimension()][right.getColumnDimension()];
+        oldStoredValues=new boolean[left.getRowDimension()][right.getColumnDimension()];
 
         for (int i = 0; i <left.getRowDimension() ; i++) {
             for (int j = 0; j <right.getColumnDimension() ; j++) {
@@ -74,13 +77,17 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
     }
 
     protected void storeValues() {
+        System.arraycopy(areValuesStored, 0, oldStoredValues, 0, areValuesStored.length);
         left.storeParameterValues();
         right.storeParameterValues();
+        inPlace.storeParameterValues();
     }
 
     protected void restoreValues() {
         left.restoreParameterValues();
         right.restoreVariableValues();
+        inPlace.restoreParameterValues();
+        areValuesStored=oldStoredValues;
     }
 
 //    protected void acceptValues() {
@@ -91,7 +98,7 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
 
     public double getParameterValue(int i, int j) {
         double sum = 0;
-        if (columnMask.getParameterValue(j)!=0) {
+        if (columnMask.getParameterValue(j)!=0 && !areValuesStored[i][j]) {
             for (int k = 0; k < midDim; k++) {
                 {
                     sum += left.getParameterValue(i, k) * right.getParameterValue(k, j);
@@ -99,7 +106,7 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
 
             }
         inPlace.setParameterValue(i,j, sum);
-//        areValuesStored[i][j]=true;
+        areValuesStored[i][j]=true;
         }
         else{
             sum=inPlace.getParameterValue(i,j);

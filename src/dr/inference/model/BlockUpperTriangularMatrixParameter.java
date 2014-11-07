@@ -6,6 +6,7 @@ package dr.inference.model;
 
 public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     private int rowDim;
+    private Bounds bounds = null;
 
     public TransposedBlockUpperTriangularMatrixParameter transposeBlock(){
         return TransposedBlockUpperTriangularMatrixParameter.recast(getVariableName(), this);
@@ -87,6 +88,94 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
         }
     }
 
+    private int getRow(int PID){
+        return  PID%getColumnDimension();
+    }
+
+    private int getColumn(int PID){
+        return PID/getRowDimension();
+    }
+
+    public void setParameterValue(int PID, double value){
+        int row=getRow(PID);
+        int col=getColumn(PID);
+
+        if(row<=col){
+            setParameterValue(row, col, value);
+        }
+    }
+
+    public double getParameterValue(int id){
+        int row=getRow(id);
+        int col=getColumn(id);
+
+        if(row<=col){
+            return getParameterValue(row, col);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    public void addBounds(Bounds<Double> boundary) {
+
+        if (bounds == null) {
+            bounds = new BUTMPBounds();
+//            return;
+        } //else {
+        IntersectionBounds newBounds = new IntersectionBounds(getDimension());
+        newBounds.addBounds(bounds);
+
+//        }
+        ((IntersectionBounds) bounds).addBounds(boundary);
+    }
+
+    public Bounds<Double> getBounds() {
+
+        if (bounds == null) {
+            bounds = new BUTMPBounds();
+        }
+        return bounds;
+    }
+
+
+    private class BUTMPBounds implements Bounds<Double>{
+
+
+            public Double getUpperLimit(int dim) {
+                int row=getRow(dim);
+                int col=getColumn(dim);
+
+                if(row <= col)
+                return getParameters().get(dim-row).getBounds().getUpperLimit(getPindex().get(dim-row));
+                else
+                    return 0.0;
+            }
+
+            public Double getLowerLimit(int dim) {
+                int row=getRow(dim);
+                int col=getColumn(dim);
+
+                if(row <= col)
+                return getParameters().get(dim-row).getBounds().getLowerLimit(getPindex().get(dim-row));
+                else
+                    return 0.0;
+            }
+
+            public int getBoundsDimension() {
+                int nBlanks = 0;
+                for (int i = 0; i <getColumnDimension() ; i++) {
+                    nBlanks+=1;
+                }
+
+                return getDimension()-nBlanks;
+        }
+    }
+
+    public int getDimension(){
+        return getRowDimension()*getColumnDimension();
+    }
 
 
 }

@@ -65,12 +65,11 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         boolean scaleData=xo.getAttribute(SCALE_DATA, true);
  //       int numFactors = xo.getAttribute(NUMBER_OF_FACTORS, 4);
         Parameter temp=null;
-        for(int i=0; i<loadings.getRowDimension(); i++)
+        for(int i=0; i<loadings.getColumnDimension(); i++)
         {
-            temp=loadings.getParameter(i);
-            if(temp.getParameterValue(i)<0)
+            if(loadings.getParameterValue(i,i)<0)
             {
-               temp.setParameterValue(i, temp.getParameterValue(i));
+               loadings.setParameterValue(i, i, temp.getParameterValue(i));
             }
         }
 

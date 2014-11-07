@@ -8,18 +8,29 @@ package dr.inference.model;
 public class MatrixMatrixProduct extends MatrixParameter implements VariableListener {
     MatrixParameter left;
     MatrixParameter right;
+    MatrixParameter inPlace;
     private final int leftDim;
     private final int rightDim;
     private final int midDim;
+    Parameter columnMask;
+
     double[][] storedValues;
     boolean[][] areValuesStored;
     private Bounds bounds=null;
 
-    public MatrixMatrixProduct(MatrixParameter[] params) {
+    public MatrixMatrixProduct(MatrixParameter[] params, Parameter columnMask) {
         super(null, params);
+
+
+
+        this.columnMask=columnMask;
 
         this.left=params[0];
         this.right=params[1];
+        if(params.length==3){
+            inPlace=params[2];
+            inPlace.addVariableListener(this);
+        }
         storedValues=new double[left.getRowDimension()][right.getColumnDimension()];
         areValuesStored=new boolean[left.getRowDimension()][right.getColumnDimension()];
 
@@ -32,18 +43,23 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
         leftDim=left.getRowDimension();
         midDim=left.getColumnDimension();
         rightDim=right.getColumnDimension();
+
+        left.addVariableListener(this);
+        right.addVariableListener(this);
+        inPlace.addVariableListener(this);
+
     }
 
 
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-//        if(variable==right)
-//            for (int i = 0; i <getRowDimension() ; i++) {
-//                areValuesStored[i][index%rightDim]=false;
-//            }
-//        if(variable==left)
-//            for (int i = 0; i <getColumnDimension() ; i++) {
-//                areValuesStored[(index)/midDim][i]=false;
-//            }
+        if(variable==right)
+            for (int i = 0; i <getRowDimension() ; i++) {
+                areValuesStored[i][index%rightDim]=false;
+            }
+        if(variable==left)
+            for (int i = 0; i <getColumnDimension() ; i++) {
+                areValuesStored[(index)/midDim][i]=false;
+            }
         fireParameterChangedEvent(index, type);
     }
 
@@ -75,18 +91,18 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
 
     public double getParameterValue(int i, int j) {
         double sum = 0;
-        if (!areValuesStored[i][j]) {
+        if (columnMask.getParameterValue(j)!=0) {
             for (int k = 0; k < midDim; k++) {
                 {
                     sum += left.getParameterValue(i, k) * right.getParameterValue(k, j);
                 }
 
             }
-        storedValues[i][j] = sum;
+        inPlace.setParameterValue(i,j, sum);
 //        areValuesStored[i][j]=true;
         }
         else{
-            sum=storedValues[i][j];
+            sum=inPlace.getParameterValue(i,j);
         }
         return sum;
     }
@@ -97,11 +113,10 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
     }
 
     public Parameter getParameter(int PID) {
-        double[] answer=new double[left.getRowDimension()];
-        for (int i = 0; i <rightDim ; i++) {
-            answer[i]=getParameterValue(i, PID);
-        }
-        return new Parameter.Default(answer);
+        for (int i = 0; i <leftDim ; i++) {
+                    getParameterValue(i,PID);
+                }
+        return inPlace.getParameter(PID) ;
     }
 
     public int getRowDimension(){

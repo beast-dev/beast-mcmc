@@ -297,6 +297,14 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         }
     }
 
+    protected ArrayList<Parameter> getParameters(){
+        return parameters;
+    }
+
+    protected ArrayList<Integer> getPindex(){
+        return pindex;
+    }
+
     private final List<Parameter> uniqueParameters = new ArrayList<Parameter>();
 
     private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();

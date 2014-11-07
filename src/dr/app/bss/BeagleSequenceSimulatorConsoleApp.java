@@ -629,6 +629,7 @@ public class BeagleSequenceSimulatorConsoleApp {
             printUsage(arguments);
             System.out.println();
             System.out.println(e.getMessage());
+            e.printStackTrace();
             System.exit(1);
 
         }// END: try-catch block

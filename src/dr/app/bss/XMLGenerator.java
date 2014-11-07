@@ -377,7 +377,7 @@ public class XMLGenerator {
 
 					data.siteRateModelIdref += suffix;
 
-					writeSiteRateModel(data, writer);
+					writeSiteRateModel(data, writer, suffix);
 					writer.writeBlankLine();
 					partitionList.add(data);
 
@@ -996,7 +996,7 @@ public class XMLGenerator {
 
 	}// END: writeReport
 
-	private void writeSiteRateModel(PartitionData data, XMLWriter writer) {
+	private void writeSiteRateModel(PartitionData data, XMLWriter writer, int suffix) {
 
 		writer.writeOpenTag(SiteModel.SITE_MODEL,
 				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
@@ -1105,7 +1105,8 @@ public class XMLGenerator {
 							GammaSiteModelParser.GAMMA_CATEGORIES,
 							String.valueOf((int) data.siteRateModelParameterValues[0])));
 
-			writeParameter(null, "alpha", 1,
+			//TODO
+			writeParameter(null, "alpha" + suffix, 1,
 					String.valueOf(data.siteRateModelParameterValues[1]),
 					writer);
 

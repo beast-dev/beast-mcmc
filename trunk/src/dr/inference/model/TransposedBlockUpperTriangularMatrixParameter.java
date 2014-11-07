@@ -44,7 +44,7 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
             return 0;
         }
         else{
-            return super.getParameterValue(row, col+row);
+            return getParameter(col).getParameterValue(row-col);
         }
     }
 
@@ -66,7 +66,6 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
     }
 
     public int getRowDimension(){
-        System.out.println(getParameterCount());
         return getParameterCount();
     }
 

@@ -51,10 +51,10 @@ public class TransposedMatrixParameter extends MatrixParameter {
         return new TransposedMatrixParameter(name, parameters);
     }
 
-    public double getParameterValue(int row, int col) {
-        // transposed
-        return super.getParameterValue(col, row);
-    }
+//    public double getParameterValue(int row, int col) {
+//        // transposed
+//        return super.getParameterValue(col, row);
+//    }
 
     public int getColumnDimension() {
         // transposed

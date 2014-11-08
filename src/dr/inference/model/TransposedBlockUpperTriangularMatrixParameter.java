@@ -48,7 +48,25 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
         }
     }
 
+    protected int getRow(int PID){
+        return  PID/getColumnDimension();
+    }
 
+    protected int getColumn(int PID){
+        return PID%getColumnDimension();
+    }
+
+    @Override
+    boolean matrixCondition(int row, int col) {
+        return super.matrixCondition(col, row);
+    }
+
+    public void setParameterValue(int row, int col, double value){
+
+        if(matrixCondition(row, col)){
+            getParameter(col).setParameterValue(row-col, value);
+        }
+    }
 
     public Parameter getParameter(int index) {
         if (slices == null) {

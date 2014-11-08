@@ -30,7 +30,6 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.List;
-import java.util.Stack;
 
 
 /**
@@ -76,8 +75,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double storedLogLikelihood;
     private double logDetCol;
     private double storedLogDetCol;
-    private Stack<Integer> loadingVariablesChanged;
-    private Stack<Integer> factorVariablesChanged;
+    private boolean[][] changed;
+    private boolean[][] storedChanged;
 
     private double[] residual;
     private double[] LxF;
@@ -115,6 +114,15 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         // Put default bounds on loadings
 //        loadings.addBounds();
 
+
+        changed=new boolean[loadings.getRowDimension()][factors.getColumnDimension()];
+        storedChanged=new boolean[loadings.getRowDimension()][factors.getColumnDimension()];
+
+        for (int i = 0; i <loadings.getRowDimension() ; i++) {
+            for (int j = 0; j <factors.getColumnDimension() ; j++) {
+                changed[i][j]=false;
+            }
+        }
 
         this.rowPrecision = rowPrecision;
         this.colPrecision = colPrecision;
@@ -402,7 +410,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         storedResidualKnown=residualKnown;
         storedLxFKnown=LxFKnown;
         System.arraycopy(residual, 0, storedResidual, 0, residual.length);
-        System.arraycopy(LxF, 0, storedLxF, 0, residual.length);
+
+//        System.arraycopy(LxF, 0, storedLxF, 0, residual.length);
+//        System.arraycopy(changed, 0, storedChanged, 0, residual.length);
+
 //        System.out.println(data.getParameterValue(10, 19));
 
 
@@ -424,6 +435,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void restoreState() {
+        changed=storedChanged;
         data.restoreParameterValues();
         loadings.restoreValues();
         factors.restoreValues();
@@ -485,6 +497,16 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        System.out.println(index);
 //            System.out.println(loadings.getParameterValue(index));}
         if(variable==factors){
+
+
+
+//            int column=index/factors.getColumnDimension();
+//            for (int i = 0; i <factors.getColumnDimension() ; i++) {
+//                changed[i][column]=true;
+//
+//            }
+
+
 
 
 //            factorVariablesChanged.push(index);

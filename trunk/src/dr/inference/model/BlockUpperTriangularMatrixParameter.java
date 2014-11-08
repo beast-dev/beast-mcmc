@@ -81,35 +81,44 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
 //    }
 
     public double getParameterValue(int row, int col) {
-        if (row > col) {
+        if (!matrixCondition(row, col)) {
             return 0.0;
         } else {
             return getParameter(col).getParameterValue(row);
         }
     }
 
-    private int getRow(int PID){
-        return  PID%getColumnDimension();
+    protected int getRow(int PID){
+        return  PID/getRowDimension();
     }
 
-    private int getColumn(int PID){
-        return PID/getRowDimension();
+    protected int getColumn(int PID){
+        return PID%getRowDimension();
     }
 
     public void setParameterValue(int PID, double value){
         int row=getRow(PID);
         int col=getColumn(PID);
+//        System.out.println(row+" "+col);
+//        System.out.println(matrixCondition(row, col));
 
-        if(row<=col){
+
+        if(matrixCondition(row, col)){
             setParameterValue(row, col, value);
         }
+    }
+
+
+
+    boolean matrixCondition(int row, int col){
+            return row<=col;
     }
 
     public double getParameterValue(int id){
         int row=getRow(id);
         int col=getColumn(id);
 
-        if(row<=col){
+        if(matrixCondition(row, col)){
             return getParameterValue(row, col);
         }
         else
@@ -147,7 +156,7 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
                 int row=getRow(dim);
                 int col=getColumn(dim);
 
-                if(row <= col)
+                if(matrixCondition(row, col))
                 return getParameters().get(dim-row).getBounds().getUpperLimit(getPindex().get(dim-row));
                 else
                     return 0.0;
@@ -157,7 +166,7 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
                 int row=getRow(dim);
                 int col=getColumn(dim);
 
-                if(row <= col)
+                if(matrixCondition(row, col))
                 return getParameters().get(dim-row).getBounds().getLowerLimit(getPindex().get(dim-row));
                 else
                     return 0.0;

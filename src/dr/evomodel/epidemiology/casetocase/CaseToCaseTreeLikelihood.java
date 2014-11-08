@@ -1,5 +1,4 @@
 package dr.evomodel.epidemiology.casetocase;
-import com.sun.deploy.util.ArrayUtil;
 import dr.app.tools.NexusExporter;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;

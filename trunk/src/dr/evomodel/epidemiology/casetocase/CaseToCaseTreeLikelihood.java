@@ -1429,18 +1429,20 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
 
     public LogColumn[] getColumns(){
-        LogColumn[] columns = new LogColumn[outbreak.size()];
+        LogColumn[] columns = new LogColumn[outbreak.infectedSize()];
         for(int i=0; i< outbreak.size(); i++){
             final AbstractCase infected = outbreak.getCase(i);
-            columns[i] = new LogColumn.Abstract(infected.toString()+"_infector"){
-                protected String getFormattedValue() {
-                    if(getInfector(infected)==null){
-                        return "Start";
-                    } else {
-                        return getInfector(infected).toString();
+            if(infected.wasEverInfected()) {
+                columns[i] = new LogColumn.Abstract(infected.toString() + "_infector") {
+                    protected String getFormattedValue() {
+                        if (getInfector(infected) == null) {
+                            return "Start";
+                        } else {
+                            return getInfector(infected).toString();
+                        }
                     }
-                }
-            };
+                };
+            }
         }
         return columns;
     }

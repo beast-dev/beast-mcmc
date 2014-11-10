@@ -4,6 +4,8 @@ package dr.inference.model;
 @author Max Tolkoff
 */
 
+//TODO Indexing is probably wrong for certain things, especially for setParameterValue function. See transposed version.
+
 public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     private int rowDim;
     private Bounds bounds = null;

@@ -120,7 +120,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         for (int i = 0; i <loadings.getRowDimension() ; i++) {
             for (int j = 0; j <factors.getColumnDimension() ; j++) {
-                changed[i][j]=false;
+                changed[i][j]=true;
             }
         }
 
@@ -244,10 +244,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < p; j++) {
+                if(changed[i][j]==true && continuous.getParameterValue(i)!=0){
                 double sum = 0;
                 for (int k = 0; k < dim; k++)
                     sum += Left.getParameterValue(i, k) * Right.getParameterValue(k,j);
                 answer[i*p+j]=sum;
+                changed[i][j]=false;}
             }
         }
     }
@@ -266,7 +268,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private void subtract(MatrixParameter Left, double[] Right, double[] answer){
         int row=Left.getRowDimension();
         int col=Left.getColumnDimension();
-        boolean containsDiscrete=false;
         for (int i = 0; i <row ; i++) {
             if(continuous.getParameterValue(i)!=0){
                 for (int j = 0; j < col; j++) {
@@ -411,21 +412,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         storedLxFKnown=LxFKnown;
         System.arraycopy(residual, 0, storedResidual, 0, residual.length);
 
-//        System.arraycopy(LxF, 0, storedLxF, 0, residual.length);
-//        System.arraycopy(changed, 0, storedChanged, 0, residual.length);
+        System.arraycopy(LxF, 0, storedLxF, 0, residual.length);
+        System.arraycopy(changed, 0, storedChanged, 0, changed.length);
 
-//        System.out.println(data.getParameterValue(10, 19));
-
-
-//        int index=0;
-//        for (int i = 0; i <continuous.getDimension() ; i++) {
-//            if(continuous.getParameterValue(i)==0){
-//                for (int j = 0; j <data.getParameter(i).getDimension() ; j++) {
-//                    storedData.getParameter(index).setParameterValueQuietly(j, getData().getParameterValue(i,j));
-//                }
-//                index++;
-//            }
-//        }
     }
 
     /**
@@ -487,24 +476,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        if(variable==data){
-//            isDataScaled=false;
-//            residualKnown=false;
-//            traceKnown=false;
-//        }
-//        if(variable==loadings){
-//        System.out.println(variable.getVariableName());
-//        System.out.println(index);
-//            System.out.println(loadings.getParameterValue(index));}
         if(variable==factors){
 
-
-
-//            int column=index/factors.getColumnDimension();
-//            for (int i = 0; i <factors.getColumnDimension() ; i++) {
-//                changed[i][column]=true;
-//
-//            }
+//            System.out.println("Factors Changed");
+//            System.out.println(index);
+//            System.out.println(index/factors.getRowDimension());
+            for (int i = 0; i <loadings.getRowDimension() ; i++) {
+                changed[i][index/factors.getRowDimension()]=true;
+            }
 
 
 
@@ -518,6 +497,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             likelihoodKnown = false;
         }
         if(variable==loadings){
+//            System.out.println("Loadings Changed");
+//            System.out.println(index);
+//            System.out.println(index/loadings.getRowDimension());
+            for (int i = 0; i <factors.getColumnDimension(); i++) {
+                changed[index%loadings.getRowDimension()][i]=true;
+            }
 
 
 //            factorVariablesChanged.push(index);

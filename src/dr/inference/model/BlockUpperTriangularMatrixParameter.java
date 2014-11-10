@@ -89,11 +89,11 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     }
 
     protected int getRow(int PID){
-        return  PID/getRowDimension();
+        return  PID%getColumnDimension();
     }
 
     protected int getColumn(int PID){
-        return PID%getRowDimension();
+        return PID/getColumnDimension();
     }
 
     public void setParameterValue(int PID, double value){

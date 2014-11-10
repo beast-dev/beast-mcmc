@@ -68,7 +68,7 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
         for (int j = 0; j < factors.getColumnDimension(); j++) {
             double sum = 0;
             for (int k = 0; k < factors.getRowDimension(); k++) {
-                sum += factors.getParameterValue(k, j) * loadings.getParameterValue(k, i);
+                sum += factors.getParameterValue(k, j) * loadings.getParameterValue(i, k);
             }
             double temp = data.getParameterValue(i, j) - sum;
             di += temp * temp;

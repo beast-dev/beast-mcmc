@@ -62,9 +62,9 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
     }
 
     public void setParameterValue(int row, int col, double value){
-
         if(matrixCondition(row, col)){
-            getParameter(col).setParameterValue(row-col, value);
+            getParameter(col).setParameterValueQuietly(row - col, value);
+            fireParameterChangedEvent(col*getRowDimension()+row, ChangeType.VALUE_CHANGED);
         }
     }
 

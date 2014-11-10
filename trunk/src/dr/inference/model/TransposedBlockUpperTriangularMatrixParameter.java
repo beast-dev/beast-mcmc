@@ -49,11 +49,11 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
     }
 
     protected int getRow(int PID){
-        return  PID/getColumnDimension();
+        return  PID%getRowDimension();
     }
 
     protected int getColumn(int PID){
-        return PID%getColumnDimension();
+        return PID/getRowDimension();
     }
 
     @Override

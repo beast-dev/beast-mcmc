@@ -152,6 +152,11 @@ public class ClockRateModelEditor {
 
 			int k = PartitionData.clockParameterIndices[index][i];
 
+			if (k == 1 || k == 2) {
+				clockParameterFields[k]
+						.setToolTipText("Parameter in the log space");
+			}//END: ucld.mean ucld.stdev check
+			
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(clockParameterFields[k], BorderLayout.WEST);
 			panel.setOpaque(false);

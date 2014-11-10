@@ -55,14 +55,20 @@ public class MatrixMatrixProduct extends MatrixParameter implements VariableList
 
 
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        if(variable==right)
-            for (int i = 0; i <getColumnDimension() ; i++) {
-                areValuesStored[index/right.getColumnDimension()][i]=false;
-            }
-        if(variable==left)
+        if(variable==right) {
+//            System.out.println("RightChanged");
+//            System.out.println(index/getRowDimension());
+//            System.out.println(index);
             for (int i = 0; i <getRowDimension() ; i++) {
-                areValuesStored[i][index%midDim]=false;
-            }
+                areValuesStored[i][index/right.getRowDimension()]=false;
+            }  }
+        if(variable==left) {
+//            System.out.println("LeftChanged");
+//            System.out.println(index%left.getRowDimension());
+//            System.out.println(index);
+            for (int i = 0; i <getColumnDimension(); i++) {
+                areValuesStored[index%left.getRowDimension()][i]=false;
+            }  }
         fireParameterChangedEvent(index, type);
     }
 

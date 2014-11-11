@@ -115,11 +115,11 @@ public class BranchJumpPlotter {
             ArrayList<Tree> trees = new ArrayList<Tree>();
             int count = 1;
             while(treesIn.hasTree()){
-                if(count % 100 == 0){
-                    System.out.println("Doing tree "+count);
-                }
+                System.out.println("Doing tree "+count);
+
                 trees.add(rewireTree(treesIn.importNextTree(),true));
                 count++;
+                System.out.println();
             }
             Tree[] treeArray = trees.toArray(new Tree[trees.size()]);
             treesOut.exportTrees(treeArray);

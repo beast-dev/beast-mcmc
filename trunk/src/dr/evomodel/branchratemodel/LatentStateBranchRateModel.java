@@ -396,10 +396,37 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
                 latentTransitionFrequencyParameter.getParameterValue(0) * branchLength;
         final double zeroJumps = Math.exp(-rate);
 
+        // Check numerical tolerance
+        if (marg - zeroJumps <= 0.0) {
+            return 0.0;
+        }
+
         // TODO Overhead in creating double[] could be saved by changing signature to computePdf
 
         double density = joint / (marg - zeroJumps); // conditional on ending state and >= 2 jumps
         density *= branchLength;  // random variable is latentProportion = reward / branchLength, so include Jacobian
+
+        if (DEBUG) {
+            if (Double.isInfinite(Math.log(density))) {
+                System.err.println("Infinite density in LatentStateBranchRateModel:");
+                System.err.println("proportion   = " + proportion);
+                System.err.println("branchLength = " + branchLength);
+                System.err.println("lTRP  = " + latentTransitionRateParameter.getParameterValue(0));
+                System.err.println("lTFP  = " + latentTransitionFrequencyParameter.getParameterValue(0));
+                System.err.println("rate  = " + rate);
+                System.err.println("joint = " + joint);
+                System.err.println("marg  = " + marg);
+                System.err.println("zero  = " + zeroJumps);
+                System.err.println("Hit debugger");
+
+                final double joint2 = markovReward.computePdf(proportion * branchLength, branchLength, 0, 0);
+
+                final double marg2 = markovReward.computeConditionalProbability(branchLength, 0, 0);
+
+
+            }
+        }
+
         return density;
     }
 
@@ -474,5 +501,7 @@ public class LatentStateBranchRateModel extends AbstractModelLikelihood implemen
         System.out.println(model.getMarkovReward());
 
     }
+
+    private static boolean DEBUG = true;
 
 }

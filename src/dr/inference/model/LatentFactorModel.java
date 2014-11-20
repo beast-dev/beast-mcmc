@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.evomodel.continuous.SoftThresholdLikelihood;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -37,7 +38,7 @@ import java.util.List;
  * @author Marc Suchard
  */
 
-public class LatentFactorModel extends AbstractModelLikelihood implements Citable {
+public class LatentFactorModel extends AbstractModelLikelihood implements SoftThresholdLikelihood, Citable {
 //    private Matrix data;
 //    private Matrix factors;
 //    private Matrix loadings;
@@ -82,6 +83,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double[] LxF;
     private double[] storedResidual;
     private double[] storedLxF;
+
+    private double pathParameter;
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
@@ -625,5 +628,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
        return -.5*trace + .5*data.getColumnDimension()*logDetCol
 
                -.5*data.getRowDimension()*data.getColumnDimension()*Math.log(2.0 * StrictMath.PI);
+    }
+
+    public void setPathParameter(double beta){
+        pathParameter=beta;
     }
 }

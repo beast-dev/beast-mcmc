@@ -25,7 +25,10 @@
 
 package dr.inference.model;
 
+import dr.evomodel.continuous.SoftThresholdLikelihood;
 import dr.xml.*;
+
+import java.util.ArrayList;
 
 /**
  * A likelihood function which is simply the product of a set of likelihood functions.
@@ -55,6 +58,23 @@ public class PathLikelihood implements Likelihood {
         this.destination = destination;
         this.pseudoSource = pseudoSource;
         this.pseudoDestination = pseudoDestination;
+        if(source!=null) {
+            for (int j = 0; j < source.getModel().getModelCount(); j++) {
+                for (int i = 0; i < source.getModel().getModel(j).getModelCount(); i++) {
+                    if (source.getModel().getModel(0).getModel(i) instanceof SoftThresholdLikelihood) {
+                        thresholdSofteners.add((SoftThresholdLikelihood) source.getModel().getModel(0).getModel(i));
+                    }
+                }
+            }
+        }
+
+        if(pseudoSource!=null){
+            for (int i = 0; i < pseudoSource.getModel().getModelCount(); i++) {
+                if(pseudoSource.getModel().getModel(i) instanceof SoftThresholdLikelihood){
+                    thresholdSofteners.add((SoftThresholdLikelihood) pseudoSource.getModel().getModel(i));
+                }
+            }
+        }
 
         compoundModel.addModel(source.getModel());
         compoundModel.addModel(destination.getModel());
@@ -66,6 +86,11 @@ public class PathLikelihood implements Likelihood {
 
     public void setPathParameter(double pathParameter) {
         this.pathParameter = pathParameter;
+        if(thresholdSofteners!=null){
+            for(SoftThresholdLikelihood threshold:thresholdSofteners){
+                threshold.setPathParameter(pathParameter);
+            }
+        }
     }
 
     // **************************************************************
@@ -270,4 +295,6 @@ public class PathLikelihood implements Likelihood {
     private double pathParameter;
 
     private final CompoundModel compoundModel = new CompoundModel("compoundModel");
+
+    private ArrayList<SoftThresholdLikelihood> thresholdSofteners=new ArrayList<SoftThresholdLikelihood>();
 }

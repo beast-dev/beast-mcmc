@@ -175,7 +175,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             for (int i = 0; i <sData.getRowDimension() ; i++) {
                 for (int j = 0; j <sData.getColumnDimension() ; j++) {
                         this.data.setParameterValue(i,j,sData.getParameterValue(i,j));
-                    System.out.println(this.data.getParameterValue(i,j));
+//                    System.out.println(this.data.getParameterValue(i,j));
                 }
 
             }
@@ -565,7 +565,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean checkLoadings(){
         for(int i=0; i<StrictMath.min(loadings.getRowDimension(),loadings.getColumnDimension()); i++)
         {
-            if(loadings.getParameter(i).getParameterValue(i)<0)
+            if(loadings.getParameterValue(i,i)<0)
             {
                 return false;
             }

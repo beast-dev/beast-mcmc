@@ -49,7 +49,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable {
+public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable, SoftThresholdLikelihood {
 
     public final static String ORDERED_LATENT_LIABILITY_LIKELIHOOD = "orderedLatentLiabilityLikelihood";
 
@@ -152,6 +152,11 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         return logLikelihood;
     }
 
+    @Override
+    public void setPathParameter(double beta) {
+        pathParameter=beta;
+    }
+
     public String toString() {
         return getClass().getName() + "(" + getLogLikelihood() + ")";
     }
@@ -170,7 +175,11 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         if (valid) {
             return 0.0;
         } else {
-            return Double.NEGATIVE_INFINITY;
+            if(pathParameter==1)
+                return Double.NEGATIVE_INFINITY;
+            else{
+                return Math.log(1-pathParameter);
+            }
         }
     }
 
@@ -475,4 +484,6 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
     private double storedLogLikelihood;
 
     private static final boolean DEBUG = false;
+
+    private double pathParameter=1;
 }

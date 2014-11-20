@@ -84,7 +84,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
     private double[] storedResidual;
     private double[] storedLxF;
 
-    private double pathParameter;
+    private double pathParameter=1.0;
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
@@ -577,8 +577,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
     }
 
     private double calculateLogLikelihood() {
-         if(!checkLoadings())
-            return Double.NEGATIVE_INFINITY;
+         if(!checkLoadings()){
+             if(pathParameter==1)
+                return Double.NEGATIVE_INFINITY;
+            else{
+                return 1000*Math.log(1-pathParameter);}}
 
 //        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
 //        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());

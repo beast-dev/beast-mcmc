@@ -39,7 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class MultinomialLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable {
+public class MultinomialLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable, SoftThresholdLikelihood {
 
     public final static String MULTINOMIAL_LATENT_LIABILITY_LIKELIHOOD = "multinomialLatentLiabilityLikelihood";
 
@@ -235,6 +235,10 @@ public class MultinomialLatentLiabilityLikelihood extends AbstractModelLikelihoo
         }
     };
 
+    public void setPathParameter(double beta){
+        pathParameter=beta;
+    }
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -319,6 +323,8 @@ public class MultinomialLatentLiabilityLikelihood extends AbstractModelLikelihoo
     private double storedLogLikelihood;
 
     private static final boolean DEBUG = true;
+
+    private double pathParameter=1;
 
 
 }

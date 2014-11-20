@@ -49,7 +49,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable {
+public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable, SoftThresholdLikelihood {
 
     public final static String LATENT_LIABILITY_LIKELIHOOD = "latentLiabilityLikelihood";
 
@@ -173,6 +173,10 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
         return normalizationDelegate.getNormalizationConstant(working); // delegate to abstract Delegate
     }
 
+    public void setPathParameter(double beta){
+        pathParameter=beta;
+    }
+
     private final LatentTruncation.Delegate normalizationDelegate = new LatentTruncation.Delegate() {
 
         protected double computeNormalizationConstant(Distribution working) {
@@ -264,5 +268,7 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
     private double storedLogLikelihood;
 
     private static final boolean DEBUG = false;
+
+    private double pathParameter=1;
 
 }

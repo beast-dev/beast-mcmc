@@ -47,7 +47,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable {
+public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood implements LatentTruncation, Citable, SoftThresholdLikelihood {
 
     public final static String LATENT_LIABILITY_LIKELIHOOD = "intervalLatentLiabilityLikelihood";
 
@@ -306,6 +306,10 @@ public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood i
         }
     };
 
+    public void setPathParameter(double beta){
+        pathParameter=beta;
+    }
+
     private TreeModel treeModel;
     private PatternList patternList;
     private CompoundParameter tipTraitParameter;
@@ -317,5 +321,7 @@ public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood i
     private double storedLogLikelihood;
 
     private static final boolean DEBUG = false;
+
+    private double pathParameter=1;
 
 }

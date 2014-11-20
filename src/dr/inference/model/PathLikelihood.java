@@ -61,8 +61,8 @@ public class PathLikelihood implements Likelihood {
         if(source!=null) {
             for (int j = 0; j < source.getModel().getModelCount(); j++) {
                 for (int i = 0; i < source.getModel().getModel(j).getModelCount(); i++) {
-                    if (source.getModel().getModel(0).getModel(i) instanceof SoftThresholdLikelihood) {
-                        thresholdSofteners.add((SoftThresholdLikelihood) source.getModel().getModel(0).getModel(i));
+                    if (source.getModel().getModel(j).getModel(i) instanceof SoftThresholdLikelihood) {
+                        thresholdSofteners.add((SoftThresholdLikelihood) source.getModel().getModel(j).getModel(i));
                     }
                 }
             }

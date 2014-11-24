@@ -33,8 +33,9 @@ h1. CITING
    
 h1. TODO
 
-* parameters for lognormal clock model should be on a log scale or there should be a boolean switch for real/log scales
-* parser fo routput type should be case insensitive
+* PIBUSS bug with newick import (Importer line 199 read method). Does not happen if first char is newline
+* boolean switch for real/log scales for the parameters of lognormal clock model 
+* parser for output type should be case insensitive
 * fix simulation-inference XML problem when using codons
 * output type not updated after loading bussdata
 * tree/taxa not set in Partitions table after loading bussdata

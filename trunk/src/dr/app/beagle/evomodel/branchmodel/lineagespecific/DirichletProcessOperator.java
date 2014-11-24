@@ -127,6 +127,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 				if (occupancy[i] == 0) {
 					// TODO: M-H step here if not conjugate
 
+					//TODO: get from the data
 					double center = 0;
 					double scale = 1;
 					double df = realizationCount - 1;
@@ -136,28 +137,31 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 					double predDensity = t.pdf(param.getParameterValue(0));
 
 					// draw new
-					prob = intensity / (realizationCount - 1 + intensity);
+					prob = (intensity / (realizationCount - 1 + intensity)) * predDensity;
 					clusterProbs[i] = Math.log(prob);
-
+					
 				} else {
 
 					Parameter param = dpp.getUniqueParameter((int) zParameter.getParameterValue(index));
-					double density = dpp.getLogDensity(param);
+					double density = Math.exp(dpp.getLogDensity(param));
 
 					// draw existing
-					prob = occupancy[i] / (realizationCount - 1 + intensity);
+					prob = (occupancy[i] / (realizationCount - 1 + intensity)) * density;
 					clusterProbs[i] = Math.log(prob);
 
-				}
+				}//END: occupancy check
 
-				sum+=prob;
+				sum += prob;
 			}// END: i loop
 
+
+			//TODO: FUBAR here
 			// normalize (b in Neal 2000)
 			double logsum = Math.log(sum);
 			for (int i = 0; i < clusterProbs.length; i++) {
 				clusterProbs[i] -=  logsum;
 			}
+			
 			
 			dr.app.bss.Utils.exponentiate(clusterProbs);
 			
@@ -166,6 +170,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 				dr.app.bss.Utils.printArray(clusterProbs);
 			}
 
+			
+//			System.exit(-1);
+			
 			// sample
 //			int sampledCluster = dr.app.bss.Utils.sample(clusterProbs);
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
@@ -189,12 +196,10 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 	}
 
 	private void printZ() {
-
 		for (int i = 0; i < zParameter.getDimension(); i++) {
 			System.out.print(zParameter.getParameterValue(i) + " ");
 		}
 		System.out.println();
-
 	}// END: printZ
 
 	@Override

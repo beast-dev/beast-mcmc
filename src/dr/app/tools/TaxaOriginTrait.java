@@ -127,7 +127,6 @@ public class TaxaOriginTrait {
                     break;
                 } else {
                     String parentTrait = (String)currentParent.getAttribute(attributeName);
-                    parentTrait = parentTrait.replaceAll("\"","");
                     if(!parentTrait.equals(traitName)){
                         sameTrait = false;
                         out.put(traitName,parentTrait);
@@ -157,8 +156,6 @@ public class TaxaOriginTrait {
     private void tabulateOrigins(){
 
         HashMap<String,Integer> countsMap = new HashMap<String, Integer>();
-
-
 
         int count = 0;
         for(FlexibleTree currentTree: trees){

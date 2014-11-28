@@ -43,6 +43,7 @@ import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
 /**
@@ -51,6 +52,19 @@ import dr.math.MathUtils;
  */
 public class Utils {
 
+	// ////////////////////
+	// ---THREAD UTILS---//
+	// ////////////////////
+
+	public static void sleep(int seconds) {
+		try {
+
+			Thread.sleep(seconds * 1000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}// END: sleep
+	
 	// ////////////////////////////////
 	// ---RANDOM NUMB3R GENERATION---//
 	// ////////////////////////////////
@@ -143,9 +157,42 @@ public class Utils {
         double max = max(logX);
         for (int i = 0; i < logX.length; i++) {
             logX[i] -= max;
-        }
-    }
+		}
+	}// END: rescale
 
+	public double getParameterVariance(Parameter param) {
+		
+		int n = param.getSize();
+		double mean = getParameterMean(param);
+		double var = 0;
+		
+		for (int i = 0; i < n; i++) {
+
+			var+= Math.pow( (param.getValue(i) - mean), 2);
+
+		}
+		
+		var/= (n-1);
+		
+		return var;
+	}// END: getParameterVariance
+
+	public double getParameterMean(Parameter param) {
+
+		double mean = 0;
+		int n = param.getSize();
+
+		for (int i = 0; i < n; i++) {
+
+			mean += param.getValue(i);
+
+		}
+
+		mean /= n;
+
+		return mean;
+	}// END: getParameterMean
+	
 	// ////////////////////
 	// ---ARRAYS UTILS---//
 	// ////////////////////
@@ -160,7 +207,7 @@ public class Utils {
 
 		int max = -Integer.MAX_VALUE;
 
-		for (int i=0; i< array.length;i++) {
+		for (int i = 0; i < array.length; i++) {
 		
 			if (array[i] > max) {
 

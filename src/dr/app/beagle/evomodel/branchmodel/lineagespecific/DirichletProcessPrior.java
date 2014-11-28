@@ -110,6 +110,17 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
 	public double getLogDensity(Parameter parameter) {
 		double value[] = parameter.getAttributeValue();
+		
+		//TODO
+//		if(Double.isNaN(baseModel.logPdf(value))) {
+//			
+//			Utils.printArray(value);
+//			System.out.println(baseModel.logPdf(value));
+//		Utils.print2DArray(baseModel.getScaleMatrix());
+//			
+//			System.exit(-1);
+//		}
+		
 		return baseModel.logPdf(value);
 	}
 
@@ -132,9 +143,10 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 			
 		}
 		
+//		System.out.println(total);
 		
-		return  total;
-//		return  0;
+		return  0.0;
+//		return  total;
 	}
 
 	public double getCategoriesLogDensity(int[] counts) {
@@ -200,6 +212,14 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		likelihoodKnown = false;
 	}
 
+	public int getCategoryCount() {
+		return categoryCount;
+	}
+	
+	public Parameter getUniqueParameters() {
+		return uniquelyRealizedParameters;
+	}
+	
 	public Parameter getUniqueParameter(int index) {
 		return uniquelyRealizedParameters.getParameter(index);
 	}

@@ -8,7 +8,7 @@ import java.util.List;
  */
 public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTriangularMatrixParameter{
     public TransposedBlockUpperTriangularMatrixParameter(String name, Parameter[] params) {
-        super(name, params);
+        super(name, params, false);
 
 
 
@@ -39,14 +39,14 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
         return new TransposedBlockUpperTriangularMatrixParameter(name, parameters);
     }
 
-    public double getParameterValue(int row, int col){
-        if(col>row){
-            return 0;
-        }
-        else{
-            return getParameter(col).getParameterValue(row-col);
-        }
-    }
+//    public double getParameterValue(int row, int col){
+//        if(col>row){
+//            return 0;
+//        }
+//        else{
+//            return getParameter(col).getParameterValue(row-col);
+//        }
+//    }
 
     protected int getRow(int PID){
         return  PID%getRowDimension();
@@ -81,6 +81,10 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
             }
         }
         return slices.get(index);
+    }
+
+    protected int getInnerDimension(int row, int col){
+        return row-col;
     }
 
     public int getRowDimension(){

@@ -577,11 +577,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
     }
 
     private double calculateLogLikelihood() {
-         if(!checkLoadings()){
-             if(pathParameter==1)
-                return Double.NEGATIVE_INFINITY;
-            else{
-                return 1000*Math.log(1-pathParameter);}}
+//         if(!checkLoadings()){
+//             if(pathParameter==1)
+//                return Double.NEGATIVE_INFINITY;
+//            else{
+//                return Math.log(1-pathParameter);}}
 
 //        Matrix tRowPrecision= new Matrix(rowPrecision.getParameterAsMatrix());
 //        Matrix tColPrecision= new Matrix(colPrecision.getParameterAsMatrix());

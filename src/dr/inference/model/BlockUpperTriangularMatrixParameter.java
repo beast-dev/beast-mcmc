@@ -14,7 +14,7 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
         return TransposedBlockUpperTriangularMatrixParameter.recast(getVariableName(), this);
     }
 
-    public BlockUpperTriangularMatrixParameter(String name, Parameter[] params) {
+    public BlockUpperTriangularMatrixParameter(String name, Parameter[] params, boolean diagonalRestriction) {
         super(name);
 
         int rowDim=params[params.length-1].getSize();
@@ -48,6 +48,23 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
 //            }
 //            System.err.print("\n");
 //        }
+        if(diagonalRestriction) {
+            for (int i = 0; i < getColumnDimension(); i++) {
+                if (i < getRowDimension()) {
+                    double[] uppers = new double[i + 1];
+                    double[] lowers = new double[i + 1];
+
+                    for (int j = 0; j < uppers.length; j++) {
+                        uppers[j] = Double.POSITIVE_INFINITY;
+                        lowers[j] = Double.NEGATIVE_INFINITY;
+
+                    }
+                    lowers[i] = 0;
+                    getParameter(i).addBounds(new DefaultBounds(uppers, lowers));
+                }
+            }
+        }
+
     }
 
     @Override
@@ -86,7 +103,7 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
         if (!matrixCondition(row, col)) {
             return 0.0;
         } else {
-            return getParameter(col).getParameterValue(row);
+            return getParameter(col).getParameterValue(getInnerDimension(row, col));
         }
     }
 
@@ -99,6 +116,8 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     }
 
     public void setParameterValue(int PID, double value){
+
+        //TODO check if indexing is correct
         int row=getRow(PID);
         int col=getColumn(PID);
 //        System.out.println(row+" "+col);
@@ -150,16 +169,21 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
         return bounds;
     }
 
+    protected int getInnerDimension(int row, int col){
+        return row;
+    }
+
 
     private class BUTMPBounds implements Bounds<Double>{
-
+   //TODO test!
 
             public Double getUpperLimit(int dim) {
                 int row=getRow(dim);
                 int col=getColumn(dim);
 
-                if(matrixCondition(row, col))
-                return getParameters().get(dim-row).getBounds().getUpperLimit(getPindex().get(dim-row));
+                if(matrixCondition(row, col)){
+
+                 return getParameter(col).getBounds().getUpperLimit(getInnerDimension(row, col)); }
                 else
                     return 0.0;
             }
@@ -168,19 +192,23 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
                 int row=getRow(dim);
                 int col=getColumn(dim);
 
-                if(matrixCondition(row, col))
-                return getParameters().get(dim-row).getBounds().getLowerLimit(getPindex().get(dim-row));
+                if(matrixCondition(row, col)){
+                    return getParameter(col).getBounds().getLowerLimit(getInnerDimension(row, col));
+//                    System.out.println(getParameters().get(dim-row).getBounds().getLowerLimit(getPindex().get(dim-row)));
+//                return getParameters().get(dim-row).getBounds().getLowerLimit(getPindex().get(dim-row));
+                }
                 else
                     return 0.0;
             }
 
             public int getBoundsDimension() {
-                int nBlanks = 0;
-                for (int i = 0; i <getColumnDimension() ; i++) {
-                    nBlanks+=1;
-                }
-
-                return getDimension()-nBlanks;
+//                int nBlanks = 0;
+//                for (int i = 0; i <getColumnDimension() ; i++) {
+//                    nBlanks+=1;
+//                }
+//
+//                return getDimension()-nBlanks;
+                return getDimension();
         }
     }
 

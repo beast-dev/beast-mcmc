@@ -11,6 +11,17 @@ public class VectorSliceParameter extends CompoundParameter {
     public static final String SLICE_DIMENSION = "sliceDimension";
 
     private final int sliceDimension;
+    private Bounds<Double> bounds;
+
+    public Bounds<Double> getBounds() {
+
+        if (bounds == null) {
+            bounds = new sliceBounds();
+        }
+        return bounds;
+    }
+
+    //TODO test add bounds function
 
     public VectorSliceParameter(String name, int sliceDimension) {
         super(name);
@@ -47,6 +58,25 @@ public class VectorSliceParameter extends CompoundParameter {
     public void setParameterValueNotifyChangedAll(int dim, double value){
         Parameter parameter = getParameter(dim);
         parameter.setParameterValueNotifyChangedAll(sliceDimension, value);
+    }
+
+    private class sliceBounds implements Bounds<Double>{
+
+
+        @Override
+        public Double getUpperLimit(int dimension) {
+            return getParameter(dimension).getBounds().getUpperLimit(sliceDimension);
+        }
+
+        @Override
+        public Double getLowerLimit(int dimension) {
+            return getParameter(dimension).getBounds().getLowerLimit(sliceDimension);
+        }
+
+        @Override
+        public int getBoundsDimension() {
+            return getDimension();
+        }
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {

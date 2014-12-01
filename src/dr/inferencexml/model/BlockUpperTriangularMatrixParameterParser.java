@@ -11,6 +11,7 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
     private static final String BLOCK_UPPER_TRIANGULAR_MATRIX="blockUpperTriangularMatrixParameter";
     private static final String COLUMN_DIMENSION="columnDimension";
     private static final String TRANSPOSE="transpose";
+    private static final String DIAGONAL_RESTRICTION="diagonalRestriction";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -19,6 +20,7 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
         final boolean transpose= xo.getAttribute(TRANSPOSE, false);
 //        int rowDim=xo.getChildCount();
 //        int colDim;
+        final boolean diagonalRestriction=xo.getAttribute(DIAGONAL_RESTRICTION, false);
         Parameter temp=null;
 //        if(xo.hasAttribute(COLUMN_DIMENSION)) {
 //            colDim = xo.getAttribute(COLUMN_DIMENSION, 1);
@@ -37,7 +39,7 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
             temp = (Parameter) xo.getChild(i);
             params[i]=temp;}
 
-        BlockUpperTriangularMatrixParameter ltmp=new BlockUpperTriangularMatrixParameter(name, params);
+        BlockUpperTriangularMatrixParameter ltmp=new BlockUpperTriangularMatrixParameter(name, params, diagonalRestriction);
         if(transpose){
             return ltmp.transposeBlock();
         }
@@ -55,6 +57,7 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
             new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
             AttributeRule.newBooleanRule(TRANSPOSE, true),
             AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
+            AttributeRule.newBooleanRule(DIAGONAL_RESTRICTION, true),
     };
 
 

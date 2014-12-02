@@ -4,17 +4,13 @@ import org.apache.commons.math.MathException;
 
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.inference.operators.CoercionMode;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.distributions.TDistribution;
 
-public class DirichletProcessOperator extends SimpleMCMCOperator implements GibbsOperator
-//extends //SimpleMCMCOperator
-// AbstractCoercableOperator
-{
+public class DirichletProcessOperator extends SimpleMCMCOperator implements
+		GibbsOperator {
 
 	private static final boolean DEBUG = false;
 
@@ -25,16 +21,14 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 	private int uniqueRealizationCount;
 	private double intensity;
 
-	public DirichletProcessOperator(DirichletProcessPrior dpp,
-			Parameter zParameter, //CoercionMode mode,
-			int uniqueRealizationCount, double weight) {
-
-		// super(mode);
+	public DirichletProcessOperator(DirichletProcessPrior dpp, 
+			Parameter zParameter, 
+			double weight) {
 
 		this.dpp = dpp;
 		this.intensity = dpp.getGamma();
 		this.zParameter = zParameter;
-		this.uniqueRealizationCount = uniqueRealizationCount;
+		this.uniqueRealizationCount = dpp.getCategoryCount();
 		this.realizationCount = zParameter.getDimension();
 
 		setWeight(weight);
@@ -65,38 +59,34 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
 	private void doOperate() throws MathException {
 
-		// zParameter.setParameterValue(1, 1);
-		// zParameter.setParameterValue(0, 4);
-		// zParameter.setParameterValue(2, 4);
-
 //		int index = MathUtils.nextInt(realizationCount);
-		
 		for (int index = 0; index < realizationCount; index++) {
 
 			// if z[index] is currently a singleton remove
-			int zIndex = (int) zParameter.getParameterValue(index);
+			int zValue = (int) zParameter.getParameterValue(index);
+			
 			int occupied = 0;
 			for (int j = 0; j < realizationCount; j++) {
 
-				if (zIndex == zParameter.getParameterValue(j)) {
+				if (zValue == zParameter.getParameterValue(j)) {
 					occupied++;
 				}// END: value check
 
 			}// END: z loop
 
 			if (DEBUG) {
-				System.out.println("index: " + index + " value: " + zIndex + " occupancy: " + occupied);
+				System.out.println("index: " + index + " value: " + zValue + " occupancy: " + occupied);
 			}
 
 			if (occupied == 1) {
 
-				for (int j = 0; j < zParameter.getDimension(); j++) {
-
-					int zj = (int) zParameter.getParameterValue(j);
-					if (zj > zIndex) {
-						zParameter.setParameterValue(j, zj - 1);
-					}
-				}// END: z loop
+//				for (int j = 0; j < zParameter.getDimension(); j++) {
+//
+//					int zj = (int) zParameter.getParameterValue(j);
+//					if (zj > zValue) {
+//						zParameter.setParameterValue(j, zj - 1);
+//					}
+//				}// END: z loop
 
 				zParameter.setParameterValue(index, 0);
 
@@ -123,47 +113,38 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 			double sum = 0;
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
+				double loglike = dpp.getRealizedValuesLogDensity();
+
 				double prob = 0;
-				if (occupancy[i] == 0) {
-					// TODO: M-H step here if not conjugate
-
-					//TODO: get from the data
-					double center = 0;
-					double scale = 1;
-					double df = realizationCount - 1;
-
-					Parameter param = dpp.getUniqueParameter((int) zParameter.getParameterValue(index));
-					TDistribution t = new TDistribution(center, scale, df);
-					double predDensity = t.pdf(param.getParameterValue(0));
-
-					// draw new
-					prob = (intensity / (realizationCount - 1 + intensity)) * predDensity;
-					clusterProbs[i] = Math.log(prob);
+				if (occupancy[i] == 0) {// draw new
 					
-				} else {
+					prob = (intensity / (realizationCount - 1 + intensity));
+					
+				} else {// draw existing
 
-					Parameter param = dpp.getUniqueParameter((int) zParameter.getParameterValue(index));
-					double density = Math.exp(dpp.getLogDensity(param));
-
-					// draw existing
-					prob = (occupancy[i] / (realizationCount - 1 + intensity)) * density;
-					clusterProbs[i] = Math.log(prob);
+					prob = (occupancy[i] / (realizationCount - 1 + intensity)) ;
 
 				}//END: occupancy check
 
-				sum += prob;
+//				TODO
+//				System.out.println("i: ");
+//				System.out.println(prob);
+//				System.out.println(Math.log(prob));
+//				System.out.println(Math.log(prob) + loglike);
+//				System.out.println();
+				
+				clusterProbs[i] = Math.log(prob) + loglike;
+				sum += (prob);
 			}// END: i loop
 
-
-			//TODO: FUBAR here
+			
 			// normalize (b in Neal 2000)
 			double logsum = Math.log(sum);
 			for (int i = 0; i < clusterProbs.length; i++) {
 				clusterProbs[i] -=  logsum;
 			}
 			
-			
-			dr.app.bss.Utils.exponentiate(clusterProbs);
+			 dr.app.bss.Utils.exponentiate(clusterProbs);
 			
 			if (DEBUG) {
 				System.out.println("P(z[index] | z[-index]): ");
@@ -171,10 +152,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 			}
 
 			
-//			System.exit(-1);
-			
 			// sample
-//			int sampledCluster = dr.app.bss.Utils.sample(clusterProbs);
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
 			zParameter.setParameterValue(index, sampledCluster);
 
@@ -182,12 +160,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 				System.out.println("sampled category: " + sampledCluster + "\n");
 			}
 
-//			 printZ();
-//			 System.exit(-1);
-		}// END: realizations loop
+		}// END: index loop
 
-//		 printZ();
-//		 System.exit(-1);
 	}// END: doOperate
 
 	@Override
@@ -195,12 +169,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 		return DirichletProcessOperatorParser.DIRICHLET_PROCESS_OPERATOR;
 	}
 
-	private void printZ() {
-		for (int i = 0; i < zParameter.getDimension(); i++) {
-			System.out.print(zParameter.getParameterValue(i) + " ");
-		}
-		System.out.println();
-	}// END: printZ
+//	private void printZ() {
+//		for (int i = 0; i < zParameter.getDimension(); i++) {
+//			System.out.print(zParameter.getParameterValue(i) + " ");
+//		}
+//		System.out.println();
+//	}// END: printZ
 
 	@Override
 	public String getPerformanceSuggestion() {

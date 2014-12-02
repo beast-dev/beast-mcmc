@@ -178,20 +178,33 @@ public class Utils {
 	}// END: getParameterVariance
 
 	public double getParameterMean(Parameter param) {
-
 		double mean = 0;
 		int n = param.getSize();
-
 		for (int i = 0; i < n; i++) {
-
 			mean += param.getValue(i);
-
 		}
-
 		mean /= n;
 
 		return mean;
 	}// END: getParameterMean
+	
+	public static double getNorm(double[] vector) {
+		double norm = 0;
+		for (int i = 0; i < vector.length; i++) {
+			norm += Math.pow(vector[i], 2);
+		}
+
+		return Math.sqrt(norm);
+	}// END: getNorm
+
+	public static void normalize(double[] vector) {
+
+		double norm = getNorm(vector);
+		for (int i = 0; i < vector.length; i++) {
+			vector[i] = vector[i] / norm;
+		}
+
+	}// END: normalize
 	
 	// ////////////////////
 	// ---ARRAYS UTILS---//

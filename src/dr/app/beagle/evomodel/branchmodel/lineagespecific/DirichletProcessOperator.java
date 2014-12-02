@@ -12,7 +12,7 @@ import dr.math.MathUtils;
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		GibbsOperator {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private DirichletProcessPrior dpp;
 
@@ -110,7 +110,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			}
 
 			double[] clusterProbs = new double[uniqueRealizationCount];
-			double sum = 0;
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
 				double loglike = dpp.getRealizedValuesLogDensity();
@@ -125,32 +124,25 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					prob = (occupancy[i] / (realizationCount - 1 + intensity)) ;
 
 				}//END: occupancy check
-
-//				TODO
-//				System.out.println("i: ");
-//				System.out.println(prob);
-//				System.out.println(Math.log(prob));
-//				System.out.println(Math.log(prob) + loglike);
-//				System.out.println();
 				
 				clusterProbs[i] = Math.log(prob) + loglike;
-				sum += (prob);
 			}// END: i loop
 
-			
-			// normalize (b in Neal 2000)
-			double logsum = Math.log(sum);
+			//rescale
+			double max =dr.app.bss.Utils.max(clusterProbs);
 			for (int i = 0; i < clusterProbs.length; i++) {
-				clusterProbs[i] -=  logsum;
+				clusterProbs[i] -=  max;
 			}
 			
-			 dr.app.bss.Utils.exponentiate(clusterProbs);
+			dr.app.bss.Utils.exponentiate(clusterProbs);
+//			dr.app.bss.Utils.normalize(clusterProbs);
 			
 			if (DEBUG) {
 				System.out.println("P(z[index] | z[-index]): ");
 				dr.app.bss.Utils.printArray(clusterProbs);
 			}
 
+//			System.exit(-1);
 			
 			// sample
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);

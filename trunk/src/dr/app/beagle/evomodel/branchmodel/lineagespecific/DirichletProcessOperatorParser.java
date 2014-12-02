@@ -12,21 +12,16 @@ import dr.xml.XMLSyntaxRule;
 public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 
 	public static final String DIRICHLET_PROCESS_OPERATOR = "dpOperator";
-	public static final String UNIQUE_REALIZATION_COUNT = "uniqueRealizationCount";
 	
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		DirichletProcessPrior dpp = (DirichletProcessPrior) xo.getChild(DirichletProcessPrior.class);
-		
-		Parameter zParameter = (Parameter) xo.getChild(Parameter.class);
-		int uniqueRealizationCount = xo
-				.getIntegerAttribute(UNIQUE_REALIZATION_COUNT);
 
-		 final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
-		
-		return new DirichletProcessOperator(dpp, zParameter,
-				uniqueRealizationCount, weight);
+		Parameter zParameter = (Parameter) xo.getChild(Parameter.class);
+		final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
+
+		return new DirichletProcessOperator(dpp, zParameter, weight);
 	}// END: parseXMLObject
 
 	@Override
@@ -35,9 +30,7 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 
 				new ElementRule(DirichletProcessPrior.class, false),
 		new ElementRule(Parameter.class, false), //
-		AttributeRule.newDoubleRule(MCMCOperator.WEIGHT), //
-		AttributeRule.newIntegerRule(UNIQUE_REALIZATION_COUNT)
-
+		AttributeRule.newDoubleRule(MCMCOperator.WEIGHT) //
 		};
 
 	}// END: getSyntaxRules

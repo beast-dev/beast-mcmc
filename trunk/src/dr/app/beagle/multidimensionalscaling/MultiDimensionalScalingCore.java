@@ -68,4 +68,10 @@ public interface MultiDimensionalScalingCore {
      * Restore the stored state
      */
     void restoreState();
+
+    /**
+     * Set all recalculate flags
+     */
+    void makeDirty();
+
 }

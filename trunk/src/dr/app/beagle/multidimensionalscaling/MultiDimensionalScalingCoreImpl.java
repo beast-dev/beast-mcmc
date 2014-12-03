@@ -46,7 +46,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     public void initialize(int embeddingDimension, int locationCount) {
         this.embeddingDimension = embeddingDimension;
         this.locationCount = locationCount;
-        this.observationCount = locationCount * locationCount;
+        this.observationCount = (locationCount * (locationCount - 1)) / 2;
 
         observations = new double[locationCount][locationCount];
         squaredResiduals = new double[2][locationCount][locationCount];
@@ -64,16 +64,20 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void setPairwiseData(double[] observations) {
-        if (observations.length != observationCount) {
+        if (observations.length != (locationCount * locationCount)) {
             throw new RuntimeException("Observation data is not the correct dimension");
         }
-        System.arraycopy(observations, 0, this.observations, 0, observationCount);
+
+        int k = 0;
+        for (int i = 0; i < locationCount; i++) {
+            System.arraycopy(observations, k, this.observations[i], 0, locationCount);
+            k += locationCount;
+        }
     }
 
     @Override
     public void setParameters(double[] parameters) {
         precision = parameters[0];
-        likelihoodKnown = false;
     }
 
     @Override
@@ -84,38 +88,36 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
         System.arraycopy(location, 0, locations[locationIndex], 0, embeddingDimension);
         locationUpdated[locationIndex] = true;
-        likelihoodKnown = false;
         sumOfSquaredResidualsKnown = false;
     }
 
     @Override
     public double calculateLogLikelihood() {
-        if (!likelihoodKnown) {
-            if (!sumOfSquaredResidualsKnown) {
-                if (!residualsKnown) {
-                    computeSumOfSquaredResiduals();
-                } else {
-                    updateSumOfSquaredResiduals();
-                }
-                sumOfSquaredResidualsKnown = true;
+        makeDirty();
+
+        if (!sumOfSquaredResidualsKnown) {
+            if (!residualsKnown) {
+                computeSumOfSquaredResiduals();
+            } else {
+                updateSumOfSquaredResiduals();
             }
+            sumOfSquaredResidualsKnown = true;
+        }
 
-            logLikelihood = (0.5 * Math.log(precision) * observationCount) - (0.5 * precision * sumOfSquaredResiduals);
+        double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
+                (0.5 * precision * sumOfSquaredResiduals);
 
-            if (isLeftTruncated) {
-                throw new UnsupportedOperationException("Truncations not implemented");
+        if (isLeftTruncated) {
+            throw new UnsupportedOperationException("Truncations not implemented");
 //                if (!truncationsKnown) {
 //                    calculateTruncations(precision);
 //                }
 //                truncationSum = calculateTruncationSum();
 //                logLikelihood -= truncationSum;
-            }
+        }
 
-            likelihoodKnown = true;
-
-            for (int i = 0; i < locationUpdated.length; i++) {
-                locationUpdated[i] = false;
-            }
+        for (int i = 0; i < locationUpdated.length; i++) {
+            locationUpdated[i] = false;
         }
 
         return logLikelihood;
@@ -123,29 +125,33 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void storeState() {
-        storedLogLikelihood = logLikelihood;
         storedResidualFlag = residualFlag;
         storedSumOfSquaredResiduals = sumOfSquaredResiduals;
     }
 
     @Override
     public void restoreState() {
-        logLikelihood = storedLogLikelihood;
         residualFlag = storedResidualFlag;
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
 
-        likelihoodKnown = true;
         residualsKnown = true;
     }
 
+    public void makeDirty() {
+        sumOfSquaredResidualsKnown = false;
+        residualsKnown = false;
+
+
+    }
 
     protected void computeSumOfSquaredResiduals() {
         for (int i = 0; i < locationCount; i++) {
-            for (int j = 0; j < locationCount; j++) {
+            for (int j = i + 1; j < locationCount; j++) {
                 double distance = calculateDistance(locations[i], locations[j]);
                 double residual = distance - observations[i][j];
                 double squaredResidual = residual * residual;
-                squaredResiduals[residualFlag][i][j] = squaredResidual;
+                squaredResiduals[0][i][j] = squaredResidual;
+                squaredResiduals[1][i][j] = squaredResidual;
                 sumOfSquaredResiduals += squaredResidual;
             }
         }
@@ -221,10 +227,6 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     private double[][] locations;
 
     private boolean[] locationUpdated;
-
-    private boolean likelihoodKnown = false;
-    private double logLikelihood;
-    private double storedLogLikelihood;
 
     private boolean residualsKnown = false;
     private int residualFlag = 0;

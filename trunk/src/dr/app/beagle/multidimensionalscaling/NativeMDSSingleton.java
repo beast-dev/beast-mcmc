@@ -120,6 +120,8 @@ public class NativeMDSSingleton {
 
     public native void restoreState(int instance);
 
+    public native void makeDirty();
+
     public native void setPairwiseData(int instance, double[] observations);
 
     public native void setParameters(int instance, double[] parameters);

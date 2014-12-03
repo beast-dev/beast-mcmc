@@ -56,6 +56,11 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     }
 
     @Override
+    public void setParameters(double[] parameters) {
+        nativeSetParameters(parameters);
+    }
+
+    @Override
     public void updateLocation(int locationIndex, double[] location) {
         nativeUpdateLocation(locationIndex, location);
     }
@@ -78,6 +83,8 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private native void nativeInitialize(int dimensionCount, int locationCount);
 
     private native void nativeSetPairwiseData(double[] observations);
+
+    private native void nativeSetParameters(double[] parameters);
 
     private native void nativeUpdateLocation(int locationIndex, double[] location);
 

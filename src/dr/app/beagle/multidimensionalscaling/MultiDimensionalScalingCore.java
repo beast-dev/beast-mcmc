@@ -45,6 +45,11 @@ public interface MultiDimensionalScalingCore {
     void setPairwiseData(double[] observations);
 
     /**
+     *
+     */
+    void setParameters(double[] parameters);
+
+    /**
      * Updates the location of a single entity
      */
     void updateLocation(int locationIndex, double[] location);

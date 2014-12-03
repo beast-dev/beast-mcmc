@@ -32,6 +32,7 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
 import dr.util.Timer;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -43,7 +44,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id$
  */
-public final class SubstitutionModelDelegate {
+public final class SubstitutionModelDelegate implements Serializable {
 
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;

@@ -65,6 +65,8 @@ public class LocalClockModel extends AbstractBranchRateModel {
         // add the super class' tree traits (just the rate)
         helper.addTrait(this);
 
+        updateNodeClocks = true;
+
     }
 
     public void addExternalBranchClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate) throws Tree.MissingTaxonException {

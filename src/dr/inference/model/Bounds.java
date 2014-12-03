@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
@@ -33,7 +34,7 @@ import java.util.ArrayList;
  * @author Alexei Drummond
  * @version $Id: Bounds.java,v 1.2 2005/05/24 20:25:59 rambaut Exp $
  */
-public interface Bounds<V> {
+public interface Bounds<V> extends Serializable {
 
     /**
      * @return the upper limit of this hypervolume in the given dimension.

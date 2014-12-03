@@ -25,6 +25,8 @@
 
 package dr.inference.model;
 
+import java.io.Serializable;
+
 /**
  * An interface that provides a listener on a model.
  *
@@ -34,7 +36,7 @@ package dr.inference.model;
  * @author Andrew Rambaut
  */
 
-public interface ModelListener {
+public interface ModelListener extends Serializable {
 
 	/**
 	 * The model has changed. The model firing the event can optionally

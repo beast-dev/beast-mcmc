@@ -25,13 +25,15 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
+import java.io.Serializable;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @Author Marc A. Suchard
  * @version $Id$
  */
-public class EigenDecomposition {
+public class EigenDecomposition implements Serializable {
 
     public EigenDecomposition(double[] evec, double[] ievc, double[] eval) {
         Evec = evec;

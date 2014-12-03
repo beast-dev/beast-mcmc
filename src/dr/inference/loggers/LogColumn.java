@@ -25,6 +25,8 @@
 
 package dr.inference.loggers;
 
+import java.io.Serializable;
+
 /**
  * An interface for a column in a log.
  *
@@ -33,7 +35,7 @@ package dr.inference.loggers;
  * @version $Id: LogColumn.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public interface LogColumn {
+public interface LogColumn extends Serializable {
 
     /**
      * Set the label (heading) for this column

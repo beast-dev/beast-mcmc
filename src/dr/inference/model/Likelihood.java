@@ -28,6 +28,7 @@ package dr.inference.model;
 import dr.inference.loggers.Loggable;
 import dr.util.Identifiable;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 

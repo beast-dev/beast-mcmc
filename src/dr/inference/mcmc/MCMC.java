@@ -38,6 +38,7 @@ import dr.util.NumberFormatter;
 import dr.xml.Spawnable;
 
 import java.io.*;
+import java.util.Calendar;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -196,7 +197,7 @@ public class MCMC implements Identifiable, Spawnable {
     }
 
     // Experimental
-    //public static int ontheflyFreq = 0;
+    public final static boolean TEST_CLONING = false;
 
     /**
      * This method actually initiates the MCMC analysis.
@@ -236,6 +237,25 @@ public class MCMC implements Identifiable, Spawnable {
                 }
             }
 
+            if (TEST_CLONING) {
+                // TEST Code for cloning the MarkovChain to a file to distribute amongst processors
+                for(MarkovChainDelegate delegate : delegates) {
+                    mc.removeMarkovChainDelegate(delegate);
+                }
+                mc.removeMarkovChainListener(chainListener);
+
+                // Write the MarkovChain out and back in again...
+                writeMarkovChainToFile(new File("beast.clone"), mc);
+                mc = readMarkovChainFromFile(new File("beast.clone"));
+
+                mc.addMarkovChainListener(chainListener);
+
+                for(MarkovChainDelegate delegate : delegates) {
+                    mc.addMarkovChainDelegate(delegate);
+                }
+                // TEST Code end
+            }
+
             mc.runChain(chainLength, false);
 
             mc.terminateChain();
@@ -247,6 +267,39 @@ public class MCMC implements Identifiable, Spawnable {
             }
         }
         timer.stop();
+    }
+
+    protected boolean writeMarkovChainToFile(File file, MarkovChain mc) {
+        OutputStream fileOut = null;
+        try {
+            fileOut = new FileOutputStream(file);
+            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            out.writeObject(mc);
+            out.close();
+            fileOut.close();
+        } catch (IOException ioe) {
+            System.err.println("Unable to write file: " + ioe.getMessage());
+        }
+        return true;
+    }
+
+    protected MarkovChain readMarkovChainFromFile(File file) {
+        MarkovChain mc = null;
+        try {
+            FileInputStream fileIn =
+                    new FileInputStream(file);
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            mc = (MarkovChain) in.readObject();
+            in.close();
+            fileIn.close();
+        } catch (IOException ioe) {
+            System.err.println("Unable to read file: " + ioe.getMessage());
+        } catch (ClassNotFoundException cnfe) {
+            System.err.println("Unable to read file: " + cnfe.getMessage());
+            cnfe.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+
+        return mc;
     }
 
     protected final MarkovChainListener chainListener = new MarkovChainListener() {
@@ -316,13 +369,13 @@ public class MCMC implements Identifiable, Spawnable {
     private void showOperatorAnalysis(PrintStream out) {
         out.println();
         out.println("Operator analysis");
-            out.println(formatter.formatToFieldWidth("Operator", 50) +
-                    formatter.formatToFieldWidth("Tuning", 9) +
-                    formatter.formatToFieldWidth("Count", 11) +
-                    formatter.formatToFieldWidth("Time", 9) +
-                    formatter.formatToFieldWidth("Time/Op", 9) +
-                    formatter.formatToFieldWidth("Pr(accept)", 11) +
-                    (options.useCoercion() ? "" : " Performance suggestion"));
+        out.println(formatter.formatToFieldWidth("Operator", 50) +
+                formatter.formatToFieldWidth("Tuning", 9) +
+                formatter.formatToFieldWidth("Count", 11) +
+                formatter.formatToFieldWidth("Time", 9) +
+                formatter.formatToFieldWidth("Time/Op", 9) +
+                formatter.formatToFieldWidth("Pr(accept)", 11) +
+                (options.useCoercion() ? "" : " Performance suggestion"));
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
 

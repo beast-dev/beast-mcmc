@@ -25,6 +25,8 @@
 
 package dr.inference.markovchain;
 
+import java.io.Serializable;
+
 /**
  * An interface for an acceptance criterion.
  *
@@ -32,7 +34,7 @@ package dr.inference.markovchain;
  *
  * @version $Id: Acceptor.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  */
-public interface Acceptor {
+public interface Acceptor extends Serializable {
 
 	boolean accept(double oldScore, double newScore, double hastingsRatio, double[] logr);
 }

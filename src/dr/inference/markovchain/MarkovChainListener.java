@@ -27,6 +27,8 @@ package dr.inference.markovchain;
 
 import dr.inference.model.Model;
 
+import java.io.Serializable;
+
 /**
  * An interface for facilitating listening to events in an MCMC chain.
  *
@@ -36,7 +38,7 @@ import dr.inference.model.Model;
  * @version $Id: MarkovChainListener.java,v 1.3 2005/05/24 20:25:59 rambaut Exp $
  *
  */
-public interface MarkovChainListener {
+public interface MarkovChainListener extends Serializable {
 
     void bestState(long state, Model bestModel);
 

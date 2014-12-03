@@ -48,36 +48,6 @@ public class NativeMDSSingleton {
     private NativeMDSSingleton() {
     } // ensure singleton
 
-//    @Override
-//    public void initialize(int embeddingDimension, int locationCount) {
-//        nativeInitialize(embeddingDimension, locationCount);
-//    }
-//
-//    @Override
-//    public void setData(double[] observations, int[] observationTypes) {
-//        nativeSetData(observations, observationTypes);
-//    }
-//
-//    @Override
-//    public void updateLocations(int updateCount, double[] locations) {
-//        nativeUpdateLocations(updateCount, locations);
-//    }
-//
-//    @Override
-//    public double calculateLogLikelihood() {
-//        return nativeCalculateLogLikelihood();
-//    }
-//
-//    @Override
-//    public void storeState() {
-//        nativeStoreState();
-//    }
-//
-//    @Override
-//    public void restoreState() {
-//        nativeRestoreState();
-//    }
-
     private static String getPlatformSpecificLibraryName() {
         String osName = System.getProperty("os.name").toLowerCase();
         String osArch = System.getProperty("os.arch").toLowerCase();
@@ -110,7 +80,7 @@ public class NativeMDSSingleton {
 
     private static NativeMDSSingleton INSTANCE = null;
 
-    public native void initialize(int instance, int dimensionCount, int locationCount);
+    public native int initialize(int dimensionCount, int locationCount, long flags);
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 
@@ -120,7 +90,7 @@ public class NativeMDSSingleton {
 
     public native void restoreState(int instance);
 
-    public native void makeDirty();
+    public native void makeDirty(int instance);
 
     public native void setPairwiseData(int instance, double[] observations);
 

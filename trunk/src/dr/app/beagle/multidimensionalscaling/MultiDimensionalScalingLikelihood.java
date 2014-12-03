@@ -201,7 +201,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     public void makeDirty() {
         likelihoodKnown = false;
-//        mdsCore.makeDirty();
+        mdsCore.makeDirty();
     }
 
     public Model getModel() {

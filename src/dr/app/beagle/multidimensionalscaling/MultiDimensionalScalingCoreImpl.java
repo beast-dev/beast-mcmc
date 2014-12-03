@@ -48,8 +48,16 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         this.locationCount = locationCount;
         this.observationCount = locationCount * locationCount;
 
-        observations = new double[locationCount * locationCount];
+        observations = new double[locationCount][locationCount];
+        squaredResiduals = new double[2][locationCount][locationCount];
+        residualFlag = 0;
+        residualsKnown = false;
+        sumOfSquaredResidualsKnown = false;
+
         locationUpdated = new boolean[locationCount];
+        for (int i = 0; i < locationUpdated.length; i++) {
+            locationUpdated[i] = true;
+        }
 
         locations = new double[locationCount][embeddingDimension];
     }
@@ -65,51 +73,42 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     @Override
     public void setParameters(double[] parameters) {
         precision = parameters[0];
+        likelihoodKnown = false;
     }
 
     @Override
     public void updateLocation(int locationIndex, double[] location) {
-        locationUpdated[locationIndex] = true;
-        likelihoodKnown = false;
-        distancesKnown = false;
-        residualsKnown = false;
-
         if (location.length != embeddingDimension) {
             throw new RuntimeException("Location is not the correct dimension");
         }
+
         System.arraycopy(location, 0, locations[locationIndex], 0, embeddingDimension);
+        locationUpdated[locationIndex] = true;
+        likelihoodKnown = false;
+        sumOfSquaredResidualsKnown = false;
     }
 
     @Override
     public double calculateLogLikelihood() {
         if (!likelihoodKnown) {
-            if (locationsUpdated) {
-                calculateDistances();
-                residualsKnown = false;
-            }
-
-            double precision = mdsPrecisionParameter.getParameterValue(0);
-
-            if (!residualsKnown) {
-                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-            }
-
-            // totalNonMissingCount should be totalObservedCount (not > or < threshold)
-            double logLikelihood = (0.5 * Math.log(precision) * pointObservationCount) - (0.5 * precision * sumOfSquaredResiduals);
-
-            if (thresholdCount > 0) {
-                if (!thresholdsKnown) {
-                    thresholdSum = calculateThresholdObservations(precision);
+            if (!sumOfSquaredResidualsKnown) {
+                if (!residualsKnown) {
+                    computeSumOfSquaredResiduals();
+                } else {
+                    updateSumOfSquaredResiduals();
                 }
-                logLikelihood += thresholdSum;
+                sumOfSquaredResidualsKnown = true;
             }
+
+            logLikelihood = (0.5 * Math.log(precision) * observationCount) - (0.5 * precision * sumOfSquaredResiduals);
 
             if (isLeftTruncated) {
-                if (!truncationsKnown) {
-                    calculateTruncations(precision);
-                }
-                truncationSum = calculateTruncationSum();
-                logLikelihood -= truncationSum;
+                throw new UnsupportedOperationException("Truncations not implemented");
+//                if (!truncationsKnown) {
+//                    calculateTruncations(precision);
+//                }
+//                truncationSum = calculateTruncationSum();
+//                logLikelihood -= truncationSum;
             }
 
             likelihoodKnown = true;
@@ -124,73 +123,93 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void storeState() {
-
+        storedLogLikelihood = logLikelihood;
+        storedResidualFlag = residualFlag;
+        storedSumOfSquaredResiduals = sumOfSquaredResiduals;
     }
 
     @Override
     public void restoreState() {
+        logLikelihood = storedLogLikelihood;
+        residualFlag = storedResidualFlag;
+        sumOfSquaredResiduals = storedSumOfSquaredResiduals;
 
-    }
-
-    protected void calculateTruncations(double precision) {
-        double sd = 1.0 / Math.sqrt(precision);
-        for (int i = 0; i < distanceCount; i++) {
-            if (distanceUpdated[i]) {
-                truncations[i] = NormalDistribution.cdf(distances[i], 0.0, sd, true);
-            }
-        }
-        truncationsKnown = true;
-    }
-
-    protected double calculateTruncationSum() {
-        double sum = 0.0;
-        for (int i = 0; i < observationCount; i++) {
-            int dist = getDistanceIndexForObservation(i);
-            if (dist != -1) {
-                sum += truncations[dist];
-            } else {
-                sum += Math.log(0.5);
-            }
-        }
-        return sum;
-    }
-
-    protected double calculateSumOfSquaredResiduals() {
-        double sum = 0.0;
-        for (int i = 0; i < observationCount; i++) {
-            if (observationTypes[i] == ObservationType.POINT) {
-                // Only increment sum if dataTable[i][j] is observed (not > or < threshold)
-                double residual;
-                int dist = getDistanceIndexForObservation(i);
-                if (dist == -1) {
-                    // -1 denotes a distance to self (i.e., 0)
-                    residual = - observations[i];
-                } else {
-                    residual = distances[dist] - observations[i];
-                }
-                sum += residual * residual;
-            }
-        }
+        likelihoodKnown = true;
         residualsKnown = true;
-        return sum;
     }
 
-    protected void calculateDistances() {
-        int k = 0;
-        for (int x = 0; x < locationCount; x++) {
-            for (int y = x + 1; y < locationCount; y++) {
-                // the diagonal (x=y) is always zero so don't update it
-                if (locationUpdated[x] || locationUpdated[y]) {
-                    distances[k] = calculateDistance(
-                            locationsParameter.getParameter(x),
-                            locationsParameter.getParameter(y));
-                    distanceUpdated[k] = true;
-                }
-                k++;
+
+    protected void computeSumOfSquaredResiduals() {
+        for (int i = 0; i < locationCount; i++) {
+            for (int j = 0; j < locationCount; j++) {
+                double distance = calculateDistance(locations[i], locations[j]);
+                double residual = distance - observations[i][j];
+                double squaredResidual = residual * residual;
+                squaredResiduals[residualFlag][i][j] = squaredResidual;
+                sumOfSquaredResiduals += squaredResidual;
             }
         }
-        distancesKnown = true;
+
+        residualsKnown = true;
     }
+
+    protected void updateSumOfSquaredResiduals() {
+        double delta = 0.0;
+
+        int oldFlag = residualFlag;
+        residualFlag = 1 - residualFlag;
+
+        for (int i = 0; i < locationCount; i++) {
+            if (locationUpdated[i]) {
+                // if location i is updated, calculate the residuals to all js
+                // also sum the change in sum residual
+                for (int j = 0; j < locationCount; j++) {
+                    double distance = calculateDistance(locations[i], locations[j]);
+                    double residual = distance - observations[i][j];
+                    double squaredResidual = residual * residual;
+
+                    delta += squaredResiduals[oldFlag][i][j] - squaredResidual;
+
+                    squaredResiduals[residualFlag][i][j] = squaredResidual;
+                    squaredResiduals[residualFlag][j][i] = squaredResidual;
+                }
+            }
+        }
+
+        sumOfSquaredResiduals += delta;
+    }
+
+    protected double calculateDistance(double[] X, double[] Y) {
+        double sum = 0.0;
+        for (int i = 0; i < embeddingDimension; i++) {
+            double difference = X[i] - Y[i];
+            sum += difference * difference;
+        }
+        return Math.sqrt(sum);
+    }
+
+//    protected void calculateTruncations(double precision) {
+//        double sd = 1.0 / Math.sqrt(precision);
+//        for (int i = 0; i < distanceCount; i++) {
+//            if (distanceUpdated[i]) {
+//                truncations[i] = NormalDistribution.cdf(distances[i], 0.0, sd, true);
+//            }
+//        }
+//        truncationsKnown = true;
+//    }
+//
+//    protected double calculateTruncationSum() {
+//        double sum = 0.0;
+//        for (int i = 0; i < observationCount; i++) {
+//            int dist = getDistanceIndexForObservation(i);
+//            if (dist != -1) {
+//                sum += truncations[dist];
+//            } else {
+//                sum += Math.log(0.5);
+//            }
+//        }
+//        return sum;
+//    }
 
     private int embeddingDimension;
     private boolean isLeftTruncated = false;
@@ -198,7 +217,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     private int observationCount;
     private double precision;
 
-    private double[] observations;
+    private double[][] observations;
     private double[][] locations;
 
     private boolean[] locationUpdated;
@@ -207,13 +226,16 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     private double logLikelihood;
     private double storedLogLikelihood;
 
-    protected boolean distancesKnown = false;
+    private boolean residualsKnown = false;
+    private int residualFlag = 0;
+    private int storedResidualFlag;
+
+    private boolean sumOfSquaredResidualsKnown = false;
+    private double[][][] squaredResiduals;
     private double sumOfSquaredResiduals;
     private double storedSumOfSquaredResiduals;
 
-    protected boolean residualsKnown = false;
-
-    protected boolean truncationsKnown = false;
+    private boolean truncationsKnown = false;
     private double truncationSum;
     private double storedTruncationSum;
     private double[] truncations;

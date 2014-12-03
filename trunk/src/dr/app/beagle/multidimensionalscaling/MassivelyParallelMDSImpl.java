@@ -40,58 +40,45 @@ package dr.app.beagle.multidimensionalscaling;
  */
 public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
-    @Override
-    public void initialize(int embeddingDimension, int locationCount) {
-        nativeInitialize(embeddingDimension, locationCount);
+    private NativeMDSSingleton singleton = null;
+    private int instance = 0;
+
+    public MassivelyParallelMDSImpl() {
+        singleton = NativeMDSSingleton.loadLibrary();
     }
 
-
-    // embeddingDimension
-
-    // dim rowColumnCount
+    @Override
+    public void initialize(int embeddingDimension, int locationCount) {
+        singleton.initialize(instance, embeddingDimension, locationCount);
+    }
 
     @Override
     public void setPairwiseData(double[] observations) {
-        nativeSetPairwiseData(observations);
+        singleton.setPairwiseData(instance, observations);
     }
 
     @Override
     public void setParameters(double[] parameters) {
-        nativeSetParameters(parameters);
+        singleton.setParameters(instance, parameters);
     }
 
     @Override
     public void updateLocation(int locationIndex, double[] location) {
-        nativeUpdateLocation(locationIndex, location);
+        singleton.updateLocations(instance, locationIndex, location);
     }
 
     @Override
     public double calculateLogLikelihood() {
-        return nativeCalculateLogLikelihood();
+        return singleton.calculateLogLikelihood(instance);
     }
 
     @Override
     public void storeState() {
-        nativeStoreState();
+        singleton.storeState(instance);
     }
 
     @Override
     public void restoreState() {
-        nativeRestoreState();
+        singleton.restoreState(instance);
     }
-
-    private native void nativeInitialize(int dimensionCount, int locationCount);
-
-    private native void nativeSetPairwiseData(double[] observations);
-
-    private native void nativeSetParameters(double[] parameters);
-
-    private native void nativeUpdateLocation(int locationIndex, double[] location);
-
-    private native double nativeCalculateLogLikelihood();
-
-    private native void nativeStoreState();
-
-    private native void nativeRestoreState();
-
 }

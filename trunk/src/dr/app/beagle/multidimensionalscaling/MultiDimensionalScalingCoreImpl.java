@@ -93,15 +93,14 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     @Override
     public double calculateLogLikelihood() {
         if (!sumOfSquaredResidualsKnown) {
-//            if (!residualsKnown) {
-//                computeSumOfSquaredResiduals();
-//            } else {
-//                updateSumOfSquaredResiduals();
-//            }
+            if (!residualsKnown) {
+                computeSumOfSquaredResiduals();
+            } else {
+                updateSumOfSquaredResiduals();
+            }
             sumOfSquaredResidualsKnown = true;
         }
 
-        computeSumOfSquaredResiduals();
         double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
                 (0.5 * precision * sumOfSquaredResiduals);
 
@@ -195,7 +194,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
                     double residual = distance - observations[i][j];
                     double squaredResidual = residual * residual;
 
-                    delta += oldSquaredResidualRow[j] - squaredResidual;
+                    delta += squaredResidual - oldSquaredResidualRow[j];
 
                     squaredResiduals[i][j] = squaredResidual;
                     squaredResiduals[j][i] = squaredResidual;

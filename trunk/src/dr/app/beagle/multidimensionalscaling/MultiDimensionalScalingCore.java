@@ -40,11 +40,6 @@ public interface MultiDimensionalScalingCore {
     void initialize(int dimensionCount, int locationCount, int observationCount);
 
     /**
-     * cleans up and deallocates arrays.
-     */
-    void finalize() throws Throwable;
-
-    /**
      * sets the observation data
      */
     void setData(double[] observations, int[] observationTypes);

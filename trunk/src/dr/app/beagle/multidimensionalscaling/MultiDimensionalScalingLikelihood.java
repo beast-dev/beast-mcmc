@@ -112,6 +112,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
             final int[] rowLocationIndices,
             final int[] columnLocationIndices) {
 
+        this.mdsCore = new MultiDimensionalScalingCoreImpl();
         this.mdsDimension = mdsDimension;
 
         locationCount = locationLabels.length;
@@ -637,6 +638,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     private int pointObservationCount;
     private int thresholdCount;
 
+    private MultiDimensionalScalingCore mdsCore;
 
     private String[] locationLabels;
 

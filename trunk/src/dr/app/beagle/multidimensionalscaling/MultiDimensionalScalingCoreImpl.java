@@ -46,12 +46,12 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     }
 
     @Override
-    public void setData(double[] observations, int[] observationTypes) {
+    public void setPairwiseData(double[] observations) {
 
     }
 
     @Override
-    public void updateLocations(int updateCount, double[] locations) {
+    public void updateLocation(int locationIndex, double[] location) {
 
     }
 

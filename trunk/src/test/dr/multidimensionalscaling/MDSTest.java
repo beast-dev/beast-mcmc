@@ -47,9 +47,21 @@ public class MDSTest extends MathTestCase {
 
     public void testInitialization() {
         if (mds != null) {
-            mds.initialize(0, 2, 100);
+            int i = mds.initialize(2, 100, 0);
+            assertEquals(i, 0);
+            i = mds.initialize(2, 100, 0);
+            assertEquals(i, 1);
         } else {
             System.out.println("testInitialization skipped");
+        }
+
+    }
+
+    public void testMakeDirty() {
+        if (mds != null) {
+            mds.makeDirty(0);
+        } else {
+            System.out.println("testMakeDirty skipped");
         }
 
     }

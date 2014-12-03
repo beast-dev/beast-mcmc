@@ -41,7 +41,8 @@ package dr.app.beagle.multidimensionalscaling;
 public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     private NativeMDSSingleton singleton = null;
-    private int instance = 0;
+    private int instance = -1; // Get instance # via initialization
+    private final long flags = 0;
 
     public MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
@@ -49,7 +50,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     @Override
     public void initialize(int embeddingDimension, int locationCount) {
-        singleton.initialize(instance, embeddingDimension, locationCount);
+        instance = singleton.initialize(embeddingDimension, locationCount, flags);
     }
 
     @Override
@@ -84,7 +85,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     @Override
     public void makeDirty() {
-        singleton.makeDirty();
+        singleton.makeDirty(instance);
     }
 
 }

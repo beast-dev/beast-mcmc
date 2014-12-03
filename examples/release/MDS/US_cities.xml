@@ -1,0 +1,256 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+		
+	<!--
+boston  = c(   0,  206,  429, 1504,  963, 2976, 3095, 2979, 1949)
+ny      = c( 206,    0,  233, 1308,  802, 2815, 2934, 2786, 1771)
+dc      = c( 429,  233,    0, 1075,  671, 2684, 2799, 2631, 1616)
+miami   = c(1504, 1308, 1075,    0, 1329, 3273, 3053, 2687, 2037)
+chicago = c( 963,  802,  671, 1329,    0, 2013, 2142, 2054,  996)
+seattle = c(2976, 2815, 2684, 3273, 2013,    0,  808, 1131, 1307)
+sf      = c(3095, 2934, 2799, 3053, 2142,  808,    0,  379, 1235)
+la      = c(2979, 2786, 2631, 2687, 2054, 1131,  379,    0, 1059)
+denver  = c(1949, 1771, 1616, 2037,  966, 1307, 1235, 1059,    0)
+
+dist = rbind( boston, ny, dc, miami, chicago, seattle, sf, la, denver)
+
+fit = cmdscale(dist, k=2)
+
+plot(fit[,1], fit[,2], xlab="Coordinate 1", ylab="Coordinate 2", type="n")
+text(fit[,1], fit[,2], labels=row.names(dist))
+dev.copy2pdf(file="US-Cities.pdf")
+
+# Get prior values from R fit
+fit.cov = 1 / length(fit[,1]) * t(fit) %*% fit
+print(1 / fit.cov[1,1])
+print(1 / fit.cov[2,2])
+
+fit.dist = dist(fit)
+n = dim(fit)[1]
+SSR = 0
+index = 1
+for (i in 1:(n-1)) {
+	for (j in (i+1):n) {
+		residual = (fit.dist[index] - dist[i,j])
+		SSR = SSR + residual * residual
+#		print(cat(i,j,SSR,fit.dist[index],dist[i,j],residual,0))
+		index = index + 1
+	}	
+}
+print(SSR)
+	-->
+	
+	<parameter id="mds.residual.precision" value="1.2"/>		<!-- == 1 / sigma^2 from Oh & Raftery (2001) -->
+	<reciprocalStatistic id="mds.residual.variance">
+		<parameter idref="mds.residual.precision"/>
+	</reciprocalStatistic>
+		
+	<multiDimensionalScalingLikelihood id="mdsLikelihood" fileName="US_cities.txt" mdsDimension="2">
+		<locations>
+			<matrixParameter id="locations"/>
+		</locations>
+
+		<mdsPrecision>
+			<parameter idref="mds.residual.precision"/>
+		</mdsPrecision>
+	</multiDimensionalScalingLikelihood>
+
+<!--
+	<parameter id="locations" value="		
+		1.0 10.0
+		2.0 20.0
+		3.0 30.0
+		4.0 40.0
+		5.0 50.0
+	"/>
+-->	
+	<!-- The following assumes that locations is formatted:  taxonA.dim1 taxonA.dim2 taxonB.dim1 taxonB.dim2 taxonC.dim1 taxonC.dim2 -->
+	<maskedParameter id="locations.1" from="1" every="2">
+		<matrixParameter idref="locations"/>
+	</maskedParameter>	
+	<maskedParameter id="locations.2" from="2" every="2">
+		<matrixParameter idref="locations"/>
+	</maskedParameter>	
+			
+	<normalDistributionModel id="normalDistribution.1">
+		<mean>
+			<parameter id="mds.fitted.mean.1" value="0"/>		<!-- Fixed -->
+		</mean>
+		<precision>
+			<parameter id="mds.fitted.precision.1" value="1"/>	<!-- Random == 1 / lambda_1 from Oh & Raftery (2001) -->
+		</precision>
+	</normalDistributionModel>	
+	<normalDistributionModel id="normalDistribution.2">
+		<mean>
+			<parameter id="mds.fitted.mean.2" value="0"/>		<!-- Fixed -->
+		</mean>
+		<precision>
+			<parameter id="mds.fitted.precision.2" value="1"/>	<!-- Random == 1 / lambda_2 from Oh & Raftery (2001) -->
+		</precision>
+	</normalDistributionModel>
+	
+	<reciprocalStatistic id="mds.fitted.variance.1">
+		<parameter idref="mds.fitted.precision.1"/>
+	</reciprocalStatistic>
+	<reciprocalStatistic id="mds.fitted.variance.2">
+		<parameter idref="mds.fitted.precision.2"/>
+	</reciprocalStatistic>	
+	
+	<distributionLikelihood id="hierarchicalPrior.1">
+		<distribution>
+			<normalDistributionModel idref="normalDistribution.1"/>
+		</distribution>
+		<data>
+			<maskedParameter idref="locations.1"/>
+		</data>
+	</distributionLikelihood>
+	<distributionLikelihood id="hierarchicalPrior.2">
+		<distribution>
+			<normalDistributionModel idref="normalDistribution.2"/>
+		</distribution>
+		<data>
+			<maskedParameter idref="locations.2"/>
+		</data>
+	</distributionLikelihood>
+	
+	<!-- From OR: sigma^2 ~ InverseGamma(a, b), with
+			a: small
+			b: such that E(sigma^2) = fitted SSR / # of dissimilarities
+		NB: E(sigma^2) = b / (a - 1) = 1 / (scale * (shape - 1)) for shape > 1
+		We use: precision ~ Gamma(a, b), with
+			a: small (larger values lead to more weight, can be < 1 if # of residuals > 1)
+			b: such that E(precision) = # of dissimilarities / fitted SSR -->
+	<gammaPrior id="prior.residual" shape="1.0" scale="6.4E-4" offset="0.0"> <!-- E(precision) = 36 / 56310 -->
+		<parameter idref="mds.residual.precision"/>
+	</gammaPrior>	
+	
+	<!-- From OR: lambda_j ~ InverseGamma(alpha, beta_j), with
+			 alpha: small
+			beta_j: such that E(lambda_j) = avg(fitted x_j^2)
+		We use: precision ~ Gamma(alpha, beta_j), with
+			 alpha: small (larger values lead to more weight, can be < 1 if # of points > 1)
+			beta_j: such that E(precision) = 1 / avg(fitted x_j^2) -->			
+	<gammaPrior id="prior.precision.1" shape="1.0" scale="6.5E-7" offset="0.0"> <!-- E(precision) = 6.5E-07 -->
+		<parameter idref="mds.fitted.precision.1"/>
+	</gammaPrior>
+	<gammaPrior id="prior.precision.2" shape="1.0" scale="4.2E-6" offset="0.0"> <!-- E(precision) = 4.2E-06 -->
+		<parameter idref="mds.fitted.precision.2"/>
+	</gammaPrior>			
+		
+	<operators id="operators" optimizationSchedule="log">
+												
+		<randomWalkOperator windowSize="1.0" weight="20">
+			<parameter idref="locations"/>
+		</randomWalkOperator>
+						
+		<scaleOperator scaleFactor="0.75" weight="1">
+			<parameter idref="mds.residual.precision"/>
+		</scaleOperator>		<!-- TODO Write Gibbs sampler given SSR and Gamma prior -->		
+		
+		<normalGammaPrecisionGibbsOperator weight="1">
+			<likelihood>
+				<distributionLikelihood idref="hierarchicalPrior.1"/>
+			</likelihood>		
+			<prior>
+				<gammaPrior idref="prior.precision.1"/>
+			</prior>
+		</normalGammaPrecisionGibbsOperator>
+	
+		<normalGammaPrecisionGibbsOperator weight="1">
+			<likelihood>
+				<distributionLikelihood idref="hierarchicalPrior.2"/>
+			</likelihood>		
+			<prior>
+				<gammaPrior idref="prior.precision.2"/>
+			</prior>
+		</normalGammaPrecisionGibbsOperator>	
+		
+	</operators>
+	
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" fullEvaluation="10000">
+		<posterior id="posterior">
+			<prior id="prior">
+				<gammaPrior idref="prior.residual"/>
+				<gammaPrior idref="prior.precision.1"/>
+				<gammaPrior idref="prior.precision.2"/>
+		
+				<distributionLikelihood idref="hierarchicalPrior.1"/>
+				<distributionLikelihood idref="hierarchicalPrior.2"/>					
+			</prior>
+			
+			<likelihood id="likelihood">
+										
+				<!-- <dummyModel>					 
+					<parameter idref="locations"/>
+					<parameter idref="mds.residual.precision"/>
+					<parameter idref="mds.fitted.precision.1"/>
+					<parameter idref="mds.fitted.precision.2"/>
+				</dummyModel> -->
+
+				<multidimensionalScalingLikelihood idref="mdsLikelihood"/>
+
+			</likelihood>
+		
+		</posterior>
+		
+		<operators idref="operators"/>
+		
+		<log id="screenLog" logEvery="100000">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+
+			<column label="MDSPrecision" sf="6" width="12">
+				<parameter idref="mds.residual.precision"/>
+				<parameter idref="mds.fitted.precision.1"/>
+				<parameter idref="mds.fitted.precision.2"/>				
+			</column> 
+		</log>
+		
+		<log id="fileLog1" logEvery="10000" fileName="US_cities.log">
+			<posterior idref="posterior"/>
+			<prior idref="prior"/>
+			<likelihood idref="likelihood"/>
+
+			<parameter idref="mds.residual.precision"/>
+		</log>
+		
+		<log id="tauLog" logEvery="100" fileName="precision.log">
+			<parameter idref="mds.residual.precision"/>
+			<parameter idref="mds.fitted.precision.1"/>
+			<parameter idref="mds.fitted.precision.2"/>
+			<reciprocalStatistic idref="mds.residual.variance"/>
+			<reciprocalStatistic idref="mds.fitted.variance.1"/>
+			<reciprocalStatistic idref="mds.fitted.variance.2"/>
+		</log>
+<!--		
+		<log id="t1" logEvery="10000" fileName="t1.log">
+			<maskedParameter idref="locations.1"/>
+		</log>
+		
+		<log id="t2" logEvery="10000" fileName="t2.log">
+			<maskedParameter idref="locations.2"/>
+		</log>
+-->
+		<log id="fileLog2" logEvery="10000" fileName="US_cities.locations.log">
+			<matrixParameter idref="locations"/>
+		</log>
+		
+	</mcmc>
+<!--	
+	<traceAnalysis stdError="true" fileName="t1.log"/>
+	<traceAnalysis stdError="true" fileName="t2.log"/>
+	<traceAnalysis stdError="true" fileName="precision.log"/>
+-->
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+</beast>

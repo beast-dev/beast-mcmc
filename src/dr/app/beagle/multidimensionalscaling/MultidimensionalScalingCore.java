@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.antigenic;
+package dr.app.beagle.multidimensionalscaling;
 
 /**
  * MultidimensionalScalingCore - An interface describing the core likelihood functions.

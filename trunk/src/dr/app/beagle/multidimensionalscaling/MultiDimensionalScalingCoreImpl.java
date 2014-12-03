@@ -25,8 +25,6 @@
 
 package dr.app.beagle.multidimensionalscaling;
 
-import dr.math.distributions.NormalDistribution;
-
 /**
  * MultiDimensionalScalingCoreImpl
  *
@@ -164,6 +162,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     }
 
     protected void computeSumOfSquaredResiduals() {
+        sumOfSquaredResiduals = 0.0;
         for (int i = 0; i < locationCount; i++) {
             for (int j = i + 1; j < locationCount; j++) {
                 double distance = calculateDistance(locations[i], locations[j]);

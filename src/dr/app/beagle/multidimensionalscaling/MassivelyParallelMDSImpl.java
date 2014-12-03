@@ -81,4 +81,10 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public void restoreState() {
         singleton.restoreState(instance);
     }
+
+    @Override
+    public void makeDirty() {
+        singleton.makeDirty();
+    }
+
 }

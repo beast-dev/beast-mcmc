@@ -74,24 +74,25 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         int rowCount = dataTable.getRowCount();
         locationCount = rowCount;
 
-        int observationCount = ((rowCount - 1) * rowCount) / 2;
+        int observationCount = rowCount * rowCount;
         double[] observations = new double[observationCount];
         ObservationType[] observationTypes = new ObservationType[observationCount];
-//        int[] distanceIndices = new int[observationCount];
-        int[] rowLocationIndices = new int[observationCount];
-        int[] columnLocationIndices = new int[observationCount];
 
-        int u = 0;
+        double[][] tmp = new double[rowCount][rowCount];
+
         for (int i = 0; i < rowCount; i++) {
-
             double[] dataRow = dataTable.getRow(i);
 
             for (int j = i + 1; j < rowCount; j++) {
-                observations[u] = dataRow[j];
+                tmp[i][j] = tmp[j][i] = dataRow[j];
+            }
+        }
+
+        int u = 0;
+        for (int i = 0; i < rowCount; i++) {
+            for (int j = 0; j < rowCount; j++) {
+                observations[u] = (i == j ? 0 : tmp[i][j]);
                 observationTypes[u] = ObservationType.POINT;
-//                distanceIndices[u] = u;
-                rowLocationIndices[u] = i;
-                columnLocationIndices[u] = j;
                 u++;
             }
 
@@ -119,7 +120,11 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.mdsPrecisionParameter = mdsPrecision;
         addVariable(mdsPrecision);
 
+        mdsCore.setParameters(mdsPrecisionParameter.getParameterValues());
         mdsCore.setPairwiseData(observations);
+        for (int i = 0; i < locationCount; i++) {
+            mdsCore.updateLocation(i, locationsParameter.getColumnValues(i));
+        }
 
         // make sure everything is calculated on first evaluation
         makeDirty();
@@ -166,7 +171,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         if (variable == locationsParameter) {
             int locationIndex = index / mdsDimension;
 
-            mdsCore.updateLocation(locationIndex, locationsParameter.getRowValues(locationIndex));
+            mdsCore.updateLocation(locationIndex, locationsParameter.getColumnValues(locationIndex));
         } else if (variable == mdsPrecisionParameter) {
             mdsCore.setParameters(mdsPrecisionParameter.getParameterValues());
         } else {

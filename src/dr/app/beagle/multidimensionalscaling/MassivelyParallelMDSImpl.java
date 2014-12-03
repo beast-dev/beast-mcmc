@@ -1,5 +1,5 @@
 /*
- * MultiDimensionalScalingCoreImpl.java
+ * MassivelyParallelMDSImpl.java
  *
  * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,47 +26,65 @@
 package dr.app.beagle.multidimensionalscaling;
 
 /**
- * MultiDimensionalScalingCoreImpl
+ * MassivelyParallelMDSImpl
  *
- * @author Andrew Rambaut
  * @author Marc Suchard
+ * @author Andrew Rambaut
  * @version $Id$
- *
- * $HeadURL$
- *
- * $LastChangedBy$
- * $LastChangedDate$
- * $LastChangedRevision$
+ *          <p/>
+ *          $HeadURL$
+ *          <p/>
+ *          $LastChangedBy$
+ *          $LastChangedDate$
+ *          $LastChangedRevision$
  */
+public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
-public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingCore {
     @Override
     public void initialize(int embeddingDimension, int locationCount) {
-
+        nativeInitialize(embeddingDimension, locationCount);
     }
+
+
+    // embeddingDimension
+
+    // dim rowColumnCount
 
     @Override
     public void setData(double[] observations, int[] observationTypes) {
-
+        nativeSetData(observations, observationTypes);
     }
 
     @Override
     public void updateLocations(int updateCount, double[] locations) {
-
+        nativeUpdateLocations(updateCount, locations);
     }
 
     @Override
     public double calculateLogLikelihood() {
-        return 0;
+        return nativeCalculateLogLikelihood();
     }
 
     @Override
     public void storeState() {
-
+        nativeStoreState();
     }
 
     @Override
     public void restoreState() {
-
+        nativeRestoreState();
     }
+
+    private native void nativeInitialize(int dimensionCount, int locationCount);
+
+    private native void nativeSetData(double[] observations, int[] observationTypes);
+
+    private native void nativeUpdateLocations(int updateCount, double[] locations);
+
+    private native double nativeCalculateLogLikelihood();
+
+    private native void nativeStoreState();
+
+    private native void nativeRestoreState();
+
 }

@@ -1,5 +1,5 @@
 /*
- * LikelihoodCore.java
+ * MultiDimensionalScalingCore.java
  *
  * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -37,7 +37,7 @@ public interface MultiDimensionalScalingCore {
     /**
      * initializes arrays.
      */
-    void initialize(int dimensionCount, int locationCount, int observationCount);
+    void initialize(int embeddingDimension, int locationCount);
 
     /**
      * sets the observation data

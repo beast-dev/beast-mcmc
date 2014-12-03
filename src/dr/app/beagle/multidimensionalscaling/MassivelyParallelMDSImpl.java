@@ -51,13 +51,13 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     // dim rowColumnCount
 
     @Override
-    public void setData(double[] observations, int[] observationTypes) {
-        nativeSetData(observations, observationTypes);
+    public void setPairwiseData(double[] observations) {
+        nativeSetPairwiseData(observations);
     }
 
     @Override
-    public void updateLocations(int updateCount, double[] locations) {
-        nativeUpdateLocations(updateCount, locations);
+    public void updateLocation(int locationIndex, double[] location) {
+        nativeUpdateLocation(locationIndex, location);
     }
 
     @Override
@@ -77,9 +77,9 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     private native void nativeInitialize(int dimensionCount, int locationCount);
 
-    private native void nativeSetData(double[] observations, int[] observationTypes);
+    private native void nativeSetPairwiseData(double[] observations);
 
-    private native void nativeUpdateLocations(int updateCount, double[] locations);
+    private native void nativeUpdateLocation(int locationIndex, double[] location);
 
     private native double nativeCalculateLogLikelihood();
 

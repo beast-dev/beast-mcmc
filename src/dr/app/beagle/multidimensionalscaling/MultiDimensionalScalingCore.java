@@ -42,12 +42,12 @@ public interface MultiDimensionalScalingCore {
     /**
      * sets the observation data
      */
-    void setData(double[] observations, int[] observationTypes);
+    void setPairwiseData(double[] observations);
 
     /**
-     * Allocates partials for a node
+     * Updates the location of a single entity
      */
-    void updateLocations(int updateCount, double[] locations);
+    void updateLocation(int locationIndex, double[] location);
 
     /**
      * Calculates the log likelihood of the data given the current locations.

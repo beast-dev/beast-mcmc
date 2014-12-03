@@ -27,13 +27,15 @@ package dr.inference.prior;
 
 import dr.inference.model.Model;
 
+import java.io.Serializable;
+
 /**
  * This interface provides for general priors on models.
  *
  * @author Alexei Drummond
  * @version $Id: Prior.java,v 1.3 2005/05/24 20:26:00 rambaut Exp $
  */
-public interface Prior {
+public interface Prior extends Serializable {
 
     public static final class UniformPrior implements Prior {
         public double getLogPrior(Model m) {

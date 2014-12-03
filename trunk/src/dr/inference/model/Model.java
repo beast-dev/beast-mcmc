@@ -27,6 +27,7 @@ package dr.inference.model;
 
 import dr.util.Identifiable;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -38,7 +39,7 @@ import java.util.*;
  * @author Andrew Rambaut
  */
 
-public interface Model extends Identifiable  {
+public interface Model extends Identifiable, Serializable {
 
 	/**
 	 * Adds a listener that is notified when the this model changes.
@@ -112,7 +113,7 @@ public interface Model extends Identifiable  {
     /**
 	 * A helper class for storing listeners and firing events.
 	 */
-	public class ListenerHelper {
+	public class ListenerHelper implements Serializable {
 
 		public void fireModelChanged(Model model) {
 			fireModelChanged(model, model, -1);

@@ -25,12 +25,14 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
+import java.io.Serializable;
+
 /**
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @version $Id$
  */
-public interface EigenSystem {
+public interface EigenSystem extends Serializable {
     /**
      * Set the instantaneous rate matrix
      *

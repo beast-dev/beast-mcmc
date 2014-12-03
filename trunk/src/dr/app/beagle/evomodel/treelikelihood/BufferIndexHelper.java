@@ -25,7 +25,9 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-public class BufferIndexHelper {
+import java.io.Serializable;
+
+public class BufferIndexHelper implements Serializable {
 	
     /**
      * @param maxIndexValue the number of possible input values for the index

@@ -31,6 +31,7 @@ import dr.inference.model.Model;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.logging.Logger;
 
@@ -43,7 +44,10 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: MarkovChain.java,v 1.10 2006/06/21 13:34:42 rambaut Exp $
  */
-public final class MarkovChain {
+public final class MarkovChain implements Serializable {
+    private static final long serialVersionUID = 181L;
+
+
     private final static boolean DEBUG = false;
     private final static boolean PROFILE = true;
 

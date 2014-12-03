@@ -25,6 +25,8 @@
 
 package dr.evolution.tree;
 
+import java.io.Serializable;
+
 /**
  * Interface for a phylogenetic or genealogical tree.
  *
@@ -33,7 +35,7 @@ package dr.evolution.tree;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public interface NodeRef {
+public interface NodeRef extends Serializable {
 
 	int getNumber();
 

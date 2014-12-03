@@ -415,17 +415,17 @@ public interface Parameter extends Statistic, Variable<Double> {
                 //
             }
             final String id = getId();
-            if (id != null) buffer.append(id);
+            if (id != null) buffer.append(", ").append(id);
             if (bounds != null) {
                 buffer.append("=[").append(String.valueOf(bounds.getLowerLimit(0)));
-                buffer.append(",").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
+                buffer.append(", ").append(String.valueOf(bounds.getUpperLimit(0))).append("]");
             }
 
             for (int i = 1; i < getDimension(); i++) {
                 buffer.append(", ").append(String.valueOf(getParameterValue(i)));
                 if (bounds != null) {
                     buffer.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
-                    buffer.append(",").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+                    buffer.append(", ").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
                 }
             }
             return buffer.toString();

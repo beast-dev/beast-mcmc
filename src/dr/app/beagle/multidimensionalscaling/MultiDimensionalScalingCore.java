@@ -26,13 +26,13 @@
 package dr.app.beagle.multidimensionalscaling;
 
 /**
- * MultidimensionalScalingCore - An interface describing the core likelihood functions.
+ * MultiDimensionalScalingCore - An interface describing the core likelihood functions.
  *
  * @author Andrew Rambaut
  * @version $Id$
  */
 
-public interface MultidimensionalScalingCore {
+public interface MultiDimensionalScalingCore {
 
     /**
      * initializes arrays.

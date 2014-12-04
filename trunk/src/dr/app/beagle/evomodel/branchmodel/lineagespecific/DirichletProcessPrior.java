@@ -110,17 +110,6 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
 	public double getLogDensity(Parameter parameter) {
 		double value[] = parameter.getAttributeValue();
-		
-		//TODO
-//		if(Double.isNaN(baseModel.logPdf(value))) {
-//			
-//			Utils.printArray(value);
-//			System.out.println(baseModel.logPdf(value));
-//		Utils.print2DArray(baseModel.getScaleMatrix());
-//			
-//			System.exit(-1);
-//		}
-		
 		return baseModel.logPdf(value);
 	}
 
@@ -133,26 +122,15 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 	
 	public double getRealizedValuesLogDensity() {
 
-		int counts[] = getCounts();
 		double total = 0.0;
 
 		for (int i = 0; i < categoryCount; i++) {
 
 			Parameter param = uniquelyRealizedParameters.getParameter(i);
-			int whichCluster = i;
-
-			total += counts[whichCluster] * getLogDensity(param);
-
-//			System.out.println("[" + param.getParameterValue(0) + ", "
-//					+ baseModel.getMean()[0] + ", "
-//					+ baseModel.getScaleMatrix()[0][0] + "]"
-//					+ getLogDensity(param) + " * " + counts[whichCluster]);
+			total += getLogDensity(param);
 			
 		}
 		
-//		System.out.println(total);
-		
-//		return  0.0;
 		return  total;
 	}
 
@@ -199,14 +177,12 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 			likelihoodKnown = true;
 		}
 
-//		System.out.println(logLikelihood);
-		
 		return logLikelihood;
 	}
 
 	private double calculateLogLikelihood() {
 		int[] counts = getCounts();
-		return getCategoriesLogDensity(counts);// + getRealizedValuesLogDensity();
+		return getCategoriesLogDensity(counts)+ getRealizedValuesLogDensity();
 	}//END: calculateLogLikelihood
 
 	@Override

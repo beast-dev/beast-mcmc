@@ -1,5 +1,6 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.AbstractXMLObjectParser;
@@ -18,10 +19,12 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 
 		DirichletProcessPrior dpp = (DirichletProcessPrior) xo.getChild(DirichletProcessPrior.class);
 
+		Likelihood likelihod = (Likelihood) xo.getChild(Likelihood.class);
+		
 		Parameter zParameter = (Parameter) xo.getChild(Parameter.class);
 		final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-		return new DirichletProcessOperator(dpp, zParameter, weight);
+		return new DirichletProcessOperator(dpp, zParameter, likelihod, weight);
 	}// END: parseXMLObject
 
 	@Override

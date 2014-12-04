@@ -2,6 +2,7 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
 import org.apache.commons.math.MathException;
 
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.GibbsOperator;
@@ -12,7 +13,7 @@ import dr.math.MathUtils;
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		GibbsOperator {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private DirichletProcessPrior dpp;
 
@@ -21,8 +22,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	private int uniqueRealizationCount;
 	private double intensity;
 
+	private Likelihood likelihood;
+	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
 			Parameter zParameter, 
+			Likelihood likelihood,
 			double weight) {
 
 		this.dpp = dpp;
@@ -31,6 +35,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		this.uniqueRealizationCount = dpp.getCategoryCount();
 		this.realizationCount = zParameter.getDimension();
 
+		
+		this.likelihood = likelihood;
+		
 		setWeight(weight);
 
 	}// END: Constructor
@@ -59,8 +66,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	private void doOperate() throws MathException {
 
-//		int index = MathUtils.nextInt(realizationCount);
-		for (int index = 0; index < realizationCount; index++) {
+		int index = MathUtils.nextInt(realizationCount);
+//		for (int index = 0; index < realizationCount; index++) {
 
 			// if z[index] is currently a singleton remove
 			int zValue = (int) zParameter.getParameterValue(index);
@@ -112,30 +119,32 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			double[] clusterProbs = new double[uniqueRealizationCount];
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
-				double loglike = dpp.getRealizedValuesLogDensity();
+				double loglike = likelihood.getLogLikelihood();//dpp.getRealizedValuesLogDensity();
 
 				double prob = 0;
 				if (occupancy[i] == 0) {// draw new
 					
-					prob = (intensity / (realizationCount - 1 + intensity));
+					prob = ( (intensity) / (realizationCount - 1 + intensity) );
 					
 				} else {// draw existing
 
-					prob = (occupancy[i] / (realizationCount - 1 + intensity)) ;
+					prob = ( (occupancy[i]) / (realizationCount - 1 + intensity) );
 
 				}//END: occupancy check
+
+//				double prob = (occupancy[i] +intensity)/ (realizationCount - 1 + intensity) ;
 				
 				clusterProbs[i] = Math.log(prob) + loglike;
 			}// END: i loop
 
 			//rescale
-			double max =dr.app.bss.Utils.max(clusterProbs);
+			double max = dr.app.bss.Utils.max(clusterProbs);
 			for (int i = 0; i < clusterProbs.length; i++) {
 				clusterProbs[i] -=  max;
 			}
 			
 			dr.app.bss.Utils.exponentiate(clusterProbs);
-//			dr.app.bss.Utils.normalize(clusterProbs);
+			dr.app.bss.Utils.normalize(clusterProbs);
 			
 			if (DEBUG) {
 				System.out.println("P(z[index] | z[-index]): ");
@@ -152,7 +161,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				System.out.println("sampled category: " + sampledCluster + "\n");
 			}
 
-		}// END: index loop
+//		}// END: index loop
 
 	}// END: doOperate
 
@@ -175,7 +184,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	@Override
 	public int getStepCount() {
-		return realizationCount;
+		return 1;//realizationCount;
 	}// END: getStepCount
 
 }// END: class

@@ -1173,18 +1173,20 @@ public class BeautiOptions extends ModelOptions {
     }
 
     private void updateTraitParameters(AbstractPartitionData partition) {
-        ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
-        comp.createParameters(this);
+        if (partition.isCreatedFromTrait()) {
+            ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
+            comp.createParameters(this);
 
-        DiscreteTraitsComponentOptions comp2 = (DiscreteTraitsComponentOptions) getComponentOptions(DiscreteTraitsComponentOptions.class);
-        comp2.createParameters(this);
+            DiscreteTraitsComponentOptions comp2 = (DiscreteTraitsComponentOptions) getComponentOptions(DiscreteTraitsComponentOptions.class);
+            comp2.createParameters(this);
 
-        AncestralStatesComponentOptions comp3 = (AncestralStatesComponentOptions) getComponentOptions(AncestralStatesComponentOptions.class);
-        comp3.setReconstructAtNodes(partition, true);
-        comp3.setReconstructAtMRCA(partition, false);
+            AncestralStatesComponentOptions comp3 = (AncestralStatesComponentOptions) getComponentOptions(AncestralStatesComponentOptions.class);
+            comp3.setReconstructAtNodes(partition, true);
+            comp3.setReconstructAtMRCA(partition, false);
+        }
     }
 
-    public void renameTrait(AbstractPartitionData partition, String newName) {
+    public void renamePartition(AbstractPartitionData partition, String newName) {
         partition.setName(newName);
         updateTraitParameters(partition);
     }

@@ -40,7 +40,7 @@ package dr.app.beagle.multidimensionalscaling;
  */
 
 public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingCore {
-    private static final boolean USE_CACHING = false;
+    private static final boolean USE_CACHING = true;
 
     @Override
     public void initialize(int embeddingDimension, int locationCount) {
@@ -169,10 +169,7 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         sumOfSquaredResiduals = 0.0;
         for (int i = 0; i < locationCount; i++) {
 
-            // if we are not using caching then just compute the upper triangular matrix
-            int start = (USE_CACHING ? 0 : i + 1);
-
-            for (int j = start; j < locationCount; j++) {
+            for (int j = i+1; j < locationCount; j++) {
                 double distance = calculateDistance(locations[i], locations[j]);
                 double residual = distance - observations[i][j];
                 double squaredResidual = residual * residual;
@@ -182,10 +179,6 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
             }
         }
 
-        if (USE_CACHING) {
-            // if we computed the full square matrix then divide by 2
-            sumOfSquaredResiduals /= 2;
-        }
         residualsKnown = true;
         sumOfSquaredResidualsKnown = true;
     }

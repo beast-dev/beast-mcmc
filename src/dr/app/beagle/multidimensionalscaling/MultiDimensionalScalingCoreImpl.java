@@ -51,8 +51,6 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         observations = new double[locationCount][locationCount];
         squaredResiduals = new double[locationCount][locationCount];
         storedSquaredResiduals = new double[locationCount][locationCount];
-        squaredResidualRowSums = new double[locationCount];
-        storedSquaredResidualRowSums = new double[locationCount];
         residualsKnown = false;
         sumOfSquaredResidualsKnown = false;
 
@@ -85,6 +83,13 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     @Override
     public void updateLocation(int locationIndex, double[] location) {
+        if (USE_CACHING && locationUpdateCount != -1) {
+            if (locationUpdateCount > 1) {
+                throw new RuntimeException("Cannot change more than one location per step with caching on");
+            }
+            locationUpdateCount += 1;
+        }
+
         if (location.length != embeddingDimension) {
             throw new RuntimeException("Location is not the correct dimension");
         }
@@ -137,6 +142,8 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         }
 
         storedPrecision = precision;
+
+        locationUpdateCount = 0;
     }
 
     @Override
@@ -252,6 +259,9 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     private double precision;
     private double storedPrecision;
 
+    // Prevents more than one location being updated per step. Is initialized
+    // to zero in store().
+    private int locationUpdateCount = -1;
 
     private double[][] observations;
     private double[][] locations;
@@ -264,8 +274,6 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     private boolean sumOfSquaredResidualsKnown = false;
     private double[][] squaredResiduals;
     private double[][] storedSquaredResiduals;
-    private double[] squaredResidualRowSums;
-    private double[] storedSquaredResidualRowSums;
     private double sumOfSquaredResiduals;
     private double storedSumOfSquaredResiduals;
 

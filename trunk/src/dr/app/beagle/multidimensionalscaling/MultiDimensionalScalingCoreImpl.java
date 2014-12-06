@@ -49,8 +49,8 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
 
         observations = new double[locationCount][locationCount];
-        squaredResiduals = new double[locationCount][locationCount];
-        storedSquaredResiduals = new double[locationCount][locationCount];
+        squaredResiduals = new double[locationCount * locationCount];
+        storedSquaredResiduals = new double[locationCount * locationCount];
         residualsKnown = false;
         sumOfSquaredResidualsKnown = false;
 
@@ -137,9 +137,9 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     public void storeState() {
         storedSumOfSquaredResiduals = sumOfSquaredResiduals;
         for (int i = 0; i < locationCount; i++) {
-            System.arraycopy(squaredResiduals[i], 0 , storedSquaredResiduals[i], 0, locationCount);
             System.arraycopy(locations[i], 0 , storedLocations[i], 0, embeddingDimension);
         }
+        System.arraycopy(squaredResiduals, 0 , storedSquaredResiduals, 0, locationCount * locationCount);
 
         storedPrecision = precision;
 
@@ -151,13 +151,13 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
         sumOfSquaredResidualsKnown = true;
 
-        double[][] tmp = storedSquaredResiduals;
+        double[] tmp = storedSquaredResiduals;
         storedSquaredResiduals = squaredResiduals;
         squaredResiduals = tmp;
 
-        tmp = storedLocations;
+        double[][] tmp1 = storedLocations;
         storedLocations = locations;
-        locations = tmp;
+        locations = tmp1;
 
         precision = storedPrecision;
 
@@ -176,15 +176,17 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
         sumOfSquaredResiduals = 0.0;
         for (int i = 0; i < locationCount; i++) {
 
-            for (int j = i+1; j < locationCount; j++) {
+            for (int j = 0; j < locationCount; j++) {
                 double distance = calculateDistance(locations[i], locations[j]);
                 double residual = distance - observations[i][j];
                 double squaredResidual = residual * residual;
-                squaredResiduals[i][j] = squaredResidual;
-                squaredResiduals[j][i] = squaredResidual;
+                squaredResiduals[i * locationCount + j] = squaredResidual;
+                squaredResiduals[j * locationCount + i] = squaredResidual;
                 sumOfSquaredResiduals += squaredResidual;
             }
         }
+
+        sumOfSquaredResiduals /= 2;
 
         residualsKnown = true;
         sumOfSquaredResidualsKnown = true;
@@ -193,12 +195,8 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     protected void updateSumOfSquaredResiduals() {
         double delta = 0.0;
 
-        double[] oldSquaredResidualRow = new double[locationCount];
-
         for (int i = 0; i < locationCount; i++) {
             if (locationUpdated[i]) {
-
-                System.arraycopy(squaredResiduals[i], 0, oldSquaredResidualRow, 0, locationCount);
 
                 // if location i is updated, calculate the residuals to all js
                 // also sum the change in sum residual
@@ -208,10 +206,10 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
                         double residual = distance - observations[i][j];
                         double squaredResidual = residual * residual;
 
-                        delta += squaredResidual - oldSquaredResidualRow[j];
+                        delta += squaredResidual - squaredResiduals[i * locationCount + j];
 
-                        squaredResiduals[i][j] = squaredResidual;
-                        squaredResiduals[j][i] = squaredResidual;
+                        squaredResiduals[i * locationCount + j] = squaredResidual;
+                        squaredResiduals[j * locationCount + i] = squaredResidual;
                     }
                 }
             }
@@ -272,8 +270,8 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
     private boolean residualsKnown = false;
 
     private boolean sumOfSquaredResidualsKnown = false;
-    private double[][] squaredResiduals;
-    private double[][] storedSquaredResiduals;
+    private double[] squaredResiduals;
+    private double[] storedSquaredResiduals;
     private double sumOfSquaredResiduals;
     private double storedSumOfSquaredResiduals;
 

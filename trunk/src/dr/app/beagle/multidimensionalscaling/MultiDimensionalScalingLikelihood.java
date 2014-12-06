@@ -132,7 +132,6 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter) {
         if (locationsParameter.getColumnDimension() > 0){
-            boolean proceed = true;
             if (locationsParameter.getColumnDimension() != locationCount){
                 throw new RuntimeException("locationsParameter column dimension ("+locationsParameter.getColumnDimension()+") is not equal to the locationCount ("+locationCount+")");
             }

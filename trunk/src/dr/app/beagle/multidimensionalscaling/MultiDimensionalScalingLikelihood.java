@@ -109,7 +109,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
             final double[] observations,
             final ObservationType[] observationTypes) {
 
-        this.mdsCore = new MultiDimensionalScalingCoreImpl();
+        this.mdsCore = new MultiDimensionalScalingCoreImpl2();
         this.mdsCore.initialize(mdsDimension, locationCount);
         this.locationLabels = locationLabels;
 

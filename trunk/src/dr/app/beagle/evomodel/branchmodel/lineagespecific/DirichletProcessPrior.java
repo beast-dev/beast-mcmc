@@ -134,9 +134,9 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 		return  total;
 	}
 
-	public double getCategoriesLogDensity(int[] counts) {
+	public double getCategoriesLogDensity() {
 
-//		int[] counts = getCounts();
+		int[] counts = getCounts();
 		
 		if (VERBOSE) {
 			Utils.printArray(counts);
@@ -182,7 +182,7 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
 	private double calculateLogLikelihood() {
 		int[] counts = getCounts();
-		return getCategoriesLogDensity(counts)+ getRealizedValuesLogDensity();
+		return getCategoriesLogDensity()+ getRealizedValuesLogDensity();
 	}//END: calculateLogLikelihood
 
 	@Override
@@ -279,8 +279,8 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 				categoriesParameter, dummy, null, gammaParameter);
 		dpp.setVerbose();
 		
-		int[] counts = dpp.getCounts();
-		System.out.println("lnL:          " + dpp.getCategoriesLogDensity(counts));
+//		int[] counts = dpp.getCounts();
+		System.out.println("lnL:          " + dpp.getCategoriesLogDensity());
 		System.out.println("expected lnL: " + expectedLogL);
 	}// END: testDirichletProcess
 	

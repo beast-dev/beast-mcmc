@@ -13,7 +13,7 @@ import dr.math.MathUtils;
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		GibbsOperator {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private DirichletProcessPrior dpp;
 
@@ -120,7 +120,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
 				double loglike = likelihood.getLogLikelihood();//dpp.getRealizedValuesLogDensity();
-
+				
 				double prob = 0;
 				if (occupancy[i] == 0) {// draw new
 					

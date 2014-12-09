@@ -1,5 +1,5 @@
 /*
- * MultidimensionalScalingLikelihood.java
+ * MultiDimensionalScalingLikelihood.java
  *
  * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,8 +25,8 @@
 
 package dr.app.beagle.multidimensionalscaling;
 
+import dr.evomodel.antigenic.MultidimensionalScalingLikelihood;
 import dr.inference.model.*;
-import dr.math.distributions.NormalDistribution;
 import dr.util.DataTable;
 import dr.xml.*;
 
@@ -40,6 +40,7 @@ import java.io.IOException;
  */
 public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
+    public static final String NATIVE_MDS = "native_mds";
 
     public enum ObservationType {
         POINT,
@@ -101,6 +102,25 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         initialize(mdsDimension, mdsPrecision, locationsParameter, rowLabels, observations, observationTypes);
     }
 
+    private MultiDimensionalScalingCore getCore() {
+        int computeMode = 0;
+        String r = System.getProperty(NATIVE_MDS);
+        if (r != null) {
+            computeMode = Integer.parseInt(r.trim());
+        }
+
+        MultiDimensionalScalingCore core;
+        switch (computeMode) {
+            case 1:
+                System.err.println("Attempting to use a native MDS core; may the force be with you ....");
+                core = new MassivelyParallelMDSImpl();
+                break;
+            default:
+                core = new MultiDimensionalScalingCoreImpl2();
+        }
+        return core;
+    }
+
     protected void initialize(
             final int mdsDimension,
             final Parameter mdsPrecision,
@@ -109,7 +129,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
             final double[] observations,
             final ObservationType[] observationTypes) {
 
-        this.mdsCore = new MultiDimensionalScalingCoreImpl2();
+        this.mdsCore = getCore();
         this.mdsCore.initialize(mdsDimension, locationCount);
         this.locationLabels = locationLabels;
 
@@ -226,6 +246,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         public final static String LOCATIONS = "locations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
+        public static final String USE_OLD = "useOld";
 
         public String getParserName() {
             return MULTIDIMENSIONAL_SCALING_LIKELIHOOD;
@@ -251,7 +272,13 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new MultiDimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
+            boolean useOld = xo.getAttribute(USE_OLD, false);
+
+            if (useOld) {
+                return new MultidimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
+            } else {
+                return new MultiDimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
+            }
         }
 
         //************************************************************************
@@ -271,6 +298,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
+                AttributeRule.newStringRule(USE_OLD, true),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 

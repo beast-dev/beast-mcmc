@@ -142,7 +142,7 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
         sumOfSquaredResidualsKnown = true;
 
         if (storedSquaredResiduals != null) {
-            System.arraycopy(storedSquaredResiduals, 0 , squaredResiduals[updatedLocation], 0, embeddingDimension);
+            System.arraycopy(storedSquaredResiduals, 0 , squaredResiduals[updatedLocation], 0, locationCount);
             for (int j = 0; j < locationCount; j++) {
                 squaredResiduals[j][updatedLocation] = storedSquaredResiduals[j];
             }

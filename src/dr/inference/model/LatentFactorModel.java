@@ -185,7 +185,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
             data.fireParameterChangedEvent();
         }
 
-//       computeResiduals();
+       computeResiduals();
 //        System.out.print(new Matrix(residual.toComponents()));
 //        System.out.print(calculateLogLikelihood());
     }
@@ -357,7 +357,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
             }
         }
 //        System.out.println(new Matrix(answerTemp));
-        computeResiduals();
+//        computeResiduals();
         return answer;
     }
 

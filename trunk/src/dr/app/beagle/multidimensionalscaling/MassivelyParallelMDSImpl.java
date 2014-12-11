@@ -51,6 +51,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     @Override
     public void initialize(int embeddingDimension, int locationCount) {
         instance = singleton.initialize(embeddingDimension, locationCount, flags);
+        this.observationCount = (locationCount * (locationCount - 1)) / 2;
     }
 
     @Override
@@ -60,7 +61,8 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     @Override
     public void setParameters(double[] parameters) {
-        singleton.setParameters(instance, parameters);
+        precision = parameters[0];
+//        singleton.setParameters(instance, parameters); // Not necessary
     }
 
     @Override
@@ -70,22 +72,31 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     @Override
     public double calculateLogLikelihood() {
-        return singleton.calculateLogLikelihood(instance);
+        double sumOfSquaredResiduals = singleton.calculateLogLikelihood(instance);  // Really just returns SSR
+
+        return (0.5 * Math.log(precision) * observationCount) -
+                (0.5 * precision * sumOfSquaredResiduals);
     }
 
     @Override
     public void storeState() {
         singleton.storeState(instance);
+        storedPrecision = precision;
     }
 
     @Override
     public void restoreState() {
         singleton.restoreState(instance);
+        precision = storedPrecision;
     }
 
     @Override
     public void makeDirty() {
         singleton.makeDirty(instance);
     }
+
+    private int observationCount;
+    private double precision;
+    private double storedPrecision;
 
 }

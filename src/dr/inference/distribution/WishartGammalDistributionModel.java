@@ -180,4 +180,10 @@ public class WishartGammalDistributionModel extends AbstractModel implements Par
     private boolean storedWishartDistributionKnown;
 
     public static final String TYPE = "WishartGamma";
+
+	@Override
+	public double[] nextRandom() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

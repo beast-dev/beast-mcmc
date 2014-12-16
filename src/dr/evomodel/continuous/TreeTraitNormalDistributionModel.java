@@ -161,7 +161,7 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
     private boolean storedDistributionKnown;
 
     // RandomGenerator interface
-    public Object nextRandom() {
+    public double[] nextRandom() {
         checkDistribution();
         return distribution.nextMultivariateNormal();
     }

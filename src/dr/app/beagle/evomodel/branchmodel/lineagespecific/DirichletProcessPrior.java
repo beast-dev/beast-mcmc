@@ -19,7 +19,7 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 	
 	private Parameter categoriesParameter;
 	private CompoundParameter uniquelyRealizedParameters;
-	private ParametricMultivariateDistributionModel baseModel;
+	public ParametricMultivariateDistributionModel baseModel;
 	private Parameter gamma;
 
 	private int categoryCount;

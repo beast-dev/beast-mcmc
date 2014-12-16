@@ -2,18 +2,24 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
 import org.apache.commons.math.MathException;
 
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
+import dr.inferencexml.distribution.DistributionModelParser;
 import dr.math.MathUtils;
+import dr.math.distributions.NormalDistribution;
 
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		GibbsOperator {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private DirichletProcessPrior dpp;
 
@@ -22,11 +28,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	private int uniqueRealizationCount;
 	private double intensity;
 
-	private Likelihood likelihood;
+	private CompoundLikelihood likelihood;
 	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
 			Parameter zParameter, 
-			Likelihood likelihood,
+			CompoundLikelihood likelihood,
 			double weight) {
 
 		this.dpp = dpp;
@@ -61,13 +67,13 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			e.printStackTrace();
 		}// END: try-catch block
 
-		return 0;
+		return 0.0;
 	}// END: doOperation
 
 	private void doOperate() throws MathException {
 
-		int index = MathUtils.nextInt(realizationCount);
-//		for (int index = 0; index < realizationCount; index++) {
+//		int index = MathUtils.nextInt(realizationCount);
+		for (int index = 0; index < realizationCount; index++) {
 
 			// if z[index] is currently a singleton remove
 			int zValue = (int) zParameter.getParameterValue(index);
@@ -85,19 +91,15 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				System.out.println("index: " + index + " value: " + zValue + " occupancy: " + occupied);
 			}
 
-			if (occupied == 1) {
-
+//			if (occupied == 1) {
 //				for (int j = 0; j < zParameter.getDimension(); j++) {
-//
 //					int zj = (int) zParameter.getParameterValue(j);
 //					if (zj > zValue) {
 //						zParameter.setParameterValue(j, zj - 1);
 //					}
 //				}// END: z loop
-
-				zParameter.setParameterValue(index, 0);
-
-			}// END: singleton check
+//				zParameter.setParameterValue(index, 0);
+//			}// END: singleton check
 
 			int[] occupancy = new int[uniqueRealizationCount];
 			for (int i = 0; i < realizationCount; i++) {
@@ -119,22 +121,42 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			double[] clusterProbs = new double[uniqueRealizationCount];
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
-				double loglike = likelihood.getLogLikelihood();//dpp.getRealizedValuesLogDensity();
-				
 				double prob = 0;
 				if (occupancy[i] == 0) {// draw new
-					
-					prob = ( (intensity) / (realizationCount - 1 + intensity) );
-					
+
+					// draw from base model, evaluate at likelihood
+
+					double[] candidate = dpp.baseModel.nextRandom();
+					DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
+					double[] data = dl.getDataList().get(0) .getAttributeValue();
+					ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);
+
+					// TODO: general implementation for every distribution model
+					// TODO: move to method
+					int m = 10;
+					double loglike = 0;
+					for (int j = 0; j < m; j++) {
+
+						loglike += NormalDistribution.logPdf(data[0],
+								candidate[0], (double) dm.getVariable(1)
+										.getValue(0));
+
+					}
+					loglike /= m;
+
+					prob = Math.log((intensity)
+							/ (realizationCount - 1 + intensity))
+							+ loglike;
+
 				} else {// draw existing
 
-					prob = ( (occupancy[i]) / (realizationCount - 1 + intensity) );
+					// likelihood for component x_index
+					double loglike = likelihood.getLikelihood(index) .getLogLikelihood();
+					prob = Math.log((occupancy[i]) / (realizationCount - 1 + intensity)) + loglike;
 
-				}//END: occupancy check
+				}// END: occupancy check
 
-//				double prob = (occupancy[i] +intensity)/ (realizationCount - 1 + intensity) ;
-				
-				clusterProbs[i] = Math.log(prob) + loglike;
+				clusterProbs[i] = prob;
 			}// END: i loop
 
 			//rescale
@@ -151,7 +173,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				dr.app.bss.Utils.printArray(clusterProbs);
 			}
 
-//			System.exit(-1);
 			
 			// sample
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
@@ -161,21 +182,36 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				System.out.println("sampled category: " + sampledCluster + "\n");
 			}
 
-//		}// END: index loop
+			//TODO
+//			System.exit(-1);	
+			
+		}// END: index loop
 
+//			printZ();
+//			System.exit(-1);	
+			
 	}// END: doOperate
 
+//	private double getPartialLikelihood(int index) {
+//		double like = 0.0;
+//		
+//	Model model = 	likelihood.getModel().getModel(index);
+//		
+//	
+//	return like;
+//	}
+	
 	@Override
 	public String getOperatorName() {
 		return DirichletProcessOperatorParser.DIRICHLET_PROCESS_OPERATOR;
 	}
 
-//	private void printZ() {
-//		for (int i = 0; i < zParameter.getDimension(); i++) {
-//			System.out.print(zParameter.getParameterValue(i) + " ");
-//		}
-//		System.out.println();
-//	}// END: printZ
+	private void printZ() {
+		for (int i = 0; i < zParameter.getDimension(); i++) {
+			System.out.print(zParameter.getParameterValue(i) + " ");
+		}
+		System.out.println();
+	}// END: printZ
 
 	@Override
 	public String getPerformanceSuggestion() {
@@ -184,7 +220,21 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	@Override
 	public int getStepCount() {
-		return 1;//realizationCount;
+		return realizationCount;
 	}// END: getStepCount
 
+	private class Dummy {
+		  public ParametricDistributionModel dm;
+
+		  public Dummy(ParametricDistributionModel dm) {
+		    this.dm = dm; // you can access  
+		    
+		    
+		  }
+
+		  
+		  
+		  
+		}//END: dummy
+	
 }// END: class

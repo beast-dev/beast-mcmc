@@ -132,7 +132,7 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     private boolean storedDistributionKnown;
 
     // RandomGenerator interface
-    public Object nextRandom() {
+    public double[] nextRandom() {
         checkDistribution();
         return distribution.nextMultivariateNormal();
     }

@@ -252,7 +252,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
                 for (int k = 0; k < dim; k++)
                     sum += Left.getParameterValue(i, k) * Right.getParameterValue(k,j);
                 answer[i*p+j]=sum;
-                changed[i][j]=false;}
+                //changed[i][j]=false;
+                }
             }
         }
     }
@@ -481,12 +482,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if(variable==factors){
 
-//            System.out.println("Factors Changed");
-//            System.out.println(index);
-//            System.out.println(index/factors.getRowDimension());
-            for (int i = 0; i <loadings.getRowDimension() ; i++) {
-                changed[i][index/factors.getRowDimension()]=true;
-            }
+
+
+
+//            for (int i = 0; i <loadings.getRowDimension() ; i++) {
+//                changed[i][index/factors.getRowDimension()]=true;
+//            }
 
 
 
@@ -503,9 +504,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
 //            System.out.println("Loadings Changed");
 //            System.out.println(index);
 //            System.out.println(index/loadings.getRowDimension());
-            for (int i = 0; i <factors.getColumnDimension(); i++) {
-                changed[index%loadings.getRowDimension()][i]=true;
-            }
+
+
+//            for (int i = 0; i <factors.getColumnDimension(); i++) {
+//                changed[index%loadings.getRowDimension()][i]=true;
+//            }
 
 
 //            factorVariablesChanged.push(index);

@@ -1,6 +1,25 @@
 package dr.evomodel.epidemiology.casetocase;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
+
 import dr.app.tools.NexusExporter;
-import dr.evolution.tree.*;
+import dr.evolution.tree.FlexibleNode;
+import dr.evolution.tree.FlexibleTree;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
@@ -15,10 +34,6 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * Handles manipulation of the tree partition, and likelihood of the infection times.

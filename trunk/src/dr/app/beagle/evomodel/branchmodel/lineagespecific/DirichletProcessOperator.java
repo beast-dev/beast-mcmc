@@ -105,7 +105,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 					double candidate = dpp.baseModel.nextRandom()[0];//-2.6;
 					
-					double stdev = (double) dm.getVariable(1) .getValue(0);
+					double stdev = (Double) dm.getVariable(1) .getValue(0);
 					double data = dl.getDataList().get(0) .getAttributeValue()[0];
 					
 					double loglike = NormalDistribution.logPdf(data, candidate, stdev);
@@ -136,7 +136,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					
 					double mu = dpp.getUniqueParameter(i).getParameterValue(0);
 					
-					double stdev = (double) dm.getVariable(1) .getValue(0);
+					double stdev = (Double) dm.getVariable(1) .getValue(0);
 					double data = dl.getDataList().get(0) .getAttributeValue()[0];
 					
 //					System.out.println(index);

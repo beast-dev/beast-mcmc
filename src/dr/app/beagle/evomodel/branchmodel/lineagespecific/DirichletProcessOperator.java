@@ -73,34 +73,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	private void doOperate() throws MathException {
 
-//		int index = 1;//MathUtils.nextInt(realizationCount);
+//		int index = 0;
 		for (int index = 0; index < realizationCount; index++) {
-
-			// if z[index] is currently a singleton remove
-//			int zValue = (int) zParameter.getParameterValue(index);
-			
-//			int occupied = 0;
-//			for (int j = 0; j < realizationCount; j++) {
-//
-//				if (zValue == zParameter.getParameterValue(j)) {
-//					occupied++;
-//				}// END: value check
-//
-//			}// END: z loop
-//
-//			if (DEBUG) {
-//				System.out.println("index: " + index + " value: " + zValue + " occupancy: " + occupied);
-//			}
-
-//			if (occupied == 1) {
-//				for (int j = 0; j < zParameter.getDimension(); j++) {
-//					int zj = (int) zParameter.getParameterValue(j);
-//					if (zj > zValue) {
-//						zParameter.setParameterValue(j, zj - 1);
-//					}
-//				}// END: z loop
-//				zParameter.setParameterValue(index, 0);
-//			}// END: singleton check
 
 			int[] occupancy = new int[uniqueRealizationCount];
 			for (int i = 0; i < realizationCount; i++) {
@@ -134,13 +108,13 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					double stdev = (double) dm.getVariable(1) .getValue(0);
 					double data = dl.getDataList().get(0) .getAttributeValue()[0];
 					
-					
 					double loglike = NormalDistribution.logPdf(data, candidate, stdev);
 					double prob = (intensity) / (realizationCount - 1 + intensity);
 					logprob = Math.log(prob) + loglike;
 
 					if (DEBUG) {
-						System.out.println("probability for new: " + prob);
+						System.out.println("data: " + data);
+//						System.out.println("probability for new: " + prob);
 						System.out.println("mu candidate: " + candidate);
 						System.out.println("stdev: " + stdev);
 						System.out.println("loglikelihood for new: " + loglike);
@@ -157,9 +131,25 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);					
 					
 					
-					double mu = (double) dm.getVariable(0) .getValue(0);
+					//TODO: this is a proposed value, why?
+//					double mu = (double) dm.getVariable(0) .getValue(0);
+					
+					double mu = dpp.getUniqueParameter(i).getParameterValue(0);
+					
 					double stdev = (double) dm.getVariable(1) .getValue(0);
 					double data = dl.getDataList().get(0) .getAttributeValue()[0];
+					
+//					System.out.println(index);
+//					System.out.println(dl.getId());
+					
+					
+					
+					
+					
+					
+					
+					
+					
 					
 					double loglike = NormalDistribution.logPdf(data, mu, stdev);
 					
@@ -170,7 +160,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 					
 					if (DEBUG) {
-						System.out.println("probability for existing: " + prob);
+//						System.out.println("probability for existing: " + prob);
+						System.out.println("data: " + data);
 						System.out.println("mu[i]: " + mu);
 						System.out.println("stdev: " + stdev);
 						System.out.println("loglikelihood for existing: " + loglike );
@@ -187,7 +178,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 //			for (int i = 0; i < clusterProbs.length; i++) {
 //				clusterProbs[i] -=  max;
 //			}
-			
+//			
 			dr.app.bss.Utils.exponentiate(clusterProbs);
 //			dr.app.bss.Utils.normalize(clusterProbs);
 			

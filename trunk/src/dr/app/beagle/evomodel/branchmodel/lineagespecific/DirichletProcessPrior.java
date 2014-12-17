@@ -110,15 +110,22 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 
 	public double getLogDensity(Parameter parameter) {
 		double value[] = parameter.getAttributeValue();
+		
+		//TODO
+//		Utils.printArray(value);
+//		System.out.println(baseModel.logPdf(value));
+//		System.out.println();
+		
+		
 		return baseModel.logPdf(value);
 	}
 
-	public double getRealizedParameterLogLikelihood(int index) {
-		int counts[] = getCounts();
-		Parameter param = uniquelyRealizedParameters.getParameter(index);
-		double like = counts[index] * getLogDensity(param);
-		return like;
-	}
+//	public double getRealizedParameterLogLikelihood(int index) {
+//		int counts[] = getCounts();
+//		Parameter param = uniquelyRealizedParameters.getParameter(index);
+//		double like = counts[index] * getLogDensity(param);
+//		return like;
+//	}
 	
 	public double getRealizedValuesLogDensity() {
 
@@ -130,6 +137,9 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 			total += getLogDensity(param);
 			
 		}
+		
+		//TODO
+//		System.out.println("total:" + total);
 		
 		return  total;
 	}
@@ -181,8 +191,13 @@ public class DirichletProcessPrior  extends AbstractModelLikelihood  {
 	}
 
 	private double calculateLogLikelihood() {
-		int[] counts = getCounts();
-		return getCategoriesLogDensity()+ getRealizedValuesLogDensity();
+//		getCounts();
+		double loglike = getCategoriesLogDensity() + getRealizedValuesLogDensity();
+	
+		//TODOs
+//		System.out.println(loglike);
+		
+		return loglike;
 	}//END: calculateLogLikelihood
 
 	@Override

@@ -93,6 +93,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				dr.app.bss.Utils.printArray(occupancy);
 			}
 
+			
+			DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
+			ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);
+			double stdev = (Double) dm.getVariable(1) .getValue(0);
+			double data = dl.getDataList().get(0) .getAttributeValue()[0];
+			
 			double[] clusterProbs = new double[uniqueRealizationCount];
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
@@ -100,21 +106,21 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				if (occupancy[i] == 0) {// draw new
 
 					// draw from base model, evaluate at likelihood
-					DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
-					ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);
-
-					double candidate = dpp.baseModel.nextRandom()[0];//-2.6;
+					// M-H for poor people
 					
-					double stdev = (Double) dm.getVariable(1) .getValue(0);
-					double data = dl.getDataList().get(0) .getAttributeValue()[0];
+					int m = 1;
+					double loglike = 0.0;
+					double candidate = 0.0;
+					for (int j = 0; j < m; j++) {
+						 candidate = dpp.baseModel.nextRandom()[0];
+						loglike = NormalDistribution.logPdf(data, candidate, stdev);
+					}
+					loglike /= m;
 					
-					double loglike = NormalDistribution.logPdf(data, candidate, stdev);
-					double prob = (intensity) / (realizationCount - 1 + intensity);
-					logprob = Math.log(prob) + loglike;
+					logprob = Math.log((intensity) / (realizationCount - 1 + intensity)) + loglike;
 
 					if (DEBUG) {
 						System.out.println("data: " + data);
-//						System.out.println("probability for new: " + prob);
 						System.out.println("mu candidate: " + candidate);
 						System.out.println("stdev: " + stdev);
 						System.out.println("loglikelihood for new: " + loglike);
@@ -122,45 +128,15 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					}
 
 				} else {// draw existing
+					
 					// likelihood for component x_index
-//					loglike = likelihood.getLikelihood(index) .getLogLikelihood();
-	
-//					System.out.println(likelihood.getLikelihood(index) .getLogLikelihood());
-					
-					DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
-					ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);					
-					
-					
-					//TODO: this is a proposed value, why?
-//					double mu = (double) dm.getVariable(0) .getValue(0);
-					
 					double mu = dpp.getUniqueParameter(i).getParameterValue(0);
-					
-					double stdev = (Double) dm.getVariable(1) .getValue(0);
-					double data = dl.getDataList().get(0) .getAttributeValue()[0];
-					
-//					System.out.println(index);
-//					System.out.println(dl.getId());
-					
-					
-					
-					
-					
-					
-					
-					
-					
-					
 					double loglike = NormalDistribution.logPdf(data, mu, stdev);
-					
-					
 					
 					double prob = (occupancy[i]) / (realizationCount - 1 + intensity);
 					logprob = Math.log(prob) + loglike;
 
-					
 					if (DEBUG) {
-//						System.out.println("probability for existing: " + prob);
 						System.out.println("data: " + data);
 						System.out.println("mu[i]: " + mu);
 						System.out.println("stdev: " + stdev);
@@ -178,7 +154,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 //			for (int i = 0; i < clusterProbs.length; i++) {
 //				clusterProbs[i] -=  max;
 //			}
-//			
+
 			dr.app.bss.Utils.exponentiate(clusterProbs);
 //			dr.app.bss.Utils.normalize(clusterProbs);
 			
@@ -204,6 +180,17 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			
 	}// END: doOperate
 
+	
+	//TODO: move here
+	private double getPartialLoglike() {
+		double loglike = 0.0;
+
+		
+		
+		
+		return loglike;
+	}
+	
 	
 	@Override
 	public String getOperatorName() {

@@ -743,10 +743,9 @@ public class BeastMain {
             BeastMPI.Finalize();
         }
 
-        // AR - there is no reason to force an exit here - there may still be threads running...
-//        if (!window) {
-//            System.exit(0);
-//        }
+        if (!window) {
+            System.exit(0);
+        }
     }
 }
 

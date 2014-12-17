@@ -5,14 +5,11 @@ import org.apache.commons.math.MathException;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.inferencexml.distribution.DistributionModelParser;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 
@@ -92,12 +89,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				System.out.println("N[-index]: ");
 				dr.app.bss.Utils.printArray(occupancy);
 			}
-
-			
-			DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
-			ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);
-			double stdev = (Double) dm.getVariable(1) .getValue(0);
-			double data = dl.getDataList().get(0) .getAttributeValue()[0];
 			
 			double[] clusterProbs = new double[uniqueRealizationCount];
 			for (int i = 0; i < uniqueRealizationCount; i++) {
@@ -113,37 +104,21 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					double candidate = 0.0;
 					for (int j = 0; j < m; j++) {
 						 candidate = dpp.baseModel.nextRandom()[0];
-						loglike = NormalDistribution.logPdf(data, candidate, stdev);
+						loglike = getPartialLoglike(index, candidate);
 					}
 					loglike /= m;
 					
 					logprob = Math.log((intensity) / (realizationCount - 1 + intensity)) + loglike;
 
-					if (DEBUG) {
-						System.out.println("data: " + data);
-						System.out.println("mu candidate: " + candidate);
-						System.out.println("stdev: " + stdev);
-						System.out.println("loglikelihood for new: " + loglike);
-						System.out.println();
-					}
-
 				} else {// draw existing
 					
 					// likelihood for component x_index
 					double mu = dpp.getUniqueParameter(i).getParameterValue(0);
-					double loglike = NormalDistribution.logPdf(data, mu, stdev);
+					double loglike = getPartialLoglike(index, mu);
 					
 					double prob = (occupancy[i]) / (realizationCount - 1 + intensity);
 					logprob = Math.log(prob) + loglike;
 
-					if (DEBUG) {
-						System.out.println("data: " + data);
-						System.out.println("mu[i]: " + mu);
-						System.out.println("stdev: " + stdev);
-						System.out.println("loglikelihood for existing: " + loglike );
-						System.out.println();
-					}
-					
 				}// END: occupancy check
 
 				clusterProbs[i] = logprob;
@@ -177,16 +152,18 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			
 		}// END: index loop
 
-			
 	}// END: doOperate
 
 	
-	//TODO: move here
-	private double getPartialLoglike() {
-		double loglike = 0.0;
+	//TODO: general for arbitrary distributions
+	private double getPartialLoglike(int index, double parameterValue) {
 
+		DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
+		ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);
+		double stdev = (Double) dm.getVariable(1) .getValue(0);
+		double data = dl.getDataList().get(0) .getAttributeValue()[0];
 		
-		
+		double loglike = NormalDistribution.logPdf(data, parameterValue, stdev);
 		
 		return loglike;
 	}
@@ -196,13 +173,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	public String getOperatorName() {
 		return DirichletProcessOperatorParser.DIRICHLET_PROCESS_OPERATOR;
 	}
-
-//	private void printZ() {
-//		for (int i = 0; i < zParameter.getDimension(); i++) {
-//			System.out.print(zParameter.getParameterValue(i) + " ");
-//		}
-//		System.out.println();
-//	}// END: printZ
 
 	@Override
 	public String getPerformanceSuggestion() {

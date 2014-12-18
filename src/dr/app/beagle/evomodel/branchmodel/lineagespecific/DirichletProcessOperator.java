@@ -98,6 +98,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 					// draw from base model, evaluate at likelihood
 					// M-H for poor people
+					// TODO: perhpas just loop over all mu[i] values?
 					
 					int m = 1;
 					double loglike = 0.0;
@@ -116,8 +117,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					double mu = dpp.getUniqueParameter(i).getParameterValue(0);
 					double loglike = getPartialLoglike(index, mu);
 					
-					double prob = (occupancy[i]) / (realizationCount - 1 + intensity);
-					logprob = Math.log(prob) + loglike;
+					logprob = Math.log(occupancy[i]) / (realizationCount - 1 + intensity) + loglike;
 
 				}// END: occupancy check
 
@@ -138,7 +138,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				dr.app.bss.Utils.printArray(clusterProbs);
 			}
 
-			
 			// sample
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
 			zParameter.setParameterValue(index, sampledCluster);
@@ -147,14 +146,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				System.out.println("sampled category: " + sampledCluster + "\n");
 			}
 
-			//TODO
 //			System.exit(-1);	
 			
 		}// END: index loop
 
 	}// END: doOperate
 
-	
 	//TODO: general for arbitrary distributions
 	private double getPartialLoglike(int index, double parameterValue) {
 
@@ -163,11 +160,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		double stdev = (Double) dm.getVariable(1) .getValue(0);
 		double data = dl.getDataList().get(0) .getAttributeValue()[0];
 		
+		//TODO: same distribution as likelihood
 		double loglike = NormalDistribution.logPdf(data, parameterValue, stdev);
 		
 		return loglike;
 	}
-	
 	
 	@Override
 	public String getOperatorName() {

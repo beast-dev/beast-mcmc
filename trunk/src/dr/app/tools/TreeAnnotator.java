@@ -68,7 +68,7 @@ public class TreeAnnotator {
 
     enum Target {
         MAX_CLADE_CREDIBILITY("Maximum clade credibility tree"),
-        MAX_SUM_CLADE_CREDIBILITY("Maximum sum of clade credibilities"),
+        //MAX_SUM_CLADE_CREDIBILITY("Maximum sum of clade credibilities"),
         USER_TARGET_TREE("User target tree");
 
         String desc;
@@ -256,14 +256,15 @@ public class TreeAnnotator {
             }
             case MAX_CLADE_CREDIBILITY: {
                 progressStream.println("Finding maximum credibility tree...");
-                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, false));
+                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName /*, false*/));
                 break;
             }
-            case MAX_SUM_CLADE_CREDIBILITY: {
-                progressStream.println("Finding maximum sum clade credibility tree...");
-                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
-                break;
-            }
+//            case MAX_SUM_CLADE_CREDIBILITY: {
+//                progressStream.println("Finding maximum sum clade credibility tree...");
+//                targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName, true));
+//                break;
+//            }
+            default: throw new IllegalArgumentException("Unknown targetOption");
         }
 
         progressStream.println("Collecting node information...");
@@ -359,8 +360,8 @@ public class TreeAnnotator {
         }
     }
 
-    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName,
-                                boolean useSumCladeCredibility) throws IOException {
+    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName /*, boolean useSumCladeCredibility */)
+            throws IOException {
 
         Tree bestTree = null;
         double bestScore = Double.NEGATIVE_INFINITY;
@@ -380,7 +381,7 @@ public class TreeAnnotator {
                 Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
-                    double score = scoreTree(tree, cladeSystem, useSumCladeCredibility);
+                    double score = scoreTree(tree, cladeSystem /*, useSumCladeCredibility*/);
 //                    progressStream.println(score);
                     if (score > bestScore) {
                         bestTree = tree;
@@ -401,21 +402,21 @@ public class TreeAnnotator {
         progressStream.println();
         progressStream.println();
         progressStream.println("Best tree: " + bestTree.getId() + " (tree number " + bestTreeNumber + ")");
-        if (useSumCladeCredibility) {
-            progressStream.println("Highest Sum Clade Credibility: " + bestScore);
-        } else {
+//        if (useSumCladeCredibility) {
+//            progressStream.println("Highest Sum Clade Credibility: " + bestScore);
+//        } else {
             progressStream.println("Highest Log Clade Credibility: " + bestScore);
-        }
+//        }
 
         return bestTree;
     }
 
-    private double scoreTree(Tree tree, CladeSystem cladeSystem, boolean useSumCladeCredibility) {
-        if (useSumCladeCredibility) {
-            return cladeSystem.getSumCladeCredibility(tree, tree.getRoot(), null);
-        } else {
+    private double scoreTree(Tree tree, CladeSystem cladeSystem /*, boolean useSumCladeCredibility*/) {
+//        if (useSumCladeCredibility) {
+//            return cladeSystem.getSumCladeCredibility(tree, tree.getRoot(), null);
+//        } else {
             return cladeSystem.getLogCladeCredibility(tree, tree.getRoot(), null);
-        }
+//        }
     }
 
     private class CladeSystem {
@@ -590,33 +591,33 @@ public class TreeAnnotator {
             }
         }
 
-        public double getSumCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
-
-            double sum = 0.0;
-
-            if (tree.isExternal(node)) {
-
-                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-                bits.set(index);
-            } else {
-
-                BitSet bits2 = new BitSet();
-                for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                    NodeRef node1 = tree.getChild(node, i);
-
-                    sum += getSumCladeCredibility(tree, node1, bits2);
-                }
-
-                sum += getCladeCredibility(bits2);
-
-                if (bits != null) {
-                    bits.or(bits2);
-                }
-            }
-
-            return sum;
-        }
+//        public double getSumCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
+//
+//            double sum = 0.0;
+//
+//            if (tree.isExternal(node)) {
+//
+//                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+//                bits.set(index);
+//            } else {
+//
+//                BitSet bits2 = new BitSet();
+//                for (int i = 0; i < tree.getChildCount(node); i++) {
+//
+//                    NodeRef node1 = tree.getChild(node, i);
+//
+//                    sum += getSumCladeCredibility(tree, node1, bits2);
+//                }
+//
+//                sum += getCladeCredibility(bits2);
+//
+//                if (bits != null) {
+//                    bits.or(bits2);
+//                }
+//            }
+//
+//            return sum;
+//        }
 
         public double getLogCladeCredibility(Tree tree, NodeRef node, BitSet bits) {
 

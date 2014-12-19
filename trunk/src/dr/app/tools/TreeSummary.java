@@ -30,10 +30,8 @@ import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.util.Version;
 
@@ -114,7 +112,7 @@ public class TreeSummary {
                         burnin = totalTrees;
                     }
 
-                    cladeSystem.add(tree, false);
+                    cladeSystem.add(tree, true);
 
                     totalTreesUsed += 1;
                 }
@@ -158,35 +156,85 @@ public class TreeSummary {
         progressStream.println();
 
         progressStream.println("Finding summary tree...");
-        MutableTree targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName /*, false*/));
 
-        progressStream.println("Writing summary tree....");
+//        MutableTree targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName /*, false*/));
+
+        Tree consensusTree = buildConsensusTree(cladeSystem);
+
+        progressStream.println("Writing consensus tree....");
 
         try {
             final PrintStream stream = outputFileName != null ?
                     new PrintStream(new FileOutputStream(outputFileName)) :
                     System.out;
 
-            new NexusExporter(stream).exportTree(targetTree);
+            new NexusExporter(stream).exportTree(consensusTree);
         } catch (Exception e) {
-            System.err.println("Error writing summary tree file: " + e.getMessage());
+            System.err.println("Error writing consensus tree file: " + e.getMessage());
             return;
         }
 
     }
 
-    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName)
-            throws IOException {
+    private Tree buildConsensusTree(CladeSystem cladeSystem) {
+        List<BitSet> bitSets = new ArrayList<BitSet>(cladeSystem.getCladeMap().keySet());
 
-        Map<BitSet, CladeSystem> highSupportedClades = new HashMap<BitSet, CladeSystem>();
-        for (BitSet bits : cladeSystem.cladeMap.keySet()) {
-            double posterior = cladeSystem.getCladeCredibility(bits);
+        Collections.sort(bitSets, new Comparator<BitSet>() {
+            @Override
+            public int compare(BitSet b1, BitSet b2) {
+                return b1.cardinality() - b2.cardinality();
+            }
+        });
 
-            if (posterior >= posteriorLimit) {
-                highSupportedClades.put(bits, new CladeSystem());
+        SimpleNode root = null;
+
+        for (int i = 0; i < bitSets.size(); i++) {
+            BitSet key1 = bitSets.get(i);
+            CladeSystem.Clade clade1 = cladeSystem.getCladeMap().get(key1);
+
+            if (key1.cardinality() == 1) {
+                Taxon taxon = cladeSystem.getTaxon(key1.nextSetBit(0));
+                clade1.node = new SimpleNode();
+                clade1.node.setTaxon(taxon);
+
+                clade1.node.setAttribute("clade", clade1);
+            }
+
+            if (clade1.credibility >= posteriorLimit) {
+
+                for (int j = i + 1; j < bitSets.size(); j++) {
+                    BitSet key2 = bitSets.get(j);
+                    if (isSubSet(key1, key2) && cladeSystem.getCladeCredibility(key2) >= posteriorLimit) {
+                        // the clades are ordered by size so this is the smallest clade for which
+                        // clade1 is a subset and has high credibility.
+                        CladeSystem.Clade clade2 = cladeSystem.getCladeMap().get(key2);
+                        if (clade2.node == null) {
+                            clade2.node = new SimpleNode();
+                        }
+                        if (clade1.node == null) {
+                            throw new RuntimeException("null node");
+                        }
+                        clade2.node.addChild(clade1.node);
+
+                        clade2.node.setAttribute("credibility", clade2.credibility);
+                        clade2.node.setAttribute("clade", clade2);
+
+                        if (key2.cardinality() == cladeSystem.taxonList.getTaxonCount()) {
+                            root = clade2.node;
+                        }
+                        break;
+                    }
+
+                }
             }
         }
+        SimpleTree tree = new SimpleTree(root);
 
+        return tree;
+    }
+
+    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName)
+            throws IOException {
 
         progressStream.println("Analyzing " + totalTreesUsed + " trees...");
         progressStream.println("0              25             50             75            100");
@@ -199,14 +247,13 @@ public class TreeSummary {
         int bestTreeNumber = 0;
         TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
 
-        SubTreeSystem subTreeSystem = new SubTreeSystem();
         try {
             while (importer.hasTree()) {
                 Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
 
-                    subTreeSystem.addSubTrees(tree, tree.getRoot(), cladeSystem);
+                    cladeSystem.addSubTrees(tree);
                 }
                 if (counter > 0 && counter % stepSize == 0) {
                     progressStream.print("*");
@@ -219,147 +266,18 @@ public class TreeSummary {
             return null;
         }
 
-        Tree bestTree = subTreeSystem.getBestTree();
+        Tree bestTree = cladeSystem.getBestTree();
 
         return bestTree;
     }
 
-    private class SubTreeSystem {
-        public SubTreeSystem() {
-        }
-
-        public void addSubTree(Tree tree, NodeRef node, CladeSystem clades) {
-            if (taxonList == null) {
-                taxonList = tree;
-            }
-
-            addSubTrees(tree, node, clades);
-        }
-
-        private BitSet addSubTrees(Tree tree, NodeRef node, CladeSystem clades) {
-
-            BitSet bits = new BitSet();
-
-            if (tree.isExternal(node)) {
-
-                int index = clades.taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-                bits.set(index);
-
-            } else {
-
-                for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                    NodeRef node1 = tree.getChild(node, i);
-
-                    BitSet bits2 = addSubTrees(tree, node1, clades);
-
-                    bits.or(bits2);
-                }
-
-                SubTree subTree = addSubTree(bits);
-
-                if (clades.getCladeCredibility(bits) >= posteriorLimit) {
-                    if (subTree.subTreeSystem == null) {
-                        subTree.subTreeSystem = new SubTreeSystem();
-                    }
-                    subTree.subTreeSystem.addSubTree(tree, node, clades);
-                }
-            }
-
-            return bits;
-        }
-
-        private SubTree addSubTree(BitSet bits) {
-            SubTree subTree = subTreeMap.get(bits);
-            if (subTree == null) {
-                subTree = new SubTree(bits);
-                subTreeMap.put(bits, subTree);
-            }
-            subTree.setCount(subTree.getCount() + 1);
-
-            return subTree;
-        }
-
-        public Tree getBestTree() {
-//            for (Clade clade : cladeMap.values()) {
-//                if (clade.subTreeCladeSystem != null) {
-//                    Tree bestSubTree =
-//                }
-//            }
-            return null;
-        }
-
-
-        class SubTree {
-            public SubTree(BitSet bits) {
-                this.bits = bits;
-                count = 0;
-                credibility = 0.0;
-            }
-
-            public int getCount() {
-                return count;
-            }
-
-            public void setCount(int count) {
-                this.count = count;
-            }
-
-            public double getCredibility() {
-                return credibility;
-            }
-
-            public void setCredibility(double credibility) {
-                this.credibility = credibility;
-            }
-
-            public boolean equals(Object o) {
-                if (this == o) return true;
-                if (o == null || getClass() != o.getClass()) return false;
-
-                final SubTree clade = (SubTree) o;
-
-                return !(bits != null ? !bits.equals(clade.bits) : clade.bits != null);
-
-            }
-
-            public int hashCode() {
-                return (bits != null ? bits.hashCode() : 0);
-            }
-
-            public String toString() {
-                return "subtree " + bits.toString();
-            }
-
-            int count;
-            double credibility;
-            BitSet bits;
-
-            SubTreeSystem subTreeSystem = null;
-        }
-
-        //
-        // Private stuff
-        //
-        TaxonList taxonList = null;
-        Map<BitSet, SubTree> subTreeMap = new HashMap<BitSet, SubTree>();
-    }
-
     private class CladeSystem {
-        //
-        // Public stuff
-        //
 
-        /**
-         */
         public CladeSystem() {
         }
 
-        /**
-         */
-        public CladeSystem(Tree targetTree) {
-            this.targetTree = targetTree;
-            add(targetTree, true);
+        public CladeSystem(TaxonList taxonList) {
+            this.taxonList = taxonList;
         }
 
         /**
@@ -413,7 +331,44 @@ public class TreeSummary {
             clade.setCount(clade.getCount() + 1);
         }
 
-        public Map getCladeMap() {
+        public void addSubTrees(Tree tree) {
+            addSubTrees(tree, tree.getRoot());
+        }
+
+        private BitSet addSubTrees(Tree tree, NodeRef node) {
+
+            BitSet bits = new BitSet();
+
+            if (tree.isExternal(node)) {
+
+                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                bits.set(index);
+
+            } else {
+
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    BitSet bits2 = addSubTrees(tree, node1);
+
+                    bits.or(bits2);
+                }
+
+                Clade clade = cladeMap.get(bits);
+
+                if (clade.credibility >= posteriorLimit) {
+                    if (clade.conditionalCladeSystem == null) {
+                        clade.conditionalCladeSystem = new CladeSystem(taxonList);
+                    }
+                    clade.conditionalCladeSystem.addClades(tree, node, false);
+                }
+            }
+
+            return bits;
+        }
+
+        public Map<BitSet, Clade> getCladeMap() {
             return cladeMap;
         }
 
@@ -427,6 +382,10 @@ public class TreeSummary {
                 }
 
                 clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
+
+                if (clade.conditionalCladeSystem != null) {
+                    clade.conditionalCladeSystem.calculateCladeCredibilities(totalTreesUsed);
+                }
             }
         }
 
@@ -466,64 +425,14 @@ public class TreeSummary {
             return clade.getCredibility();
         }
 
-        public BitSet removeClades(Tree tree, NodeRef node, boolean includeTips) {
+        public Tree getBestTree() {
 
-            BitSet bits = new BitSet();
 
-            if (tree.isExternal(node)) {
-
-                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-                bits.set(index);
-
-                if (includeTips) {
-                    removeClade(bits);
-                }
-
-            } else {
-
-                for (int i = 0; i < tree.getChildCount(node); i++) {
-
-                    NodeRef node1 = tree.getChild(node, i);
-
-                    bits.or(removeClades(tree, node1, includeTips));
-                }
-
-                removeClade(bits);
-            }
-
-            return bits;
+            return null;
         }
 
-        private void removeClade(BitSet bits) {
-            Clade clade = cladeMap.get(bits);
-            if (clade != null) {
-                clade.setCount(clade.getCount() - 1);
-            }
-
-        }
-
-        // Get tree clades as bitSets on target taxa
-        // codes is an array of existing BitSet objects, which are reused
-
-        void getTreeCladeCodes(Tree tree, BitSet[] codes) {
-            getTreeCladeCodes(tree, tree.getRoot(), codes);
-        }
-
-        int getTreeCladeCodes(Tree tree, NodeRef node, BitSet[] codes) {
-            final int inode = node.getNumber();
-            codes[inode].clear();
-            if (tree.isExternal(node)) {
-                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
-                codes[inode].set(index);
-            } else {
-                for (int i = 0; i < tree.getChildCount(node); i++) {
-                    final NodeRef child = tree.getChild(node, i);
-                    final int childIndex = getTreeCladeCodes(tree, child, codes);
-
-                    codes[inode].or(codes[childIndex]);
-                }
-            }
-            return inode;
+        public Taxon getTaxon(int index) {
+            return taxonList.getTaxon(index);
         }
 
         class Clade {
@@ -570,6 +479,8 @@ public class TreeSummary {
             int count;
             double credibility;
             BitSet bits;
+            SimpleNode node;
+            CladeSystem conditionalCladeSystem;
         }
 
         //
@@ -586,7 +497,7 @@ public class TreeSummary {
     double posteriorLimit = 0.0;
 
     Set<String> attributeNames = new HashSet<String>();
-    TaxonList taxa = null;
+
     public static void printTitle() {
         progressStream.println();
         centreLine("TreeSummary " + version.getVersionString() + ", " + version.getDateString(), 60);
@@ -662,7 +573,7 @@ public class TreeSummary {
             burninTrees = arguments.getIntegerOption("burninTrees");
         }
 
-        double posteriorLimit = 0.0;
+        double posteriorLimit = 0.5;
         if (arguments.hasOption("limit")) {
             posteriorLimit = arguments.getRealOption("limit");
         }
@@ -689,9 +600,12 @@ public class TreeSummary {
         System.exit(0);
     }
 
-    // very inefficient, but Java wonderful bitset has no subset op
-    // perhaps using bit iterator would be faster, I can't br bothered.
-
+    /**
+     * Is x a subset of y?
+     * @param x
+     * @param y
+     * @return
+     */
     static boolean isSubSet(BitSet x, BitSet y) {
         y = (BitSet) y.clone();
         y.and(x);

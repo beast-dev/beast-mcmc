@@ -233,7 +233,7 @@ public class TreeSummary {
         return tree;
     }
 
-    private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName)
+    private Tree summarizeTrees(int burnin, Tree consensusTree, CladeSystem cladeSystem, String inputFileName)
             throws IOException {
 
         progressStream.println("Analyzing " + totalTreesUsed + " trees...");
@@ -266,7 +266,7 @@ public class TreeSummary {
             return null;
         }
 
-        Tree bestTree = cladeSystem.getBestTree();
+        Tree bestTree = cladeSystem.getBestTree(consensusTree);
 
         return bestTree;
     }
@@ -425,10 +425,34 @@ public class TreeSummary {
             return clade.getCredibility();
         }
 
-        public Tree getBestTree() {
+        public Tree getBestTree(Tree consensusTree) {
+            return new SimpleTree(getBestSubTree(consensusTree, consensusTree.getRoot()));
+        }
+
+        public SimpleNode getBestSubTree(Tree tree, NodeRef node) {
+            SimpleNode subTree = null;
+
+            if (tree.isExternal(node)) {
+            } else {
+
+                Clade clade = (Clade) tree.getNodeAttribute(node, "clade");
+                if (clade.conditionalCladeSystem != null) {
+                    subTree = clade.conditionalCladeSystem.getBestSubTree(tree, node);
+                } else {
+
+                    for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                        NodeRef child = tree.getChild(node, i);
+
+                        SimpleNode newChild = getBestSubTree(tree, child);
+                    }
+
+                }
+
+            }
 
 
-            return null;
+            return subTree;
         }
 
         public Taxon getTaxon(int index) {

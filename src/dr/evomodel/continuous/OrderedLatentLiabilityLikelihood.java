@@ -203,6 +203,10 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             int dim = (int) numClasses.getParameterValue(index);
 
 
+            //handles missing data
+            if(datum==-1){return true;}
+
+
             if (dim == 1.0) {
                 valid = true;
             } else if (dim == 2.0) {

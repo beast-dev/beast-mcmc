@@ -53,6 +53,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     ArrayList<double[]> meanMidArray;
     ArrayList<double[]> meanArray;
     boolean randomScan;
+    double pathParameter=1.0;
 
 
     double priorPrecision;
@@ -132,8 +133,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                     sum += full.getParameterValue(i, k) * full.getParameterValue(j, k);
                 answer[i][j] = sum * LFM.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
-                    answer[i][j] += priorPrecision;
+                    answer[i][j] =answer[i][j]*pathParameter+ priorPrecision;
                 } else {
+                    answer[i][j]*=pathParameter;
                     answer[j][i] = answer[i][j];
                 }
             }
@@ -201,6 +203,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 //            }
         }
+        for (int j = 0; j <mean.length ; j++) {//TODO implement for generic prior
+            mean[j]*=pathParameter;
+        }
 
     }
 
@@ -254,9 +259,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //        }
 //    }
         if (i < draws.length) {
-            if (draws[i] > 0) {
+            //if (draws[i] > 0) { TODO implement as option
                 copy(i, draws);
-            }
+            //}
         } else {
             copy(i, draws);
         }
@@ -310,5 +315,9 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //            LFM.getLoadings().fireParameterChangedEvent();
         }
         return 0;
+    }
+
+    public void setPathParameter(double beta){
+        pathParameter=beta;
     }
 }

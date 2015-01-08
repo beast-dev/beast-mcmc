@@ -3,7 +3,6 @@
  */
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.MutableTree.InvalidTreeException;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -386,7 +385,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
 
     private double calculateTreeLikelihood(Prior prior, Likelihood likelihood,
                                            TreeModel tree) {
-        return evaluate(likelihood, prior);
+        return evaluate(likelihood, prior, 1.0);
         // return 0.0;
     }
 

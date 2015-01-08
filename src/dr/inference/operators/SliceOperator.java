@@ -1,13 +1,16 @@
 package dr.inference.operators;
 
-import dr.inference.prior.Prior;
-import dr.inference.model.*;
-import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.NormalDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.util.Attribute;
-import dr.math.distributions.NormalDistribution;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.inference.prior.Prior;
 import dr.math.MathUtils;
+import dr.math.distributions.NormalDistribution;
+import dr.util.Attribute;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +43,7 @@ public class SliceOperator extends SimpleMetropolizedGibbsOperator {
     }
 
     public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
-        double logPosterior = evaluate(likelihood, prior);
+        double logPosterior = evaluate(likelihood, prior, 1.0);
         double cutoffDensity = logPosterior + MathUtils.randomLogDouble();
         sliceInterval.drawFromInterval(prior, likelihood, cutoffDensity, width);
         // No need to set variable, as SliceInterval has already done this (and recomputed posterior)

@@ -57,7 +57,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
     private final int dimData;
     private final int nTaxa;
 
-    private boolean firstTime=true;
+    private boolean newModel;
 
     private boolean likelihoodKnown = false;
     private boolean isDataScaled=false;
@@ -88,12 +88,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
-                             boolean scaleData, Parameter continuous
+                             boolean scaleData, Parameter continuous, boolean newModel
     ) {
         super("");
 //        data = new Matrix(dataIn.getParameterAsMatrix());
 //        factors = new Matrix(factorsIn.getParameterAsMatrix());
 //        loadings = new Matrix(loadingsIn.getParameterAsMatrix());
+        this.newModel=newModel;
         this.scaleData=scaleData;
         this.data = data;
         this.factors = factors;
@@ -247,7 +248,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
 
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < p; j++) {
-                if(changed[i][j]==true && continuous.getParameterValue(i)!=0){
+                if((changed[i][j]==true && continuous.getParameterValue(i)!=0) || newModel){
                 double sum = 0;
                 for (int k = 0; k < dim; k++)
                     sum += Left.getParameterValue(i, k) * Right.getParameterValue(k,j);
@@ -273,7 +274,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
         int row=Left.getRowDimension();
         int col=Left.getColumnDimension();
         for (int i = 0; i <row ; i++) {
-            if(continuous.getParameterValue(i)!=0){
+            if(continuous.getParameterValue(i)!=0 ||newModel){
                 for (int j = 0; j < col; j++) {
                     answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
                 }
@@ -295,7 +296,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
         int outerDim=array.length/innerDim;
         double sum=0;
         for (int j = 0; j <innerDim ; j++){
-            if(continuous.getParameterValue(j)!=0) {
+            if(continuous.getParameterValue(j)!=0 || newModel) {
                 for (int i = 0; i < outerDim; i++) {
                         double s1 = array[j * outerDim + i];
                         double s2 = middle.getParameterValue(j, j);
@@ -480,6 +481,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
      */
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        if(variable==getScaledData()){
+            residualKnown=false;
+            traceKnown=false;
+            likelihoodKnown=false;
+        }
         if(variable==factors){
 
 

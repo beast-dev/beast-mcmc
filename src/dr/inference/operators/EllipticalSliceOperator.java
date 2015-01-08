@@ -64,7 +64,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
-        double logPosterior = evaluate(likelihood, prior);
+        double logPosterior = evaluate(likelihood, prior, pathParameter);
         double cutoffDensity = logPosterior + MathUtils.randomLogDouble(); // TODO Gaussian contribution should stay constant, check!
         drawFromSlice(prior, likelihood, cutoffDensity);
         // No need to set variable, as SliceInterval has already done this (and recomputed posterior)
@@ -146,7 +146,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         while (!done) {
             double[] xx = pointOnEllipse(x, nu, phi);
             setVariable(xx);
-            double density = evaluate(likelihood, prior);
+            double density = evaluate(likelihood, prior, pathParameter);
             if (density > cutoffDensity) {
                 done = true;
             } else {
@@ -190,7 +190,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
      */
     @Override
     public void setPathParameter(double beta) {
-        // Do nothing
+        pathParameter=beta;
     }
 
     public String getOperatorName() {
@@ -267,6 +267,8 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         }
     }
 
+
+    private double pathParameter=1.0;
     private final Parameter variable;
     private int current;
     private static boolean drawByRow;

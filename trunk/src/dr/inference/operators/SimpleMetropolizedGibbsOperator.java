@@ -107,7 +107,7 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
         return 1.0;
     }
 
-    protected double evaluate(Likelihood likelihood, Prior prior) {
+    protected double evaluate(Likelihood likelihood, Prior prior, double pathParameter) {
 
         double logPosterior = 0.0;
 
@@ -121,7 +121,7 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
             logPosterior += logPrior;
         }
 
-        final double logLikelihood = likelihood.getLogLikelihood();
+        final double logLikelihood = likelihood.getLogLikelihood()*pathParameter;
 
         if (Double.isNaN(logLikelihood)) {
             return Double.NEGATIVE_INFINITY;
@@ -141,7 +141,7 @@ public abstract class SimpleMetropolizedGibbsOperator extends SimpleOperator imp
         // state is fully evaluated and the likelihood compared with that before
         // the operation was made.
         likelihood.makeDirty();
-        final double testScore = evaluate(likelihood, prior);
+        final double testScore = evaluate(likelihood, prior, 1.0);
 
         if (Math.abs(testScore - oldScore) > 1e-6) {
             Logger.getLogger("error").severe(

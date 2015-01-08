@@ -1,9 +1,9 @@
 package dr.inference.operators;
 
-import dr.math.MathUtils;
-import dr.inference.model.Variable;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Variable;
 import dr.inference.prior.Prior;
+import dr.math.MathUtils;
 
 /**
  * Constructs a univariate slice sampler interval
@@ -68,7 +68,7 @@ public interface SliceInterval {
 
         protected double evaluate(Prior prior, Likelihood likelihood, double x) {
             variable.setValue(0, x);
-            return sliceSampler.evaluate(likelihood, prior);
+            return sliceSampler.evaluate(likelihood, prior, 1.0);
         }
 
         protected Variable<Double> variable;

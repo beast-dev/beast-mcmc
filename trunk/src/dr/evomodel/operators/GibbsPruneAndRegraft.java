@@ -3,7 +3,6 @@
  */
 package dr.evomodel.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -232,7 +231,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 						sumBackward += prob;
 
 						pruneAndRegraft(tree, i, iP, newBrother, newGrandfather);
-						evaluate(likelihood, prior);
+						evaluate(likelihood, prior, 1.0);
 					}
 				}
 			}
@@ -274,7 +273,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 
 	private double calculateTreeLikelihood(Prior prior, Likelihood likelihood,
 			TreeModel tree) {
-		return evaluate(likelihood, prior);
+		return evaluate(likelihood, prior, 1.0);
 	}
 
 	private void pruneAndRegraft(TreeModel tree, NodeRef i, NodeRef iP,

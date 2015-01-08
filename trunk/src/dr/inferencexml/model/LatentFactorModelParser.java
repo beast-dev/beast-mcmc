@@ -43,6 +43,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public static final String COLUMN_PRECISION = "columnPrecision";
     public static final String SCALE_DATA="scaleData";
     public static final String CONTINUOUS="continuous";
+    public static final String COMPUTE_RESIDUALS_FOR_DISCRETE="computeResidualsForDiscrete";
 
 
     public String getParserName() {
@@ -57,6 +58,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         MatrixParameter loadings = (MatrixParameter) xo.getChild(LOADINGS).getChild(MatrixParameter.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
+        boolean newModel= xo.getAttribute(COMPUTE_RESIDUALS_FOR_DISCRETE, true);
         Parameter continuous=null;
         if(xo.getChild(CONTINUOUS)!=null)
             continuous=(Parameter) xo.getChild(CONTINUOUS).getChild(Parameter.class);
@@ -74,12 +76,13 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         }
 
 
-        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous);
+        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous, newModel);
     }
 
     private static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
             AttributeRule.newBooleanRule(SCALE_DATA, true),
+            AttributeRule.newBooleanRule(COMPUTE_RESIDUALS_FOR_DISCRETE, true),
             new ElementRule(DATA, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameter.class),
             }),

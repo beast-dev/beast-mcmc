@@ -16,7 +16,7 @@ import org.w3c.dom.Element;
 public class MultivariateDiffusionModel extends AbstractModel implements TreeAttributeProvider {
 
     public static final String DIFFUSION_PROCESS = "multivariateDiffusionModel";
-    public static final String DIFFUSION_CONSTANT = "precisionMatrix";   
+    public static final String DIFFUSION_CONSTANT = "precisionMatrix";
     public static final String PRECISION_TREE_ATTRIBUTE = "precision";
 
     public static final double LOG2PI = Math.log(2*Math.PI);
@@ -44,21 +44,24 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
 //    }
 
     public void check(Parameter trait) throws XMLParseException {
-        assert trait != null;       
+        assert trait != null;
     }
 
-    public Parameter getPrecisionParameter() {
+    public Parameter getPrecisionParameter() {checkVariableChanged();
+
         return diffusionPrecisionMatrixParameter;
     }
 
     public double[][] getPrecisionmatrix() {
         if (diffusionPrecisionMatrixParameter != null) {
+            checkVariableChanged();
             return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
         }
         return null;
     }
 
-    public double getDeterminantPrecisionMatrix() { return determinatePrecisionMatrix; }
+    public double getDeterminantPrecisionMatrix() {  checkVariableChanged();
+        return determinatePrecisionMatrix; }
 
     /**
      * @return the log likelihood of going from start to stop in the given time
@@ -75,13 +78,21 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
             }
             if (equal)
                 return 0.0;
-            return Double.NEGATIVE_INFINITY;                  
+            return Double.NEGATIVE_INFINITY;
         }
 
         return calculateLogDensity(start, stop, time);
     }
 
+    protected void checkVariableChanged(){
+        if(variableChanged){
+            calculatePrecisionInfo();
+            variableChanged=false;
+        }
+    }
+
     protected double calculateLogDensity(double[] start, double[] stop, double time) {
+        checkVariableChanged();
         final double logDet = Math.log(determinatePrecisionMatrix);
         return MultivariateNormalDistribution.logPdf(stop, start, diffusionPrecisionMatrix, logDet, time);
     }
@@ -115,17 +126,20 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        calculatePrecisionInfo();
+        variableChanged=true;
+//        calculatePrecisionInfo();
     }
 
     protected void storeState() {
         savedDeterminatePrecisionMatrix = determinatePrecisionMatrix;
         savedDiffusionPrecisionMatrix = diffusionPrecisionMatrix;
+        storedVariableChanged=variableChanged;
     }
 
     protected void restoreState() {
         determinatePrecisionMatrix = savedDeterminatePrecisionMatrix;
         diffusionPrecisionMatrix = savedDiffusionPrecisionMatrix;
+        variableChanged=storedVariableChanged;
     }
 
     protected void acceptState() {
@@ -199,6 +213,9 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     private double savedDeterminatePrecisionMatrix;
     private double[][] diffusionPrecisionMatrix;
     private double[][] savedDiffusionPrecisionMatrix;
+
+    private boolean variableChanged=true;
+    private boolean storedVariableChanged;
 
 }
 

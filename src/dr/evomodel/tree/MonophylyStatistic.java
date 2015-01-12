@@ -44,6 +44,12 @@ public class MonophylyStatistic extends BooleanStatistic implements TreeStatisti
 
     public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore) throws Tree.MissingTaxonException {
 
+        this(name, tree, taxa, ignore, false);
+
+    }
+
+    public MonophylyStatistic(String name, Tree tree, TaxonList taxa, TaxonList ignore, boolean inverse) throws Tree.MissingTaxonException {
+
         super(name);
         this.tree = tree;
         this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
@@ -52,6 +58,7 @@ public class MonophylyStatistic extends BooleanStatistic implements TreeStatisti
         } else {
             this.ignoreLeafSet = Collections.emptySet();
         }
+        this.inverse = inverse;
 
     }
 
@@ -71,11 +78,17 @@ public class MonophylyStatistic extends BooleanStatistic implements TreeStatisti
      * @return boolean result of test.
      */
     public boolean getBoolean(int dim) {
-        return Tree.Utils.isMonophyletic(this.tree, this.leafSet, this.ignoreLeafSet);
+        boolean monophyletic = Tree.Utils.isMonophyletic(this.tree, this.leafSet, this.ignoreLeafSet);
+        if (inverse){
+            return !monophyletic;
+        } else {
+            return monophyletic;
+        }
     }
 
     private Tree tree = null;
     private Set<String> leafSet = null;
     private Set<String> ignoreLeafSet = null;
+    private boolean inverse = false;
 
 }

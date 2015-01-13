@@ -27,10 +27,12 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 		CompoundLikelihood likelihod = (CompoundLikelihood) xo .getElementFirstChild(DATA_LIKELIHOOD);
 //		Likelihood likelihod = (Likelihood) xo.getChild(Likelihood.class);
 		
-		Parameter zParameter = (Parameter) xo.getChild(Parameter.class);
+		Parameter zParameter = (Parameter) xo.getElementFirstChild(  DirichletProcessPriorParser.CATEGORIES);
+		CountableRealizationsParameter countableRealizationsParameter = (CountableRealizationsParameter) xo.getChild(CountableRealizationsParameter.class);
+		
 		final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-		return new DirichletProcessOperator(dpp, zParameter, likelihod, weight);
+		return new DirichletProcessOperator(dpp, zParameter, countableRealizationsParameter, likelihod, weight);
 	}// END: parseXMLObject
 
 	@Override

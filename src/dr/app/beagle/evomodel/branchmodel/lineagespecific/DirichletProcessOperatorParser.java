@@ -1,11 +1,8 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
-import dr.math.distributions.Distribution;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -17,22 +14,20 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 
 	public static final String DIRICHLET_PROCESS_OPERATOR = "dpOperator";
 	public static final String DATA_LIKELIHOOD = "dataLogLike";
+	public static final String MH_STEPS = "mhSteps";
 	
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		DirichletProcessPrior dpp = (DirichletProcessPrior) xo.getChild(DirichletProcessPrior.class);
-
-		
 		CompoundLikelihood likelihod = (CompoundLikelihood) xo .getElementFirstChild(DATA_LIKELIHOOD);
-//		Likelihood likelihod = (Likelihood) xo.getChild(Likelihood.class);
-		
 		Parameter zParameter = (Parameter) xo.getElementFirstChild(  DirichletProcessPriorParser.CATEGORIES);
 		CountableRealizationsParameter countableRealizationsParameter = (CountableRealizationsParameter) xo.getChild(CountableRealizationsParameter.class);
 		
+		int M = xo.getIntegerAttribute(MH_STEPS);
 		final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-		return new DirichletProcessOperator(dpp, zParameter, countableRealizationsParameter, likelihod, weight);
+		return new DirichletProcessOperator(dpp, zParameter, countableRealizationsParameter, likelihod, M, weight);
 	}// END: parseXMLObject
 
 	@Override

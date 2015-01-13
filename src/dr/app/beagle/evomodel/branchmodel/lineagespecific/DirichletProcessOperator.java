@@ -3,7 +3,6 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import org.apache.commons.math.MathException;
 
 import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -11,7 +10,6 @@ import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 
 @SuppressWarnings("serial")
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
@@ -26,7 +24,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	private int realizationCount;
 	private int uniqueRealizationCount;
 	private double intensity;
-
+    private int M;
 	
 	
 	private Parameter zParameter;
@@ -40,17 +38,19 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			Parameter zParameter, 
 			CountableRealizationsParameter countableRealizationsParameter,
 			CompoundLikelihood likelihood,
+			int M,
 			double weight) {
 
 		this.dpp = dpp;
 		this.intensity = dpp.getGamma();
 		this.uniqueRealizationCount = dpp.getCategoryCount();
 		this.realizationCount = zParameter.getDimension();
-
+		
 		this.zParameter = zParameter;
 		this.countableRealizationsParameter = countableRealizationsParameter;
 		this.likelihood = likelihood;
 		
+		this.M = M;
 		setWeight(weight);
 
 	}// END: Constructor
@@ -108,16 +108,13 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					// draw from base model, evaluate at likelihood
 					// M-H for poor people
 					
-					// TODO: parse M from XML
-					
-					int m = 1;
 					double loglike = 0.0;
 					double candidate = 0.0;
-					for (int j = 0; j < m; j++) {
+					for (int j = 0; j < M; j++) {
 						 candidate = dpp.baseModel.nextRandom()[0];
 						 loglike = getPartialLoglike(index, candidate);
 					}
-					loglike /= m;
+					loglike /= M;
 					
 					logprob = Math.log((intensity) / (realizationCount - 1 + intensity)) + loglike;
 

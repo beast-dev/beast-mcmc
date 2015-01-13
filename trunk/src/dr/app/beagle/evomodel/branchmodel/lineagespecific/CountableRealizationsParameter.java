@@ -121,13 +121,6 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
 
 	public void setParameterValue(int dim, double value) {
 
-		
-	
-		
-		
-		
-		
-		
 		int whichCategoryIndex = (int) categoriesParameter.getParameterValue(dim);
 		uniquelyRealizedParameters.setParameterValue(whichCategoryIndex, value);
 

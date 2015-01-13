@@ -24,11 +24,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	private int realizationCount;
 	private int uniqueRealizationCount;
 	private double intensity;
-    private int M;
+    private int mhSteps;
 	
 	
 	private Parameter zParameter;
-	private CountableRealizationsParameter countableRealizationsParameter;
+//	private CountableRealizationsParameter countableRealizationsParameter;
+	private Parameter parameter;
 	
 	private CompoundLikelihood likelihood;
 	
@@ -36,9 +37,10 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
 			Parameter zParameter, 
-			CountableRealizationsParameter countableRealizationsParameter,
+//			CountableRealizationsParameter countableRealizationsParameter,
+			Parameter parameter,
 			CompoundLikelihood likelihood,
-			int M,
+			int mhSteps,
 			double weight) {
 
 		this.dpp = dpp;
@@ -47,10 +49,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		this.realizationCount = zParameter.getDimension();
 		
 		this.zParameter = zParameter;
-		this.countableRealizationsParameter = countableRealizationsParameter;
+//		this.countableRealizationsParameter = countableRealizationsParameter;
+		this.parameter = parameter;
 		this.likelihood = likelihood;
 		
-		this.M = M;
+		this.mhSteps = mhSteps;
 		setWeight(weight);
 
 	}// END: Constructor
@@ -110,12 +113,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					
 					double loglike = 0.0;
 					double candidate = 0.0;
-					for (int j = 0; j < M; j++) {
+					for (int j = 0; j < mhSteps; j++) {
 						 candidate = dpp.baseModel.nextRandom()[0];
 						 loglike = getPartialLoglike(index, candidate);
 					}
-					loglike /= M;
 					
+					loglike /= mhSteps;
 					logprob = Math.log((intensity) / (realizationCount - 1 + intensity)) + loglike;
 
 				} else {// draw existing
@@ -160,14 +163,19 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	private double getPartialLoglike(int index, double candidate) {
 
 		DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
-		double value = countableRealizationsParameter.getParameterValue(index);
+		
+		int category = (int) zParameter.getParameterValue(index);
+		double value = parameter.getParameterValue(category);
+		
+//		double value = parameter.getParameterValue(index);
 
 		double loglike = 0.0;
 		if (candidate != value) {
 
-			countableRealizationsParameter.setParameterValue(index, candidate);
+			//TODO: which category
+			parameter.setParameterValue(category, candidate);
 			loglike = dl.getLogLikelihood();
-			countableRealizationsParameter.setParameterValue(index, value);
+			parameter.setParameterValue(category, value);
 
 		} else {
 

@@ -21,25 +21,34 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	private DirichletProcessPrior dpp;
 
-	private Parameter zParameter;
+	
+	
 	private int realizationCount;
 	private int uniqueRealizationCount;
 	private double intensity;
 
+	
+	
+	private Parameter zParameter;
+	private CountableRealizationsParameter countableRealizationsParameter;
+	
 	private CompoundLikelihood likelihood;
+	
+	
 	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
 			Parameter zParameter, 
+			CountableRealizationsParameter countableRealizationsParameter,
 			CompoundLikelihood likelihood,
 			double weight) {
 
 		this.dpp = dpp;
 		this.intensity = dpp.getGamma();
-		this.zParameter = zParameter;
 		this.uniqueRealizationCount = dpp.getCategoryCount();
 		this.realizationCount = zParameter.getDimension();
 
-		
+		this.zParameter = zParameter;
+		this.countableRealizationsParameter = countableRealizationsParameter;
 		this.likelihood = likelihood;
 		
 		setWeight(weight);
@@ -98,14 +107,15 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 					// draw from base model, evaluate at likelihood
 					// M-H for poor people
-					// TODO: perhpas just loop over all mu[i] values?
+					
+					// TODO: parse M from XML
 					
 					int m = 1;
 					double loglike = 0.0;
 					double candidate = 0.0;
 					for (int j = 0; j < m; j++) {
 						 candidate = dpp.baseModel.nextRandom()[0];
-						loglike = getPartialLoglike(index, candidate);
+						 loglike = getPartialLoglike(index, candidate);
 					}
 					loglike /= m;
 					
@@ -114,8 +124,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				} else {// draw existing
 					
 					// likelihood for component x_index
-					double mu = dpp.getUniqueParameter(i).getParameterValue(0);
-					double loglike = getPartialLoglike(index, mu);
+					double value = dpp.getUniqueParameter(i).getParameterValue(0);
+					double loglike = getPartialLoglike(index, value);
 					
 					logprob = Math.log(occupancy[i]) / (realizationCount - 1 + intensity) + loglike;
 
@@ -146,25 +156,30 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				System.out.println("sampled category: " + sampledCluster + "\n");
 			}
 
-//			System.exit(-1);	
-			
 		}// END: index loop
 
 	}// END: doOperate
 
-	//TODO: general for arbitrary distributions
-	private double getPartialLoglike(int index, double parameterValue) {
+	private double getPartialLoglike(int index, double candidate) {
 
 		DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
-		ParametricDistributionModel dm = (ParametricDistributionModel) likelihood .getModel().getModel(index);
-		double stdev = (Double) dm.getVariable(1) .getValue(0);
-		double data = dl.getDataList().get(0) .getAttributeValue()[0];
-		
-		//TODO: same distribution as likelihood
-		double loglike = NormalDistribution.logPdf(data, parameterValue, stdev);
-		
+		double value = countableRealizationsParameter.getParameterValue(index);
+
+		double loglike = 0.0;
+		if (candidate != value) {
+
+			countableRealizationsParameter.setParameterValue(index, candidate);
+			loglike = dl.getLogLikelihood();
+			countableRealizationsParameter.setParameterValue(index, value);
+
+		} else {
+
+			loglike = dl.getLogLikelihood();
+
+		}
+
 		return loglike;
-	}
+	}// END: getPartialLoglike
 	
 	@Override
 	public String getOperatorName() {

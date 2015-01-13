@@ -119,9 +119,19 @@ public class CountableRealizationsParameter extends Parameter.Abstract implement
     	return param.getParameterValue(whichDimIndex);     
     }//END: getParameterValue
 
-    public void setParameterValue(int dim, double value) {
-        throw new RuntimeException("Not implemented");
-    }
+	public void setParameterValue(int dim, double value) {
+
+		
+	
+		
+		
+		
+		
+		
+		int whichCategoryIndex = (int) categoriesParameter.getParameterValue(dim);
+		uniquelyRealizedParameters.setParameterValue(whichCategoryIndex, value);
+
+	}//END: setParameterValue
 
     public void setParameterValueQuietly(int dim, double value) {
         throw new RuntimeException("Not implemented");

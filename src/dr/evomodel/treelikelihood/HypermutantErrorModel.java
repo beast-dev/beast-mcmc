@@ -32,9 +32,9 @@ public class HypermutantErrorModel extends TipStatesModel {
         this.hypermutationRateParameter = hypermutationRateParameter;
         addVariable(this.hypermutationRateParameter);
 
-        this.hypermuationIndicatorParameter = hypermuationIndicatorParameter;
+        this.hypermutationIndicatorParameter = hypermuationIndicatorParameter;
 
-        addVariable(this.hypermuationIndicatorParameter);
+        addVariable(this.hypermutationIndicatorParameter);
 
         addStatistic(new TaxonHypermutatedStatistic());
         addStatistic(new TaxonHypermutationRateStatistic());
@@ -42,8 +42,8 @@ public class HypermutantErrorModel extends TipStatesModel {
     }
 
     protected void taxaChanged() {
-        if (hypermuationIndicatorParameter.getDimension() <= 1) {
-            this.hypermuationIndicatorParameter.setDimension(tree.getExternalNodeCount());
+        if (hypermutationIndicatorParameter.getDimension() <= 1) {
+            this.hypermutationIndicatorParameter.setDimension(tree.getExternalNodeCount());
         }
         if (unlinkedRates && hypermutationRateParameter.getDimension() <= 1) {
             this.hypermutationRateParameter.setDimension(tree.getExternalNodeCount());
@@ -63,7 +63,7 @@ public class HypermutantErrorModel extends TipStatesModel {
     @Override
     public void getTipPartials(int nodeIndex, double[] partials) {
         int[] states = this.states[nodeIndex];
-        boolean isHypermutated = hypermuationIndicatorParameter.getParameterValue(nodeIndex) > 0.0;
+        boolean isHypermutated = hypermutationIndicatorParameter.getParameterValue(nodeIndex) > 0.0;
 
         double rate = (unlinkedRates ? hypermutationRateParameter.getParameterValue(nodeIndex) : hypermutationRateParameter.getParameterValue(0));
 
@@ -123,12 +123,14 @@ public class HypermutantErrorModel extends TipStatesModel {
 
     @Override
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == hypermuationIndicatorParameter) {
-            fireModelChanged();
+        if (variable == hypermutationIndicatorParameter) {
+            fireModelChanged(tree.getTaxon(index));
         } else if (variable == hypermutationRateParameter) {
-            if (!unlinkedRates || hypermuationIndicatorParameter.getValue(index)  > 0.5) {
-                // only fire an update if the indicator is on....
+            if (!unlinkedRates) {
                 fireModelChanged();
+            } else if (hypermutationIndicatorParameter.getValue(index)  > 0.5) {
+                // only fire an update if the indicator is on....
+                fireModelChanged(tree.getTaxon(index));
             }
         } else {
             throw new RuntimeException("Unknown parameter has changed in HypermutantErrorModel.handleVariableChangedEvent");
@@ -194,7 +196,7 @@ public class HypermutantErrorModel extends TipStatesModel {
         }
 
         public int getDimension() {
-            return hypermuationIndicatorParameter.getDimension();
+            return hypermutationIndicatorParameter.getDimension();
         }
 
         public String getDimensionName(int dim) {
@@ -202,7 +204,7 @@ public class HypermutantErrorModel extends TipStatesModel {
         }
 
         public double getStatisticValue(int dim) {
-            return hypermuationIndicatorParameter.getParameterValue(dim);
+            return hypermutationIndicatorParameter.getParameterValue(dim);
         }
 
     }
@@ -222,7 +224,7 @@ public class HypermutantErrorModel extends TipStatesModel {
         }
 
         public double getStatisticValue(int dim) {
-            return hypermutationRateParameter.getParameterValue(dim) * hypermuationIndicatorParameter.getParameterValue(dim);                           
+            return hypermutationRateParameter.getParameterValue(dim) * hypermutationIndicatorParameter.getParameterValue(dim);
         }
 
     }
@@ -256,8 +258,8 @@ public class HypermutantErrorModel extends TipStatesModel {
 
             double mutatedCount = 0;
             double totalCount = 0;
-            for (int i = 0; i < hypermuationIndicatorParameter.getDimension(); i++) {
-                if (hypermuationIndicatorParameter.getParameterValue(i) > 0.5) {
+            for (int i = 0; i < hypermutationIndicatorParameter.getDimension(); i++) {
+                if (hypermutationIndicatorParameter.getParameterValue(i) > 0.5) {
                     mutatedCount += mutatedContextCounts.get(i);
                     totalCount += mutatedCount + unmutatedContextCounts.get(i);
 
@@ -275,6 +277,6 @@ public class HypermutantErrorModel extends TipStatesModel {
 
     private final HypermutantAlignment hypermutantAlignment;
     private final Parameter hypermutationRateParameter;
-    private final Parameter hypermuationIndicatorParameter;
+    private final Parameter hypermutationIndicatorParameter;
     private final boolean unlinkedRates;
 }

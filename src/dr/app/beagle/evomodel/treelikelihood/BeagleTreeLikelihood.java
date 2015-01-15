@@ -656,8 +656,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 for (int i = 0; i < treeModel.getNodeCount(); i++)
                     if (treeModel.getNodeTaxon(treeModel.getNode(i)) != null && treeModel.getNodeTaxon(treeModel.getNode(i)).getId().equalsIgnoreCase(((Taxon) object).getId()))
                         updateNode(treeModel.getNode(i));
-            } else
+            } else if (object instanceof Parameter) {
+                // ignore...
+            } else {
                 updateAllNodes();
+            }
         } else {
 
             throw new RuntimeException("Unknown componentChangedEvent");

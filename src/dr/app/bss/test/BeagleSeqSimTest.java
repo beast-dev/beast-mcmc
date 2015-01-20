@@ -25,6 +25,7 @@
 
 package dr.app.bss.test;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -32,11 +33,13 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.app.beagle.evomodel.branchmodel.RandomBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
@@ -85,7 +88,8 @@ public class BeagleSeqSimTest {
 			// simulateThreePartitions(i, N);
 			// simulateAminoAcid();
 			// simulateCodon();
-			ancestralSequenceTree();
+//			ancestralSequenceTree();
+			simulateRandomBranchAssignment();
 
 		}
 		long toc = System.currentTimeMillis();
@@ -95,6 +99,86 @@ public class BeagleSeqSimTest {
 
 	} // END: main
 
+	static void simulateRandomBranchAssignment() {
+		
+		try {
+			
+			System.out.println("Test case I dunno which: simulate random branch assignments");
+
+			MathUtils.setSeed(666);
+
+			int sequenceLength = 10;
+			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+			
+	        File treeFile = new File("/home/filip/Dropbox/BeagleSequenceSimulator/SimTree/SimTree.figtree");
+	        Tree tree = Utils.importTreeFromFile(treeFile);
+	        TreeModel treeModel = new TreeModel(tree);
+			
+			// create Frequency Model
+			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
+					0.25, 0.25 });
+			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+					freqs);
+
+			// create  model list
+	        ArrayList<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
+	        
+			int nModels = 4;
+			for(int i = 0;i<nModels;i++) {
+				
+				// create substitution model
+				Parameter kappa = new Parameter.Default(i+1, 10);
+				HKY hky = new HKY(kappa, freqModel);
+				substitutionModelList.add(hky);
+				
+			}
+			
+			RandomBranchModel substitutionModel = new RandomBranchModel(treeModel, substitutionModelList);
+			
+			// create site model
+			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+					"siteModel");
+
+			// create branch rate model
+			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+			// create partition
+			Partition partition1 = new Partition(treeModel, //
+					substitutionModel,//
+					siteRateModel, //
+					branchRateModel, //
+					freqModel, //
+					0, // from
+					sequenceLength - 1, // to
+					1 // every
+			);
+
+			Sequence ancestralSequence = new Sequence();
+			ancestralSequence.appendSequenceString("TCAAGTGAGG");
+			partition1.setRootSequence(ancestralSequence);
+
+			partitionsList.add(partition1);
+
+			// feed to sequence simulator and generate data
+			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(
+					partitionsList);
+
+			SimpleAlignment alignment = simulator.simulate(simulateInPar, true);
+
+			// alignment.setOutputType(SimpleAlignment.OutputType.NEXUS);
+			alignment.setOutputType(SimpleAlignment.OutputType.XML);
+
+			System.out.println(alignment.toString());
+	        
+	        
+		} catch (Exception e) {
+
+			e.printStackTrace();
+
+		}// END: try-catch
+		
+	}//END: simulateRandomBranchAssignment
+	
 	static void ancestralSequenceTree() {
 
 		try {

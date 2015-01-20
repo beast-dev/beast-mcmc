@@ -13,6 +13,12 @@ import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ * 
+ */
+
 @SuppressWarnings("serial")
 public class RandomBranchModel extends AbstractModel implements BranchModel{
 

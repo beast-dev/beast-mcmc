@@ -13,6 +13,12 @@ import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ * 
+ */
+
 public class RandomBranchModelParser extends AbstractXMLObjectParser {
 
 	 public static final String MODELS = "models";

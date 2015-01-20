@@ -17,7 +17,7 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 //	private BranchSpecific branchSpecific;
 	private Helper helper;
 	
-	public BranchSpecificTrait(final BranchSpecific branchSpecific, final CompoundParameter parameter ) {
+	public BranchSpecificTrait(final LineageSpecificBranchModel branchSpecific, final CompoundParameter parameter ) {
 		
 //		this.parameter = parameter;
 //		this.branchSpecific = branchSpecific;

@@ -4,6 +4,7 @@ import org.apache.commons.math.MathException;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.GibbsOperator;
@@ -162,7 +163,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	private double getPartialLoglike(int index, double candidate) {
 
-		DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
+//		DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
+		
+		Likelihood dl = (Likelihood) likelihood .getLikelihood(index);
 		
 		int category = (int) zParameter.getParameterValue(index);
 		double value = parameter.getParameterValue(category);

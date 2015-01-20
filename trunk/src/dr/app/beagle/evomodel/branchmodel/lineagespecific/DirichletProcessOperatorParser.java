@@ -13,14 +13,14 @@ import dr.xml.XMLSyntaxRule;
 public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 
 	public static final String DIRICHLET_PROCESS_OPERATOR = "dpOperator";
-	public static final String DATA_LIKELIHOOD = "dataLogLike";
+	public static final String DATA_LOG_LIKELIHOOD = "dataLogLikelihood";
 	public static final String MH_STEPS = "mhSteps";
 	
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		DirichletProcessPrior dpp = (DirichletProcessPrior) xo.getChild(DirichletProcessPrior.class);
-		CompoundLikelihood likelihod = (CompoundLikelihood) xo .getElementFirstChild(DATA_LIKELIHOOD);
+		CompoundLikelihood likelihood = (CompoundLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
 		Parameter zParameter = (Parameter) xo.getElementFirstChild(  DirichletProcessPriorParser.CATEGORIES);
 //		CountableRealizationsParameter countableRealizationsParameter = (CountableRealizationsParameter) xo.getChild(CountableRealizationsParameter.class);
 		
@@ -31,7 +31,7 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 
 		return new DirichletProcessOperator(dpp, zParameter, uniquelyRealizedParameters,
 //				countableRealizationsParameter, 
-				likelihod, M, weight);
+				likelihood, M, weight);
 	}// END: parseXMLObject
 
 	@Override

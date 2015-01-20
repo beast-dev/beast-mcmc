@@ -61,7 +61,7 @@ public class Partition {
 	public int every;
 	private BranchModel branchModel;
 	private TreeModel treeModel;
-	private GammaSiteRateModel siteModel;
+	private GammaSiteRateModel siteRateModel;
 	private BranchRateModel branchRateModel;
 	private FrequencyModel freqModel;
 
@@ -110,7 +110,7 @@ public class Partition {
 	) {
 
 		this.treeModel = treeModel;
-		this.siteModel = siteModel;
+		this.siteRateModel = siteModel;
 		this.freqModel = freqModel;
 		this.branchModel = branchModel;
 		this.branchRateModel = branchRateModel;
@@ -154,7 +154,7 @@ public class Partition {
 		compactPartialsCount = tipCount;
 		stateCount = dataType.getStateCount();
 		patternCount = partitionSiteCount;
-		siteRateCategoryCount = siteModel.getCategoryCount();
+		siteRateCategoryCount = siteRateModel.getCategoryCount();
 
 		int[] resourceList = new int[] { 0 };
 		long preferenceFlags = 0;
@@ -182,11 +182,11 @@ public class Partition {
 			NodeRef root = treeModel.getRoot();
 
 			// gamma category rates
-			double[] categoryRates = siteModel.getCategoryRates();
+			double[] categoryRates = siteRateModel.getCategoryRates();
 			beagle.setCategoryRates(categoryRates);
 
 			// probabilities for gamma category rates
-			double[] categoryProbs = siteModel.getCategoryProportions();
+			double[] categoryProbs = siteRateModel.getCategoryProportions();
 //			beagle.setCategoryWeights(0, categoryProbs);
 
 //			Utils.printArray(categoryRates);

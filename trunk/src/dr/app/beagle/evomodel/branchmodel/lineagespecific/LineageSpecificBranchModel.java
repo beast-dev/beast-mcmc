@@ -68,8 +68,10 @@ import dr.util.Citation;
  * @version $Id$
  */
 @SuppressWarnings("serial")
-public class BranchSpecific extends AbstractModel implements BranchModel, Citable {
+public class LineageSpecificBranchModel extends AbstractModel implements BranchModel, Citable {
 
+	 public static final String LINEAGE_SPECIFIC_BRANCH_MODEL = "lineageSpecificBranchModel";
+	
 	private static final boolean DEBUG = false;
 	
     private boolean setupMapping = true;
@@ -83,7 +85,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel, Citabl
     private CountableBranchCategoryProvider uCategoriesProvider;
     private Parameter uCategoriesParameter;
 
-	public BranchSpecific(TreeModel treeModel, //
+	public LineageSpecificBranchModel(TreeModel treeModel, //
 			FrequencyModel rootFrequencyModel, //
 			final List<SubstitutionModel> substitutionModels, //
 			CountableBranchCategoryProvider uCategoriesProvider, //
@@ -275,7 +277,7 @@ public class BranchSpecific extends AbstractModel implements BranchModel, Citabl
 			Parameter uCategories = new Parameter.Default(2, 0);
             CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
 			
-            BranchSpecific branchSpecific = new BranchSpecific(tree, freqModel, substModels, provider, uCategories);
+            LineageSpecificBranchModel branchSpecific = new LineageSpecificBranchModel(tree, freqModel, substModels, provider, uCategories);
 
             BeagleTreeLikelihood like = new BeagleTreeLikelihood(convert, //
                     tree, //

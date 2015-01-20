@@ -20,15 +20,14 @@ import dr.xml.XMLSyntaxRule;
  * @version $Id$
  * 
  */
-public class BranchSpecificParser extends AbstractXMLObjectParser {
+public class LineageSpecificBranchModelParser extends AbstractXMLObjectParser {
 
-	 public static final String BRANCH_SPECIFIC = "branchSpecific";
 	 public static final String MODELS = "models";
 	 public static final String CATEGORIES = "categories";
 	
 	@Override
 	public String getParserName() {
-		return BRANCH_SPECIFIC;
+		return LineageSpecificBranchModel.LINEAGE_SPECIFIC_BRANCH_MODEL;
 	}
 
 	@Override
@@ -52,7 +51,7 @@ public class BranchSpecificParser extends AbstractXMLObjectParser {
 			
 			CountableBranchCategoryProvider.CladeBranchCategoryModel provider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categories);// false);
 			
-		return new BranchSpecific(treeModel, rootFrequencyModel, substitutionModels, provider, categories);
+		return new LineageSpecificBranchModel(treeModel, rootFrequencyModel, substitutionModels, provider, categories);
 	}
 
 	@Override
@@ -78,12 +77,13 @@ public class BranchSpecificParser extends AbstractXMLObjectParser {
 
 	@Override
 	public String getParserDescription() {
-		return BRANCH_SPECIFIC;
+		return "This element provides a branch model which has branches assigned to specific substitution models." +
+				"These assignments can then be changed in course of MCMC.";
 	}
 
 	@Override
 	public Class getReturnType() {
-		return BranchSpecific.class;
+		return LineageSpecificBranchModel.class;
 	}
 
 }//END: class

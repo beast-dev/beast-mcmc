@@ -59,7 +59,7 @@ public class TrialTreeParameterModel extends TreeParameterModel {
         return treeSize;
     }
 
-    protected int getNodeNumberFromParameterIndex(int parameterIndex) {
+    public int getNodeNumberFromParameterIndex(int parameterIndex) {
         int number = super.getNodeNumberFromParameterIndex(parameterIndex);
         if (!includeTips) {
             number += tree.getExternalNodeCount();
@@ -67,7 +67,7 @@ public class TrialTreeParameterModel extends TreeParameterModel {
         return number;
     }
 
-    protected int getParameterIndexFromNodeNumber(int nodeNumber) {
+    public int getParameterIndexFromNodeNumber(int nodeNumber) {
         int number = super.getParameterIndexFromNodeNumber(nodeNumber);
         if (!includeTips) {
             number -= tree.getExternalNodeCount();

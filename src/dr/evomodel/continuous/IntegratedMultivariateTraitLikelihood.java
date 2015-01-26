@@ -864,7 +864,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     private void preOrderTraverseSample(MultivariateTraitTree treeModel, NodeRef node, int parentIndex, double[][] treePrecision,
                                         double[][] treeVariance) {
-        //   System.err.println("preOrderTraverseSample got called!!");
+        //  System.err.println("preOrderTraverseSample got called!!");
         //  System.exit(-1);
         final int thisIndex = node.getNumber();
 
@@ -938,7 +938,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                     }
 
                     for (int i = 0; i < dimTrait; i++) {
-                        mean[i] = (drawnStates[parentOffset + i] * precisionToParent
+                        mean[i] = ((drawnStates[parentOffset + i] + cacheHelper.getShift(node)[i]) * precisionToParent
+                                //mean[i] = (drawnStates[parentOffset + i] * precisionToParent
                                 //  + meanCache[thisOffset + i] * precisionOfNode) / totalPrecision;
                                 + cacheHelper.getMeanCache()[thisOffset + i] * precisionOfNode) / totalPrecision;
                         for (int j = 0; j < dimTrait; j++) {
@@ -1004,6 +1005,15 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 storedMeanCache = new double[cacheLength];
             }
 
+        }
+
+        public double[] getShift(NodeRef node) {
+
+            double[] shift = new double[dimTrait];
+            for (int i = 0; i < dim; ++i) {
+                shift[i] = 0;
+            }
+            return shift;
         }
 
         public double[] getMeanCache() {
@@ -1088,6 +1098,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         public DriftCacheHelper(int cacheLength, boolean cacheBranches) {
             super(cacheLength, cacheBranches);
             correctedMeanCache = new double[cacheLength];
+        }
+
+        public double[] getShift(NodeRef node) {
+            return getShiftForBranchLength(node);
         }
 
         public double[] getCorrectedMeanCache() {

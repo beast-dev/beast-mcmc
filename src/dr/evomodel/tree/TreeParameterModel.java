@@ -165,12 +165,12 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         parameter.setParameterValue(index, value);
     }
 
-    protected int getNodeNumberFromParameterIndex(int parameterIndex) {
+    public int getNodeNumberFromParameterIndex(int parameterIndex) {
         if (!includeRoot && parameterIndex >= tree.getRoot().getNumber()) return parameterIndex + 1;
         return parameterIndex;
     }
 
-    protected int getParameterIndexFromNodeNumber(int nodeNumber) {
+    public int getParameterIndexFromNodeNumber(int nodeNumber) {
         if (!includeRoot && nodeNumber > tree.getRoot().getNumber()) return nodeNumber - 1;
         return nodeNumber;
     }

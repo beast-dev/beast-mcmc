@@ -29,14 +29,7 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-import dr.xml.XORRule;
+import dr.xml.*;
 
 /**
  */
@@ -47,6 +40,7 @@ public class PriorParsers {
     public static final String EXPONENTIAL_PRIOR = "exponentialPrior";
     public static final String POISSON_PRIOR = "poissonPrior";
     public static final String NEGATIVE_BINOMIAL_PRIOR = "negativeBinomialPrior";
+    public static final String DISCRETE_UNIFORM_PRIOR = "discreteUniformPrior";
     public static final String NORMAL_PRIOR = "normalPrior";
     public static final String LOG_NORMAL_PRIOR = "logNormalPrior";
     public static final String GAMMA_PRIOR = "gammaPrior";
@@ -299,6 +293,53 @@ public class PriorParsers {
             return Likelihood.class;
         }
     };
+
+    /**
+     * A special parser that reads a convenient short form of priors on parameters.
+     */
+    public static XMLObjectParser DISCRETE_UNIFORM_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return DISCRETE_UNIFORM_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double upper = xo.getDoubleAttribute(UPPER);
+            double lower = xo.getDoubleAttribute(LOWER);
+
+            DistributionLikelihood likelihood = new DistributionLikelihood(new DiscreteUniformDistribution(lower, upper));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleRule(LOWER),
+                AttributeRule.newDoubleRule(UPPER),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a given discrete uniform distribution.";
+        }
+
+        public Class getReturnType() {
+            return Likelihood.class;
+        }
+    };
+
+
 
     /**
      * A special parser that reads a convenient short form of priors on parameters.

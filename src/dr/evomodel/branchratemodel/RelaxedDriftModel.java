@@ -25,47 +25,40 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
     public RelaxedDriftModel(TreeModel treeModel,
                              Parameter rateIndicatorParameter,
                              Parameter ratesParameter,
-                             boolean randInheritance,
-                             boolean randNumChanges) {
+                             Parameter driftRates) {
 
         super(RelaxedDriftModelParser.RELAXED_DRIFT);
 
-
-        //indicators = new TreeParameterModel(treeModel, rateIndicatorParameter, true);
         rates = new TreeParameterModel(treeModel, ratesParameter, true);
-        randomInheritance = randInheritance;
-        randomNumChanges = randNumChanges;
-
-        // rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
         ratesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, -Double.MAX_VALUE, ratesParameter.getDimension()));
+        indicators = new TreeParameterModel(treeModel, rateIndicatorParameter, true);
+        rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, -1, rateIndicatorParameter.getDimension()));
 
-        if (rateIndicatorParameter != null) {
-            indicators = new TreeParameterModel(treeModel, rateIndicatorParameter, true);
-            rateIndicatorParameter.addBounds(new Parameter.DefaultBounds(1, 0, rateIndicatorParameter.getDimension()));
-            addModel(indicators);
-            for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
-                rateIndicatorParameter.setParameterValue(i, 0.0);
-            }
+        for (int i = 0; i < rateIndicatorParameter.getDimension(); i++) {
+            rateIndicatorParameter.setParameterValue(i, 0.0);
         }
-
         for (int i = 0; i < ratesParameter.getDimension(); i++) {
             ratesParameter.setParameterValue(i, 0.0);
         }
 
-        // rootDrift = rootDriftParameter;
-
         addModel(treeModel);
         this.treeModel = treeModel;
-
-        // addModel(indicators);
+        addModel(indicators);
         addModel(rates);
 
+        if (driftRates != null) {
+            this.driftRates = driftRates;
+            driftRates.setDimension(ratesParameter.getDimension());
+        } else {
+            driftRates = null;
+        }
 
-        unscaledBranchRates = new double[treeModel.getNodeCount()];
+        branchRates = new double[treeModel.getNodeCount()];
 
         // Logger.getLogger("dr.evomodel").info("  indicator parameter name is '" + rateIndicatorParameter.getId() + "'");
 
-        recalculateScaleFactor();
+        calculateBranchRates(treeModel);
+        //recalculateScaleFactor();
     }
 
 
@@ -85,7 +78,7 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
      * function looking down the tree.
      */
     public final boolean isVariableSelected(Tree tree, NodeRef node) {
-        return indicators.getNodeValue(tree, node) > 0.5;
+        return indicators.getNodeValue(tree, node) != 0;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -102,7 +95,8 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
     }
 
     protected void restoreState() {
-        recalculateScaleFactor();
+        calculateBranchRates(treeModel);
+        // recalculateScaleFactor();
     }
 
     protected void acceptState() {
@@ -110,15 +104,20 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
         if (recalculationNeeded) {
-            recalculateScaleFactor();
+            calculateBranchRates(treeModel);
+            // recalculateScaleFactor();
             recalculationNeeded = false;
         }
-        return unscaledBranchRates[node.getNumber()] * scaleFactor;
+        return branchRates[node.getNumber()];
     }
 
-    private void calculateUnscaledBranchRates(TreeModel tree) {
-        unscaledBranchRates[tree.getRoot().getNumber()] = getVariable(tree, tree.getRoot());
-        cubr(tree, tree.getRoot(), unscaledBranchRates[tree.getRoot().getNumber()]);
+    private void calculateBranchRates(TreeModel tree) {
+        branchRates[tree.getRoot().getNumber()] = getVariable(tree, tree.getRoot());
+        if (driftRates != null) {
+            driftRates.setParameterValue(tree.getRoot().getNumber(), getVariable(tree, tree.getRoot()));
+        }
+
+        cbr(tree, tree.getRoot(), branchRates[tree.getRoot().getNumber()]);
     }
 
     /**
@@ -130,99 +129,90 @@ public class RelaxedDriftModel extends AbstractBranchRateModel
      * @param node the node
      * @param rate the rate of the parent node
      */
-    private void cubr(TreeModel tree, NodeRef node, double rate) {
+    private void cbr(TreeModel tree, NodeRef node, double rate) {
 
         NodeRef childNode0 = tree.getChild(node, 0);
         NodeRef childNode1 = tree.getChild(node, 1);
         int nodeNumber0 = childNode0.getNumber();
         int nodeNumber1 = childNode1.getNumber();
+        double nodeIndicator = indicators.getNodeValue(tree, node);
+        if (indicators.getNodeValue(tree, node) != 0) {
+            //     System.err.println("nodeIndicator: " + nodeIndicator);
+        }
+        if (nodeIndicator < 0) {
+            //  System.err.println("child0 change");
+            branchRates[nodeNumber0] = rate + getVariable(tree, childNode0);
+            // branchRates[nodeNumber0] = getVariable(tree, childNode0);
+            branchRates[nodeNumber1] = rate;
 
+            if (driftRates != null) {
+                driftRates.setParameterValue(nodeNumber0, rate + getVariable(tree, childNode0));
+                driftRates.setParameterValue(nodeNumber1, rate);
+            }
 
-        if (randomInheritance) {
+        } else if (nodeIndicator > 0) {
+            //  System.err.println("child1 change");
+            branchRates[nodeNumber0] = rate;
+            branchRates[nodeNumber1] = rate + getVariable(tree, childNode1);
+            // branchRates[nodeNumber1] = getVariable(tree, childNode1);
 
-
-            if (randomNumChanges) {
-                if (indicators.getNodeValue(tree, childNode0) > 0.5 && indicators.getNodeValue(tree, childNode1) < 0.5) {
-                    unscaledBranchRates[nodeNumber0] = rate + getVariable(tree, childNode0);
-                    unscaledBranchRates[nodeNumber1] = rate;
-                } else if (indicators.getNodeValue(tree, childNode0) < 0.5 && indicators.getNodeValue(tree, childNode1) > 0.5) {
-                    unscaledBranchRates[nodeNumber0] = rate;
-                    unscaledBranchRates[nodeNumber1] = rate + getVariable(tree, childNode1);
-                } else {
-                    unscaledBranchRates[nodeNumber0] = rate;
-                    unscaledBranchRates[nodeNumber1] = rate;
-                }
-
-            } else {
-                if (indicators.getNodeValue(tree, node) > 0.5) {
-                    unscaledBranchRates[nodeNumber0] = rate + getVariable(tree, childNode0);
-                    unscaledBranchRates[nodeNumber1] = rate;
-                } else {
-                    unscaledBranchRates[nodeNumber0] = rate;
-                    unscaledBranchRates[nodeNumber1] = rate + getVariable(tree, childNode1);
-                }
-
+            if (driftRates != null) {
+                driftRates.setParameterValue(nodeNumber0, rate);
+                driftRates.setParameterValue(nodeNumber1, rate + getVariable(tree, childNode1));
             }
 
         } else {
-            //  System.err.println("I get heeeeeere");
-            unscaledBranchRates[nodeNumber0] = rate + getVariable(tree, childNode0);
-            unscaledBranchRates[nodeNumber1] = rate;
+            // System.err.println("NO CHANGES!!!");
+            branchRates[nodeNumber0] = rate;
+            branchRates[nodeNumber1] = rate;
+
+            if (driftRates != null) {
+                driftRates.setParameterValue(nodeNumber0, rate);
+                driftRates.setParameterValue(nodeNumber1, rate);
+            }
         }
 
         if (tree.getChildCount(childNode0) > 0) {
-            cubr(tree, childNode0, unscaledBranchRates[nodeNumber0]);
+            cbr(tree, childNode0, branchRates[nodeNumber0]);
         }
         if (tree.getChildCount(childNode1) > 0) {
-            cubr(tree, childNode1, unscaledBranchRates[nodeNumber1]);
+            cbr(tree, childNode1, branchRates[nodeNumber1]);
         }
 
 
+        /*
+        if (indicators.getNodeValue(tree, childNode0) > 0.5 && indicators.getNodeValue(tree, childNode1) < 0.5) {
+            branchRates[nodeNumber0] = rate + getVariable(tree, childNode0);
+           // branchRates[nodeNumber0] = getVariable(tree, childNode0);
+            branchRates[nodeNumber1] = rate;
+        } else if (indicators.getNodeValue(tree, childNode0) < 0.5 && indicators.getNodeValue(tree, childNode1) > 0.5) {
+            branchRates[nodeNumber0] = rate;
+            branchRates[nodeNumber1] = rate + getVariable(tree, childNode1);
+           // branchRates[nodeNumber1] = getVariable(tree, childNode1);
+        } else {
+            branchRates[nodeNumber0] = rate;
+            branchRates[nodeNumber1] = rate;
+        }
+
+        if (tree.getChildCount(childNode0) > 0) {
+            cbr(tree, childNode0, branchRates[nodeNumber0]);
+        }
+        if (tree.getChildCount(childNode1) > 0) {
+            cbr(tree, childNode1, branchRates[nodeNumber1]);
+        }
+        */
     }
 
-    private void recalculateScaleFactor() {
-        calculateUnscaledBranchRates(treeModel);
-        scaleFactor = 1;
-    }
-
-    // AR - as TreeParameterModels are now loggable, the indicator parameter should be logged
-    // directly.
-//    private static String[] attributeLabel = {"changed"};
-//
-//    public String[] getNodeAttributeLabel() {
-//        return attributeLabel;
-//    }
-//
-//    public String[] getAttributeForNode(Tree tree, NodeRef node) {
-//
-//        if (tree.isRoot(node)) {
-//            return new String[]{"false"};
-//        }
-//
-//        return new String[]{(isVariableSelected((TreeModel) tree, node) ? "true" : "false")};
-//    }
-
-    // the scale factor necessary to maintain the mean rate
-    private double scaleFactor;
 
     // the tree model
     private TreeModel treeModel;
 
-    // true if the rate variables are treated as relative
-    // to the parent rate rather than absolute rates
-    private boolean randomInheritance = false;
-    private boolean randomNumChanges = false;
-
     // the unscaled rates of each branch, taking into account the indicators
-    private double[] unscaledBranchRates;
-
-    // the mean rate across all the tree, if null then mean rate is scaled to 1.0
-    private Parameter meanRateParameter;
+    private double[] branchRates;
 
     private TreeParameterModel indicators;
     private TreeParameterModel rates;
-    private Parameter rootDrift;
-    private double myRandom;
+    private Parameter driftRates;
 
     boolean recalculationNeeded = true;
 }

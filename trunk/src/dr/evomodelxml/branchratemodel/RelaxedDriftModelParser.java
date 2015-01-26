@@ -16,13 +16,10 @@ import java.util.logging.Logger;
  */
 public class RelaxedDriftModelParser extends AbstractXMLObjectParser {
 
-    public static final String LOCAL_BRANCH_RATES = "randomLocalClockModel";
     public static final String RELAXED_DRIFT = "relaxedDriftModel";
     public static final String RATES = "rates";
     public static final String RATE_IND = "rateIndicator";
-    public static final String ROOT_DRIFT = "rootDrift";
-    public static final String RAND_INH = "randomInheritance";
-    public static final String RAND_CHANGES = "randomNumChanges";
+    public static final String DRIFT_RATES = "driftRates";
 
     public String getParserName() {
         return RELAXED_DRIFT;
@@ -34,22 +31,19 @@ public class RelaxedDriftModelParser extends AbstractXMLObjectParser {
 
         Parameter ratesParameter = (Parameter) xo.getElementFirstChild(RATES);
 
-        Parameter rateIndicatorParameter = null;
+        Parameter rateIndicatorParameter = (Parameter) xo.getElementFirstChild(RATE_IND);
 
-        if (xo.hasChildNamed(RATE_IND)) {
-            rateIndicatorParameter = (Parameter) xo.getElementFirstChild(RATE_IND);
+        Parameter driftRates = null;
+        if (xo.hasChildNamed(DRIFT_RATES)) {
+            driftRates = (Parameter) xo.getElementFirstChild(DRIFT_RATES);
         }
 
-        //  Parameter rootDriftParameter = (Parameter) xo.getElementFirstChild(ROOT_DRIFT);
-
-        boolean randomInheritance = xo.getAttribute(RAND_INH, false);
-        boolean randomNumChanges = xo.getAttribute(RAND_CHANGES, false);
 
         Logger.getLogger("dr.evomodel").info("Using relaxed drift model.");
 
 
         return new RelaxedDriftModel(tree, rateIndicatorParameter,
-                ratesParameter, randomInheritance, randomNumChanges);
+                ratesParameter, driftRates);
     }
 
     //************************************************************************
@@ -72,8 +66,7 @@ public class RelaxedDriftModelParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(TreeModel.class),
             new ElementRule(RATES, Parameter.class, "The rates parameter", false),
-            //  new ElementRule(RATE_IND, Parameter.class, "The mean rate across all local clocks", false),
-            //     new ElementRule(ROOT_DRIFT, Parameter.class, "The mean rate across all local clocks", false)
-            AttributeRule.newBooleanRule(RAND_INH, true)
+            new ElementRule(RATE_IND, Parameter.class, "The indicator parameter", false),
+            new ElementRule(DRIFT_RATES, Parameter.class, "the drift rates parameter", true)
     };
 }

@@ -37,10 +37,16 @@ public class SumStatistic extends Statistic.Abstract {
 
     private int dimension = 0;
     private final boolean elementwise;
+    private final boolean absolute;
 
-    public SumStatistic(String name, boolean elementwise) {
+    public SumStatistic(String name, boolean elementwise, boolean absolute) {
         super(name);
         this.elementwise = elementwise;
+        this.absolute = absolute;
+    }
+
+    public SumStatistic(String name, boolean elementwise) {
+        this(name, elementwise, false);
     }
 
     public void addStatistic(Statistic statistic) {
@@ -73,8 +79,18 @@ public class SumStatistic extends Statistic.Abstract {
 
         for (Statistic statistic : statistics) {
             if (elementwise) {
-                for (int j = 0; j < statistic.getDimension(); j++) {
-                    sum += statistic.getStatisticValue(j);
+                if (absolute) {
+                    //  System.err.println("statistic.getDimension(): " + statistic.getDimension());
+                    for (int j = 0; j < statistic.getDimension(); j++) {
+                        sum += Math.abs(statistic.getStatisticValue(j));
+                    }
+                } else {
+                    for (int j = 0; j < statistic.getDimension(); j++) {
+                        sum += statistic.getStatisticValue(j);
+                        //    if(statistic.getStatisticValue(j)<0) {
+                        //      System.err.println("statisticValue: " + statistic.getStatisticValue(j));
+                        //  }
+                    }
                 }
             } else {
                 sum += statistic.getStatisticValue(dim);

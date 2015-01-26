@@ -11,6 +11,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     public static String SUM_STATISTIC = "sumStatistic";
     public static String SUM = "sum";
     public static String ELEMENTWISE = "elementwise";
+    public static String ABSOLUTE = "absolute";
 
     public String[] getParserNames() {
         return new String[]{getParserName(), SUM};
@@ -23,6 +24,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean elementwise = xo.getAttribute(ELEMENTWISE, false);
+        boolean absolute = xo.getAttribute(ABSOLUTE, false);
 
         String name = SUM_STATISTIC;
         if (xo.hasAttribute(Statistic.NAME)) {
@@ -31,7 +33,7 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
             name = xo.getAttribute(XMLParser.ID, xo.getId());
         }
 
-        final SumStatistic sumStatistic = new SumStatistic(name, elementwise);
+        final SumStatistic sumStatistic = new SumStatistic(name, elementwise, absolute);
 
         for (int i = 0; i < xo.getChildCount(); i++) {
             final Statistic statistic = (Statistic) xo.getChild(i);

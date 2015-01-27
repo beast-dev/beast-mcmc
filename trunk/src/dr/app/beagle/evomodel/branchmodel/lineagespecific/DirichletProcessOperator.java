@@ -16,7 +16,7 @@ import dr.math.MathUtils;
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		GibbsOperator {
 
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 
 	private DirichletProcessPrior dpp;
 
@@ -170,8 +170,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		int category = (int) zParameter.getParameterValue(index);
 		double value = parameter.getParameterValue(category);
 		
-//		double value = parameter.getParameterValue(index);
-
 		double loglike = 0.0;
 		if (candidate != value) {
 

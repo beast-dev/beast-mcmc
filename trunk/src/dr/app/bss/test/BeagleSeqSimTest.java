@@ -37,6 +37,7 @@ import dr.app.beagle.evomodel.branchmodel.RandomBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EmpiricalAminoAcidModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.MG94CodonModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -115,25 +116,16 @@ public class BeagleSeqSimTest {
 	        TreeModel treeModel = new TreeModel(tree);
 			
 			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-					0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+			Parameter freqs = new Parameter.Default(Utils.UNIFORM_CODON_FREQUENCIES);
+			FrequencyModel freqModel = new FrequencyModel(Codons.UNIVERSAL,
 					freqs);
 
-			// create  model list
-	        ArrayList<SubstitutionModel> substitutionModelList = new ArrayList<SubstitutionModel>();
-	        
-			int nModels = 4;
-			for(int i = 0;i<nModels;i++) {
-				
-				// create substitution model
-				Parameter kappa = new Parameter.Default(i+1, 10);
-				HKY hky = new HKY(kappa, freqModel);
-				substitutionModelList.add(hky);
-				
-			}
+			// create base subst model
+			Parameter omegaParameter = new Parameter.Default("omega", 1, 1.0);
+			Parameter kappaParameter = new Parameter.Default("kappa", 1, 1.0);
+			GY94CodonModel baseSubModel = new GY94CodonModel(Codons.UNIVERSAL, omegaParameter, kappaParameter, freqModel);
 			
-			RandomBranchModel substitutionModel = new RandomBranchModel(treeModel, substitutionModelList);
+			RandomBranchModel substitutionModel = new RandomBranchModel(treeModel, baseSubModel);
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
@@ -153,9 +145,9 @@ public class BeagleSeqSimTest {
 					1 // every
 			);
 
-			Sequence ancestralSequence = new Sequence();
-			ancestralSequence.appendSequenceString("TCAAGTGAGG");
-			partition1.setRootSequence(ancestralSequence);
+//			Sequence ancestralSequence = new Sequence();
+//			ancestralSequence.appendSequenceString("TCAAGTGAGG");
+//			partition1.setRootSequence(ancestralSequence);
 
 			partitionsList.add(partition1);
 
@@ -661,44 +653,7 @@ public class BeagleSeqSimTest {
 			BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
 			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] {
-					0.0163936, //
-					0.01639344, 0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344, //
-					0.01639344, 0.01639344, 0.01639344, 0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344, //
-					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
-					0.01639344, 0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344, //
-					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
-					0.01639344, 0.01639344, 0.01639344, 0.01639344,
-					0.01639344,
-					0.01639344,
-					0.01639344, //
-					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
-					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
-					0.01639344, 0.01639344 //
-					});
+			Parameter freqs = new Parameter.Default(Utils.UNIFORM_CODON_FREQUENCIES);
 			FrequencyModel freqModel = new FrequencyModel(Codons.UNIVERSAL,
 					freqs);
 

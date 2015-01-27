@@ -1,14 +1,24 @@
 package dr.app.beagle.evomodel.branchmodel;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.math.random.MersenneTwister;
+
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.bss.Utils;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Parameter.Default;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
 import dr.math.MathUtils;
@@ -20,53 +30,77 @@ import dr.math.MathUtils;
  */
 
 @SuppressWarnings("serial")
-public class RandomBranchModel extends AbstractModel implements BranchModel{
+public class RandomBranchModel extends AbstractModel implements BranchModel {
 
-    public static final String RANDOM_BRANCH_MODEL = "randomBranchModel";
-    private final TreeModel treeModel;
-    private final List<SubstitutionModel> substitutionModels;
-    
-//    private int[] order;
-    private LinkedHashMap<NodeRef, Integer> branchAssignmentMap;
-    
+	public static final String RANDOM_BRANCH_MODEL = "randomBranchModel";
+	private final TreeModel treeModel;
+	private GY94CodonModel baseSubstitutionModel;
+
+	private LinkedList<SubstitutionModel> substitutionModels;
+
+	// private int[] order;
+	private LinkedHashMap<NodeRef, Integer> branchAssignmentMap;
+
+	private static MersenneTwister random = new MersenneTwister(
+			MathUtils.nextLong());
+
 	public RandomBranchModel(TreeModel treeModel,
-            List<SubstitutionModel> substitutionModels) {
-		
+			GY94CodonModel baseSubstitutionModel) {
+
 		super(RANDOM_BRANCH_MODEL);
-		
-		
+
 		this.treeModel = treeModel;
-		this.substitutionModels = substitutionModels;
-		
-		int nodeCount = treeModel.getNodeCount();
-		int nModels = substitutionModels.size();
-		
-		// randomly decide order, once and for all
-		  branchAssignmentMap = new LinkedHashMap<NodeRef, Integer>();
-		for (int i = 0; i < nodeCount; i++) {
+		this.baseSubstitutionModel = baseSubstitutionModel;
 
-			NodeRef node = treeModel.getNode(i);
-			int branchClass = MathUtils.nextInt(nModels);
+		setup();
+
+	}// END: Constructor
+
+	private void setup() {
+
+		// TODO: parse
+		double stdev = 1.0;
+		double mean = 0.0;
+
+		DataType dataType = baseSubstitutionModel.getDataType();
+		FrequencyModel freqModel = baseSubstitutionModel.getFrequencyModel();
+		Parameter kappaParameter = new Parameter.Default("kappa", 1, baseSubstitutionModel.getKappa());
+		
+		substitutionModels = new LinkedList<SubstitutionModel>();
+		branchAssignmentMap = new LinkedHashMap<NodeRef, Integer>();
+
+		int branchClass = 0;
+		for (NodeRef node : treeModel.getNodes()) {
+
+			double time = treeModel.getNodeHeight(node);
+			double baseOmega = baseSubstitutionModel.getOmega();
+			double epsilon = (random.nextGaussian() * stdev + mean);
+
+			double value = baseOmega * time + epsilon;
+			Parameter omegaParameter = new Parameter.Default("omega", 1, value);
+			GY94CodonModel gy94 = new GY94CodonModel((Codons) dataType, omegaParameter, kappaParameter, freqModel);
+
+			substitutionModels.add(gy94);
 			branchAssignmentMap.put(node, branchClass);
+			branchClass++;
+		}// END: nodes loop
 
-		}// END: nodes loop		
-		
-	}//END: Constructor
-	
+	}// END: setup
+
 	@Override
 	public Mapping getBranchModelMapping(NodeRef branch) {
-		
-		final int branchClass = branchAssignmentMap.get(branch);
-		
-        return new Mapping() {
-            public int[] getOrder() {
-                return new int[] { branchClass };
-            }
 
-            public double[] getWeights() {
-                return new double[] { 1.0 };
-            }
-        };
+		final int branchClass = branchAssignmentMap.get(branch);
+
+		return new Mapping() {
+			public int[] getOrder() {
+				return new int[] { branchClass };
+			}
+
+			public double[] getWeights() {
+				return new double[] { 1.0 };
+			}
+		};
 	}
 
 	@Override
@@ -112,5 +146,4 @@ public class RandomBranchModel extends AbstractModel implements BranchModel{
 	protected void acceptState() {
 	}
 
-
-}//END: class
+}// END: class

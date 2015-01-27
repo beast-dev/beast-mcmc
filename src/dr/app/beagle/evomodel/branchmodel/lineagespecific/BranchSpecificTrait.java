@@ -35,7 +35,8 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 	public BranchSpecificTrait(
 			TreeModel treeModel,
 			final BranchModel branchModel,
-			final CompoundParameter parameter ) {
+			final CompoundParameter parameter 
+			) {
 		
 		this.treeModel = treeModel;
 		helper = new Helper();
@@ -62,16 +63,13 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 
 				//TODO: write some mechanism to get the right parameter from the substitution model
 				value = (double) branchModel.getSubstitutionModels().get(category).getVariable(0).getValue(0);
+	
+				
+				
 				
 //				System.out.println( 				branchModel.getSubstitutionModels().get(category).getVariable(0));
-				System.out.println(value);
+//				System.out.println(value);
 				
-				
-				System.out.println("--------------");
-				
-				
-				
-	
 				return value;
 
 			}//END: getTrait
@@ -89,7 +87,6 @@ public class BranchSpecificTrait implements TreeTraitProvider {
         return helper.getTreeTrait(key);
     }
 
-	// TODO: return annotated tree
 	public String toString() {
 
 		String annotatedTree = Tree.Utils.newick(treeModel, 

@@ -78,8 +78,8 @@ public class RandomBranchModel extends AbstractModel implements BranchModel {
 				double parentHeight = treeModel.getNodeHeight(treeModel
 						.getParent(node));
 
-				System.out.println("upper: " + parentHeight + ", lower: "
-						+ nodeHeight);
+//				System.out.println("upper: " + parentHeight + ", lower: "
+//						+ nodeHeight);
 
 				double time = 0.5 * (parentHeight - nodeHeight);
 

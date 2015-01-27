@@ -1,5 +1,7 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
@@ -24,17 +26,19 @@ public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		LineageSpecificBranchModel branchSpecific = (LineageSpecificBranchModel) xo.getChild(LineageSpecificBranchModel.class);
+		BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
 		CompoundParameter parameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
-
-		return new BranchSpecificTrait(branchSpecific, parameter);
+        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+		
+		
+		return new BranchSpecificTrait(treeModel, branchModel, parameter);
 	}
 
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
 		return new XMLSyntaxRule[] {
 
-		new ElementRule(LineageSpecificBranchModel.class, false), //
+		new ElementRule(BranchModel.class, false), //
 				new ElementRule(CompoundParameter.class, false), //
 
 		};
@@ -48,6 +52,7 @@ public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 	@Override
 	public Class getReturnType() {
 		return BranchSpecificTrait.class;
+//		return TreeModel.class;
 	}
 
 }// END: class

@@ -64,25 +64,38 @@ public class RandomBranchModel extends AbstractModel implements BranchModel {
 
 		DataType dataType = baseSubstitutionModel.getDataType();
 		FrequencyModel freqModel = baseSubstitutionModel.getFrequencyModel();
-		Parameter kappaParameter = new Parameter.Default("kappa", 1, baseSubstitutionModel.getKappa());
-		
+		Parameter kappaParameter = new Parameter.Default("kappa", 1,
+				baseSubstitutionModel.getKappa());
+
 		substitutionModels = new LinkedList<SubstitutionModel>();
 		branchAssignmentMap = new LinkedHashMap<NodeRef, Integer>();
 
 		int branchClass = 0;
 		for (NodeRef node : treeModel.getNodes()) {
+			if (!treeModel.isRoot(node)) {
 
-			double time = treeModel.getNodeHeight(node);
-			double baseOmega = baseSubstitutionModel.getOmega();
-			double epsilon = (random.nextGaussian() * stdev + mean);
+				double nodeHeight = treeModel.getNodeHeight(node);
+				double parentHeight = treeModel.getNodeHeight(treeModel
+						.getParent(node));
 
-			double value = baseOmega * time + epsilon;
-			Parameter omegaParameter = new Parameter.Default("omega", 1, value);
-			GY94CodonModel gy94 = new GY94CodonModel((Codons) dataType, omegaParameter, kappaParameter, freqModel);
+				System.out.println("upper: " + parentHeight + ", lower: "
+						+ nodeHeight);
 
-			substitutionModels.add(gy94);
-			branchAssignmentMap.put(node, branchClass);
-			branchClass++;
+				double time = 0.5 * (parentHeight - nodeHeight);
+
+				double baseOmega = baseSubstitutionModel.getOmega();
+				double epsilon = (random.nextGaussian() * stdev + mean);
+
+				double value = baseOmega * time + epsilon;
+				Parameter omegaParameter = new Parameter.Default("omega", 1,
+						value);
+				GY94CodonModel gy94 = new GY94CodonModel((Codons) dataType,
+						omegaParameter, kappaParameter, freqModel);
+
+				substitutionModels.add(gy94);
+				branchAssignmentMap.put(node, branchClass);
+				branchClass++;
+			}
 		}// END: nodes loop
 
 	}// END: setup
@@ -110,8 +123,9 @@ public class RandomBranchModel extends AbstractModel implements BranchModel {
 
 	@Override
 	public SubstitutionModel getRootSubstitutionModel() {
-		int rootClass = branchAssignmentMap.get(treeModel.getRoot());
-		return substitutionModels.get(rootClass);
+		// int rootClass = branchAssignmentMap.get(treeModel.getRoot());
+		// return substitutionModels.get(rootClass);
+		throw new RuntimeException("Not implemented!");
 	}
 
 	@Override

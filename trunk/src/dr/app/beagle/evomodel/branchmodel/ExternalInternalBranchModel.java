@@ -55,7 +55,7 @@ public class ExternalInternalBranchModel extends AbstractModel implements Branch
 
         addModel(tree);
         addModel(externalSubstModel);
-        addModel(externalSubstModel);
+        addModel(internalSubstModel);
     }
 
     public Mapping getBranchModelMapping(final NodeRef node) {

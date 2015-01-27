@@ -4,8 +4,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.NumberFormat;
+import java.util.HashMap;
+import java.util.Map;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.bss.Utils;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -52,17 +55,26 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 			@Override
 			public Double getTrait(Tree tree, NodeRef branch) {
 
+				double value = 0.0;
+				
 				int[] uCats = branchModel.getBranchModelMapping(branch).getOrder();
-				int branchParameterIndex = uCats[0];
+				int category = uCats[0];
+
+				//TODO: write some mechanism to get the right parameter from the substitution model
+				value = (double) branchModel.getSubstitutionModels().get(category).getVariable(0).getValue(0);
 				
-				//TODO: get the right parameter from the model, this assumes they are in the same order as models in Mapping
-				double value = (Double) parameter.getParameter(branchParameterIndex).getParameterValue(0);
+//				System.out.println( 				branchModel.getSubstitutionModels().get(category).getVariable(0));
+				System.out.println(value);
+				
+				
+				System.out.println("--------------");
+				
+				
+				
 	
-				System.out.println("FUBAR");
-				
 				return value;
 
-			}
+			}//END: getTrait
 		};
 		
 		helper.addTrait(uTrait);
@@ -76,44 +88,15 @@ public class BranchSpecificTrait implements TreeTraitProvider {
     public TreeTrait getTreeTrait(String key) {
         return helper.getTreeTrait(key);
     }
-	
-    //TODO: return annotated tree
+
+	// TODO: return annotated tree
 	public String toString() {
-		
-		TreeLogger treeLogger = null;
-		
-		try {
-			
-//			File file = new File("annotated.tree");
-//			file.deleteOnExit();
-//			FileOutputStream out;
-//			out = new FileOutputStream(file);
 
-			
-			 treeLogger = new TreeLogger(treeModel, //
-					 null, //
-                    null, //
-                    new  TreeTraitProvider[] {this}, //
-                    new TabDelimitedFormatter(System.out), // 
-                    1, //
-                    true, //
-                     true, //
-                     false, //
-                     null, //
-                     null);
-					 
-//					 new TreeLogger(treeModel, new TabDelimitedFormatter(System.out), 1, true, true, false);
+		String annotatedTree = Tree.Utils.newick(treeModel, 
+				new TreeTraitProvider[] { this });
 
-			
-			treeLogger.startLogging();
-//			treeLogger.stopLogging();
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-		}//END: try-catch
+		return annotatedTree;
 
-		return treeLogger.getTree().toString();
-
-	}//END: toString
+	}// END: toString
     
 }//END: class

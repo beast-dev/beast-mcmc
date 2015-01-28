@@ -62,15 +62,32 @@ public class GY94CodonModel extends AbstractCodonModel {
         super("GY94", codonDataType, freqModel, eigenSystem);
 
         this.omegaParameter = omegaParameter;
+
+        int dim = omegaParameter.getDimension();
+        double value = omegaParameter.getParameterValue(dim - 1); 
+        if(value < 0) {
+        	throw new RuntimeException("Negative Omega parameter value " + value);
+        }//END: negative check
+        
         addVariable(omegaParameter);
         omegaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 omegaParameter.getDimension()));
 
         this.kappaParameter = kappaParameter;
+        
+        dim = kappaParameter.getDimension();
+        value = kappaParameter.getParameterValue(dim - 1);
+        if(value < 0) {
+        	throw new RuntimeException("Negative kappa parameter value value " + value);
+        }//END: negative check
+        
         addVariable(kappaParameter);
         kappaParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                 kappaParameter.getDimension()));
 
+        // Assuming it's always the same dim
+        
+        
         addStatistic(synonymousRateStatistic);
     }
 

@@ -27,11 +27,11 @@ public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
-		CompoundParameter parameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
+//		CompoundParameter parameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 		
 		
-		return new BranchSpecificTrait(treeModel, branchModel, parameter);
+		return new BranchSpecificTrait(treeModel, branchModel, xo.getId());
 	}
 
 	@Override
@@ -39,7 +39,7 @@ public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 		return new XMLSyntaxRule[] {
 
 		new ElementRule(BranchModel.class, false), //
-				new ElementRule(CompoundParameter.class, false), //
+				new ElementRule(TreeModel.class, false), //
 
 		};
 	}
@@ -52,7 +52,6 @@ public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 	@Override
 	public Class getReturnType() {
 		return BranchSpecificTrait.class;
-//		return TreeModel.class;
 	}
 
 }// END: class

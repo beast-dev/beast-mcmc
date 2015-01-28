@@ -41,9 +41,14 @@ public class RandomBranchModel extends AbstractModel implements BranchModel {
 	// private int[] order;
 	private LinkedHashMap<NodeRef, Integer> branchAssignmentMap;
 
-	private static MersenneTwister random = new MersenneTwister(
-			MathUtils.nextLong());
+	
+	//TODO: switch between parsed seed and random seed by XML attribute
+//	private static MersenneTwister random = new MersenneTwister(
+//			MathUtils.nextLong());
 
+	private static MersenneTwister random = new MersenneTwister(
+			666);
+	
 	public RandomBranchModel(TreeModel treeModel,
 			GY94CodonModel baseSubstitutionModel) {
 
@@ -80,9 +85,10 @@ public class RandomBranchModel extends AbstractModel implements BranchModel {
 
 //				System.out.println("upper: " + parentHeight + ", lower: "
 //						+ nodeHeight);
+//				double time = 0.5 * (parentHeight - nodeHeight) + nodeHeight ;
 
-				double time = 0.5 * (parentHeight - nodeHeight);
-
+				double time = 0.5 * (parentHeight + nodeHeight);
+				
 				double baseOmega = baseSubstitutionModel.getOmega();
 				double epsilon = (random.nextGaussian() * stdev + mean);
 

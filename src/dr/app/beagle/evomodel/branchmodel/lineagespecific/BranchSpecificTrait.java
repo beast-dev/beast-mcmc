@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.bss.Utils;
 import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
@@ -21,6 +22,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Filip Bielejec
@@ -35,17 +37,19 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 	public BranchSpecificTrait(
 			TreeModel treeModel,
 			final BranchModel branchModel,
-			final CompoundParameter parameter 
+//			, final CompoundParameter parameter 
+			final String parameterName
 			) {
 		
 		this.treeModel = treeModel;
 		helper = new Helper();
 		
+		//TODO: this could annotate with all Variables in Substitution model
 		TreeTrait<Double> uTrait = new TreeTrait.D() {
 
 			@Override
 			public String getTraitName() {
-				return parameter.getId();
+				return parameterName;//parameter.getId();
 			}
 
 			@Override
@@ -61,14 +65,20 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 				int[] uCats = branchModel.getBranchModelMapping(branch).getOrder();
 				int category = uCats[0];
 
+				SubstitutionModel substmodel = branchModel.getSubstitutionModels().get(category);
+
 				//TODO: write some mechanism to get the right parameter from the substitution model
-				value = (double) branchModel.getSubstitutionModels().get(category).getVariable(0).getValue(0);
-	
+//				for(int i=0;i<substmodel.getVariableCount();i++) {
+//					Variable variable = substmodel.getVariable(i);
+//					
+//					System.out.println(variable.getId());
+//					
+//				}
+//				
+//				System.out.println("---------------");
 				
+                 value = (Double) substmodel.getVariable(0).getValue(0);		
 				
-				
-//				System.out.println( 				branchModel.getSubstitutionModels().get(category).getVariable(0));
-//				System.out.println(value);
 				
 				return value;
 

@@ -53,10 +53,24 @@ public class GY94CodonModelParser extends AbstractXMLObjectParser {
             codons = Codons.findByName(codeStr);
         }
 
-        Parameter omegaParam = (Parameter)xo.getElementFirstChild(OMEGA);
-        Parameter kappaParam = (Parameter)xo.getElementFirstChild(KAPPA);
+        Parameter omegaParameter = (Parameter)xo.getElementFirstChild(OMEGA);
+        
+        int dim = omegaParameter.getDimension();
+        double value = omegaParameter.getParameterValue(dim - 1); 
+        if(value < 0) {
+        	throw new RuntimeException("Negative Omega parameter value " + value);
+        }//END: negative check
+        
+        Parameter kappaParameter = (Parameter)xo.getElementFirstChild(KAPPA);
+        
+        dim = kappaParameter.getDimension();
+        value = kappaParameter.getParameterValue(dim - 1);
+        if(value < 0) {
+        	throw new RuntimeException("Negative kappa parameter value value " + value);
+        }//END: negative check
+        
         FrequencyModel freqModel = (FrequencyModel)xo.getChild(FrequencyModel.class);
-        GY94CodonModel codonModel = new GY94CodonModel(codons, omegaParam, kappaParam, freqModel);
+        GY94CodonModel codonModel = new GY94CodonModel(codons, omegaParameter, kappaParameter, freqModel);
 
 //            codonModel.printRateMap();
 

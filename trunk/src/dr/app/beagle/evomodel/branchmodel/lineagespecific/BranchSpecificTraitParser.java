@@ -2,7 +2,6 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.CompoundParameter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
 import dr.xml.XMLObject;

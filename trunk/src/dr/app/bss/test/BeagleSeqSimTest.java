@@ -125,7 +125,7 @@ public class BeagleSeqSimTest {
 			Parameter kappaParameter = new Parameter.Default("kappa", 1, 1.0);
 			GY94CodonModel baseSubModel = new GY94CodonModel(Codons.UNIVERSAL, omegaParameter, kappaParameter, freqModel);
 			
-			RandomBranchModel substitutionModel = new RandomBranchModel(treeModel, baseSubModel);
+			RandomBranchModel substitutionModel = new RandomBranchModel(treeModel, baseSubModel, 0.25, false, -1);
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(

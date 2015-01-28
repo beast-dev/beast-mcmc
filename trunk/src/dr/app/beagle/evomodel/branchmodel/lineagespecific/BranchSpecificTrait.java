@@ -1,28 +1,12 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.text.NumberFormat;
-import java.util.HashMap;
-import java.util.Map;
-
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.bss.Utils;
-import dr.evolution.tree.BranchRates;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeAttributeProvider;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.tree.TreeLogger;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.loggers.LogFormatter;
-import dr.inference.loggers.TabDelimitedFormatter;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Variable;
 
 /**
  * @author Filip Bielejec
@@ -66,18 +50,7 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 				int category = uCats[0];
 
 				SubstitutionModel substmodel = branchModel.getSubstitutionModels().get(category);
-
-				//TODO: write some mechanism to get the right parameter from the substitution model
-//				for(int i=0;i<substmodel.getVariableCount();i++) {
-//					Variable variable = substmodel.getVariable(i);
-//					
-//					System.out.println(variable.getId());
-//					
-//				}
-//				
-//				System.out.println("---------------");
-				
-                 value = (Double) substmodel.getVariable(0).getValue(0);		
+                value = (Double) substmodel.getVariable(0).getValue(0);		
 				
 				
 				return value;

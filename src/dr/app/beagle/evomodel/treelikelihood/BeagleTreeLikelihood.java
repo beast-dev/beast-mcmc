@@ -1028,8 +1028,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         // First update the transition probability matrix(ices) for this branch
         if (parent != null && updateNode[nodeNum]) {
 
-            final double branchRate = branchRateModel.getBranchRate(tree, node);
+            final double branchRate;
 
+            synchronized (branchRateModel) {
+                branchRate = branchRateModel.getBranchRate(tree, node);
+            }
             final double parentHeight = tree.getNodeHeight(parent);
             final double nodeHeight = tree.getNodeHeight(node);
 

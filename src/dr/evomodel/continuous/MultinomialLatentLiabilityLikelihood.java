@@ -239,6 +239,11 @@ public class MultinomialLatentLiabilityLikelihood extends AbstractModelLikelihoo
         pathParameter=beta;
     }
 
+    @Override
+    public double getLikelihoodCorrection() {
+        return 0;
+    }
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************

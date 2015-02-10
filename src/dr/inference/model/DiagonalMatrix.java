@@ -180,14 +180,12 @@ public class DiagonalMatrix extends MatrixParameter {
         return answer;
     }
 
-    public MatrixParameter product(double a) {
-        MatrixParameter answer = new MatrixParameter(null);
-        answer.setDimensions(this.getRowDimension(), this.getColumnDimension());
+    public void product(double a) {
         for (int i = 0; i < this.getRowDimension(); i++) {
-            answer.setParameterValueQuietly(i, i, a * this.getParameterValue(i, i));
+            this.setParameterValueQuietly(i, i, a * this.getParameterValue(i, i));
 
         }
-        return answer;
+        this.fireParameterChangedEvent();
     }
 
     public MatrixParameter productInPlace(double a, MatrixParameter answer) {

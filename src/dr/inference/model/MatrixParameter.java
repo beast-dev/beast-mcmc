@@ -414,16 +414,13 @@ public class MatrixParameter extends CompoundParameter {
         return answer;
     }
 
-    public MatrixParameter product(double a){
-        MatrixParameter answer=new MatrixParameter(null);
-        answer.setDimensions(this.getRowDimension(), this.getColumnDimension());
+    public void product(double a){
         for (int i = 0; i <this.getRowDimension() ; i++) {
-            for (int j = 0; j <this.getColumnDimension() ; j++) {
-                answer.setParameterValueQuietly(i,j, a*this.getParameterValue(i,j));
+            for (int j = 0; j < this.getColumnDimension(); j++) {
+                this.setParameterValueQuietly(i, j, a * this.getParameterValue(i, j));
             }
-
         }
-        return answer;
+        this.fireParameterChangedEvent();
     }
 
     public MatrixParameter productInPlace(double a, MatrixParameter answer){

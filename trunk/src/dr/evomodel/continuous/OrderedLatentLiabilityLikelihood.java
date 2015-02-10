@@ -157,6 +157,22 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         pathParameter=beta;
     }
 
+    @Override
+    public double getLikelihoodCorrection() {
+        boolean valid=true;
+        for (int tip = 0; tip < tipData.length && valid; ++tip) {
+            valid = validTraitForTip(tip);
+
+        }
+        if(valid)
+        {
+            return 0;
+        }
+        else{
+            return 1/(1-pathParameter);
+        }
+    }
+
     public String toString() {
         return getClass().getName() + "(" + getLogLikelihood() + ")";
     }
@@ -203,18 +219,17 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
             int dim = (int) numClasses.getParameterValue(index);
 
 
-            //handles missing data
-            if(datum==-1){return true;}
 
 
             if (dim == 1.0) {
                 valid = true;
-            } else if (dim == 2.0) {
-
+            } else if (dim == 2.0){
                 if (trait == 0) {
                     valid = true;
+                }
+                else if(datum>1){
+                    valid=true;
                 } else {
-
                     boolean positive = trait > 0.0;
                     if (positive) {
                         valid = (datum == 1.0);
@@ -230,7 +245,9 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
                             trait <= thresholdParameter.getParameter(threshNum).getParameterValue(0));
                 } else if (datum == (dim - 1)) {
                     valid = trait >= thresholdParameter.getParameter(threshNum).getParameterValue(dim - 3);
-                } else {
+                } else if (datum > (dim-1)) {
+                    valid=true;
+                }else {
                     valid = (trait >= thresholdParameter.getParameter(threshNum).getParameterValue(datum - 2) &&
                             trait <= thresholdParameter.getParameter(threshNum).getParameterValue(datum - 1));
                 }
@@ -478,6 +495,7 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
     public CompoundParameter tipTraitParameter;
     private CompoundParameter thresholdParameter;
     public Parameter numClasses;
+    private Parameter containsMissing;
 
     private boolean isUnordered = false;
     private int[][] tipData;

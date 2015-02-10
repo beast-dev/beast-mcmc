@@ -38,7 +38,7 @@ import java.util.List;
  * @author Marc Suchard
  */
 
-public class LatentFactorModel extends AbstractModelLikelihood implements SoftThresholdLikelihood, Citable {
+public class LatentFactorModel extends AbstractModelLikelihood implements Citable {
 //    private Matrix data;
 //    private Matrix factors;
 //    private Matrix loadings;
@@ -186,6 +186,15 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
             data.fireParameterChangedEvent();
         }
 
+        double sum=0;
+        for(int i=0; i<sData.getRowDimension(); i++){
+            for (int j = 0; j <sData.getColumnDimension() ; j++) {
+                if(continuous.getParameterValue(i)==0)
+                {sum+=-.5*Math.log(2*StrictMath.PI)-.5*sData.getParameterValue(i,j)*sData.getParameterValue(i,j);}
+            }
+        }
+        System.out.println("Constant Value for Path Sampling (normal 0,1): " + -1*sum);
+
        computeResiduals();
 //        System.out.print(new Matrix(residual.toComponents()));
 //        System.out.print(calculateLogLikelihood());
@@ -276,7 +285,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
         for (int i = 0; i <row ; i++) {
             if(continuous.getParameterValue(i)!=0 ||newModel){
                 for (int j = 0; j < col; j++) {
-                    answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
+                       answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
                 }
             }
 //            else{
@@ -642,7 +651,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements SoftTh
                -.5*data.getRowDimension()*data.getColumnDimension()*Math.log(2.0 * StrictMath.PI);
     }
 
-    public void setPathParameter(double beta){
-        pathParameter=beta;
-    }
+//    public void setPathParameter(double beta){
+//        pathParameter=beta;
+//        data.product(pathParameter);
+//    }
+
+//    @Override
+//    public double getLikelihoodCorrection() {
+//        return 0;
+//    }
 }

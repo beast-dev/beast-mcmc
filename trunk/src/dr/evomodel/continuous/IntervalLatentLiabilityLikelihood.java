@@ -310,6 +310,11 @@ public class IntervalLatentLiabilityLikelihood extends AbstractModelLikelihood i
         pathParameter=beta;
     }
 
+    @Override
+    public double getLikelihoodCorrection() {
+        return 0;
+    }
+
     private TreeModel treeModel;
     private PatternList patternList;
     private CompoundParameter tipTraitParameter;

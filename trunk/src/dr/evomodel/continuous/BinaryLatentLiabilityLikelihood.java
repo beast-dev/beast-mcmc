@@ -177,6 +177,11 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
         pathParameter=beta;
     }
 
+    @Override
+    public double getLikelihoodCorrection() {
+        return 0;
+    }
+
     private final LatentTruncation.Delegate normalizationDelegate = new LatentTruncation.Delegate() {
 
         protected double computeNormalizationConstant(Distribution working) {

@@ -70,26 +70,33 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
         addVariable(chi);
         addVariable(transformFactor);
         addVariable(alpha);
-        addVariable(locationDrift);
+       // addVariable(locationDrift);
         addVariable(offsets);
 
         numdata = traitParameter.getParameterCount();
         this.allTips=Tree.Utils.getExternalNodes(treeModel,treeModel.getRoot());
 
 
-     //   setData();
+
        setDepMatrix();
+
+
 
 
 
 	 for (int i=0; i<numdata; i++){
 		 assignments.setParameterValue(i, i);
 	     links.setParameterValue(i,i);
+
      }
-	 
+
 	
 	       
 	       this.logLikelihoodsVector = new double[links.getDimension()+1];
+           this.logLikelihoodsVectorKnown = new boolean[links.getDimension()+1];
+           this.storedLogLikelihoodsVector = new double[links.getDimension()+1];
+
+
 
         this.m = new double[2];
         m[0]= priorMean.getParameterValue(0);
@@ -135,20 +142,71 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
         }
     */
 
-       //printInformtion(logLikelihoodsVector[0]);
-       // printInformtion(logLikelihoodsVector[2]);
 
 
 
     }
 
 
+    /*
+    public void setInitialAssignmentsToDates(){
+
+
+
+
+
+
+
+        double[] offsetValues = new double[numdata];
+        for (int i=0; i<numdata; i++){
+            offsetValues[i] =offsets.getParameterValue(findOffsetIndex(i));
+
+        }
+
+
+        boolean[] assigned = new boolean[numdata];
+        for (int i=0; i<numdata;i++ ){
+            assigned[i]=false;
+        }
+
+            int group = 0;
+            for (int i=0; i<numdata; i++){
+               if (!assigned[i]){
+
+                   int last = i;
+                  for (int j=0;j<numdata;j++){
+
+                      if (offsetValues[j]==offsetValues[i]||offsetValues[j]==offsetValues[i]+1||offsetValues[j]==offsetValues[i]+2||offsetValues[j]==offsetValues[i]+3||offsetValues[j]==offsetValues[i]+4){
+                          links.setParameterValue(j,last);
+                          assignments.setParameterValue(j, group);
+                          assigned[j]=true;
+                          last=j;
+                      }
+
+                  }
+                   links.setParameterValue(i,last);
+                   group ++;
+
+               }
+
+
+
+        }
+
+
+        printInformation(links);
+        printInformation(assignments);
+
+
+
+    }
 
 
     private int findOffsetIndex(int traitParameterIndex){
                String NAME = traitParameter.getParameter(traitParameterIndex).getParameterName();
                boolean notFound =true;
                int i=0;
+
 
         while (notFound){
 
@@ -160,7 +218,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
             }
                 }
 
-      //  printInformtion((double) i);
+      //  printInformation((double) i);
       //  printInformation(offsets.getDimensionName(i),NAME);
 
        return i;
@@ -169,27 +227,54 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 
 
-    private void setData(){
+   private void setData(){
+        dataMatrixKnown=true;
         int dim = traitParameter.getParameter(0).getSize();
 
 
-        double Data[][] =new double[numdata][dim];
-
         for (int i=0; i<numdata; i++){
-            for (int j=0; j<dim; j++){
-                Data[i][j]= traitParameter.getParameter(i).getParameterValue(j);
+            for (int j=1; j<dim; j++){
+                data[i][j]= traitParameter.getParameter(i).getParameterValue(j);
             }
-            if (hasDrift){
-                int offsetIndex = findOffsetIndex(i);
-                Data[i][0] += locationDrift.getParameterValue(0)*offsets.getParameterValue(offsetIndex);
-             }
+            //if (hasDrift){
+               // int offsetIndex = findOffsetIndex(i);
+              //  Data[i][0] += locationDrift.getParameterValue(0)*offsets.getParameterValue(offsetIndex);
+            //}  else{
+                data[i][0]= traitParameter.getParameter(i).getParameterValue(0);
+            //}
         }
 
-        this.data=Data;
+
+
     }
-	
+
+
+    private void setDatum(int virus){
+
+
+        int dim = traitParameter.getParameter(0).getSize();
+
+
+        for (int j=1; j<dim; j++){
+                data[virus][j]= traitParameter.getParameter(virus).getParameterValue(j);
+            }
+            //if (hasDrift){
+            // int offsetIndex = findOffsetIndex(i);
+            //  Data[i][0] += locationDrift.getParameterValue(0)*offsets.getParameterValue(offsetIndex);
+            //}  else{
+            data[virus][0]= traitParameter.getParameter(virus).getParameterValue(0);
+            //}
+
+
+
+
+    }
+   */
+
 
     private void setDepMatrix(){
+
+        depMatrixKnown = true;
 
         depMatrix=new double[numdata][numdata];
         List<NodeRef> childList = new ArrayList<NodeRef>();
@@ -205,8 +290,8 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
             }
         }
 
-
     }
+
 
 
 
@@ -230,8 +315,8 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
             int count = 0;
             for (int i=0;i<assignments.getDimension(); i++){
                 if((int) assignments.getParameterValue(i) == groupNumber){
-                    group[count][0] = getData()[i][0];
-                    group[count][1] = getData()[i][1];
+                    group[count][0] = getData(i,0);
+                    group[count][1] = getData(i,0);
                     mean[0]+=group[count][0];
                     mean[1]+=group[count][1];
                     count++;}}
@@ -278,6 +363,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 
         }
+        logLikelihoodsVectorKnown[groupNumber]=true;
         return L;
 
     }
@@ -307,8 +393,8 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
     }
 
 
-    public double[][] getData(){
-		  return data;
+    public double getData(int virus, int dim){
+		  return traitParameter.getParameter(virus).getParameterValue(dim);
 	  }
 	  
 	  public double[][] getDepMatrix(){
@@ -347,19 +433,35 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
         means2.setParameterValue(pos,value[1]);
     }
 
-	  
-	  public double getLogLikelihood() {
-          setDepMatrix();
-          setData();
 
+    public double getLogLikelihood() {
+        if (!logLikelihoodKnown) {
+
+            logLikelihood = computeLogLikelihood();
+        }
+
+        return logLikelihood;
+    }
+
+
+
+	  
+	  public double computeLogLikelihood() {
+
+
+          if (!depMatrixKnown ){
+          setDepMatrix();
+          }
 
 
 
 
           double logL = 0.0;
 		  for (int j=0 ; j<logLikelihoodsVector.length;j++){
-			   logLikelihoodsVector[j]=getLogLikGroup(j);
 
+              if(!logLikelihoodsVectorKnown[j]){
+              logLikelihoodsVector[j]=getLogLikGroup(j);
+              }
 			  	  logL +=logLikelihoodsVector[j];
 
 		  }
@@ -381,11 +483,15 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 		  logL-= Math.log(alpha.getParameterValue(0)+sumDist);
 		  }
 		
-	
-		  
-		 
-		 return logL;
-	  }
+
+
+          logLikelihoodKnown=true;
+         // printInformation(logL);
+
+          return logL;
+
+
+      }
 	 
 	  
 	  
@@ -456,22 +562,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 	  
 	  
 	  
-	  // Slow method for computing matrix from tree
-	  
-	  
-	  
-	  public double[][] getMatrixFromTree(double p){
-		  double[][] Mat = new double[numdata][numdata];
-		  
-	  for (int i = 0 ; i<numdata; i++){
-		  for (int j =0 ; j<i; j++){
-			  Mat[i][j] = -p*Math.log(getTreeDist(i,j));			
-			  Mat[j][i] = Mat[i][j];
-		  }
-	  }
-	  return Mat;
-	  }
-	  
+
 	  
 	  
 	  
@@ -514,10 +605,35 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
          }
          
          Logger.getLogger("dr.evomodel").info(sb.toString()); };
-        
-        
 
-   	  public void printOrder() {
+
+      public void printInformation(Parameter Vec) {
+        StringBuffer sb = new StringBuffer("Vector \n");
+
+                 for (int i = 0; i<numdata; i++){
+                sb.append(Vec.getParameterValue(i)+" \t");
+                 }
+
+
+        Logger.getLogger("dr.evomodel").info(sb.toString()); };
+
+
+
+
+    public void printInformation(int[] Vec) {
+        StringBuffer sb = new StringBuffer("Vector \n");
+        for(int i=0;i <numdata; i++){
+
+            sb.append(Vec[i]+" \t");
+
+        }
+
+        Logger.getLogger("dr.evomodel").info(sb.toString()); };
+
+
+
+
+    public void printOrder() {
             StringBuffer sb = new StringBuffer("taxa \n");
             for(int i=0;i <numdata; i++){
            	 sb.append(" \n");
@@ -531,7 +647,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
          
          
          
-         public void printInformtion(double x) {
+         public void printInformation(double x) {
              StringBuffer sb = new StringBuffer("Info \n");
              		 sb.append(x);
              
@@ -551,6 +667,26 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 
 
+    @Override
+    protected void storeState() {
+        System.arraycopy(logLikelihoodsVector, 0, storedLogLikelihoodsVector, 0, logLikelihoodsVector.length);
+    }
+
+    @Override
+    protected void restoreState() {
+        double[] tmp = logLikelihoodsVector;
+        logLikelihoodsVector = storedLogLikelihoodsVector;
+        storedLogLikelihoodsVector = tmp;
+
+        depMatrixKnown = !proposedChangeDepMatrix;
+        proposedChangeDepMatrix =false;
+
+    //    dataMatrixKnown = !proposedChangeDataMatrix;
+    //    proposedChangeDataMatrix =false;
+
+        logLikelihoodKnown = false;
+    }
+
 
 
 
@@ -560,23 +696,38 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 	    public void acceptState() {
 	        // DO NOTHING
+            proposedChangeDepMatrix =false;
+            proposedChangeDataMatrix =false;
 	    }
 
-	    public void restoreState() {
-	        // DO NOTHING
-	    }
-
-	    public void storeState() {
-	        // DO NOTHING
-	    }
 
 	    protected void handleModelChangedEvent(Model model, Object object, int index) {
-	        // DO NOTHING
-	    }
+            if (model == treeModel)
+                depMatrixKnown=false;
+                logLikelihoodKnown=false;
+            return;
+        }
+
 
 	    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-	        // DO NOTHING
+	          logLikelihoodKnown = false;
+
+	           if (variable == transformFactor)   {
+                depMatrixKnown=false;
+                proposedChangeDepMatrix=true;
 	    }
+
+           // if (variable == traitParameter || variable == locationDrift ){
+            if (variable == traitParameter){
+               // dataMatrixKnown=false;
+               // proposedChangeDataMatrix=true;
+
+                int loc= index / 2;
+                int changedGroup=(int)assignments.getParameterValue(loc);
+                logLikelihoodsVectorKnown[changedGroup]=false;
+            }
+
+        }
 
 	Set<NodeRef> allTips;  
 	CompoundParameter traitParameter;  
@@ -592,13 +743,27 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
     Parameter offsets;
     boolean hasDrift;
 
+    private boolean depMatrixKnown= false;
+    private boolean[] dataMatrixKnown;
+    private boolean logLikelihoodKnown=false;
+    private double logLikelihood =0.0;
+    private boolean[] logLikelihoodsVectorKnown;
+
+
+    boolean proposedChangeDepMatrix=false;
+    boolean proposedChangeDataMatrix=false;
+
+
+
+
     TreeModel treeModel;
 	String traitName;
-	double[][] data;
+	//double[][] data;
 	double[][] depMatrix;
 	double[][] logDepMatrix;
 	double[] logLikelihoodsVector;
-	int numdata;
+    double[] storedLogLikelihoodsVector;
+    int numdata;
 	Parameter transformFactor;
 	double k0;
     double v0;
@@ -623,17 +788,17 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 
         boolean integrate = false;
-    	
-        
+
+
         public String getParserName() {
             return NP_ANTIGENIC_LIKELIHOOD;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-     
+
         	TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         	//String traitName = (String) xo.getAttribute(TRAIT_NAME);
-        	
+
 	        XMLObject cxo = xo.getChild(CLUSTER_PREC);
 	        Parameter clusterPrec = (Parameter) cxo.getChild(Parameter.class);
 
@@ -676,20 +841,20 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
             }
 
 
-	     
+
 	        TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
             String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
-         
-            
+
+
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                     utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
            // traitName = returnValue.traitName;
             CompoundParameter traitParameter = returnValue.traitParameter;
-            
-	     
 
-	       
-	        
+
+
+
+
 	        return new NPAntigenicLikelihood(treeModel,traitParameter,  assignments, links, chi,clusterPrec, priorMean,priorPrec,
                     transformFactor, means1,means2,locationDrift,offsets,hasDrift);
 	    }
@@ -715,7 +880,7 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 
 	    		 new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
 	                        new ElementRule(Parameter.class)
-	                }),   
+	                }),
 	    		 new ElementRule(PRIOR_PREC,
 		    	                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 		           new ElementRule(CLUSTER_PREC,
@@ -740,14 +905,33 @@ public class NPAntigenicLikelihood extends AbstractModelLikelihood {
                 new ElementRule(LOCATION_DRIFT, Parameter.class),
 
                 new ElementRule(TreeModel.class),
-				    	                    
+
 	    };
     };
 
 
-    
-  
 
-    String Atribute = null;
-	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

@@ -29,7 +29,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 
 	    public final static String DDCRP_GIBBS_OPERATOR = "distanceDependentCRPGibbsOperator";
 
-	   
+
 	    private final Parameter chiParameter;
 	    private final double[][] depMatrix;
 	    public NPAntigenicLikelihood modelLikelihood;
@@ -41,24 +41,24 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
         double[] m;
         double[][] T0Inv;
         double logDetT0;
-	    
-	    
+
+
 	    public DistanceDependentCRPGibbsOperator(Parameter links, Parameter assignments,
                                                  Parameter chiParameter,
                                                  NPAntigenicLikelihood Likelihood,
                                                  double weight) {
-	     
+
 	    	this.links = links;
 	    	this.assignments = assignments;
 	    	this.modelLikelihood = Likelihood;
 	    	this.chiParameter = chiParameter;
 	        this.depMatrix = Likelihood.getLogDepMatrix();
-	        
+
 	        for (int i=0;i<links.getDimension();i++){
 	        	links.setParameterValue(i, i);
-	        }   
-	        
-	        
+	        }
+
+
 	        setWeight(weight);
 
 	      // double[][] x=modelLikelihood.getData();
@@ -88,9 +88,9 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 
 
 	    }
-	   
-	      
-	    
+
+
+
 	    /**
 	     * @return the parameter this operator acts on.
 	     */
@@ -100,7 +100,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 
 	    /**
 	     * @return the Variable this operator acts on.
-	   
+
 	    public Variable getVariable() {
 	        return clusteringParameter;
 	    }
@@ -110,33 +110,33 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	     */
 	    public final double doOperation() {
 
-	    	
+
 	        int index = MathUtils.nextInt(links.getDimension());
 
 	        int oldGroup = (int)assignments.getParameterValue(index);
-	       
+
 	      /*
 	       * Set index customer link to index and all connected to it to a new assignment (min value empty)
 	       */
 	        int minEmp = minEmpty(modelLikelihood.getLogLikelihoodsVector());
 	        links.setParameterValue(index, index);
 	        int[] visited = connected(index, links);
-	        
+
 	        int ii = 0;
 	        while (visited[ii]!=0){
 	        	assignments.setParameterValue(visited[ii]-1, minEmp);
 	        	ii++;
 	        }
-	        
-	        
 
-	      
-	       
+
+
+
+
 	        /*
 	         * Adjust likvector for group separated
 	         */
-	        
-	        
+
+
 	       modelLikelihood.setLogLikelihoodsVector(oldGroup,modelLikelihood.getLogLikGroup(oldGroup) );
 
 	       modelLikelihood.setLogLikelihoodsVector(minEmp,modelLikelihood.getLogLikGroup(minEmp) );
@@ -148,104 +148,104 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	       /*
 	        * computing likelihoods of joint groups
 	        */
-	       
+
 	       double[] crossedLiks = new double[maxFull+1];
-	       
+
 	       for (int ll=0;ll<maxFull+1;ll++ ){
 	    	   if (ll!=minEmp){
 	    		   crossedLiks[ll]=getLogLik2Group(ll,minEmp);
 	    	   }
 	       }
-	       
-	        
+
+
 	        /*
-	         * Add logPrior 
+	         * Add logPrior
 	         */
 	        double[] logP = new double[links.getDimension()];
 
 	        for (int jj=0; jj<links.getDimension(); jj++){
 	        	logP[jj] += depMatrix[index][jj];
-	        	
+
 	        	int n = (int)assignments.getParameterValue(jj);
 	        	if (n!= minEmp){
 	        logP[jj]+=crossedLiks[n] - liks[n] - liks[minEmp];
 	        	}
 	        }
-	      
+
 	        logP[index]= Math.log(chiParameter.getParameterValue(0));
-	        
-	        
+
+
 	        /*
 	         * possibilidade de mandar p zero as probs muito pequenas
 	         */
-	      
-	        
-	        
+
+
+
 	        /*
 	         *  Gibbs sampling
 	         */
-	        
-	        
+
+
 	        this.rescale(logP); // Improve numerical stability
 	        this.exp(logP); // Transform back to probability-scale
 
 	        int k = MathUtils.randomChoicePDF(logP);
-	        
+
 	        links.setParameterValue(index, k);
-	        
+
 	        int newGroup = (int)assignments.getParameterValue(k);
 	        ii = 0;
 	        while (visited[ii]!=0){
 	        	assignments.setParameterValue(visited[ii]-1, newGroup);
 	        	ii++;
 	        }
-	        
-	        
-	        
+
+
+
 	       /*
-	        * updating conditional likelihood vector 
+	        * updating conditional likelihood vector
 	        */
 	        modelLikelihood.setLogLikelihoodsVector(newGroup, modelLikelihood.getLogLikGroup(newGroup));
 	        if (newGroup!=minEmp){
 	        	 modelLikelihood.setLogLikelihoodsVector(minEmp, 0);
-	  	       
+
 	        }
 
             sampleMeans(maxFull);
 
 	        return 0.0;
-	
+
 	    }
 
 
-	    
 
 
-	    
+
+
 	    /*
 	     * find min Empty
 	     */
-	    
+
 	    public int minEmpty(double[] logLikVector){
 	    int isEmpty=0;
 	    int i =0;
 	    	while (isEmpty==0){
 	    if(logLikVector[i]==0){
 	    	isEmpty=1;}
-	    else { 
+	    else {
 	    	if(i==logLikVector.length-1){isEmpty=1;}
 		   i++;}
 	    	}
 	    return i;
 	    }
-	   
-	
-	    
+
+
+
 	    /*
 	     * find max Full
 	     */
-	    
-	    
+
+
 	    public int maxFull(double[] logLikVector){
 		    int isEmpty=1;
 		    int i =logLikVector.length-1;
@@ -259,20 +259,20 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	 /*
 	  * find customers connected to i
 	  */
-	    
+
 	    public int[] connected(int i, Parameter clusteringParameter){
 	    	int n =  clusteringParameter.getDimension();
-	    	int[] visited = new int[n+1]; 
+	    	int[] visited = new int[n+1];
 	  	    visited[0]=i+1;
 	  	    int tv=1;
-	  	    
+
 	  	    for(int j=0;j<n;j++){
 	  	    	if(visited[j]!=0){
 	  	    		int curr = visited[j]-1;
-		  	    	
+
 	  	    		/*look forward
 		  	    	*/
-	  	    		
+
 	  	    	int forward = (int) clusteringParameter.getParameterValue(curr);
 	  	    	visited[tv] = forward+1;
 	  	    	tv++;
@@ -289,40 +289,40 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	  	    	/*look back
 	  	    	*/
 	  	    	for (int jj=0; jj<n;jj++){
-	  	    		if((int)clusteringParameter.getParameterValue(jj)==curr){ 
+	  	    		if((int)clusteringParameter.getParameterValue(jj)==curr){
 	  	    			visited[tv]= jj+1;
 	  	    			tv++;
-	  	    			
+
 	  	    			for(int ii=0; ii<tv-1; ii++){
 	  	  	  	    	if(visited[ii]==jj+1){
 	  	  	  	    		tv--;
 	  	  	  	    		visited[tv]=0;
-	  	  	  	    	}		
+	  	  	  	    	}
 	  	    		}
-	  
+
 	  	    	}
 	  	    	}
-	  	    	
+
 	  	    	}}
 	  	return visited;
-	  	
+
 	    }
-	    
-	
-	    
-			  
+
+
+
+
 	    private void printInformtion(Parameter par) {
 	         StringBuffer sb = new StringBuffer("parameter \n");
 	         	 for(int j=0; j<par.getDimension(); j++){
 	        		 sb.append(par.getParameterValue(j));
 	         }
-	         
+
 	         Logger.getLogger("dr.evomodel").info(sb.toString()); };
-	        
-		  
-	    
-	    
-	    
+
+
+
+
+
 
   /*  OLD
 
@@ -391,92 +391,94 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
    */
 
     public double getLogLik2Group(int group1, int group2){
-        double L =0.0;
+		throw new UnsupportedOperationException("This method has been commented out because of build errors");
 
-
-        int ngroup1=0;
-        for (int i=0;i<assignments.getDimension(); i++){
-            if((int) assignments.getParameterValue(i) == group1 ){
-                ngroup1++;}}
-
-        int ngroup2=0;
-        for (int i=0;i<assignments.getDimension(); i++){
-            if((int) assignments.getParameterValue(i) == group2 ){
-                ngroup2++;}}
-
-        int ngroup = (ngroup1+ngroup2);
-
-        if (ngroup != 0){
-            double[][] group = new double[ngroup][2];
-
-            double mean[]=new double[2];
-
-
-            int count = 0;
-            for (int i=0;i<assignments.getDimension(); i++){
-                if((int) assignments.getParameterValue(i) == group1 ){
-                    group[count][0] = modelLikelihood.getData()[i][0];
-                    group[count][1] = modelLikelihood.getData()[i][1];
-                    mean[0]+=group[count][0];
-                    mean[1]+=group[count][1];
-                    count+=1;}}
-
-            for (int i=0;i<assignments.getDimension(); i++){
-                if((int) assignments.getParameterValue(i) == group2 ){
-                    group[count][0] = modelLikelihood.getData()[i][0];
-                    group[count][1] = modelLikelihood.getData()[i][1];
-                    mean[0]+=group[count][0];
-                    mean[1]+=group[count][1];
-                    count+=1;}}
-
-
-
-            mean[0]/=ngroup;
-            mean[1]/=ngroup;
-
-
-
-            double kn= k0+ngroup;
-            double vn= v0+ngroup;
-
-
-            double[][] sumdif=new double[2][2];
-
-            for(int i=0;i<ngroup;i++){
-                sumdif[0][0]+= (group[i][0]-mean[0])*(group[i][0]-mean[0]);
-                sumdif[0][1]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
-                sumdif[1][0]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
-                sumdif[1][1]+= (group[i][1]-mean[1])*(group[i][1]-mean[1]);
-            }
-
-
-
-            double[][] TnInv = new double[2][2];
-            TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(mean[0]-m[0])*(mean[0]-m[0])+sumdif[0][0];
-            TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(mean[1]-m[1])*(mean[0]-m[0])+sumdif[0][1];
-            TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (mean[0]-m[0])*(mean[1]-m[1])+sumdif[1][0];
-            TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (mean[1]-m[1])*(mean[1]-m[1])+sumdif[1][1];
-
-
-            double logDetTn=-Math.log(TnInv[0][0]*TnInv[1][1]-TnInv[0][1]*TnInv[1][0]);
-
-
-            L+= -(ngroup)*Math.log(Math.PI);
-            L+= Math.log(k0) - Math.log(kn);
-            L+= (vn/2)*logDetTn - (v0/2)*logDetT0;
-            L+= GammaFunction.lnGamma(vn/2)+ GammaFunction.lnGamma((vn/2)-0.5);
-            L+=-GammaFunction.lnGamma(v0/2)- GammaFunction.lnGamma((v0/2)-0.5);
-
-
-
-
-
-
-
-
-        }
-
-        return L;
+//        double L =0.0;
+//
+//
+//        int ngroup1=0;
+//        for (int i=0;i<assignments.getDimension(); i++){
+//            if((int) assignments.getParameterValue(i) == group1 ){
+//                ngroup1++;}}
+//
+//        int ngroup2=0;
+//        for (int i=0;i<assignments.getDimension(); i++){
+//            if((int) assignments.getParameterValue(i) == group2 ){
+//                ngroup2++;}}
+//
+//        int ngroup = (ngroup1+ngroup2);
+//
+//        if (ngroup != 0){
+//            double[][] group = new double[ngroup][2];
+//
+//            double mean[]=new double[2];
+//
+//
+//            int count = 0;
+//            for (int i=0;i<assignments.getDimension(); i++){
+//                if((int) assignments.getParameterValue(i) == group1 ){
+//                    group[count][0] = modelLikelihood.getData()[i][0];
+//                    group[count][1] = modelLikelihood.getData()[i][1];
+//                    mean[0]+=group[count][0];
+//                    mean[1]+=group[count][1];
+//                    count+=1;}}
+//
+//            for (int i=0;i<assignments.getDimension(); i++){
+//                if((int) assignments.getParameterValue(i) == group2 ){
+//                    group[count][0] = modelLikelihood.getData()[i][0];
+//                    group[count][1] = modelLikelihood.getData()[i][1];
+//                    mean[0]+=group[count][0];
+//                    mean[1]+=group[count][1];
+//                    count+=1;}}
+//
+//
+//
+//            mean[0]/=ngroup;
+//            mean[1]/=ngroup;
+//
+//
+//
+//            double kn= k0+ngroup;
+//            double vn= v0+ngroup;
+//
+//
+//            double[][] sumdif=new double[2][2];
+//
+//            for(int i=0;i<ngroup;i++){
+//                sumdif[0][0]+= (group[i][0]-mean[0])*(group[i][0]-mean[0]);
+//                sumdif[0][1]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+//                sumdif[1][0]+= (group[i][0]-mean[0])*(group[i][1]-mean[1]);
+//                sumdif[1][1]+= (group[i][1]-mean[1])*(group[i][1]-mean[1]);
+//            }
+//
+//
+//
+//            double[][] TnInv = new double[2][2];
+//            TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(mean[0]-m[0])*(mean[0]-m[0])+sumdif[0][0];
+//            TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(mean[1]-m[1])*(mean[0]-m[0])+sumdif[0][1];
+//            TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (mean[0]-m[0])*(mean[1]-m[1])+sumdif[1][0];
+//            TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (mean[1]-m[1])*(mean[1]-m[1])+sumdif[1][1];
+//
+//
+//            double logDetTn=-Math.log(TnInv[0][0]*TnInv[1][1]-TnInv[0][1]*TnInv[1][0]);
+//
+//
+//            L+= -(ngroup)*Math.log(Math.PI);
+//            L+= Math.log(k0) - Math.log(kn);
+//            L+= (vn/2)*logDetTn - (v0/2)*logDetT0;
+//            L+= GammaFunction.lnGamma(vn/2)+ GammaFunction.lnGamma((vn/2)-0.5);
+//            L+=-GammaFunction.lnGamma(v0/2)- GammaFunction.lnGamma((v0/2)-0.5);
+//
+//
+//
+//
+//
+//
+//
+//
+//        }
+//
+//        return L;
 
     }
 
@@ -560,93 +562,95 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 
       double[][] means=new double[maxFull+2][2];
 
-      //sample mean vector for each cluster
+	  throw new UnsupportedOperationException("This method has been commented out because of build errors");
 
-      for (int i=0; i<maxFull+1; i++){
+	  //sample mean vector for each cluster
 
-          // Find all elements in cluster
-
-          int ngroup=0;
-          for (int ii=0;ii<assignments.getDimension(); ii++){
-              if((int) assignments.getParameterValue(ii) == i ){
-                  ngroup++;}}
-
-
-          if (ngroup != 0){
-              double[][] group = new double[ngroup][2];
-              double[] groupMean=new double[2];
-
-              int count = 0;
-              for (int ii=0;ii<assignments.getDimension(); ii++){
-                  if((int) assignments.getParameterValue(ii) == i ){
-                      group[count][0] = modelLikelihood.getData()[ii][0];
-                      group[count][1] = modelLikelihood.getData()[ii][1];
-                      groupMean[0]+=group[count][0];
-                      groupMean[1]+=group[count][1];
-                      count+=1;}}
-
-              groupMean[0]/=ngroup;
-              groupMean[1]/=ngroup;
-
-
-
-              double kn= k0+ngroup;
-              double vn= v0+ngroup;
-
-
-              double[][] sumdif=new double[2][2];
-
-              for(int jj=0;jj<ngroup;jj++){
-                  sumdif[0][0]+= (group[jj][0]-groupMean[0])*(group[jj][0]-groupMean[0]);
-                  sumdif[0][1]+= (group[jj][0]-groupMean[0])*(group[jj][1]-groupMean[1]);
-                  sumdif[1][0]+= (group[jj][0]-groupMean[0])*(group[jj][1]-groupMean[1]);
-                  sumdif[1][1]+= (group[jj][1]-groupMean[1])*(group[jj][1]-groupMean[1]);
-              }
-
-
-
-              double[][] TnInv = new double[2][2];
-              TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(groupMean[0]-m[0])*(groupMean[0]-m[0])+sumdif[0][0];
-              TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(groupMean[1]-m[1])*(groupMean[0]-m[0])+sumdif[0][1];
-              TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (groupMean[0]-m[0])*(groupMean[1]-m[1])+sumdif[1][0];
-              TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (groupMean[1]-m[1])*(groupMean[1]-m[1])+sumdif[1][1];
-
-             Matrix Tn = new SymmetricMatrix(TnInv).inverse();
-
-
-              double[] posteriorMean=new double[2];
-          // compute posterior mean
-
-              posteriorMean[0]= (k0*m[0] +ngroup*groupMean[0])/(k0+ngroup);
-              posteriorMean[1]= (k0*m[1] +ngroup*groupMean[1])/(k0+ngroup);
-
-
-
-        //compute posterior Precision
-              double[][] posteriorPrecision=new WishartDistribution(vn,Tn.toComponents()).nextWishart();
-              posteriorPrecision[0][0]*= kn;
-              posteriorPrecision[1][0]*= kn;
-              posteriorPrecision[0][1]*= kn;
-              posteriorPrecision[1][1]*= kn;
-
-
-
-
-          double[] sample= new MultivariateNormalDistribution(posteriorMean,posteriorPrecision).nextMultivariateNormal();
-          means[i][0]=sample[0];
-          means[i][1]=sample[1];
-          }
-      }
-
-      //Fill in cluster means for each observation
-
-        for (int j=0; j<assignments.getDimension();j++){
-            double[] group=new double[2];
-            group[0]=means[(int)assignments.getParameterValue(j)][0];
-            group[1]=means[(int)assignments.getParameterValue(j)][1];
-
-            modelLikelihood.setMeans(j, group);
-        }
+//      for (int i=0; i<maxFull+1; i++){
+//
+//          // Find all elements in cluster
+//
+//          int ngroup=0;
+//          for (int ii=0;ii<assignments.getDimension(); ii++){
+//              if((int) assignments.getParameterValue(ii) == i ){
+//                  ngroup++;}}
+//
+//
+//          if (ngroup != 0){
+//              double[][] group = new double[ngroup][2];
+//              double[] groupMean=new double[2];
+//
+//              int count = 0;
+//              for (int ii=0;ii<assignments.getDimension(); ii++){
+//                  if((int) assignments.getParameterValue(ii) == i ){
+//                      group[count][0] = modelLikelihood.getData()[ii][0];
+//                      group[count][1] = modelLikelihood.getData()[ii][1];
+//                      groupMean[0]+=group[count][0];
+//                      groupMean[1]+=group[count][1];
+//                      count+=1;}}
+//
+//              groupMean[0]/=ngroup;
+//              groupMean[1]/=ngroup;
+//
+//
+//
+//              double kn= k0+ngroup;
+//              double vn= v0+ngroup;
+//
+//
+//              double[][] sumdif=new double[2][2];
+//
+//              for(int jj=0;jj<ngroup;jj++){
+//                  sumdif[0][0]+= (group[jj][0]-groupMean[0])*(group[jj][0]-groupMean[0]);
+//                  sumdif[0][1]+= (group[jj][0]-groupMean[0])*(group[jj][1]-groupMean[1]);
+//                  sumdif[1][0]+= (group[jj][0]-groupMean[0])*(group[jj][1]-groupMean[1]);
+//                  sumdif[1][1]+= (group[jj][1]-groupMean[1])*(group[jj][1]-groupMean[1]);
+//              }
+//
+//
+//
+//              double[][] TnInv = new double[2][2];
+//              TnInv[0][0]=T0Inv[0][0]+ngroup*(k0/kn)*(groupMean[0]-m[0])*(groupMean[0]-m[0])+sumdif[0][0];
+//              TnInv[0][1]=T0Inv[0][1]+ngroup*(k0/kn)*(groupMean[1]-m[1])*(groupMean[0]-m[0])+sumdif[0][1];
+//              TnInv[1][0]=T0Inv[1][0]+ngroup*(k0/kn)* (groupMean[0]-m[0])*(groupMean[1]-m[1])+sumdif[1][0];
+//              TnInv[1][1]=T0Inv[1][1]+ngroup*(k0/kn)* (groupMean[1]-m[1])*(groupMean[1]-m[1])+sumdif[1][1];
+//
+//             Matrix Tn = new SymmetricMatrix(TnInv).inverse();
+//
+//
+//              double[] posteriorMean=new double[2];
+//          // compute posterior mean
+//
+//              posteriorMean[0]= (k0*m[0] +ngroup*groupMean[0])/(k0+ngroup);
+//              posteriorMean[1]= (k0*m[1] +ngroup*groupMean[1])/(k0+ngroup);
+//
+//
+//
+//        //compute posterior Precision
+//              double[][] posteriorPrecision=new WishartDistribution(vn,Tn.toComponents()).nextWishart();
+//              posteriorPrecision[0][0]*= kn;
+//              posteriorPrecision[1][0]*= kn;
+//              posteriorPrecision[0][1]*= kn;
+//              posteriorPrecision[1][1]*= kn;
+//
+//
+//
+//
+//          double[] sample= new MultivariateNormalDistribution(posteriorMean,posteriorPrecision).nextMultivariateNormal();
+//          means[i][0]=sample[0];
+//          means[i][1]=sample[1];
+//          }
+//      }
+//
+//      //Fill in cluster means for each observation
+//
+//        for (int j=0; j<assignments.getDimension();j++){
+//            double[] group=new double[2];
+//            group[0]=means[(int)assignments.getParameterValue(j)][0];
+//            group[1]=means[(int)assignments.getParameterValue(j)][1];
+//
+//            modelLikelihood.setMeans(j, group);
+//        }
 
 
   }
@@ -673,19 +677,20 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	    }
 
 	    private void rescale(double[] logX) {
-	        double max = this.max(logX);
-	        for (int i = 0; i < logX.length; ++i) {
-	            if(logX[i] == Double.NEGATIVE_INFINITY){
-                    modelLikelihood.printInformtion(logX[i]);
-                    logX[i]=-1E16;
-                }
-                if(logX[i]==Double.POSITIVE_INFINITY){
-                    modelLikelihood.printInformtion(logX[i]);
-                    logX[i]=1E16;
-                }
-	             logX[i] -= max;
-
-	        }
+			throw new UnsupportedOperationException("This method has been commented out because of build errors");
+//	        double max = this.max(logX);
+//	        for (int i = 0; i < logX.length; ++i) {
+//	            if(logX[i] == Double.NEGATIVE_INFINITY){
+//                    modelLikelihood.printInformtion(logX[i]);
+//                    logX[i]=-1E16;
+//                }
+//                if(logX[i]==Double.POSITIVE_INFINITY){
+//                    modelLikelihood.printInformtion(logX[i]);
+//                    logX[i]=1E16;
+//                }
+//	             logX[i] -= max;
+//
+//	        }
 	    }
 
 	    private double max(double[] x) {
@@ -742,9 +747,9 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 	        }
 	    }
 
-	
-	   
-	
+
+
+
 
 	    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 	        public final static String CHI = "chi";
@@ -764,7 +769,7 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 
 	            double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-	            
+
 	            XMLObject cxo = xo.getChild(ASSIGNMENTS);
 		        Parameter assignments = (Parameter) cxo.getChild(Parameter.class);
 
@@ -774,14 +779,14 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
 		        cxo = xo.getChild(CHI);
 		        Parameter chiParameter = (Parameter) cxo.getChild(Parameter.class);
 
-		        
-		        
+
+
 		        cxo = xo.getChild(LIKELIHOOD);
 		        NPAntigenicLikelihood likelihood = (NPAntigenicLikelihood)cxo.getChild(NPAntigenicLikelihood.class);
-		        
-		  
-		        
-		        
+
+
+
+
 	            return new DistanceDependentCRPGibbsOperator( links, assignments,
                         chiParameter,likelihood, weight);
 
@@ -816,13 +821,13 @@ public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implem
     	                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
     	            new ElementRule(LINKS,
 		    	                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-    	 
+
 	    };
-	    
+
 	    };
 
 
-	
+
 	    public int getStepCount() {
 	        return 1;
 	    }

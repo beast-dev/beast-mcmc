@@ -66,6 +66,12 @@ public class OrderedLatentLiabilityLikelihood extends AbstractModelLikelihood im
         addVariable(thresholdParameter);
 
 
+        for (int i=0; i<tipTraitParameter.getParameterCount();i++){
+            tipTraitParameter.getParameter(i).addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY, tipTraitParameter.getParameter(0).getDimension()));
+        }
+
+
+
         setTipDataValuesForAllNodes();
 
         StringBuilder sb = new StringBuilder();

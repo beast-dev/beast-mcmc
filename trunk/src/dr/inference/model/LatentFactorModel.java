@@ -25,7 +25,6 @@
 
 package dr.inference.model;
 
-import dr.evomodel.continuous.SoftThresholdLikelihood;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -189,7 +188,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         double sum=0;
         for(int i=0; i<sData.getRowDimension(); i++){
             for (int j = 0; j <sData.getColumnDimension() ; j++) {
-                if(continuous.getParameterValue(i)==0)
+                if(continuous.getParameterValue(i)==0 && sData.getParameterValue(i,j)!=0)
                 {sum+=-.5*Math.log(2*StrictMath.PI)-.5*sData.getParameterValue(i,j)*sData.getParameterValue(i,j);}
             }
         }
@@ -325,14 +324,18 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         double[][] aData=data.getParameterAsMatrix();
         double[] meanList=new double[data.getRowDimension()];
         double[] varList=new double[data.getRowDimension()];
+        double[] count=new double[data.getRowDimension()];
         for(int i=0; i<data.getColumnDimension(); i++){
             for (int j=0; j<data.getRowDimension(); j++){
-                meanList[j]+=data.getParameterValue(j,i);
+                if(data.getParameterValue(j,i)!=0) {
+                    meanList[j] += data.getParameterValue(j, i);
+                    count[j]++;
+                }
             }
         }
         for(int i=0; i<data.getRowDimension(); i++){
             if(continuous.getParameterValue(i)==1)
-                meanList[i]=meanList[i]/data.getColumnDimension();
+                meanList[i]=meanList[i]/count[i];
             else
                 meanList[i]=0;
         }
@@ -340,7 +343,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         double[][] answerTemp=new double[data.getRowDimension()][data.getColumnDimension()];
         for(int i=0; i<data.getColumnDimension(); i++){
             for(int j=0; j<data.getRowDimension(); j++){
-                answerTemp[j][i]=aData[j][i]-meanList[j];
+                if(aData[j][i]!=0) {
+                    answerTemp[j][i] = aData[j][i] - meanList[j];
+                }
             }
         }
 //        System.out.println(new Matrix(answerTemp));
@@ -353,7 +358,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         for(int i=0; i<data.getRowDimension(); i++){
             if(continuous.getParameterValue(i)==1){
-            varList[i]=varList[i]/(data.getColumnDimension()-1);
+            varList[i]=varList[i]/(count[i]-1);
             varList[i]=StrictMath.sqrt(varList[i]);}
             else{
                 varList[i]=1;

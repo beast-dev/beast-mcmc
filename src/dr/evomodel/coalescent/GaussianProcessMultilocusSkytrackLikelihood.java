@@ -25,7 +25,7 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.IntervalType;
+//import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -34,17 +34,18 @@ import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.SymmTridiagMatrix;
+//import no.uib.cipr.matrix.DenseVector;
+//import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+//import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author Julia Palacios
  * @author Marc A. Suchard
  * @author Vladimir Minin
+ * @author Mike
  */
 
 public class GaussianProcessMultilocusSkytrackLikelihood extends GaussianProcessSkytrackLikelihood implements MultiLociTreeSet {

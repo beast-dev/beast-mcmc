@@ -4,7 +4,7 @@ package dr.inference.model;
 @author Max Tolkoff
 */
 
-//TODO Indexing is probably wrong for certain things, especially for setParameterValue function. See transposed version.
+
 
 public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     private int rowDim;
@@ -21,15 +21,16 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
         int colDim=params.length;
 
         for(int i=0; i<colDim; i++){
-            if(i<rowDim)
-            {params[i].setDimension(i+1);
-            this.addParameter(params[i]);}
-            else
-            {params[i].setDimension(rowDim);
+//            if(i<rowDim)
+//            {params[i].setDimension(i+1);
+//            this.addParameter(params[i]);}
+//            else
+//            {
+//                params[i].setDimension(rowDim);
                 this.addParameter(params[i]);
 //                System.err.print(colDim-rowDim+i+1);
 //                System.err.print("\n");
-            }
+//            }
         }
         this.rowDim=rowDim;
 //        System.err.print("Dimension Check\n");
@@ -108,16 +109,20 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     }
 
     protected int getRow(int PID){
-        return  PID%getColumnDimension();
+        return  PID%getRowDimension();
     }
 
     protected int getColumn(int PID){
-        return PID/getColumnDimension();
+        return PID/getRowDimension();
     }
 
+    public void setParameterValue(int row, int col, double value){
+         if(matrixCondition(row, col)){
+             getParameter(col).setParameterValue(row, value);
+        }
+    }
     public void setParameterValue(int PID, double value){
 
-        //TODO check if indexing is correct
         int row=getRow(PID);
         int col=getColumn(PID);
 //        System.out.println(row+" "+col);
@@ -130,9 +135,9 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     }
 
 
-
+ //test if violates matrix condition
     boolean matrixCondition(int row, int col){
-            return row<=col;
+            return row>=(getColumnDimension()-1-col);
     }
 
     public double getParameterValue(int id){
@@ -170,7 +175,7 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     }
 
     protected int getInnerDimension(int row, int col){
-        return row;
+        return row-(getColumnDimension()-1-col);
     }
 
 

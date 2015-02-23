@@ -1,6 +1,8 @@
 package dr.evomodelxml.branchratemodel;
 
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.FixedDriftModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -11,11 +13,18 @@ import java.util.logging.Logger;
  */
 public class FixedDriftModelParser extends AbstractXMLObjectParser {
     public static final String FIXED_DRIFT = "fixedDriftModel";
+    /*
     public static final String RATE_ONE = "rateOne";
     public static final String RATE_TWO = "rateTwo";
     public static final String REMAINING_RATES = "remainingRates";
     public static final String RATE_ONE_ID = "rateOneID";
     public static final String RATE_TWO_ID = "rateTwoID";
+    */
+    public static final String BACKBONE_DRIFT = "backboneDrift";
+
+    public static final String OTHER_DRIFT = "otherDrift";
+
+    public static final String BACKBONE_TAXON_LIST = "backboneTaxonList";
 
     public String getParserName() {
         return FIXED_DRIFT;
@@ -23,6 +32,7 @@ public class FixedDriftModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        /*
         String idOne = xo.getStringAttribute(RATE_ONE_ID);
 
         String idTwo = xo.getStringAttribute(RATE_TWO_ID);
@@ -32,17 +42,21 @@ public class FixedDriftModelParser extends AbstractXMLObjectParser {
         Parameter rateTwo = (Parameter) xo.getElementFirstChild(RATE_TWO);
 
         Parameter remainingRates = (Parameter) xo.getElementFirstChild(REMAINING_RATES);
+        */
 
-        // Parameter rateOneNum = (Parameter) xo.getElementFirstChild(RATE_ONE_NUM);
+        TaxonList taxonList = (TaxonList) xo.getElementFirstChild(BACKBONE_TAXON_LIST);
 
-        // Parameter rateTwoNum = (Parameter) xo.getElementFirstChild(RATE_TWO_NUM);
+        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
+        Parameter backboneDrift = (Parameter) xo.getElementFirstChild(BACKBONE_DRIFT);
+
+        Parameter otherDrift = (Parameter) xo.getElementFirstChild(OTHER_DRIFT);
 
         Logger.getLogger("dr.evomodel").info("Using fixed drift model.");
 
 
-        return new FixedDriftModel(rateOne, rateTwo, remainingRates,
-                idOne, idTwo);
+        return new FixedDriftModel(treeModel, backboneDrift, otherDrift, taxonList);
+        //  return new FixedDriftModel(rateOne, rateTwo, remainingRates, idOne, idTwo);
     }
 
     //************************************************************************
@@ -63,13 +77,15 @@ public class FixedDriftModelParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+            new ElementRule(BACKBONE_DRIFT, Parameter.class, "backbone drift rate", false),
+            new ElementRule(OTHER_DRIFT, Parameter.class, "other drift rate", false)
+           /*
             AttributeRule.newStringRule(RATE_ONE_ID, false),
             AttributeRule.newStringRule(RATE_TWO_ID, false),
             new ElementRule(RATE_ONE, Parameter.class, "rate one parameter", false),
             new ElementRule(RATE_TWO, Parameter.class, "rate two parameter", false),
             new ElementRule(REMAINING_RATES, Parameter.class, "remaining rates parameter", false)
-            // new ElementRule(RATE_ONE_NUM, Parameter.class, "rate one node num", false),
-            // new ElementRule(RATE_TWO_NUM, Parameter.class, "rate two node num", false)
+            */
     };
 
 

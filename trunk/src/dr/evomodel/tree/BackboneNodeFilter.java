@@ -49,7 +49,7 @@ public class BackboneNodeFilter extends AbstractModel implements TreeNodeFilter 
         return backboneSet.contains(node);
     }
 
-    private void computeBackBoneMap() {
+    public void computeBackBoneMap() {
         backboneSet.clear();
         recursivelyComputeBackBoneMap(tree, tree.getRoot());
     }

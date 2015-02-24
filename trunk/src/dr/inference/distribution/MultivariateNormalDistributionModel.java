@@ -27,8 +27,8 @@ package dr.inference.distribution;
 
 import dr.inference.model.*;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
+import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.distributions.RandomGenerator;
 
 /**
  * A class that acts as a model for multivariate normally distributed data.
@@ -37,7 +37,7 @@ import dr.math.distributions.RandomGenerator;
  * @author Max Tolkoff
  */
 
-public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel, RandomGenerator {
+public class MultivariateNormalDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel, GaussianProcessRandomGenerator {
 
     public MultivariateNormalDistributionModel(Parameter meanParameter, MatrixParameter precParameter) {
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);

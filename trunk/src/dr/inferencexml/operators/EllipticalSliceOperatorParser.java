@@ -26,6 +26,7 @@
 package dr.inferencexml.operators;
 
 import dr.inference.distribution.MultivariateDistributionLikelihood;
+import dr.inference.distribution.MultivariateNormalDistributionModel;
 import dr.inference.model.Parameter;
 import dr.inference.operators.EllipticalSliceOperator;
 import dr.inference.operators.MCMCOperator;
@@ -65,7 +66,12 @@ public class EllipticalSliceOperatorParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Elliptical slice sampling only works for multivariate normally distributed random variables");
             }
 
-            gaussianProcess = (MultivariateNormalDistribution) likelihood.getDistribution();
+
+            if(likelihood.getDistribution() instanceof MultivariateNormalDistribution)
+                gaussianProcess = (MultivariateNormalDistribution) likelihood.getDistribution();
+
+            if(likelihood.getDistribution() instanceof MultivariateNormalDistributionModel)
+                gaussianProcess = (MultivariateNormalDistributionModel) likelihood.getDistribution();
 
         }
         EllipticalSliceOperator operator = new EllipticalSliceOperator(variable, gaussianProcess, drawByRow);

@@ -47,22 +47,27 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
     private final boolean evaluateEarly;
 
     public DistributionLikelihood(Distribution distribution) {
-        this(distribution, 0.0, false);
+        this(distribution, 0.0, false, 1.0);
     }
 
     public DistributionLikelihood(Distribution distribution, double offset) {
-        this(distribution, offset, offset > 0.0);
+        this(distribution, offset, offset > 0.0, 1.0);
+    }
+
+    public DistributionLikelihood(Distribution distribution, double offset, double scale){
+        this(distribution, offset, offset>0.0, scale);
     }
 
     public DistributionLikelihood(Distribution distribution, boolean evaluateEarly) {
-        this(distribution, 0.0, evaluateEarly);
+        this(distribution, 0.0, evaluateEarly, 1.0);
     }
 
-    public DistributionLikelihood(Distribution distribution, double offset, boolean evaluateEarly) {
+    public DistributionLikelihood(Distribution distribution, double offset, boolean evaluateEarly, double scale) {
         super(null);
         this.distribution = distribution;
         this.offset = offset;
         this.evaluateEarly = evaluateEarly;
+        this.scale=scale;
     }
 
     public DistributionLikelihood(ParametricDistributionModel distributionModel) {
@@ -70,6 +75,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         this.distribution = distributionModel;
         this.offset = 0.0;
         this.evaluateEarly = false;
+        this.scale=1.0;
     }
 
     public Distribution getDistribution() {
@@ -112,7 +118,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
                     return Double.NEGATIVE_INFINITY;
                 }
 
-                logL += distribution.logPdf(value);
+                logL += distribution.logPdf(value/scale);
             }
 
         }
@@ -155,5 +161,6 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
     protected Distribution distribution;
     private final double offset;
+    private final double scale;
 }
 

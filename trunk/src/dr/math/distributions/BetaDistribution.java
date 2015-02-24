@@ -1,11 +1,10 @@
 package dr.math.distributions;
 
-import org.apache.commons.math.special.Gamma;
-import org.apache.commons.math.MathRuntimeException;
+import dr.math.UnivariateFunction;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.AbstractContinuousDistribution;
 import org.apache.commons.math.special.Beta;
-import dr.math.UnivariateFunction;
+import org.apache.commons.math.special.Gamma;
 
 /**
  * User: dkuh004
@@ -104,7 +103,7 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
     public double logPdf(double x){
         recomputeZ();
         if (x < 0 || x > 1) {
-            return 0;
+            return Double.NEGATIVE_INFINITY;
         } else if (x == 0) {
             if (alpha < 1) {
                 // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
@@ -113,7 +112,7 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
 //                throw MathRuntimeException.createIllegalArgumentException(
 //                        "Cannot compute beta density at 0 when alpha = {0,number}", alpha);
             }
-            return 0;
+            return Double.NEGATIVE_INFINITY;
         } else if (x == 1) {
             if (beta < 1) {
                 // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
@@ -122,7 +121,7 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
 //                throw MathRuntimeException.createIllegalArgumentException(
 //                        "Cannot compute beta density at 1 when beta = %.3g", beta);
             }
-            return 0;
+            return Double.NEGATIVE_INFINITY;
         } else {
             double logX = Math.log(x);
             double log1mX = Math.log1p(-x);

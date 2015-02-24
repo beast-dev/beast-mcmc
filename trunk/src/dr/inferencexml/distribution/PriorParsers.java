@@ -656,8 +656,9 @@ public class PriorParsers {
             final double shape = xo.getDoubleAttribute(SHAPE);
             final double shapeB = xo.getDoubleAttribute(SHAPEB);
             final double offset = xo.getAttribute(OFFSET, 0.0);
+            final double scale = xo.getAttribute(SCALE, 1.0);
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new BetaDistribution(shape, shapeB), offset);
+            DistributionLikelihood likelihood = new DistributionLikelihood(new BetaDistribution(shape, shapeB), offset, scale);
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));

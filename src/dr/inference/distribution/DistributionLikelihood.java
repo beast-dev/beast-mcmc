@@ -118,7 +118,7 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
                     return Double.NEGATIVE_INFINITY;
                 }
 
-                logL += distribution.logPdf(value/scale);
+                logL += distribution.logPdf(value/scale)/scale;
             }
 
         }

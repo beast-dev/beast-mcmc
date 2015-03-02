@@ -85,6 +85,10 @@ public class SubtreeJumpOperator extends AbstractTreeOperator /* implements Coer
         // get a list of all edges that intersect this height
         final List<NodeRef> destinations = getIntersectingEdges(tree, height);
 
+        // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
+        destinations.remove(i);
+        destinations.remove(CiP);
+
         // pick uniformly from this list
         final NodeRef j = destinations.get(MathUtils.nextInt(destinations.size()));
         final NodeRef jP = tree.getParent(j);
@@ -119,7 +123,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator /* implements Coer
         for (int i = 0; i < tree.getNodeCount(); i++) {
             final NodeRef node = tree.getNode(i);
             final NodeRef parent = tree.getParent(node);
-            if (parent != null || tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
+            if (parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
                 intersectingEdges.add(node);
             }
         }

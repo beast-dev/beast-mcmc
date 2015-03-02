@@ -1,7 +1,7 @@
 <!--
   ~ build.xml
   ~
-  ~ Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+  ~ Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
   ~
   ~ This file is part of BEAST.
   ~ See the NOTICE file distributed with this work for additional
@@ -290,8 +290,8 @@
         <echo message="JUnit test report finished."/>
     </target>
 
-    <property name="version" value="1.8.1"/>
-    <property name="version_number" value="1.8.1"/>
+    <property name="version" value="1.8.2pre"/>
+    <property name="version_number" value="1.8.2"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEAUti_name" value="BEAUti"/>

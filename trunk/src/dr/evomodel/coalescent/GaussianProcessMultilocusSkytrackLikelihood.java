@@ -45,7 +45,7 @@ import java.util.List;
  * @author Julia Palacios
  * @author Marc A. Suchard
  * @author Vladimir Minin
- * @author Mike
+ * @author Michael Karcher
  */
 
 public class GaussianProcessMultilocusSkytrackLikelihood extends GaussianProcessSkytrackLikelihood implements MultiLociTreeSet {

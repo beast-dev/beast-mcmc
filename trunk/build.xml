@@ -290,7 +290,7 @@
         <echo message="JUnit test report finished."/>
     </target>
 
-    <property name="version" value="1.8.2pre"/>
+    <property name="version" value="1.8.2"/>
     <property name="version_number" value="1.8.2"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
@@ -493,12 +493,13 @@
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAST_name} v${version}"
                     mainclass="dr.app.beast.BeastMain"
+                    stubfile="${Mac_dir}/universalJavaApplicationStub"
                     icon="${common_dir}/icons/beast.icns"
                     jvmversion="1.6+"
                     vmoptions="-d64 -Xmx2048M"
                     arguments="-window -working -options"
                     version="${version}"
-                    infostring="${BEAST_name} v${version}, Copyright 2002-2014, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                    infostring="${BEAST_name} v${version}, Copyright 2002-2015, Alexei Drummond, Andrew Rambaut and Marc Suchard"
                     bundleid="dr.app.beast">
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
@@ -511,23 +512,16 @@
             </jarfileset>
         </jarbundler>
 
-        <!-- remove code signing -->
-        <exec executable="/usr/bin/codesign">
-            <arg value="-s"/>
-            <arg value="-"/>
-            <arg value="--force"/>
-            <arg value="${Mac_package_dir}/${BEAST_name} v${version}.app"/>
-        </exec>
-
         <jarbundler dir="${Mac_package_dir}"
                     name="${BEAUti_name} v${version}"
                     mainclass="dr.app.beauti.BeautiApp"
+                    stubfile="${Mac_dir}/universalJavaApplicationStub"
                     icon="${common_dir}/icons/beauti.icns"
                     jvmversion="1.6+"
                     vmoptions="-d64 -Xmx2048M"
                     arguments=""
                     version="${version}"
-                    infostring="${BEAUti_name} v${version}, Copyright 2002-2014, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${BEAUti_name} v${version}, Copyright 2002-2015, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.beauti">
             <documenttype name="BEAUti document"
                           extensions="beauti bti"
@@ -546,23 +540,16 @@
             <javaproperty name="java.library.path" value="$JAVAROOT"/>
         </jarbundler>
 
-        <!-- remove code signing -->
-        <exec executable="/usr/bin/codesign">
-            <arg value="-s"/>
-            <arg value="-"/>
-            <arg value="--force"/>
-            <arg value="${Mac_package_dir}/${BEAUti_name} v${version}.app"/>
-        </exec>
-
         <jarbundler dir="${Mac_package_dir}"
                     name="${LogCombiner_name} v${version}"
                     mainclass="dr.app.tools.LogCombiner"
+                    stubfile="${Mac_dir}/universalJavaApplicationStub"
                     icon="${common_dir}/icons/utility.icns"
                     jvmversion="1.6+"
                     vmoptions="-d64 -Xmx2048M"
                     arguments=""
                     version="${version}"
-                    infostring="${LogCombiner_name} v${version}, Copyright 2002-2014, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${LogCombiner_name} v${version}, Copyright 2002-2015, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.tools.logcombiner">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -571,23 +558,16 @@
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
         </jarbundler>
 
-        <!-- remove code signing -->
-        <exec executable="/usr/bin/codesign">
-            <arg value="-s"/>
-            <arg value="-"/>
-            <arg value="--force"/>
-            <arg value="${Mac_package_dir}/${LogCombiner_name} v${version}.app"/>
-        </exec>
-
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeAnnotator_name} v${version}"
                     mainclass="dr.app.tools.TreeAnnotator"
+                    stubfile="${Mac_dir}/universalJavaApplicationStub"
                     icon="${common_dir}/icons/utility.icns"
                     jvmversion="1.6+"
                     vmoptions="-d64 -Xmx4096M"
                     arguments=""
                     version="${version}"
-                    infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2014, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2015, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.tools.treeannotator">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -596,23 +576,16 @@
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
         </jarbundler>
 
-        <!-- remove code signing -->
-        <exec executable="/usr/bin/codesign">
-            <arg value="-s"/>
-            <arg value="-"/>
-            <arg value="--force"/>
-            <arg value="${Mac_package_dir}/${TreeAnnotator_name} v${version}.app"/>
-        </exec>
-
         <jarbundler dir="${Mac_package_dir}"
                     name="${TreeStat_name} v${version}"
                     mainclass="dr.app.treestat.TreeStatApp"
+                    stubfile="${Mac_dir}/universalJavaApplicationStub"
                     icon="${common_dir}/icons/TreeStat.icns"
                     jvmversion="1.6+"
                     vmoptions="-d64 -Xmx1024M"
                     arguments=""
                     version="${version}"
-                    infostring="${TreeStat_name} v${version}, Copyright 2002-2014, Alexei Drummond and Andrew Rambaut"
+                    infostring="${TreeStat_name} v${version}, Copyright 2002-2015, Alexei Drummond and Andrew Rambaut"
                     bundleid="dr.app.treestat">
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -620,14 +593,6 @@
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
         </jarbundler>
-
-        <!-- remove code signing -->
-        <exec executable="/usr/bin/codesign">
-            <arg value="-s"/>
-            <arg value="-"/>
-            <arg value="--force"/>
-            <arg value="${Mac_package_dir}/${TreeStat_name} v${version}.app"/>
-        </exec>
 
         <echo message="Building disk image."/>
 

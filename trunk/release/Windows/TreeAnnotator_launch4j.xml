@@ -8,11 +8,11 @@
   <jre>
     <minVersion>1.6.0</minVersion>
     <initialHeapSize>256</initialHeapSize>
-    <maxHeapSize>2048</maxHeapSize>
+    <maxHeapSize>4096</maxHeapSize>
   </jre>    
   <versionInfo>
     <fileDescription>TreeAnnotator</fileDescription>    
-        <copyright>2002-2014</copyright>
+        <copyright>2002-2015</copyright>
     <productName>TreeAnnotator</productName>
     <internalName>TreeAnnotator</internalName>
     <originalFilename>TreeAnnotator.exe</originalFilename>    

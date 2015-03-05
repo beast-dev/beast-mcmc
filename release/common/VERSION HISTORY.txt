@@ -1,4 +1,4 @@
-                    BEAST v1.8.1 2002-2014
+                    BEAST v1.8.2 2002-2015
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,9 +17,24 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 20th September 2014
+Last updated: a.rambaut@ed.ac.uk - 5th March 2015
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
+================================================================================
+
+Version 1.8.2 released 5th March 2015
+
+	Bug Fixes:
+	    Issue 756:	FEE with random local clock + codon position partitions 
+	    			+ multiple threads.
+		Issue 754:	BEAST v1.8.1 is not terminating leaving 'zombie' processes
+		Issue 749:	Multiple partitions with unlinked substitution models can 
+					turn on ancestral state reconstruction.
+		Issue 747:	Duplicate references in robust counting with multiple 
+					partitions.
+		Issue 745:	Removing an HPM from some parameters doesn't remove the 
+					model in the XML			   			
+					
 ================================================================================
 
 Version 1.8.1 released 20th September 2014

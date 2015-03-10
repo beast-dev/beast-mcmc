@@ -76,7 +76,7 @@ public class TN93 extends BaseSubstitutionModel {
         rates[5] = 1.0;
     }
 
-    public EigenDecomposition getEigenDecomposition() {
+    public synchronized EigenDecomposition getEigenDecomposition() {
 
         if (eigenDecomposition == null) {
             double[] evec = new double[stateCount * stateCount];

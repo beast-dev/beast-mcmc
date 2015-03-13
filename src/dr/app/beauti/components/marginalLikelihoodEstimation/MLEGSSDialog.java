@@ -1,29 +1,24 @@
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
-import jam.panels.OptionsPanel;
-
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
-import javax.swing.border.EmptyBorder;
-
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
+import jam.panels.OptionsPanel;
+
+import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 
 
 /**
  * @author Guy Baele
  */
-public class MLEDialog {
+public class MLEGSSDialog {
 
     private JFrame frame;
 
     private final OptionsPanel optionsPanel;
 
-    private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName, labelStepDistribution;
+    private JLabel labelPathSteps, labelChainLength, labelLogEvery, labelLogFileName;
+    private JLabel labelStepDistribution, labelTreeWorkingPrior, labelParameterWorkingPrior;
 
     private WholeNumberField pathStepsField = new WholeNumberField(1, Integer.MAX_VALUE);
     private WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
@@ -32,12 +27,14 @@ public class MLEDialog {
     private JTextArea logFileNameField = new JTextArea("MLE.log");
 
     private JComboBox stepDistribution = new JComboBox();
+    private JComboBox treeWorkingPrior = new JComboBox();
+    private JComboBox parameterWorkingPrior = new JComboBox();
 
     private MarginalLikelihoodEstimationOptions options;
 
-    private String description = "Settings for marginal likelihood estimation using PS/SS";
+    private String description = "Settings for marginal likelihood estimation using GSS";
 
-    public MLEDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options) {
+    public MLEGSSDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options) {
         this.frame = frame;
         this.options = options;
 
@@ -46,7 +43,7 @@ public class MLEDialog {
         optionsPanel.setOpaque(false);
 
         JTextArea mleInfo = new JTextArea("Set the options to perform marginal likelihood " +
-                "estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS).");
+                "estimation (MLE) using generalized stepping-stone sampling (GSS).");
         mleInfo.setColumns(56);
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addSpanningComponent(mleInfo);
@@ -54,7 +51,7 @@ public class MLEDialog {
         pathStepsField.setValue(100);
         pathStepsField.setColumns(16);
         pathStepsField.setMinimumSize(pathStepsField.getPreferredSize());
-        labelPathSteps = optionsPanel.addComponentWithLabel("Number of path steps:", pathStepsField);
+        labelPathSteps = optionsPanel.addComponentWithLabel("Number of stepping stones:", pathStepsField);
         /*pathStepsField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
@@ -128,8 +125,16 @@ public class MLEDialog {
         PanelUtils.setupComponent(betaInfo);
         optionsPanel.addSpanningComponent(betaInfo);
 
+        treeWorkingPrior.addItem("Product of exponential distributions");
+        treeWorkingPrior.addItem("Matching coalescent model");
+        labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
+
+        parameterWorkingPrior.addItem("Normal KDE");
+        //parameterWorkingPrior.addItem("Gamma KDE");
+        labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
+
         stepDistribution.addItem("Beta");
-        labelStepDistribution = optionsPanel.addComponentWithLabel("Path step distribution:", stepDistribution);
+        labelStepDistribution = optionsPanel.addComponentWithLabel("Stepping stone distribution:", stepDistribution);
 
         optionsPanel.addSeparator();
 
@@ -139,10 +144,7 @@ public class MLEDialog {
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
         
-        JTextArea citationText = new JTextArea("Baele G, Lemey P, Bedford T, Rambaut A, Suchard MA, Alekseyenko AV (2012)\n" + 
-                "Mol Biol Evol 29(9), 2157-2167 [Advantages of PS/SS].\n" + 
-                "Baele G, Li WLS, Drummond AJ, Suchard MA, Lemey P (2013)\nMol Biol Evol 30(2), 239-243 " + 
-                "[Importance of using proper priors].");
+        JTextArea citationText = new JTextArea("Baele G, Lemey P, Suchard MA (2015) In preparation [GSS Paper].");
         citationText.setColumns(45);
         optionsPanel.addComponentWithLabel("Citation:", citationText);
 
@@ -202,6 +204,8 @@ public class MLEDialog {
 
         logFileNameField.setText(options.mleFileName);
 
+        treeWorkingPrior.setSelectedItem(options.choiceTreeWorkingPrior);
+
         optionsPanel.validate();
         optionsPanel.repaint();
     }
@@ -212,6 +216,7 @@ public class MLEDialog {
         options.mleLogEvery = logEveryField.getValue();
 
         options.mleFileName = logFileNameField.getText();
+        options.choiceTreeWorkingPrior = treeWorkingPrior.getSelectedItem().toString();
     }
 
 }

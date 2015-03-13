@@ -29,8 +29,8 @@ package dr.app.beauti.mcmcpanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MLEDialog;
+import dr.app.beauti.components.marginalLikelihoodEstimation.MLEGSSDialog;
 import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.STARBEASTOptions;
@@ -64,6 +64,8 @@ public class MCMCPanel extends BeautiPanel {
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
     JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
     JButton buttonMLE = new JButton("Settings");
+    JCheckBox performMLEGSS = new JCheckBox("Perform marginal likelihood estimation (MLE) using generalized stepping-stone sampling");
+    JButton buttonMLEGSS = new JButton("Settings");
 
     public static final String DEFAULT_FILE_NAME_STEM = "untitled";
     JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
@@ -80,14 +82,15 @@ public class MCMCPanel extends BeautiPanel {
     JCheckBox substTreeLogCheck = new JCheckBox("Create tree log file with branch length in substitutions:");
     JTextArea substTreeFileNameField = new JTextArea("untitled(subst).trees");
 
-    JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
-    JTextArea operatorAnalaysisFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".ops");
+    JCheckBox operatorAnalysisCheck = new JCheckBox("Create operator analysis file:");
+    JTextArea operatorAnalysisFileNameField = new JTextArea(DEFAULT_FILE_NAME_STEM + ".ops");
 
     BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
     private BeautiOptions options;
 
     private MLEDialog mleDialog = null;
+    private MLEGSSDialog mleGssDialog = null;
     private MarginalLikelihoodEstimationOptions mleOptions;
 
     public MCMCPanel(BeautiFrame parent) {
@@ -235,10 +238,10 @@ public class MCMCPanel extends BeautiPanel {
         substTreeFileNameField.setEnabled(false);
         optionsPanel.addComponentWithLabel("Substitutions trees file name:", substTreeFileNameField);
 
-        optionsPanel.addComponent(operatorAnalaysisCheck);
-        operatorAnalaysisCheck.addActionListener(new java.awt.event.ActionListener() {
+        optionsPanel.addComponent(operatorAnalysisCheck);
+        operatorAnalysisCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                options.operatorAnalysis = operatorAnalaysisCheck.isSelected();
+                options.operatorAnalysis = operatorAnalysisCheck.isSelected();
 
                 updateOtherFileNames(options);
 
@@ -246,10 +249,10 @@ public class MCMCPanel extends BeautiPanel {
             }
         });
 
-        operatorAnalaysisFileNameField.setColumns(32);
-        operatorAnalaysisFileNameField.setEditable(false);
-        operatorAnalaysisFileNameField.setEnabled(false);
-        optionsPanel.addComponentWithLabel("Operator analysis file name:", operatorAnalaysisFileNameField);
+        operatorAnalysisFileNameField.setColumns(32);
+        operatorAnalysisFileNameField.setEditable(false);
+        operatorAnalysisFileNameField.setEnabled(false);
+        optionsPanel.addComponentWithLabel("Operator analysis file name:", operatorAnalysisFileNameField);
 
         optionsPanel.addSeparator();
 
@@ -263,13 +266,14 @@ public class MCMCPanel extends BeautiPanel {
 
         optionsPanel.addSeparator();
 
-        JTextArea mleInfo = new JTextArea("Select the option below to perform marginal likelihoood " +
+        JTextArea mleInfo = new JTextArea("Select the option below to perform marginal likelihood " +
                 "estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS) " +
                 "which performs an additional analysis after the standard MCMC chain has finished.");
         mleInfo.setColumns(50);
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addSpanningComponent(mleInfo);
 
+        //add PS/SS button
         optionsPanel.addComponent(performMLE);
         //will be false by default
         //options.performMLE = false;
@@ -280,10 +284,14 @@ public class MCMCPanel extends BeautiPanel {
                 if (performMLE.isSelected()) {
                     mleOptions.performMLE = true;
                     buttonMLE.setEnabled(true);
+                    buttonMLEGSS.setEnabled(false);
+                    performMLEGSS.setEnabled(false);
                     updateMLEFileNameStem();
                 } else {
                     mleOptions.performMLE = false;
                     buttonMLE.setEnabled(false);
+                    performMLEGSS.setEnabled(true);
+                    buttonMLEGSS.setEnabled(false);
                 }
             }
         });
@@ -292,6 +300,48 @@ public class MCMCPanel extends BeautiPanel {
                 updateMLEFileNameStem();
 
                 int result = mleDialog.showDialog();
+
+                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                }
+
+            }
+        });
+
+        JTextArea mleGssInfo = new JTextArea("Select the option below to perform marginal likelihood " +
+                "estimation (MLE) using generalized stepping-stone sampling (GSS) which " +
+                "performs an additional analysis after the standard MCMC chain has finished.");
+        mleGssInfo.setColumns(50);
+        PanelUtils.setupComponent(mleGssInfo);
+        optionsPanel.addSpanningComponent(mleGssInfo);
+
+        //add GSS button
+        optionsPanel.addComponent(performMLEGSS);
+        //will be false by default
+        //options.performMLE = false; ??
+        optionsPanel.addComponent(buttonMLEGSS);
+        buttonMLEGSS.setEnabled(false);
+        performMLEGSS.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (performMLEGSS.isSelected()) {
+                    mleOptions.performMLEGSS = true;
+                    buttonMLEGSS.setEnabled(true);
+                    buttonMLE.setEnabled(false);
+                    performMLE.setEnabled(false);
+                    updateMLEFileNameStem();
+                } else {
+                    mleOptions.performMLEGSS = false;
+                    buttonMLE.setEnabled(false);
+                    performMLE.setEnabled(true);
+                    buttonMLEGSS.setEnabled(false);
+                }
+            }
+        });
+        buttonMLEGSS.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                updateMLEFileNameStem();
+
+                int result = mleGssDialog.showDialog();
 
                 if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
                     return;
@@ -369,6 +419,9 @@ public class MCMCPanel extends BeautiPanel {
         if (mleDialog != null) {
             mleDialog.setOptions(mleOptions);
         }
+        if (mleGssDialog != null) {
+            mleGssDialog.setOptions(mleOptions);
+        }
 
         chainLengthField.setValue(options.chainLength);
         echoEveryField.setValue(options.echoEvery);
@@ -381,7 +434,7 @@ public class MCMCPanel extends BeautiPanel {
             fileNameStemField.setEnabled(false);
         }
 
-        operatorAnalaysisCheck.setSelected(options.operatorAnalysis);
+        operatorAnalysisCheck.setSelected(options.operatorAnalysis);
 
         updateOtherFileNames(options);
 
@@ -424,11 +477,11 @@ public class MCMCPanel extends BeautiPanel {
             if (addTxt.isSelected()) {
                 options.operatorAnalysisFileName = options.operatorAnalysisFileName + ".txt";
             }
-            operatorAnalaysisFileNameField.setEnabled(options.operatorAnalysis);
+            operatorAnalysisFileNameField.setEnabled(options.operatorAnalysis);
             if (options.operatorAnalysis) {
-                operatorAnalaysisFileNameField.setText(options.operatorAnalysisFileName);
+                operatorAnalysisFileNameField.setText(options.operatorAnalysisFileName);
             } else {
-                operatorAnalaysisFileNameField.setText("");
+                operatorAnalysisFileNameField.setText("");
             }
 
 //            mapTreeLogCheck.setEnabled(true);
@@ -450,8 +503,8 @@ public class MCMCPanel extends BeautiPanel {
             substTreeLogCheck.setSelected(false);
             substTreeFileNameField.setEnabled(false);
             substTreeFileNameField.setText("");
-            operatorAnalaysisCheck.setSelected(false);
-            operatorAnalaysisFileNameField.setText("");
+            operatorAnalysisCheck.setSelected(false);
+            operatorAnalysisFileNameField.setText("");
         }
     }
 
@@ -459,7 +512,11 @@ public class MCMCPanel extends BeautiPanel {
         if (mleDialog == null) {
             mleDialog = new MLEDialog(frame, mleOptions);
         }
+        if (mleGssDialog == null) {
+            mleGssDialog = new MLEGSSDialog(frame, mleOptions);
+        }
         mleDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
+        mleGssDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
     }
 
     public void getOptions(BeautiOptions options) {
@@ -472,13 +529,17 @@ public class MCMCPanel extends BeautiPanel {
         options.substTreeLog = substTreeLogCheck.isSelected();
         updateTreeFileNameList();
 
-        options.operatorAnalysis = operatorAnalaysisCheck.isSelected();
-        options.operatorAnalysisFileName = operatorAnalaysisFileNameField.getText();
+        options.operatorAnalysis = operatorAnalysisCheck.isSelected();
+        options.operatorAnalysisFileName = operatorAnalysisFileNameField.getText();
 
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
 
         if (mleDialog != null) {
             mleDialog.getOptions(mleOptions);
+        }
+
+        if (mleGssDialog != null) {
+            mleGssDialog.getOptions(mleOptions);
         }
 
     }

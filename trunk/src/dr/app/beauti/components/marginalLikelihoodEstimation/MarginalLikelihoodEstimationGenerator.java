@@ -25,20 +25,15 @@
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.types.SequenceErrorType;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.alignment.HypermutantAlignment;
-import dr.evomodel.treelikelihood.HypermutantErrorModel;
-import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
-import dr.evoxml.HypermutantAlignmentParser;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.StatisticParser;
+import dr.inferencexml.distribution.WorkingPriorParsers;
 import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -51,15 +46,17 @@ import java.util.List;
  */
 public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerator {
 
+    private BeautiOptions beautiOptions = null;
+
     MarginalLikelihoodEstimationGenerator(final BeautiOptions options) {
         super(options);
+        this.beautiOptions = options;
     }
 
     public boolean usesInsertionPoint(final InsertionPoint point) {
         MarginalLikelihoodEstimationOptions component = (MarginalLikelihoodEstimationOptions) options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
 
-
-        if (!component.performMLE) {
+        if (!component.performMLE && !component.performMLEGSS) {
             return false;
         }
 
@@ -96,7 +93,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
         if (options.performMLE) {
 
-            writer.writeComment("Define marginal likelihood estimator settings");
+            writer.writeComment("Define marginal likelihood estimator (PS/SS) settings");
 
             List<Attribute> attributes = new ArrayList<Attribute>();
             //attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
@@ -150,8 +147,117 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             writer.writeTag("thetaColumn", new Attribute.Default<String>("name", "pathLikelihood.theta"), true);
             writer.writeCloseTag("steppingStoneSamplingAnalysis");
 
+        } else if (options.performMLEGSS) {
+
+            //First define necessary components for the tree working prior
+            if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
+                //more general product of exponentials needs to be constructed
+
+                System.err.println("productOfExponentials selected: " + options.choiceTreeWorkingPrior);
+
+                List<Attribute> attributes = new ArrayList<Attribute>();
+                attributes.add(new Attribute.Default<String>("fileName", beautiOptions.logFileName));
+                attributes.add(new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10));
+                //TODO: coalescentEventsStatistic has to be logged to logFile
+                attributes.add(new Attribute.Default<String>("parameterColumn", "coalescentEventsStatistic"));
+                attributes.add(new Attribute.Default<String>("dimension", "" + (beautiOptions.taxonList.getTaxonCount()-1)));
+
+                //currently, the following element does not receive and id="exponentials"
+                writer.writeOpenTag("productOfExponentialsPosteriorMeansLoess", attributes);
+                writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, TreeModel.TREE_MODEL), true);
+                writer.writeCloseTag("productOfExponentialsPosteriorMeansLoess");
+
+            } else {
+                //matching coalescent model has to be constructed
+                //getting the coalescent model
+                System.err.println("matching coalescent model selected: " + options.choiceTreeWorkingPrior);
+
+                System.err.println(beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior());
+
+            }
+
+
+
+
+            writer.writeComment("Define marginal likelihood estimator (GSS) settings");
+
+            List<Attribute> attributes = new ArrayList<Attribute>();
+            //attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
+            attributes.add(new Attribute.Default<Integer>("chainLength", options.mleChainLength));
+            attributes.add(new Attribute.Default<Integer>("pathSteps", options.pathSteps));
+            attributes.add(new Attribute.Default<String>("pathScheme", options.pathScheme));
+            if (!options.pathScheme.equals("linear")) {
+                attributes.add(new Attribute.Default<Double>("alpha", options.schemeParameter));
+            }
+
+            writer.writeOpenTag("marginalLikelihoodEstimator", attributes);
+
+            writer.writeOpenTag("samplers");
+            writer.writeIDref("mcmc", "mcmc");
+            writer.writeCloseTag("samplers");
+
+            attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, "pathLikelihood"));
+            writer.writeOpenTag("pathLikelihood", attributes);
+            writer.writeOpenTag("source");
+            writer.writeIDref(CompoundLikelihoodParser.POSTERIOR, CompoundLikelihoodParser.POSTERIOR);
+            writer.writeCloseTag("source");
+            writer.writeOpenTag("destination");
+            writer.writeOpenTag("referencePrior");
+
+            ArrayList<Parameter> parameters = beautiOptions.selectParameters();
+
+            for (Parameter param : parameters) {
+                System.err.println(param.toString() + "   " + param.priorType.toString());
+                //should leave out those parameters set by the coalescent
+                if (param.priorType != PriorType.NONE_TREE_PRIOR) {
+                    //frequencies is multidimensional, is that automatically dealt with?
+                    writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                            new Attribute[]{
+                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                    new Attribute.Default<String>("parameterColumn", param.getName()),
+                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                            });
+                    writeParameterIdref(writer, param);
+                    writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                }
+            }
+
+            //TODO: add tree working prior
+
+            writer.writeCloseTag("referencePrior");
+            writer.writeCloseTag("destination");
+            writer.writeCloseTag("pathLikelihood");
+
+            attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute.Default<String>(XMLParser.ID, "MLELog"));
+            attributes.add(new Attribute.Default<Integer>("logEvery", options.mleLogEvery));
+            attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
+            writer.writeOpenTag("log", attributes);
+            writer.writeIDref("pathLikelihood", "pathLikelihood");
+            writer.writeCloseTag("log");
+
+            writer.writeCloseTag("marginalLikelihoodEstimator");
+
+            writer.writeComment("Generalized stepping-stone sampling estimator from collected samples");
+            attributes = new ArrayList<Attribute>();
+            attributes.add(new Attribute.Default<String>("fileName", options.mleFileName));
+            writer.writeOpenTag("generalizedSteppingStoneSamplingAnalysis", attributes);
+            writer.writeTag("sourceColumn", new Attribute.Default<String>("name", "pathLikelihood.source"), true);
+            writer.writeTag("destinationColumn", new Attribute.Default<String>("name", "pathLikelihood.destination"), true);
+            writer.writeTag("thetaColumn", new Attribute.Default<String>("name", "pathLikelihood.theta"), true);
+            writer.writeCloseTag("generalizedSteppingStoneSamplingAnalysis");
+
         }
 
+    }
+
+    private void writeParameterIdref(XMLWriter writer, Parameter parameter) {
+        if (parameter.isStatistic) {
+            writer.writeIDref("statistic", parameter.getName());
+        } else {
+            writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        }
     }
 
 }

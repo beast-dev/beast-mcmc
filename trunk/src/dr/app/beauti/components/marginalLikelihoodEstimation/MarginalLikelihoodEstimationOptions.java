@@ -25,14 +25,12 @@
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.OperatorType;
-import dr.app.beauti.types.PriorScaleType;
-import dr.app.beauti.types.SequenceErrorType;
+import dr.app.beauti.options.ComponentOptions;
+import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.Operator;
+import dr.app.beauti.options.Parameter;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -62,13 +60,17 @@ public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
     public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
         // nothing to do
     }
+
     //MLE options
     public boolean performMLE = false;
+    public boolean performMLEGSS = false;
     public int pathSteps = 100;
     public int mleChainLength = 1000000;
     public int mleLogEvery = 1000;
     public String mleFileName = "MLE.log";
     public String pathScheme = "betaquantile";
+    public String choiceParameterWorkingPrior = "normal";
+    public String choiceTreeWorkingPrior = "Product of exponential distributions";
     public double schemeParameter = 0.30;
 
 }

@@ -29,12 +29,15 @@ import dr.app.gui.chart.*;
 import dr.app.gui.util.LongTask;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 import dr.stats.Regression;
 import dr.stats.Variate;
 import dr.util.NumberFormatter;
 import figtree.panel.FigTreePanel;
+import figtree.panel.SimpleControlPalette;
+import figtree.panel.SimpleTreeViewer;
 import figtree.treeviewer.TreePaneSelector;
 import figtree.treeviewer.TreeSelectionListener;
 import jam.framework.Exportable;
@@ -60,7 +63,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
-public class TreesPanel extends JPanel implements Exportable {
+public class PathogenPanel extends JPanel implements Exportable {
 
     StatisticsModel statisticsModel;
     JTable statisticsTable = null;
@@ -75,6 +78,7 @@ public class TreesPanel extends JPanel implements Exportable {
     private final JCheckBox showMRCACheck = new JCheckBox("Show ancestor traces");
 
     //    JTreeDisplay treePanel;
+    private final SamplesPanel samplesPanel;
     private final FigTreePanel treePanel;
 
     JChartPanel rootToTipPanel;
@@ -101,8 +105,12 @@ public class TreesPanel extends JPanel implements Exportable {
     private TemporalRooting.RootingFunction rootingFunction;
     private TemporalRooting temporalRooting = null;
 
-    public TreesPanel(PathogenFrame parent, Tree tree) {
+    public PathogenPanel(PathogenFrame parent, TaxonList taxa, Tree tree) {
         frame = parent;
+
+        samplesPanel = new SamplesPanel(parent, taxa);
+
+        tabbedPane.addTab("Sample Dates", samplesPanel);
 
         statisticsModel = new StatisticsModel();
         statisticsTable = new JTable(statisticsModel);
@@ -143,7 +151,6 @@ public class TreesPanel extends JPanel implements Exportable {
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.NORTH);
-
 
         treePanel = new FigTreePanel(FigTreePanel.Style.SIMPLE);
         tabbedPane.add("Tree", treePanel);

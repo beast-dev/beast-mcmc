@@ -88,7 +88,7 @@
         </jar>
     </target>
 
-    <property name="version" value="1.4" />
+    <property name="version" value="1.5" />
     <property name="release_dir" value="release_pathogen" />
     <property name="name" value="Path-O-Gen" />
 

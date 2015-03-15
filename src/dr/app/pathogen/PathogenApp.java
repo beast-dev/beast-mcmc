@@ -39,7 +39,7 @@ import java.awt.*;
  */
 public class PathogenApp extends MultiDocApplication {
     private final static Version version = new Version() {
-        private static final String VERSION = "1.4.1";
+        private static final String VERSION = "1.5";
 
         public String getVersion() {
             return VERSION;
@@ -50,7 +50,7 @@ public class PathogenApp extends MultiDocApplication {
         }
 
         public String getDateString() {
-            return "2013";
+            return "2003-2015";
         }
 
         public String getBuildString() {

@@ -43,8 +43,7 @@ public class PathogenFrame extends DocumentFrame {
     private JTabbedPane tabbedPane = new JTabbedPane();
     private JLabel statusLabel = new JLabel("No data loaded");
 
-    private SamplesPanel samplesPanel;
-    private TreesPanel treesPanel;
+    private PathogenPanel pathogenPanel;
 
     TaxonList taxa = null;
     java.util.List<Tree> trees = new ArrayList<Tree>();
@@ -76,16 +75,12 @@ public class PathogenFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        samplesPanel = new SamplesPanel(this, taxa);
-        treesPanel = new TreesPanel(this, trees.get(0));
+        pathogenPanel = new PathogenPanel(this, taxa, trees.get(0));
 
-        tabbedPane.addTab("Sample Dates", samplesPanel);
-        tabbedPane.addTab("Analysis", treesPanel);
+        JPanel panel = new JPanel(new BorderLayout(0, 0));
+        panel.add(pathogenPanel, BorderLayout.CENTER);
 
-        JPanel panel = new JPanel(new BorderLayout(6, 6));
-        panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-        panel.add(tabbedPane, BorderLayout.CENTER);
-
+        statusLabel.setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(0, 12, 6, 12)));
         panel.add(statusLabel, BorderLayout.SOUTH);
 
         getContentPane().setLayout(new BorderLayout(0, 0));
@@ -97,7 +92,7 @@ public class PathogenFrame extends DocumentFrame {
     }
 
     public void timeScaleChanged() {
-        treesPanel.timeScaleChanged();
+        pathogenPanel.timeScaleChanged();
         setStatusMessage();
     }
 
@@ -217,9 +212,9 @@ public class PathogenFrame extends DocumentFrame {
 
     protected void writeTimeTreeFile(PrintStream ps) throws IOException {
 
-        FlexibleTree tree = new FlexibleTree(treesPanel.getTreeAsViewed());
+        FlexibleTree tree = new FlexibleTree(pathogenPanel.getTreeAsViewed());
 
-        Regression r = treesPanel.getTemporalRooting().getRootToTipRegression(treesPanel.getTreeAsViewed());
+        Regression r = pathogenPanel.getTemporalRooting().getRootToTipRegression(pathogenPanel.getTreeAsViewed());
 
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             NodeRef node = tree.getInternalNode(i);
@@ -236,7 +231,7 @@ public class PathogenFrame extends DocumentFrame {
 
     protected void writeTreeFile(PrintStream ps, boolean newickFormat) throws IOException {
 
-        Tree tree = treesPanel.getTreeAsViewed();
+        Tree tree = pathogenPanel.getTreeAsViewed();
 
 //        if (newickFormat) {
 //            NewickExporter newickExporter = new NewickExporter(ps);
@@ -264,7 +259,7 @@ public class PathogenFrame extends DocumentFrame {
             Writer writer = null;
             try {
                 writer = new PrintWriter(file);
-                treesPanel.writeDataFile(writer);
+                pathogenPanel.writeDataFile(writer);
                 writer.close();
             } catch (IOException ioe) {
                 JOptionPane.showMessageDialog(this, "Error writing data file: " + ioe.getMessage(),
@@ -276,12 +271,12 @@ public class PathogenFrame extends DocumentFrame {
     }
 
     private void setStatusMessage() {
-        Tree tree = treesPanel.getTree();
+        Tree tree = pathogenPanel.getTree();
         if (tree != null) {
             String message = "";
             message += "Tree loaded, " + tree.getTaxonCount() + " taxa";
 
-            TemporalRooting tr = treesPanel.getTemporalRooting();
+            TemporalRooting tr = pathogenPanel.getTemporalRooting();
             if (tr.isContemporaneous()) {
                 message += ", contemporaneous tips";
             } else {
@@ -311,7 +306,7 @@ public class PathogenFrame extends DocumentFrame {
         StringWriter writer = new StringWriter();
         PrintWriter pwriter = new PrintWriter(writer);
 
-        for (String tip : treesPanel.getSelectedTips()) {
+        for (String tip : pathogenPanel.getSelectedTips()) {
             pwriter.println(tip);
         }
 

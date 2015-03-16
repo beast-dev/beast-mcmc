@@ -393,6 +393,78 @@ public class TemporalRooting {
         return fminx;
     }
 
+    private double findAnalyticalLocalRoot(final FlexibleTree tree,
+                                           final double[] dates,
+                                           final RootingFunction rootingFunction,
+                                           final boolean forcePositiveRate) {
+
+        if (rootingFunction != RootingFunction.RESIDUAL_MEAN_SQUARED) {
+            throw new UnsupportedOperationException("Analytical local root solution only for residual mean squared");
+        }
+
+        NodeRef node1 = tree.getChild(tree.getRoot(), 0);
+        NodeRef node2 = tree.getChild(tree.getRoot(), 1);
+
+        final double length1 = tree.getBranchLength(node1);
+        final double length2 = tree.getBranchLength(node2);
+
+        final double sumLength = length1 + length2;
+
+        final Set<NodeRef> tipSet1 = Tree.Utils.getExternalNodes(tree, node1);
+        final Set<NodeRef> tipSet2 = Tree.Utils.getExternalNodes(tree, node2);
+
+        final double[] y = new double[tree.getExternalNodeCount()];
+
+//                double l1 = argument * sumLength;
+//
+//                for (NodeRef tip : tipSet1) {
+//                    y[tip.getNumber()] = getRootToTipDistance(tree, tip) - length1 + l1;
+//                }
+//
+//                double l2 = (1.0 - argument) * sumLength;
+//
+//                for (NodeRef tip : tipSet2) {
+//                    y[tip.getNumber()] = getRootToTipDistance(tree, tip) - length2 + l2;
+//                }
+//
+//                double score;
+//
+//              score = r.getResidualMeanSquared();
+
+//        ## the analytical solution. Takes a vector of divergences (vd), a vector of times (vt), the children indicators (cs) and the branch length m
+//        N <- length(vd)
+//        n <- sum(cs)
+//        d.bar <- mean(vd)
+//        t.bar <- mean(vt)
+//        C <- sum(vt^2) - (sum(vt)^2)/N
+//        Ai <- 2*cs - (2*n-N)/N + 2*(t.bar-vt)/(C*N)*(N*sum(vt*cs) - n*sum(vt))-1
+//        Bi <- vd-d.bar + (t.bar-vt)/(C*N)*(N*sum(vt*vd)- sum(vt)*sum(vd))
+//        alpha <- -sum(Ai*Bi)/(m*sum(Ai^2))
+//        if(bounded){# failsafe to ensure \alpha \in (0, 1)
+//            alpha <- min(max(alpha, 0), 1)
+//            if(n == N){alpha <- 1}
+//        }
+//        return(alpha)
+
+
+        double sumAB = 0.0;
+        double sumAA = 0.0;
+
+
+
+//////        double x = - sumAB / b * sumAA;
+//////        x = Math.min(Math.max(x, 0.0), 1.0);
+////
+////        double l1 = x * sumLength;
+////        double l2 = (1.0 - x) * sumLength;
+//
+//        tree.setBranchLength(node1, l1);
+//        tree.setBranchLength(node2, l2);
+        Regression r = new Regression(dates, y);
+
+        return r.getResidualMeanSquared();
+    }
+
     public double getRootToTipDistance(Tree tree, NodeRef node) {
         double distance = 0;
         while (node != null) {

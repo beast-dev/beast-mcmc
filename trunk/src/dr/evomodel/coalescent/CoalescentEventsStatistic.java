@@ -26,7 +26,6 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.IntervalType;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Statistic;
 
 /**
@@ -40,13 +39,14 @@ public class CoalescentEventsStatistic extends Statistic.Abstract {
 	
     private final CoalescentIntervalProvider coalescent;
     //treeModel currently only required for debugging purposes
-    private TreeModel treeModel;
+    //private TreeModel treeModel;
     private int coalescentEvents;
     private double[] coalescentValues;
     
-    public CoalescentEventsStatistic(CoalescentIntervalProvider coalescent, TreeModel treeModel) {
+    //public CoalescentEventsStatistic(CoalescentIntervalProvider coalescent, TreeModel treeModel) {
+    public CoalescentEventsStatistic(CoalescentIntervalProvider coalescent) {
         this.coalescent = coalescent;
-        this.treeModel = treeModel;
+        //this.treeModel = treeModel;
         this.coalescentEvents = 0;
         for (int i = 0; i < coalescent.getCoalescentIntervalDimension(); i++) {
     		if (coalescent.getCoalescentIntervalType(i) == IntervalType.COALESCENT) {

@@ -1,7 +1,7 @@
 /*
  * MissingTraits.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -57,8 +57,8 @@ public interface MissingTraits {
             this.missingIndices = missingIndices;
 
             completelyMissing = new boolean[treeModel.getNodeCount()];
-            Arrays.fill(completelyMissing, 0, treeModel.getExternalNodeCount(), false);
-            Arrays.fill(completelyMissing, treeModel.getExternalNodeCount() + 1, treeModel.getNodeCount(), true); // All internal and root nodes are missing
+            Arrays.fill(completelyMissing, 0, treeModel.getExternalNodeCount() - 1, false);
+            Arrays.fill(completelyMissing, treeModel.getExternalNodeCount(), treeModel.getNodeCount(), true); // All internal and root nodes are missing
         }
 
         final protected MultivariateTraitTree treeModel;

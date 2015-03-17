@@ -27,12 +27,7 @@ package dr.evomodelxml.coalescent;
 
 import dr.evomodel.coalescent.CoalescentEventsStatistic;
 import dr.evomodel.coalescent.CoalescentIntervalProvider;
-import dr.evomodel.tree.TreeModel;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
 * @author Guy Baele
@@ -51,15 +46,16 @@ public class CoalescentEventsStatisticParser extends AbstractXMLObjectParser {
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
-                new ElementRule(CoalescentIntervalProvider.class),
-                new ElementRule(TreeModel.class)
+                new ElementRule(CoalescentIntervalProvider.class)//,
+                //new ElementRule(TreeModel.class)
         };
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         CoalescentIntervalProvider coalescent = (CoalescentIntervalProvider) xo.getChild(CoalescentIntervalProvider.class);
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        return new CoalescentEventsStatistic(coalescent, treeModel);
+        //TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+        //return new CoalescentEventsStatistic(coalescent, treeModel);
+        return new CoalescentEventsStatistic(coalescent);
     }
 
     public String getParserName() {

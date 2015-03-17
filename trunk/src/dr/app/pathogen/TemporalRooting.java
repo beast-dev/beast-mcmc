@@ -300,6 +300,10 @@ public class TemporalRooting {
                                  final RootingFunction rootingFunction,
                                  final boolean forcePositiveRate) {
 
+        if (rootingFunction == RootingFunction.RESIDUAL_MEAN_SQUARED) {
+            return findAnalyticalLocalRoot(tree, dates, rootingFunction);
+        }
+
         NodeRef node1 = tree.getChild(tree.getRoot(), 0);
         NodeRef node2 = tree.getChild(tree.getRoot(), 1);
 
@@ -394,9 +398,8 @@ public class TemporalRooting {
     }
 
     private double findAnalyticalLocalRoot(final FlexibleTree tree,
-                                           final double[] dates,
-                                           final RootingFunction rootingFunction,
-                                           final boolean forcePositiveRate) {
+                                           final double[] t,
+                                           final RootingFunction rootingFunction) {
 
         if (rootingFunction != RootingFunction.RESIDUAL_MEAN_SQUARED) {
             throw new UnsupportedOperationException("Analytical local root solution only for residual mean squared");
@@ -413,23 +416,7 @@ public class TemporalRooting {
         final Set<NodeRef> tipSet1 = Tree.Utils.getExternalNodes(tree, node1);
         final Set<NodeRef> tipSet2 = Tree.Utils.getExternalNodes(tree, node2);
 
-        final double[] y = new double[tree.getExternalNodeCount()];
-
-//                double l1 = argument * sumLength;
-//
-//                for (NodeRef tip : tipSet1) {
-//                    y[tip.getNumber()] = getRootToTipDistance(tree, tip) - length1 + l1;
-//                }
-//
-//                double l2 = (1.0 - argument) * sumLength;
-//
-//                for (NodeRef tip : tipSet2) {
-//                    y[tip.getNumber()] = getRootToTipDistance(tree, tip) - length2 + l2;
-//                }
-//
-//                double score;
-//
-//              score = r.getResidualMeanSquared();
+        final double[] y = getRootToTipDistances(tree);
 
 //        ## the analytical solution. Takes a vector of divergences (vd), a vector of times (vt), the children indicators (cs) and the branch length m
 //        N <- length(vd)
@@ -447,20 +434,59 @@ public class TemporalRooting {
 //        return(alpha)
 
 
+        int N = tipSet1.size() + tipSet2.size();
+        int n = tipSet1.size();
+
+        double d_bar = DiscreteStatistics.mean(y);
+        double t_bar = DiscreteStatistics.mean(t);
+
+        final double[] cs = new double[N];
+        for (NodeRef tip : tipSet1) {
+            int i = tip.getNumber();
+            cs[i] = 1;
+        }
+
+        double sum_tt = 0.0;
+        double sum_t = 0.0;
+        double sum_d = 0.0;
+        double sum_td = 0.0;
+        double sum_tc = 0.0;
+
+        for (int i = 0; i < N; i++) {
+            sum_tt += t[i] * t[i];
+            sum_t += t[i];
+            sum_d += y[i];
+            sum_td += t[i] * y[i];
+            sum_tc += t[i] * cs[i];
+        }
+
+        double C = sum_tt - (sum_t * sum_t / N);
+
         double sumAB = 0.0;
         double sumAA = 0.0;
 
+        for (int i = 0; i < N; i++) {
+            double Ai = (2 * cs[i])
+                    - ((2 * n - N) / N) +
+                    (2 * (t_bar - t[i]) / (C * N) * ((N * sum_tc) - (n * sum_t)) - 1);
+            double Bi = (y[i] - d_bar)
+                    + (t_bar - t[i]) / (C * N) * ((N * sum_td) - (sum_t * sum_d));
+
+            sumAB += Ai * Bi;
+            sumAA += Ai * Ai;
+        }
 
 
-//////        double x = - sumAB / b * sumAA;
-//////        x = Math.min(Math.max(x, 0.0), 1.0);
-////
-////        double l1 = x * sumLength;
-////        double l2 = (1.0 - x) * sumLength;
-//
-//        tree.setBranchLength(node1, l1);
-//        tree.setBranchLength(node2, l2);
-        Regression r = new Regression(dates, y);
+        double x = - sumAB / sumLength * sumAA;
+        x = Math.min(Math.max(x, 0.0), 1.0);
+
+        double l1 = x * sumLength;
+        double l2 = (1.0 - x) * sumLength;
+
+        tree.setBranchLength(node1, l1);
+        tree.setBranchLength(node2, l2);
+
+        Regression r = new Regression(t, getRootToTipDistances(tree));
 
         return r.getResidualMeanSquared();
     }

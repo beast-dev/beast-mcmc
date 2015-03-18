@@ -41,6 +41,7 @@ import java.util.*;
 public class TemporalRooting {
 
     public enum RootingFunction {
+        HEURISTIC_RESIDUAL_MEAN_SQUARED("heuristic residual mean squared"),
         RESIDUAL_MEAN_SQUARED("residual mean squared"),
         //        SUM_RESIDUAL_SQUARED("sum squared residuals"),
         CORRELATION("correlation"),
@@ -345,6 +346,7 @@ public class TemporalRooting {
                         case R_SQUARED:
                             score = -r.getRSquared();
                             break;
+                        case HEURISTIC_RESIDUAL_MEAN_SQUARED:
                         case RESIDUAL_MEAN_SQUARED:
                             score = r.getResidualMeanSquared();
                             break;
@@ -437,28 +439,28 @@ public class TemporalRooting {
         int N = tipSet1.size() + tipSet2.size();
         int n = tipSet1.size();
 
-        double d_bar = DiscreteStatistics.mean(y);
-        double t_bar = DiscreteStatistics.mean(t);
 
-        final double[] cs = new double[N];
+        final double[] c = new double[N];
         for (NodeRef tip : tipSet1) {
             int i = tip.getNumber();
-            cs[i] = 1;
+            c[i] = 1;
         }
 
         double sum_tt = 0.0;
         double sum_t = 0.0;
-        double sum_d = 0.0;
-        double sum_td = 0.0;
+        double sum_y = 0.0;
+        double sum_ty = 0.0;
         double sum_tc = 0.0;
 
         for (int i = 0; i < N; i++) {
             sum_tt += t[i] * t[i];
             sum_t += t[i];
-            sum_d += y[i];
-            sum_td += t[i] * y[i];
-            sum_tc += t[i] * cs[i];
+            sum_y += y[i];
+            sum_ty += t[i] * y[i];
+            sum_tc += t[i] * c[i];
         }
+        double y_bar = sum_y / N;
+        double t_bar = sum_t / N;
 
         double C = sum_tt - (sum_t * sum_t / N);
 
@@ -466,11 +468,11 @@ public class TemporalRooting {
         double sumAA = 0.0;
 
         for (int i = 0; i < N; i++) {
-            double Ai = (2 * cs[i])
+            double Ai = (2 * c[i])
                     - ((2 * n - N) / N) +
-                    (2 * (t_bar - t[i]) / (C * N) * ((N * sum_tc) - (n * sum_t)) - 1);
-            double Bi = (y[i] - d_bar)
-                    + (t_bar - t[i]) / (C * N) * ((N * sum_td) - (sum_t * sum_d));
+                    (2 * (t_bar - t[i]) / (C * N)) * ((N * sum_tc) - (n * sum_t)) - 1;
+            double Bi = (y[i] - y_bar)
+                    + ((t_bar - t[i]) / (C * N)) * ((N * sum_ty) - (sum_t * sum_y));
 
             sumAB += Ai * Bi;
             sumAA += Ai * Ai;

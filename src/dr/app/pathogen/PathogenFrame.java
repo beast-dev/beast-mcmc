@@ -16,8 +16,15 @@ import dr.evolution.util.TaxonList;
 import dr.app.tools.NexusExporter;
 import dr.stats.Regression;
 import dr.util.NumberFormatter;
+import figtree.treeviewer.TreeViewer;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
+import jam.panels.SearchPanel;
+import jam.panels.SearchPanelListener;
+import jam.toolbar.Toolbar;
+import jam.toolbar.ToolbarAction;
+import jam.toolbar.ToolbarButton;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -35,9 +42,6 @@ import java.util.*;
  */
 public class PathogenFrame extends DocumentFrame {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 2114148696789612509L;
 
     private JTabbedPane tabbedPane = new JTabbedPane();
@@ -354,5 +358,6 @@ public class PathogenFrame extends DocumentFrame {
             doExportTimeTree();
         }
     };
+
 
 }

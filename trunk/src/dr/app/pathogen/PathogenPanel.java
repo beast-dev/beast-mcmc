@@ -40,8 +40,15 @@ import figtree.panel.SimpleControlPalette;
 import figtree.panel.SimpleTreeViewer;
 import figtree.treeviewer.TreePaneSelector;
 import figtree.treeviewer.TreeSelectionListener;
+import figtree.treeviewer.TreeViewer;
 import jam.framework.Exportable;
+import jam.panels.SearchPanel;
+import jam.panels.SearchPanelListener;
 import jam.table.TableRenderer;
+import jam.toolbar.Toolbar;
+import jam.toolbar.ToolbarAction;
+import jam.toolbar.ToolbarButton;
+import jam.util.IconUtils;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.taxa.Taxon;
 import jebl.evolution.trees.RootedTree;
@@ -65,6 +72,9 @@ import java.util.List;
  */
 public class PathogenPanel extends JPanel implements Exportable {
 
+    public static final String COLOUR = "Colour...";
+    public static final String CLEAR_COLOURING = "Clear Colouring...";
+
     StatisticsModel statisticsModel;
     JTable statisticsTable = null;
 
@@ -80,6 +90,9 @@ public class PathogenPanel extends JPanel implements Exportable {
     //    JTreeDisplay treePanel;
     private final SamplesPanel samplesPanel;
     private final FigTreePanel treePanel;
+
+    private SearchPanel filterPanel;
+    private JPopupMenu filterPopup;
 
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
@@ -124,10 +137,6 @@ public class PathogenPanel extends JPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-//        JToolBar toolBar1 = new JToolBar();
-//        toolBar1.setFloatable(false);
-//        toolBar1.setOpaque(false);
-//        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         Box controlPanel1 = new Box(BoxLayout.PAGE_AXIS);
         controlPanel1.setOpaque(false);
 
@@ -152,8 +161,93 @@ public class PathogenPanel extends JPanel implements Exportable {
         panel1.add(scrollPane, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.NORTH);
 
+        // Set up tree panel
+
+        Toolbar toolBar = new Toolbar();
+        toolBar.setOpaque(false);
+        toolBar.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.darkGray));
+
+        toolBar.setRollover(true);
+        toolBar.setFloatable(false);
+
+        Icon colourToolIcon = IconUtils.getIcon(this.getClass(), "images/coloursTool.png");
+
+        final ToolbarAction colourToolbarAction = new ToolbarAction("Colour", COLOUR, colourToolIcon) {
+            public void actionPerformed(ActionEvent e){
+                colourSelected();
+            }
+        };
+        ToolbarButton colourToolButton = new ToolbarButton(colourToolbarAction, true);
+        colourToolButton.setFocusable(false);
+        toolBar.addComponent(colourToolButton);
+
+        toolBar.addFlexibleSpace();
+
+        filterPopup = new JPopupMenu();
+
+        final ButtonGroup bg = new ButtonGroup();
+        boolean first = true;
+        for (TreeViewer.TextSearchType searchType : TreeViewer.TextSearchType.values()) {
+            final JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(searchType.toString());
+            if (first) {
+                menuItem.setSelected(true);
+                first = false;
+            }
+            filterPopup.add(menuItem);
+            bg.add(menuItem);
+        }
+        filterPanel = new SearchPanel("Filter", filterPopup, true);
+        filterPanel.setOpaque(false);
+//        filterPanel.getSearchText().requestFocus();
+        filterPanel.addSearchPanelListener(new SearchPanelListener() {
+
+            /**
+             * Called when the user requests a search by pressing return having
+             * typed a search string into the text field. If the continuousUpdate
+             * flag is true then this method is called when the user types into
+             * the text field.
+             *
+             * @param searchString the user's search string
+             */
+            public void searchStarted(String searchString) {
+                Enumeration e = bg.getElements();
+                String value = null;
+                while (e.hasMoreElements()) {
+                    AbstractButton button = (AbstractButton)e.nextElement();
+                    if (button.isSelected()) {
+                        value = button.getText();
+                    }
+                }
+
+                for (TreeViewer.TextSearchType searchType : TreeViewer.TextSearchType.values()) {
+                    if (searchType.toString().equals(value)) {
+                        treePanel.getTreeViewer().selectTaxa("!name", searchType, searchString, false);
+                    }
+                }
+            }
+
+            /**
+             * Called when the user presses the cancel search button or presses
+             * escape while the search is in focus.
+             */
+            public void searchStopped() {
+//                treeViewer.clearSelectedTaxa();
+            }
+        });
+
+        JPanel panel5 = new JPanel(new FlowLayout());
+        panel5.setOpaque(false);
+        panel5.add(filterPanel);
+        toolBar.addComponent(panel5);
+
         treePanel = new FigTreePanel(FigTreePanel.Style.SIMPLE);
-        tabbedPane.add("Tree", treePanel);
+
+        JPanel panel2 = new JPanel(new BorderLayout(0, 0));
+        panel2.setOpaque(false);
+        panel2.add(treePanel, BorderLayout.CENTER);
+        panel2.add(toolBar, BorderLayout.NORTH);
+
+        tabbedPane.add("Tree", panel2);
 
         treePanel.getTreeViewer().setSelectionMode(TreePaneSelector.SelectionMode.TAXA);
         treePanel.getTreeViewer().addTreeSelectionListener(new TreeSelectionListener() {
@@ -185,25 +279,25 @@ public class PathogenPanel extends JPanel implements Exportable {
 
 //        textArea.setEditable(false);
 
-        JPanel panel2 = new JPanel(new BorderLayout(0, 0));
-        panel2.setOpaque(false);
-        panel2.add(tabbedPane, BorderLayout.CENTER);
-//        panel2.add(textArea, BorderLayout.SOUTH);
+        JPanel panel6 = new JPanel(new BorderLayout(0, 0));
+        panel6.setOpaque(false);
+        panel6.add(tabbedPane, BorderLayout.CENTER);
+//        panel6.add(textArea, BorderLayout.SOUTH);
 
         if (SHOW_NODE_DENSITY) {
             nodeDensityChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
             nodeDensityPanel = new JChartPanel(nodeDensityChart, "", "time", "node density");
-            JPanel panel5 = new JPanel(new BorderLayout());
-            panel5.add(nodeDensityPanel, BorderLayout.CENTER);
-            panel5.setOpaque(false);
+            JPanel panel7 = new JPanel(new BorderLayout());
+            panel7.add(nodeDensityPanel, BorderLayout.CENTER);
+            panel7.setOpaque(false);
 
             ChartSelector selector3 = new ChartSelector(nodeDensityChart);
 
-            tabbedPane.add("Node density", panel5);
+            tabbedPane.add("Node density", panel7);
         }
 
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel2);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, tabbedPane);
         splitPane.setDividerLocation(220);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
@@ -245,6 +339,16 @@ public class PathogenPanel extends JPanel implements Exportable {
             tips.add(tree.getTaxon(node).getName());
         }
         return tips;
+    }
+
+    private static Color lastColor = Color.GRAY;
+
+    private void colourSelected() {
+        Color color = JColorChooser.showDialog(this, "Select Colour", lastColor);
+        if (color != null) {
+            treePanel.getTreeViewer().annotateSelectedTips("!color", color);
+            lastColor = color;
+        }
     }
 
     private void treeSelectionChanged() {
@@ -789,4 +893,5 @@ public class PathogenPanel extends JPanel implements Exportable {
     }
 
     private JCheckBox rootingCheck;
+
 }

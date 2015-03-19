@@ -35,7 +35,6 @@ import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
@@ -1443,5 +1442,7 @@ public class BeautiOptions extends ModelOptions {
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 
     public boolean shareMicroSat = true;
+
+    public boolean logCoalescentEventsStatistic = false;
 
 }

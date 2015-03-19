@@ -1,11 +1,13 @@
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.ActionEvent;
 
 
 /**
@@ -31,12 +33,14 @@ public class MLEGSSDialog {
     private JComboBox parameterWorkingPrior = new JComboBox();
 
     private MarginalLikelihoodEstimationOptions options;
+    private BeautiOptions beautiOptions;
 
     private String description = "Settings for marginal likelihood estimation using GSS";
 
-    public MLEGSSDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options) {
+    public MLEGSSDialog(final JFrame frame, final MarginalLikelihoodEstimationOptions options, final BeautiOptions beautiOptions) {
         this.frame = frame;
         this.options = options;
+        this.beautiOptions = beautiOptions;
 
         optionsPanel = new OptionsPanel(12, 12);
 
@@ -127,6 +131,11 @@ public class MLEGSSDialog {
 
         treeWorkingPrior.addItem("Product of exponential distributions");
         treeWorkingPrior.addItem("Matching coalescent model");
+        /*treeWorkingPrior.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });*/
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
 
         parameterWorkingPrior.addItem("Normal KDE");
@@ -205,6 +214,11 @@ public class MLEGSSDialog {
         logFileNameField.setText(options.mleFileName);
 
         treeWorkingPrior.setSelectedItem(options.choiceTreeWorkingPrior);
+        if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
+            beautiOptions.logCoalescentEventsStatistic = true;
+        } else {
+            beautiOptions.logCoalescentEventsStatistic = false;
+        }
 
         optionsPanel.validate();
         optionsPanel.repaint();
@@ -217,6 +231,11 @@ public class MLEGSSDialog {
 
         options.mleFileName = logFileNameField.getText();
         options.choiceTreeWorkingPrior = treeWorkingPrior.getSelectedItem().toString();
+        if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
+            beautiOptions.logCoalescentEventsStatistic = true;
+        } else {
+            beautiOptions.logCoalescentEventsStatistic = false;
+        }
     }
 
 }

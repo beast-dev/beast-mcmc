@@ -156,13 +156,12 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 System.err.println("productOfExponentials selected: " + options.choiceTreeWorkingPrior);
 
                 List<Attribute> attributes = new ArrayList<Attribute>();
+                attributes.add(new Attribute.Default<String>(XMLParser.ID, "exponentials"));
                 attributes.add(new Attribute.Default<String>("fileName", beautiOptions.logFileName));
                 attributes.add(new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10));
-                //TODO: coalescentEventsStatistic has to be logged to logFile
                 attributes.add(new Attribute.Default<String>("parameterColumn", "coalescentEventsStatistic"));
                 attributes.add(new Attribute.Default<String>("dimension", "" + (beautiOptions.taxonList.getTaxonCount()-1)));
 
-                //currently, the following element does not receive and id="exponentials"
                 writer.writeOpenTag("productOfExponentialsPosteriorMeansLoess", attributes);
                 writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, TreeModel.TREE_MODEL), true);
                 writer.writeCloseTag("productOfExponentialsPosteriorMeansLoess");
@@ -174,15 +173,17 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                 System.err.println(beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior());
 
+                //TODO: add the simple parametric coalescent models
+                //TODO: if not a simple coalescent model, switch to product of exponentials
+
+
+
+
             }
-
-
-
 
             writer.writeComment("Define marginal likelihood estimator (GSS) settings");
 
             List<Attribute> attributes = new ArrayList<Attribute>();
-            //attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
             attributes.add(new Attribute.Default<Integer>("chainLength", options.mleChainLength));
             attributes.add(new Attribute.Default<Integer>("pathSteps", options.pathSteps));
             attributes.add(new Attribute.Default<String>("pathScheme", options.pathScheme));
@@ -223,7 +224,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 }
             }
 
-            //TODO: add tree working prior
+            if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
+                writer.writeIDref("productOfExponentialsPosteriorMeansLoess", "exponentials");
+            } else {
+                //TODO: complete this section
+            }
 
             writer.writeCloseTag("referencePrior");
             writer.writeCloseTag("destination");

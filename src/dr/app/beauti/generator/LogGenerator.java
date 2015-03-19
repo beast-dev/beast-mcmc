@@ -314,6 +314,25 @@ public class LogGenerator extends Generator {
             branchRatesModelGenerator.writeLogStatistic(model, writer);
         }
 
+        if (options.logCoalescentEventsStatistic) {
+            writer.writeOpenTag("coalescentEventsStatistic");
+            // coalescentLikelihood
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                PartitionTreePrior prior = model.getPartitionTreePrior();
+                treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+                writer.writeText("");
+            }
+
+            /*for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
+                    writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+                } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+                    writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
+                }
+            }*/
+            writer.writeCloseTag("coalescentEventsStatistic");
+        }
+
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);

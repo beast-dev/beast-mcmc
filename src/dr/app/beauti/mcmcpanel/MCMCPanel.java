@@ -325,12 +325,15 @@ public class MCMCPanel extends BeautiPanel {
             public void actionPerformed(ActionEvent e) {
                 if (performMLEGSS.isSelected()) {
                     mleOptions.performMLEGSS = true;
+                    //set to true because product of exponentials is the default option
+                    options.logCoalescentEventsStatistic = true;
                     buttonMLEGSS.setEnabled(true);
                     buttonMLE.setEnabled(false);
                     performMLE.setEnabled(false);
                     updateMLEFileNameStem();
                 } else {
                     mleOptions.performMLEGSS = false;
+                    options.logCoalescentEventsStatistic = false;
                     buttonMLE.setEnabled(false);
                     performMLE.setEnabled(true);
                     buttonMLEGSS.setEnabled(false);
@@ -513,7 +516,7 @@ public class MCMCPanel extends BeautiPanel {
             mleDialog = new MLEDialog(frame, mleOptions);
         }
         if (mleGssDialog == null) {
-            mleGssDialog = new MLEGSSDialog(frame, mleOptions);
+            mleGssDialog = new MLEGSSDialog(frame, mleOptions, options);
         }
         mleDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());
         mleGssDialog.setFilenameStem(options.fileNameStem, addTxt.isSelected());

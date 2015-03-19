@@ -25,6 +25,7 @@
 
 package dr.inferencexml.model;
 
+import dr.app.beagle.evomodel.branchmodel.lineagespecific.BeagleBranchLikelihoods;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.xml.*;
@@ -72,7 +73,14 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         for (int i = 0; i < xo.getChildCount(); i++) {
             final Object child = xo.getChild(i);
             if (child instanceof Likelihood) {
+            	
                 likelihoods.add((Likelihood) child);
+                
+            } else if (child instanceof BeagleBranchLikelihoods){
+                
+            	//TODO
+            	likelihoods.addAll( ((BeagleBranchLikelihoods)child).getBranchLikelihoods());
+                
             } else {
 
                 throw new XMLParseException("An element (" + child + ") which is not a likelihood has been added to a "
@@ -99,6 +107,9 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
             compoundLikelihood = new CompoundLikelihood(likelihoods);
         }
 
+//		TODO
+//        System.err.println(compoundLikelihood.getLikelihoodCount());
+        
         return compoundLikelihood;
     }
 

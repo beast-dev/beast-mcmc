@@ -35,7 +35,9 @@ public class RandomBranchModel extends AbstractModel implements BranchModel {
 	private LinkedList<SubstitutionModel> substitutionModels;
 	private LinkedHashMap<NodeRef, Integer> branchAssignmentMap;
 
-	//TODO: parse distribution model for e_i
+	// TODO: parse distribution model for e_i
+	// TODO: parse substitution model (hardcoded now)
+	// TODO: parse parameter that follows trend (hardcoded now)
 	private double rate;
 	
 	private static MersenneTwister random;

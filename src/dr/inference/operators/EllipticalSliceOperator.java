@@ -84,10 +84,11 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     private void setVariable(double[] x) {
-        variable.setParameterValueNotifyChangedAll(0, x[0]);
-        for (int i = 1; i < x.length; ++i) {
+//        variable.setParameterValueNotifyChangedAll(0, x[0]);
+        for (int i = 0; i < x.length; ++i) {
             variable.setParameterValueQuietly(i, x[i]);
         }
+        variable.fireParameterChangedEvent();
     }
 //
 //        if(!(variable instanceof CompoundParameter))

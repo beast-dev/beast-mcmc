@@ -349,6 +349,7 @@ public class PathogenPanel extends JPanel implements Exportable {
             treePanel.getTreeViewer().annotateSelectedTips("!color", color);
             lastColor = color;
         }
+        setupPanel();
     }
 
     private void treeSelectionChanged() {
@@ -497,6 +498,12 @@ public class PathogenPanel extends JPanel implements Exportable {
 
             RootedTree jtree = Tree.Utils.asJeblTree(currentTree);
 
+            List<Color> colours = new ArrayList<Color>();
+            for (Node tip : jtree.getExternalNodes()) {
+                Taxon taxon = jtree.getTaxon(tip);
+                colours.add((Color)taxon.getAttribute("!color"));
+            }
+
             if (temporalRooting.isContemporaneous()) {
                 double[] dv = temporalRooting.getRootToTipDistances(currentTree);
 
@@ -518,7 +525,8 @@ public class PathogenPanel extends JPanel implements Exportable {
                 }
 
                 rootToTipPlot = new ScatterPlot(values, dummyValues);
-                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+                rootToTipPlot.setColours(colours);
+                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 8, new BasicStroke(0.0F), new Color(44, 44, 44), new Color(129, 149, 149));
                 rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
                 rootToTipPlot.addListener(new Plot.Adaptor() {
                     @Override
@@ -601,7 +609,10 @@ public class PathogenPanel extends JPanel implements Exportable {
                         plotSelectionChanged(selectedPoints);
                     }
                 });
-                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+
+                rootToTipPlot.setColours(colours);
+
+                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 8, new BasicStroke(0.0F), new Color(44, 44, 44), new Color(129, 149, 149));
                 rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
 
                 rootToTipChart.addPlot(rootToTipPlot);
@@ -637,7 +648,8 @@ public class PathogenPanel extends JPanel implements Exportable {
                         plotSelectionChanged(selectedPoints);
                     }
                 });
-                residualPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+                residualPlot.setColours(colours);
+                residualPlot.setMarkStyle(Plot.CIRCLE_MARK, 8, new BasicStroke(0.0F), new Color(44, 44, 44), new Color(129, 149, 149));
                 residualPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
 
                 residualChart.addPlot(residualPlot);
@@ -665,7 +677,8 @@ public class PathogenPanel extends JPanel implements Exportable {
                             plotSelectionChanged(selectedPoints);
                         }
                     });
-                    nodeDensityPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+                    nodeDensityPlot.setColours(colours);
+                    nodeDensityPlot.setMarkStyle(Plot.CIRCLE_MARK, 8, new BasicStroke(0.0F), new Color(44, 44, 44), new Color(129, 149, 149));
                     nodeDensityPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
 
                     nodeDensityChart.addPlot(nodeDensityPlot);

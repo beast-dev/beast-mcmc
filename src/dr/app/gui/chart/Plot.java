@@ -197,6 +197,8 @@ public interface Plot {
         protected Variate.N xData = null;
         protected Variate.N yData = null;
 
+        protected List<Color> colours = null;
+
         protected Shape mark;
 
         protected Stroke lineStroke = new BasicStroke(1.5f);
@@ -253,6 +255,13 @@ public interface Plot {
         public void setData(Variate.N xData, Variate.N yData) {
             this.xData = xData;
             this.yData = yData;
+        }
+
+        /**
+         * Set data
+         */
+        public void setColours(List<Color> colours) {
+            this.colours = colours;
         }
 
         /**

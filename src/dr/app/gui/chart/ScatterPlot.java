@@ -76,8 +76,8 @@ public class ScatterPlot extends Plot.AbstractPlot {
      * Set mark style
      */
     public void setHilightedMarkStyle(Stroke hilightedMarkStroke,
-                               Paint hilightedMarkPaint,
-                               Paint hilightedMarkFillPaint) {
+                                      Paint hilightedMarkPaint,
+                                      Paint hilightedMarkFillPaint) {
 
         this.hilightedMarkStroke = hilightedMarkStroke;
         this.hilightedMarkPaint = hilightedMarkPaint;
@@ -87,7 +87,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
     /**
      * Draw a mark transforming co-ordinates to each axis
      */
-    protected void drawMark(Graphics2D g2, float x, float y) {
+    protected void drawMark(Graphics2D g2, float x, float y, Color color) {
 
         Rectangle2D bounds = mark.getBounds2D();
         float w = (float) bounds.getWidth();
@@ -97,8 +97,13 @@ public class ScatterPlot extends Plot.AbstractPlot {
 
         g2.translate(x, y);
 
-        if (markFillPaint != null) {
-            g2.setPaint(markFillPaint);
+        if (color == null) {
+            if (markFillPaint != null) {
+                g2.setPaint(markFillPaint);
+                g2.fill(mark);
+            }
+        } else {
+            g2.setPaint(color);
             g2.fill(mark);
         }
 
@@ -152,14 +157,27 @@ public class ScatterPlot extends Plot.AbstractPlot {
         Set<Integer> selectedPoints = getSelectedPoints();
 
         int n = xData.getCount();
-        for (int i = 0; i < n; i++) {
-            x = (float) transformX(((Number) xData.get(i)).doubleValue());
-            y = (float) transformY(((Number) yData.get(i)).doubleValue());
+        if (colours != null && colours.size() == n) {
+            for (int i = 0; i < n; i++) {
+                x = (float) transformX(((Number) xData.get(i)).doubleValue());
+                y = (float) transformY(((Number) yData.get(i)).doubleValue());
 
-            if (selectedPoints.contains(i)) {
-                drawMarkHilighted(g2, x, y);
-            } else {
-                drawMark(g2, x, y);
+                if (selectedPoints.contains(i)) {
+                    drawMarkHilighted(g2, x, y);
+                } else {
+                    drawMark(g2, x, y, colours.get(i));
+                }
+            }
+        } else {
+            for (int i = 0; i < n; i++) {
+                x = (float) transformX(((Number) xData.get(i)).doubleValue());
+                y = (float) transformY(((Number) yData.get(i)).doubleValue());
+
+                if (selectedPoints.contains(i)) {
+                    drawMarkHilighted(g2, x, y);
+                } else {
+                    drawMark(g2, x, y, null);
+                }
             }
         }
 
@@ -183,10 +201,10 @@ public class ScatterPlot extends Plot.AbstractPlot {
                 }
             }
             fireMarkClickedEvent(mark, x, y, isShiftDown);
-		}
+        }
 
-		firePointClickedEvent(x, y, isShiftDown);
-	}
+        firePointClickedEvent(x, y, isShiftDown);
+    }
 
 }
 

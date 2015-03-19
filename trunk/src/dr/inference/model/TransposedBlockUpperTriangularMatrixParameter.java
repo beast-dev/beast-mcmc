@@ -58,7 +58,7 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
 
     @Override
     boolean matrixCondition(int row, int col) {
-        return super.matrixCondition(col, row);
+        return row>=col;
     }
 
     public void setParameterValue(int row, int col, double value){

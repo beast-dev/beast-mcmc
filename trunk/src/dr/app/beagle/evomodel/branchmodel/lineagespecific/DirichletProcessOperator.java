@@ -16,7 +16,7 @@ import dr.math.MathUtils;
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		GibbsOperator {
 
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 
 	private DirichletProcessPrior dpp;
 
@@ -83,6 +83,10 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	private void doOperate() throws MathException {
 
+		//TODO
+//		System.out.println(likelihood.toString());
+		System.out.println("likelihood count: " + likelihood.getLikelihoodCount());
+		
 //		int index = 0;
 		for (int index = 0; index < realizationCount; index++) {
 
@@ -106,13 +110,13 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			double[] clusterProbs = new double[uniqueRealizationCount];
 			for (int i = 0; i < uniqueRealizationCount; i++) {
 
+				double loglike = 0;
 				double logprob = 0;
 				if (occupancy[i] == 0) {// draw new
 
-					// draw from base model, evaluate at likelihood
 					// M-H for poor people
-					
-					double loglike = 0.0;
+					// draw from base model, evaluate at likelihood
+
 					double candidate = 0.0;
 					for (int j = 0; j < mhSteps; j++) {
 						 candidate = dpp.baseModel.nextRandom()[0];
@@ -125,21 +129,21 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				} else {// draw existing
 					
 					// likelihood for component x_index
-					double value = dpp.getUniqueParameter(i).getParameterValue(0);
-					double loglike = getPartialLoglike(index, value);
+					 double value = dpp.getUniqueParameter(i).getParameterValue(0);
+					 loglike = getPartialLoglike(index, value);
 					
-					logprob = Math.log(occupancy[i]) / (realizationCount - 1 + intensity) + loglike;
+					 logprob = Math.log(occupancy[i]) / (realizationCount - 1 + intensity) + loglike;
 
 				}// END: occupancy check
-
+				
 				clusterProbs[i] = logprob;
 			}// END: i loop
 
 			//rescale
-//			double max = dr.app.bss.Utils.max(clusterProbs);
-//			for (int i = 0; i < clusterProbs.length; i++) {
-//				clusterProbs[i] -=  max;
-//			}
+			double max = dr.app.bss.Utils.max(clusterProbs);
+			for (int i = 0; i < clusterProbs.length; i++) {
+				clusterProbs[i] -=  max;
+			}
 
 			dr.app.bss.Utils.exponentiate(clusterProbs);
 //			dr.app.bss.Utils.normalize(clusterProbs);

@@ -88,14 +88,12 @@ public class BranchSpecificBranchModelParser extends AbstractXMLObjectParser {
                     }
                 } else if (xoc.getName().equals(EXTERNAL_BRANCHES)) {
 
-                    double weight = xoc.getAttribute(STEM_WEIGHT, 1.0);
-
                     substitutionModel = (SubstitutionModel) xoc.getChild(SubstitutionModel.class);
                     TaxonList taxonList = (TaxonList) xoc.getChild(TaxonList.class);
 
 
                     try {
-                        branchModel.addExternalBranches(taxonList, substitutionModel, weight);
+                        branchModel.addExternalBranches(taxonList, substitutionModel);
 
                     } catch (Tree.MissingTaxonException mte) {
                         throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + " was not found in the tree.");
@@ -142,7 +140,6 @@ public class BranchSpecificBranchModelParser extends AbstractXMLObjectParser {
             new ElementRule(SubstitutionModel.class, "The substitution model for branches not explicitly included"),
             new ElementRule(EXTERNAL_BRANCHES,
                     new XMLSyntaxRule[]{
-                            AttributeRule.newDoubleRule(STEM_WEIGHT, true, "What proportion of the branch to include [0 < w <= 1] (default 1)."),
                             new ElementRule(Taxa.class, "A substitution model will be applied to the external branches for these taxa"),
                             new ElementRule(SubstitutionModel.class, "The substitution model"),
                     }, 0, Integer.MAX_VALUE),

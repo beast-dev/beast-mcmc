@@ -53,6 +53,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
 
     private boolean updateNodeMaps = true;
     private Map<NodeRef, Mapping> nodeMap = new HashMap<NodeRef, Mapping>();
+    private Map<NodeRef, Mapping> externalNodeMap = new HashMap<NodeRef, Mapping>();
 
     private final SubstitutionModel rootSubstitutionModel;
     private final List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
@@ -96,20 +97,46 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         }
     }
 
-    public void addExternalBranches(TaxonList taxonList, SubstitutionModel substitutionModel, double weight) throws Tree.MissingTaxonException {
-        throw new UnsupportedOperationException("Not implemented yet");
+    public void addExternalBranches(TaxonList taxonList, SubstitutionModel substitutionModel) throws Tree.MissingTaxonException {
+        int x = substitutionModels.indexOf(substitutionModel);
+        if (x == -1) {
+            x = substitutionModels.size();
+            substitutionModels.add(substitutionModel);
+            addModel(substitutionModel);
+        }
+        final int index = x;
+
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            NodeRef node = treeModel.getExternalNode(i);
+
+            externalNodeMap.put(node, new Mapping() {
+                //            @Override
+                public int[] getOrder() {
+                    return new int[]{index};
+                }
+
+                //            @Override
+                public double[] getWeights() {
+                    return new double[]{1.0};
+                }
+            });
+        }
     }
 
     public void addBackbone(TaxonList taxonList, SubstitutionModel substitutionModel) throws Tree.MissingTaxonException {
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-//    @Override // use java 1.5
+    @Override
     public Mapping getBranchModelMapping(NodeRef branch) {
         if (updateNodeMaps) {
             setupNodeMaps();
         }
-        Mapping mapping = nodeMap.get(branch);
+        Mapping mapping = externalNodeMap.get(branch);
+        if (mapping != null) {
+            return mapping;
+        }
+        mapping = nodeMap.get(branch);
         if (mapping != null) {
             return mapping;
         }
@@ -136,7 +163,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel) {
+        if (model == treeModel && clades.size() > 0) {
             updateNodeMaps = true;
         }
         fireModelChanged();
@@ -149,7 +176,9 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
     }
 
     protected void restoreState() {
-        updateNodeMaps = true;
+        if (clades.size() > 0) {
+            updateNodeMaps = true;
+        }
     }
 
     protected void acceptState() {
@@ -157,7 +186,10 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
 
 
     private void setupNodeMaps() {
-        setupNodeMaps(treeModel, treeModel.getRoot(), new BitSet());
+        if (clades.size() > 0) {
+            setupNodeMaps(treeModel, treeModel.getRoot(), new BitSet());
+        }
+        updateNodeMaps = false;
     }
 
     private void setupNodeMaps(Tree tree, NodeRef node, BitSet tips) {

@@ -29,7 +29,6 @@ import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.components.RealNumberField;
-import figtree.treeviewer.TreeViewer;
 import jam.mac.Utils;
 import jam.panels.OptionsPanel;
 
@@ -48,7 +47,7 @@ import java.util.prefs.Preferences;
  */
 public class GuessDatesDialog {
 
-    public static Preferences PREFS = Preferences.userNodeForPackage(TreeViewer.class);
+    public static Preferences PREFS = Preferences.userNodeForPackage(GuessDatesDialog.class);
     public static final String DELIMIT_RADIO_KEY = "delimitRadio";
     public static final String ORDER_COMBO_KEY = "orderCombo";
     public static final String PREFIX_TEXT_KEY = "prefixText";

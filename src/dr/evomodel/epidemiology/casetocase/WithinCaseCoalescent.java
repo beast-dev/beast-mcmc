@@ -12,10 +12,8 @@ import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
-import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 import dr.math.*;
 import dr.xml.*;
 
@@ -35,12 +33,15 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public static final String WITHIN_CASE_COALESCENT = "withinCaseCoalescent";
 
+    private enum Mode {TRUNCATE, TRANSFORM}
+
     private double[] partitionTreeLogLikelihoods;
     private double[] storedPartitionTreeLogLikelihoods;
     private boolean[] recalculateCoalescentFlags;
     private HashMap<AbstractCase,Treelet> partitionsAsTrees;
     private HashMap<AbstractCase,Treelet> storedPartitionsAsTrees;
     private DemographicModel demoModel;
+    private Mode mode;
 
 
     private double infectiousPeriodsLogLikelihood;
@@ -50,9 +51,12 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
 
     public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
-                                String startingNetworkFileName, Parameter maxFirstInfToRoot, DemographicModel demoModel)
+                                String startingNetworkFileName, Parameter maxFirstInfToRoot, DemographicModel demoModel,
+                                Mode mode)
             throws TaxonList.MissingTaxonException {
+
         super(WITHIN_CASE_COALESCENT, virusTree, caseData, maxFirstInfToRoot);
+        this.mode = mode;
         this.demoModel = demoModel;
         addModel(demoModel);
         addModel(outbreak);
@@ -150,18 +154,18 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
 
-                    if (children.size() != 0) {
-                        MaxTMRCACoalescent coalescent = new MaxTMRCACoalescent(treelet, demoModel,
-                                treelet.getRootHeight() + treelet.getRootBranchLength());
-                        partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
-                        coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
-                        if (DEBUG && partitionTreeLogLikelihoods[number] == Double.POSITIVE_INFINITY) {
-                            debugOutputTree("infCoalescent.nex", false);
-                            debugTreelet(treelet, aCase + "_partition.nex");
+                        if (children.size() != 0) {
+                            SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
+                                    treelet.getZeroHeight(), mode == Mode.TRUNCATE);
+                            partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
+                            coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
+                            if (DEBUG && partitionTreeLogLikelihoods[number] == Double.POSITIVE_INFINITY) {
+                                debugOutputTree("infCoalescent.nex", false);
+                                debugTreelet(treelet, aCase + "_partition.nex");
+                            }
+                        } else {
+                            partitionTreeLogLikelihoods[number] = 0.0;
                         }
-                    } else {
-                        partitionTreeLogLikelihoods[number] = 0.0;
-                    }
                     recalculateCoalescentFlags[number] = false;
                 } else {
                     coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
@@ -310,7 +314,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                     littleTree.resolveTree();
 
-                    partitionsAsTrees.put(aCase, new Treelet(littleTree, rootTime - infectionTime));
+                    if(mode == Mode.TRUNCATE){
+                        partitionsAsTrees.put(aCase, new Treelet(littleTree,
+                                littleTree.getRootHeight() + rootTime - infectionTime));
+                    } else {
+                        partitionsAsTrees.put(aCase, transformTreelet(new Treelet(littleTree,
+                                littleTree.getRootHeight() + rootTime - infectionTime)));
+                    }
                 }
             }
         }
@@ -364,115 +374,202 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     private class Treelet extends FlexibleTree {
 
-        private double rootBranchLength;
+        private double zeroHeight;
 
-        private Treelet(FlexibleTree tree, double rootBranchLength){
+        private Treelet(FlexibleTree tree, double zeroHeight){
             super(tree);
-            this.rootBranchLength = rootBranchLength;
+            this.zeroHeight = zeroHeight;
+
         }
 
-        private double getRootBranchLength(){
-            return rootBranchLength;
+        private double getZeroHeight(){
+            return zeroHeight;
         }
 
-        private void setRootBranchLength(double rootBranchLength){
-            this.rootBranchLength = rootBranchLength;
+
+
+        private void setZeroHeight(double rootBranchLength){
+            this.zeroHeight = zeroHeight;
         }
     }
 
-    private class MaxTMRCACoalescent extends Coalescent {
+    private Treelet transformTreelet(Treelet treelet){
 
-        private double maxHeight;
+        double[] transformedNodeTimes = new double[treelet.getNodeCount()];
 
-        private MaxTMRCACoalescent(Tree tree, DemographicModel demographicModel, double maxHeight){
+        double totalHeight = treelet.getZeroHeight();
+
+        double willMapToZero = totalHeight - 1;
+
+        for(int i=0; i<treelet.getNodeCount(); i++){
+            NodeRef node = treelet.getNode(i);
+
+            double time =  treelet.getNodeHeight(node) - totalHeight;
+
+            transformedNodeTimes[i] = -Math.log(-(time));
+        }
+
+        double first = Double.POSITIVE_INFINITY;
+        for (double transformedNodeTime : transformedNodeTimes) {
+            if (transformedNodeTime < first) {
+                first = transformedNodeTime;
+            }
+        }
+
+        double zeroHeight = -first;
+
+        Treelet copy = new Treelet(treelet, zeroHeight);
+
+        for(int i=0; i<copy.getNodeCount(); i++){
+            NodeRef node = copy.getNode(i);
+
+            copy.setNodeHeight(node, transformedNodeTimes[i] - first);
+        }
+
+        copy.resolveTree();
+
+        return copy;
+
+    }
+
+
+    private class SpecifiedZeroCoalescent extends Coalescent {
+
+        private double zeroHeight;
+        boolean truncate;
+
+        private SpecifiedZeroCoalescent(Tree tree, DemographicModel demographicModel, double zeroHeight,
+                                        boolean truncate){
             super(tree, demographicModel.getDemographicFunction());
 
-            this.maxHeight = maxHeight;
+            this.zeroHeight = zeroHeight;
+            this.truncate = truncate;
 
         }
 
         public double calculateLogLikelihood() {
-            return calculatePartitionTreeLogLikelihood(getIntervals(), getDemographicFunction(), 0, maxHeight);
+            return calculatePartitionTreeLogLikelihood(getIntervals(), getDemographicFunction(), 0, zeroHeight,
+                    truncate);
         }
 
     }
 
     public static double calculatePartitionTreeLogLikelihood(IntervalList intervals,
                                                              DemographicFunction demographicFunction, double threshold,
-                                                             double maxHeight) {
+                                                             double zeroHeight, boolean truncate) {
 
         double logL = 0.0;
 
-        double startTime = -maxHeight;
+
+
+        double startTime = -zeroHeight;
         final int n = intervals.getIntervalCount();
 
         //TreeIntervals sets up a first zero-length interval with a lineage count of zero - skip this one
 
         for (int i = 0; i < n; i++) {
 
-            // time zero corresponds to the date of first infection
+            if(truncate) {
 
-            final double duration = intervals.getInterval(i);
-            final double finishTime = startTime + duration;
+                // time zero corresponds to the date of first infection
 
-            // if this has happened the run is probably pretty unhappy
+                final double duration = intervals.getInterval(i);
+                final double finishTime = startTime + duration;
 
-            if(finishTime==0){
-                return Double.NEGATIVE_INFINITY;
-            }
+                // if this has happened the run is probably pretty unhappy
 
-            final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
-            final double normalisationArea = demographicFunction.getIntegral(startTime, 0);
+                if (finishTime == 0) {
+                    return Double.NEGATIVE_INFINITY;
+                }
 
-            if( intervalArea == 0 && duration != 0 ) {
-                return Double.NEGATIVE_INFINITY;
-            }
+                final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+                final double normalisationArea = demographicFunction.getIntegral(startTime, 0);
 
-            final int lineageCount = intervals.getLineageCount(i);
+                if (intervalArea == 0 && duration != 0) {
+                    return Double.NEGATIVE_INFINITY;
+                }
 
-            if(lineageCount>=2){
+                final int lineageCount = intervals.getLineageCount(i);
 
+                if (lineageCount >= 2) {
+
+                    final double kChoose2 = Binomial.choose2(lineageCount);
+
+                    if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
+
+                        logL += -kChoose2 * intervalArea;
+
+                        final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
+
+                        if (duration == 0.0 || demographicAtCoalPoint * (intervalArea / duration) >= threshold) {
+                            logL -= Math.log(demographicAtCoalPoint);
+                        } else {
+                            return Double.NEGATIVE_INFINITY;
+                        }
+
+                    } else {
+                        double numerator = Math.exp(-kChoose2 * intervalArea) - Math.exp(-kChoose2 * normalisationArea);
+                        logL += Math.log(numerator);
+
+                    }
+
+                    // normalisation
+
+                    double normExp = Math.exp(-kChoose2 * normalisationArea);
+
+                    double logDenominator;
+
+                    // the denominator has an irritating tendency to round to zero
+
+                    if (normExp != 1) {
+                        logDenominator = Math.log1p(-normExp);
+                    } else {
+                        logDenominator = handleDenominatorUnderflow(-kChoose2 * normalisationArea);
+                    }
+
+
+                    logL -= logDenominator;
+
+                }
+
+                startTime = finishTime;
+            } else {
+                final double duration = intervals.getInterval(i);
+                final double finishTime = startTime + duration;
+
+                final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
+                if( intervalArea == 0 && duration != 0 ) {
+                    return Double.NEGATIVE_INFINITY;
+                }
+                final int lineageCount = intervals.getLineageCount(i);
                 final double kChoose2 = Binomial.choose2(lineageCount);
+                // common part
+                logL += -kChoose2 * intervalArea;
 
                 if (intervals.getIntervalType(i) == IntervalType.COALESCENT) {
 
-                    logL += -kChoose2 * intervalArea;
-
                     final double demographicAtCoalPoint = demographicFunction.getDemographic(finishTime);
 
+                    // if value at end is many orders of magnitude different than mean over interval reject the interval
+                    // This is protection against cases where ridiculous infinitesimal population size at the end of a
+                    // linear interval drive coalescent values to infinity.
+
                     if( duration == 0.0 || demographicAtCoalPoint * (intervalArea/duration) >= threshold ) {
+                        //                if( duration == 0.0 || demographicAtCoalPoint >= threshold * (duration/intervalArea) ) {
                         logL -= Math.log(demographicAtCoalPoint);
                     } else {
+                        // remove this at some stage
+                        //  System.err.println("Warning: " + i + " " + demographicAtCoalPoint + " " + (intervalArea/duration) );
                         return Double.NEGATIVE_INFINITY;
                     }
 
-                } else {
-                    double numerator = Math.exp(-kChoose2 * intervalArea) - Math.exp(-kChoose2 * normalisationArea);
-                    logL += Math.log(numerator);
-
                 }
 
-                // normalisation
-
-                double normExp = Math.exp(-kChoose2 * normalisationArea);
-
-                double logDenominator;
-
-                // the denominator has an irritating tendency to round to zero
-
-                if(normExp!=1){
-                    logDenominator = Math.log1p(-normExp);
-                } else {
-                    logDenominator = handleDenominatorUnderflow(-kChoose2 * normalisationArea);
-                }
-
-
-                logL -= logDenominator;
-
+                startTime = finishTime;
             }
-
-            startTime = finishTime;
         }
+
+
 
         return logL;
     }
@@ -544,6 +641,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         public static final String STARTING_NETWORK = "startingNetwork";
         public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
         public static final String DEMOGRAPHIC_MODEL = "demographicModel";
+        public static final String TRANSFORM = "transform";
 
         public String getParserName() {
             return WITHIN_CASE_COALESCENT;
@@ -567,9 +665,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             DemographicModel demoModel = (DemographicModel) xo.getElementFirstChild(DEMOGRAPHIC_MODEL);
 
+            Mode mode = xo.hasAttribute(TRANSFORM) & xo.getBooleanAttribute(TRANSFORM) ? Mode.TRANSFORM : Mode.TRUNCATE;
+
             try {
                 likelihood = new WithinCaseCoalescent(virusTree, caseSet, startingNetworkFileName,
-                        earliestFirstInfection, demoModel);
+                        earliestFirstInfection, demoModel, mode);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -599,7 +699,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 new ElementRule(MAX_FIRST_INF_TO_ROOT, Parameter.class, "The maximum time from the first infection to" +
                         "the root node"),
                 new ElementRule(DEMOGRAPHIC_MODEL, DemographicModel.class, "The demographic model for within-case" +
-                        "evolution")
+                        "evolution"),
+                AttributeRule.newBooleanRule(TRANSFORM)
         };
     };
 }

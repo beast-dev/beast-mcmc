@@ -1,6 +1,5 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.AbstractXMLObjectParser;

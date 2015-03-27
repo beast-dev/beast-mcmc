@@ -2,8 +2,6 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
 import org.apache.commons.math.MathException;
 
-import dr.inference.distribution.DistributionLikelihood;
-import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -32,15 +30,16 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 //	private CountableRealizationsParameter countableRealizationsParameter;
 	private Parameter parameter;
 	
-	private CompoundLikelihood likelihood;
-	
+//	private CompoundLikelihood likelihood;
+	private BeagleBranchLikelihood likelihood;
 	
 	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
 			Parameter zParameter, 
 //			CountableRealizationsParameter countableRealizationsParameter,
 			Parameter parameter,
-			CompoundLikelihood likelihood,
+//		    CompoundLikelihood likelihood;
+			BeagleBranchLikelihood likelihood,
 			int mhSteps,
 			double weight) {
 
@@ -85,7 +84,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 		//TODO
 //		System.out.println(likelihood.toString());
-		System.out.println("likelihood count: " + likelihood.getLikelihoodCount());
+//		System.out.println("likelihood count: " + likelihood.getLikelihoodCount());
 		
 //		int index = 0;
 		for (int index = 0; index < realizationCount; index++) {

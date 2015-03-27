@@ -3,6 +3,7 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import dr.evolution.tree.NodeRef;
@@ -39,32 +40,51 @@ public class BeagleBranchLikelihood implements Likelihood {
 		this.uniqueLikelihoods = likelihoods;
 		this.zParameter = zParameter;
 
+		if(this.treeModel != null) {
 		this.categoriesProvider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(
 				treeModel, zParameter);
-
+		}
+		
 		this.branchLikelihoods = getBranchLikelihoods();
 		
 	}// END: Constructor
 
 	public List<Likelihood> getBranchLikelihoods() {
 
-		List<Likelihood>  loglikes = new ArrayList<Likelihood>();
+		// TODO: if no tree then read them in supplied order
+		List<Likelihood> loglikes = new LinkedList<Likelihood>();
 
-		for (NodeRef branch : treeModel.getNodes()) {
+		if (treeModel != null) {
 
-			if (!treeModel.isRoot(branch)) {
+			for (NodeRef branch : treeModel.getNodes()) {
 
-				int branchCategory = categoriesProvider.getBranchCategory(
-						treeModel, branch);
-				int zIndex = (int) zParameter.getParameterValue(branchCategory);
+				if (!treeModel.isRoot(branch)) {
 
-				Likelihood branchLikelihood = uniqueLikelihoods.get(zIndex);
+					int branchCategory = categoriesProvider.getBranchCategory(
+							treeModel, branch);
+					int zIndex = (int) zParameter
+							.getParameterValue(branchCategory);
 
-				// branchLikelihoods.add(new Holder(branchLikelihood).value);
-				loglikes.add(branchLikelihood);
+					Likelihood branchLikelihood = uniqueLikelihoods.get(zIndex);
 
+					// branchLikelihoods.add(new
+					// Holder(branchLikelihood).value);
+					loglikes.add(branchLikelihood);
+
+				}
+			}// END: branch loop
+
+		} else {
+
+			int dim = zParameter.getDimension();
+			if (dim != uniqueLikelihoods.size()) {
+				throw new RuntimeException("Dimensionality mismatch!");
 			}
-		}// END: branch loop
+
+			// TODO: does this preserve order? check!
+			loglikes.addAll(uniqueLikelihoods);
+
+		}// END: tree check
 
 		return loglikes;
 	}// END: getBranchLikelihoods

@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import dr.app.beagle.evomodel.branchmodel.lineagespecific.BeagleBranchLikelihood;
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
 
@@ -104,14 +105,26 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         }
     }
 
+//    public CompoundLikelihood(BeagleBranchLikelihoods bbl) {
+//
+//        pool = null;
+//        threadCount = 0;
+//        evaluationTimes = null;
+//        evaluationCounts = null;
+//        
+//    }
+    
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
         // unroll any compound likelihoods
         if (UNROLL_COMPOUND && addToPool && likelihood instanceof CompoundLikelihood) {
+        	
             for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
                 addLikelihood(l, index, addToPool);
             }
+            
         } else {
+        	
             if (!likelihoods.contains(likelihood)) {
 
                 likelihoods.add(likelihood);
@@ -120,8 +133,11 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                 }
 
                 if (likelihood.evaluateEarly()) {
+                	
                     earlyLikelihoods.add(likelihood);
+                    
                 } else {
+                	
                     // late likelihood list is used to evaluate them if the thread pool is not being used...
                     lateLikelihoods.add(likelihood);
 
@@ -129,9 +145,17 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                         likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
                     }
                 }
-            }
-        }
-    }
+                
+//            } else {
+            	
+            	//TODO: hack in branch likes here
+//            	likelihoods.add(likelihood);
+            	
+            }// END: contains check
+            
+        }//END: if unroll check
+        
+    }//END: addLikelihood
 
     public int getLikelihoodCount() {
         return likelihoods.size();

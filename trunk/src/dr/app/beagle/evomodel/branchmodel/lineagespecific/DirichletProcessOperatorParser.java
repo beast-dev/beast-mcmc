@@ -20,7 +20,8 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		DirichletProcessPrior dpp = (DirichletProcessPrior) xo.getChild(DirichletProcessPrior.class);
-		CompoundLikelihood likelihood = (CompoundLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
+//		CompoundLikelihood likelihood = (CompoundLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
+		BeagleBranchLikelihood likelihood = (BeagleBranchLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
 		Parameter zParameter = (Parameter) xo.getElementFirstChild(  DirichletProcessPriorParser.CATEGORIES);
 //		CountableRealizationsParameter countableRealizationsParameter = (CountableRealizationsParameter) xo.getChild(CountableRealizationsParameter.class);
 		

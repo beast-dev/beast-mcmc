@@ -1,7 +1,7 @@
 /*
  * MaskedParameter.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -40,9 +40,14 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     public MaskedParameter(Parameter parameter) {
         this.parameter = parameter;
+        parameter.addParameterListener(this);
+
         this.map = new int[parameter.getDimension()];
-        for (int i = 0; i < map.length; i++)
+        this.inverseMap = new int[parameter.getDimension()];
+        for (int i = 0; i < map.length; i++) {
             map[i] = i;
+            inverseMap[i] = i;
+        }
         length = map.length;
     }
 
@@ -66,7 +71,10 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
             final int maskValue = (int) maskParameter.getParameterValue(i);
             if (maskValue == equalValue) {
                 map[index] = i;
+                inverseMap[i] = index;
                 index++;
+            } else {
+                inverseMap[i] = -1; // Keep track of indices from parameter than do NOT correspond to entries in mask
             }
         }
         length = index;
@@ -160,15 +168,17 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         if (variable == maskParameter) {
             updateMask();
-        } else {
-            System.err.println("Called by " + variable.getId());
-            throw new RuntimeException("Not yet implemented.");
+        } else { // variable == parameter
+            if (inverseMap[index] != -1) {
+                fireParameterChangedEvent(inverseMap[index], type);
+            }
         }
     }
 
     private final Parameter parameter;
     private Parameter maskParameter;
     private final int[] map;
+    private final int[] inverseMap;
     private int length;
     private int equalValue;
 }

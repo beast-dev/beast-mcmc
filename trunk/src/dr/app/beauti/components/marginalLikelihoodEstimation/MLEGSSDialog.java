@@ -131,11 +131,11 @@ public class MLEGSSDialog {
 
         treeWorkingPrior.addItem("Product of exponential distributions");
         treeWorkingPrior.addItem("Matching coalescent model");
-        /*treeWorkingPrior.addActionListener(new java.awt.event.ActionListener() {
+        treeWorkingPrior.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-
+                options.choiceTreeWorkingPrior = (String)((JComboBox)e.getSource()).getSelectedItem();
             }
-        });*/
+        });
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
 
         parameterWorkingPrior.addItem("Normal KDE");

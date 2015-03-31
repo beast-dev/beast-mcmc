@@ -185,6 +185,31 @@ public abstract class Generator {
         }
     }
 
+    /**
+     * write a parameter
+     *
+     * @param parameterId     the parameter name/id
+     * @param parameterColumn the parameter column from which the samples are taken
+     * @param fileName        the file from which the samples are taken
+     * @param burnin          the number of samples to be discarded
+     * @param writer          the writer
+     */
+    public void writeParameter(String parameterId, String parameterColumn, String fileName, int burnin, XMLWriter writer) {
+        ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
+        attributes.add(new Attribute.Default<String>(XMLParser.ID, parameterId));
+
+        attributes.add(new Attribute.Default<String>("parameterColumn", parameterColumn));
+        attributes.add(new Attribute.Default<String>("fileName", fileName));
+        attributes.add(new Attribute.Default<String>("burnin", "" + burnin));
+
+        Attribute[] attrArray = new Attribute[attributes.size()];
+        for (int i = 0; i < attrArray.length; i++) {
+            attrArray[i] = attributes.get(i);
+        }
+
+        writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
+    }
+
     public void writeParameter(String id, Parameter parameter, XMLWriter writer) {
         if (parameter.isFixed) {
             writeParameter(id, 1, parameter.initial, Double.NaN, Double.NaN, writer);

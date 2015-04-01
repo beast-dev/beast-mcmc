@@ -32,7 +32,6 @@ import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;
-import dr.evomodel.coalescent.ExponentialGrowthModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
 import dr.evomodelxml.coalescent.*;
@@ -109,11 +108,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
             List<Attribute> attributes = new ArrayList<Attribute>();
             //attributes.add(new Attribute.Default<String>(XMLParser.ID, "mcmc"));
-            attributes.add(new Attribute.Default<Integer>("chainLength", options.mleChainLength));
-            attributes.add(new Attribute.Default<Integer>("pathSteps", options.pathSteps));
-            attributes.add(new Attribute.Default<String>("pathScheme", options.pathScheme));
-            if (!options.pathScheme.equals("linear")) {
-                attributes.add(new Attribute.Default<Double>("alpha", options.schemeParameter));
+            attributes.add(new Attribute.Default<Integer>(MarginalLikelihoodEstimator.CHAIN_LENGTH, options.mleChainLength));
+            attributes.add(new Attribute.Default<Integer>(MarginalLikelihoodEstimator.PATH_STEPS, options.pathSteps));
+            attributes.add(new Attribute.Default<String>(MarginalLikelihoodEstimator.PATH_SCHEME, options.pathScheme));
+            if (!options.pathScheme.equals(MarginalLikelihoodEstimator.LINEAR)) {
+                attributes.add(new Attribute.Default<Double>(MarginalLikelihoodEstimator.ALPHA, options.schemeParameter));
             }
 
             writer.writeOpenTag(MarginalLikelihoodEstimator.MARGINAL_LIKELIHOOD_ESTIMATOR, attributes);
@@ -230,7 +229,22 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                     case EXPONENTIAL:
 
+                        writer.writeComment("A working prior for the exponential growth model.");
+                        writer.writeOpenTag(
+                                ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL,
+                                new Attribute[]{
+                                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + "exponentialReference"),
+                                        new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(beautiOptions.units))
+                                }
+                        );
 
+                        writer.writeOpenTag(ExponentialGrowthModelParser.POPULATION_SIZE);
+                        writeParameter("exponentialReference.popSize", "exponential.popSize", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(ExponentialGrowthModelParser.POPULATION_SIZE);
+                        writer.writeOpenTag(ExponentialGrowthModelParser.GROWTH_RATE);
+                        writeParameter("exponentialReference.growthRate", "exponential.growthRate", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(ExponentialGrowthModelParser.GROWTH_RATE);
+                        writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
 
                         writer.writeComment("A working prior for the coalescent.");
                         writer.writeOpenTag(
@@ -251,7 +265,25 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                     case LOGISTIC:
 
+                        writer.writeComment("A working prior for the logistic growth model.");
+                        writer.writeOpenTag(
+                                LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL,
+                                new Attribute[]{
+                                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + "logisticReference"),
+                                        new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(beautiOptions.units))
+                                }
+                        );
 
+                        writer.writeOpenTag(LogisticGrowthModelParser.POPULATION_SIZE);
+                        writeParameter("logisticReference.popSize", "logistic.popSize", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(LogisticGrowthModelParser.POPULATION_SIZE);
+                        writer.writeOpenTag(LogisticGrowthModelParser.GROWTH_RATE);
+                        writeParameter("logisticReference.growthRate", "logistic.growthRate", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(LogisticGrowthModelParser.GROWTH_RATE);
+                        writer.writeOpenTag(LogisticGrowthModelParser.TIME_50);
+                        writeParameter("logisticReference.t50", "logistic.t50", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(LogisticGrowthModelParser.TIME_50);
+                        writer.writeCloseTag(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL);
 
                         writer.writeComment("A working prior for the coalescent.");
                         writer.writeOpenTag(
@@ -272,7 +304,25 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                     case EXPANSION:
 
+                        writer.writeComment("A working prior for the expansion growth model.");
+                        writer.writeOpenTag(
+                                ExpansionModelParser.EXPANSION_MODEL,
+                                new Attribute[]{
+                                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + "expansionReference"),
+                                        new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(beautiOptions.units))
+                                }
+                        );
 
+                        writer.writeOpenTag(ExpansionModelParser.POPULATION_SIZE);
+                        writeParameter("expansionReference.popSize", "expansion.popSize", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(ExpansionModelParser.POPULATION_SIZE);
+                        writer.writeOpenTag(ExpansionModelParser.GROWTH_RATE);
+                        writeParameter("expansionReference.growthRate", "expansion.growthRate", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(ExpansionModelParser.GROWTH_RATE);
+                        writer.writeOpenTag(ExpansionModelParser.ANCESTRAL_POPULATION_PROPORTION);
+                        writeParameter("expansionReference.ancestralProportion", "expansion.ancestralProportion", beautiOptions.logFileName, (int) (options.mleChainLength * 0.10), writer);
+                        writer.writeCloseTag(ExpansionModelParser.ANCESTRAL_POPULATION_PROPORTION);
+                        writer.writeCloseTag(ExpansionModelParser.EXPANSION_MODEL);
 
                         writer.writeComment("A working prior for the coalescent.");
                         writer.writeOpenTag(
@@ -293,22 +343,22 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                     default:
 
-                        //TODO: show menu that explains mismatch between prior and working prior
+                        //Do not switch to product of exponentials as the coalescentEventsStatistic has not been logged
+                        //TODO: show menu that explains mismatch between prior and working prior?
+                        //TODO: but show it when the MCM option is wrongfully being selected, don't do anything here
 
                 }
-
-                //TODO: if not a simple coalescent model, switch to product of exponentials
 
             }
 
             writer.writeComment("Define marginal likelihood estimator (GSS) settings");
 
             List<Attribute> attributes = new ArrayList<Attribute>();
-            attributes.add(new Attribute.Default<Integer>("chainLength", options.mleChainLength));
-            attributes.add(new Attribute.Default<Integer>("pathSteps", options.pathSteps));
-            attributes.add(new Attribute.Default<String>("pathScheme", options.pathScheme));
-            if (!options.pathScheme.equals("linear")) {
-                attributes.add(new Attribute.Default<Double>("alpha", options.schemeParameter));
+            attributes.add(new Attribute.Default<Integer>(MarginalLikelihoodEstimator.CHAIN_LENGTH, options.mleChainLength));
+            attributes.add(new Attribute.Default<Integer>(MarginalLikelihoodEstimator.PATH_STEPS, options.pathSteps));
+            attributes.add(new Attribute.Default<String>(MarginalLikelihoodEstimator.PATH_SCHEME, options.pathScheme));
+            if (!options.pathScheme.equals(MarginalLikelihoodEstimator.LINEAR)) {
+                attributes.add(new Attribute.Default<Double>(MarginalLikelihoodEstimator.ALPHA, options.schemeParameter));
             }
 
             writer.writeOpenTag(MarginalLikelihoodEstimator.MARGINAL_LIKELIHOOD_ESTIMATOR, attributes);

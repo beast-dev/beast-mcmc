@@ -1,6 +1,7 @@
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import jam.panels.OptionsPanel;
@@ -133,7 +134,25 @@ public class MLEGSSDialog {
         treeWorkingPrior.addItem("Matching coalescent model");
         treeWorkingPrior.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                options.choiceTreeWorkingPrior = (String)((JComboBox)e.getSource()).getSelectedItem();
+                String selection = (String)((JComboBox)e.getSource()).getSelectedItem();
+                TreePriorType treePrior = beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior();
+                boolean mcmAllowed = false;
+                if (treePrior.equals(TreePriorType.CONSTANT) || treePrior.equals(TreePriorType.EXPONENTIAL)
+                        || treePrior.equals(TreePriorType.EXPANSION) || treePrior.equals(TreePriorType.LOGISTIC)) {
+                    mcmAllowed = true;
+                }
+                if (selection.equals("Matching coalescent model") && !mcmAllowed) {
+                    JOptionPane.showMessageDialog(frame,
+                            "The selected coalescent model can't be equipped with a \n" +
+                                    "matching working prior. Reverting back to use a product \n" +
+                                    "of exponential distributions.",
+                            "Matching coalescent model warning",
+                            JOptionPane.WARNING_MESSAGE);
+                    treeWorkingPrior.setSelectedItem("Product of exponential distributions");
+                    options.choiceTreeWorkingPrior = "Product of exponential distributions";
+                } else {
+                    options.choiceTreeWorkingPrior = selection;
+                }
             }
         });
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);

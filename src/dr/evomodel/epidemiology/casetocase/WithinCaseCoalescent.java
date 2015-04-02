@@ -8,6 +8,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
@@ -33,7 +34,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public static final String WITHIN_CASE_COALESCENT = "withinCaseCoalescent";
 
-    private enum Mode {TRUNCATE, TRANSFORM}
+    private enum Mode {TRUNCATE, NORMAL}
 
     private double[] partitionTreeLogLikelihoods;
     private double[] storedPartitionTreeLogLikelihoods;
@@ -314,13 +315,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                     littleTree.resolveTree();
 
-                    if(mode == Mode.TRUNCATE){
-                        partitionsAsTrees.put(aCase, new Treelet(littleTree,
-                                littleTree.getRootHeight() + rootTime - infectionTime));
-                    } else {
-                        partitionsAsTrees.put(aCase, transformTreelet(new Treelet(littleTree,
-                                littleTree.getRootHeight() + rootTime - infectionTime)));
-                    }
+
+                    partitionsAsTrees.put(aCase, new Treelet(littleTree,
+                            littleTree.getRootHeight() + rootTime - infectionTime));
+
                 }
             }
         }
@@ -534,6 +532,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 startTime = finishTime;
             } else {
+                if(!(demographicFunction instanceof LinearGrowth)){
+                    throw new RuntimeException("Function must have zero population at t=0 if truncate=false");
+                }
+
                 final double duration = intervals.getInterval(i);
                 final double finishTime = startTime + duration;
 
@@ -641,7 +643,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         public static final String STARTING_NETWORK = "startingNetwork";
         public static final String MAX_FIRST_INF_TO_ROOT = "maxFirstInfToRoot";
         public static final String DEMOGRAPHIC_MODEL = "demographicModel";
-        public static final String TRANSFORM = "transform";
+        public static final String TRUNCATE = "truncate";
 
         public String getParserName() {
             return WITHIN_CASE_COALESCENT;
@@ -665,7 +667,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             DemographicModel demoModel = (DemographicModel) xo.getElementFirstChild(DEMOGRAPHIC_MODEL);
 
-            Mode mode = xo.hasAttribute(TRANSFORM) & xo.getBooleanAttribute(TRANSFORM) ? Mode.TRANSFORM : Mode.TRUNCATE;
+            Mode mode = xo.hasAttribute(TRUNCATE) & xo.getBooleanAttribute(TRUNCATE) ? Mode.TRUNCATE : Mode.NORMAL;
 
             try {
                 likelihood = new WithinCaseCoalescent(virusTree, caseSet, startingNetworkFileName,
@@ -700,7 +702,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                         "the root node"),
                 new ElementRule(DEMOGRAPHIC_MODEL, DemographicModel.class, "The demographic model for within-case" +
                         "evolution"),
-                AttributeRule.newBooleanRule(TRANSFORM)
+                AttributeRule.newBooleanRule(TRUNCATE)
         };
     };
+
+
+
 }

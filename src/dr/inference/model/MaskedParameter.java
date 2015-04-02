@@ -78,6 +78,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
             }
         }
         length = index;
+        fireParameterChangedEvent();
     }
 
     public int getDimension() {
@@ -95,9 +96,9 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         parameter.restoreParameterValues();
     }
 
-    public void fireParameterChangedEvent() {
-        parameter.fireParameterChangedEvent();
-    }
+//    public void fireParameterChangedEvent() {
+//        parameter.fireParameterChangedEvent(); // TODO This could be wrong
+//    }
 
     protected void acceptValues() {
         parameter.acceptParameterValues();
@@ -169,7 +170,9 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
         if (variable == maskParameter) {
             updateMask();
         } else { // variable == parameter
-            if (inverseMap[index] != -1) {
+            if (index == -1) {
+                fireParameterChangedEvent();
+            } else if (inverseMap[index] != -1) {
                 fireParameterChangedEvent(inverseMap[index], type);
             }
         }

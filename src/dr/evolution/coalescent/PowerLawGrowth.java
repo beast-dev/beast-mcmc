@@ -57,9 +57,7 @@ public class PowerLawGrowth extends LinearGrowth
 
 
 	public void setR(double r) {
-		if(r<=1){
-			throw new RuntimeException("PowerLawGrowth requires r>1");
-		}
+
 
 		this.r = r;
 	}

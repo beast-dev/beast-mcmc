@@ -34,6 +34,9 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import org.apache.commons.math.stat.descriptive.moment.Mean;
+import org.apache.commons.math.stat.descriptive.moment.Variance;
+import org.apache.commons.math.stat.descriptive.rank.Median;
 
 /**
  * Handles manipulation of the tree partition, and likelihood of the infection times.
@@ -989,14 +992,14 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             primitiveVariable[i] = variable[i];
         }
 
-        DescriptiveStatistics stats = new DescriptiveStatistics(primitiveVariable);
         Double[] out = new Double[4];
-        out[0] = stats.getMean();
-        out[1] = stats.getPercentile(50);
-        out[2] = stats.getVariance();
-        out[3] = stats.getStandardDeviation();
+        out[0] = (new Mean()).evaluate(primitiveVariable);
+        out[1] = (new Median()).evaluate(primitiveVariable);
+        out[2] = (new Variance()).evaluate(primitiveVariable);
+        out[3] = Math.sqrt(out[2]);
         return out;
     }
+
 
 
 

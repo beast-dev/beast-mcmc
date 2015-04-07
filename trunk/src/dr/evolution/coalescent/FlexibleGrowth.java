@@ -60,20 +60,20 @@ public class FlexibleGrowth extends PowerLawGrowth
 	}
 
 
-	public void setK(double r) {
-		if(r<=1){
-			throw new RuntimeException("PowerLawGrowth requires r>1");
-		}
+	public void setK(double K) {
 
-		this.K = r;
+		this.K = K;
 	}
 
-		
-	// Implementation of abstract methods
+
+
+
+
+    // Implementation of abstract methods
 	
 	public double getDemographic(double t) {
 		if(t>0){
-			throw new RuntimeException("Negative times only!");
+			throw new RuntimeException("Negative times only! t="+t);
 		}
 
 		return getN0()*K*Math.pow(-t,getR())/(1+K*Math.pow(-t, getR()-1));
@@ -142,9 +142,9 @@ public class FlexibleGrowth extends PowerLawGrowth
 	public double getLowerBound(int n) {
 		switch (n) {
 			case 0:
-				return Double.NEGATIVE_INFINITY;
-			case 1:
 				return 0;
+			case 1:
+				return Double.NEGATIVE_INFINITY;
 			case 2:
 				return 0;
 			default:

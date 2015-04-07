@@ -27,16 +27,15 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.FlexibleGrowth;
-import dr.evolution.coalescent.LogisticGrowth;
+import dr.evomodelxml.coalescent.AsymptoticGrowthModelParser;
 import dr.evomodelxml.coalescent.LogisticGrowthModelParser;
-import dr.evomodelxml.coalescent.PeakAndDeclineModelParser;
 import dr.inference.model.Parameter;
 
 /**
  * Growth starts at zero at time zero, peaks and declines
  *
  */
-public class PeakAndDeclineModel extends DemographicModel {
+public class AsymptoticGrowthModel extends DemographicModel {
 
     //
     // Public stuff
@@ -45,34 +44,29 @@ public class PeakAndDeclineModel extends DemographicModel {
     /**
      * Construct demographic model with default settings
      */
-    public PeakAndDeclineModel(Parameter peakValueParameter, Parameter shapeParameter, Parameter peakTimeParameter,
-                               Type units) {
+    public AsymptoticGrowthModel(Parameter asymptoteValueParameter, Parameter shapeParameter, Type units) {
 
-        this(PeakAndDeclineModelParser.PEAK_AND_DECLINE_MODEL, peakValueParameter, shapeParameter, peakTimeParameter,
-                units);
+        this(AsymptoticGrowthModelParser.ASYMPTOTIC_GROWTH_MODEL, asymptoteValueParameter, shapeParameter, units);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public PeakAndDeclineModel(String name, Parameter peakValueParameter, Parameter shapeParameter,
-                               Parameter peakTimeParameter, Type units) {
+    public AsymptoticGrowthModel(String name, Parameter asymptoteValueParameter, Parameter shapeParameter,
+                                 Type units) {
 
         super(name);
 
         flexibleGrowth = new FlexibleGrowth(units);
 
-        this.peakValueParameter = peakValueParameter;
-        addVariable(peakValueParameter);
-        peakValueParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        this.asyptoteValue = asymptoteValueParameter;
+        addVariable(asymptoteValueParameter);
+        asymptoteValueParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.peakTimeParameter = peakTimeParameter;
-        addVariable(peakTimeParameter);
-        peakTimeParameter.addBounds(new Parameter.DefaultBounds(0, Double.NEGATIVE_INFINITY, 1));
 
         this.shapeParameter = shapeParameter;
         addVariable(shapeParameter);
-        shapeParameter.addBounds(new Parameter.DefaultBounds(0, Double.NEGATIVE_INFINITY, 1));
+        shapeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, 1));
 
 
         setUnits(units);
@@ -83,17 +77,17 @@ public class PeakAndDeclineModel extends DemographicModel {
 
     public DemographicFunction getDemographicFunction() {
 
-        double peakTimeValue = peakTimeParameter.getParameterValue(0);
-        double peakValueValue = peakValueParameter.getParameterValue(0);
+        double asymptoteValue = asyptoteValue.getParameterValue(0);
         double shapeValue = shapeParameter.getParameterValue(0);
 
-        double flexibleN0 = peakValueValue*(1-shapeValue)/(shapeValue*peakTimeValue);
-        double flexibleK = (-shapeValue/Math.pow(-peakTimeValue, shapeValue-1));
+
+
+        double flexibleN0 = asymptoteValue/shapeValue;
 
 
         flexibleGrowth.setN0(flexibleN0);
-        flexibleGrowth.setK(flexibleK);
-        flexibleGrowth.setR(shapeValue);
+        flexibleGrowth.setK(shapeValue);
+        flexibleGrowth.setR(0);
 
 
 
@@ -104,9 +98,8 @@ public class PeakAndDeclineModel extends DemographicModel {
     // protected stuff
     //
 
-    Parameter peakValueParameter = null;
+    Parameter asyptoteValue = null;
     Parameter shapeParameter = null;
-    Parameter peakTimeParameter = null;
     FlexibleGrowth flexibleGrowth = null;
 
 }

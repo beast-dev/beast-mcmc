@@ -85,7 +85,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         if(DEBUG){
 
-            super.debugOutputTree("bleh.nex", false);
+            super.debugOutputTree("bleh.nex", true);
         }
 
         double logL = 0;
@@ -155,18 +155,20 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
 
-                        if (children.size() != 0) {
-                            SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
-                                    treelet.getZeroHeight(), mode == Mode.TRUNCATE);
-                            partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
-                            coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
-                            if (DEBUG && partitionTreeLogLikelihoods[number] == Double.POSITIVE_INFINITY) {
-                                debugOutputTree("infCoalescent.nex", false);
-                                debugTreelet(treelet, aCase + "_partition.nex");
-                            }
-                        } else {
-                            partitionTreeLogLikelihoods[number] = 0.0;
+
+
+                    if (children.size() != 0) {
+                        SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
+                                treelet.getZeroHeight(), mode == Mode.TRUNCATE);
+                        partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
+                        coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
+                        if (DEBUG && partitionTreeLogLikelihoods[number] == Double.POSITIVE_INFINITY) {
+                            debugOutputTree("infCoalescent.nex", false);
+                            debugTreelet(treelet, aCase + "_partition.nex");
                         }
+                    } else {
+                        partitionTreeLogLikelihoods[number] = 0.0;
+                    }
                     recalculateCoalescentFlags[number] = false;
                 } else {
                     coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
@@ -293,33 +295,46 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             AbstractCase aCase = outbreak.getCase(i);
             if(aCase.wasEverInfected() && partitionsAsTrees.get(aCase)==null){
 
-                if(aCase.wasEverInfected()) {
+                NodeRef partitionRoot = getEarliestNodeInPartition(aCase);
 
-                    NodeRef partitionRoot = getEarliestNodeInPartition(aCase);
 
-                    double infectionTime = getInfectionTime(branchMap.get(partitionRoot.getNumber()));
-                    double rootTime = getNodeTime(partitionRoot);
+                double infectionTime = getInfectionTime(branchMap.get(partitionRoot.getNumber()));
+                double rootTime = getNodeTime(partitionRoot);
 
-                    FlexibleNode newRoot = new FlexibleNode();
+                FlexibleNode newRoot = new FlexibleNode();
 
-                    FlexibleTree littleTree = new FlexibleTree(newRoot);
-                    littleTree.beginTreeEdit();
+                FlexibleTree littleTree = new FlexibleTree(newRoot);
+                littleTree.beginTreeEdit();
 
-                    if (!treeModel.isExternal(partitionRoot)) {
-                        for (int j = 0; j < treeModel.getChildCount(partitionRoot); j++) {
-                            copyPartitionToTreelet(littleTree, treeModel.getChild(partitionRoot, j), newRoot, aCase);
-                        }
+                if (!treeModel.isExternal(partitionRoot)) {
+                    for (int j = 0; j < treeModel.getChildCount(partitionRoot); j++) {
+                        copyPartitionToTreelet(littleTree, treeModel.getChild(partitionRoot, j), newRoot, aCase);
                     }
-
-                    littleTree.endTreeEdit();
-
-                    littleTree.resolveTree();
-
-
-                    partitionsAsTrees.put(aCase, new Treelet(littleTree,
-                            littleTree.getRootHeight() + rootTime - infectionTime));
-
                 }
+
+                littleTree.endTreeEdit();
+
+                littleTree.resolveTree();
+
+                double sampleTipHeight = 0;
+
+                if(littleTree.getExternalNodeCount()>1) {
+                    for (int j = 0; j < littleTree.getExternalNodeCount(); j++) {
+                        NodeRef node = littleTree.getExternalNode(j);
+                        if (!littleTree.getNodeTaxon(node).getId().startsWith("Transmission_")) {
+                            sampleTipHeight = littleTree.getNodeHeight(node);
+                            break;
+                        }
+
+                    }
+                }
+
+                Treelet treelet = new Treelet(littleTree,
+                        sampleTipHeight + (aCase.examTime-getInfectionTime(aCase)));
+
+                partitionsAsTrees.put(aCase, treelet);
+
+
             }
         }
     }
@@ -446,6 +461,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         }
 
         public double calculateLogLikelihood() {
+
             return calculatePartitionTreeLogLikelihood(getIntervals(), getDemographicFunction(), 0, zeroHeight,
                     truncate);
         }
@@ -457,8 +473,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                                                              double zeroHeight, boolean truncate) {
 
         double logL = 0.0;
-
-
 
         double startTime = -zeroHeight;
         final int n = intervals.getIntervalCount();
@@ -533,6 +547,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 startTime = finishTime;
             } else {
                 if(!(demographicFunction instanceof LinearGrowth)){
+
                     throw new RuntimeException("Function must have zero population at t=0 if truncate=false");
                 }
 

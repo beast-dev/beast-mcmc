@@ -86,6 +86,10 @@ public class FlexibleGrowth extends PowerLawGrowth
 		throw new RuntimeException("Not implemented");
 	}
 
+	public double getInverseIntegral(double x, double start) {
+		throw new RuntimeException("Not implemented");
+	}
+
 	public double getIntegral(double start, double finish) {
 
 		return 1/getN0() * (1/((getR()-1)*K) * (Math.pow(-finish, -getR() + 1) - Math.pow(-start, -getR() +1 )) + Math.log((-start)/(-finish)));

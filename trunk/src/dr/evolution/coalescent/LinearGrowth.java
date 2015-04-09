@@ -79,6 +79,12 @@ public class LinearGrowth extends ConstantPopulation
 		return 1/getN0() * Math.log((-start)/(-finish));
 	}
 
+	public double getInverseIntegral(double x, double start){
+
+		return start*Math.exp(-(x*getN0()));
+
+	}
+
 	public int getNumArguments() {
 		return 1;
 	}

@@ -784,7 +784,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     private double getInfectionTime(double min, double max, AbstractCase infected){
         final double branchLength = max-min;
-        return max - branchLength*infected.getInfectionBranchPosition().getParameterValue(0);
+        return min + branchLength*(1-infected.getInfectionBranchPosition().getParameterValue(0));
     }
 
 
@@ -1375,40 +1375,43 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
 
         for(AbstractCase aCase : outbreak.getCases()){
-            NodeRef originalNode = getEarliestNodeInPartition(aCase);
-            int infectionNodeNo = originalNode.getNumber();
-            if(!treeModel.isRoot(originalNode)){
-                NodeRef originalParent = treeModel.getParent(originalNode);
-                double nodeTime = getNodeTime(originalNode);
-                double infectionTime = getInfectionTime(aCase);
-                double heightToBreakBranch = getHeight(originalNode) +  (nodeTime - infectionTime);
-                FlexibleNode newNode = (FlexibleNode)outTree.getNode(infectionNodeNo);
-                FlexibleNode oldParent = (FlexibleNode)outTree.getParent(newNode);
+            if(aCase.wasEverInfected()) {
+                NodeRef originalNode = getEarliestNodeInPartition(aCase);
 
-                outTree.beginTreeEdit();
-                outTree.removeChild(oldParent, newNode);
-                FlexibleNode infectionNode = new FlexibleNode();
-                infectionNode.setHeight(heightToBreakBranch);
-                infectionNode.setLength(oldParent.getHeight() - heightToBreakBranch);
-                infectionNode.setAttribute(PARTITIONS_KEY, getNodePartition(treeModel, originalParent));
-                newNode.setLength(nodeTime - infectionTime);
+                int infectionNodeNo = originalNode.getNumber();
+                if (!treeModel.isRoot(originalNode)) {
+                    NodeRef originalParent = treeModel.getParent(originalNode);
+                    double nodeTime = getNodeTime(originalNode);
+                    double infectionTime = getInfectionTime(aCase);
+                    double heightToBreakBranch = getHeight(originalNode) + (nodeTime - infectionTime);
+                    FlexibleNode newNode = (FlexibleNode) outTree.getNode(infectionNodeNo);
+                    FlexibleNode oldParent = (FlexibleNode) outTree.getParent(newNode);
 
-                outTree.addChild(oldParent, infectionNode);
-                outTree.addChild(infectionNode, newNode);
-                outTree.endTreeEdit();
-            } else {
-                double nodeTime = getNodeTime(originalNode);
-                double infectionTime = getInfectionTime(aCase);
-                double heightToInstallRoot = getHeight(originalNode) +  (nodeTime - infectionTime);
-                FlexibleNode newNode = (FlexibleNode)outTree.getNode(infectionNodeNo);
-                outTree.beginTreeEdit();
-                FlexibleNode infectionNode = new FlexibleNode();
-                infectionNode.setHeight(heightToInstallRoot);
-                infectionNode.setAttribute(PARTITIONS_KEY, "The_Ether");
-                outTree.addChild(infectionNode, newNode);
-                newNode.setLength(heightToInstallRoot - getHeight(originalNode));
-                outTree.setRoot(infectionNode);
-                outTree.endTreeEdit();
+                    outTree.beginTreeEdit();
+                    outTree.removeChild(oldParent, newNode);
+                    FlexibleNode infectionNode = new FlexibleNode();
+                    infectionNode.setHeight(heightToBreakBranch);
+                    infectionNode.setLength(oldParent.getHeight() - heightToBreakBranch);
+                    infectionNode.setAttribute(PARTITIONS_KEY, getNodePartition(treeModel, originalParent));
+                    newNode.setLength(nodeTime - infectionTime);
+
+                    outTree.addChild(oldParent, infectionNode);
+                    outTree.addChild(infectionNode, newNode);
+                    outTree.endTreeEdit();
+                } else {
+                    double nodeTime = getNodeTime(originalNode);
+                    double infectionTime = getInfectionTime(aCase);
+                    double heightToInstallRoot = getHeight(originalNode) + (nodeTime - infectionTime);
+                    FlexibleNode newNode = (FlexibleNode) outTree.getNode(infectionNodeNo);
+                    outTree.beginTreeEdit();
+                    FlexibleNode infectionNode = new FlexibleNode();
+                    infectionNode.setHeight(heightToInstallRoot);
+                    infectionNode.setAttribute(PARTITIONS_KEY, "The_Ether");
+                    outTree.addChild(infectionNode, newNode);
+                    newNode.setLength(heightToInstallRoot - getHeight(originalNode));
+                    outTree.setRoot(infectionNode);
+                    outTree.endTreeEdit();
+                }
             }
         }
 

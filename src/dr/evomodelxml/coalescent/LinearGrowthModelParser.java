@@ -26,7 +26,7 @@ public class LinearGrowthModelParser extends AbstractXMLObjectParser {
         XMLObject cxo = xo.getChild(SLOPE);
         Parameter slopeParam = (Parameter) cxo.getChild(Parameter.class);
 
-        return new ConstantPopulationModel(slopeParam, units);
+        return new LinearGrowthModel(slopeParam, units);
     }
 
 

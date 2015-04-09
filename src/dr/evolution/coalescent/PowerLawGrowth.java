@@ -80,6 +80,10 @@ public class PowerLawGrowth extends LinearGrowth
 		throw new RuntimeException("Not implemented");
 	}
 
+	public double getInverseIntegral(double x, double start) {
+		throw new RuntimeException("Not implemented");
+	}
+
 	public double getIntegral(double start, double finish) {
 
 		return (Math.pow(-finish, -r+1) - Math.pow(-start, -r+1))/(getN0()*(r-1));

@@ -11,6 +11,7 @@ import dr.util.HeapSort;
 public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
     public static final int MINIMUM_GRID_SIZE = 2048;
+    public static final boolean DEBUG = false;
 
     //the samples should not already be log transformed (the log transformation is done in this class)
     public LogTransformedNormalKDEDistribution(Double[] sample) {
@@ -42,11 +43,15 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
         processBounds(lowerBound, upperBound);
         setBandWidth(bandWidth); 
     	*/
+
         super(sample, lowerBound, upperBound, bandWidth);
         //transform the data to the log scale and store in logSample
-        System.out.println("Creating the KDE in log space");
-        System.out.println("lowerBound = " + lowerBound);
-        System.out.println("upperBound = " + upperBound);
+        if (DEBUG) {
+            System.out.println("Creating the KDE in log space");
+            System.out.println("lowerBound = " + lowerBound);
+            System.out.println("upperBound = " + upperBound);
+        }
+
         this.logSample = new double[sample.length];
         for (int i = 0; i < logSample.length; i++) {
         	this.logSample[i] = Math.log(sample[i]);
@@ -70,16 +75,20 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
         from = DiscreteStatistics.min(this.sample) - this.cut * this.bandWidth;
         to = DiscreteStatistics.max(this.sample) + this.cut * this.bandWidth;
 
-        System.out.println("bandWidth = " + this.bandWidth);
-        System.out.println("cut = " + this.cut);
-        System.out.println("from = " + from);
-        System.out.println("to = " + to);
+        if (DEBUG) {
+            System.out.println("bandWidth = " + this.bandWidth);
+            System.out.println("cut = " + this.cut);
+            System.out.println("from = " + from);
+            System.out.println("to = " + to);
+        }
         
         lo = from - 4.0 * this.bandWidth;
         up = to + 4.0 * this.bandWidth;
-        
-        System.out.println("lo = " + lo);
-        System.out.println("up = " + up);
+
+        if (DEBUG) {
+            System.out.println("lo = " + lo);
+            System.out.println("up = " + up);
+        }
 
         densityKnown = false;
         
@@ -212,9 +221,12 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
     
     private void transformEstimator() {
     	
-    	System.out.println("\nCreating the KDE in normal space");
-    	System.out.println("lowerBound = " + lowerBound);
-        System.out.println("upperBound = " + upperBound);
+    	if (DEBUG) {
+            System.out.println("\nCreating the KDE in normal space");
+            System.out.println("lowerBound = " + lowerBound);
+            System.out.println("upperBound = " + upperBound);
+        }
+
     	this.sample = backupSample;
     	//processBounds(lowerBound, upperBound);
         setBandWidth(null);
@@ -222,16 +234,20 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
         from = DiscreteStatistics.min(this.sample) - this.cut * this.bandWidth;
         to = DiscreteStatistics.max(this.sample) + this.cut * this.bandWidth;
 
-        System.out.println("bandWidth = " + this.bandWidth);
-        System.out.println("cut = " + this.cut);
-        System.out.println("from = " + from);
-        System.out.println("to = " + to);
+        if (DEBUG) {
+            System.out.println("bandWidth = " + this.bandWidth);
+            System.out.println("cut = " + this.cut);
+            System.out.println("from = " + from);
+            System.out.println("to = " + to);
+        }
         
         lo = from - 4.0 * this.bandWidth;
         up = to + 4.0 * this.bandWidth;
         
-        System.out.println("lo = " + lo);
-        System.out.println("up = " + up);
+        if (DEBUG) {
+            System.out.println("lo = " + lo);
+            System.out.println("up = " + up);
+        }
         
         /*if (from < 0.0) {
         	from = 0.0;
@@ -247,24 +263,30 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
         makeOrdinates();
         
         int numberOfNegatives = 0;
-        System.out.println("\nxPoints length = " + xPoints.length);
+        if (DEBUG) {
+            System.out.println("\nxPoints length = " + xPoints.length);
+        }
         for (int i = 0; i < xPoints.length; i++) {
         	if (xPoints[i] < 0.0) {
         		numberOfNegatives++;
         	}
         	//System.out.println(xPoints[i]);
         }
-        System.out.println("number of negative xPoints = " + numberOfNegatives);
+        if (DEBUG) {
+            System.out.println("number of negative xPoints = " + numberOfNegatives);
+        }
         
         //the KDE on log scale is contained in the xPoints and densityPoints arrays
     	//copy them to finalXPoints and finalDensityPoints
     	this.finalXPoints = new double[xPoints.length - numberOfNegatives];
     	System.arraycopy(xPoints, numberOfNegatives, finalXPoints, 0, xPoints.length - numberOfNegatives);
-    	for (int i = 0; i < xPoints.length; i++) {
-    		System.out.println(backupXPoints[i] + " : " + densityPoints[i]);
-    	}
-    	
-    	System.out.println("\nfinalXPoints length = " + finalXPoints.length);
+    	if (DEBUG) {
+            for (int i = 0; i < xPoints.length; i++) {
+                System.out.println(backupXPoints[i] + " : " + densityPoints[i]);
+            }
+            System.out.println("\nfinalXPoints length = " + finalXPoints.length);
+        }
+
     	this.finalDensityPoints = new double[densityPoints.length - numberOfNegatives];
     	
     	for (int i = 0; i < finalXPoints.length; i++) {

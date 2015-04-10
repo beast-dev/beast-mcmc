@@ -5,6 +5,8 @@ import dr.math.FastFourierTransform;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 
+import java.util.Random;
+
 /**
  * @author Marc A. Suchard
  */
@@ -260,4 +262,27 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
     private double up;
 
     private boolean densityKnown = false;
+
+    public static void main(String[] args) {
+
+        long start = System.currentTimeMillis();
+
+        Random random = new Random(1234);
+
+        Double[] samples = new Double[10000000];
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = random.nextDouble();
+        }
+        NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
+
+        for (int i = 0; i < 100; i++) {
+            nKDE.evaluateKernel(random.nextDouble());
+        }
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("Time: " + (end-start));
+
+    }
+
 }

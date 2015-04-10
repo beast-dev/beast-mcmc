@@ -2,6 +2,8 @@ package dr.math.distributions;
 
 import dr.stats.DiscreteStatistics;
 
+import java.util.Random;
+
 
 /**
  * @author Jennifer Tom
@@ -66,6 +68,28 @@ public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
 
     private double gamma(double value) {
         return cern.jet.stat.Gamma.gamma(value);
+
+    }
+
+    public static void main(String[] args) {
+
+        long start = System.currentTimeMillis();
+
+        Random random = new Random(1234);
+
+        Double[] samples = new Double[10000000];
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = random.nextDouble();
+        }
+        GammaKDEDistribution nKDE = new GammaKDEDistribution(samples);
+
+        for (int i = 0; i < 100; i++) {
+            nKDE.evaluateKernel(random.nextDouble());
+        }
+
+        long end = System.currentTimeMillis();
+
+        System.out.println("Time: " + (end-start));
 
     }
 

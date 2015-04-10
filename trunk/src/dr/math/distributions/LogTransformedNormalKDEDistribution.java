@@ -5,6 +5,8 @@ import dr.math.FastFourierTransform;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 
+import java.util.Arrays;
+
 /**
  * @author Guy Baele
  */
@@ -291,7 +293,9 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
     	
     	for (int i = 0; i < finalXPoints.length; i++) {
     		finalDensityPoints[i] = linearApproximate(backupXPoints, densityPoints, Math.log(finalXPoints[i]), 0.0, 0.0)*(1.0/finalXPoints[i]);
-    		System.out.println(finalXPoints[i] + " : " + finalDensityPoints[i]);
+    		if (DEBUG) {
+                System.out.println(finalXPoints[i] + "\t" + finalDensityPoints[i]);
+            }
     	}
     	
     	//System.exit(0);
@@ -401,4 +405,31 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
     private double up;
 
     private boolean densityKnown = false;
+
+    public static void main(String[] args) {
+
+        Double[] samples = new Double[10000];
+        NormalDistribution dist = new NormalDistribution(0.5, 0.10);
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = (Double)dist.nextRandom();
+            if (samples[i] < 0.0) {
+                System.err.println("Negative value generated!");
+            }
+        }
+        Arrays.sort(samples);
+        System.out.println("min: " + samples[0]);
+        System.out.println("max: " + samples[samples.length-1] + "\n");
+
+        LogTransformedNormalKDEDistribution ltn = new LogTransformedNormalKDEDistribution(samples);
+        NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
+
+        for (int i = 0; i < 50; i++) {
+            Double test = (Double)dist.nextRandom();
+            System.out.println("random draw: " + test);
+            System.out.println("normal KDE: " + nKDE.evaluateKernel(test));
+            System.out.println("log transformed normal KDE: " + ltn.evaluateKernel(test) + "\n");
+        }
+
+    }
+
 }

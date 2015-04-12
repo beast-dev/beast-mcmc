@@ -297,9 +297,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 NodeRef partitionRoot = getEarliestNodeInPartition(aCase);
 
+                double extraHeight;
 
-                double infectionTime = getInfectionTime(branchMap.get(partitionRoot.getNumber()));
-                double rootTime = getNodeTime(partitionRoot);
+                if(treeModel.isRoot(partitionRoot)){
+                    extraHeight = maxFirstInfToRoot.getParameterValue(0) * aCase.getInfectionBranchPosition().getParameterValue(0);
+                } else {
+                    extraHeight = treeModel.getBranchLength(partitionRoot) * aCase.getInfectionBranchPosition().getParameterValue(0);
+                }
 
                 FlexibleNode newRoot = new FlexibleNode();
 
@@ -329,8 +333,26 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     }
                 }
 
+
+
+
+
                 Treelet treelet = new Treelet(littleTree,
-                        sampleTipHeight + (aCase.examTime-getInfectionTime(aCase)));
+                        littleTree.getRootHeight() + extraHeight);
+
+
+
+
+//                if(sampleTipHeight==-1){
+//                    System.out.println();
+//                }
+
+//                double heightPlusRB = treelet.getZeroHeight() - sampleTipHeight;
+//                double infectedTime = aCase.examTime - getInfectionTime(aCase);
+//
+//                if(heightPlusRB!=infectedTime){
+//                    System.out.println();
+//                }
 
                 partitionsAsTrees.put(aCase, treelet);
 

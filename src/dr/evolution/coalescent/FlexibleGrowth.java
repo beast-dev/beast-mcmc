@@ -65,10 +65,6 @@ public class FlexibleGrowth extends PowerLawGrowth
 		this.K = K;
 	}
 
-
-
-
-
     // Implementation of abstract methods
 	
 	public double getDemographic(double t) {
@@ -94,8 +90,6 @@ public class FlexibleGrowth extends PowerLawGrowth
 
 		return 1/getN0() * (1/((getR()-1)*K) * (Math.pow(-finish, -getR() + 1) - Math.pow(-start, -getR() +1 )) + Math.log((-start)/(-finish)));
 	}
-
-
 
 	public int getNumArguments() {
 		return 3;

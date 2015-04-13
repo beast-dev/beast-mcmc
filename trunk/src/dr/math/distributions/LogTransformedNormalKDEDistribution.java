@@ -408,27 +408,79 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
 
     public static void main(String[] args) {
 
+        //Normal distribution
         Double[] samples = new Double[10000];
         NormalDistribution dist = new NormalDistribution(0.5, 0.10);
         for (int i = 0; i < samples.length; i++) {
             samples[i] = (Double)dist.nextRandom();
-            if (samples[i] < 0.0) {
+            if (samples[i] < 0.0 && DEBUG) {
                 System.err.println("Negative value generated!");
             }
         }
         Arrays.sort(samples);
-        System.out.println("min: " + samples[0]);
-        System.out.println("max: " + samples[samples.length-1] + "\n");
+        if (DEBUG) {
+            System.out.println("min: " + samples[0]);
+            System.out.println("max: " + samples[samples.length - 1] + "\n");
+        }
 
         LogTransformedNormalKDEDistribution ltn = new LogTransformedNormalKDEDistribution(samples);
         NormalKDEDistribution nKDE = new NormalKDEDistribution(samples);
 
-        for (int i = 0; i < 50; i++) {
-            Double test = (Double)dist.nextRandom();
-            System.out.println("random draw: " + test);
-            System.out.println("normal KDE: " + nKDE.evaluateKernel(test));
-            System.out.println("log transformed normal KDE: " + ltn.evaluateKernel(test) + "\n");
+        if (DEBUG) {
+            for (int i = 0; i < 50; i++) {
+                Double test = (Double) dist.nextRandom();
+                System.out.println("random draw: " + test);
+                System.out.println("normal KDE: " + nKDE.evaluateKernel(test));
+                System.out.println("log transformed normal KDE: " + ltn.evaluateKernel(test) + "\n");
+            }
         }
+
+
+        //LogNormal distribution
+        samples = new Double[2000];
+        dist = new NormalDistribution(0.0, 1.0);
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = (Double)dist.nextRandom();
+            while (samples[i] < 0.0) {
+                samples[i] = (Double)dist.nextRandom();
+            }
+            samples[i] = Math.exp(samples[i]-Math.exp(1.0));
+        }
+
+        //Generate R code for visualisation
+        System.out.print("par(mfrow=c(2,2))\n\nsamples <- c(");
+        for (int i = 0; i < samples.length-1; i++) {
+            System.out.print(samples[i] + ",");
+        }
+        System.out.println(samples[samples.length-1] + ")\n\n");
+        System.out.println("hist(samples, 200)\nminimum=min(samples)\nabline(v=minimum,col=2,lty=2)\n");
+        System.out.println("plot(density(samples))\nabline(v=minimum,col=2,lty=2)\n");
+
+        Arrays.sort(samples);
+        if (DEBUG) {
+            System.out.println("min: " + samples[0]);
+            System.out.println("max: " + samples[samples.length - 1] + "\n");
+        }
+
+        ltn = new LogTransformedNormalKDEDistribution(samples);
+        nKDE = new NormalKDEDistribution(samples);
+
+        System.out.print("normalKDE <- c(");
+        for (int i = 0; i < 1999; i++) {
+            Double test = 0.0 + ((double)i)/((double)1000);
+            System.out.print(nKDE.evaluateKernel(test) + ",");
+        }
+        System.out.println(nKDE.evaluateKernel(((double)1999)/((double)1000)) + ")\n");
+        System.out.println("index <- seq(0.0,1.999,by=0.001)");
+        System.out.println("plot(index,normalKDE,type=\"l\")\nabline(v=minimum,col=2,lty=2)\n");
+
+        System.out.print("TransKDE <- c(");
+        for (int i = 0; i < 1999; i++) {
+            Double test = 0.0 + ((double)i)/((double)1000);
+            System.out.print(ltn.evaluateKernel(test) + ",");
+        }
+        System.out.println(ltn.evaluateKernel(((double)1999)/((double)1000)) + ")\n");
+        System.out.println("plot(index,TransKDE,type=\"l\")\nabline(v=minimum,col=2,lty=2)");
 
     }
 

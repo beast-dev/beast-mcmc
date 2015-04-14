@@ -7,6 +7,8 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Parameter;
 
 /**
  * @author Filip Bielejec
@@ -17,6 +19,52 @@ public class BranchSpecificTrait implements TreeTraitProvider {
 
 	private Helper helper;
 	private TreeModel treeModel;
+	
+	public BranchSpecificTrait(
+		TreeModel treeModel,
+		Parameter uCategories,
+		CompoundParameter uniqueParameters, 
+		final String parameterName) {
+		
+		this.treeModel = treeModel;
+		helper = new Helper();
+		
+		TreeTrait<Double> uTrait = new TreeTrait.D() {
+
+			@Override
+			public String getTraitName() {
+				return parameterName;
+			}
+
+			@Override
+			public dr.evolution.tree.TreeTrait.Intent getIntent() {
+				return Intent.BRANCH;
+			}
+
+			@Override
+			public Double getTrait(Tree tree, NodeRef node) {
+
+				double value = 0.0;
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				return null;
+			}
+			
+			
+			
+		};
+		
+		
+	}//END: Constructor
 	
 	public BranchSpecificTrait(
 			TreeModel treeModel,

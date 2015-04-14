@@ -452,7 +452,7 @@ public class LogTransformedNormalKDEDistribution extends KernelDensityEstimatorD
         for (int i = 0; i < samples.length-1; i++) {
             System.out.print(samples[i] + ",");
         }
-        System.out.println(samples[samples.length-1] + ")\n\n");
+        System.out.println(samples[samples.length-1] + ")\n");
         System.out.println("hist(samples, 200)\nminimum=min(samples)\nabline(v=minimum,col=2,lty=2)\n");
         System.out.println("plot(density(samples))\nabline(v=minimum,col=2,lty=2)\n");
 

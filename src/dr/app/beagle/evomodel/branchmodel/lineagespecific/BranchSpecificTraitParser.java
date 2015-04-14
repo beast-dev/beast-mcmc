@@ -29,7 +29,6 @@ public class BranchSpecificTraitParser extends AbstractXMLObjectParser {
 //		CompoundParameter parameter = (CompoundParameter) xo.getChild(CompoundParameter.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 		
-		
 		return new BranchSpecificTrait(treeModel, branchModel, xo.getId());
 	}
 

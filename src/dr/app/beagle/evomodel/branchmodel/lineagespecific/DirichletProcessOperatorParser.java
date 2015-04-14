@@ -21,7 +21,7 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 		DirichletProcessPrior dpp = (DirichletProcessPrior) xo.getChild(DirichletProcessPrior.class);
 //		CompoundLikelihood likelihood = (CompoundLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
 		BeagleBranchLikelihood likelihood = (BeagleBranchLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
-		Parameter zParameter = (Parameter) xo.getElementFirstChild(  DirichletProcessPriorParser.CATEGORIES);
+		Parameter categoriesParameter = (Parameter) xo.getElementFirstChild(  DirichletProcessPriorParser.CATEGORIES);
 //		CountableRealizationsParameter countableRealizationsParameter = (CountableRealizationsParameter) xo.getChild(CountableRealizationsParameter.class);
 		
 		Parameter uniquelyRealizedParameters = (Parameter) xo.getChild(Parameter.class);
@@ -29,7 +29,7 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 		int M = xo.getIntegerAttribute(MH_STEPS);
 		final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-		return new DirichletProcessOperator(dpp, zParameter, uniquelyRealizedParameters,
+		return new DirichletProcessOperator(dpp, categoriesParameter, uniquelyRealizedParameters,
 //				countableRealizationsParameter, 
 				likelihood, M, weight);
 	}// END: parseXMLObject

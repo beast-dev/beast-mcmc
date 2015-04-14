@@ -26,7 +26,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
     private int mhSteps;
 	
 	
-	private Parameter zParameter;
+	private Parameter categoriesParameter;
 //	private CountableRealizationsParameter countableRealizationsParameter;
 	private Parameter parameter;
 	
@@ -35,7 +35,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	
 	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
-			Parameter zParameter, 
+			Parameter categoriesParameter, 
 //			CountableRealizationsParameter countableRealizationsParameter,
 			Parameter parameter,
 //		    CompoundLikelihood likelihood;
@@ -46,9 +46,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		this.dpp = dpp;
 		this.intensity = dpp.getGamma();
 		this.uniqueRealizationCount = dpp.getCategoryCount();
-		this.realizationCount = zParameter.getDimension();
+		this.realizationCount = categoriesParameter.getDimension();
 		
-		this.zParameter = zParameter;
+		this.categoriesParameter = categoriesParameter;
 //		this.countableRealizationsParameter = countableRealizationsParameter;
 		this.parameter = parameter;
 		this.likelihood = likelihood;
@@ -59,11 +59,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	}// END: Constructor
 
     public Parameter getParameter() {
-        return zParameter;
+        return categoriesParameter;
     }//END: getParameter
 	
     public Variable getVariable() {
-        return zParameter;
+        return categoriesParameter;
     }//END: getVariable
 	
 	@Override
@@ -94,7 +94,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 				if (i != index) {
 
-					int j = (int) zParameter.getParameterValue(i);
+					int j = (int) categoriesParameter.getParameterValue(i);
 					occupancy[j]++;
 
 				}// END: i check
@@ -154,7 +154,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 			// sample
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
-			zParameter.setParameterValue(index, sampledCluster);
+			categoriesParameter.setParameterValue(index, sampledCluster);
 
 			if (DEBUG) {
 				System.out.println("sampled category: " + sampledCluster + "\n");
@@ -170,7 +170,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		
 		Likelihood dl = (Likelihood) likelihood .getLikelihood(index);
 		
-		int category = (int) zParameter.getParameterValue(index);
+		int category = (int) categoriesParameter.getParameterValue(index);
 		double value = parameter.getParameterValue(category);
 		
 		double loglike = 0.0;

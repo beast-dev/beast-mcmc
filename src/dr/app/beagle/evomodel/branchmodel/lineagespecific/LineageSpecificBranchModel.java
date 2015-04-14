@@ -82,22 +82,22 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
     private FrequencyModel rootFrequencyModel;
     
     // for discrete categories
-    private CountableBranchCategoryProvider uCategoriesProvider;
-    private Parameter uCategoriesParameter;
+    private CountableBranchCategoryProvider categoriesProvider;
+    private Parameter categoriesParameter;
 
 	public LineageSpecificBranchModel(TreeModel treeModel, //
 			FrequencyModel rootFrequencyModel, //
 			final List<SubstitutionModel> substitutionModels, //
-			CountableBranchCategoryProvider uCategoriesProvider, //
-			Parameter uCategoriesParameter //
+			CountableBranchCategoryProvider categoriesProvider, //
+			Parameter categoriesParameter //
 	) {
 
 		super("");
 
 		this.treeModel = treeModel;
 		this.substitutionModels = substitutionModels;
-		this.uCategoriesProvider = uCategoriesProvider;
-		this.uCategoriesParameter = uCategoriesParameter;
+		this.categoriesProvider = categoriesProvider;
+		this.categoriesParameter = categoriesParameter;
 		this.rootFrequencyModel = rootFrequencyModel;
 
 		this.nodeMap = new HashMap<NodeRef, Mapping>();
@@ -108,8 +108,8 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
 
 		addModel(this.treeModel);
 		addModel(this.rootFrequencyModel);
-		addModel((Model) this.uCategoriesProvider);
-		addVariable(this.uCategoriesParameter);
+		addModel((Model) this.categoriesProvider);
+		addVariable(this.categoriesParameter);
 
 	}// END: Constructor
 	
@@ -127,9 +127,9 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
 
 		if (branch != treeModel.getRoot()) {//TODO: neccessary?
 
-			int branchCategory = uCategoriesProvider.getBranchCategory(
+			int branchCategory = categoriesProvider.getBranchCategory(
 					treeModel, branch);
-			final int uCategory = (int) uCategoriesParameter.getParameterValue(branchCategory);
+			final int uCategory = (int) categoriesParameter.getParameterValue(branchCategory);
 
 			if (DEBUG) {
 				System.out.println("branch length: " + treeModel.getBranchLength(branch) + ", " + "category:" + uCategory);

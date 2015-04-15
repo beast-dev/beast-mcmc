@@ -10,6 +10,10 @@ import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 
+
+/**
+ * @author Filip Bielejec
+ */
 @SuppressWarnings("serial")
 public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		GibbsOperator {

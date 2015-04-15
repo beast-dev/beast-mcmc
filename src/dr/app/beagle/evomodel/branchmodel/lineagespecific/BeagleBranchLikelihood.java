@@ -8,9 +8,11 @@ import dr.evomodel.branchratemodel.CountableBranchCategoryProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.model.CompoundModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Likelihood.Abstract;
 
 @SuppressWarnings("serial")
 public class BeagleBranchLikelihood implements Likelihood {
@@ -18,15 +20,19 @@ public class BeagleBranchLikelihood implements Likelihood {
 	private	TreeModel treeModel;
 	private	List<Likelihood> uniqueLikelihoods;
 	
-	// size of z:
 	private	List<Likelihood> branchLikelihoods;
 	private	Parameter categoriesParameter;
 
 	private String id = null;
-
+	private boolean used = false;
+	 
 	// for discrete categories
 	private CountableBranchCategoryProvider categoriesProvider;
 
+	//TODO
+	   private final CompoundModel compoundModel = new CompoundModel("compoundModel");
+	
+	
 	public BeagleBranchLikelihood(TreeModel treeModel,
 			List<Likelihood> likelihoods, 
 			Parameter categoriesParameter) {
@@ -50,7 +56,7 @@ public class BeagleBranchLikelihood implements Likelihood {
 
 	public List<Likelihood> getBranchLikelihoods() {
 
-		// TODO: if no tree then read them in supplied order
+		// linked list preserves order
 		List<Likelihood> loglikes = new LinkedList<Likelihood>();
 
 		if (treeModel != null) {
@@ -61,26 +67,30 @@ public class BeagleBranchLikelihood implements Likelihood {
 
 					int branchCategory = categoriesProvider.getBranchCategory(
 							treeModel, branch);
-					int zIndex = (int) categoriesParameter
+					int index = (int) categoriesParameter
 							.getParameterValue(branchCategory);
 
-					Likelihood branchLikelihood = uniqueLikelihoods.get(zIndex);
+//					System.out.println("branchCategory: " + branchCategory);
+//					System.out.println("index: " + index);					
+					
+					Likelihood branchLikelihood = uniqueLikelihoods.get(index);
 
 					// branchLikelihoods.add(new
 					// Holder(branchLikelihood).value);
 					loglikes.add(branchLikelihood);
-
+					//TODO
+					compoundModel.addModel(branchLikelihood.getModel());
+					
 				}
 			}// END: branch loop
 
-		} else {
+		} else {// if no tree then read them in supplied order
 
 			int dim = categoriesParameter.getDimension();
 			if (dim != uniqueLikelihoods.size()) {
 				throw new RuntimeException("Dimensionality mismatch!");
-			}
+			}// END: size of categoriesParameter check
 
-			// TODO: does this preserve order? check!
 			loglikes.addAll(uniqueLikelihoods);
 
 		}// END: tree check
@@ -102,11 +112,16 @@ public class BeagleBranchLikelihood implements Likelihood {
 	public double getLogLikelihood() {
 		
 		double loglike = 0;
-		for(Likelihood like : getBranchLikelihoods()) {
-			
+//		for(Likelihood like : getBranchLikelihoods()) {
+//			
+//			loglike += like.getLogLikelihood();
+//			
+//		}//END: loglikes loop
+		
+		for(Likelihood like : branchLikelihoods) {
 			loglike += like.getLogLikelihood();
-			
-		}//END: loglikes loop
+		}
+		
 		
 		return loglike;
 	}//END: getLogLikelihood
@@ -127,52 +142,56 @@ public class BeagleBranchLikelihood implements Likelihood {
 	public LogColumn[] getColumns() {
 		return new dr.inference.loggers.LogColumn[] { new LikelihoodColumn(
 				getId() == null ? "likelihood" : getId()) };
-	}
+	}//END: getColumns
 
 	@Override
 	public String getId() {
 		return this.id;
-	}
+	}//END: getId
 
 	@Override
 	public void setId(String id) {
 		this.id = id;
-	}
+	}//END: setId
 
 	@Override
 	public Model getModel() {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO 
+//return null;
+		return compoundModel;
 	}
 
 
 	@Override
 	public void makeDirty() {
-		// TODO Auto-generated method stub
+		
+        for( Likelihood likelihood : uniqueLikelihoods ) {
+            likelihood.makeDirty();
+        }
 
-	}
+	}//END: makeDirty
 
 	@Override
 	public String prettyName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+		return Abstract.getPrettyName(this);
+	}//END: prettyName
 
 	@Override
 	public boolean isUsed() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+		return used;
+	}//END: isUsed
 
 	@Override
 	public void setUsed() {
-		// TODO Auto-generated method stub
+        used = true;
+        for (Likelihood like : branchLikelihoods) {
+            like.setUsed();
+        }
 
-	}
+	}//END: setUsed
 
 	@Override
 	public boolean evaluateEarly() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

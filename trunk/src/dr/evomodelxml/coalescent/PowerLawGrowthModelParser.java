@@ -13,7 +13,7 @@ import dr.xml.*;
 public class PowerLawGrowthModelParser extends AbstractXMLObjectParser {
 
     public static String N0 = "n0";
-    public static String POWER_LAW_GROWTH_MODEL = "exponentialGrowth";
+    public static String POWER_LAW_GROWTH_MODEL = "powerLawGrowth";
 
     public static String POWER = "power";
 

@@ -162,7 +162,7 @@ public class GibbsIndependentGammaOperator extends SimpleMCMCOperator implements
         };
 
 		public String getParserDescription() {
-			return "This element returns an independence sampler, disguised as a Gibss operator, from a provided gamma prior.";
+			return "This element returns an independence sampler, disguised as a Gibbs operator, from a provided gamma prior.";
 		}
 
 		public Class getReturnType() {

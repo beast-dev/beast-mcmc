@@ -62,7 +62,8 @@ public class GammaDistribution implements Distribution {
 
         if (TRY_COLT) {
             randomEngine = new MersenneTwister(MathUtils.nextInt());
-            coltGamma = new Gamma(shape, scale, randomEngine);
+            System.out.println("Colt Gamma(" + shape + "," + scale + ")");
+            coltGamma = new Gamma(shape, 1.0/scale, randomEngine);
         }
     }
 
@@ -83,15 +84,27 @@ public class GammaDistribution implements Distribution {
     }
 
     public double pdf(double x) {
-        return pdf(x, shape, scale);
+        if (TRY_COLT) {
+            return coltGamma.pdf(x);
+        } else {
+            return pdf(x, shape, scale);
+        }
     }
 
     public double logPdf(double x) {
-        return logPdf(x, shape, scale);
+        if (TRY_COLT) {
+            return Math.log(coltGamma.pdf(x));
+        } else {
+            return logPdf(x, shape, scale);
+        }
     }
 
     public double cdf(double x) {
-        return cdf(x, shape, scale);
+        if (TRY_COLT) {
+            return coltGamma.cdf(x);
+        } else {
+            return cdf(x, shape, scale);
+        }
     }
 
     public double quantile(double y) {
@@ -535,6 +548,22 @@ public class GammaDistribution implements Distribution {
         	System.out.println(e.getMessage());
         	}
         }
+
+        GammaDistribution gamma = new GammaDistribution(0.01,100.0);
+        double[] samples = new double[100000];
+        double sum = 0.0;
+        for (int i = 0; i < samples.length; i++) {
+            samples[i] = gamma.nextGamma();
+            sum += samples[i];
+        }
+        double mean = sum/(double)samples.length;
+        System.out.println("Mean = " + mean);
+        double variance = 0.0;
+        for (int i = 0; i < samples.length; i++) {
+            variance += Math.pow((samples[i] - mean),2.0);
+        }
+        variance = variance/(double)samples.length;
+        System.out.println("Variance = " + variance);
 
 //        System.out
 //                .println("K-S critical values: 1.22(10%), 1.36(5%), 1.63(1%)\n");

@@ -25,6 +25,7 @@
 
 package dr.inference.markovchain;
 
+import dr.evomodel.continuous.GibbsIndependentCoalescentOperator;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -252,7 +253,9 @@ public final class MarkovChain implements Serializable {
                 }
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
-                    Logger.getLogger("error").severe("State " + currentState + ": A Gibbs opertor, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
+                    if (!(mcmcOperator instanceof GibbsIndependentNormalDistributionOperator) && !(mcmcOperator instanceof GibbsIndependentGammaOperator) && !(mcmcOperator instanceof GibbsIndependentCoalescentOperator) && !(mcmcOperator instanceof GibbsIndependentJointNormalGammaOperator)) {
+                        Logger.getLogger("error").severe("State " + currentState + ": A Gibbs opertor, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
+                    }
                 }
 
                 if (score == Double.POSITIVE_INFINITY ||

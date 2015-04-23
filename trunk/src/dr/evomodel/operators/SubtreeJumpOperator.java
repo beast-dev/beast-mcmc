@@ -90,15 +90,15 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         final double height = tree.getNodeHeight(iP);
 
         // get a list of all edges that intersect this height
-        final List<NodeRef> destinations = getIntersectingEdges(tree, height);
+        final List<NodeRef> destinations = getIntersectingEdges(tree, i, height);
 
         if (destinations.size() < 1) {
             throw new OperatorFailedException("no destinations to jump to");
         }
 
-        double[] weights =  getDestinationWeights(tree, iP, height, destinations);
+        double[] weights = getDestinationWeights(tree, i, height, destinations);
 
-            // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
+        // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
         destinations.remove(i);
         destinations.remove(CiP);
 
@@ -124,6 +124,8 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
 
         tree.endTreeEdit();
 
+        double[] reverseWeights = getDestinationWeights(tree, j, height, destinations);
+
         logq = 0.0;
 
         return logq;
@@ -143,14 +145,21 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         return MathUtils.randomChoicePDF(weights);
     }
 
-    private List<NodeRef> getIntersectingEdges(Tree tree, double height) {
+    /**
+     * Gets a list of edges that subtend the given height, excluding the original node
+     * @param tree
+     * @param node0
+     * @param height
+     * @return
+     */
+    private List<NodeRef> getIntersectingEdges(Tree tree, NodeRef node0, double height) {
 
         List<NodeRef> intersectingEdges = new ArrayList<NodeRef>();
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             final NodeRef node = tree.getNode(i);
             final NodeRef parent = tree.getParent(node);
-            if (parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
+            if (node != node0 && parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
                 intersectingEdges.add(node);
             }
         }

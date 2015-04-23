@@ -30,10 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.SubtreeJumpOperatorParser;
 import dr.evomodelxml.operators.SubtreeSlideOperatorParser;
-import dr.inference.operators.CoercableMCMCOperator;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.OperatorUtils;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
@@ -45,14 +42,24 @@ import java.util.List;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class SubtreeJumpOperator extends AbstractTreeOperator /* implements CoercableMCMCOperator */ { // not coercable at the moment.
+public class SubtreeJumpOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
     private TreeModel tree = null;
-//    private CoercionMode mode = CoercionMode.DEFAULT;
+    private double size = 1;
+    private CoercionMode mode = CoercionMode.DEFAULT;
 
-    public SubtreeJumpOperator(TreeModel tree, double weight) {
+    /**
+     * Constructor
+     * @param tree
+     * @param weight
+     * @param size a non-negative value used as a power coeficient for the relatedness weights
+     * @param mode
+     */
+    public SubtreeJumpOperator(TreeModel tree, double weight, double size, CoercionMode mode) {
         this.tree = tree;
         setWeight(weight);
+        this.size = size;
+        this.mode = mode;
     }
 
     /**
@@ -85,16 +92,18 @@ public class SubtreeJumpOperator extends AbstractTreeOperator /* implements Coer
         // get a list of all edges that intersect this height
         final List<NodeRef> destinations = getIntersectingEdges(tree, height);
 
-        // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
-        destinations.remove(i);
-        destinations.remove(CiP);
-
         if (destinations.size() < 1) {
             throw new OperatorFailedException("no destinations to jump to");
         }
 
+        double[] weights =  getDestinationWeights(tree, iP, height, destinations);
+
+            // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
+        destinations.remove(i);
+        destinations.remove(CiP);
+
         // pick uniformly from this list
-        final NodeRef j = destinations.get(MathUtils.nextInt(destinations.size()));
+        final NodeRef j = destinations.get(pickDestination(weights, size));
         final NodeRef jP = tree.getParent(j);
 
         tree.beginTreeEdit();
@@ -120,6 +129,20 @@ public class SubtreeJumpOperator extends AbstractTreeOperator /* implements Coer
         return logq;
     }
 
+    private int pickDestination(double[] weights, double size) {
+        double sum = 0.0;
+        for (int i = 0; i < weights.length; i++) {
+            weights[i] = 1.0 / Math.pow(weights[i], size);
+            sum += weights[i];
+            i++;
+        }
+        for (int i = 0; i < weights.length; i++) {
+            weights[i] /= sum;
+        }
+
+        return MathUtils.randomChoicePDF(weights);
+    }
+
     private List<NodeRef> getIntersectingEdges(Tree tree, double height) {
 
         List<NodeRef> intersectingEdges = new ArrayList<NodeRef>();
@@ -131,10 +154,49 @@ public class SubtreeJumpOperator extends AbstractTreeOperator /* implements Coer
                 intersectingEdges.add(node);
             }
         }
-
         return intersectingEdges;
     }
 
+    private double[] getDestinationWeights(Tree tree, NodeRef node0, double height, List<NodeRef> intersectingEdges) {
+        double[] weights = new double[intersectingEdges.size()];
+        double sum = 0.0;
+        for (int i = 0; i < weights.length; i++) {
+            NodeRef node1 = intersectingEdges.get(i);
+            weights[i] = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+            sum += weights[i];
+            i++;
+        }
+        for (int i = 0; i < weights.length; i++) {
+            weights[i] /= sum;
+        }
+
+        return weights;
+    }
+
+
+    public double getSize() {
+        return size;
+    }
+
+    public void setSize(double size) {
+        this.size = size;
+    }
+
+    public double getCoercableParameter() {
+        return Math.log(getSize());
+    }
+
+    public void setCoercableParameter(double value) {
+        setSize(Math.exp(value));
+    }
+
+    public double getRawParameter() {
+        return getSize();
+    }
+
+    public CoercionMode getMode() {
+        return mode;
+    }
 
     public double getTargetAcceptanceProbability() {
         return 0.234;
@@ -142,19 +204,18 @@ public class SubtreeJumpOperator extends AbstractTreeOperator /* implements Coer
 
 
     public String getPerformanceSuggestion() {
-        return "";
+        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+        double targetProb = getTargetAcceptanceProbability();
 
-//        double prob = Utils.getAcceptanceProbability(this);
-//        double targetProb = getTargetAcceptanceProbability();
-//
-//        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
-//
-//        if (prob < getMinimumGoodAcceptanceLevel()) {
-//            return "Try decreasing size to about " + ws;
-//        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-//            return "Try increasing size to about " + ws;
-//        } else return "";
+        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
+
+        if (prob < getMinimumGoodAcceptanceLevel()) {
+            return "Try decreasing size to about " + ws;
+        } else if (prob > getMaximumGoodAcceptanceLevel()) {
+            return "Try increasing size to about " + ws;
+        } else return "";
     }
+
 
     public String getOperatorName() {
         return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";

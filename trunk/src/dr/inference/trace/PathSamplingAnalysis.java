@@ -159,7 +159,7 @@ public class PathSamplingAnalysis {
 
                     if (burnin < 0 || burnin >= maxState) {
                         burnin = maxState / 5;
-                        System.out.println("WARNING: Burn-in larger than total number of states - using to 20%");
+                        System.out.println("WARNING: Burn-in larger than total number of states - using 20%");
                     }
 
                     burnin = 0;

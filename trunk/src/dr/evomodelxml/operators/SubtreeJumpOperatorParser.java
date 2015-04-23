@@ -20,8 +20,6 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        /*
-        No coercion at the moment.
         CoercionMode mode = CoercionMode.DEFAULT;
         if (xo.hasAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
             if (xo.getBooleanAttribute(CoercableMCMCOperator.AUTO_OPTIMIZE)) {
@@ -30,21 +28,20 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
                 mode = CoercionMode.COERCION_OFF;
             }
         }
-        */
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
 //        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
-//
-//        final double size = xo.getAttribute("size", 1.0);
-//
-//        if (Double.isInfinite(size) || size <= 0.0) {
-//            throw new XMLParseException("size attribute must be positive and not infinite. was " + size +
-//           " for tree " + treeModel.getId() );
-//        }
 
-        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight);
+        final double size = xo.getAttribute("size", 1.0);
+
+        if (Double.isInfinite(size) || size <= 0.0) {
+            throw new XMLParseException("size attribute must be positive and not infinite. was " + size +
+           " for tree " + treeModel.getId() );
+        }
+
+        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, size, weight, mode);
 //        operator.setTargetAcceptanceProbability(targetAcceptance);
 
         return operator;

@@ -173,11 +173,12 @@
         <jarbundler dir="${Mac_package_dir}"
                         name="${name} v${version}"
                         mainclass="dr.app.pathogen.PathogenApp"
+                        stubfile="${Mac_dir}/universalJavaApplicationStub"
                         icon="${Mac_dir}/icons/Path-O-Gen.icns"
-                        jvmversion="1.5+"
+                        jvmversion="1.6+"
                         arguments=""
                         version="${version}"
-                        infostring="${name} v${version}, Copyright 2006-2013, Andrew Rambaut"
+                        infostring="${name} v${version}, Copyright 2006-2015, Andrew Rambaut"
                         bundleid="pathogen" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">

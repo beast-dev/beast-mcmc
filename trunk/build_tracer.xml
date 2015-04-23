@@ -129,8 +129,8 @@
 
     </target>
 
-    <property name="version" value="1.6.0" />
-    <property name="version_number" value="1.6.0" />
+    <property name="version" value="1.6.1pre" />
+    <property name="version_number" value="1.6.1" />
     <property name="release_dir" value="release_tracer" />
     <property name="name" value="Tracer" />
 
@@ -216,12 +216,11 @@
                         name="${name} v${version}"
                         mainclass="dr.app.tracer.application.TracerApp"
                         icon="${Mac_dir}/icons/Tracer.icns"
-                        jvmversion="1.6+"
-	                    stubfile="${Mac_dir}/universalJavaApplicationStub"
+                        jvmversion="1.5+"
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${name} v${version}, Copyright 2003-2015, Andrew Rambaut, Marc Suchard &amp; Alexei J. Drummond"
+                        infostring="${name} v${version}, Copyright 2003-2013, Andrew Rambaut, Marc Suchard &amp; Alexei J. Drummond"
                         bundleid="tracer" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">

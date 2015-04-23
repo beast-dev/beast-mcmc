@@ -29,6 +29,7 @@ import dr.evomodel.continuous.GibbsIndependentCoalescentOperator;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
+import dr.inference.model.PathLikelihood;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 
@@ -138,6 +139,9 @@ public final class MarkovChain implements Serializable {
             String message = "The initial likelihood is zero";
             if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+            } else if (likelihood instanceof PathLikelihood) {
+                message += ": " + ((CompoundLikelihood)((PathLikelihood) likelihood).getSourceLikelihood()).getDiagnosis();
+                message += ": " + ((CompoundLikelihood)((PathLikelihood) likelihood).getDestinationLikelihood()).getDiagnosis();
             } else {
                 message += ".";
             }
@@ -254,7 +258,7 @@ public final class MarkovChain implements Serializable {
 
                 if (score == Double.NEGATIVE_INFINITY && mcmcOperator instanceof GibbsOperator) {
                     if (!(mcmcOperator instanceof GibbsIndependentNormalDistributionOperator) && !(mcmcOperator instanceof GibbsIndependentGammaOperator) && !(mcmcOperator instanceof GibbsIndependentCoalescentOperator) && !(mcmcOperator instanceof GibbsIndependentJointNormalGammaOperator)) {
-                        Logger.getLogger("error").severe("State " + currentState + ": A Gibbs opertor, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
+                        Logger.getLogger("error").severe("State " + currentState + ": A Gibbs operator, " + mcmcOperator.getOperatorName() + ", returned a state with zero likelihood.");
                     }
                 }
 

@@ -106,6 +106,14 @@ public class PathLikelihood implements Likelihood {
         return (source.getLogLikelihood() * pathParameter) + (destination.getLogLikelihood() * (1.0 - pathParameter));
     }
 
+    public Likelihood getSourceLikelihood() {
+        return source;
+    }
+
+    public Likelihood getDestinationLikelihood() {
+        return destination;
+    }
+
     public void makeDirty() {
         source.makeDirty();
         destination.makeDirty();

@@ -127,7 +127,9 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
 
         tree.endTreeEdit();
 
-        double reverseProbability = getReverseProbability(tree, j, i, height, destinations);
+        final List<NodeRef> reverseDestinations = getIntersectingEdges(tree, height);
+
+        double reverseProbability = getReverseProbability(tree, CiP, j, height, reverseDestinations);
 
         logq = Math.log(forwardProbability) - Math.log(reverseProbability);
 
@@ -147,6 +149,8 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         for (int i = 0; i < tree.getNodeCount(); i++) {
             final NodeRef node = tree.getNode(i);
             final NodeRef parent = tree.getParent(node);
+
+            // The original node and its sibling will not be included because their height is exactly equal to the target height
             if (parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
                 intersectingEdges.add(node);
             }
@@ -159,13 +163,11 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         double sum = 0.0;
         int i = 0;
         for (NodeRef node1 : intersectingEdges) {
-            if (node1 != node0) {
-                double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
-                weights[i] = 1.0 / Math.pow(age, size);
-                sum += weights[i];
-            } else {
-                weights[i] = 0.0;
-            }
+            assert(node1 != node0);
+
+            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+            weights[i] = 1.0 / Math.pow(age, 1.0 / size);
+            sum += weights[i];
             i++;
         }
         for (int j = 0; j < weights.length; j++) {
@@ -183,7 +185,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         for (NodeRef node1 : intersectingEdges) {
             if (node1 != targetNode) {
                 double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
-                weights[i] = 1.0 / Math.pow(age, size);
+                weights[i] = 1.0 / Math.pow(age, 1.0 / size);
                 sum += weights[i];
 
                 if (node1 == originalNode) {

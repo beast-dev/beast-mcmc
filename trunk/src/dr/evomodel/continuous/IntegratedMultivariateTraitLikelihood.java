@@ -1,7 +1,7 @@
 /*
  * IntegratedMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -239,12 +239,25 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         citations.add(
                 new Citation(
                         new Author[]{
-                                new Author("O", "Pybus"),
+                                new Author("OG", "Pybus"),
+                                new Author("MA", "Suchard"),
                                 new Author("P", "Lemey"),
+                                new Author("F", "Bernadin"),
                                 new Author("A", "Rambaut"),
-                                new Author("MA", "Suchard")
+                                new Author("FW", "Crawford"),
+                                new Author("RR", "Gray"),
+                                new Author("N", "Arinaminpathy"),
+                                new Author("S", "Stramer"),
+                                new Author("MP", "Busch"),
+                                new Author("E", "Delwart")
+
                         },
-                        Citation.Status.IN_PREPARATION
+                        "Unifying the spatial epidemiology and evolution of emerging epidemics",
+                        2012,
+                        "Proceedings of the National Academy of Sciences",
+                        109,
+                        15066, 15071,
+                        Citation.Status.PUBLISHED
                 )
         );
         return citations;
@@ -1090,8 +1103,42 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     }
 
-    ;
+    class StandarizedCacheHelper extends CacheHelper {
 
+        public StandarizedCacheHelper(int dim, int nodeCount, boolean cacheBranches) {
+            super(dim * nodeCount, cacheBranches);
+            this.dim = dim;
+            this.nodeCount = nodeCount;
+
+
+        }
+
+        public void setTipMeans(double[] traitValue, int dim, int index, NodeRef node) {
+            //System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
+            for (int i = 0; i < dim; ++i) {
+                setMeanCache(dim * index + i, traitValue[i]);
+            }
+        }
+
+        public void setTipMeans(double[] traitValue, int dim, int index) {
+//            System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
+            for (int i = 0; i < dim; ++i) {
+                setMeanCache(dim * index + i, traitValue[i]);
+            }
+        }
+
+//        public void copyToMeanCache(double[] src, int destPos, int length) {
+//            System.arraycopy(src, 0, meanCache, destPos, length);
+//        }
+
+        public void setMeanCache(int index, double value) {
+            final int thisDim = index % dim;
+            meanCache[index] = value;
+        }
+
+        private final int dim;
+        private final int nodeCount;
+    }
 
     class DriftCacheHelper extends CacheHelper {
 
@@ -1191,6 +1238,31 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     }
 
+    private CacheHelper createCacheHelper(IntegratedDiffusionType type, int cacheLength, boolean cacheBranches) {
+        CacheHelper helper = null;
+        switch (type) {
+            case PLAIN:
+                helper = new CacheHelper(cacheLength, cacheBranches);
+                break;
+            case SCALED:
+                helper = new CacheHelper(cacheLength, cacheBranches);
+                break;
+            case DRIFT:
+                helper = new DriftCacheHelper(cacheLength, cacheBranches);
+                break;
+            case OU:
+                helper = new OUCacheHelper(cacheLength, cacheBranches);
+                break;
+        }
+        return helper;
+    }
+
+    public enum IntegratedDiffusionType {
+        PLAIN,
+        SCALED,
+        DRIFT,
+        OU,
+    }
 
     // protected boolean hasDrift;
 

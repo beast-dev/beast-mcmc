@@ -26,6 +26,7 @@
 package dr.inferencexml.operators;
 
 import dr.inference.model.Parameter;
+import dr.inference.operators.SwapParameterGibbsOperator;
 import dr.inference.operators.SwapParameterOperator;
 import dr.xml.*;
 
@@ -37,6 +38,8 @@ import java.util.List;
 public class SwapParameterOperatorParser extends AbstractXMLObjectParser {
 
     public final static String SWAP_OPERATOR = "swapParameterOperator";
+    public static final String FORCE_GIBBS = "forceGibbs";
+    public static final String WEIGHT = "weight";
 
     public String getParserName() {
         return SWAP_OPERATOR;
@@ -50,9 +53,15 @@ public class SwapParameterOperatorParser extends AbstractXMLObjectParser {
             parameterList.add((Parameter) xo.getChild(i));
         }
 
-        double weight = xo.getDoubleAttribute("weight");
+        double weight = xo.getDoubleAttribute(WEIGHT);
+        boolean forceGibbs = xo.getAttribute(FORCE_GIBBS, false);
 
-        return new SwapParameterOperator(parameterList, weight);
+        if (forceGibbs) {
+            return new SwapParameterGibbsOperator(parameterList, weight);
+        } else {
+            return new SwapParameterOperator(parameterList, weight);
+        }
+
     }
 
     //************************************************************************
@@ -72,7 +81,8 @@ public class SwapParameterOperatorParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            AttributeRule.newDoubleRule("weight"),
+            AttributeRule.newDoubleRule(WEIGHT),
+            AttributeRule.newBooleanRule(FORCE_GIBBS, true),
             new ElementRule(Parameter.class, 2, Integer.MAX_VALUE)
     };
 

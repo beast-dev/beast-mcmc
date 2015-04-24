@@ -106,6 +106,7 @@ public class SwapParameterOperator extends SimpleMCMCOperator {
             for (Parameter p : parameterList) {
                 sb.append(p.getParameterName()).append(".");
             }
+            parameterNames = sb.toString();
         }
         return parameterNames;
     }
@@ -117,8 +118,6 @@ public class SwapParameterOperator extends SimpleMCMCOperator {
     public String getPerformanceSuggestion() {
         return "No suggestions";
     }
-
-    //PRIVATE STUFF
 
     private final List<Parameter> parameterList;
     private String parameterNames = null;

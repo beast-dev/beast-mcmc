@@ -57,7 +57,7 @@ public interface MissingTraits {
             this.missingIndices = missingIndices;
 
             completelyMissing = new boolean[treeModel.getNodeCount()];
-            Arrays.fill(completelyMissing, 0, treeModel.getExternalNodeCount() - 1, false);
+            Arrays.fill(completelyMissing, 0, treeModel.getExternalNodeCount(), false);
             Arrays.fill(completelyMissing, treeModel.getExternalNodeCount(), treeModel.getNodeCount(), true); // All internal and root nodes are missing
         }
 

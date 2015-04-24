@@ -25,6 +25,7 @@
 
 package dr.inference.operators;
 
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.SwapOperatorParser;
 import dr.math.MathUtils;
@@ -59,7 +60,7 @@ public class SwapParameterOperator extends SimpleMCMCOperator {
     /**
      * swap all values in two random parameters.
      */
-    public final double doOperation() {
+    public final double doOperation() throws OperatorFailedException {
 
         int i = MathUtils.nextInt(parameterList.size());
         int j = i;
@@ -68,19 +69,35 @@ public class SwapParameterOperator extends SimpleMCMCOperator {
             j = MathUtils.nextInt(parameterList.size());
         }
 
-        Parameter a = parameterList.get(i);
-        Parameter b = parameterList.get(j);
+        final Parameter a = parameterList.get(i);
+        final Parameter b = parameterList.get(j);
+
+        Bounds<Double> aBounds = a.getBounds();
+        Bounds<Double> bBounds = b.getBounds();
+
 
         for (int k = 0; k < a.getDimension(); ++k) {
-            double tmp = a.getParameterValue(k);
-            a.setParameterValueQuietly(k, b.getParameterValue(k));
-            b.setParameterValueQuietly(k, tmp);
+            final double ak = a.getParameterValue(k);
+            final double bk = b.getParameterValue(k);
+
+            // Check bk outside of aBounds or ak outside of bBounds
+            if (isOutside(aBounds, bk, k) || isOutside(bBounds, ak, k)) {
+                throw new OperatorFailedException("proposed value outside boundaries");
+            }
+
+            // Swap
+            a.setParameterValueQuietly(k, bk);
+            b.setParameterValueQuietly(k, ak);
         }
 
         a.fireParameterChangedEvent();
         b.fireParameterChangedEvent();
 
         return 0.0;
+    }
+
+    private boolean isOutside(final Bounds<Double> bounds, final double x, final int index) {
+        return (x < bounds.getLowerLimit(index) || x > bounds.getUpperLimit(index));
     }
 
     private String getParameterNames() {

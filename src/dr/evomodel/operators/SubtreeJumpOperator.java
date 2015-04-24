@@ -90,20 +90,23 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         final double height = tree.getNodeHeight(iP);
 
         // get a list of all edges that intersect this height
-        final List<NodeRef> destinations = getIntersectingEdges(tree, i, height);
+        final List<NodeRef> destinations = getIntersectingEdges(tree, height);
 
         if (destinations.size() < 1) {
             throw new OperatorFailedException("no destinations to jump to");
         }
 
-        double[] weights = getDestinationWeights(tree, i, height, destinations);
+        double[] pdf = getDestinationProbabilities(tree, i, height, destinations);
 
         // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
         destinations.remove(i);
         destinations.remove(CiP);
 
         // pick uniformly from this list
-        final NodeRef j = destinations.get(pickDestination(weights, size));
+        int r = MathUtils.randomChoicePDF(pdf);
+
+        double forwardProbability = pdf[r];
+        final NodeRef j = destinations.get(r);
         final NodeRef jP = tree.getParent(j);
 
         tree.beginTreeEdit();
@@ -124,62 +127,75 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
 
         tree.endTreeEdit();
 
-        double[] reverseWeights = getDestinationWeights(tree, j, height, destinations);
+        double reverseProbability = getReverseProbability(tree, j, i, height, destinations);
 
-        logq = 0.0;
+        logq = Math.log(forwardProbability) - Math.log(reverseProbability);
 
         return logq;
     }
 
-    private int pickDestination(double[] weights, double size) {
-        double sum = 0.0;
-        for (int i = 0; i < weights.length; i++) {
-            weights[i] = 1.0 / Math.pow(weights[i], size);
-            sum += weights[i];
-            i++;
-        }
-        for (int i = 0; i < weights.length; i++) {
-            weights[i] /= sum;
-        }
-
-        return MathUtils.randomChoicePDF(weights);
-    }
-
     /**
-     * Gets a list of edges that subtend the given height, excluding the original node
+     * Gets a list of edges that subtend the given height
      * @param tree
-     * @param node0
      * @param height
      * @return
      */
-    private List<NodeRef> getIntersectingEdges(Tree tree, NodeRef node0, double height) {
+    private List<NodeRef> getIntersectingEdges(Tree tree, double height) {
 
         List<NodeRef> intersectingEdges = new ArrayList<NodeRef>();
 
         for (int i = 0; i < tree.getNodeCount(); i++) {
             final NodeRef node = tree.getNode(i);
             final NodeRef parent = tree.getParent(node);
-            if (node != node0 && parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
+            if (parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
                 intersectingEdges.add(node);
             }
         }
         return intersectingEdges;
     }
 
-    private double[] getDestinationWeights(Tree tree, NodeRef node0, double height, List<NodeRef> intersectingEdges) {
+    private double[] getDestinationProbabilities(Tree tree, NodeRef node0, double height, List<NodeRef> intersectingEdges) {
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
-        for (int i = 0; i < weights.length; i++) {
-            NodeRef node1 = intersectingEdges.get(i);
-            weights[i] = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
-            sum += weights[i];
+        int i = 0;
+        for (NodeRef node1 : intersectingEdges) {
+            if (node1 != node0) {
+                double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+                weights[i] = 1.0 / Math.pow(age, size);
+                sum += weights[i];
+            } else {
+                weights[i] = 0.0;
+            }
             i++;
         }
-        for (int i = 0; i < weights.length; i++) {
-            weights[i] /= sum;
+        for (int j = 0; j < weights.length; j++) {
+            weights[j] /= sum;
         }
 
         return weights;
+    }
+
+    private double getReverseProbability(Tree tree, NodeRef originalNode, NodeRef targetNode, double height, List<NodeRef> intersectingEdges) {
+        double[] weights = new double[intersectingEdges.size()];
+        double sum = 0.0;
+        int i = 0;
+        int originalIndex = -1;
+        for (NodeRef node1 : intersectingEdges) {
+            if (node1 != targetNode) {
+                double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
+                weights[i] = 1.0 / Math.pow(age, size);
+                sum += weights[i];
+
+                if (node1 == originalNode) {
+                    originalIndex = i;
+                }
+            } else {
+                weights[i] = 0.0;
+            }
+            i++;
+        }
+
+        return weights[originalIndex] /= sum;
     }
 
 

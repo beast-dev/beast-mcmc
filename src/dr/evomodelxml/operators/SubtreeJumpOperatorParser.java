@@ -41,7 +41,7 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
            " for tree " + treeModel.getId() );
         }
 
-        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, size, weight, mode);
+        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, mode);
 //        operator.setTargetAcceptanceProbability(targetAcceptance);
 
         return operator;

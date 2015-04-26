@@ -25,6 +25,8 @@
 
 package dr.app.beagle.multidimensionalscaling;
 
+import dr.math.distributions.NormalDistribution;
+
 /**
  * MultiDimensionalScalingCoreImpl
  *
@@ -112,12 +114,18 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
                 (0.5 * precision * sumOfSquaredResiduals);
 
         if (isLeftTruncated) {
+
+            if (!sumOfTruncationsKnown) {
+                if (!truncationsKnown) {
+                    computeSumOfTruncations();
+                } else {
+                    updateSumOfTruncations();
+                }
+                sumOfTruncationsKnown = true;
+            }
+
+            logLikelihood += truncationSum;
             throw new UnsupportedOperationException("Truncations not implemented");
-//                if (!truncationsKnown) {
-//                    calculateTruncations(precision);
-//                }
-//                truncationSum = calculateTruncationSum();
-//                logLikelihood -= truncationSum;
         }
 
         return logLikelihood;
@@ -125,20 +133,29 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
 
     @Override
     public void storeState() {
+        // Handle residuals
         storedSumOfSquaredResiduals = sumOfSquaredResiduals;
+        storedSquaredResiduals = null;
+
+        // Handle locations
         for (int i = 0; i < locationCount; i++) {
             System.arraycopy(locations[i], 0 , storedLocations[i], 0, embeddingDimension);
         }
+        updatedLocation = -1;
 
-        storedSquaredResiduals = null;
-
+        // Handle precision
         storedPrecision = precision;
 
-        updatedLocation = -1;
+        // Handle truncations
+        if (isLeftTruncated) {
+            storedTruncationSum = truncationSum;
+            storedTruncations = null;
+        }
     }
 
     @Override
     public void restoreState() {
+        // Handle residuals
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
         sumOfSquaredResidualsKnown = true;
 
@@ -148,20 +165,38 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
                 squaredResiduals[j][updatedLocation] = storedSquaredResiduals[j];
             }
         }
+        residualsKnown = true;
 
+        // Handle locations
         double[][] tmp1 = storedLocations;
         storedLocations = locations;
         locations = tmp1;
 
+        // Handle precision
         precision = storedPrecision;
 
-        residualsKnown = true;
+        // Handle truncations
+        if (isLeftTruncated) {
+            truncationSum = storedTruncationSum;
+            sumOfTruncationsKnown = true;
+
+            if (storedTruncations != null) {
+                System.arraycopy(storedTruncations, 0, truncations[updatedLocation], 0, locationCount);
+                for (int j = 0; j < locationCount; ++j) {
+                    truncations[j][updatedLocation] = storedTruncations[j];
+                }
+            }
+            truncationsKnown = true;
+        }
     }
 
     @Override
     public void makeDirty() {
         sumOfSquaredResidualsKnown = false;
         residualsKnown = false;
+
+        sumOfTruncationsKnown = false;
+        truncationsKnown = false;
     }
 
     protected void computeSumOfSquaredResiduals() {
@@ -182,6 +217,27 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
 
         residualsKnown = true;
         sumOfSquaredResidualsKnown = true;
+    }
+
+    protected void computeSumOfTruncations() {
+        final double sd = 1.0 / Math.sqrt(precision);
+
+        truncationSum = 0.0;
+        for (int i = 0; i < locationCount; i++) {
+
+            for (int j = 0; j < locationCount; j++) {
+                double squaredResidual = squaredResiduals[i][j]; // Note just written above, save transaction
+                double truncation = computeTruncation(squaredResidual, precision, sd);
+                truncations[i][j] =  truncation;
+                truncations[j][i] = truncation;
+                truncationSum += truncation;
+            }
+        }
+
+        truncationSum /= 2;
+
+        truncationsKnown = true;
+        sumOfTruncationsKnown = true;
     }
 
     protected void updateSumOfSquaredResiduals() {
@@ -206,6 +262,28 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
         sumOfSquaredResiduals += delta;
     }
 
+    protected void updateSumOfTruncations() {
+        final double sd = 1.0 / Math.sqrt(precision);
+        double delta = 0.0;
+
+        int i = updatedLocation;
+
+        storedTruncations = new double[locationCount];
+        System.arraycopy(truncations[i], 0, storedTruncations, 0, locationCount);
+
+        for (int j = 0; j < locationCount; j++) {
+            double squaredResidual = squaredResiduals[i][j];
+            double truncation = computeTruncation(squaredResidual, precision, sd);
+
+            delta += truncation - truncations[i][j];
+
+            truncations[i][j] = truncation;
+            truncations[j][i] = truncation;
+        }
+
+        truncationSum += delta;
+    }
+
     protected double calculateDistance(double[] X, double[] Y) {
         double sum = 0.0;
         for (int i = 0; i < embeddingDimension; i++) {
@@ -213,6 +291,10 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
             sum += difference * difference;
         }
         return Math.sqrt(sum);
+    }
+
+    protected double computeTruncation(double squaredResidual, double precision, double sd) {
+        return NormalDistribution.cdf(Math.sqrt(squaredResidual), 0.0, sd, true);
     }
 
 //    protected void calculateTruncations(double precision) {
@@ -262,9 +344,11 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     private double storedSumOfSquaredResiduals;
 
     private boolean truncationsKnown = false;
+    private boolean sumOfTruncationsKnown = false;
+
     private double truncationSum;
     private double storedTruncationSum;
-    private double[] truncations;
+    private double[][] truncations;
     private double[] storedTruncations;
 
 }

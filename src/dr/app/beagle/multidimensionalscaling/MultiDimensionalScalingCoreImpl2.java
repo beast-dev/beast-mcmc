@@ -42,10 +42,11 @@ package dr.app.beagle.multidimensionalscaling;
 public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScalingCore {
 
     @Override
-    public void initialize(int embeddingDimension, int locationCount) {
+    public void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated) {
         this.embeddingDimension = embeddingDimension;
         this.locationCount = locationCount;
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        this.isLeftTruncated = isLeftTruncated;
 
         observations = new double[locationCount][locationCount];
         squaredResiduals = new double[locationCount][locationCount];

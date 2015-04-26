@@ -38,7 +38,7 @@ public interface MultiDimensionalScalingCore {
     /**
      * initializes arrays.
      */
-    void initialize(int embeddingDimension, int locationCount);
+    void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated);
 
     /**
      * sets the observation data

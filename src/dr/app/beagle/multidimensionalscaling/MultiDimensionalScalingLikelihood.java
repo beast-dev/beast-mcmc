@@ -51,22 +51,33 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     public final static String MULTIDIMENSIONAL_SCALING_LIKELIHOOD = "multiDimensionalScalingLikelihood";
 
+    public MultiDimensionalScalingLikelihood(
+            int mdsDimension,
+            Parameter mdsPrecision,
+            MatrixParameter locationsParameter,
+            DataTable<double[]> dataTable) {
+        this(mdsDimension, mdsPrecision, locationsParameter, dataTable, false);
+    }
+
     /**
      * A simple constructor for a fully specified symmetrical data matrix
      * @param mdsDimension
      * @param mdsPrecision
      * @param locationsParameter
      * @param dataTable
+     * @param includeTruncation
      */
     public MultiDimensionalScalingLikelihood(
             int mdsDimension,
             Parameter mdsPrecision,
             MatrixParameter locationsParameter,
-            DataTable<double[]> dataTable) {
+            DataTable<double[]> dataTable,
+            boolean isLeftTruncated) {
 
         super(MULTIDIMENSIONAL_SCALING_LIKELIHOOD);
 
         this.mdsDimension = mdsDimension;
+        this.isLeftTruncated = isLeftTruncated;
 
         // construct a compact data table
         String[] rowLabels = dataTable.getRowLabels();
@@ -99,7 +110,8 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         }
 
-        initialize(mdsDimension, mdsPrecision, locationsParameter, rowLabels, observations, observationTypes);
+        initialize(mdsDimension, mdsPrecision, isLeftTruncated, locationsParameter,
+                rowLabels, observations, observationTypes);
     }
 
     private MultiDimensionalScalingCore getCore() {
@@ -124,13 +136,14 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     protected void initialize(
             final int mdsDimension,
             final Parameter mdsPrecision,
+            final boolean isLeftTruncated,
             final MatrixParameter locationsParameter,
             final String[] locationLabels,
             final double[] observations,
             final ObservationType[] observationTypes) {
 
         this.mdsCore = getCore();
-        this.mdsCore.initialize(mdsDimension, locationCount);
+        this.mdsCore.initialize(mdsDimension, locationCount, isLeftTruncated);
         this.locationLabels = locationLabels;
 
         this.locationsParameter = locationsParameter;
@@ -246,6 +259,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         public final static String LOCATIONS = "locations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
+        public static final String INCLUDE_TRUNCATION = "includeTruncation";
         public static final String USE_OLD = "useOld";
 
         public String getParserName() {
@@ -274,10 +288,13 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             boolean useOld = xo.getAttribute(USE_OLD, false);
 
+            boolean includeTrauncation = xo.getAttribute(INCLUDE_TRUNCATION, false);
+
             if (useOld) {
                 return new MultidimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
             } else {
-                return new MultiDimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
+                return new MultiDimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter,
+                        distanceTable, includeTrauncation);
             }
         }
 
@@ -298,7 +315,8 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
-                AttributeRule.newStringRule(USE_OLD, true),
+                AttributeRule.newBooleanRule(USE_OLD, true),
+                AttributeRule.newBooleanRule(INCLUDE_TRUNCATION, true),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 
@@ -309,6 +327,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private final int mdsDimension;
     private final int locationCount;
+    private final boolean isLeftTruncated;
 
     private MultiDimensionalScalingCore mdsCore;
 

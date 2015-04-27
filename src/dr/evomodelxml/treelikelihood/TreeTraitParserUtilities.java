@@ -141,21 +141,26 @@ public class TreeTraitParserUtilities {
         }
     }
 
-    public boolean hasIdenticalTraits(Parameter trait, int dim) {
+    public boolean hasIdenticalTraits(Parameter trait, List<Integer> missingIndices, int dim) {
         int numTraits = trait.getDimension() / dim;
 
-        DoubleArray[] traitArray = new DoubleArray[numTraits];
+        List<DoubleArray> traitArray = new ArrayList<DoubleArray>();
         for (int i = 0; i < numTraits; i++) {
-            double[] x = new double[dim];
-            for (int j = 0; j < dim; j++) {
-                x[j] = trait.getParameterValue(i * dim + j);
+
+            if (!missingIndices.contains(i * dim)) { // TODO Assumes completely missing traits
+                double[] x = new double[dim];
+                for (int j = 0; j < dim; j++) {
+                    x[j] = trait.getParameterValue(i * dim + j);
+                }
+                traitArray.add(new DoubleArray(x, i));
             }
-            traitArray[i] = new DoubleArray(x, i);
         }
-        Arrays.sort(traitArray);
+
+        DoubleArray[] sortedTraits = traitArray.toArray(new DoubleArray[0]);
+        Arrays.sort(sortedTraits);
         // Mark duplicates
-        for (int i = 1; i < numTraits; i++) {
-            if (traitArray[i].compareTo(traitArray[i - 1]) == 0) {
+        for (int i = 1; i < sortedTraits.length; i++) {
+            if (sortedTraits[i].compareTo(sortedTraits[i - 1]) == 0) {
                 return true;
             }
         }

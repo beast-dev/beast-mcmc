@@ -348,7 +348,7 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     }
 
     protected double computeTruncation(double squaredResidual, double precision, double sd) {
-        return NormalDistribution.cdf(Math.sqrt(squaredResidual), 0.0, sd, true);
+        return NormalDistribution.standardCDF(Math.sqrt(squaredResidual) / sd , true);
     }
 
 //    protected void calculateTruncations(double precision) {

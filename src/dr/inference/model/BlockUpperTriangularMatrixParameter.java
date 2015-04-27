@@ -137,7 +137,7 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
 
  //test if violates matrix condition
     boolean matrixCondition(int row, int col){
-            return row>=(getColumnDimension()-1-col);
+            return row>=(col);
     }
 
     public double getParameterValue(int id){

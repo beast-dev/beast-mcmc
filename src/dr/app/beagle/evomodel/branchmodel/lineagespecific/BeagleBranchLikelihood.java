@@ -45,8 +45,8 @@ public class BeagleBranchLikelihood implements Likelihood {
 
 		if(this.treeModel != null) {
 			
-		this.categoriesProvider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel( treeModel, categoriesParameter);
-//		this.categoriesProvider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categoriesParameter);
+//		this.categoriesProvider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel( treeModel, categoriesParameter);
+		this.categoriesProvider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categoriesParameter);
 		
 		}
 		

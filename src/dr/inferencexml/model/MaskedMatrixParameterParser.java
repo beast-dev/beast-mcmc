@@ -47,9 +47,9 @@ public class MaskedMatrixParameterParser extends AbstractXMLObjectParser {
         MatrixParameter matrix = (MatrixParameter) xo.getChild(MatrixParameter.class);
 
 
-        System.err.println("colDim " + matrix.getColumnDimension());
-        System.err.println("rowDim " + matrix.getRowDimension());
-        System.err.println("parDim " + matrix.getParameterCount());
+//        System.err.println("colDim " + matrix.getColumnDimension());
+//        System.err.println("rowDim " + matrix.getRowDimension());
+//        System.err.println("parDim " + matrix.getParameterCount());
 
 
         Parameter mask;

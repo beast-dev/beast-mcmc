@@ -64,6 +64,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
      */
     public MultidimensionalScalingLikelihood(
             int mdsDimension,
+            boolean isLeftTruncated,
             Parameter mdsPrecision,
             MatrixParameter locationsParameter,
             DataTable<double[]> dataTable) {
@@ -98,11 +99,12 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         }
 
-        initialize(mdsDimension, mdsPrecision, locationsParameter, rowLabels, observations, observationTypes, rowLocationIndices, columnLocationIndices);
+        initialize(mdsDimension, isLeftTruncated, mdsPrecision, locationsParameter, rowLabels, observations, observationTypes, rowLocationIndices, columnLocationIndices);
     }
 
     protected void initialize(
             final int mdsDimension,
+            final boolean isLeftTruncated,
             final Parameter mdsPrecision,
             final MatrixParameter locationsParameter,
             final String[] locationLabels,
@@ -184,7 +186,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.mdsPrecisionParameter = mdsPrecision;
         addVariable(mdsPrecision);
 
-        this.isLeftTruncated = false; // Re-normalize likelihood for strictly positive distances
+        this.isLeftTruncated = isLeftTruncated; // Re-normalize likelihood for strictly positive distances
 
         // make sure everything is calculated on first evaluation
         makeDirty();
@@ -602,7 +604,9 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new MultidimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
+            boolean isLeftTruncated = false;
+
+            return new MultidimensionalScalingLikelihood(mdsDimension, isLeftTruncated, mdsPrecision, locationsParameter, distanceTable);
         }
 
         //************************************************************************

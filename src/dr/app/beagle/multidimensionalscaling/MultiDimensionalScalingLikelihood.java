@@ -291,7 +291,8 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
             boolean includeTrauncation = xo.getAttribute(INCLUDE_TRUNCATION, false);
 
             if (useOld) {
-                return new MultidimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
+                System.err.println("USE OLD");
+                return new MultidimensionalScalingLikelihood(mdsDimension, includeTrauncation, mdsPrecision, locationsParameter, distanceTable);
             } else {
                 return new MultiDimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter,
                         distanceTable, includeTrauncation);

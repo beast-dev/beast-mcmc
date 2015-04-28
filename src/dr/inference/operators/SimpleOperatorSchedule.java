@@ -151,7 +151,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 				columnList.add(new OperatorSizeColumn(op.getOperatorName() + "_size", (CoercableMCMCOperator)op));
 			}
 		}
-		LogColumn[] columns = null;
+		LogColumn[] columns = new LogColumn[columnList.size()];
 		columns = columnList.toArray(columns);
 		return columns;
 	}

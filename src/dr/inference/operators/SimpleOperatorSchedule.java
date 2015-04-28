@@ -30,6 +30,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
 import dr.math.MathUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
 
@@ -142,24 +143,41 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	 * @return the log columns.
 	 */
 	public LogColumn[] getColumns() {
-		LogColumn[] columns = new LogColumn[getOperatorCount()];
+		List<LogColumn> columnList = new ArrayList<LogColumn>();
 		for (int i = 0; i < getOperatorCount(); i++) {
 			MCMCOperator op = getOperator(i);
-			columns[i] = new OperatorColumn(op.getOperatorName(), op);
+			columnList.add(new OperatorAcceptanceColumn(op.getOperatorName(), op));
+			if (op instanceof CoercableMCMCOperator) {
+				columnList.add(new OperatorSizeColumn(op.getOperatorName() + "_size", (CoercableMCMCOperator)op));
+			}
 		}
+		LogColumn[] columns = columnList.toArray(new LogColumn[columnList.size()]);
 		return columns;
 	}
 
-    private class OperatorColumn extends NumberColumn {
+    private class OperatorAcceptanceColumn extends NumberColumn {
 		private final MCMCOperator op;
 
-		public OperatorColumn(String label, MCMCOperator op) {
+		public OperatorAcceptanceColumn(String label, MCMCOperator op) {
 			super(label);
 			this.op = op;
 		}
 
 		public double getDoubleValue() {
 			return MCMCOperator.Utils.getAcceptanceProbability(op);
+		}
+	}
+
+	private class OperatorSizeColumn extends NumberColumn {
+		private final CoercableMCMCOperator op;
+
+		public OperatorSizeColumn(String label, CoercableMCMCOperator op) {
+			super(label);
+			this.op = op;
+		}
+
+		public double getDoubleValue() {
+			return op.getRawParameter();
 		}
 	}
 }

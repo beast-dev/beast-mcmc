@@ -49,9 +49,10 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     }
 
     @Override
-    public void initialize(int embeddingDimension, int locationCount) {
+    public void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated) {
         instance = singleton.initialize(embeddingDimension, locationCount, flags);
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        this.isLeftTruncated = isLeftTruncated;
     }
 
     @Override
@@ -73,6 +74,10 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     @Override
     public double calculateLogLikelihood() {
         double sumOfSquaredResiduals = singleton.calculateLogLikelihood(instance);  // Really just returns SSR
+
+        if (isLeftTruncated) {
+            throw new IllegalArgumentException("left truncation is not supported");
+        }
 
         return (0.5 * Math.log(precision) * observationCount) -
                 (0.5 * precision * sumOfSquaredResiduals);
@@ -98,5 +103,6 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private int observationCount;
     private double precision;
     private double storedPrecision;
+    private boolean isLeftTruncated;
 
 }

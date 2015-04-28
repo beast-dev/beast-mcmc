@@ -255,6 +255,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         initialize(
                 mdsDimension,
+                false,
                 mdsPrecision,
                 locationsParameter,
                 locationLabels,

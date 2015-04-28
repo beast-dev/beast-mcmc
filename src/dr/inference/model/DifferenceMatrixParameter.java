@@ -65,6 +65,17 @@ public class DifferenceMatrixParameter extends MatrixParameter implements
         return val1-val2;
     }
 
+    public int getParameterCount(){
+        int pcount1=1;
+        int pcount2=1;
+        if(parameter1 instanceof MatrixParameter){
+            pcount1=((MatrixParameter) parameter1).getParameterCount();
+        }
+        if(parameter2 instanceof MatrixParameter){
+            pcount2=((MatrixParameter) parameter2).getParameterCount();
+        }
+        return Math.max(pcount1, pcount2);
+    }
 
     @Override
     public Parameter getParameter(int index) {

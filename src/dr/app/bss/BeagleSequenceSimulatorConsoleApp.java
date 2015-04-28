@@ -28,13 +28,16 @@ package dr.app.bss;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.app.util.Arguments;
+import dr.app.util.Arguments.ArgumentException;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.io.Importer.ImportException;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -623,16 +626,34 @@ public class BeagleSequenceSimulatorConsoleApp {
             writer.println(alignment.toString());
             writer.close();
 
-        } catch (Exception e) {
+		} catch (ArgumentException e) {
 
-            System.out.println();
-            printUsage(arguments);
-            System.out.println();
-            System.out.println(e.getMessage());
-            e.printStackTrace();
-            System.exit(1);
+			System.out.println();
+			printUsage(arguments);
+			System.out.println();
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+			System.exit(1);
 
-        }// END: try-catch block
+		} catch (IOException e) {
+			
+			System.out.println();
+			printUsage(arguments);
+			System.out.println();
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+			System.exit(1);
+			
+		} catch (ImportException e) {
+		
+			System.out.println();
+			printUsage(arguments);
+			System.out.println();
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+			System.exit(1);
+		
+		}// END: try-catch block
 
     }// END: simulate
 

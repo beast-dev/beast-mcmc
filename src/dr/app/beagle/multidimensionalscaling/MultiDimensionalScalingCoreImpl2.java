@@ -144,15 +144,6 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
                 (0.5 * precision * sumOfSquaredResiduals);
 
         if (isLeftTruncated) {
-
-            sumOfTruncationsKnown = false;
-            truncationsKnown = false;
-
-            double savedTruncation = truncationSum;
-
-//            sumOfTruncationsKnown = false;
-//            truncationsKnown = false;
-
             if (!sumOfTruncationsKnown) {
 
                 if (!truncationsKnown) {
@@ -201,8 +192,10 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
             for (int j = 0; j < locationCount; j++) {
                 squaredResiduals[j][updatedLocation] = storedSquaredResiduals[j];
             }
+            residualsKnown = true;
+        } else {
+            residualsKnown = false;
         }
-        residualsKnown = true;
 
         // Handle locations
         double[][] tmp1 = storedLocations;
@@ -222,8 +215,10 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
                 for (int j = 0; j < locationCount; ++j) {
                     truncations[j][updatedLocation] = storedTruncations[j];
                 }
+                truncationsKnown = true;
+            } else {
+                truncationsKnown = false;
             }
-            truncationsKnown = true;
         }
     }
 
@@ -273,21 +268,22 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     }
 
     protected void computeSumOfTruncations() {
-        final double sd = 1.0 / Math.sqrt(precision);
+
+        final double oneOverSd = Math.sqrt(precision);
 
         truncationSum = 0.0;
         for (int i = 0; i < locationCount; i++) {
 
-            for (int j = i + 1; j < locationCount; j++) {
+            for (int j = 0; j < locationCount; j++) {
                 double squaredResidual = squaredResiduals[i][j]; // Note just written above, save transaction
-                double truncation = computeTruncation(squaredResidual, precision, sd);
+                double truncation = (i == j) ? 0.0 : computeTruncation(squaredResidual, precision, oneOverSd);
                 truncations[i][j] =  truncation;
                 truncations[j][i] = truncation;
                 truncationSum += truncation;
             }
         }
 
-//        truncationSum /= 2;
+        truncationSum /= 2;
 
         truncationsKnown = true;
         sumOfTruncationsKnown = true;
@@ -316,7 +312,7 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     }
 
     protected void updateSumOfTruncations() {
-        final double sd = 1.0 / Math.sqrt(precision);
+        final double oneOverSd = Math.sqrt(precision);
         double delta = 0.0;
 
         int i = updatedLocation;
@@ -327,7 +323,7 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
         for (int j = 0; j < locationCount; j++) {
 
             double squaredResidual = squaredResiduals[i][j];
-            double truncation = (i == j) ? 0.0 : computeTruncation(squaredResidual, precision, sd);
+            double truncation = (i == j) ? 0.0 : computeTruncation(squaredResidual, precision, oneOverSd);
 
             delta += truncation - truncations[i][j];
 
@@ -347,8 +343,8 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
         return Math.sqrt(sum);
     }
 
-    protected double computeTruncation(double squaredResidual, double precision, double sd) {
-        return NormalDistribution.standardCDF(Math.sqrt(squaredResidual) / sd , true);
+    protected double computeTruncation(double squaredResidual, double precision, double oneOverSd) {
+        return NormalDistribution.standardCDF(Math.sqrt(squaredResidual) * oneOverSd, true);
     }
 
 //    protected void calculateTruncations(double precision) {

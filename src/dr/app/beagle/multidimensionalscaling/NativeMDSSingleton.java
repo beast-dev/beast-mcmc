@@ -84,7 +84,9 @@ public class NativeMDSSingleton {
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 
-    public native double calculateLogLikelihood(int instance);
+    public native double getSumOfSquaredResiduals(int instance);
+
+    public native double getSumOfLogTruncations(int instance);
 
     public native void storeState(int instance);
 

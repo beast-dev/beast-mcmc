@@ -74,9 +74,9 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String ASCERTAINMENT = "ascertainedTaxon";
     public static final String EXCHANGEABLE_TIPS = "exchangeableTips";
     public static final String DRIFT_MODELS = "driftModels";
-    private BranchRateModel branchRateModel;
     public static final String STRENGTH_OF_SELECTION = "strengthOfSelection";
     public static final String OPTIMAL_TRAITS = "optimalTraits";
+    public static final String CONCATENATE_TRAIT = "concatenateTrait";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                                MultivariateTraitTree treeModel,
@@ -768,6 +768,21 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             TreeTraitParserUtilities utilities = new TreeTraitParserUtilities();
             String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
+            // TODO Concatenate multiple traits
+
+//            boolean concatenatedTraits = false;
+//
+//            for (int i = 0; i < xo.getChildCount(); ++i) {
+//                Object object = xo.getChild(i);
+//                if (((XMLObject)xo.getChild(i)).getName() == CONCATENATE_TRAIT) {
+//
+//
+//
+//                    concatenatedTraits = true;
+//                }
+//            }
+
+
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
                     utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
@@ -953,6 +968,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
                         new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
                 }, true),
+                new ElementRule(CONCATENATE_TRAIT, new XMLSyntaxRule[] {
+                        AttributeRule.newStringRule(TreeTraitParserUtilities.TRAIT_NAME),
+                        new ElementRule(Parameter.class),
+                }, 0, Integer.MAX_VALUE),
         };
 
 
@@ -1001,5 +1020,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected int dimTrait;
     protected int dim;
 
+    private BranchRateModel branchRateModel;
 }
 

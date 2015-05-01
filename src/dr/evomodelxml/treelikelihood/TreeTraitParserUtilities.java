@@ -271,6 +271,8 @@ public class TreeTraitParserUtilities {
             Map<Integer, Integer> randomSample = null;
             traitName = xo.getStringAttribute(TRAIT_NAME);
 
+            // TODO Handle multiple traits
+
             // Fill in attributeValues
             int taxonCount = treeModel.getTaxonCount();
             for (int i = 0; i < taxonCount; i++) {

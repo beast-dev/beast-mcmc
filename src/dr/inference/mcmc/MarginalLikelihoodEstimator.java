@@ -102,6 +102,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
                 MCMCOperator operator = schedule.getOperator(i);
                 if (operator instanceof GibbsOperator) {
                     ((GibbsOperator)operator).setPathParameter(pathParameter);
+                } else if (operator instanceof ApproximateGibbsOperator) {
+                    ((ApproximateGibbsOperator)operator).setPathParameter(pathParameter);
                 }
             }
 

@@ -46,7 +46,10 @@ public class BeagleBranchLikelihoodParser extends AbstractXMLObjectParser {
 			likelihoods.add(likelihood);
 		}
 
-		return new BeagleBranchLikelihood(treeModel, likelihoods, zParameter);
+		return null;
+//		new BeagleBranchLikelihood(
+////				treeModel, likelihoods, zParameter
+//				);
 	}
 
 	@Override

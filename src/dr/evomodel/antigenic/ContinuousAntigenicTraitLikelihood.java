@@ -244,6 +244,7 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
 
         initialize(
                 mdsDimension,
+                false,
                 mdsPrecision,
                 locationsParameter,
                 locationLabels,

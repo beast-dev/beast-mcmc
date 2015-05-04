@@ -44,14 +44,22 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private int instance = -1; // Get instance # via initialization
     private final long flags = 0;
 
+    private static final long LEFT_TRUNCATION = 1 << 5;
+
     public MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
     }
 
     @Override
-    public void initialize(int embeddingDimension, int locationCount) {
+    public void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated) {
+        long flags = this.flags;
+        if (isLeftTruncated) {
+            flags |= LEFT_TRUNCATION;
+        }
+
         instance = singleton.initialize(embeddingDimension, locationCount, flags);
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
+        this.isLeftTruncated = isLeftTruncated;
     }
 
     @Override
@@ -62,7 +70,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     @Override
     public void setParameters(double[] parameters) {
         precision = parameters[0];
-//        singleton.setParameters(instance, parameters); // Not necessary
+        singleton.setParameters(instance, parameters); // Necessary for truncation
     }
 
     @Override
@@ -72,10 +80,16 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     @Override
     public double calculateLogLikelihood() {
-        double sumOfSquaredResiduals = singleton.calculateLogLikelihood(instance);  // Really just returns SSR
+        double sumOfSquaredResiduals = singleton.getSumOfSquaredResiduals(instance);
 
-        return (0.5 * Math.log(precision) * observationCount) -
-                (0.5 * precision * sumOfSquaredResiduals);
+        double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
+                        (0.5 * precision * sumOfSquaredResiduals);
+
+        if (isLeftTruncated) {
+            logLikelihood -= singleton.getSumOfLogTruncations(instance);
+        }
+
+        return logLikelihood;
     }
 
     @Override
@@ -98,5 +112,6 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private int observationCount;
     private double precision;
     private double storedPrecision;
+    private boolean isLeftTruncated;
 
 }

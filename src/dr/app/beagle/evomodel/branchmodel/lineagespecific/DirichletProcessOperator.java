@@ -2,6 +2,9 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
 import org.apache.commons.math.MathException;
 
+import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -32,18 +35,18 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	
 	private Parameter categoriesParameter;
 //	private CountableRealizationsParameter countableRealizationsParameter;
-	private Parameter parameter;
 	
-//	private CompoundLikelihood likelihood;
-	private BeagleBranchLikelihood likelihood;
+	// Compound Parameter 
+	private CompoundParameter parameter;
+	
+	private CompoundLikelihood likelihood;
 	
 	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
 			Parameter categoriesParameter, 
 //			CountableRealizationsParameter countableRealizationsParameter,
-			Parameter parameter,
-//		    CompoundLikelihood likelihood;
-			BeagleBranchLikelihood likelihood,
+			CompoundParameter parameter,
+		    CompoundLikelihood likelihood,
 			int mhSteps,
 			double weight) {
 
@@ -86,7 +89,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	private void doOperate() throws MathException {
 
-		//TODO
 //		System.out.println(likelihood.toString());
 //		System.out.println("likelihood count: " + likelihood.getLikelihoodCount());
 		
@@ -170,9 +172,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 	private double getPartialLoglike(int index, double candidate) {
 
-//		DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
-		
-		Likelihood dl = (Likelihood) likelihood .getLikelihood(index);
+		DistributionLikelihood dl = (DistributionLikelihood) likelihood .getLikelihood(index);
 		
 		int category = (int) categoriesParameter.getParameterValue(index);
 		double value = parameter.getParameterValue(category);

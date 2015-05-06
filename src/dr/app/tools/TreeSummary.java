@@ -209,7 +209,7 @@ public class TreeSummary {
                 while (importer.hasTree()) {
                     Tree tree = importer.importNextTree();
 
-                    int state = Integer.MAX_VALUE;
+                    int state = totalTrees;
 
                     if (burninStates > 0) {
                         // if burnin has been specified in states, try to parse it out...

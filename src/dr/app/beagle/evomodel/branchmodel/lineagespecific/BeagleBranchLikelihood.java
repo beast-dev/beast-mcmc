@@ -111,14 +111,9 @@ public class BeagleBranchLikelihood implements Likelihood {
 	}//END: getLogLikelihood
 
 	
-	public double getBranchLoglikelihood(NodeRef node) throws Throwable {
+	public void fillTree() {
 		
-//		double loglikelihood = 0;
-		int count = 1;
-		double[] loglikelihood = new double [count];
-	
 		//---SET---//
-		
 		// gamma category rates
 		double[] categoryRates = siteRateModel.getCategoryRates();
 		beagle.setCategoryRates(categoryRates);
@@ -129,62 +124,92 @@ public class BeagleBranchLikelihood implements Likelihood {
 		 double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
 		 beagle.setStateFrequencies(0, frequencies);
 		
+			//---UPDATE---//
 		 
-//		 Utils.printArray(categoryRates);
-//		 Utils.printArray(categoryWeights);
-//		 Utils.printArray(frequencies);
-		 
-		//---UPDATE---//
-		
-		int nodeNum = node.getNumber();
-		matrixBufferHelper.flipOffset(nodeNum);
-		int branchIndex = nodeNum;
-		int[] childBufferIndices = new int[] { branchIndex };
-		
-		double branchRate = branchRateModel.getBranchRate(treeModel, node);
+		for(NodeRef node : treeModel.getNodes()) { 
+			if(!treeModel.isRoot(node)) {
+			
+			int nodeNum = node.getNumber();
+			matrixBufferHelper.flipOffset(nodeNum);
+			int branchIndex = nodeNum;
+			int[] childBufferIndices = new int[] { branchIndex };
+			
+			double branchRate = branchRateModel.getBranchRate(treeModel, node);
 
-		double branchLength = treeModel.getBranchLength(node);
-		double branchTime = branchLength * branchRate;// * siteRate;
-		
-		substitutionModelDelegate.updateTransitionMatrices(
-				beagle, //
-				childBufferIndices, //
-				new double[] { branchTime }, 
-				count //
-				);
-		
-		
-		int siteRateCategoryCount = siteRateModel.getCategoryCount();
-		int stateCount = freqModel.getDataType().getStateCount();
-		
-		double transitionMatrix[] = new double[siteRateCategoryCount
-		                       				* stateCount * stateCount];
+			double branchLength = treeModel.getBranchLength(node);
+			double branchTime = branchLength * branchRate;// * siteRate;
+			
+			substitutionModelDelegate.updateTransitionMatrices(
+					beagle, //
+					childBufferIndices, //
+					new double[] { branchTime }, 
+					1 //
+					);
+			
+			
+			int siteRateCategoryCount = siteRateModel.getCategoryCount();
+			int stateCount = freqModel.getDataType().getStateCount();
+			
+			double transitionMatrix[] = new double[siteRateCategoryCount
+			                       				* stateCount * stateCount];
+	
+			                       		beagle.getTransitionMatrix(branchIndex, //
+			                       				transitionMatrix //
+			                       		);
 
-		                       		beagle.getTransitionMatrix(branchIndex, //
-		                       				transitionMatrix //
-		                       		);
+			double[][] probabilities = new double[siteRateCategoryCount][stateCount
+					* stateCount];
+			for (int siteRateCat = 0; siteRateCat < siteRateCategoryCount; siteRateCat++) {
+	
+				System.arraycopy(transitionMatrix, siteRateCat * stateCount
+						* stateCount, probabilities[siteRateCat], 0, stateCount
+						* stateCount);
+	
+			}// END: i loop
+			         
+			 // TODO
+//			System.out.println("Index: " + branchIndex + " Branch length: " + branchLength
+//					+ " branch rate: " + branchRate + " branch time: "
+//					+ branchTime);
+//			 Utils.printArray(transitionMatrix);   
 
-		double[][] probabilities = new double[siteRateCategoryCount][stateCount
-				* stateCount];
-		for (int siteRateCat = 0; siteRateCat < siteRateCategoryCount; siteRateCat++) {
-
-			System.arraycopy(transitionMatrix, siteRateCat * stateCount
-					* stateCount, probabilities[siteRateCat], 0, stateCount
-					* stateCount);
-
-		}// END: i loop
-		         
-		 // TODO
-		System.out.println("Branch length: " + branchLength
-				+ " branch rate: " + branchRate + " branch time: "
-				+ branchTime);
-		 Utils.printArray(transitionMatrix);                      		
-		                       		
-		 
+			}// END: root check
+		}// END: nodes loop
+	}// END: methods
+	
+	public void runTest() {
+		
+ 		beagle.calculateEdgeLogLikelihoods(
+ 				new int[]{1}, // parentBufferIndices
+ 				new int[]{0}, //  childBufferIndices
+ 				new int[]{0}, // probabilityIndices
+	null, // int[] firstDerivativeIndices
+	null, // int[] secondDerivativeIndices 
+	new int[]{0}, //  categoryWeightsIndices
+	new int[]{0}, //  stateFrequenciesIndices
+	new int[]{Beagle.NONE}, // cumulativeScaleIndices
+	1, // count
+	new double[1], // 
+	null, // double[] outSumFirstDerivative, // 
+	null // double[]  outSumSecondDerivative //
+);
+		
+	}
+	
+	public double getBranchLoglikelihood(NodeRef node) throws Throwable {
+		
+		int count = 1;
+		double[] loglikelihood = new double [count];
+	
 		 //---CALCULATE---//
 		 
 			if(!treeModel.isRoot(node)) {
-		 
+
+			int nodeNum = node.getNumber();
+			matrixBufferHelper.flipOffset(nodeNum);
+			int branchIndex = nodeNum;
+			int[] childBufferIndices = new int[] { branchIndex };
+		
 			int cumulativeBufferIndex = Beagle.NONE;
 			int[] cumulativeScaleIndices = new int[] { cumulativeBufferIndex };
 		 
@@ -193,13 +218,16 @@ public class BeagleBranchLikelihood implements Likelihood {
 			matrixBufferHelper.flipOffset(nodeParentNum);
 			int[] parentBufferIndices = new int[] { nodeParentNum };
 			
+			//TODO
+			System.out.println("branchIndex: " + branchIndex +"category: " + substitutionModelDelegate.getMatrixIndex(branchIndex));
+			
 			int[] probabilityIndices = new int[] {substitutionModelDelegate.getMatrixIndex(branchIndex)};
 			
 			
-			// TODO
 			int[] categoryWeightsIndices = new int[] { 0 };
 			int[] stateFrequenciesIndices = new int[] { 0 };
 		
+			// TODO
 //			System.out.println(nodeNum + " " + nodeParentNum);
 //			System.out.println(substitutionModelDelegate.getMatrixIndex(branchIndex));
 			
@@ -220,11 +248,13 @@ public class BeagleBranchLikelihood implements Likelihood {
 			null // double[]  outSumSecondDerivative //
 	);
 		 
-			}
-		 
-		 
-		
-		
+		 		
+		 		
+		 		
+		 		
+		 		
+		 		
+		}// END: root check
 		
 		return 0;//loglikelihood[0];
 	}//END: getBranchLoglikelihood
@@ -233,6 +263,10 @@ public class BeagleBranchLikelihood implements Likelihood {
 	// ---PRIVATE---//
 	// ///////////////
 
+	public void finalizeBeagle() throws Throwable {
+		beagle.finalize();
+	}//
+	
 	private void loadBeagleInstance() {
 
 			this.substitutionModelDelegate = new SubstitutionModelDelegate(treeModel,
@@ -403,9 +437,7 @@ public class BeagleBranchLikelihood implements Likelihood {
           partitionsList.add(partition1);
 
           // feed to sequence simulator and generate data
-          BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
-//          		, sequenceLength
-          );
+          BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList );
           
           Alignment alignment = simulator.simulate(false, false);
 		  
@@ -420,17 +452,9 @@ public class BeagleBranchLikelihood implements Likelihood {
 		  BeagleBranchLikelihood bbl = new BeagleBranchLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, freqModel, branchRateModel);
 		  
 		  
-		  // TODO
-		for(NodeRef node : treeModel.getNodes()) { 
-			
-		  System.out.println(bbl.getBranchLoglikelihood( node ));
-		
-		}//END: test loop
-		  
-		  
-		  
-		  
-		  
+		  bbl.fillTree();
+			bbl.runTest();
+		      bbl.finalizeBeagle();
 		  
 		  
 		  

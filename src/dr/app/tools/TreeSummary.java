@@ -606,7 +606,7 @@ public class TreeSummary {
         }
 
         public Map<BitSet, Integer> getCladeCounts() {
-            Map<BitSet, Integer> countMap = new HashMap<>();
+            Map<BitSet, Integer> countMap = new HashMap<BitSet, Integer>();
 
             for (BitSet bits : cladeMap.keySet()) {
                 int count = getCladeCount(bits);

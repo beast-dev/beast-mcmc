@@ -209,7 +209,7 @@ public class TreeSummary {
                 while (importer.hasTree()) {
                     Tree tree = importer.importNextTree();
 
-                    int state = Integer.MAX_VALUE;
+                    int state = totalTrees;
 
                     if (burninStates > 0) {
                         // if burnin has been specified in states, try to parse it out...
@@ -606,7 +606,7 @@ public class TreeSummary {
         }
 
         public Map<BitSet, Integer> getCladeCounts() {
-            Map<BitSet, Integer> countMap = new HashMap<>();
+            Map<BitSet, Integer> countMap = new HashMap<BitSet, Integer>();
 
             for (BitSet bits : cladeMap.keySet()) {
                 int count = getCladeCount(bits);

@@ -162,7 +162,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         double[] ages = new double[intersectingEdges.size()];
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
-        double alpha = 1.0 / (size + 1.0);
+        double alpha = 1.0 / (size + 0.5);
         int i = 0;
         for (NodeRef node1 : intersectingEdges) {
             assert(node1 != node0);

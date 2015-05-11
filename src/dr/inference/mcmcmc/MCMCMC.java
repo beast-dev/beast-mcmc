@@ -376,54 +376,6 @@ public class MCMCMC implements Runnable {
         }
     }
 
-    public class BurninListener implements MarkovChainListener {
-
-        public BurninListener(long stateCount) {
-            this.stateCount = stateCount;
-            step = 0;
-            stepSize = (double) stateCount / 60.0;
-        }
-
-        /**
-         * Called to update the current model keepEvery states.
-         */
-        public synchronized void currentState(long state, Model currentModel) {
-
-            if (state == 0) {
-                System.out.println();
-                System.out.println("Pre-burnin (" + stateCount + " states)");
-                System.out.println("0              25             50             75            100");
-                System.out.println("|--------------|--------------|--------------|--------------|");
-                System.out.print("*");
-                step = 1;
-            }
-
-            if (state >= (int) Math.round(step * stepSize) && step <= 60) {
-                System.out.print("*");
-                System.out.flush();
-                step += 1;
-            }
-        }
-
-        /**
-         * Called when a new new best posterior state is found.
-         */
-        public synchronized void bestState(long state, Model bestModel) {
-        }
-
-        /**
-         * cleans up when the chain finishes (possibly early).
-         */
-        public synchronized void finished(long chainLength) {
-            System.out.println("*");
-            System.out.println();
-        }
-
-        long stateCount = 0;
-        double stepSize;
-        int step = 0;
-    }
-
     private final MarkovChainListener chainListener = new MarkovChainListener() {
 
         // MarkovChainListener interface *******************************************

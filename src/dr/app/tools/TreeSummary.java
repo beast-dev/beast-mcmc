@@ -64,6 +64,8 @@ public class TreeSummary {
     public TreeSummary(final int burninTrees,
                        final int burninStates,
                        double posteriorLimit,
+                       boolean createSummaryTree,
+                       boolean createCladeMap,
                        String inputFileName,
                        String outputFileName
     ) throws IOException {
@@ -155,23 +157,126 @@ public class TreeSummary {
         progressStream.println("Total unique clades: " + cladeSystem.getCladeMap().keySet().size());
         progressStream.println();
 
-        progressStream.println("Finding summary tree...");
+        if (createCladeMap) {
 
-//        MutableTree targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName /*, false*/));
+            Map<BitSet, Integer> cladeCountMap = cladeSystem.getCladeCounts();
 
-        Tree consensusTree = buildConsensusTree(cladeSystem);
+            System.out.println("No.\tSize\tCred\tMembers");
+            int n = 1;
+            for (BitSet bits : cladeCountMap.keySet()) {
+                System.out.print(n);
+                System.out.print("\t");
+                System.out.print(bits.cardinality());
+                System.out.print("\t");
+                System.out.print(cladeSystem.getCladeCredibility(bits));
+                System.out.print("\t");
+                System.out.println(cladeSystem.getCladeString(bits));
+                n++;
+            }
+            System.out.println();
 
-        progressStream.println("Writing consensus tree....");
 
-        try {
+            progressStream.println("Reading trees...");
+            progressStream.println("0              25             50             75            100");
+            progressStream.println("|--------------|--------------|--------------|--------------|");
+
+            stepSize = totalTrees / 60;
+
+            fileReader = new FileReader(inputFileName);
+            importer = new NexusImporter(fileReader);
             final PrintStream stream = outputFileName != null ?
                     new PrintStream(new FileOutputStream(outputFileName)) :
                     System.out;
 
-            new NexusExporter(stream).exportTree(consensusTree);
-        } catch (Exception e) {
-            System.err.println("Error writing consensus tree file: " + e.getMessage());
-            return;
+            stream.print("Clade");
+             n = 1;
+            for (BitSet bits : cladeCountMap.keySet()) {
+                stream.print("\t");
+                stream.print(n);
+                n++;
+            }
+            stream.println();
+
+            stream.print("State");
+            for (BitSet bits : cladeCountMap.keySet()) {
+                stream.print("\t");
+                stream.print(cladeSystem.getCladeCredibility(bits));
+            }
+            stream.println();
+
+            try {
+                totalTrees = 0;
+                while (importer.hasTree()) {
+                    Tree tree = importer.importNextTree();
+
+                    int state = totalTrees;
+
+                    if (burninStates > 0) {
+                        // if burnin has been specified in states, try to parse it out...
+                        String name = tree.getId().trim();
+
+                        if (name != null && name.length() > 0 && name.startsWith("STATE_")) {
+                            state = Integer.parseInt(name.split("_")[1]);
+                        }
+                    }
+
+                    if (totalTrees >= burninTrees && state >= burninStates) {
+                        // if either of the two burnin thresholds have been reached...
+
+                        if (burnin < 0) {
+                            // if this is the first time this point has been reached,
+                            // record the number of trees this represents for future use...
+                            burnin = totalTrees;
+                        }
+
+                        stream.print(state);
+
+                        Set<BitSet> cladeSet = cladeSystem.getCladeSet(tree);
+
+                        for (BitSet bits : cladeCountMap.keySet()) {
+                            stream.print("\t");
+                            stream.print(cladeSet.contains(bits) ? "1" : "0");
+                        }
+                        stream.println();
+
+                        totalTreesUsed += 1;
+                    }
+
+                    if (totalTrees > 0 && totalTrees % stepSize == 0) {
+                        progressStream.print("*");
+                        progressStream.flush();
+                    }
+                    totalTrees++;
+                }
+
+            } catch (Importer.ImportException e) {
+                System.err.println("Error Parsing Input Tree: " + e.getMessage());
+                return;
+            }
+            fileReader.close();
+            stream.close();
+            progressStream.println();
+            progressStream.println();
+        }
+        if (createSummaryTree) {
+            progressStream.println("Finding summary tree...");
+
+//        MutableTree targetTree = new FlexibleTree(summarizeTrees(burnin, cladeSystem, inputFileName /*, false*/));
+
+            Tree consensusTree = buildConsensusTree(cladeSystem);
+
+            progressStream.println("Writing consensus tree....");
+
+            try {
+                final PrintStream stream = outputFileName != null ?
+                        new PrintStream(new FileOutputStream(outputFileName)) :
+                        System.out;
+
+                new NexusExporter(stream).exportTree(consensusTree);
+            } catch (Exception e) {
+                System.err.println("Error writing consensus tree file: " + e.getMessage());
+                return;
+            }
         }
 
     }
@@ -252,7 +357,6 @@ public class TreeSummary {
                 Tree tree = importer.importNextTree();
 
                 if (counter >= burnin) {
-
                     cladeSystem.addSubTrees(tree);
                 }
                 if (counter > 0 && counter % stepSize == 0) {
@@ -425,6 +529,14 @@ public class TreeSummary {
             return clade.getCredibility();
         }
 
+        private int getCladeCount(BitSet bits) {
+            Clade clade = cladeMap.get(bits);
+            if (clade == null) {
+                return 0;
+            }
+            return clade.getCount();
+        }
+
         public Tree getBestTree(Tree consensusTree) {
             return new SimpleTree(getBestSubTree(consensusTree, consensusTree.getRoot()));
         }
@@ -457,6 +569,69 @@ public class TreeSummary {
 
         public Taxon getTaxon(int index) {
             return taxonList.getTaxon(index);
+        }
+
+        private BitSet getClades(Tree tree, NodeRef node, boolean includeTips, Set<BitSet> cladeSet) {
+
+            BitSet bits = new BitSet();
+
+            if (tree.isExternal(node)) {
+
+                int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+                bits.set(index);
+
+                if (includeTips) {
+                    cladeSet.add(bits);
+                }
+
+            } else {
+
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+
+                    NodeRef node1 = tree.getChild(node, i);
+
+                    bits.or(getClades(tree, node1, includeTips, cladeSet));
+                }
+
+                cladeSet.add(bits);
+            }
+
+            return bits;
+        }
+
+        public Set<BitSet> getCladeSet(Tree tree) {
+            Set<BitSet> cladeSet = new HashSet<BitSet>();
+            getClades(tree, tree.getRoot(), false, cladeSet);
+            return cladeSet;
+        }
+
+        public Map<BitSet, Integer> getCladeCounts() {
+            Map<BitSet, Integer> countMap = new HashMap<BitSet, Integer>();
+
+            for (BitSet bits : cladeMap.keySet()) {
+                int count = getCladeCount(bits);
+                if (count > 1) {
+                    countMap.put(bits, count);
+                }
+            }
+
+            return countMap;
+        }
+
+        public String getCladeString(BitSet bits) {
+            StringBuilder sb = new StringBuilder("{");
+            int index = bits.nextSetBit(0);
+            if (index != -1) {
+                sb.append(taxonList.getTaxon(index).getId());
+                index = bits.nextSetBit(index + 1);
+            }
+            while (index != -1) {
+                sb.append(",");
+                sb.append(taxonList.getTaxon(index).getId());
+                 index = bits.nextSetBit(index + 1);
+            }
+            sb.append("}");
+            return sb.toString();
         }
 
         class Clade {
@@ -571,6 +746,7 @@ public class TreeSummary {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.IntegerOption("burninTrees", "the number of trees to be considered as 'burn-in'"),
+                        new Arguments.Option("clademap", "show states of all clades over chain length"),
                         new Arguments.RealOption("limit", "the minimum posterior probability for a subtree to be included"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -604,6 +780,15 @@ public class TreeSummary {
 
         final String[] args2 = arguments.getLeftoverArguments();
 
+        boolean createCladeMap = false;
+        boolean createSummaryTree = true;
+
+        if (arguments.hasOption("clademap")) {
+            createCladeMap = true;
+            createSummaryTree = false;
+        }
+
+
         switch (args2.length) {
             case 2:
                 outputFileName = args2[1];
@@ -619,7 +804,7 @@ public class TreeSummary {
             }
         }
 
-        new TreeSummary(burninTrees, burninStates, posteriorLimit, inputFileName, outputFileName);
+        new TreeSummary(burninTrees, burninStates, posteriorLimit, createSummaryTree, createCladeMap, inputFileName, outputFileName);
 
         System.exit(0);
     }

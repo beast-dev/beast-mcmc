@@ -159,14 +159,16 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     }
 
     private double[] getDestinationProbabilities(Tree tree, NodeRef node0, double height, List<NodeRef> intersectingEdges) {
+        double[] ages = new double[intersectingEdges.size()];
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
+        double alpha = 1.0 / (size + 0.5);
         int i = 0;
         for (NodeRef node1 : intersectingEdges) {
             assert(node1 != node0);
 
-            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
-            weights[i] = 1.0 / Math.pow(age, 1.0 / size);
+            double age = ages[i] = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+            weights[i] = 1.0 / Math.pow(age, alpha);
             sum += weights[i];
             i++;
         }

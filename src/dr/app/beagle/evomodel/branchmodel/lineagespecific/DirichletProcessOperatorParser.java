@@ -1,5 +1,7 @@
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
+import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.xml.AbstractXMLObjectParser;
@@ -19,17 +21,17 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		DirichletProcessPrior dpp = (DirichletProcessPrior) xo.getChild(DirichletProcessPrior.class);
-//		CompoundLikelihood likelihood = (CompoundLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
-		BeagleBranchLikelihood likelihood = (BeagleBranchLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
+		CompoundLikelihood likelihood = (CompoundLikelihood) xo .getElementFirstChild(DATA_LOG_LIKELIHOOD);
 		Parameter categoriesParameter = (Parameter) xo.getElementFirstChild(  DirichletProcessPriorParser.CATEGORIES);
 //		CountableRealizationsParameter countableRealizationsParameter = (CountableRealizationsParameter) xo.getChild(CountableRealizationsParameter.class);
 		
-		Parameter uniquelyRealizedParameters = (Parameter) xo.getChild(Parameter.class);
+		CompoundParameter uniquelyRealizedParameters = (CompoundParameter) xo.getChild(CompoundParameter.class);
 		
 		int M = xo.getIntegerAttribute(MH_STEPS);
 		final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-		return new DirichletProcessOperator(dpp, categoriesParameter, uniquelyRealizedParameters,
+		return 
+		new DirichletProcessOperator(dpp, categoriesParameter, uniquelyRealizedParameters,
 //				countableRealizationsParameter, 
 				likelihood, M, weight);
 	}// END: parseXMLObject
@@ -37,9 +39,8 @@ public class DirichletProcessOperatorParser extends AbstractXMLObjectParser {
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
 		return new XMLSyntaxRule[] {
-
-				new ElementRule(DirichletProcessPrior.class, false),
-		new ElementRule(Parameter.class, false), //
+		new ElementRule(DirichletProcessPrior.class, false),
+		new ElementRule(CompoundParameter.class, false), //
 		AttributeRule.newDoubleRule(MCMCOperator.WEIGHT) //
 		};
 

@@ -349,6 +349,9 @@ public class BeastMain {
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
+                        new Arguments.StringOption("debug_state_file", "FILENAME", "Specify a filename to load a debug state from"),
+                        new Arguments.IntegerOption("debug_write_state", "Specify a state at which to write a debug state file"),
+
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
@@ -514,6 +517,16 @@ public class BeastMain {
                 System.err.println("The random number seed should be > 0");
                 System.exit(1);
             }
+        }
+
+        if (arguments.hasOption("debug_state_file")) {
+            String debugStateFile = arguments.getStringOption("debug_state_file");
+            System.setProperty(MCMC.DEBUG_STATE_FILE, debugStateFile);
+        }
+
+        if (arguments.hasOption("debug_write_state")) {
+            int debugWriteState = arguments.getIntegerOption("debug_write_state");
+            System.setProperty(MCMC.DEBUG_WRITE_STATE, Integer.toString(debugWriteState));
         }
 
         if (useMPI) {

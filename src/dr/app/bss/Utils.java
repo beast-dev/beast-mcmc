@@ -1078,6 +1078,15 @@ public class Utils {
 		}
 	}// END: print2DArray
 
+	public static void print2DArray(int[][] array) {
+		for (int row = 0; row < array.length; row++) {
+			for (int col = 0; col < array[row].length; col++) {
+				System.out.print(array[row][col] + " ");
+			}
+			System.out.print("\n");
+		}
+	}// END: print2DArray
+	
 	public static void print2Arrays(int[] array1, double[] array2, int nrow) {
 		for (int row = 0; row < nrow; row++) {
 			System.out.print(array1[row] + " " + array2[row] + " ");
@@ -1482,5 +1491,6 @@ public class Utils {
 
 		return string;
 	}
+
 
 }// END: class

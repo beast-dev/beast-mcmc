@@ -176,9 +176,9 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         // using multiple instances of BEAGLE...
 
-        if (!(patternList instanceof SitePatterns)) {
-            throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with BEAUti-selected codon partitioning.");
-        }
+//        if (!(patternList instanceof SitePatterns)) {
+//            throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with BEAUti-selected codon partitioning.");
+//        }
 
         if (tipStatesModel != null) {
             throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
@@ -187,7 +187,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         List<Likelihood> likelihoods = new ArrayList<Likelihood>();
         for (int i = 0; i < instanceCount; i++) {
 
-            Patterns subPatterns = new Patterns((SitePatterns)patternList, 0, 0, 1, i, instanceCount);
+            Patterns subPatterns = new Patterns(patternList, i, instanceCount);
 
             AbstractTreeLikelihood treeLikelihood = createTreeLikelihood(
                     subPatterns,

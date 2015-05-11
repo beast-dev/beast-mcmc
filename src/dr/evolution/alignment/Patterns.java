@@ -114,7 +114,25 @@ public class Patterns implements PatternList {
      */
     public Patterns(SiteList siteList, int from, int to, int every, int subSet, int subSetCount) {
         addPatterns(siteList, from, to, every);
+        subSetPatterns(subSet, subSetCount);
+    }
 
+    /**
+     * Constructor
+     */
+    public Patterns(PatternList patternList) {
+        addPatterns(patternList);
+    }
+
+    /**
+     * Constructor
+     */
+    public Patterns(PatternList patternList, int subSet, int subSetCount) {
+        addPatterns(patternList);
+        subSetPatterns(subSet, subSetCount);
+    }
+
+    private void subSetPatterns(int subSet, int subSetCount) {
         if (subSetCount > 0) {
             // if we are using subSetCount then cut it down to only the subset we want...
             int div = patternCount / subSetCount;
@@ -141,13 +159,6 @@ public class Patterns implements PatternList {
 
             patternCount = newPatternCount;
         }
-    }
-
-    /**
-     * Constructor
-     */
-    public Patterns(PatternList patternList) {
-        addPatterns(patternList);
     }
 
     /**

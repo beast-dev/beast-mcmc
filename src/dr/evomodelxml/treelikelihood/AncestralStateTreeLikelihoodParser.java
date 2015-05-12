@@ -31,7 +31,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        throw new XMLParseException("Ancestral state functionality is only support when using the BEAGLE library.\nAvailable from http://http://beagle-lib.googlecode.com/");
+        throw new XMLParseException("Ancestral state functionality is only support when using the BEAGLE library.\nAvailable from http://github.com/beagle-dev/beagle-lib/");
 
 //        boolean useAmbiguities = xo.getAttribute(TreeLikelihoodParser.USE_AMBIGUITIES, false);
 //        boolean storePartials = xo.getAttribute(TreeLikelihoodParser.STORE_PARTIALS, true);

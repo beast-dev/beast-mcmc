@@ -117,7 +117,7 @@ public class BeastRemote extends BeastMain {
 					"<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
 					"<p><a href=\"http://evolve.zoo.ox.ac.uk/beast/\">http://evolve.zoo.ox.ac.uk/beast/</a></p>" +
 					"<p>Source code distributed under the GNU LGPL:<br>" +
-					"<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
+					"<a href=\"http://github.com/beast-dev/beast-mcmc/\">http://github.com/beast-dev/beast-mcmc/</a></p>" +
 					"<p>Additional programming by:<br>" +
 					"Roald Forsberg, Gerton Lunter, Sidney Markowitz, Oliver Pybus</p>" +
 					"<p>Thanks to Korbinian Strimmer for use of his code</p>" +

@@ -88,7 +88,7 @@ public class BeastVersion implements Version {
                 "\thttp://beast.bio.ed.ac.uk",
                 "",
                 "Source code distributed under the GNU Lesser General Public License:",
-                "\thttp://code.google.com/p/beast-mcmc",
+                "\thttp://github.com/beast-dev/beast-mcmc",
                 "",
                 "BEAST developers:",
                 "\tAlex Alekseyenko, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, Matthew Hall,",
@@ -112,7 +112,7 @@ public class BeastVersion implements Version {
                         "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
                         "<p><a href=\"http://beast.bio.ed.ac.uk\">http://beast.bio.ed.ac.uk</a></p>" +
                         "<p>Source code distributed under the GNU LGPL:<br>" +
-                        "<a href=\"http://code.google.com/p/beast-mcmc\">http://code.google.com/p/beast-mcmc</a></p>" +
+                        "<a href=\"http://github.com/beast-dev/beast-mcmc\">http://github.com/beast-dev/beast-mcmc</a></p>" +
                         "<p>BEAST developers:<br>" +
                         "Alex Alekseyenko, Guy Baele, Trevor Bedford, Filip Bielejec, Erik Bloomquist, Matthew Hall,<br>"+
                         "Joseph Heled, Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,<br>"+

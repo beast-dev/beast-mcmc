@@ -136,7 +136,8 @@ public class CountableModelMixtureBranchRates extends AbstractBranchRateModel im
                 } else if (object == null) {
                     fireModelChanged(null, index);
                 } else {
-                    throw new IllegalArgumentException("Unknown object component!");
+//                    throw new IllegalArgumentException("Unknown object component!");
+                    fireModelChanged();
                 }
             } else {
                 throw new IllegalArgumentException("Unknown model component!");
@@ -145,11 +146,13 @@ public class CountableModelMixtureBranchRates extends AbstractBranchRateModel im
     }
 
     private AbstractBranchRateModel findModel(Model model) {
-        int index = randomEffectsModels.indexOf(model);
-        if (index != -1) {
-            return randomEffectsModels.get(index);
+        if (randomEffectsModels != null) {
+            int index = randomEffectsModels.indexOf(model);
+            if (index != -1) {
+                return randomEffectsModels.get(index);
+            }
         }
-        index = fixedEffectsModels.indexOf(model);
+        int index = fixedEffectsModels.indexOf(model);
         if (index != -1) {
             return fixedEffectsModels.get(index);
         }
@@ -177,6 +180,7 @@ public class CountableModelMixtureBranchRates extends AbstractBranchRateModel im
         assert !tree.isRoot(node) : "root node doesn't have a rate!";
 
         int rateCategory = rateCategories.getBranchCategory(tree, node);
+
         AbstractBranchRateModel fixedModel = fixedEffectsModels.get(rateCategory);
         double effect = fixedModel.getBranchRate(tree, node);
 

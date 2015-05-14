@@ -125,6 +125,12 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
             categoryCount = count;
             Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, categoryParameter.getDimension());
             categoryParameter.addBounds(bound);
+
+            for (int i = 0; i < categoryParameter.getDimension(); ++i) {
+                if (categoryParameter.getParameterValue(i) >= categoryCount) {
+                    categoryParameter.setParameterValue(i, categoryCount - 1);
+                }
+            }
         }
 
         @Override

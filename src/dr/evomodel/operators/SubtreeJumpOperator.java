@@ -182,12 +182,13 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     private double getReverseProbability(Tree tree, NodeRef originalNode, NodeRef targetNode, double height, List<NodeRef> intersectingEdges) {
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
+        double alpha = 1.0 / (size + 0.5);
         int i = 0;
         int originalIndex = -1;
         for (NodeRef node1 : intersectingEdges) {
             if (node1 != targetNode) {
                 double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
-                weights[i] = 1.0 / Math.pow(age, 1.0 / size);
+                weights[i] = 1.0 / Math.pow(age, alpha);
                 sum += weights[i];
 
                 if (node1 == originalNode) {

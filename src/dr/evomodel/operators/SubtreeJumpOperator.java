@@ -159,16 +159,14 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     }
 
     private double[] getDestinationProbabilities(Tree tree, NodeRef node0, double height, List<NodeRef> intersectingEdges) {
-        double[] ages = new double[intersectingEdges.size()];
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
-        double alpha = 1.0 / (size + 0.5);
         int i = 0;
         for (NodeRef node1 : intersectingEdges) {
             assert(node1 != node0);
 
-            double age = ages[i] = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
-            weights[i] = 1.0 / Math.pow(age, alpha);
+            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+            weights[i] = getJumpWeight(age, size);
             sum += weights[i];
             i++;
         }
@@ -182,19 +180,18 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     private double getReverseProbability(Tree tree, NodeRef originalNode, NodeRef targetNode, double height, List<NodeRef> intersectingEdges) {
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
+
         int i = 0;
         int originalIndex = -1;
         for (NodeRef node1 : intersectingEdges) {
-            if (node1 != targetNode) {
-                double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
-                weights[i] = 1.0 / Math.pow(age, 1.0 / size);
-                sum += weights[i];
+            assert(node1 != targetNode);
 
-                if (node1 == originalNode) {
-                    originalIndex = i;
-                }
-            } else {
-                weights[i] = 0.0;
+            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
+            weights[i] = getJumpWeight(age, size);
+            sum += weights[i];
+
+            if (node1 == originalNode) {
+                originalIndex = i;
             }
             i++;
         }
@@ -202,6 +199,12 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         return weights[originalIndex] /= sum;
     }
 
+    private final static double CONSTANT = 0.5;
+
+    private double getJumpWeight(double age, double size) {
+        double alpha = 1.0 / (size + CONSTANT);
+        return 1.0 / Math.pow(age, alpha);
+    }
 
     public double getSize() {
         return size;

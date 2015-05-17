@@ -61,18 +61,16 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         this.size = size;
         this.mode = mode;
     }
-
+    double alpha = Math.log(size); // now alpha lives on the real line
     /**
      * Do a subtree jump move.
      *
      * @return the log-transformed hastings ratio
      */
     public double doOperation() throws OperatorFailedException {
-
         double logq;
 
         final NodeRef root = tree.getRoot();
-        final double oldTreeHeight = tree.getNodeHeight(root);
 
         NodeRef i;
 
@@ -163,7 +161,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
             assert(node1 != node0);
 
             double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
-            weights[i] = getJumpWeight(age, size);
+            weights[i] = getJumpWeight(age, alpha);
             sum += weights[i];
             i++;
         }
@@ -184,7 +182,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
             assert(node1 != targetNode);
 
             double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
-            weights[i] = getJumpWeight(age, size);
+            weights[i] = getJumpWeight(age, alpha);
             sum += weights[i];
 
             if (node1 == originalNode) {
@@ -196,8 +194,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     }
 
 
-    private double getJumpWeight(double age, double size) {
-        double alpha = Math.log(size); // now alpha lives on the real line
+    private double getJumpWeight(double age, double alpha) {
         return Math.pow(age, alpha);
     }
 

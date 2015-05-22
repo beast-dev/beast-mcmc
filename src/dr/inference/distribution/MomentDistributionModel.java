@@ -1,10 +1,7 @@
 package dr.inference.distribution;
 
 import com.sun.tools.doclets.internal.toolkit.util.SourceToHTMLConverter;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.inferencexml.distribution.MomentDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -13,7 +10,7 @@ import dr.math.distributions.RandomGenerator;
 /**
  * Created by max on 5/13/15.
  */
-public class MomentDistributionModel extends AbstractModel implements ParametricMultivariateDistributionModel, RandomGenerator {
+public class MomentDistributionModel extends AbstractModelLikelihood implements ParametricMultivariateDistributionModel, RandomGenerator {
 
     public MomentDistributionModel(Parameter mean, Parameter precision, Parameter cutoff) {
         super(MomentDistributionModelParser.MOMENT_DISTRIBUTION_MODEL);
@@ -148,5 +145,20 @@ public class MomentDistributionModel extends AbstractModel implements Parametric
          return logPdf(((Parameter) x).getParameterValues());
         else
             return 0;
+    }
+
+    @Override
+    public Model getModel() {
+        return null;
+    }
+
+    @Override
+    public double getLogLikelihood() {
+        return 0;
+    }
+
+    @Override
+    public void makeDirty() {
+
     }
 }

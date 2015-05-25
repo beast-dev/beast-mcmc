@@ -228,6 +228,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     @Override
     protected void acceptState() {
+        mdsCore.acceptState();
         // do nothing
     }
 

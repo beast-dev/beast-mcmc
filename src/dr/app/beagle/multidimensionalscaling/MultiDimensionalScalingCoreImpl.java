@@ -173,6 +173,11 @@ public class MultiDimensionalScalingCoreImpl implements MultiDimensionalScalingC
 
     }
 
+    @Override
+    public void acceptState() {
+        // Do nothing
+    }
+
     protected void computeSumOfSquaredResiduals() {
         sumOfSquaredResiduals = 0.0;
         for (int i = 0; i < locationCount; i++) {

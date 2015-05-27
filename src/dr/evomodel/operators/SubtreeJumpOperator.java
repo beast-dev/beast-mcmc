@@ -44,226 +44,216 @@ import java.util.List;
  */
 public class SubtreeJumpOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
-    private TreeModel tree = null;
-    private double size = 1;
-    private CoercionMode mode = CoercionMode.DEFAULT;
+	private TreeModel tree = null;
+	private double size = 1;
+	private CoercionMode mode = CoercionMode.DEFAULT;
 
-    /**
-     * Constructor
-     * @param tree
-     * @param weight
-     * @param size a non-negative value used as a power coeficient for the relatedness weights
-     * @param mode
-     */
-    public SubtreeJumpOperator(TreeModel tree, double weight, double size, CoercionMode mode) {
-        this.tree = tree;
-        setWeight(weight);
-        this.size = size;
-        this.mode = mode;
-    }
-    /**
-     * Do a subtree jump move.
-     *
-     * @return the log-transformed hastings ratio
-     */
-    public double doOperation() throws OperatorFailedException {
-        double logq;
-        final double alpha = Math.log(size); // now alpha lives on the real line
-        final NodeRef root = tree.getRoot();
-        
-        double[] allHeights = new double[tree.getNodeCount()]; // storing the heights
-        for (int k = 0; k < tree.getNodeCount(); k++) {
-            allHeights[k] = tree.getNodeHeight(tree.getNode(k));
-        }
-        
-       double  maxHeight = allHeights[0];
-       for (int j = 1; j < tree.getNodeCount(); j++) { // finding the maximum
-    	   if(allHeights[j]>maxHeight){
-    		   maxHeight = allHeights[j];
-    	   }
-       }
-       
-        NodeRef i;
-        NodeRef iP = null;
-        NodeRef CiP = null;
-        NodeRef PiP = null;
-        double height = Double.NaN;
-        List<NodeRef> destinations = null;
+	/**
+	 * Constructor
+	 * @param tree
+	 * @param weight
+	 * @param size a non-negative value used as a power coeficient for the relatedness weights
+	 * @param mode
+	 */
+	public SubtreeJumpOperator(TreeModel tree, double weight, double size, CoercionMode mode) {
+		this.tree = tree;
+		setWeight(weight);
+		this.size = size;
+		this.mode = mode;
+	}
+	/**
+	 * Do a subtree jump move.
+	 *
+	 * @return the log-transformed hastings ratio
+	 */
+	public double doOperation() throws OperatorFailedException {
+		double logq;
+		final double alpha = Math.log(size); // now alpha lives on the real line
+		final NodeRef root = tree.getRoot();
 
-        boolean destinationFound = false;
-        do {
-            // 1. choose a random node avoiding root or child of root
-            i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
+		double  maxHeight = tree.getNodeHeight(root);
 
-            if (root == i || tree.getParent(i) == root) {
-                continue;
-            }
+		NodeRef i;
+		NodeRef iP = null;
+		NodeRef CiP = null;
+		NodeRef PiP = null;
+		double height = Double.NaN;
+		List<NodeRef> destinations = null;
 
-            iP = tree.getParent(i);
-            CiP = getOtherChild(tree, iP, i);
-            PiP = tree.getParent(iP);
+		boolean destinationFound = false;
+		do {
+			// 1. choose a random node avoiding root or child of root
+			i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
 
-            // get the height of the parent
-            height = tree.getNodeHeight(iP);
+			if (root == i || tree.getParent(i) == root) {
+				continue;
+			}
 
-            // get a list of all edges that intersect this height
-            destinations = getIntersectingEdges(tree, height);
+			iP = tree.getParent(i);
+			CiP = getOtherChild(tree, iP, i);
+			PiP = tree.getParent(iP);
 
-            if (destinations.size() > 0) {
-                destinationFound = true;
-            }
+			// get the height of the parent
+			height = tree.getNodeHeight(iP);
 
-        } while (!destinationFound);
+			// get a list of all edges that intersect this height
+			destinations = getIntersectingEdges(tree, height);
 
-        double[] pdf = getDestinationProbabilities(tree, i, height, maxHeight, destinations, alpha);
+			if (destinations.size() > 0) {
+				destinationFound = true;
+			}
 
-        // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
-        destinations.remove(i);
-        destinations.remove(CiP);
+		} while (!destinationFound);
 
-        // pick uniformly from this list
-        int r = MathUtils.randomChoicePDF(pdf);
+		double[] pdf = getDestinationProbabilities(tree, i, height, maxHeight, destinations, alpha);
 
-        double forwardProbability = pdf[r];
-        final NodeRef j = destinations.get(r);
-        final NodeRef jP = tree.getParent(j);
+		// remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
+		destinations.remove(i);
+		destinations.remove(CiP);
 
-        tree.beginTreeEdit();
+		// pick uniformly from this list
+		int r = MathUtils.randomChoicePDF(pdf);
 
-        // remove the parent of i by connecting its sibling to its grandparent.
-        tree.removeChild(iP, CiP);
-        tree.removeChild(PiP, iP);
-        tree.addChild(PiP, CiP);
+		double forwardProbability = pdf[r];
+		final NodeRef j = destinations.get(r);
+		final NodeRef jP = tree.getParent(j);
 
-        // remove destination edge j from its parent
-        tree.removeChild(jP, j);
+		tree.beginTreeEdit();
 
-        // add destination edge to the parent of i
-        tree.addChild(iP, j);
+		// remove the parent of i by connecting its sibling to its grandparent.
+		tree.removeChild(iP, CiP);
+		tree.removeChild(PiP, iP);
+		tree.addChild(PiP, CiP);
 
-        // and add the parent of i as a child of the former parent of j
-        tree.addChild(jP, iP);
+		// remove destination edge j from its parent
+		tree.removeChild(jP, j);
 
-        tree.endTreeEdit();
+		// add destination edge to the parent of i
+		tree.addChild(iP, j);
 
-        final List<NodeRef> reverseDestinations = getIntersectingEdges(tree, height);
-        double reverseProbability = getReverseProbability(tree, CiP, j, height, maxHeight, reverseDestinations, alpha);
-        logq = Math.log(forwardProbability) - Math.log(reverseProbability);
-        return logq;
-    }
+		// and add the parent of i as a child of the former parent of j
+		tree.addChild(jP, iP);
 
-    /**
-     * Gets a list of edges that subtend the given height
-     * @param tree
-     * @param height
-     * @return
-     */
-    private List<NodeRef> getIntersectingEdges(Tree tree, double height) {
+		tree.endTreeEdit();
 
-        List<NodeRef> intersectingEdges = new ArrayList<NodeRef>();
+		final List<NodeRef> reverseDestinations = getIntersectingEdges(tree, height);
+		double reverseProbability = getReverseProbability(tree, CiP, j, height, maxHeight, reverseDestinations, alpha);
+		logq = Math.log(forwardProbability) - Math.log(reverseProbability);
+		return logq;
+	}
 
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            final NodeRef node = tree.getNode(i);
-            final NodeRef parent = tree.getParent(node);
+	/**
+	 * Gets a list of edges that subtend the given height
+	 * @param tree
+	 * @param height
+	 * @return
+	 */
+	private List<NodeRef> getIntersectingEdges(Tree tree, double height) {
 
-            // The original node and its sibling will not be included because their height is exactly equal to the target height
-            if (parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
-                intersectingEdges.add(node);
-            }
-        }
-        return intersectingEdges;
-    }
+		List<NodeRef> intersectingEdges = new ArrayList<NodeRef>();
 
-    private double[] getDestinationProbabilities(Tree tree, NodeRef node0, double height, double maxAge, List<NodeRef> intersectingEdges, double alpha) {
-        double[] weights = new double[intersectingEdges.size()];
-        double sum = 0.0;
-        int i = 0;
-        for (NodeRef node1 : intersectingEdges) {
-            assert(node1 != node0);
+		for (int i = 0; i < tree.getNodeCount(); i++) {
+			final NodeRef node = tree.getNode(i);
+			final NodeRef parent = tree.getParent(node);
 
-            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
-            age = age/maxAge;
-            weights[i] = getJumpWeight(age, alpha);
-            sum += weights[i];
-            i++;
-        }
-        for (int j = 0; j < weights.length; j++) {
-            weights[j] /= sum;
-        }
+			// The original node and its sibling will not be included because their height is exactly equal to the target height
+			if (parent != null && tree.getNodeHeight(node) < height && tree.getNodeHeight(parent) > height) {
+				intersectingEdges.add(node);
+			}
+		}
+		return intersectingEdges;
+	}
 
-        return weights;
-    }
+	private double[] getDestinationProbabilities(Tree tree, NodeRef node0, double height, double maxAge, List<NodeRef> intersectingEdges, double alpha) {
+		double[] weights = new double[intersectingEdges.size()];
+		double sum = 0.0;
+		int i = 0;
+		for (NodeRef node1 : intersectingEdges) {
+			assert(node1 != node0);
 
-    private double getReverseProbability(Tree tree, NodeRef originalNode, NodeRef targetNode, double height, double maxAge, List<NodeRef> intersectingEdges, double alpha) {
-        double[] weights = new double[intersectingEdges.size()];
-        double sum = 0.0;
+			double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+			age = age/maxAge;
+			weights[i] = getJumpWeight(age, alpha);
+			sum += weights[i];
+			i++;
+		}
+		for (int j = 0; j < weights.length; j++) {
+			weights[j] /= sum;
+		}
 
-        int i = 0;
-        int originalIndex = -1;
-        for (NodeRef node1 : intersectingEdges) {
-            assert(node1 != targetNode);
+		return weights;
+	}
 
-            double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
-            age = age/maxAge;
-            weights[i] = getJumpWeight(age, alpha);
-            sum += weights[i];
+	private double getReverseProbability(Tree tree, NodeRef originalNode, NodeRef targetNode, double height, double maxAge, List<NodeRef> intersectingEdges, double alpha) {
+		double[] weights = new double[intersectingEdges.size()];
+		double sum = 0.0;
 
-            if (node1 == originalNode) {
-                originalIndex = i;
-            }
-            i++;
-        }
-        return weights[originalIndex] /= sum;
-    }
+		int i = 0;
+		int originalIndex = -1;
+		for (NodeRef node1 : intersectingEdges) {
+			assert(node1 != targetNode);
 
-    private double getJumpWeight(double age, double alpha) {
-        return Math.pow(age, alpha);
-    }
+			double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
+			age = age/maxAge;
+			weights[i] = getJumpWeight(age, alpha);
+			sum += weights[i];
 
-    public double getSize() {
-        return size;
-    }
+			if (node1 == originalNode) {
+				originalIndex = i;
+			}
+			i++;
+		}
+		return weights[originalIndex] /= sum;
+	}
 
-    public void setSize(double size) {
-        this.size = size;
-    }
+	private double getJumpWeight(double age, double alpha) {
+		return Math.pow(age, alpha);
+	}
 
-    public double getCoercableParameter() {
-        return Math.log(getSize());
-    }
+	public double getSize() {
+		return size;
+	}
 
-    public void setCoercableParameter(double value) {
-        setSize(Math.exp(value));
-    }
+	public void setSize(double size) {
+		this.size = size;
+	}
 
-    public double getRawParameter() {
-        return getSize();
-    }
+	public double getCoercableParameter() {
+		return Math.log(getSize());
+	}
 
-    public CoercionMode getMode() {
-        return mode;
-    }
+	public void setCoercableParameter(double value) {
+		setSize(Math.exp(value));
+	}
 
-    public double getTargetAcceptanceProbability() {
-        return 0.234;
-    }
+	public double getRawParameter() {
+		return getSize();
+	}
+
+	public CoercionMode getMode() {
+		return mode;
+	}
+
+	public double getTargetAcceptanceProbability() {
+		return 0.234;
+	}
 
 
-    public String getPerformanceSuggestion() {
-        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
-        double targetProb = getTargetAcceptanceProbability();
+	public String getPerformanceSuggestion() {
+		double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+		double targetProb = getTargetAcceptanceProbability();
 
-        double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
+		double ws = OperatorUtils.optimizeWindowSize(getSize(), Double.MAX_VALUE, prob, targetProb);
 
-        if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing size to about " + ws;
-        } else if (prob > getMaximumGoodAcceptanceLevel()) {
-            return "Try increasing size to about " + ws;
-        } else return "";
-    }
+		if (prob < getMinimumGoodAcceptanceLevel()) {
+			return "Try decreasing size to about " + ws;
+		} else if (prob > getMaximumGoodAcceptanceLevel()) {
+			return "Try increasing size to about " + ws;
+		} else return "";
+	}
 
 
-    public String getOperatorName() {
-        return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";
-    }
+	public String getOperatorName() {
+		return SubtreeJumpOperatorParser.SUBTREE_JUMP + "(" + tree.getId() + ")";
+	}
 }

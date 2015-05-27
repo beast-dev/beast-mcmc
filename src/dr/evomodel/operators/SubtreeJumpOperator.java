@@ -79,13 +79,12 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         double height = Double.NaN;
         List<NodeRef> destinations = null;
 
-        boolean destinationFound = true;
+        boolean destinationFound = false;
         do {
             // 1. choose a random node avoiding root or child of root
             i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
 
             if (root == i || tree.getParent(i) == root) {
-                destinationFound = false;
                 continue;
             }
 
@@ -99,8 +98,8 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
             // get a list of all edges that intersect this height
             destinations = getIntersectingEdges(tree, height);
 
-            if (destinations.size() < 1) {
-                destinationFound = false;
+            if (destinations.size() > 0) {
+                destinationFound = true;
             }
 
         } while (!destinationFound);

@@ -85,9 +85,10 @@ public class BitFlipOperator extends SimpleMCMCOperator {
                 // }
                 sum += Math.abs(parameter.getParameterValue(i));
             }
-            if (sum > 103) {
-                System.err.println("sum: " + sum);
-            }
+// AR - removed a debugging printf
+//            if (sum > 103) {
+//                System.err.println("sum: " + sum);
+//            }
 
             /*
             for (int i = 0; i < dim; i++) {

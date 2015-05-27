@@ -73,25 +73,38 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
 
         NodeRef i;
 
-        // 1. choose a random node avoiding root or child of root
+        NodeRef iP = null;
+        NodeRef CiP = null;
+        NodeRef PiP = null;
+        double height = Double.NaN;
+        List<NodeRef> destinations = null;
+
+        boolean destinationFound = true;
         do {
-            i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
-        } while (root == i || tree.getParent(i) == root);
+        	destinationFound = true; // got to reset it to true in case it was changed
+        	// 1. choose a random node avoiding root or child of root
+        	i = tree.getNode(MathUtils.nextInt(tree.getNodeCount()));
 
+        	if (root == i || tree.getParent(i) == root) {
+        		destinationFound = false;
+        		continue;
+        	}
 
-        final NodeRef iP = tree.getParent(i);
-        final NodeRef CiP = getOtherChild(tree, iP, i);
-        final NodeRef PiP = tree.getParent(iP);
+        	iP = tree.getParent(i);
+        	CiP = getOtherChild(tree, iP, i);
+        	PiP = tree.getParent(iP);
 
-        // get the height of the parent
-        final double height = tree.getNodeHeight(iP);
+        	// get the height of the parent
+        	height = tree.getNodeHeight(iP);
 
-        // get a list of all edges that intersect this height
-        final List<NodeRef> destinations = getIntersectingEdges(tree, height);
+        	// get a list of all edges that intersect this height
+        	destinations = getIntersectingEdges(tree, height);
 
-        if (destinations.size() < 1) {
-            throw new OperatorFailedException("no destinations to jump to");
-        }
+        	if (destinations.size() < 1) {
+        		destinationFound = false;
+        		continue;
+        	}
+        } while (!destinationFound);
 
         double[] pdf = getDestinationProbabilities(tree, i, height, destinations, alpha);
 
@@ -191,7 +204,6 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         }
         return weights[originalIndex] /= sum;
     }
-
 
     private double getJumpWeight(double age, double alpha) {
         return Math.pow(age, alpha);

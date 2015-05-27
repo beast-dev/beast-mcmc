@@ -1,7 +1,7 @@
 /*
  * SubtreeJumpOperator.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2015 Alexei Drummond, Marc A. Suchard and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -71,8 +71,9 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         final double alpha = Math.log(size); // now alpha lives on the real line
         final NodeRef root = tree.getRoot();
 
-        NodeRef i;
+		double  maxHeight = tree.getNodeHeight(root);
 
+        NodeRef i;
         NodeRef iP = null;
         NodeRef CiP = null;
         NodeRef PiP = null;
@@ -104,7 +105,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
 
         } while (!destinationFound);
 
-        double[] pdf = getDestinationProbabilities(tree, i, height, destinations, alpha);
+		double[] pdf = getDestinationProbabilities(tree, i, height, maxHeight, destinations, alpha);
 
         // remove the target node and its sibling (shouldn't be there because their parent's height is exactly equal to the target height).
         destinations.remove(i);
@@ -136,7 +137,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         tree.endTreeEdit();
 
         final List<NodeRef> reverseDestinations = getIntersectingEdges(tree, height);
-        double reverseProbability = getReverseProbability(tree, CiP, j, height, reverseDestinations, alpha);
+		double reverseProbability = getReverseProbability(tree, CiP, j, height, maxHeight, reverseDestinations, alpha);
         logq = Math.log(forwardProbability) - Math.log(reverseProbability);
         return logq;
     }
@@ -163,7 +164,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         return intersectingEdges;
     }
 
-    private double[] getDestinationProbabilities(Tree tree, NodeRef node0, double height, List<NodeRef> intersectingEdges, double alpha) {
+	private double[] getDestinationProbabilities(Tree tree, NodeRef node0, double height, double maxAge, List<NodeRef> intersectingEdges, double alpha) {
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
         int i = 0;
@@ -171,6 +172,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
             assert(node1 != node0);
 
             double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, node0, node1)) - height;
+			age = age/maxAge;
             weights[i] = getJumpWeight(age, alpha);
             sum += weights[i];
             i++;
@@ -182,7 +184,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
         return weights;
     }
 
-    private double getReverseProbability(Tree tree, NodeRef originalNode, NodeRef targetNode, double height, List<NodeRef> intersectingEdges, double alpha) {
+	private double getReverseProbability(Tree tree, NodeRef originalNode, NodeRef targetNode, double height, double maxAge, List<NodeRef> intersectingEdges, double alpha) {
         double[] weights = new double[intersectingEdges.size()];
         double sum = 0.0;
 
@@ -192,6 +194,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
             assert(node1 != targetNode);
 
             double age = tree.getNodeHeight(Tree.Utils.getCommonAncestor(tree, targetNode, node1)) - height;
+			age = age/maxAge;
             weights[i] = getJumpWeight(age, alpha);
             sum += weights[i];
 

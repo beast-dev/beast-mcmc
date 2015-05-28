@@ -1,7 +1,9 @@
 package dr.inference.distribution;
 
 import com.sun.tools.doclets.internal.toolkit.util.SourceToHTMLConverter;
+import dr.app.beauti.options.*;
 import dr.inference.model.*;
+import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.MomentDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -12,7 +14,7 @@ import dr.math.distributions.RandomGenerator;
  */
 public class MomentDistributionModel extends AbstractModelLikelihood implements ParametricMultivariateDistributionModel, RandomGenerator {
 
-    public MomentDistributionModel(Parameter mean, Parameter precision, Parameter cutoff) {
+    public MomentDistributionModel(Parameter mean, Parameter precision, Parameter cutoff, Parameter data) {
         super(MomentDistributionModelParser.MOMENT_DISTRIBUTION_MODEL);
 
         this.mean = mean;
@@ -24,6 +26,8 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         this.cutoff=cutoff;
         addVariable(cutoff);
        cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        addVariable(data);
+        this.data=data;
         untruncated=new NormalDistributionModel(mean, precision, true);
         sumKnown=false;
         untruncatedKnown=false;
@@ -41,32 +45,38 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
     private boolean untruncatedKnown;
     private boolean storedUntruncatedKnown;
     private NormalDistributionModel storedUntruncated;
+    private Parameter data;
 
-    @Override
-    public double logPdf(double[] x) {
-        System.out.println(x[0]);
+    public double logPdf(Parameter data) {
+//        untruncatedKnown=false;
+//        sumKnown=false;
         checkDistribution();
-//        if(sumKnown)
-//            return sum;
-//        else
-//        {
+        if(sumKnown)
+            return sum;
+        else
+        {
             sum=0;
-//        }
-        if(x.length!=cutoff.getDimension()){
+        }
+        if(data.getDimension()!=cutoff.getDimension()){
             throw new RuntimeException("Incorrect number of cutoffs");
         }
-        for (int i = 0; i <x.length ; i++) {
-            if (Math.sqrt(precision.getParameterValue(0) * cutoff.getParameterValue(i)) > Math.abs(x[i]) && x[i]!=0)
+        for (int i = 0; i <data.getDimension() ; i++) {
+            if (Math.sqrt(precision.getParameterValue(0) * cutoff.getParameterValue(i)) > Math.abs(data.getParameterValue(i)) && data.getParameterValue(i)!=0)
                 return Double.NEGATIVE_INFINITY;
-            else if(x[i]==0)
+            else if(data.getParameterValue(i)==0)
                 sum+=-1000-Math.log(precision.getParameterValue(0));
             else
-                sum+=untruncated.logPdf(x[i]);//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
+                sum+=untruncated.logPdf(data.getParameterValue(i));//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
         }
-//            sumKnown=true;
+        sumKnown=true;
         return sum;
         //}
 
+    }
+
+    @Override
+    public double logPdf(double[] x) {
+        return 0;
     }
 
     @Override
@@ -96,23 +106,23 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         sumKnown=false;
-        if(variable==mean)
+        if(variable==mean || variable==precision)
         {untruncatedKnown=false;}
 
     }
 
     @Override
     protected void storeState() {
-//        storedSumKnown=sumKnown;
-//        storedSum=sum;
+        storedSumKnown=sumKnown;
+        storedSum=sum;
         storedUntruncated=untruncated;
         storedUntruncatedKnown=untruncatedKnown;
     }
 
     @Override
     protected void restoreState() {
-//        sumKnown=storedSumKnown;
-//        sum=storedSum;
+        sumKnown=storedSumKnown;
+        sum=storedSum;
         untruncated=storedUntruncated;
         untruncatedKnown=storedUntruncatedKnown;
 
@@ -142,23 +152,25 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
     @Override
     public double logPdf(Object x) {
         if(x instanceof Parameter)
-         return logPdf(((Parameter) x).getParameterValues());
+         return logPdf((Parameter) x);
         else
             return 0;
     }
 
     @Override
     public Model getModel() {
-        return null;
+        return this;
     }
 
     @Override
     public double getLogLikelihood() {
-        return 0;
+        return logPdf(data);
     }
 
     @Override
     public void makeDirty() {
+        sumKnown=false;
+        untruncatedKnown=false;
 
     }
 }

@@ -13,15 +13,16 @@ public class MomentDistributionModelParser extends AbstractXMLObjectParser {
 //    public static final String STDEV = "stdev";
     public static final String PREC = "precision";
     public static final String CUTOFF="cutoff";
-
+    public static final String DATA="data";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Parameter mean=(Parameter) xo.getChild(MEAN).getChild(0);
         Parameter prec=(Parameter) xo.getChild(PREC).getChild(0);
         Parameter cutoff=(Parameter) xo.getChild(CUTOFF).getChild(0);
+        Parameter data=(Parameter) xo.getChild(DATA).getChild(0);
 
-        return new MomentDistributionModel(mean, prec, cutoff);
+        return new MomentDistributionModel(mean, prec, cutoff, data);
     }
 
     @Override
@@ -44,6 +45,11 @@ public class MomentDistributionModelParser extends AbstractXMLObjectParser {
                             new XMLSyntaxRule[]{
                                             new ElementRule(Parameter.class)
                                     }
+            ),
+            new ElementRule(DATA,
+                    new XMLSyntaxRule[]{
+                            new ElementRule(Parameter.class)
+                    }
             )
     };
 

@@ -128,7 +128,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 						 loglike = getPartialLoglike(index, candidate);
 					}
 					
-					loglike /= mhSteps;
+					loglike -= Math.log(mhSteps);
 					logprob = Math.log((intensity) / (realizationCount - 1 + intensity)) + loglike;
 
 				} else {// draw existing

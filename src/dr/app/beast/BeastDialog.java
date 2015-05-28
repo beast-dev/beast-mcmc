@@ -175,7 +175,7 @@ public class BeastDialog {
                 "<html><div style=\"font-family:'helvetica neue light',helvetica,sans-serif;font-size:12;\"><p>BEAGLE is a high-performance phylogenetic library that can make use of<br>" +
                         "additional computational resources such as graphics boards. It must be<br>" +
                         "downloaded and installed independently of BEAST:</p>" +
-                        "<pre><a href=\"http://beagle-lib.googlecode.com/\">http://beagle-lib.googlecode.com/</a></pre></div>");
+                        "<pre><a href=\"http://github.com/beagle-dev/beagle-lib/\">http://github.com/beagle-dev/beagle-lib/</a></pre></div>");
         beagleInfo.setOpaque(false);
         beagleInfo.setEditable(false);
         beagleInfo.addHyperlinkListener(new SimpleLinkListener());

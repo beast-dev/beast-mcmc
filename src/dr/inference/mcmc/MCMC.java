@@ -25,6 +25,9 @@
 
 package dr.inference.mcmc;
 
+import dr.evolution.tree.TreeTrait;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainDelegate;
@@ -38,6 +41,7 @@ import dr.util.NumberFormatter;
 import dr.xml.Spawnable;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
@@ -47,7 +51,11 @@ import java.util.Calendar;
  * @author Andrew Rambaut
  * @version $Id: MCMC.java,v 1.41 2005/07/11 14:06:25 rambaut Exp $
  */
-public class MCMC implements Identifiable, Spawnable {
+public class MCMC implements Identifiable, Spawnable, Loggable {
+
+    public final static String DEBUG_STATE_FILE = "debug.state.file";
+    public final static String DEBUG_WRITE_STATE = "debug.write.state";
+
 
     public MCMC(String id) {
         this.id = id;
@@ -141,17 +149,16 @@ public class MCMC implements Identifiable, Spawnable {
         //initialize transients
         currentState = 0;
 
-        // Does not seem to be in use (JH)
-/*
-        stepsPerReport = 1;
-        while ((getChainLength() / stepsPerReport) > 1000) {
-            stepsPerReport *= 2;
-        }*/
-
         for(MarkovChainDelegate delegate : delegates) {
             delegate.setup(options, schedule, mc);
         }
         this.delegates = delegates;
+
+        debugStateFile = System.getProperty(DEBUG_STATE_FILE);
+        if (System.getProperty(DEBUG_WRITE_STATE) != null) {
+            long debugWriteState = Long.parseLong(System.getProperty(DEBUG_WRITE_STATE));
+            mc.addMarkovChainListener(new DebugChainListener(debugWriteState));
+        }
     }
 
     /**
@@ -216,6 +223,10 @@ public class MCMC implements Identifiable, Spawnable {
         }
 
         if (!stopping) {
+            if (debugStateFile != null) {
+                mc = readMarkovChainFromFile(new File(debugStateFile));
+            }
+
             mc.addMarkovChainListener(chainListener);
 
             for(MarkovChainDelegate delegate : delegates) {
@@ -302,7 +313,78 @@ public class MCMC implements Identifiable, Spawnable {
         return mc;
     }
 
-    protected final MarkovChainListener chainListener = new MarkovChainListener() {
+    @Override
+    public LogColumn[] getColumns() {
+        return new LogColumn[] { new LogColumn() {
+            @Override
+            public void setLabel(String label) {
+            }
+
+            @Override
+            public String getLabel() {
+                return "time";
+            }
+
+            @Override
+            public void setMinimumWidth(int minimumWidth) {
+
+            }
+
+            @Override
+            public int getMinimumWidth() {
+                return 0;
+            }
+
+            @Override
+            public String getFormatted() {
+                return Double.toString(getTimer().toSeconds());
+            }
+        }   };
+    }
+
+    class DebugChainListener implements MarkovChainListener {
+        public DebugChainListener(final long writeStateAt) {
+            this.writeStateAt = writeStateAt;
+        }
+        // MarkovChainListener interface *******************************************
+
+        /**
+         * Called to update the current model keepEvery states.
+         */
+        public void currentState(long state, Model currentModel) {
+            if (state == writeStateAt) {
+//                for(MarkovChainDelegate delegate : delegates) {
+//                    mc.removeMarkovChainDelegate(delegate);
+//                }
+//                mc.removeMarkovChainListener(chainListener);
+
+                // Write the MarkovChain out and back in again...
+                String timeStamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss").format(Calendar.getInstance().getTime());
+                writeMarkovChainToFile(new File("beast_debug_" + timeStamp), mc);
+
+//                mc.addMarkovChainListener(chainListener);
+//
+//                for(MarkovChainDelegate delegate : delegates) {
+//                    mc.addMarkovChainDelegate(delegate);
+//                }
+
+            }
+        }
+
+        /**
+         * Called when a new new best posterior state is found.
+         */
+        public void bestState(long state, Model bestModel) { }
+
+        /**
+         * cleans up when the chain finishes (possibly early).
+         */
+        public void finished(long chainLength) { }
+
+        private final long writeStateAt;
+    }
+
+    private final MarkovChainListener chainListener = new MarkovChainListener() {
 
         // MarkovChainListener interface *******************************************
         // for receiving messages from subordinate MarkovChain
@@ -384,22 +466,22 @@ public class MCMC implements Identifiable, Spawnable {
                 JointOperator jointOp = (JointOperator) op;
                 for (int k = 0; k < jointOp.getNumberOfSubOperators(); k++) {
                     out.println(formattedOperatorName(jointOp.getSubOperatorName(k))
-                            + formattedParameterString(jointOp.getSubOperator(k))
-                            + formattedCountString(op)
-                            + formattedTimeString(op)
-                            + formattedTimePerOpString(op)
-                            + formattedProbString(jointOp)
-                            + (options.useCoercion() ? "" : formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)))
+                                    + formattedParameterString(jointOp.getSubOperator(k))
+                                    + formattedCountString(op)
+                                    + formattedTimeString(op)
+                                    + formattedTimePerOpString(op)
+                                    + formattedProbString(jointOp)
+                                    + (options.useCoercion() ? "" : formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)))
                     );
                 }
             } else {
                 out.println(formattedOperatorName(op.getOperatorName())
-                        + formattedParameterString(op)
-                        + formattedCountString(op)
-                        + formattedTimeString(op)
-                        + formattedTimePerOpString(op)
-                        + formattedProbString(op)
-                        + (options.useCoercion() ? "" : formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)))
+                                + formattedParameterString(op)
+                                + formattedCountString(op)
+                                + formattedTimeString(op)
+                                + formattedTimePerOpString(op)
+                                + formattedProbString(op)
+                                + (options.useCoercion() ? "" : formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)))
                 );
             }
 
@@ -584,6 +666,8 @@ public class MCMC implements Identifiable, Spawnable {
     }
 
     // PRIVATE TRANSIENTS
+
+    private String debugStateFile = null;
 
     //private FileLogger operatorLogger = null;
     protected final boolean isAdapting = true;

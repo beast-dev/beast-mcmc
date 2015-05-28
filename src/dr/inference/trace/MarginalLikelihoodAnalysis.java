@@ -186,10 +186,12 @@ public class MarginalLikelihoodAnalysis {
                 progress += delta;
 
                 int[] indices = MathUtils.sampleIndicesWithReplacement(sampleLength);
-                for (int k = 0; k < sampleLength; k++)
-                    bsSample.add(k, sample.get(indices[k]));
+                for (int k = 0; k < sampleLength; k++) {
+                    bsSample.add(sample.get(indices[k]));
+                }
                 bootstrappedLogML[i] = calculateLogMarginalLikelihood(bsSample);
                 sum += bootstrappedLogML[i];
+                bsSample.clear();
             }
             sum /= bootstrapLength;
             double bootstrappedAverage = sum;

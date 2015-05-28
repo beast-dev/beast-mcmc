@@ -1,31 +1,31 @@
 package dr.inference.distribution;
 
-import com.sun.tools.doclets.internal.toolkit.util.SourceToHTMLConverter;
-import dr.app.beauti.options.*;
+
 import dr.inference.model.*;
 import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.MomentDistributionModelParser;
-import dr.math.UnivariateFunction;
-import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.RandomGenerator;
 
-/**
- * Created by max on 5/13/15.
- */
+//@author Max Tolkoff
 public class MomentDistributionModel extends AbstractModelLikelihood implements ParametricMultivariateDistributionModel, RandomGenerator {
 
     public MomentDistributionModel(Parameter mean, Parameter precision, Parameter cutoff, Parameter data) {
         super(MomentDistributionModelParser.MOMENT_DISTRIBUTION_MODEL);
 
-        this.mean = mean;
-        this.precision = precision;
+        this.mean=mean;
+        this.precision=precision;
+//        this.mean = new DuplicatedParameter(mean);
+//        this.mean.addDuplicationParameter(new Parameter.Default(cutoff.getDimension()));
+//        DuplicatedParameter precTemp= new DuplicatedParameter(precision);
+//        precTemp.addDuplicationParameter(new Parameter.Default(cutoff.getDimension()));
+//        this.precision=new DiagonalMatrix(precTemp);
         addVariable(mean);
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         addVariable(precision);
-        precision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+//        precision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
         this.cutoff=cutoff;
         addVariable(cutoff);
-       cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, cutoff.getDimension()));
         addVariable(data);
         this.data=data;
         untruncated=new NormalDistributionModel(mean, precision, true);
@@ -35,6 +35,8 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
 
     private final Parameter mean;
     private final Parameter precision;
+//    private final DuplicatedParameter mean;
+//    private final DiagonalMatrix precision;
     private final Parameter cutoff;
     private NormalDistributionModel untruncated;
     private double sum;
@@ -84,13 +86,12 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         double[][] temp=new double[1][1];
         temp[0][0]=precision.getParameterValue(0);
         return temp;
+//        return precision.getParameterAsMatrix();
     }
 
     @Override
     public double[] getMean() {
-        double[] meanList=new double[1];
-        meanList[0]=mean.getParameterValue(0);
-        return meanList;
+        return mean.getParameterValues();
     }
 
     @Override
@@ -135,6 +136,7 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
 
     private NormalDistributionModel createNewDistribution() {
         return new NormalDistributionModel(mean, precision, true);
+//        return new NormalDistributionModel(new Parameter.Default(mean.getParameterValue(0)), new Parameter.Default(precision.getParameterValue(0)), true);
     }
 
     private void checkDistribution() {

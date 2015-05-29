@@ -11,8 +11,13 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
     public IndianBuffetProcessPrior(Parameter alpha, Parameter beta, MatrixParameter data) {
         super(null);
         this.alpha=alpha;
+        alpha.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, 1));
+        addVariable(alpha);
         this.beta=beta;
+        beta.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0, 1));
+        addVariable(beta);
         this.data=data;
+        addVariable(data);
     }
 
     private int factorial(int num){
@@ -80,37 +85,45 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
         int sum;
         double sum2=0;
         boolean[] isExplored= new boolean[data.getColumnDimension()];
-        boolean[] containsAll0=new boolean[data.getColumnDimension()];
+        boolean[] containsNonZeroElement=new boolean[data.getColumnDimension()];
         int[] rowCount=new int[data.getColumnDimension()];
         boolean same;
+        for (int i = 0; i <data.getRowDimension() ; i++) {
+            if(data.getParameterValue(i,0)!=0)
+                containsNonZeroElement[0]=true;
+        }
         for (int i = 0; i <data.getColumnDimension(); i++) {
             sum=1;
+            if(!isExplored[i]){
             for (int j = i+1; j <data.getColumnDimension() ; j++) {
-                same=true;
-                if(!isExplored[j]) {
-                    for (int k = 0; k <data.getRowDimension(); k++){
-                        if(data.getParameterValue(k,i)!=data.getParameterValue(k,j))
-                            same=false;
-                        if(data.getParameterValue(k,j)!=0){
-                            containsAll0[j]=false;
+                same = true;
+                if (!isExplored[j]) {
+                    for (int k = 0; k < data.getRowDimension(); k++) {
+                        if (data.getParameterValue(k, i) != data.getParameterValue(k, j))
+                            same = false;
+                        if (data.getParameterValue(k, j) != 0) {
+                            containsNonZeroElement[j] = true;
                         }
 //                        rowCount[j]+=data.getParameterValue(k,j);
                     }
                 }
-                if(same)
-                {isExplored[j]=true;
-                sum+=1;}
-
+                if (same && containsNonZeroElement[j]) {
+                    isExplored[j] = true;
+                    sum += 1;
+                } else if (!containsNonZeroElement[j]) {
+                    isExplored[j] = true;
+                }
+            }
             }
             bottom*=factorial(sum);
 
         }
         int KPlus=0;
         for (int i = 0; i <data.getColumnDimension() ; i++) {
-          if(!containsAll0[i]) {
+          if(containsNonZeroElement[i]) {
               KPlus++;
               for (int j = 0; j < data.getRowDimension(); j++) {
-                  rowCount[i] += data.getParameterValue(i, j);
+                  rowCount[i] += data.getParameterValue(j, i);
               }
               sum2+=Beta.logBeta(rowCount[i], data.getRowDimension() + beta.getParameterValue(0) - rowCount[i]);
           }

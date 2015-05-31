@@ -55,7 +55,7 @@ public class NativeMDSSingleton {
             if (osArch.equals("i386")) return LIBRARY_NAME + "32";
             if (osArch.startsWith("amd64") || osArch.startsWith("x86_64")) return LIBRARY_NAME + "64";
         }
-        return LIBRARY_NAME;
+        return "lib" + LIBRARY_NAME + ".dylib";
     }
 
     public static NativeMDSSingleton loadLibrary() throws UnsatisfiedLinkError {
@@ -70,7 +70,7 @@ public class NativeMDSSingleton {
                 }
             }
 
-            System.loadLibrary(path + LIBRARY_PLATFORM_NAME);
+            System.load(path + LIBRARY_PLATFORM_NAME);
             INSTANCE = new NativeMDSSingleton();
             System.err.println("MDS library loaded.");
         }
@@ -91,6 +91,8 @@ public class NativeMDSSingleton {
     public native void storeState(int instance);
 
     public native void restoreState(int instance);
+
+    public native void acceptState(int instance);
 
     public native void makeDirty(int instance);
 

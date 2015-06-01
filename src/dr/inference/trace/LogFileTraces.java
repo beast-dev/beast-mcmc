@@ -241,7 +241,7 @@ public class LogFileTraces extends AbstractTraceList {
             try {
                 try {
                     // Changed this to parseDouble because LAMARC uses scientific notation for the state number
-                    state = (int) Double.parseDouble(stateString);
+                    state = (long) Double.parseDouble(stateString);
                 } catch (NumberFormatException nfe) {
                     throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
                 }
@@ -440,6 +440,8 @@ public class LogFileTraces extends AbstractTraceList {
         } else {
             int step = (int) (stateNumber - lastState);
             if (step != stepSize) {
+            	//System.out.println("stateNumber: " + stateNumber + " lastState: " + lastState);
+            	//System.out.println("step: " + step + " != " + stepSize);
                 return false;
             }
         }

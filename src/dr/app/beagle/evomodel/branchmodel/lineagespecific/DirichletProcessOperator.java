@@ -24,23 +24,17 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	private static final boolean DEBUG = false;
 
 	private DirichletProcessPrior dpp;
-
-	
-	
 	private int realizationCount;
 	private int uniqueRealizationCount;
 	private double intensity;
     private int mhSteps;
-	
 	
 	private Parameter categoriesParameter;
 //	private CountableRealizationsParameter countableRealizationsParameter;
 	
 	// Compound Parameter 
 	private CompoundParameter parameter;
-	
 	private CompoundLikelihood likelihood;
-	
 	
 	public DirichletProcessOperator(DirichletProcessPrior dpp, 
 			Parameter categoriesParameter, 
@@ -69,7 +63,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
         return categoriesParameter;
     }//END: getParameter
 	
-    public Variable getVariable() {
+    public Variable<?> getVariable() {
         return categoriesParameter;
     }//END: getVariable
 	
@@ -121,15 +115,14 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 					// M-H for poor people
 					// draw from base model, evaluate at likelihood
-
 					double candidate = 0.0;
 					for (int j = 0; j < mhSteps; j++) {
 						 candidate = dpp.baseModel.nextRandom()[0];
-						 loglike = getPartialLoglike(index, candidate);
+						 loglike += Math.exp(getPartialLoglike(index, candidate));
 					}
 					
 					loglike /= mhSteps;
-					logprob = Math.log((intensity) / (realizationCount - 1 + intensity)) + loglike;
+					logprob = Math.log( ( (intensity) / (realizationCount - 1 + intensity) ) * loglike   ) ;
 
 				} else {// draw existing
 					

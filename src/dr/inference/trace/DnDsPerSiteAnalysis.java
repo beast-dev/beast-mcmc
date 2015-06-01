@@ -485,10 +485,10 @@ public class DnDsPerSiteAnalysis implements Citable {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute(BURN_IN, maxState / 10);
+                long burnin = xo.getAttribute(BURN_IN, maxState / 10);
                 //TODO: implement custom burn-in
 
                 if (burnin < 0 || burnin >= maxState) {

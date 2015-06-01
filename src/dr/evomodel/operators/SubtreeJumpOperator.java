@@ -207,7 +207,7 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
     }
 
     private double getJumpWeight(double age, double alpha) {
-        return Math.pow(age, alpha);
+        return Math.pow(age, alpha) + Double.MIN_VALUE;
     }
 
     public double getSize() {

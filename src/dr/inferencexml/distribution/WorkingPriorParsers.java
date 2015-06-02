@@ -81,10 +81,10 @@ public class WorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
@@ -173,10 +173,10 @@ public class WorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
@@ -268,10 +268,10 @@ public class WorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
@@ -363,10 +363,10 @@ public class WorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");

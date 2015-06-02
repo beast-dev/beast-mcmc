@@ -57,9 +57,9 @@ public class ArithmeticMeanAnalysisParser extends AbstractXMLObjectParser {
             // Load traces and remove burnin
             LogFileTraces traces = new LogFileTraces(fileName, file);
             traces.loadTraces();
-            int maxState = traces.getMaxState();
+            long maxState = traces.getMaxState();
 
-            int burnin = xo.getAttribute(BURN_IN, maxState / 10);
+            long burnin = xo.getAttribute(BURN_IN, maxState / 10);
 
             if (burnin < 0 || burnin >= maxState) {
                 burnin = maxState / 10;
@@ -89,7 +89,7 @@ public class ArithmeticMeanAnalysisParser extends AbstractXMLObjectParser {
             List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
-                    traces.getTraceName(traceIndex), burnin, analysisType, bootstrapLength);
+                    traces.getTraceName(traceIndex), (int)burnin, analysisType, bootstrapLength);
 
             System.out.println(analysis.toString());
 

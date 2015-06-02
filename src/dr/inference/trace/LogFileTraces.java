@@ -59,7 +59,7 @@ public class LogFileTraces extends AbstractTraceList {
     /**
      * @return the last state in the chain
      */
-    public int getMaxState() {
+    public long getMaxState() {
         return lastState;
     }
 
@@ -73,7 +73,7 @@ public class LogFileTraces extends AbstractTraceList {
     public int getStateCount() {
         // This is done as two integer divisions to ensure the same rounding for
         // the burnin...
-        return ((lastState - firstState) / stepSize) - (getBurnIn() / stepSize) + 1;
+        return (int) (((lastState - firstState) / stepSize) - (getBurnIn() / stepSize) + 1);
     }
 
     /**
@@ -129,8 +129,8 @@ public class LogFileTraces extends AbstractTraceList {
         return traces.get(index);
     }
 
-    public void setBurnIn(int burnIn) {
-        this.burnIn = burnIn;
+    public void setBurnIn(long burnin2) {
+        this.burnIn = (int) burnin2;
         for (Trace trace : traces) {
             trace.setTraceStatistics(null);
         }
@@ -236,12 +236,12 @@ public class LogFileTraces extends AbstractTraceList {
         while (tokens != null && tokens.hasMoreTokens()) {
 
             String stateString = tokens.nextToken();
-            int state = 0;
+            long state = 0;
 
             try {
                 try {
                     // Changed this to parseDouble because LAMARC uses scientific notation for the state number
-                    state = (int) Double.parseDouble(stateString);
+                    state = (long) Double.parseDouble(stateString);
                 } catch (NumberFormatException nfe) {
                     throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
                 }
@@ -432,14 +432,16 @@ public class LogFileTraces extends AbstractTraceList {
      * @param stateNumber the state
      * @return false if the state number is inconsistent
      */
-    private boolean addState(int stateNumber) {
+    private boolean addState(long stateNumber) {
         if (firstState < 0) {
             firstState = stateNumber;
         } else if (stepSize < 0) {
-            stepSize = stateNumber - firstState;
+            stepSize = (int) (stateNumber - firstState);
         } else {
-            int step = stateNumber - lastState;
+            int step = (int) (stateNumber - lastState);
             if (step != stepSize) {
+            	//System.out.println("stateNumber: " + stateNumber + " lastState: " + lastState);
+            	//System.out.println("step: " + step + " != " + stepSize);
                 return false;
             }
         }
@@ -463,8 +465,8 @@ public class LogFileTraces extends AbstractTraceList {
     private TreeMap<String, TraceFactory.TraceType> tracesType = new TreeMap<String, TraceFactory.TraceType>();
 
     private int burnIn = -1;
-    private int firstState = -1;
-    private int lastState = -1;
+    private long firstState = -1;
+    private long lastState = -1;
     private int stepSize = -1;
 
     public static class TrimLineReader extends BufferedReader {

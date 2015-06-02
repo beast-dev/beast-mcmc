@@ -82,7 +82,7 @@ public interface TraceList {
     /**
      * @return the last state in the chain
      */
-    int getMaxState();
+    long getMaxState();
 
     boolean isIncomplete();
 

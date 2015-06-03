@@ -314,14 +314,14 @@ public class LogGenerator extends Generator {
             branchRatesModelGenerator.writeLogStatistic(model, writer);
         }
 
-        if (options.logCoalescentEventsStatistic) {
+        /*if (options.logCoalescentEventsStatistic) {
             writer.writeOpenTag("coalescentEventsStatistic");
             // coalescentLikelihood
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 PartitionTreePrior prior = model.getPartitionTreePrior();
                 treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
                 writer.writeText("");
-            }
+            }*/
 
             /*for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
@@ -330,8 +330,8 @@ public class LogGenerator extends Generator {
                     writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
                 }
             }*/
-            writer.writeCloseTag("coalescentEventsStatistic");
-        }
+            /*writer.writeCloseTag("coalescentEventsStatistic");
+        }*/
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 

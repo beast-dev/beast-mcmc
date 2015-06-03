@@ -49,10 +49,10 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
 
             LogFileTraces traces = new LogFileTraces(fileName, file);
             traces.loadTraces();
-            int maxState = traces.getMaxState();
+            long maxState = traces.getMaxState();
 
             // leaving the burnin attribute off will result in 10% being used
-            int burnin = xo.getAttribute(BURN_IN, maxState / 10);
+            long burnin = xo.getAttribute(BURN_IN, maxState / 10);
 
             if (burnin < 0 || burnin >= maxState) {
                 burnin = maxState / 10;
@@ -88,7 +88,7 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
             List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
-                    traces.getTraceName(traceIndex), burnin, analysisType, bootstrapLength);
+                    traces.getTraceName(traceIndex), (int)burnin, analysisType, bootstrapLength);
 
             System.out.println(analysis.toString());
 

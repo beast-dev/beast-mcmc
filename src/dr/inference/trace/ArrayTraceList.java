@@ -71,7 +71,7 @@ public class ArrayTraceList extends AbstractTraceList {
         return stepSize;
     }
 
-    public int getMaxState() {
+    public long getMaxState() {
         return getStateCount() * getStepSize();
     }
 

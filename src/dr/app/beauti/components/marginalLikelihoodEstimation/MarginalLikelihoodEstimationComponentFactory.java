@@ -26,8 +26,6 @@
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentGenerator;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ComponentOptions;

@@ -26,6 +26,8 @@
 package dr.inference.mcmc;
 
 import dr.evolution.tree.TreeTrait;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainDelegate;
@@ -49,7 +51,7 @@ import java.util.Calendar;
  * @author Andrew Rambaut
  * @version $Id: MCMC.java,v 1.41 2005/07/11 14:06:25 rambaut Exp $
  */
-public class MCMC implements Identifiable, Spawnable {
+public class MCMC implements Identifiable, Spawnable, Loggable {
 
     public final static String DEBUG_STATE_FILE = "debug.state.file";
     public final static String DEBUG_WRITE_STATE = "debug.write.state";
@@ -309,6 +311,35 @@ public class MCMC implements Identifiable, Spawnable {
         }
 
         return mc;
+    }
+
+    @Override
+    public LogColumn[] getColumns() {
+        return new LogColumn[] { new LogColumn() {
+            @Override
+            public void setLabel(String label) {
+            }
+
+            @Override
+            public String getLabel() {
+                return "time";
+            }
+
+            @Override
+            public void setMinimumWidth(int minimumWidth) {
+
+            }
+
+            @Override
+            public int getMinimumWidth() {
+                return 0;
+            }
+
+            @Override
+            public String getFormatted() {
+                return Double.toString(getTimer().toSeconds());
+            }
+        }   };
     }
 
     class DebugChainListener implements MarkovChainListener {

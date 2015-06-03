@@ -385,14 +385,34 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 //should leave out those parameters set by the coalescent
                 if (param.priorType != PriorType.NONE_TREE_PRIOR) {
                     //TODO: frequencies is multidimensional, is that automatically dealt with?
-                    writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
-                            new Attribute[]{
-                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                    new Attribute.Default<String>("parameterColumn", param.getName()),
-                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
-                            });
-                    writeParameterIdref(writer, param);
-                    writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                    if (param.getLowerBound() == Double.NEGATIVE_INFINITY && param.getUpperBound() == Double.POSITIVE_INFINITY) {
+                        writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", param.getName()),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writeParameterIdref(writer, param);
+                        writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                    } else if (param.getLowerBound() == 0.0 && param.getUpperBound() == Double.POSITIVE_INFINITY) {
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", param.getName()),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writeParameterIdref(writer, param);
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                    } else if (param.getLowerBound() == 0.0 && param.getUpperBound() == 1.0) {
+                        writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", param.getName()),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writeParameterIdref(writer, param);
+                        writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                    }
                 }
             }
 

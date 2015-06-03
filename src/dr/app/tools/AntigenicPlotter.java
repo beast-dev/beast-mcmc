@@ -107,7 +107,7 @@ public class AntigenicPlotter {
             traces.loadTraces();
 
             if (burnin == -1) {
-                burnin = traces.getMaxState() / 10;
+                burnin = (int) (traces.getMaxState() / 10);
             }
 
             traces.setBurnIn(burnin);

@@ -85,7 +85,7 @@ public class TraceAnalysis {
 
         int burnin = inBurnin;
         if (burnin == -1) {
-            burnin = traces.getMaxState() / 10;
+            burnin = (int) (traces.getMaxState() / 10);
         }
 
         traces.setBurnIn(burnin);
@@ -183,7 +183,7 @@ public class TraceAnalysis {
         traces.loadTraces();
         int burnin = inBurnin;
         if (burnin == -1) {
-            burnin = traces.getMaxState() / 10;
+            burnin = (int) (traces.getMaxState() / 10);
         }
 
         traces.setBurnIn(burnin);
@@ -244,7 +244,7 @@ public class TraceAnalysis {
 
         TraceList traces = analyzeLogFile(filename, burnin);
 
-        int maxState = traces.getMaxState();
+        long maxState = traces.getMaxState();
 
         double minESS = Double.MAX_VALUE;
 

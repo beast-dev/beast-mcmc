@@ -40,6 +40,8 @@ import org.w3c.dom.Element;
 
 public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
+    public final static boolean DEBUG = false;
+
     public static final String DISTRIBUTION_LIKELIHOOD = "distributionLikelihood";
 
     private int from = -1;
@@ -97,6 +99,12 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
      * @return the log likelihood.
      */
     public double calculateLogLikelihood() {
+
+        if (DEBUG) {
+            System.out.println("Calling DistributionLikelihood.calculateLogLikelihood()");
+            System.out.println(distribution.toString());
+            System.out.println(dataList.toString() + "\n");
+        }
 
         double logL = 0.0;
 

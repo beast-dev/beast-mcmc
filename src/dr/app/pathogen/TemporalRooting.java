@@ -389,7 +389,7 @@ public class TemporalRooting {
         double x = minimum.findMinimum(f);
 
         double fminx = minimum.fminx;
-
+//        System.err.println("Brute force alpha: "+ x);
         double l1 = x * sumLength;
         double l2 = (1.0 - x) * sumLength;
 
@@ -399,6 +399,24 @@ public class TemporalRooting {
         return fminx;
     }
 
+    private double [] getTemperedRootToTipDistances(final FlexibleTree tree) {
+    	NodeRef node1 = tree.getChild(tree.getRoot(), 0);
+        NodeRef node2 = tree.getChild(tree.getRoot(), 1);
+        
+        final double length1 = tree.getBranchLength(node1);
+        final double length2 = tree.getBranchLength(node2);
+        final double sumLength = length1 + length2;
+        
+        final FlexibleTree newTree = tree;
+        
+        newTree.setBranchLength(node1, sumLength);
+        newTree.setBranchLength(node2, 0);
+        
+        final double[] d = getRootToTipDistances(newTree);
+        
+    	return(d);
+    }
+    
     private double findAnalyticalLocalRoot(final FlexibleTree tree,
                                            final double[] t,
                                            final RootingFunction rootingFunction) {
@@ -418,30 +436,13 @@ public class TemporalRooting {
         final Set<NodeRef> tipSet1 = Tree.Utils.getExternalNodes(tree, node1);
         final Set<NodeRef> tipSet2 = Tree.Utils.getExternalNodes(tree, node2);
 
-        final double[] y = getRootToTipDistances(tree);
-
-//        ## the analytical solution. Takes a vector of divergences (vd), a vector of times (vt), the children indicators (cs) and the branch length m
-//        N <- length(vd)
-//        n <- sum(cs)
-//        d.bar <- mean(vd)
-//        t.bar <- mean(vt)
-//        C <- sum(vt^2) - (sum(vt)^2)/N
-//        Ai <- 2*cs - (2*n-N)/N + 2*(t.bar-vt)/(C*N)*(N*sum(vt*cs) - n*sum(vt))-1
-//        Bi <- vd-d.bar + (t.bar-vt)/(C*N)*(N*sum(vt*vd)- sum(vt)*sum(vd))
-//        alpha <- -sum(Ai*Bi)/(m*sum(Ai^2))
-//        if(bounded){# failsafe to ensure \alpha \in (0, 1)
-//            alpha <- min(max(alpha, 0), 1)
-//            if(n == N){alpha <- 1}
-//        }
-//        return(alpha)
-
-
+        final double[] y = getTemperedRootToTipDistances(tree);
+        
         int N = tipSet1.size() + tipSet2.size();
-        int n = tipSet1.size();
-
-
+        int n = tipSet2.size();
+   
         final double[] c = new double[N];
-        for (NodeRef tip : tipSet1) {
+        for (NodeRef tip : tipSet2) {
             int i = tip.getNumber();
             c[i] = 1;
         }
@@ -463,33 +464,33 @@ public class TemporalRooting {
         double t_bar = sum_t / N;
 
         double C = sum_tt - (sum_t * sum_t / N);
-
         double sumAB = 0.0;
         double sumAA = 0.0;
-
+        double Nd = N;
+        double nd = n;  // need to set these naughty ones to doubles
         for (int i = 0; i < N; i++) {
-            double Ai = (2 * c[i])
-                    - ((2 * n - N) / N) +
-                    (2 * (t_bar - t[i]) / (C * N)) * ((N * sum_tc) - (n * sum_t)) - 1;
+            double Ai = 2*c[i] - 
+            		    ((2*nd-Nd)/Nd) +
+            		(2*(t_bar-t[i])/(C*Nd))*(Nd*sum_tc - nd*sum_t) - 1;
             double Bi = (y[i] - y_bar)
-                    + ((t_bar - t[i]) / (C * N)) * ((N * sum_ty) - (sum_t * sum_y));
+                    + ((t_bar - t[i]) / (C * Nd)) * ((Nd * sum_ty) - (sum_t * sum_y));
 
             sumAB += Ai * Bi;
             sumAA += Ai * Ai;
         }
 
-
-        double x = - sumAB / sumLength * sumAA;
+        double x = -sumAB / (sumLength * sumAA);
         x = Math.min(Math.max(x, 0.0), 1.0);
 
-        double l1 = x * sumLength;
-        double l2 = (1.0 - x) * sumLength;
-
+        double l1 = (1.0 - x) * sumLength;
+        double l2 = x * sumLength;
+        
+        
         tree.setBranchLength(node1, l1);
         tree.setBranchLength(node2, l2);
-
+        
         Regression r = new Regression(t, getRootToTipDistances(tree));
-
+        
         return r.getResidualMeanSquared();
     }
 
@@ -606,6 +607,5 @@ public class TemporalRooting {
             }
         }
     }
-
 
 }

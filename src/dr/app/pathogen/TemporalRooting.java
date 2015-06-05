@@ -398,24 +398,6 @@ public class TemporalRooting {
         return fminx;
     }
 
-    private double [] getTemperedRootToTipDistances(final FlexibleTree tree) {
-    	NodeRef node1 = tree.getChild(tree.getRoot(), 0);
-        NodeRef node2 = tree.getChild(tree.getRoot(), 1);
-        
-        final double length1 = tree.getBranchLength(node1);
-        final double length2 = tree.getBranchLength(node2);
-        final double sumLength = length1 + length2;
-        
-        final FlexibleTree newTree = tree;
-        
-        newTree.setBranchLength(node1, sumLength);
-        newTree.setBranchLength(node2, 0);
-        
-        final double[] d = getRootToTipDistances(newTree);
-        
-    	return(d);
-    }
-    
     private double findAnalyticalLocalRoot(final FlexibleTree tree,
                                            final double[] t,
                                            final RootingFunction rootingFunction) {
@@ -434,8 +416,6 @@ public class TemporalRooting {
 
         final Set<NodeRef> tipSet1 = Tree.Utils.getExternalNodes(tree, node1);
         final Set<NodeRef> tipSet2 = Tree.Utils.getExternalNodes(tree, node2);
-
-        final double[] y = getTemperedRootToTipDistances(tree);
         
         int N = tipSet1.size() + tipSet2.size();
         int n = tipSet2.size();
@@ -445,7 +425,12 @@ public class TemporalRooting {
             int i = tip.getNumber();
             c[i] = 1;
         }
-
+        
+        final double[] y = getRootToTipDistances(tree);
+        for (int j = 0; j < y.length; j++) { // little fiddling with the root-to-tip divergences to get the right input vector
+        	y[j] = y[j] + (1-c[j])*(sumLength-length1) - c[j]*(sumLength-length1);
+        }
+        
         double sum_tt = 0.0;
         double sum_t = 0.0;
         double sum_y = 0.0;

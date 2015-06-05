@@ -389,7 +389,6 @@ public class TemporalRooting {
         double x = minimum.findMinimum(f);
 
         double fminx = minimum.fminx;
-//        System.err.println("Brute force alpha: "+ x);
         double l1 = x * sumLength;
         double l2 = (1.0 - x) * sumLength;
 

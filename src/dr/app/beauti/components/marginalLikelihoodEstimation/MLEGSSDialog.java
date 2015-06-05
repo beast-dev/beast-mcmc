@@ -235,7 +235,7 @@ public class MLEGSSDialog {
         logFileNameField.setText(options.mleFileName);
 
         treeWorkingPrior.setSelectedItem(options.choiceTreeWorkingPrior);
-        if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
+        if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions") && options.performMLEGSS) {
             beautiOptions.logCoalescentEventsStatistic = true;
         } else {
             beautiOptions.logCoalescentEventsStatistic = false;
@@ -252,7 +252,7 @@ public class MLEGSSDialog {
 
         options.mleFileName = logFileNameField.getText();
         options.choiceTreeWorkingPrior = treeWorkingPrior.getSelectedItem().toString();
-        if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
+        if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions") && options.performMLEGSS) {
             beautiOptions.logCoalescentEventsStatistic = true;
         } else {
             beautiOptions.logCoalescentEventsStatistic = false;

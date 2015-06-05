@@ -26,14 +26,12 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
-import dr.math.distributions.GammaKDEDistribution;
-import dr.math.distributions.LogTransformedNormalKDEDistribution;
-import dr.math.distributions.LogitTransformedNormalKDEDistribution;
-import dr.math.distributions.NormalKDEDistribution;
+import dr.math.distributions.*;
 import dr.util.FileHelpers;
 import dr.xml.*;
 
@@ -52,6 +50,7 @@ public class WorkingPriorParsers {
     public static final String LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR = "logitTransformedNormalReferencePrior";
     public static final String GAMMA_REFERENCE_PRIOR = "gammaReferencePrior";
     public static final String PARAMETER_COLUMN = "parameterColumn";
+    public static final String DIMENSION = "dimension";
 
     /**
      * A special parser that reads a convenient short form of reference priors on parameters.
@@ -171,6 +170,14 @@ public class WorkingPriorParsers {
 
                 String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
 
+                int dimension = 1;
+                if (xo.hasAttribute(DIMENSION)) {
+                    dimension = xo.getIntegerAttribute(DIMENSION);
+                }
+                if (dimension <= 0) {
+                    throw new XMLParseException("Column '" + parameterName + "' has dimension smaller than 1.");
+                }
+
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
                 long maxState = traces.getMaxState();
@@ -183,31 +190,82 @@ public class WorkingPriorParsers {
                 }
                 traces.setBurnIn(burnin);
 
-                int traceIndexParameter = -1;
-                for (int i = 0; i < traces.getTraceCount(); i++) {
-                    String traceName = traces.getTraceName(i);
-                    if (traceName.trim().equals(parameterName)) {
-                        traceIndexParameter = i;
+                if (dimension == 1) {
+
+                    int traceIndexParameter = -1;
+                    for (int i = 0; i < traces.getTraceCount(); i++) {
+                        String traceName = traces.getTraceName(i);
+                        if (traceName.trim().equals(parameterName)) {
+                            traceIndexParameter = i;
+                        }
                     }
-                }
 
-                if (traceIndexParameter == -1) {
-                    throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
-                }
-
-                Double[] parameterSamples = new Double[traces.getStateCount()];
-                traces.getValues(traceIndexParameter).toArray(parameterSamples);
-
-                DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution(parameterSamples));
-                for (int j = 0; j < xo.getChildCount(); j++) {
-                    if (xo.getChild(j) instanceof Statistic) {
-                        likelihood.addData((Statistic) xo.getChild(j));
-                    } else {
-                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    if (traceIndexParameter == -1) {
+                        throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
                     }
-                }
 
-                return likelihood;
+                    Double[] parameterSamples = new Double[traces.getStateCount()];
+                    traces.getValues(traceIndexParameter).toArray(parameterSamples);
+
+                    DistributionLikelihood likelihood = new DistributionLikelihood(new LogTransformedNormalKDEDistribution(parameterSamples));
+                    for (int j = 0; j < xo.getChildCount(); j++) {
+                        if (xo.getChild(j) instanceof Statistic) {
+                            if (DEBUG) {
+                                System.out.println(((Statistic) xo.getChild(j)).toString());
+                                System.out.println(((Statistic) xo.getChild(j)).getDimension());
+                            }
+                            likelihood.addData((Statistic) xo.getChild(j));
+                        } else {
+                            throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                        }
+                    }
+
+                    return likelihood;
+
+                } else {
+
+                    //dimension > 1
+                    LogTransformedNormalKDEDistribution[] arrayKDE = new LogTransformedNormalKDEDistribution[dimension];
+
+                    for (int i = 0; i < dimension; i++) {
+                        //look for parameterName1, parameterName2, ... if necessary
+                        String newParameterName = parameterName + (i+1);
+                        int traceIndexParameter = -1;
+                        for (int j = 0; j < traces.getTraceCount(); j++) {
+                            String traceName = traces.getTraceName(j);
+                            if (traceName.trim().equals(newParameterName)) {
+                                traceIndexParameter = j;
+                            }
+                        }
+
+                        if (traceIndexParameter == -1) {
+                            throw new XMLParseException("Column '" + newParameterName + "' can not be found for " + getParserName() + " element.");
+                        }
+
+                        Double[] parameterSamples = new Double[traces.getStateCount()];
+                        traces.getValues(traceIndexParameter).toArray(parameterSamples);
+
+                        arrayKDE[i] =  new LogTransformedNormalKDEDistribution(parameterSamples);
+
+                    }
+
+                    MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new MultivariateKDEDistribution(arrayKDE));
+
+                    for (int j = 0; j < xo.getChildCount(); j++) {
+                        if (xo.getChild(j) instanceof Statistic) {
+                            if (DEBUG) {
+                                System.out.println(((Statistic) xo.getChild(j)).toString());
+                                System.out.println(((Statistic) xo.getChild(j)).getDimension());
+                            }
+                            likelihood.addData((Statistic) xo.getChild(j));
+                        } else {
+                            throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                        }
+                    }
+
+                    return likelihood;
+
+                }
 
             } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
@@ -264,7 +322,16 @@ public class WorkingPriorParsers {
                 file = new File(parent, fileName);
                 fileName = file.getAbsolutePath();
 
+                //keep using String and not an array of Strings, append integers later on
                 String parameterName = xo.getStringAttribute(PARAMETER_COLUMN);
+
+                int dimension = 1;
+                if (xo.hasAttribute(DIMENSION)) {
+                    dimension = xo.getIntegerAttribute(DIMENSION);
+                }
+                if (dimension <= 0) {
+                    throw new XMLParseException("Column '" + parameterName + "' has dimension smaller than 1.");
+                }
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
@@ -278,31 +345,82 @@ public class WorkingPriorParsers {
                 }
                 traces.setBurnIn(burnin);
 
-                int traceIndexParameter = -1;
-                for (int i = 0; i < traces.getTraceCount(); i++) {
-                    String traceName = traces.getTraceName(i);
-                    if (traceName.trim().equals(parameterName)) {
-                        traceIndexParameter = i;
+                if (dimension == 1) {
+
+                    int traceIndexParameter = -1;
+                    for (int i = 0; i < traces.getTraceCount(); i++) {
+                        String traceName = traces.getTraceName(i);
+                        if (traceName.trim().equals(parameterName)) {
+                            traceIndexParameter = i;
+                        }
                     }
-                }
 
-                if (traceIndexParameter == -1) {
-                    throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
-                }
-
-                Double[] parameterSamples = new Double[traces.getStateCount()];
-                traces.getValues(traceIndexParameter).toArray(parameterSamples);
-
-                DistributionLikelihood likelihood = new DistributionLikelihood(new LogitTransformedNormalKDEDistribution(parameterSamples));
-                for (int j = 0; j < xo.getChildCount(); j++) {
-                    if (xo.getChild(j) instanceof Statistic) {
-                        likelihood.addData((Statistic) xo.getChild(j));
-                    } else {
-                        throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                    if (traceIndexParameter == -1) {
+                        throw new XMLParseException("Column '" + parameterName + "' can not be found for " + getParserName() + " element.");
                     }
-                }
 
-                return likelihood;
+                    Double[] parameterSamples = new Double[traces.getStateCount()];
+                    traces.getValues(traceIndexParameter).toArray(parameterSamples);
+
+                    DistributionLikelihood likelihood = new DistributionLikelihood(new LogitTransformedNormalKDEDistribution(parameterSamples));
+                    for (int j = 0; j < xo.getChildCount(); j++) {
+                        if (xo.getChild(j) instanceof Statistic) {
+                            if (DEBUG) {
+                                System.out.println(((Statistic) xo.getChild(j)).toString());
+                                System.out.println(((Statistic) xo.getChild(j)).getDimension());
+                            }
+                            likelihood.addData((Statistic) xo.getChild(j));
+                        } else {
+                            throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                        }
+                    }
+
+                    return likelihood;
+
+                } else {
+
+                    //dimension > 1
+                    LogitTransformedNormalKDEDistribution[] arrayKDE = new LogitTransformedNormalKDEDistribution[dimension];
+
+                    for (int i = 0; i < dimension; i++) {
+                        //look for parameterName1, parameterName2, ... if necessary
+                        String newParameterName = parameterName + (i+1);
+                        int traceIndexParameter = -1;
+                        for (int j = 0; j < traces.getTraceCount(); j++) {
+                            String traceName = traces.getTraceName(j);
+                            if (traceName.trim().equals(newParameterName)) {
+                                traceIndexParameter = j;
+                            }
+                        }
+
+                        if (traceIndexParameter == -1) {
+                            throw new XMLParseException("Column '" + newParameterName + "' can not be found for " + getParserName() + " element.");
+                        }
+
+                        Double[] parameterSamples = new Double[traces.getStateCount()];
+                        traces.getValues(traceIndexParameter).toArray(parameterSamples);
+
+                        arrayKDE[i] =  new LogitTransformedNormalKDEDistribution(parameterSamples);
+
+                    }
+
+                    MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new MultivariateKDEDistribution(arrayKDE));
+
+                    for (int j = 0; j < xo.getChildCount(); j++) {
+                        if (xo.getChild(j) instanceof Statistic) {
+                            if (DEBUG) {
+                                System.out.println(((Statistic) xo.getChild(j)).toString());
+                                System.out.println(((Statistic) xo.getChild(j)).getDimension());
+                            }
+                            likelihood.addData((Statistic) xo.getChild(j));
+                        } else {
+                            throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                        }
+                    }
+
+                    return likelihood;
+
+                }
 
             } catch (FileNotFoundException fnfe) {
                 throw new XMLParseException("File '" + fileName + "' can not be opened for " + getParserName() + " element.");
@@ -322,6 +440,8 @@ public class WorkingPriorParsers {
                 AttributeRule.newStringRule("fileName"),
                 AttributeRule.newStringRule("parameterColumn"),
                 AttributeRule.newIntegerRule("burnin"),
+                //optional to provide a dimension attribute
+                AttributeRule.newIntegerRule("dimension", true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

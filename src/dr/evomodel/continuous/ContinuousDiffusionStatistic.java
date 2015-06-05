@@ -25,17 +25,13 @@
 
 package dr.evomodel.continuous;
 
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.utilities.HistoryFilter;
 import dr.app.util.Arguments;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeStatistic;
 import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.model.Statistic;
@@ -86,12 +82,13 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String ALL = "all";
     public static final String CLADE = "clade";
     public static final String BACKBONE = "backbone";
+    public static final String BACKBONE_TIME = "backboneTime";
 
     public ContinuousDiffusionStatistic(String name, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
                                         boolean greatCircleDistances, Mode mode,
                                         summaryStatistic statistic, double heightUpper, double heightLower,
                                         double[] lowerHeights, boolean cumulative, boolean trueNoise, int dimension,
-                                        TaxonList taxonList, BranchSet branchset,
+                                        TaxonList taxonList, BranchSet branchset, Double backboneTime,
                                         String stateString, MarkovJumpsBeagleTreeLikelihood markovJumpLikelihood) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
@@ -114,6 +111,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
         this.taxonList = taxonList;
         this.branchset = branchset;
+        this.backboneTime = backboneTime;
 
         this.stateString =  stateString;
 //        this.stateInt = stateInt;
@@ -174,10 +172,14 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                             throw new RuntimeException(mte.toString());
                         }
                     }  else if (branchset.equals(BranchSet.BACKBONE)) {
-                        try{
-                            testNode = onAncestralPath1(tree, node, taxonList);
-                        } catch (Tree.MissingTaxonException mte) {
-                            throw new RuntimeException(mte.toString());
+                        if (backboneTime > 0) {
+                            testNode = onAncestralPathTime(tree, node, backboneTime);
+                        } else {
+                            try{
+                                testNode = onAncestralPathTaxa(tree, node, taxonList);
+                            } catch (Tree.MissingTaxonException mte) {
+                                throw new RuntimeException(mte.toString());
+                            }
                         }
                     }
 
@@ -694,7 +696,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         }
         return false;
     }
-    private static boolean onAncestralPath1(Tree tree, NodeRef node, TaxonList taxonList) throws Tree.MissingTaxonException {
+    private static boolean onAncestralPathTaxa(Tree tree, NodeRef node, TaxonList taxonList) throws Tree.MissingTaxonException {
 
         if (tree.isExternal(node)) return false;
 
@@ -720,6 +722,43 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         } else return false;
     }
 
+    //the sum of the branchLength for all the descendent nodes for a particular node should be larger than a user-specified value
+    private static boolean onAncestralPathTime(Tree tree, NodeRef node, double time) {
+
+        double maxDescendentTime = 0;
+
+        Set leafSet = Tree.Utils.getExternalNodes(tree, node);
+        Set nodeSet = Tree.Utils.getExternalNodes(tree, node);
+
+        Iterator iter = leafSet.iterator();
+
+        while (iter.hasNext()) {
+//            System.out.println("found node set");
+            NodeRef currentNode = (NodeRef)iter.next();
+
+            while (tree.getNodeHeight(node) > tree.getNodeHeight(currentNode)) {
+//                System.out.println("found node height");
+                if (!nodeSet.contains(currentNode)) {
+//                    System.out.println("found node");
+                    nodeSet.add(currentNode);
+                }
+                currentNode = tree.getParent(currentNode);
+            }
+        }
+
+        Iterator nodeIter = nodeSet.iterator();
+
+        while (nodeIter.hasNext()) {
+            NodeRef testNode = (NodeRef)nodeIter.next();
+            maxDescendentTime += tree.getBranchLength(testNode);
+        }
+
+        if (maxDescendentTime > time){
+            return true;
+        }   else {
+            return false;
+        }
+    }
 
 //    private int getStateInt(String state){
 //        int returnInt = -1;
@@ -879,12 +918,29 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             }
 
             TaxonList taxonList = null;
-            if  (branchset.equals(BranchSet.CLADE) || branchset.equals(BranchSet.BACKBONE)){
+            double backboneTime = 0;
+            if  (branchset.equals(BranchSet.CLADE)){
+                taxonList = (TaxonList) xo.getChild(TaxonList.class);
+                if (taxonList==null){
+                    System.err.println("empty taxon list in continuousDiffusionStatistic despite 'clade' branchSet attribute");
+                }
+            } else if (branchset.equals(BranchSet.BACKBONE)){
+                taxonList = (TaxonList) xo.getChild(TaxonList.class);
+                if (xo.hasAttribute(BACKBONE_TIME)){
+                    backboneTime = xo.getAttribute(BACKBONE_TIME, 0.0);
+                    if (taxonList!=null){
+                        System.err.println("both backbone time and taxon list provided for backbone definition in continuousDiffusionStatistic. Ignoring taxon list...");
+                    }
+                }  else if (taxonList==null){
+                    System.err.println("empty taxon list and no backboneTime in continuousDiffusionStatistic despite 'backbone' branchSet attribute. Ignoring 'backbone' branchSet...");
+                }
+            } else if (branchset.equals(BranchSet.ALL)){
                 taxonList = (TaxonList) xo.getChild(TaxonList.class);
                 if (taxonList!=null){
-//                    System.out.println("number of taxa in cladeList = "+taxonList.getTaxonCount());
-                }  else {
-                    System.err.println("empty taxon list in continuousDiffusionStatistic despite clade or backbone branchSet attribute");
+                    System.err.println("taxon list provided in continuousDiffusionStatistic but no 'clade' or 'backbone' branchSet attribute?? Ignoring taxon list...");
+                }
+                if (xo.hasAttribute(BACKBONE_TIME)){
+                    System.err.println("backoneTime provided in continuousDiffusionStatistic but no 'backbone' branchSet attribute?? Ignoring backboneTime list...");
                 }
             }
 
@@ -908,13 +964,6 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                 }
             }
 
-//            if (stateString == null && mjtl != null) {
-//                System.err.println("markovJumpsTreeLikelihood provided but not state specified for state-specific summaries.. ignoring markovJumpsTreeLikelihood");
-//                mjtl = null;
-//            }  else if (stateString != null && mjtl == null){
-//                System.err.println("markovJumpsTreeLikelihood provided but not state specified for state-specific summaries.. ignoring state");
-//                stateString = null;
-//            }
             if (stateString == null && mjtl != null) {
                 System.err.println(name+": markovJumpsTreeLikelihood specified for state-specific summaries but no state string.. ignoring markovJumpsTreeLikelihood");
                 mjtl = null;
@@ -949,7 +998,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
 
 
-            return new ContinuousDiffusionStatistic(name, traitLikelihoods, greatCircleDistances, averageMode, summaryStat, upperHeight, lowerHeight, lowerHeights, cumulative, trueNoise, dimension, taxonList, branchset, stateString, mjtl);
+            return new ContinuousDiffusionStatistic(name, traitLikelihoods, greatCircleDistances, averageMode, summaryStat, upperHeight, lowerHeight, lowerHeights, cumulative, trueNoise, dimension, taxonList, branchset, backboneTime, stateString, mjtl);
         }
 
         //************************************************************************
@@ -1001,6 +1050,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     private int dimension;
     private TaxonList taxonList;
     private BranchSet branchset;
+    private double backboneTime;
 
     private class History {
 

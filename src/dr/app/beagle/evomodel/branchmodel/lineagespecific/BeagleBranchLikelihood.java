@@ -108,6 +108,9 @@ public class BeagleBranchLikelihood implements Likelihood {
 		// flags to keep track of updated transition matrix buffers
 		updateNode = new boolean[nodeCount];
 		Arrays.fill(updateNode, true);
+//		// Do not update root node
+//		int rootNum = treeModel.getRoot().getNumber();
+//		updateNode[rootNum] = false;
 		
 		int nodeNum = branchIndex;
 		NodeRef node = treeModel.getNode(nodeNum);
@@ -115,13 +118,12 @@ public class BeagleBranchLikelihood implements Likelihood {
 		// traverse down that node populating buffers and calculating partials
 		traverse(treeModel, node);
 
-		System.out.println("FUBAR");
-		
 		// traverse down the parent node populating buffers and calculating partials
 		NodeRef parent = treeModel.getParent(node);
 		traverse(treeModel, parent);
 		int parentNum = treeModel.getParent(node).getNumber();
 
+		
 //		beagle.calculateEdgeLogLikelihoods(new int[] { parentNum }, // parentBufferIndices
 //				new int[] { nodeNum }, // int[] childBufferIndices
 //				new int[] { 0 }, // int[] probabilityIndices
@@ -140,8 +142,10 @@ public class BeagleBranchLikelihood implements Likelihood {
 	}// END: getLogLikelihood
 
 	private boolean traverse(TreeModel treeModel, NodeRef node) {
-
+		
 		boolean update = false;
+//		if (!treeModel.isRoot(node)) {
+		
 		int nodeNum = node.getNumber();
 		NodeRef parentNode = treeModel.getParent(node);
 
@@ -222,10 +226,11 @@ public class BeagleBranchLikelihood implements Likelihood {
 
 				updateNode[nodeNum] = false;
 				update = true;
-			}// END: children updated check
+				}// END: children updated check
 
-		}// END: external branch check
-
+			}// END: external branch check
+//		}//END: root check
+		
 		return update;
 	}// END: traverse
 

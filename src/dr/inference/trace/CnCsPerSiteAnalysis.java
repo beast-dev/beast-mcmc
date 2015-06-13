@@ -345,15 +345,15 @@ public class CnCsPerSiteAnalysis implements Citable {
                 tracesCN.loadTraces();
                 tracesCS.loadTraces();
 
-                int maxStateCN = tracesCN.getMaxState();
-                int maxStateCS = tracesCS.getMaxState();
+                long maxStateCN = tracesCN.getMaxState();
+                long maxStateCS = tracesCS.getMaxState();
 
                 if (maxStateCN != maxStateCS){
                     System.err.println("max states in" + fileNameCN + "and" + fileNameCS + "are not equal");
                 }
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute(BURN_IN, maxStateCN / 10);
+                long burnin = xo.getAttribute(BURN_IN, maxStateCN / 10);
                 //TODO: implement custom burn-in
 
                 if (burnin < 0 || burnin >= maxStateCN) {

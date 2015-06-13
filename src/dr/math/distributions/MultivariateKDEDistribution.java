@@ -9,7 +9,7 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
 	
 	private Distribution[] multivariateKDE;
 	private int dimension;
-	private boolean[] flags;
+	//private boolean[] flags;
 
 	public MultivariateKDEDistribution (Distribution[] multivariateKDE) {
 		
@@ -19,12 +19,10 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
 		
 		this.multivariateKDE = multivariateKDE;
 		this.dimension = multivariateKDE.length;
-		for (int i = 0; i < dimension; i++) {
+		/*for (int i = 0; i < dimension; i++) {
 			flags[i] = true;
-		}
-		
-		//System.out.println("Constructed multivariate KDE distribution with " + dimension + " dimensions.");
-		
+		}*/
+
 	}
 	
 	public MultivariateKDEDistribution (Distribution[] multivariateKDE, boolean[] flags) {
@@ -35,16 +33,8 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
 		
 		this.multivariateKDE = multivariateKDE;
 		this.dimension = multivariateKDE.length;
-		this.flags = flags;
-		
-		/*System.out.println("Constructed multivariate KDE distribution with " + dimension + " dimensions.");
-		System.out.println("Flags:");
-		for (int i = 0; i < dimension; i++) {
-			if (flags[i]) {
-				System.out.println("  Dimension " + i);
-			}
-		}*/
-		
+		//this.flags = flags;
+
 	}
 
 	public double logPdf(double[] x) {
@@ -56,9 +46,9 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
         }
 		
 		for (int i = 0; i < dimension; i++) {
-			if (flags[i]) {
+			//if (flags[i]) {
 				logPdf += multivariateKDE[i].logPdf(x[i]);
-			}
+			//}
 		}
 		
 		return logPdf;

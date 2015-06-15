@@ -6,6 +6,7 @@ package dr.math.distributions;
 public class MultivariateKDEDistribution implements MultivariateDistribution {
 	
 	public static final String TYPE = "multivariateKDE";
+    public static final boolean DEBUG = true;
 	
 	private Distribution[] multivariateKDE;
 	private int dimension;
@@ -47,9 +48,16 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
 		
 		for (int i = 0; i < dimension; i++) {
 			//if (flags[i]) {
-				logPdf += multivariateKDE[i].logPdf(x[i]);
+			logPdf += multivariateKDE[i].logPdf(x[i]);
 			//}
 		}
+
+        if (DEBUG){
+            for (int i = 0; i < dimension; i++) {
+                System.err.println(i + ", " + "x[i] = " + x[i] + ", logPdf = " + multivariateKDE[i].logPdf(x[i]));
+                System.err.println("    mean = " + multivariateKDE[i].mean() + ", variance = " + multivariateKDE[i].variance());
+            }
+        }
 		
 		return logPdf;
 	}

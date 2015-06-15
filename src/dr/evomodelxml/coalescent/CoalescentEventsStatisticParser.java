@@ -35,6 +35,7 @@ import dr.xml.*;
 public class CoalescentEventsStatisticParser extends AbstractXMLObjectParser {
 
     public static final String COALESCENT_EVENTS_STATISTIC = "coalescentEventsStatistic";
+    public static final boolean DEBUG = false;
 
     public String getParserDescription() {
         return "";
@@ -52,6 +53,9 @@ public class CoalescentEventsStatisticParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        if (DEBUG) {
+            System.err.println("Parsing coalescentEventsStatistic");
+        }
         CoalescentIntervalProvider coalescent = (CoalescentIntervalProvider) xo.getChild(CoalescentIntervalProvider.class);
         //TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         //return new CoalescentEventsStatistic(coalescent, treeModel);

@@ -29,9 +29,11 @@ public class MLEGSSDialog {
 
     private JTextArea logFileNameField = new JTextArea("MLE.log");
 
+    JCheckBox operatorAnalysis = new JCheckBox("Print operator analysis");
+
     private JComboBox stepDistribution = new JComboBox();
     private JComboBox treeWorkingPrior = new JComboBox();
-    private JComboBox parameterWorkingPrior = new JComboBox();
+    //private JComboBox parameterWorkingPrior = new JComboBox();
 
     private MarginalLikelihoodEstimationOptions options;
     private BeautiOptions beautiOptions;
@@ -157,12 +159,26 @@ public class MLEGSSDialog {
         });
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
 
-        parameterWorkingPrior.addItem("Normal KDE");
+        //parameterWorkingPrior.addItem("Normal KDE");
         //parameterWorkingPrior.addItem("Gamma KDE");
-        labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
+        //labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
 
         stepDistribution.addItem("Beta");
         labelStepDistribution = optionsPanel.addComponentWithLabel("Stepping stone distribution:", stepDistribution);
+
+        optionsPanel.addSeparator();
+
+        optionsPanel.addComponent(operatorAnalysis);
+
+        operatorAnalysis.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (operatorAnalysis.isSelected()) {
+                    options.printOperatorAnalysis = true;
+                } else {
+                    options.printOperatorAnalysis = false;
+                }
+            }
+        });
 
         optionsPanel.addSeparator();
 

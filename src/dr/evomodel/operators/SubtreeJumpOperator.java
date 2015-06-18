@@ -138,7 +138,9 @@ public class SubtreeJumpOperator extends AbstractTreeOperator implements Coercab
 
         final List<NodeRef> reverseDestinations = getIntersectingEdges(tree, height);
 		double reverseProbability = getReverseProbability(tree, CiP, j, height, maxHeight, reverseDestinations, alpha);
-        logq = Math.log(forwardProbability) - Math.log(reverseProbability);
+
+        // hastings ratio = reverse Prob / forward Prob
+        logq = Math.log(reverseProbability) - Math.log(forwardProbability);
         return logq;
     }
 

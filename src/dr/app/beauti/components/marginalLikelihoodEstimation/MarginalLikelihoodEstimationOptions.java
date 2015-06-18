@@ -65,6 +65,7 @@ public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
     //MLE options
     public boolean performMLE = false;
     public boolean performMLEGSS = false;
+    public boolean printOperatorAnalysis = false;
     public int pathSteps = 100;
     public int mleChainLength = 1000000;
     public int mleLogEvery = 1000;

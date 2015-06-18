@@ -154,7 +154,7 @@ public class ClockRateModelEditor {
 
 			if (k == 1 || k == 2) {
 				clockParameterFields[k]
-						.setToolTipText("Parameter in the log space");
+						.setToolTipText("Parameter in the real space");
 			}//END: ucld.mean ucld.stdev check
 			
 			JPanel panel = new JPanel(new BorderLayout(6, 6));

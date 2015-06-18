@@ -887,17 +887,18 @@ public class PartitionData implements Serializable {
 	// ////////////////////
 	
 	public int clockModelIndex = 0;
-
+    public int LRC_INDEX = 1;
+	
 	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
 
 	public void resetClockModelIdref() {
 		this.clockModelIdref = BranchRateModel.BRANCH_RATES;
 	}
 	
-	public static String[] clockModels = { "Strict Clock", //
-			"Lognormal relaxed clock (Uncorrelated)", //
-			"Exponential relaxed clock (Uncorrelated)", //
-			"Inverse Gaussian relaxed clock" //
+	public static String[] clockModels = { "Strict Clock", // 0
+			"Lognormal relaxed clock (Uncorrelated)", // 1
+			"Exponential relaxed clock (Uncorrelated)", // 2
+			"Inverse Gaussian relaxed clock" // 3
 	};
 
 	public static String[] clockParameterNames = new String[] { "clock.rate", // StrictClock
@@ -928,6 +929,8 @@ public class PartitionData implements Serializable {
 			0.0 // ig.offset
 	};
 
+	public boolean lrcParametersInRealSpace = true;
+	
 	public BranchRateModel createClockRateModel() {
 
 		BranchRateModel branchRateModel = null;
@@ -938,7 +941,7 @@ public class PartitionData implements Serializable {
 			
 			branchRateModel = new StrictClockBranchRates(rateParameter);
 
-		} else if (this.clockModelIndex == 1) {// Lognormal relaxed clock
+		} else if (this.clockModelIndex == LRC_INDEX) {// Lognormal relaxed clock
 
 			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
 			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
@@ -946,7 +949,7 @@ public class PartitionData implements Serializable {
 			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
 			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
 			//TODO: choose between log scale / real scale
-	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], false, false);
+	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], lrcParametersInRealSpace, lrcParametersInRealSpace);
 	        
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
 	        		rateCategoryParameter, //
@@ -1024,7 +1027,7 @@ public class PartitionData implements Serializable {
 	}
 	
 	public static String[] siteRateModels = { "No Model", //
-			"Site Rate Model" //
+			"Gamma Site Rate Model" //
 	};
 
 	public static String[] siteRateModelParameterNames = new String[] {

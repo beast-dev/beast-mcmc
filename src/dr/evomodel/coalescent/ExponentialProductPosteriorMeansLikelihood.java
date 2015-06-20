@@ -13,6 +13,7 @@ public class ExponentialProductPosteriorMeansLikelihood extends Likelihood.Abstr
 	
 	//not used at the moment
 	public final static boolean FIXED_TREE = false;
+    public static final boolean DEBUG = true;
 	
 	private TreeModel treeModel;
 	private double[] posteriorMeans;
@@ -34,6 +35,10 @@ public class ExponentialProductPosteriorMeansLikelihood extends Likelihood.Abstr
 		
 		CoalescentTreeIntervalStatistic ctis = new CoalescentTreeIntervalStatistic(treeModel);
 		int coalescentIntervalCounter = 0;
+
+        if (DEBUG) {
+            System.err.println("ExponentialProductPosteriorMeansLikelihood dimension: " + ctis.getDimension());
+        }
 		
 		for (int i = 0; i < ctis.getDimension(); i++) {
 			
@@ -54,20 +59,29 @@ public class ExponentialProductPosteriorMeansLikelihood extends Likelihood.Abstr
 					//coalescent event at root: exponential density
 					//System.err.print("coalescent event at root: ");
 					double logContribution = -posteriorMeans[coalescentIntervalCounter] - combinations*branchLength*Math.exp(-posteriorMeans[coalescentIntervalCounter]);
-					logPDF += logContribution;
+					if (DEBUG) {
+                        System.err.println(i + ": " + logContribution);
+                    }
+                    logPDF += logContribution;
 					//System.err.println(logContribution);
 				} else if (ctis.getLineageCount(i) > ctis.getLineageCount(i+1)) {
 					//coalescent event: exponential density
 					//System.err.print("coalescent event (not at root): ");
 					double logContribution = -posteriorMeans[coalescentIntervalCounter] - combinations*branchLength*Math.exp(-posteriorMeans[coalescentIntervalCounter]);
-					logPDF += logContribution;
+                    if (DEBUG) {
+                        System.err.println(i + ": " + logContribution);
+                    }
+                    logPDF += logContribution;
 					//System.err.println(logContribution);
 					coalescentIntervalCounter++;
 				} else {
 					//sampling event: exponential tail probability
 					//System.err.print("sampling event: ");
 					double logContribution = -combinations*branchLength*Math.exp(-posteriorMeans[coalescentIntervalCounter]);
-					logPDF += logContribution;
+                    if (DEBUG) {
+                        System.err.println(i + ": " + logContribution);
+                    }
+                    logPDF += logContribution;
 					//System.err.println(logContribution);
 				}
 				

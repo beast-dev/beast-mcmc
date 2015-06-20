@@ -2,16 +2,13 @@ package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import jam.panels.OptionsPanel;
 
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
+
+import java.awt.event.ActionEvent;
 
 
 /**
@@ -30,6 +27,8 @@ public class MLEDialog {
     private WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
     private JTextArea logFileNameField = new JTextArea("MLE.log");
+
+    JCheckBox operatorAnalysis = new JCheckBox("Print operator analysis");
 
     private JComboBox stepDistribution = new JComboBox();
 
@@ -130,6 +129,20 @@ public class MLEDialog {
 
         stepDistribution.addItem("Beta");
         labelStepDistribution = optionsPanel.addComponentWithLabel("Path step distribution:", stepDistribution);
+
+        optionsPanel.addSeparator();
+
+        optionsPanel.addComponent(operatorAnalysis);
+
+        operatorAnalysis.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (operatorAnalysis.isSelected()) {
+                    options.printOperatorAnalysis = true;
+                } else {
+                    options.printOperatorAnalysis = false;
+                }
+            }
+        });
 
         optionsPanel.addSeparator();
 

@@ -36,6 +36,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
@@ -279,11 +280,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         final boolean computeWishartStatistics = getComputeWishartSufficientStatistics();
 
         if (computeWishartStatistics) {
-//            if (wishartStatistics == null) {
             wishartStatistics = new WishartSufficientStatistics(dimTrait);
-//            } else {
-//                wishartStatistics.clear();
-//            }
         }
 
         // Use dynamic programming to compute conditional likelihoods at each internal node
@@ -608,32 +605,166 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         final double[][] outerProduct = wishartStatistics.getScaleMatrix();
 
+//        for (int k = 0; k < numData; k++) {
+//
+//            for (int i = 0; i < dimTrait; i++) {
+//
+//                // final double wChild0i = meanCache[childOffset0 + k * dimTrait + i] * precision0;
+//                // final double wChild1i = meanCache[childOffset1 + k * dimTrait + i] * precision1;
+//                final double wChild0i = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + i] * precision0;
+//                final double wChild1i = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + i] * precision1;
+//
+//                for (int j = 0; j < dimTrait; j++) {
+//
+//                    //final double child0j = meanCache[childOffset0 + k * dimTrait + j];
+//                    //final double child1j = meanCache[childOffset1 + k * dimTrait + j];
+//                    final double child0j = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + j];
+//                    final double child1j = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + j];
+//
+////                    outerProduct[i][j] += wChild0i * child0j;
+////                    outerProduct[i][j] += wChild1i * child1j;
+////
+////                    //outerProduct[i][j] -= (wChild0i + wChild1i) * meanCache[thisOffset + k * dimTrait + j];
+////                    outerProduct[i][j] -= (wChild0i + wChild1i) * cacheHelper.getMeanCache()[thisOffset + k * dimTrait + j];
+//                    outerProduct[i][j] += wChild0i * child0j;
+//                    outerProduct[i][j] += wChild1i * child1j;
+//
+//                    //outerProduct[i][j] -= (wChild0i + wChild1i) * meanCache[thisOffset + k * dimTrait + j];
+//                    outerProduct[i][j] -= (wChild0i + wChild1i) * cacheHelper.getMeanCache()[thisOffset + k * dimTrait + j];
+//                }
+//            }
+//        }
+
+//        final double[][] increment = new double[dimTrait][dimTrait];
+//
+//         for (int k = 0; k < numData; k++) {
+//
+//            for (int i = 0; i < dimTrait; i++) {
+//
+//                final double child0i = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + i];
+//                final double child1i = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + i];
+//                final double nodei = cacheHelper.getMeanCache()[thisOffset + k * dimTrait + i];
+//
+//                for (int j = 0; j < dimTrait; j++) {
+//                    final double child0j = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + j];
+//                    final double child1j = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + j];
+//                    final double nodej = cacheHelper.getMeanCache()[thisOffset + k * dimTrait + j];
+//
+//                    final double inc =
+//                            (child0i * child0j - nodei * nodej) * precision0 +
+//                                    (child1i * child1j - nodei * nodej) * precision1;
+//
+//                    increment[i][j] += inc;
+////                    outerProduct[i][j] += inc;
+//                }
+//            }
+//        }
+
+//        final double[][] increment2 = new double[dimTrait][dimTrait];
+//
+//
+//        for (int k = 0; k < numData; k++) {
+//
+//            for (int i = 0; i < dimTrait; i++) {
+//
+//                final double child0i = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + i];
+//                final double child1i = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + i];
+////               final double nodei = cacheHelper.getMeanCache()[thisOffset + k * dimTrait + i];
+//
+//                for (int j = 0; j < dimTrait; j++) {
+//                    final double child0j = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + j];
+//                    final double child1j = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + j];
+////                   final double nodej = cacheHelper.getMeanCache()[thisOffset + k * dimTrait + j];
+//
+//                    final double inc = (child0i * child0j + child1i * child1j
+//                            - child0i * child1j -  child1i * child0j) * weight;
+//
+//                    increment2[i][j] += inc;
+//                }
+//            }
+//        }
+//
+//        final double[][] increment3 = new double[dimTrait][dimTrait];
+
+        final double weight = precision0 * precision1 / (precision0 + precision1);
+
         for (int k = 0; k < numData; k++) {
 
             for (int i = 0; i < dimTrait; i++) {
 
-                // final double wChild0i = meanCache[childOffset0 + k * dimTrait + i] * precision0;
-                // final double wChild1i = meanCache[childOffset1 + k * dimTrait + i] * precision1;
-                final double wChild0i = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + i] * precision0;
-                final double wChild1i = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + i] * precision1;
+                final double child0i = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + i];
+                final double child1i = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + i];
 
                 for (int j = 0; j < dimTrait; j++) {
-
-                    //final double child0j = meanCache[childOffset0 + k * dimTrait + j];
-                    //final double child1j = meanCache[childOffset1 + k * dimTrait + j];
                     final double child0j = cacheHelper.getCorrectedMeanCache()[childOffset0 + k * dimTrait + j];
                     final double child1j = cacheHelper.getCorrectedMeanCache()[childOffset1 + k * dimTrait + j];
 
-                    outerProduct[i][j] += wChild0i * child0j;
-                    outerProduct[i][j] += wChild1i * child1j;
+                    final double inc = (child0i - child1i) * (child0j - child1j) * weight;
 
-                    //outerProduct[i][j] -= (wChild0i + wChild1i) * meanCache[thisOffset + k * dimTrait + j];
-                    outerProduct[i][j] -= (wChild0i + wChild1i) * cacheHelper.getMeanCache()[thisOffset + k * dimTrait + j];
+                    outerProduct[i][j] += inc;
+//                    increment3[i][j] += inc;
                 }
             }
         }
+
+
+//        double det = increment3[0][0] * increment3[1][1] - increment3[0][1] * increment3[1][0];
+//
+//        System.err.println("INC Check\n"
+//                + new Matrix(increment) + "\n"
+//                + new Matrix(increment2) + "\n"
+//                + new Matrix(increment3) +"\n"
+//                + det + "\n\n");
+
+
+
+        // For numerical stability: Ensure increment is positive-definite
+//        if (checkIsPositiveDefinite(increment)) {
+//            for (int i = 0; i < dimTrait; ++i) {
+//                for (int j = 0; j < dimTrait; ++j) {
+//                    outerProduct[i][j] += increment3[i][j];
+//                }
+//            }
+//        }
+//        else {
+//
+//            System.err.println("ERROR INC\n" + new Matrix(increment) + "\n" + new Matrix(increment3) + "\n\n");
+////            System.exit(-1);
+//
+//        }
+
         wishartStatistics.incrementDf(1); // Peeled one node
     }
+
+//    private boolean checkIsPositiveDefinite(double[][] S) {
+//
+//        final int dim = S.length;
+//
+//        for (int i = 0; i < dim; ++i) {
+//            if (S[i][i] < 0.0) return false;
+//        }
+//
+//        if (dim == 2) {
+//            return (S[0][0] * S[1][1] > S[0][1] * S[1][0]);
+//        } else {
+//            try {
+//                return (new Matrix(S).isPD());
+//            } catch (IllegalDimension illegalDimension) {
+//                illegalDimension.printStackTrace();
+//            }
+//        }
+//        return false;
+//    }
+
+//    private boolean checkDiagonals(double[][] S) {
+//        for (int i = 0; i < S.length; ++i) {
+//            if (S[i][i] < 0.0) {
+//                System.err.println("IMTL ERROR diag(S)\n" + new Matrix(S));
+//                return false;
+//            }
+//        }
+//        return true;
+//    }
 
 //    private void computeWeightedMeanCache(int thisOffset,
 //                                          int childOffset0,
@@ -742,9 +873,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                               double[] out2, int offset2,
                                               int length) {
 
-        final double totalInverseWeight = 1.0 / (weight0 + weight1);
+//        final double totalInverseWeight = 1.0 / (weight0 + weight1);
         for (int i = 0; i < length; i++) {
-            out2[offset2 + i] = (in0[offset0 + i] * weight0 + in1[offset1 + i] * weight1) * totalInverseWeight;
+//            out2[offset2 + i] = (in0[offset0 + i] * weight0 + in1[offset1 + i] * weight1) * totalInverseWeight;
+            out2[offset2 + i] = (in0[offset0 + i] * weight0 + in1[offset1 + i] * weight1) / (weight0 + weight1);
         }
     }
 

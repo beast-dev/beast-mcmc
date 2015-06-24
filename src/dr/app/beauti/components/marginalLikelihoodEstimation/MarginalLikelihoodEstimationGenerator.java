@@ -114,6 +114,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             if (!options.pathScheme.equals(MarginalLikelihoodEstimator.LINEAR)) {
                 attributes.add(new Attribute.Default<Double>(MarginalLikelihoodEstimator.ALPHA, options.schemeParameter));
             }
+            if (options.printOperatorAnalysis) {
+                attributes.add(new Attribute.Default<Boolean>(MarginalLikelihoodEstimator.PRINT_OPERATOR_ANALYSIS, true));
+            }
 
             writer.writeOpenTag(MarginalLikelihoodEstimator.MARGINAL_LIKELIHOOD_ESTIMATOR, attributes);
 
@@ -359,6 +362,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             attributes.add(new Attribute.Default<String>(MarginalLikelihoodEstimator.PATH_SCHEME, options.pathScheme));
             if (!options.pathScheme.equals(MarginalLikelihoodEstimator.LINEAR)) {
                 attributes.add(new Attribute.Default<Double>(MarginalLikelihoodEstimator.ALPHA, options.schemeParameter));
+            }
+            if (options.printOperatorAnalysis) {
+                attributes.add(new Attribute.Default<Boolean>(MarginalLikelihoodEstimator.PRINT_OPERATOR_ANALYSIS, true));
             }
 
             writer.writeOpenTag(MarginalLikelihoodEstimator.MARGINAL_LIKELIHOOD_ESTIMATOR, attributes);

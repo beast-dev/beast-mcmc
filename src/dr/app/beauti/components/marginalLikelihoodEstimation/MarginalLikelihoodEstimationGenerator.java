@@ -26,11 +26,10 @@
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.options.*;
+import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.DataType;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
@@ -51,6 +50,7 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
+ * @author Guy Baele
  * @version $Id$
  */
 public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerator {
@@ -113,6 +113,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             attributes.add(new Attribute.Default<String>(MarginalLikelihoodEstimator.PATH_SCHEME, options.pathScheme));
             if (!options.pathScheme.equals(MarginalLikelihoodEstimator.LINEAR)) {
                 attributes.add(new Attribute.Default<Double>(MarginalLikelihoodEstimator.ALPHA, options.schemeParameter));
+            }
+            if (options.printOperatorAnalysis) {
+                attributes.add(new Attribute.Default<Boolean>(MarginalLikelihoodEstimator.PRINT_OPERATOR_ANALYSIS, true));
             }
 
             writer.writeOpenTag(MarginalLikelihoodEstimator.MARGINAL_LIKELIHOOD_ESTIMATOR, attributes);
@@ -360,6 +363,9 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             if (!options.pathScheme.equals(MarginalLikelihoodEstimator.LINEAR)) {
                 attributes.add(new Attribute.Default<Double>(MarginalLikelihoodEstimator.ALPHA, options.schemeParameter));
             }
+            if (options.printOperatorAnalysis) {
+                attributes.add(new Attribute.Default<Boolean>(MarginalLikelihoodEstimator.PRINT_OPERATOR_ANALYSIS, true));
+            }
 
             writer.writeOpenTag(MarginalLikelihoodEstimator.MARGINAL_LIKELIHOOD_ESTIMATOR, attributes);
 
@@ -376,45 +382,398 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             writer.writeOpenTag(PathLikelihood.DESTINATION);
             writer.writeOpenTag(CompoundLikelihoodParser.WORKING_PRIOR);
 
-            ArrayList<Parameter> parameters = beautiOptions.selectParameters();
+            //Start with providing working priors for the substitution model(s)
+            for (PartitionSubstitutionModel model : beautiOptions.getPartitionSubstitutionModels()) {
+                int codonPartitionCount = model.getCodonPartitionCount();
 
-            for (Parameter param : parameters) {
-                if (DEBUG) {
-                    System.err.println(param.toString() + "   " + param.priorType.toString());
+                switch (model.getDataType().getType()) {
+                    case DataType.NUCLEOTIDES:
+
+                        switch (model.getNucSubstitutionModel()) {
+
+                            case HKY:
+                                if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
+                                    for (int i = 1; i <= codonPartitionCount; i++) {
+                                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "kappa"),
+                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa");
+                                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    }
+                                } else {
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + "kappa"),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa");
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
+                                break;
+
+                            case TN93:
+                                if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
+                                    for (int i = 1; i <= codonPartitionCount; i++) {
+                                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "kappa1"),
+                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa1");
+                                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "kappa2"),
+                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa2");
+                                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    }
+                                } else {
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + "kappa1"),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa1");
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + "kappa2"),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa2");
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
+                                break;
+
+                            case GTR:
+                                if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
+                                    for (int i = 1; i <= codonPartitionCount; i++) {
+                                        for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
+                                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                    new Attribute[]{
+                                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + rateName),
+                                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                                    });
+                                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
+                                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                        }
+                                    }
+                                } else {
+                                    for (String rateName : PartitionSubstitutionModel.GTR_RATE_NAMES) {
+                                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                                new Attribute[]{
+                                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + rateName),
+                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                                });
+                                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
+                                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    }
+                                }
+                                break;
+
+                        }
+
+                        if (model.getFrequencyPolicy() == FrequencyPolicyType.ESTIMATED) {
+                            if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel() && model.isUnlinkedFrequencyModel()) {
+                                for (int i = 1; i <= codonPartitionCount; i++) {
+                                    writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "frequencies"),
+                                                    new Attribute.Default<Integer>("dimension", 4),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
+                                    writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
+                            } else {
+                                writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                        new Attribute[]{
+                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + "frequencies"),
+                                                new Attribute.Default<Integer>("dimension", 4),
+                                                new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        });
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
+                                writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                            }
+                        }
+
+                        break;//NUCLEOTIDES
+
+                    default:
+                        throw new IllegalArgumentException("Unknown data type");
                 }
-                //should leave out those parameters set by the coalescent
-                if (param.priorType != PriorType.NONE_TREE_PRIOR) {
-                    //TODO: frequencies is multidimensional, is that automatically dealt with?
-                    if (param.getLowerBound() == Double.NEGATIVE_INFINITY && param.getUpperBound() == Double.POSITIVE_INFINITY) {
-                        writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
-                                new Attribute[]{
-                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", param.getName()),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
-                                });
-                        writeParameterIdref(writer, param);
-                        writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
-                    } else if (param.getLowerBound() == 0.0 && param.getUpperBound() == Double.POSITIVE_INFINITY) {
+
+                if (model.isGammaHetero()) {
+                    if (codonPartitionCount > 1 && model.isUnlinkedHeterogeneityModel()) {
+                        for (int i = 1; i <= codonPartitionCount; i++) {
+                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "alpha"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "alpha");
+                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        }
+                    } else {
                         writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", param.getName()),
+                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + "alpha"),
                                         new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
                                 });
-                        writeParameterIdref(writer, param);
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "alpha");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
-                    } else if (param.getLowerBound() == 0.0 && param.getUpperBound() == 1.0) {
+                    }
+                }
+
+                if (model.isInvarHetero()) {
+                    if (codonPartitionCount > 1 && model.isUnlinkedHeterogeneityModel()) {
+                        for (int i = 1; i <= codonPartitionCount; i++) {
+                            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "pInv"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "pInv");
+                            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        }
+                    } else {
                         writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
-                                        new Attribute.Default<String>("parameterColumn", param.getName()),
+                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + "pInv"),
                                         new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
                                 });
-                        writeParameterIdref(writer, param);
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "pInv");
                         writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                     }
                 }
             }
+
+            //Continue with providing working priors for the clock model(s)
+            for (PartitionClockModel model : beautiOptions.getPartitionClockModels()) {
+                switch(model.getClockType()) {
+                    case STRICT_CLOCK:
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        break;
+
+                    case UNCORRELATED:
+                        switch (model.getClockDistributionType()) {
+                            case LOGNORMAL:
+                                if (model.getClockRateParam().isMeanInRealSpace()) {
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_STDEV),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                } else {
+                                    writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                                    writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                                    writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                            new Attribute[]{
+                                                    new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                    new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_STDEV),
+                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            });
+                                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                                    writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
+                                break;
+
+                            case EXPONENTIAL:
+                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                        new Attribute[]{
+                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCED_MEAN),
+                                                new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        });
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                break;
+                        }
+                        break;
+
+                    default:
+                        throw new IllegalArgumentException("Unknown clock model");
+                }
+            }
+
+            //Provide working priors for the coalescent model(s)
+            for (PartitionTreePrior model : beautiOptions.getPartitionTreePriors()) {
+                TreePriorType nodeHeightPrior = model.getNodeHeightPrior();
+                TreePriorParameterizationType parameterization = model.getParameterization();
+
+                switch (nodeHeightPrior) {
+                    case CONSTANT:
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "constant.popSize"),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "constant.popSize");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        break;
+
+                    case EXPONENTIAL:
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "exponential.popSize"),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "exponential.popSize");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
+                            writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", "exponential.growthRate"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, "exponential.growthRate");
+                            writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                        } else {
+                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", "exponential.doublingTime"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, "exponential.doublingTime");
+                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        }
+
+                        break;
+
+                    case LOGISTIC:
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "logistic.popSize"),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "logistic.popSize");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
+                            writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", "logistic.growthRate"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, "logistic.growthRate");
+                            writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                        } else {
+                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", "logistic.doublingTime"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, "logistic.doublingTime");
+                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        }
+
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "logistic.t50"),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "logistic.t50");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        break;
+
+                    case EXPANSION:
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "expansion.popSize"),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "expansion.popSize");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
+                            writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", "expansion.growthRate"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, "expansion.growthRate");
+                            writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+                        } else {
+                            writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                    new Attribute[]{
+                                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                            new Attribute.Default<String>("parameterColumn", "expansion.doublingTime"),
+                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                    });
+                            writer.writeIDref(ParameterParser.PARAMETER, "expansion.doublingTime");
+                            writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        }
+
+                        writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "expansion.ancestralProportion"),
+                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "expansion.ancestralProportion");
+                        writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        break;
+                }
+            }
+
+            //TODO: take care of anything else I missed
+
+
 
             if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
                 writer.writeIDref("productOfExponentialsPosteriorMeansLoess", "exponentials");

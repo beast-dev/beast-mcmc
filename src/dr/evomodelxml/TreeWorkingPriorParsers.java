@@ -243,10 +243,10 @@ public class TreeWorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
@@ -347,10 +347,10 @@ public class TreeWorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
@@ -382,7 +382,7 @@ public class TreeWorkingPriorParsers {
                 System.out.println("Overview of traceIndexParameter:");
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
-                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                        throw new XMLParseException("Not all traces could be linked to the required columns, problem with trace index: " + i + "; traceIndexParameter.length = " + traceIndexParameter.length);
                     }
                     System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
                 }
@@ -483,13 +483,14 @@ public class TreeWorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
+                    System.out.println("Burnin: " + burnin);
                 }
                 traces.setBurnIn(burnin);
 
@@ -518,7 +519,7 @@ public class TreeWorkingPriorParsers {
                 System.out.println("Overview of traceIndexParameter:");
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
-                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                        throw new XMLParseException("Not all traces could be linked to the required columns, problem with trace index: " + i + "; traceIndexParameter.length = " + traceIndexParameter.length);
                     }
                     System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
                 }
@@ -639,10 +640,10 @@ public class TreeWorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
@@ -762,10 +763,10 @@ public class TreeWorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
@@ -959,10 +960,10 @@ public class TreeWorkingPriorParsers {
 
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
-                int maxState = traces.getMaxState();
+                long maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute("burnin", maxState / 10);
+                long burnin = xo.getAttribute("burnin", maxState / 10);
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");

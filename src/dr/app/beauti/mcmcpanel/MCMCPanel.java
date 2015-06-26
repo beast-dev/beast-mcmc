@@ -289,6 +289,7 @@ public class MCMCPanel extends BeautiPanel {
                     updateMLEFileNameStem();
                 } else {
                     mleOptions.performMLE = false;
+                    mleOptions.printOperatorAnalysis = false;
                     buttonMLE.setEnabled(false);
                     performMLEGSS.setEnabled(true);
                     buttonMLEGSS.setEnabled(false);
@@ -333,6 +334,7 @@ public class MCMCPanel extends BeautiPanel {
                     updateMLEFileNameStem();
                 } else {
                     mleOptions.performMLEGSS = false;
+                    mleOptions.printOperatorAnalysis = false;
                     options.logCoalescentEventsStatistic = false;
                     buttonMLE.setEnabled(false);
                     performMLE.setEnabled(true);

@@ -34,6 +34,7 @@ import java.util.List;
 
 /**
  * @author Andrew Rambaut
+ * @author Guy Baele
  * @version $Id$
  */
 public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
@@ -64,12 +65,13 @@ public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
     //MLE options
     public boolean performMLE = false;
     public boolean performMLEGSS = false;
+    public boolean printOperatorAnalysis = false;
     public int pathSteps = 100;
     public int mleChainLength = 1000000;
     public int mleLogEvery = 1000;
     public String mleFileName = "MLE.log";
     public String pathScheme = "betaquantile";
-    public String choiceParameterWorkingPrior = "normal";
+    //public String choiceParameterWorkingPrior = "normal";
     public String choiceTreeWorkingPrior = "Product of exponential distributions";
     public double schemeParameter = 0.30;
 

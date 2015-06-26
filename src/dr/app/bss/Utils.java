@@ -1433,6 +1433,13 @@ public class Utils {
 		}// END: indices loop
 		string += ")";
 
+		if(data.clockModelIndex == data.LRC_INDEX) {
+			
+			String space = (data.lrcParametersInRealSpace == true ? "real" : "log");
+			string += " ( " +  "Parameters in " + space + " space )";
+			
+		}
+		
 		return string;
 	}
 

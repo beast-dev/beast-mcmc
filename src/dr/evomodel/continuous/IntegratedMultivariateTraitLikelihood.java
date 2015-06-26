@@ -370,6 +370,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         if (DEBUG_PNAS) {
             checkLogLikelihood(logLikelihood, sumLogRemainders(), conditionalRootMean,
                     conditionalRootPrecision, traitPrecision);
+
+            // Check log remainder densities
+
+            for (int i = 0; i < logRemainderDensityCache.length; ++i) {
+                if (logRemainderDensityCache[i] < -1E10) {
+                    System.err.println(logRemainderDensityCache[i] + " @ " + i);
+                }
+
+            }
+
         }
 
         areStatesRedrawn = false;  // Should redraw internal node states when needed
@@ -583,6 +593,28 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                             - 0.5 * (childSS0 + childSS1 - crossSS)
                             // changeou
                             - dimTrait * (Math.log(OUFactor0) + Math.log(OUFactor1));
+
+
+            if (logRemainderDensityCache[thisIndex] > 1E2) {
+                System.err.println(thisIndex);
+                System.err.println(logRemainderDensityCache[thisIndex]);
+                System.err.println("rP = " + remainderPrecision);
+                System.err.println("p0 = " + precision0);
+                System.err.println("p1 = " + precision1 + "\n");
+                System.err.println(new Matrix(precisionMatrix));
+                System.err.println(childSS0);
+                System.err.println(childSS1);
+                System.err.println(crossSS);
+
+
+                for (int i = 0; i < dimTrait; ++i) {
+                    System.err.println("\t"
+                                    + cacheHelper.getCorrectedMeanCache()[childOffset0 + 0 * dimTrait + i] + " "
+                                    + cacheHelper.getCorrectedMeanCache()[childOffset1 + 0 * dimTrait + i]
+                    );
+                }
+                System.exit(-1);
+            }
             //               double tempnum = childSS0 + childSS1 - crossSS;
             //   System.err.println("childSS0 + childSS1 - crossSS:  " + tempnum);
         }
@@ -685,6 +717,15 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //        }
 //
 //        final double[][] increment3 = new double[dimTrait][dimTrait];
+
+        if (precision0 == 0.0 || precision1 == 0.0) {
+            System.err.println("ZERO PRECISION");
+//            System.exit(-1);
+        }
+
+        if (precision0 < 1E-16 || precision1 < 1E-16) {
+            System.err.println("LOW PRECISION");
+        }
 
         final double weight = precision0 * precision1 / (precision0 + precision1);
 

@@ -277,9 +277,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(rootPriorMean, newPrec);
         double logPdf = mvn.logPdf(conditionalRootMean);
 
-        System.err.println("Got here subclass: " + loglikelihood);
-        System.err.println("logValue         : " + (logRemainders + logPdf));
-        System.err.println("");
+        if (Math.abs(loglikelihood - logRemainders - logPdf) > 1E-3) {
+
+            System.err.println("Got here subclass: " + loglikelihood);
+            System.err.println("logValue         : " + (logRemainders + logPdf));
+            System.err.println("logRemainder = " + logRemainders);
+            System.err.println("");
+        }
 //        System.err.println("logRemainders    : " + logRemainders);
 //        System.err.println("logPDF           : " + logPdf);
 //        System.exit(-1);

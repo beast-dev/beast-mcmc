@@ -50,10 +50,10 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
         double[] random = new double[traitModel.getTreeModel().getExternalNodeCount()*traitModel.getDimTrait()];
         NodeRef root = traitModel.getTreeModel().getRoot();
         double[] traitStart=traitModel.getPriorMean();
-        double[][] precisionCholesky=null;
+        double[][] varianceCholesky=null;
         double[][] temp= new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
         try {
-            precisionCholesky = (new CholeskyDecomposition(temp).getL());
+            varianceCholesky = (new CholeskyDecomposition(temp).getL());
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }
@@ -83,28 +83,34 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 //            }
 //            firstTime=false;
 //        }
-        nextRandomFast(traitStart, root, random, precisionCholesky);
+        nextRandomFast(traitStart, root, random, varianceCholesky);
 //        }
         return random;
     }
 
-    private void nextRandomFast(double[] currentValue, NodeRef currentNode, double[] random, double[][] precisionCholesky) {
-        double rescaledLength;
-        rescaledLength = traitModel.getRescaledBranchLengthForPrecision(currentNode);
-        double[] draw= MultivariateNormalDistribution.nextMultivariateNormalCholesky(currentValue, precisionCholesky);
+    private void nextRandomFast(double[] currentValue, NodeRef currentNode, double[] random, double[][] varianceCholesky) {
+
+        double rescaledLength = (traitModel.getTreeModel().isRoot(currentNode)) ?
+            1.0 / traitModel.getPriorSampleSize() :
+                traitModel.getRescaledBranchLengthForPrecision(currentNode);
+
+        double scale = Math.sqrt(rescaledLength);
+
+        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(currentValue, varianceCholesky, scale);
+
         if (traitModel.getTreeModel().isExternal(currentNode)) {
             //System.out.println(currentNode.toString());
             for (int i = 0; i <currentValue.length ; i++) {
-                random[currentNode.getNumber()*currentValue.length+i] = currentValue[i] + draw[i] * Math.sqrt(rescaledLength);
+                random[currentNode.getNumber()*currentValue.length+i] = currentValue[i] + draw[i];
             }
         } else {
             int childCount = traitModel.getTreeModel().getChildCount(currentNode);
-            double[] newValue=new double[currentValue.length];
+            double[] newValue = new double[currentValue.length];
             for (int i = 0; i <currentValue.length ; i++) {
-                newValue[i] = currentValue[i] +  draw[i] * Math.sqrt(rescaledLength);
+                newValue[i] = currentValue[i] +  draw[i];
             }
             for (int i = 0; i < childCount; i++) {
-                nextRandomFast(newValue, traitModel.getTreeModel().getChild(currentNode, i), random, precisionCholesky);
+                nextRandomFast(newValue, traitModel.getTreeModel().getChild(currentNode, i), random, varianceCholesky);
             }
         }
     }

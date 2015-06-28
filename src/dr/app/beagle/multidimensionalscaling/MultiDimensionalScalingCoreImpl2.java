@@ -93,7 +93,7 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
 
     @Override
     public void updateLocation(int locationIndex, double[] location) {
-        if (updatedLocation != -1) {
+        if (updatedLocation != -1 || locationIndex == -1) {
             // more than one location updated - do a full recomputation
             residualsKnown = false;
             storedSquaredResiduals = null;
@@ -103,13 +103,26 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
             storedTruncations = null;
         }
 
-        updatedLocation = locationIndex;
+        if (locationIndex != -1) {
+            updatedLocation = locationIndex;
 
-        if (location.length != embeddingDimension) {
-            throw new RuntimeException("Location is not the correct dimension");
+            if (location.length != embeddingDimension) {
+                throw new RuntimeException("Location is not the correct dimension");
+            }
+
+            System.arraycopy(location, 0, locations[locationIndex], 0, embeddingDimension);
+
+        } else {
+            if (location.length != embeddingDimension * locationCount) {
+                throw new RuntimeException("Location is the not correct dimension");
+            }
+
+            int offset = 0;
+            for (int i = 0; i < locationCount; ++i) {
+                System.arraycopy(location, offset, locations[i], 0, embeddingDimension);
+                offset += embeddingDimension;
+            }
         }
-
-        System.arraycopy(location, 0, locations[locationIndex], 0, embeddingDimension);
 
         sumOfSquaredResidualsKnown = false;
 

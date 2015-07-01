@@ -84,16 +84,10 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     private void setVariable(double[] x) {
-//        variable.setParameterValueNotifyChangedAll(0, x[0]);
         for (int i = 0; i < x.length; ++i) {
             variable.setParameterValueQuietly(i, x[i]);
         }
-        if (variable instanceof CompoundParameter) {
-            // TODO This may cause store / restore errors in latent factor models; check.
-            ((CompoundParameter) variable).fireParameterChangedEvent(-1, Variable.ChangeType.ALL_VALUES_CHANGED);
-        } else {
-            variable.fireParameterChangedEvent();
-        }
+        variable.fireParameterChangedEvent();
     }
 //
 //        if(!(variable instanceof CompoundParameter))

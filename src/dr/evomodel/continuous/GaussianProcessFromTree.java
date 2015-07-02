@@ -96,21 +96,15 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 
         double scale = Math.sqrt(rescaledLength);
 
+        // draw ~ MNV(mean = currentVale, variance = scale * scale * L^t L)
         double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(currentValue, varianceCholesky, scale);
 
         if (traitModel.getTreeModel().isExternal(currentNode)) {
-            //System.out.println(currentNode.toString());
-            for (int i = 0; i <currentValue.length ; i++) {
-                random[currentNode.getNumber()*currentValue.length+i] = currentValue[i] + draw[i];
-            }
+            System.arraycopy(draw, 0, random, currentNode.getNumber() * draw.length, draw.length);
         } else {
             int childCount = traitModel.getTreeModel().getChildCount(currentNode);
-            double[] newValue = new double[currentValue.length];
-            for (int i = 0; i <currentValue.length ; i++) {
-                newValue[i] = currentValue[i] +  draw[i];
-            }
             for (int i = 0; i < childCount; i++) {
-                nextRandomFast(newValue, traitModel.getTreeModel().getChild(currentNode, i), random, varianceCholesky);
+                nextRandomFast(draw, traitModel.getTreeModel().getChild(currentNode, i), random, varianceCholesky);
             }
         }
     }

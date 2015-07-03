@@ -57,6 +57,9 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         this.variable = variable;
         this.gaussianProcess = gaussianProcess;
         this.drawByRow = drawByRow; // TODO Fix!
+
+        // TODO Must ensure that guassianProcess has 0-mean.
+        // TODO If not, then a change-of-variables is necessary for computing the ellipse.
     }
 
     public Variable<Double> getVariable() {

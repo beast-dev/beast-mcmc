@@ -1,7 +1,7 @@
 /*
  * GaussianProcessFromTree.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,8 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
@@ -42,6 +44,10 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 
     public GaussianProcessFromTree(FullyConjugateMultivariateTraitLikelihood traitModel) {
         this.traitModel = traitModel;
+    }
+
+    public Likelihood getLikelihood() {
+        return traitModel;
     }
 
     //    boolean firstTime=true;
@@ -116,6 +122,14 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 
     @Override
     public double logPdf(Object x) {
-        return 0;
+
+        double[] v = (double[]) x;
+        Parameter variable = traitModel.getTraitParameter();
+        for (int i = 0; i < v.length; ++i) {
+            variable.setParameterValueQuietly(i, v[i]);
+        }
+        variable.fireParameterChangedEvent();
+
+        return traitModel.getLogLikelihood();
     }
 }

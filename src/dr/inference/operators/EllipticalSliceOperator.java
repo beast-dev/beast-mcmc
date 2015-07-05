@@ -1,7 +1,7 @@
 /*
  * EllipticalSliceOperator.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -66,10 +66,20 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         return variable;
     }
 
+    private double getLogGaussianPrior() {
+        return (gaussianProcess.getLikelihood() == null) ?
+                gaussianProcess.logPdf(variable.getParameterValues()) :
+                gaussianProcess.getLikelihood().getLogLikelihood();
+    }
+
     public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
         double logPosterior = evaluate(likelihood, prior, pathParameter);
-        double cutoffDensity = logPosterior + MathUtils.randomLogDouble(); // TODO Gaussian contribution should stay constant, check!
+        double logGaussianPrior = getLogGaussianPrior();
+
+        // Cut-off depends only on non-GP contribution to posterior
+        double cutoffDensity = logPosterior - logGaussianPrior + MathUtils.randomLogDouble();
         drawFromSlice(prior, likelihood, cutoffDensity);
+
         // No need to set variable, as SliceInterval has already done this (and recomputed posterior)
         return 0;
     }
@@ -150,6 +160,8 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
             double[] xx = pointOnEllipse(x, nu, phi);
             setVariable(xx);
             double density = evaluate(likelihood, prior, pathParameter);
+            density -= getLogGaussianPrior(); // Depends only on non-GP contribution to posterior
+
             if (density > cutoffDensity) {
                 done = true;
             } else {

@@ -1,7 +1,7 @@
 /*
  * GaussianProcessFromTree.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,8 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
@@ -44,16 +46,20 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
         this.traitModel = traitModel;
     }
 
+    public Likelihood getLikelihood() {
+        return traitModel;
+    }
+
     //    boolean firstTime=true;
     public double[] nextRandomFast() {
 
         double[] random = new double[traitModel.getTreeModel().getExternalNodeCount()*traitModel.getDimTrait()];
         NodeRef root = traitModel.getTreeModel().getRoot();
         double[] traitStart=traitModel.getPriorMean();
-        double[][] precisionCholesky=null;
+        double[][] varianceCholesky=null;
         double[][] temp= new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
         try {
-            precisionCholesky = (new CholeskyDecomposition(temp).getL());
+            varianceCholesky = (new CholeskyDecomposition(temp).getL());
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }
@@ -83,28 +89,28 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 //            }
 //            firstTime=false;
 //        }
-        nextRandomFast(traitStart, root, random, precisionCholesky);
+        nextRandomFast(traitStart, root, random, varianceCholesky);
 //        }
         return random;
     }
 
-    private void nextRandomFast(double[] currentValue, NodeRef currentNode, double[] random, double[][] precisionCholesky) {
-        double rescaledLength;
-        rescaledLength = traitModel.getRescaledBranchLengthForPrecision(currentNode);
-        double[] draw= MultivariateNormalDistribution.nextMultivariateNormalCholesky(currentValue, precisionCholesky);
+    private void nextRandomFast(double[] currentValue, NodeRef currentNode, double[] random, double[][] varianceCholesky) {
+
+        double rescaledLength = (traitModel.getTreeModel().isRoot(currentNode)) ?
+            1.0 / traitModel.getPriorSampleSize() :
+                traitModel.getRescaledBranchLengthForPrecision(currentNode);
+
+        double scale = Math.sqrt(rescaledLength);
+
+        // draw ~ MNV(mean = currentVale, variance = scale * scale * L^t L)
+        double[] draw = MultivariateNormalDistribution.nextMultivariateNormalCholesky(currentValue, varianceCholesky, scale);
+
         if (traitModel.getTreeModel().isExternal(currentNode)) {
-            //System.out.println(currentNode.toString());
-            for (int i = 0; i <currentValue.length ; i++) {
-                random[currentNode.getNumber()*currentValue.length+i] = currentValue[i] + draw[i] * Math.sqrt(rescaledLength);
-            }
+            System.arraycopy(draw, 0, random, currentNode.getNumber() * draw.length, draw.length);
         } else {
             int childCount = traitModel.getTreeModel().getChildCount(currentNode);
-            double[] newValue=new double[currentValue.length];
-            for (int i = 0; i <currentValue.length ; i++) {
-                newValue[i] = currentValue[i] +  draw[i] * Math.sqrt(rescaledLength);
-            }
             for (int i = 0; i < childCount; i++) {
-                nextRandomFast(newValue, traitModel.getTreeModel().getChild(currentNode, i), random, precisionCholesky);
+                nextRandomFast(draw, traitModel.getTreeModel().getChild(currentNode, i), random, varianceCholesky);
             }
         }
     }
@@ -116,6 +122,14 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 
     @Override
     public double logPdf(Object x) {
-        return 0;
+
+        double[] v = (double[]) x;
+        Parameter variable = traitModel.getTraitParameter();
+        for (int i = 0; i < v.length; ++i) {
+            variable.setParameterValueQuietly(i, v[i]);
+        }
+        variable.fireParameterChangedEvent();
+
+        return traitModel.getLogLikelihood();
     }
 }

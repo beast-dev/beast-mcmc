@@ -1,7 +1,7 @@
 /*
  * MultivariateNormalDistribution.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.model.Likelihood;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.*;
 
@@ -302,5 +303,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     public double logPdf(Object x) {
         double[] v = (double[]) x;
         return logPdf(v);
+    }
+
+    public Likelihood getLikelihood() {
+        return null;
     }
 }

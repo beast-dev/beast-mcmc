@@ -44,7 +44,7 @@ import java.util.List;
 /**
  * Implements a generic multivariate slice sampler for a Gaussian prior
  * <p/>
- * See: Murray, Ryan, et al.
+ * See: Murray, Adams, et al.
  *
  * @author Marc A. Suchard
  */
@@ -58,8 +58,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         this.gaussianProcess = gaussianProcess;
         this.drawByRow = drawByRow; // TODO Fix!
 
-        // TODO Must ensure that guassianProcess has 0-mean.
-        // TODO If not, then a change-of-variables is necessary for computing the ellipse.
+        // TODO Must set priorMean if guassianProcess does not have a 0-mean.
     }
 
     public Variable<Double> getVariable() {
@@ -84,14 +83,21 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         return 0;
     }
 
-    private double[] pointOnEllipse(double[] x, double[] y, double phi) {
+    private double[] pointOnEllipse(double[] x, double[] y, double phi, double[] priorMean) {
         final int dim = x.length;
         final double cos = Math.cos(phi);
         final double sin = Math.sin(phi);
 
         double[] r = new double[dim];
-        for (int i = 0; i < dim; ++i) {
-            r[i] = x[i] * cos + y[i] * sin;
+
+        if (priorMean == null) {
+            for (int i = 0; i < dim; ++i) {
+                r[i] = x[i] * cos + y[i] * sin;
+            }
+        } else {  // Non-0 prior mean
+            for (int i = 0; i < dim; ++i) {
+                r[i] = (x[i] - priorMean[i]) * cos + (y[i] - priorMean[i]) * sin + priorMean[i];
+            }
         }
         return r;
     }
@@ -157,7 +163,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
         boolean done = false;
         while (!done) {
-            double[] xx = pointOnEllipse(x, nu, phi);
+            double[] xx = pointOnEllipse(x, nu, phi, priorMean);
             setVariable(xx);
             double density = evaluate(likelihood, prior, pathParameter);
             density -= getLogGaussianPrior(); // Depends only on non-GP contribution to posterior
@@ -287,6 +293,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     private final Parameter variable;
     private int current;
     private static boolean drawByRow;
+    private double[] priorMean = null;
 
 /*
 function [xx, cur_log_like] = elliptical_slice(xx, prior, log_like_fn, cur_log_like, angle_range, varargin)

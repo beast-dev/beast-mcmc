@@ -28,13 +28,13 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	// private CountableRealizationsParameter countableRealizationsParameter;
 	private Parameter parameter;
 
-	private CompoundLikelihood likelihood;
+	private Likelihood likelihood;
 
 	public DirichletProcessOperator(DirichletProcessPrior dpp, //
 			Parameter zParameter, //
 			// CountableRealizationsParameter countableRealizationsParameter,
 			Parameter parameter, //
-			CompoundLikelihood likelihood, //
+			Likelihood likelihood, //
 			int mhSteps, //
 			double weight//
 	) {
@@ -98,8 +98,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 				dr.app.bss.Utils.printArray(occupancy);
 			}
 
-			Likelihood clusterLikelihood = (Likelihood) likelihood.getLikelihood(index);
-//			Likelihood clusterLikelihood = likelihood;
+//			Likelihood clusterLikelihood = (Likelihood) likelihood.getLikelihood(index);
+			Likelihood clusterLikelihood = likelihood;
 			
 			double[] clusterProbs = new double[uniqueRealizationCount];
 			for (int i = 0; i < uniqueRealizationCount; i++) {

@@ -146,7 +146,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 			dr.app.bss.Utils.exponentiate(clusterProbs);
 
-			dr.app.bss.Utils.printArray(clusterProbs);
+//			dr.app.bss.Utils.printArray(clusterProbs);
 //			System.exit(-1);
 
 			if (DEBUG) {

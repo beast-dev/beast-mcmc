@@ -118,8 +118,6 @@ public class NewickParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Failed to read tree");
         }
 
-        System.err.println(tree.toString());
-
         tree.setUnits(units);
 
         for (int i = 0; i < tree.getTaxonCount(); i++) {

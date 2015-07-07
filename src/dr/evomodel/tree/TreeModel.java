@@ -85,11 +85,8 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
 
         // adjust the heights to be compatible with the tip dates and perturb
         // any zero branches.
-        System.err.println(fixHeights);
         if (!fixHeights) {
             MutableTree.Utils.correctHeightsForTips(binaryTree);
-        } else {
-            System.err.println("NOPE");
         }
 
         // clone the node structure (this will create the individual parameters)

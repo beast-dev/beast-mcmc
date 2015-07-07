@@ -60,12 +60,14 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
     }
 
     public TreeModel(Tree tree) {
-        this(TREE_MODEL, tree, false);
+        this(TREE_MODEL, tree, false, false);
     }
 
-    public TreeModel(String id, Tree tree) {
+    public TreeModel(String id, Tree tree) { this(id, tree, false); }
 
-        this(TREE_MODEL, tree, false);
+    public TreeModel(String id, Tree tree, boolean fixHeights) {
+
+        this(TREE_MODEL, tree, false, fixHeights);
         setId(id);
     }
 
@@ -73,7 +75,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
       * Useful for constructing a TreeModel from a NEXUS file entry
       */
 
-    public TreeModel(String name, Tree tree, boolean copyAttributes) {
+    public TreeModel(String name, Tree tree, boolean copyAttributes, boolean fixHeights) {
 
         super(name);
 
@@ -83,7 +85,12 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
 
         // adjust the heights to be compatible with the tip dates and perturb
         // any zero branches.
-        MutableTree.Utils.correctHeightsForTips(binaryTree);
+        System.err.println(fixHeights);
+        if (!fixHeights) {
+            MutableTree.Utils.correctHeightsForTips(binaryTree);
+        } else {
+            System.err.println("NOPE");
+        }
 
         // clone the node structure (this will create the individual parameters)
         Node node = new Node(binaryTree, binaryTree.getRoot());

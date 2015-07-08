@@ -53,10 +53,12 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
     private final GaussianProcessRandomGenerator gaussianProcess;
 
-    public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess, boolean drawByRow) {
+    public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess,
+                                   boolean drawByRow, boolean signal) {
         this.variable = variable;
         this.gaussianProcess = gaussianProcess;
         this.drawByRow = drawByRow; // TODO Fix!
+        this.signalConstituentParameters = signal;
 
         // TODO Must set priorMean if guassianProcess does not have a 0-mean.
     }
@@ -106,7 +108,11 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         for (int i = 0; i < x.length; ++i) {
             variable.setParameterValueQuietly(i, x[i]);
         }
-        variable.fireParameterChangedEvent();
+        if (signalConstituentParameters) {
+            variable.fireParameterChangedEvent();
+        } else {
+            ((CompoundParameter)variable).fireParameterChangedEvent(-1, Variable.ChangeType.ALL_VALUES_CHANGED);
+        }
     }
 //
 //        if(!(variable instanceof CompoundParameter))
@@ -254,7 +260,8 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         list.add(likelihood);
         list.add(prior);
         CompoundLikelihood posterior = new CompoundLikelihood(0, list);
-        EllipticalSliceOperator sliceSampler = new EllipticalSliceOperator(thetaParameter, priorDistribution, drawByRow);
+        EllipticalSliceOperator sliceSampler = new EllipticalSliceOperator(thetaParameter, priorDistribution,
+                false, true);
 
 
         final int dim = thetaParameter.getDimension();
@@ -292,7 +299,8 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     private double pathParameter=1.0;
     private final Parameter variable;
     private int current;
-    private static boolean drawByRow;
+    private boolean drawByRow;
+    private boolean signalConstituentParameters;
     private double[] priorMean = null;
 
 /*

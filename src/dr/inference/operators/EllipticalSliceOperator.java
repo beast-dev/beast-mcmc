@@ -47,6 +47,7 @@ import java.util.List;
  * See: Murray, Adams, et al.
  *
  * @author Marc A. Suchard
+ * @author Max Tolkoff
  */
 
 public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator implements GibbsOperator {
@@ -55,10 +56,25 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
     public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess,
                                    boolean drawByRow, boolean signal) {
+        this(variable, gaussianProcess, drawByRow, signal, 0.0, false, false);
+
+    }
+
+    public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess,
+                                   boolean drawByRow, boolean signal, double bracketAngle,
+                                   boolean translationInvariant, boolean rotationInvariant) {
         this.variable = variable;
         this.gaussianProcess = gaussianProcess;
         this.drawByRow = drawByRow; // TODO Fix!
         this.signalConstituentParameters = signal;
+        this.bracketAngle = bracketAngle;
+
+        this.translationInvariant = translationInvariant; // TODO Delegrate into transformed variable
+        this.rotationInvariant = rotationInvariant;
+
+        if (bracketAngle < 0.0 || bracketAngle >= 2.0 * Math.PI) {
+            throw new IllegalArgumentException("Invalid bracket angle");
+        }
 
         // TODO Must set priorMean if guassianProcess does not have a 0-mean.
     }
@@ -105,7 +121,60 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     }
 
     private void setVariable(double[] x) {
+
+        if (translationInvariant) {
+            int dim = 2; // TODO How to determine?
+
+            double[] mean = new double[dim];
+            int k = 0;
+            for (int i = 0; i < x.length / dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    mean[j] += x[k];
+                    ++k;
+                }
+            }
+
+            for (int j = 0; j < dim; ++j) {
+                mean[j] /= (x.length / dim);
+            }
+
+            k = 0;
+            for (int i = 0; i < x.length / dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    x[k] -= mean[j];
+                    ++k;
+                }
+            }
+        }
+
+        if (rotationInvariant) {
+            int dim = 2;
+
+            final double theta = -Math.atan2(x[1], x[0]); // TODO Compute norm and avoid transcendentals
+            final double sin = Math.sin(theta);
+            final double cos = Math.cos(theta);
+
+//            System.err.println(theta + " " + sin + " " + cos);
+
+            int k = 0;
+            for (int i = 0; i < x.length / dim; ++i) {
+//                System.err.print(x[k + 0] + ":" + x[k + 1] + " -> ");
+                double newX = x[k + 0] * cos - x[k + 1] * sin;
+                double newY = x[k + 1] * cos + x[k + 0] * sin;
+                x[k + 0] = newX;
+                x[k + 1] = newY;
+//                System.err.println(x[k + 0] + ":" + x[k + 1]);
+                k += 2;
+            }
+//            System.err.println("");
+//            System.exit(-1);
+        }
+
+//        boolean switchSign = x[0] > 0.0;
         for (int i = 0; i < x.length; ++i) {
+//            if (switchSign) {
+//                x[i] *= -1;
+//            }
             variable.setParameterValueQuietly(i, x[i]);
         }
         if (signalConstituentParameters) {
@@ -164,8 +233,19 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 //        else
 //            nu = treePrior.nextRandomFast(0);
 
-        double phi = MathUtils.nextDouble() * 2.0 * Math.PI;
-        Interval phiInterval = new Interval(phi - 2.0 * Math.PI, phi);
+        double phi;
+        Interval phiInterval;
+
+        if (bracketAngle == 0.0) {
+            phi = MathUtils.nextDouble() * 2.0 * Math.PI;
+            phiInterval = new Interval(phi - 2.0 * Math.PI, phi);
+        } else {
+            double phi_min = -bracketAngle * MathUtils.nextDouble();
+            double phi_max = phi_min + bracketAngle;
+            phiInterval = new Interval(phi_min, phi_max);
+            phi = phiInterval.draw();
+        }
+
 
         boolean done = false;
         while (!done) {
@@ -302,6 +382,12 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
     private boolean drawByRow;
     private boolean signalConstituentParameters;
     private double[] priorMean = null;
+
+    private boolean center = true;
+    private double bracketAngle;
+
+    private boolean translationInvariant;
+    private boolean rotationInvariant;
 
 /*
 function [xx, cur_log_like] = elliptical_slice(xx, prior, log_like_fn, cur_log_like, angle_range, varargin)

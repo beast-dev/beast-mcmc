@@ -46,6 +46,8 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        String name = xo.getId();
+
         XMLObject cxo = xo.getChild(DIAGONAL);
         Parameter diagonalParameter = (Parameter) cxo.getChild(Parameter.class);
         Transform.ParsedTransform tmp = (Transform.ParsedTransform) cxo.getChild(Transform.ParsedTransform.class);
@@ -58,7 +60,11 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
 
         boolean asCorrelation = xo.getAttribute(AS_CORRELATION, false);
 
-        return new MarkovRandomFieldMatrix(diagonalParameter, offDiagonalParameter, asCorrelation,
+        if (diagonalParameter.getDimension() != 1  || offDiagonalParameter.getDimension() != 1) {
+            throw new XMLParseException("Wrong parameter dimensions for GMRF");
+        }
+
+        return new MarkovRandomFieldMatrix(name, diagonalParameter, offDiagonalParameter, asCorrelation,
                 diagonalTransform, offDiagonalTransform);
     }
 

@@ -42,13 +42,13 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 
     private int dim;
 
-    public MarkovRandomFieldMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
-        this(diagonals, offDiagonal, asCorrelation, null, null);
+    public MarkovRandomFieldMatrix(String name, Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
+        this(name, diagonals, offDiagonal, asCorrelation, null, null);
     }
 
-    public MarkovRandomFieldMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation,
+    public MarkovRandomFieldMatrix(String name, Parameter diagonals, Parameter offDiagonal, boolean asCorrelation,
                                    Transform diagonalTransform, Transform offDiagonalTransform) {
-        super(MATRIX_PARAMETER);
+        super(name);
         diagonalParameter = diagonals;
         offDiagonalParameter = offDiagonal;
         addParameter(diagonalParameter);
@@ -72,9 +72,16 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 //        return stats;
 //    }
 //
-//    public int getDimension() {
-//        return dim * dim;
-//    }
+    public int getDimension() {
+        return dim * dim;
+    }
+
+    public String getDimensionName(int i) {
+        int row = i / dim;
+        int col = i % dim;
+        return getParameterName() + "_" + (row + 1) + "_" + (col + 1);
+    }
+
 
     private double getDiagonalParameterValue(int i) {
         return diagonalTransform.inverse(diagonalParameter.getParameterValue(i));
@@ -92,7 +99,12 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 
     public double getParameterValue(int row, int col) {
         if (row == col) {
-            return getDiagonalParameterValue(row);
+            double diag = getDiagonalParameterValue(0);
+            if (row > 0 && row < (dim - 1)) {
+                diag *= 2; // TODO Assumes RW-1 model
+            }
+            return diag;
+//            return getDiagonalParameterValue(row);
         } else if (row == (col - 1) || row == (col + 1)) {
             if (asCorrelation) {
                 return -getOffDiagonalParameterValue(0) *

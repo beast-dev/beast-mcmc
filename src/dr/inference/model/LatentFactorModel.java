@@ -29,7 +29,9 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.lang.reflect.Array;
 import java.util.List;
+import java.util.Vector;
 
 
 /**
@@ -77,6 +79,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double storedLogDetCol;
     private boolean[][] changed;
     private boolean[][] storedChanged;
+    private boolean RecomputeResiduals=false;
+    private Vector<Integer> changedValues;
 
     private double[] residual;
     private double[] LxF;
@@ -90,6 +94,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                              boolean scaleData, Parameter continuous, boolean newModel
     ) {
         super("");
+        changedValues=new Vector<Integer>();
+        for (int i = 0; i <data.getDimension(); i++) {
+            changedValues.add(i);
+        }
 //        data = new Matrix(dataIn.getParameterAsMatrix());
 //        factors = new Matrix(factorsIn.getParameterAsMatrix());
 //        loadings = new Matrix(loadingsIn.getParameterAsMatrix());
@@ -281,19 +289,30 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private void subtract(MatrixParameter Left, double[] Right, double[] answer){
         int row=Left.getRowDimension();
         int col=Left.getColumnDimension();
-        for (int i = 0; i <row ; i++) {
-            if(continuous.getParameterValue(i)!=0 ||newModel){
-                for (int j = 0; j < col; j++) {
-                       answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
-                }
+        if(!RecomputeResiduals && LxFKnown){
+            while(!changedValues.isEmpty()){
+                int id=changedValues.remove(0);
+                int tcol=id/row;
+                int trow=id%row;
+//                System.out.println(Left.getParameterValue(id)==Left.getParameterValue(tcol,trow));
+                answer[tcol*col+trow]=Left.getParameterValue(id)-Right[tcol*col+trow];
             }
-//            else{
-//                for (int j = 0; j <col; j++) {
-//                    Left.setParameterValueQuietly(i,j, Right[i*col+j]);
+        }
+        else{
+            for (int i = 0; i <row ; i++) {
+                if(continuous.getParameterValue(i)!=0 ||newModel){
+                    for (int j = 0; j < col; j++) {
+                           answer[i*col+j]=Left.getParameterValue(i,j)-Right[i*col+j];
+                    }
+                }
+//              else{
+//                  for (int j = 0; j <col; j++) {
+//                        Left.setParameterValueQuietly(i,j, Right[i*col+j]);
+//                  }
+//                    containsDiscrete=true;
 //                }
-//                containsDiscrete=true;
-//            }
 
+            }
         }
 //        if(containsDiscrete){
 //            Left.fireParameterChangedEvent();}
@@ -389,9 +408,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        if(firstTime || (!factorVariablesChanged.empty() && !loadingVariablesChanged.empty())){
     if(!LxFKnown){
     Multiply(loadings, factors, LxF);
-        LxFKnown=true;
+
     }
         subtract(data, LxF, residual);
+        LxFKnown=true;
         residualKnown=true;
 //        firstTime=false;}
 //        else{
@@ -499,6 +519,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             residualKnown=false;
             traceKnown=false;
             likelihoodKnown=false;
+            if(RecomputeResiduals){
+                changedValues.add(index);
+            }
         }
         if(variable==factors){
 

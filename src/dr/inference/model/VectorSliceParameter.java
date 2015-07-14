@@ -60,6 +60,11 @@ public class VectorSliceParameter extends CompoundParameter {
         parameter.setParameterValueNotifyChangedAll(sliceDimension, value);
     }
 
+    public String getDimensionName(int dim) {
+
+        return getParameter(dim).getVariableName() + Integer.toString(sliceDimension + 1);
+    }
+
     private class sliceBounds implements Bounds<Double>{
 
 

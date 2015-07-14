@@ -47,10 +47,6 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
 
     public static final String BINOMIAL_LIKELIHOOD = "binomialLikelihood";
 
-    public BinomialLikelihood(Parameter trialsParameter, Parameter proportionParameter, Parameter countsParameter) {
-        this(trialsParameter, proportionParameter, countsParameter, false);
-    }
-
     public BinomialLikelihood(Parameter trialsParameter, Parameter proportionParameter, Parameter countsParameter,
                               boolean onLogitScale) {
 

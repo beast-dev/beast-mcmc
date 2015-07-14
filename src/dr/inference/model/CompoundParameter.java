@@ -123,7 +123,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         return uniqueParameters.size();
     }
 
-    public final String getDimensionName(int dim) {
+    public String getDimensionName(int dim) {
         return parameters.get(dim).getDimensionName(pindex.get(dim));
     }
 

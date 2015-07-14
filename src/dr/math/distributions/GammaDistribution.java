@@ -204,6 +204,10 @@ public class GammaDistribution implements Distribution {
         }
         if (shape == 0.0)  // uninformative
             return -Math.log(x);
+
+        if (shape == -0.5) { // Gelman 2008, hierarchical variance, -1 degrees of freedom
+            return 0.5 * Math.log(x);
+        }
         
         /*return ((shape - 1.0) * Math.log(x/scale) - x / scale - GammaFunction
                 .lnGamma(shape))

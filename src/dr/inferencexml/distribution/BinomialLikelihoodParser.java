@@ -39,6 +39,7 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
     public static final String COUNTS = "counts";
     public static final String PROPORTION = "proportion";
     public static final String VALUES = "values";
+    public static final String ON_LOGIT_SCALE = "onLogitScale";
 
     public String getParserName() {
         return BinomialLikelihood.BINOMIAL_LIKELIHOOD;
@@ -46,14 +47,21 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        final boolean onLogitScale = xo.getAttribute(ON_LOGIT_SCALE, false);
+
         XMLObject cxo = xo.getChild(TRIALS);
         Parameter trialsParam = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(PROPORTION);
         Parameter proportionParam = (Parameter) cxo.getChild(Parameter.class);
 
+        if (proportionParam.getDimension() != 1 && proportionParam.getDimension() != trialsParam.getDimension()) {
+            throw new XMLParseException("Proportion dimension (" + proportionParam.getDimension() + ") " +
+            "must equal 1 or trials dimension (" + trialsParam.getDimension() + ")");
+        }
+
         cxo = xo.getChild(COUNTS);
-        Parameter counts = null;
+        Parameter counts;
         if (cxo.hasAttribute(VALUES)) {
             int[] tmp = cxo.getIntegerArrayAttribute(VALUES);
             double[] v = new double[tmp.length];
@@ -70,7 +78,7 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
                     + ") must equal counts dimension (" + counts.getDimension() + ")");
         }
 
-        return new BinomialLikelihood(trialsParam, proportionParam, counts);
+        return new BinomialLikelihood(trialsParam, proportionParam, counts, onLogitScale);
 
     }
 
@@ -83,6 +91,7 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule(ON_LOGIT_SCALE, true),
             new ElementRule(TRIALS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(PROPORTION,

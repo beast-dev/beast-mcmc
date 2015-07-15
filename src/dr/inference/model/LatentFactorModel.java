@@ -295,7 +295,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 int tcol=id/row;
                 int trow=id%row;
 //                System.out.println(Left.getParameterValue(id)==Left.getParameterValue(tcol,trow));
-                answer[tcol*col+trow]=Left.getParameterValue(id)-Right[tcol*col+trow];
+                answer[trow*col+tcol]=Left.getParameterValue(id)-Right[trow*col+tcol];
             }
         }
         else{
@@ -519,8 +519,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             residualKnown=false;
             traceKnown=false;
             likelihoodKnown=false;
-            if(RecomputeResiduals){
-                changedValues.add(index);
+            if(!RecomputeResiduals){
+                if(index!=-1)
+                    changedValues.add(index);
+                else
+                    LxFKnown=false;
             }
         }
         if(variable==factors){

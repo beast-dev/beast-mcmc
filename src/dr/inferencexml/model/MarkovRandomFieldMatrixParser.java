@@ -39,6 +39,8 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
     public static final String DIAGONAL = "diagonal";
     public static final String OFF_DIAGONAL = "offDiagonal";
     public static final String AS_CORRELATION = "asCorrelation";
+    public static final String NUGGET = "nugget";
+    public static final String DIM = "dim";
 
     public String getParserName() {
         return MATRIX_PARAMETER;
@@ -47,6 +49,8 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String name = xo.getId();
+
+        final int dim = xo.getIntegerAttribute(DIM);
 
         XMLObject cxo = xo.getChild(DIAGONAL);
         Parameter diagonalParameter = (Parameter) cxo.getChild(Parameter.class);
@@ -64,7 +68,11 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Wrong parameter dimensions for GMRF");
         }
 
-        return new MarkovRandomFieldMatrix(name, diagonalParameter, offDiagonalParameter, asCorrelation,
+        cxo = xo.getChild(NUGGET);
+        Parameter nuggetParameter = (Parameter) cxo.getChild(Parameter.class);
+
+        return new MarkovRandomFieldMatrix(name, dim, diagonalParameter, offDiagonalParameter, nuggetParameter,
+                asCorrelation,
                 diagonalTransform, offDiagonalTransform);
     }
 
@@ -91,7 +99,12 @@ public class MarkovRandomFieldMatrixParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class),
                             new ElementRule(Transform.ParsedTransform.class, true),
                     }),
-            AttributeRule.newBooleanRule(AS_CORRELATION, true)
+            new ElementRule(NUGGET,
+                    new XMLSyntaxRule[] {
+                            new ElementRule(Parameter.class),
+                    }),
+            AttributeRule.newBooleanRule(AS_CORRELATION, true),
+            AttributeRule.newIntegerRule(DIM),
     };
 
     public Class getReturnType() {

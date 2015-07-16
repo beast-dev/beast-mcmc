@@ -44,11 +44,11 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 
     private int dim;
 
-    public MarkovRandomFieldMatrix(String name, int dim, Parameter diagonals, Parameter offDiagonal,
-                                   Parameter nugget,
-                                   boolean asCorrelation) {
-        this(name, dim, diagonals, offDiagonal, nugget, asCorrelation, null, null);
-    }
+//    public MarkovRandomFieldMatrix(String name, int dim, Parameter diagonals, Parameter offDiagonal,
+//                                   Parameter nugget,
+//                                   boolean asCorrelation) {
+//        this(name, dim, diagonals, offDiagonal, nugget, asCorrelation, null, null);
+//    }
 
     public MarkovRandomFieldMatrix(String name, int dim, Parameter diagonals, Parameter offDiagonal,
                                    Parameter nugget,
@@ -57,16 +57,26 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
         super(name);
         diagonalParameter = diagonals;
         offDiagonalParameter = offDiagonal;
+        nuggetParameter = nugget;
+
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
-        nuggetParameter = nugget;
         addParameter(nuggetParameter);
+
         this.dim = dim;
         this.asCorrelation = asCorrelation;
 
         this.diagonalTransform = (diagonalTransform != null) ? diagonalTransform : Transform.NONE;
         this.offDiagonalTransform = (offDiagonalTransform != null) ? offDiagonalTransform : Transform.NONE;
     }
+
+//    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+//        if (variable == diagonalParameter || variable == offDiagonalParameter || variable == nuggetParameter) {
+//            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+//        } else {
+//            throw new IllegalArgumentException("Unknown variable '" + variable.getVariableName() + "'");
+//        }
+//    }
 
 //    public double[] getAttributeValue() {
 //        double[] stats = new double[dim * dim];

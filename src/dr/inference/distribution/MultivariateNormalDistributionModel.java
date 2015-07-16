@@ -43,9 +43,11 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
         this.mean = meanParameter;
         addVariable(meanParameter);
-        meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
-                meanParameter.getDimension()));
 
+        if (!(meanParameter instanceof DuplicatedParameter)) {
+            meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                    meanParameter.getDimension()));
+        }
         this.precision = precParameter;
         addVariable(precParameter);
 

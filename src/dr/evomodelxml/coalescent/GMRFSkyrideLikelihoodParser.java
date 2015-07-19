@@ -63,6 +63,9 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String CUT_OFF = "cutOff";
     public static final String PHI_PARAMETER = "phiParameter";
     public static final String PLOIDY = "ploidy";
+    public static final String COVARIATES = "covariates";
+    public static final String LAST_OBSERVED_INDEX = "lastObservedIndex";
+    public static final String COV_PREC_PARAM = "covariatePrecision";
 
 
     public String getParserName() {
@@ -109,13 +112,13 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         } else {
             lambda = new Parameter.Default(1.0);
         }
-        /*
+
         Parameter gridPoints = null;
         if (xo.getChild(GRID_POINTS) != null) {
             cxo = xo.getChild(GRID_POINTS);
             gridPoints = (Parameter) cxo.getChild(Parameter.class);
         }
-        */
+
         Parameter numGridPoints = null;
         if (xo.getChild(NUM_GRID_POINTS) != null) {
             cxo = xo.getChild(NUM_GRID_POINTS);
@@ -134,6 +137,11 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             phi = (Parameter) cxo.getChild(Parameter.class);
         }
 
+        Parameter lastObservedIndex = null;
+        if (xo.getChild(LAST_OBSERVED_INDEX) != null) {
+            cxo = xo.getChild(LAST_OBSERVED_INDEX);
+            lastObservedIndex = (Parameter) cxo.getChild(Parameter.class);
+        }
 
         Parameter ploidyFactors = null;
         if (xo.getChild(PLOIDY) != null) {
@@ -163,8 +171,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
         }
 
-        if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
-            throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
+       // if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
+       //     throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
 
         if (dMatrix != null) {
             if (dMatrix.getRowDimension() != popParameter.getDimension())
@@ -172,6 +180,32 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             if (dMatrix.getColumnDimension() != beta.getDimension())
                 throw new XMLParseException("Design matrix column dimension must equal the regression coefficient length.");
         }
+
+        List<Parameter> covPrecParam = null;
+        if (xo.hasChildNamed(COV_PREC_PARAM)){
+            covPrecParam = new ArrayList<Parameter>();
+            cxo = xo.getChild(COV_PREC_PARAM);
+            final int numCovPrec = cxo.getChildCount();
+
+            for(int i=0; i < numCovPrec; ++i){
+                covPrecParam.add((Parameter) cxo.getChild(i));
+            }
+        }
+
+        List<MatrixParameter> covariates = null;
+        if (xo.hasChildNamed(COVARIATES)){
+            covariates = new ArrayList<MatrixParameter>();
+            cxo = xo.getChild(COVARIATES);
+            final int numCov = cxo.getChildCount();
+
+            for (int i = 0; i < numCov; ++i) {
+                covariates.add((MatrixParameter) cxo.getChild(i));
+            }
+        }
+
+        if ((covariates != null && beta == null) || (covariates == null && beta != null))
+             throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
+
 
         if (xo.getAttribute(RANDOMIZE_TREE, false)) {
             for (Tree tree : treeList) {
@@ -195,9 +229,13 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         } else {
 
-            return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                    lambda, beta, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
-
+            if(xo.getChild(GRID_POINTS) != null){
+                return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                        lambda, beta, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors, lastObservedIndex, covPrecParam);
+            }else {
+                return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                        lambda, beta, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+            }
         }
     }
 

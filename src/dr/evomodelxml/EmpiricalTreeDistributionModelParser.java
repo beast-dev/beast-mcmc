@@ -44,6 +44,7 @@ import java.util.logging.Logger;
 public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParser {
 
     public static final String RATE_ATTRIBUTE_NAME = "rateAttribute";
+    public static final String STARTING_TREE = "startingTree";
 
     public String getParserName() {
         return EmpiricalTreeDistributionModel.EMPIRICAL_TREE_DISTRIBUTION_MODEL;
@@ -82,7 +83,9 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
         
         Logger.getLogger("dr.evomodel").info("    Read " + trees.length + " trees from file, " + fileName);
 
-        return new EmpiricalTreeDistributionModel(trees);
+        int startingTree = xo.getAttribute(STARTING_TREE, -1); // default is random tree
+
+        return new EmpiricalTreeDistributionModel(trees, startingTree);
     }
 
     public static final String FILE_NAME = "fileName";
@@ -90,6 +93,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
+                AttributeRule.newIntegerRule(STARTING_TREE, true),
                 new StringAttributeRule(FILE_NAME,
                         "The name of a NEXUS tree file"),
 //                AttributeRule.newIntegerRule(BURNIN, true,

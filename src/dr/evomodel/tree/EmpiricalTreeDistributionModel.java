@@ -23,11 +23,11 @@ import java.util.logging.Logger;
  */
 public class EmpiricalTreeDistributionModel extends TreeModel {
 
-    public EmpiricalTreeDistributionModel(final Tree[] trees) {
+    public EmpiricalTreeDistributionModel(final Tree[] trees, int startingTree) {
         super(EMPIRICAL_TREE_DISTRIBUTION_MODEL);
 
         this.trees = trees;
-        drawTreeIndex();
+        drawTreeIndex(startingTree);
 
         addStatistic(new Statistic.Abstract("Current Tree")  {
 
@@ -53,9 +53,17 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
     }
 
     public void drawTreeIndex() {
+        drawTreeIndex(-1);
+    }
+
+    private void drawTreeIndex(int treeNumber) {
 //        System.err.print("Drawing new tree, (old tree = " + currentTreeIndex);
 
-        currentTreeIndex = MathUtils.nextInt(trees.length);
+        if (treeNumber == -1) {
+            currentTreeIndex = MathUtils.nextInt(trees.length);
+        } else {
+            currentTreeIndex = treeNumber;
+        }
 
         // Force computation of node heights now rather than later in the evaluation
         // where multithreading may get conflicts.

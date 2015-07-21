@@ -119,7 +119,7 @@ public class MatrixVectorProductParameter extends Parameter.Abstract implements 
     }
 
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        fireParameterChangedEvent(index, type);
+        fireParameterChangedEvent(); // All dimensions may have changed
     }
 
     private final MatrixParameter matrix;

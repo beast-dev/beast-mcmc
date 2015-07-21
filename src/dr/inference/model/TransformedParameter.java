@@ -41,6 +41,7 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
         this.parameter = parameter;
         this.transform = transform;
         this.inverse = inverse;
+        this.parameter.addVariableListener(this);
     }
 
     public int getDimension() {
@@ -145,7 +146,8 @@ public class TransformedParameter extends Parameter.Abstract implements Variable
     }
 
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
-        throw new RuntimeException("Should not call variableChangedEvent() on transformed parameter");
+        // Propogate change up model graph
+        fireParameterChangedEvent(index, type);
     }
 
     private final Parameter parameter;

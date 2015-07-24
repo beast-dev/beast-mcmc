@@ -349,7 +349,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
             numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
             minGridIndex = 0;
-            while (gridPoints[minGridIndex] <= currentTime) {
+            while (minGridIndex < numGridPoints && gridPoints[minGridIndex] <= currentTime) {
                 minGridIndex++;
             }
             currentGridIndex = minGridIndex;
@@ -363,7 +363,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                 maxGridIndex = maxGridIndex - 1;
             }
 
-            if (maxGridIndex >= 0) {
+            if (maxGridIndex >= 0 && minGridIndex < numGridPoints) {
 
                 //from likelihood of interval between first sampling time and gridPoints[minGridIndex]
 
@@ -484,6 +484,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                     currentTimeIndex++;
 
                 }
+            // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
             } else {
                 while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
                     //check to see if interval is coalescent interval or sampling interval

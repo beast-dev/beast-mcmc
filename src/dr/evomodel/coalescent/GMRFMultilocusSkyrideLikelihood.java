@@ -1,7 +1,7 @@
 /*
  * GMRFMultilocusSkyrideLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -349,7 +349,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
             numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
             minGridIndex = 0;
-            while (minGridIndex < numGridPoints && gridPoints[minGridIndex] <= currentTime) {
+            while (minGridIndex < numGridPoints - 1 && gridPoints[minGridIndex] <= currentTime) {
                 minGridIndex++;
             }
             currentGridIndex = minGridIndex;

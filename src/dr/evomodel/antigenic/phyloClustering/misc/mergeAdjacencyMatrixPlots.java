@@ -9,16 +9,77 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.ListIterator;
 
-public class countClusterCooccurrence {
+public class mergeAdjacencyMatrixPlots {
 
     public static void main(String[] args) {
     	
-    	
+    	int NUM_BURNINs = 250;
+
+    	// 	    	/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/
+
     	//int numdata = 363;
 
  		FileReader fileReader2;
 
  		try {	
+ 			
+ 	    	//int numdata = 115; // H1N1
+ 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_1/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-adjacencyMatrix.txt";
+ 			
+ 	    	//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_3/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_3-adjacencyMatrix.txt";
+
+ 	    	//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-adjacencyMatrix.txt";	    	
+
+ 	    	//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_1-sample2/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-sample2-adjacencyMatrix.txt";
+ 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_1-sample3/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-sample3-adjacencyMatrix.txt";
+ 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_1-sample4/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-sample4-adjacencyMatrix.txt";
+ 	    	//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_1-sample5/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-sample5-adjacencyMatrix.txt";
+ 	    	//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_1-sample6/H1N1_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-sample6-adjacencyMatrix.txt";
+
+ 			
+ 	    	int numdata = 402; //H3N2
+			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_1/H3N2_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_1-adjacencyMatrix.txt";
+ 			
+ 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05/H3N2_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-adjacencyMatrix.txt";
+			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_15/H3N2_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_15-adjacencyMatrix.txt";
+			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b/H3N2_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-adjacencyMatrix.txt";
+
+ 		
+ 			
+ 			
+ 	    	//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample2/H3N2_mds.clusterLabels.log";
+ 	    	//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample2-adjacencyMatrix.txt";
+ 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample3/H3N2_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample3-adjacencyMatrix.txt";
+ 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample4/H3N2_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample4-adjacencyMatrix.txt";
+ 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample5/H3N2_mds.clusterLabels.log";
+ 			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample5-adjacencyMatrix.txt";
+ 			String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample6/H3N2_mds.clusterLabels.log";
+ 			String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample6-adjacencyMatrix.txt";
+
+ 	    	
+ 			
+	
+ 	    	
+ 	    	
+ 	    	fileReader2 = new FileReader(input);
+ 			BufferedWriter outputWriter = new BufferedWriter(new FileWriter(output)); 
+
+
+ 			
   			 // fileReader2 = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialConditionWithInitialLocationDrift/H3N2ddCRP.log");
  			 //fileReader2 = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/testModel/longRun/H3N2ddCRP.log");
 // 			fileReader2 = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/testModel/30Mrun/H3N2ddCRP-1to6M.log");
@@ -57,9 +118,6 @@ public class countClusterCooccurrence {
 // 			BufferedWriter outputWriter = new BufferedWriter(new FileWriter("/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysis/fluTypes/Yam/summaryCooccurrence-mds0_2-prior4.txt")); 
 // 	    	int numdata = 174; //Yam
 
- 	    	fileReader2 = new FileReader("/Users/charles/Documents/researchData/clustering/tmpDec19/Yam/mds0_3-prior4/Yam_mds.clusterLabels.log");
- 			BufferedWriter outputWriter = new BufferedWriter(new FileWriter("/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysis/fluTypes/Yam/summaryCooccurrence-mds0_3-prior4.txt")); 
- 	    	int numdata = 174; //Yam
 
  	    	
 
@@ -113,6 +171,10 @@ public class countClusterCooccurrence {
  		      line2 = bReader2.readLine();
  		      line2 = bReader2.readLine();
  		      line2 = bReader2.readLine();
+
+ 		      for(int i=0; i < NUM_BURNINs; i++){
+ 		    	 line2 = bReader2.readLine();
+ 		      }
 
  		      
  		      System.out.println(line2);

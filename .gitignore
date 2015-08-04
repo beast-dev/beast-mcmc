@@ -5,3 +5,6 @@ bin/
 build/
 dist/
 out/
+
+
+release/*

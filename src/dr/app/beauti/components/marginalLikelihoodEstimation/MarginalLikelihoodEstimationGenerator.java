@@ -81,6 +81,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
     protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
         MarginalLikelihoodEstimationOptions component = (MarginalLikelihoodEstimationOptions) options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
 
+        /*System.err.println("generate component: " + component);
+        System.err.println("options.pathSteps: " + component.pathSteps);
+        System.err.println("options.mleChainLength: " + component.mleChainLength);
+        System.err.println("options.mleLogEvery: " + component.mleLogEvery);*/
+
         switch (point) {
             case AFTER_MCMC:
                 writeMLE(writer, component);

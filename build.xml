@@ -290,8 +290,8 @@
         <echo message="JUnit test report finished."/>
     </target>
 
-    <property name="version" value="1.8.2"/>
-    <property name="version_number" value="1.8.2"/>
+    <property name="version" value="1.8.3pre"/>
+    <property name="version_number" value="1.8.3"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEAUti_name" value="BEAUti"/>

@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -341,16 +341,17 @@ public class BeastMain {
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
-                        new Arguments.IntegerOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
+                        new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
 
                         new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
-                        new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.LongOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
-                        new Arguments.StringOption("debug_state_file", "FILENAME", "Specify a filename to load a debug state from"),
-                        new Arguments.IntegerOption("debug_write_state", "Specify a state at which to write a debug state file"),
+                        new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
+                        new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
+                        new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
@@ -519,14 +520,19 @@ public class BeastMain {
             }
         }
 
-        if (arguments.hasOption("debug_state_file")) {
-            String debugStateFile = arguments.getStringOption("debug_state_file");
-            System.setProperty(MCMC.DEBUG_STATE_FILE, debugStateFile);
+        if (arguments.hasOption("load_dump")) {
+            String debugStateFile = arguments.getStringOption("load_dump");
+            System.setProperty(MCMC.LOAD_DUMP_FILE, debugStateFile);
         }
 
-        if (arguments.hasOption("debug_write_state")) {
-            int debugWriteState = arguments.getIntegerOption("debug_write_state");
-            System.setProperty(MCMC.DEBUG_WRITE_STATE, Integer.toString(debugWriteState));
+        if (arguments.hasOption("dump_state")) {
+            long debugWriteState = arguments.getLongOption("dump_state");
+            System.setProperty(MCMC.DUMP_STATE, Long.toString(debugWriteState));
+        }
+
+        if (arguments.hasOption("dump_every")) {
+            long debugWriteEvery = arguments.getLongOption("dump_every");
+            System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
         }
 
         if (useMPI) {

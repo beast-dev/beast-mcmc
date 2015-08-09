@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="quaqua">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/release_tracer/Mac/lib/quaqua.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

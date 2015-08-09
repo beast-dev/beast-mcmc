@@ -91,7 +91,7 @@ public class MCMCPanel extends BeautiPanel {
 
     private MLEDialog mleDialog = null;
     private MLEGSSDialog mleGssDialog = null;
-    private MarginalLikelihoodEstimationOptions mleOptions;
+    private MarginalLikelihoodEstimationOptions mleOptions = new MarginalLikelihoodEstimationOptions();
 
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
@@ -418,14 +418,27 @@ public class MCMCPanel extends BeautiPanel {
     public void setOptions(BeautiOptions options) {
         this.options = options;
 
+        /*System.err.println("mleOptions: " + mleOptions);
+        System.err.println("options.pathSteps: " + mleOptions.pathSteps);
+        System.err.println("options.mleChainLength: " + mleOptions.mleChainLength);
+        System.err.println("options.mleLogEvery: " + mleOptions.mleLogEvery);*/
+
         // get the MLE options
         mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+        /*if (mleOptions == null) {
+            mleOptions = new MarginalLikelihoodEstimationOptions();
+        }*/
+
+        /*System.err.println("mleOptions: " + mleOptions);
+        System.err.println("options.pathSteps: " + mleOptions.pathSteps);
+        System.err.println("options.mleChainLength: " + mleOptions.mleChainLength);
+        System.err.println("options.mleLogEvery: " + mleOptions.mleLogEvery);*/
 
         if (mleDialog != null) {
-            mleDialog.setOptions(mleOptions);
+            //mleDialog.setOptions(mleOptions);
         }
         if (mleGssDialog != null) {
-            mleGssDialog.setOptions(mleOptions);
+            //mleGssDialog.setOptions(mleOptions);
         }
 
         chainLengthField.setValue(options.chainLength);
@@ -540,11 +553,11 @@ public class MCMCPanel extends BeautiPanel {
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
 
         if (mleDialog != null) {
-            mleDialog.getOptions(mleOptions);
+            //mleDialog.getOptions(mleOptions);
         }
 
         if (mleGssDialog != null) {
-            mleGssDialog.getOptions(mleOptions);
+            //mleGssDialog.getOptions(mleOptions);
         }
 
     }

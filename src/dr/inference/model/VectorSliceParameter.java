@@ -85,6 +85,11 @@ public class VectorSliceParameter extends CompoundParameter {
         parameter.setParameterValueNotifyChangedAll(sliceDimension, value);
     }
 
+    public String getDimensionName(int dim) {
+
+        return getParameter(dim).getVariableName() + Integer.toString(sliceDimension + 1);
+    }
+
     private class sliceBounds implements Bounds<Double>{
 
 
@@ -118,13 +123,25 @@ public class VectorSliceParameter extends CompoundParameter {
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Parameter parameter = (Parameter) xo.getChild(i);
-                vectorSlice.addParameter(parameter);
-                if (sliceDimension < 1 || sliceDimension > parameter.getDimension()) {
-                    throw new XMLParseException("Slice dimension " + sliceDimension + " is invalid for a parameter" +
-                    " with dimension = " + parameter.getDimension());
+                if (parameter instanceof MatrixParameter) {
+                    MatrixParameter mp = (MatrixParameter) parameter;
+                    for (int j = 0; j < mp.getParameterCount(); ++j) {
+                        checkAndAdd(vectorSlice, mp.getParameter(j), sliceDimension);
+                    }
+                } else {
+                    checkAndAdd(vectorSlice, parameter, sliceDimension);
                 }
             }
             return vectorSlice;
+        }
+
+        private void checkAndAdd(final VectorSliceParameter vectorSlice, final Parameter parameter,
+                                 final int sliceDimension) throws XMLParseException {
+            vectorSlice.addParameter(parameter);
+            if (sliceDimension < 1 || sliceDimension > parameter.getDimension()) {
+                throw new XMLParseException("Slice dimension " + sliceDimension + " is invalid for a parameter" +
+                        " with dimension = " + parameter.getDimension());
+            }
         }
 
         //************************************************************************

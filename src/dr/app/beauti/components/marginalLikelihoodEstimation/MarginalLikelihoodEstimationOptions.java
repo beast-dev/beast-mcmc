@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
 
-    MarginalLikelihoodEstimationOptions() {
+    public MarginalLikelihoodEstimationOptions() {
     }
 
     @Override

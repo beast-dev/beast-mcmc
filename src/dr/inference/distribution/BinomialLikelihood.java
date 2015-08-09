@@ -30,6 +30,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.Binomial;
+import dr.math.Polynomial;
+import dr.math.matrixAlgebra.Vector;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -45,7 +47,8 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
 
     public static final String BINOMIAL_LIKELIHOOD = "binomialLikelihood";
 
-    public BinomialLikelihood(Parameter trialsParameter, Parameter proportionParameter, Parameter countsParameter) {
+    public BinomialLikelihood(Parameter trialsParameter, Parameter proportionParameter, Parameter countsParameter,
+                              boolean onLogitScale) {
 
         super(BINOMIAL_LIKELIHOOD);
 
@@ -55,6 +58,8 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
         addVariable(trialsParameter);
         addVariable(proportionParameter);
         addVariable(countsParameter);
+
+        this.onLogitScale = onLogitScale;
 
     }
 
@@ -74,21 +79,48 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
      */
     public double getLogLikelihood() {
 
-        double p = proportionParameter.getParameterValue(0);
-        if (p <= 0 || p >= 1) return Double.NEGATIVE_INFINITY;
+        // Get first success probability statistics
+        SufficientStatistics ss = new SufficientStatistics(proportionParameter.getParameterValue(0), onLogitScale);
+        if (ss.outOfBounds) return Double.NEGATIVE_INFINITY;
 
-        double logP = Math.log(p);
-        double log1MinusP = Math.log(1.0 - p);
+        final boolean hasMultipleProportions = proportionParameter.getDimension() > 1;
 
         double logL = 0.0;
         for (int i = 0; i < trialsParameter.getDimension(); i++) {
+
+            if (hasMultipleProportions && i > 0) {
+                ss = new SufficientStatistics(proportionParameter.getParameterValue(i), onLogitScale);
+                if (ss.outOfBounds) return Double.NEGATIVE_INFINITY;
+            }
+
             int trials = (int) Math.round(trialsParameter.getParameterValue(i));
             int counts = (int) Math.round(countsParameter.getParameterValue(i));
 
             if (counts > trials) return Double.NEGATIVE_INFINITY;
-            logL += binomialLogLikelihood(trials, counts, logP, log1MinusP);
+            logL += binomialLogLikelihood(trials, counts, ss.logP, ss.log1MinusP);
         }
         return logL;
+    }
+
+    class SufficientStatistics {
+
+        double logP;
+        double log1MinusP;
+        boolean outOfBounds;
+
+        SufficientStatistics(double theta, boolean onLogitScale) {
+            if (onLogitScale) {
+                // e(x) / (1 + e(x)) and 1  / (1 + e(x))
+                final double logDenominator = Math.log(1.0 + Math.exp(theta));
+                logP = theta - logDenominator;
+                log1MinusP = -logDenominator;
+                outOfBounds = false;
+            } else {
+                logP = Math.log(theta);
+                log1MinusP = Math.log(1.0 - theta);
+                outOfBounds = (theta <= 0 || theta >= 1);
+            }
+        }
     }
 
     public void makeDirty() {
@@ -133,5 +165,7 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
     Parameter trialsParameter;
     Parameter proportionParameter;
     Parameter countsParameter;
+
+    private final boolean onLogitScale;
 }
 

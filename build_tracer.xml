@@ -134,6 +134,7 @@
     <property name="release_dir" value="release_tracer" />
     <property name="name" value="Tracer" />
 
+    <property name="packaging_tools" value="packaging_tools" />
     <property name="common_dir" value="${release_dir}/common" />
 
     <property name="Mac_dir" value="${release_dir}/Mac" />
@@ -215,12 +216,13 @@
         <jarbundler dir="${Mac_package_dir}"
                         name="${name} v${version}"
                         mainclass="dr.app.tracer.application.TracerApp"
+                        stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
                         icon="${Mac_dir}/icons/Tracer.icns"
-                        jvmversion="1.5+"
+                        jvmversion="1.6+"
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${name} v${version}, Copyright 2003-2013, Andrew Rambaut, Marc Suchard &amp; Alexei J. Drummond"
+                        copyright="${name} v${version}, Copyright 2003-2015, Andrew Rambaut, Marc Suchard &amp; Alexei J. Drummond"
                         bundleid="tracer" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">

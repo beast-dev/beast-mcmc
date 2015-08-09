@@ -133,7 +133,7 @@ public class PartitionData implements Serializable {
     	"Constant Population",
         "Exponential Growth (Growth Rate)",
         "Exponential Growth (Doubling Time)",
-        "Logistic Growth (Growth Rate)",
+//        "Logistic Growth (Growth Rate)",
 //        "Logistic Growth (Doubling Time)",
 //        "Expansion (Growth Rate)",
 //        "Expansion (Doubling Time)",
@@ -1017,9 +1017,6 @@ public class PartitionData implements Serializable {
 	        ParametricDistributionModel distributionModel = new InverseGaussianDistributionModel(
 					mean, stdev, clockParameterValues[8], false);
      
-//	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-//	                distributionModel, 1, false, Double.NaN);
-	        
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
 	        		rateCategoryParameter, //
 	                distributionModel, //
@@ -1097,6 +1094,7 @@ public class PartitionData implements Serializable {
 	// //////////////////////////
 	// ---ANCESTRAL SEQUENCE---//
 	// //////////////////////////
+	
 	public String ancestralSequenceString = null;
 
 	public Sequence createAncestralSequence() {

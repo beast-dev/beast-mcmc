@@ -74,9 +74,10 @@ public class LineageSpecificBranchModelParser extends AbstractXMLObjectParser {
 			// TODO: check if categories numbering starts from zero
 			Parameter categories = (Parameter) xo.getElementFirstChild(CATEGORIES); 
 			
-			CountableBranchCategoryProvider.CladeBranchCategoryModel provider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categories);// false);
+//			CountableBranchCategoryProvider.CladeBranchCategoryModel provider = new CountableBranchCategoryProvider.CladeBranchCategoryModel(treeModel, categories);// false);
 			
-		return new LineageSpecificBranchModel(treeModel, rootFrequencyModel, substitutionModels, provider, categories);
+		return new LineageSpecificBranchModel(treeModel, rootFrequencyModel, substitutionModels, //provider, 
+				categories);
 	}
 
 	@Override

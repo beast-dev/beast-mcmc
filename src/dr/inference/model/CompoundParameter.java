@@ -123,7 +123,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         return uniqueParameters.size();
     }
 
-    public final String getDimensionName(int dim) {
+    public String getDimensionName(int dim) {
         return parameters.get(dim).getDimensionName(pindex.get(dim));
     }
 
@@ -186,9 +186,12 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public void fireParameterChangedEvent() {
+        doNotPropogateChangeUp = true;
         for (Parameter p : parameters) {
             p.fireParameterChangedEvent();
         }
+        doNotPropogateChangeUp = false;
+        fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
     }
 
     public double getParameterValue(int dim) {
@@ -271,7 +274,9 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         int dim = 0;
         for (Parameter parameter1 : uniqueParameters) {
             if (variable == parameter1) {
-                fireParameterChangedEvent(dim + index, type);
+                if (!doNotPropogateChangeUp) {
+                    fireParameterChangedEvent(dim + index, type);
+                }
                 break;
             }
             dim += parameter1.getDimension();
@@ -308,6 +313,8 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     private Bounds bounds = null;
     private int dimension;
     private String name;
+
+    private boolean doNotPropogateChangeUp = false;
 
     public static void main(String[] args) {
 

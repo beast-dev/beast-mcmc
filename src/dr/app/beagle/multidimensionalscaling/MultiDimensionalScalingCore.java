@@ -75,4 +75,8 @@ public interface MultiDimensionalScalingCore {
      */
     void makeDirty();
 
+    /**
+     * Accept the proposed state
+     */
+    void acceptState();
 }

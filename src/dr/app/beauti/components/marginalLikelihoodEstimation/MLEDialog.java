@@ -25,15 +25,14 @@
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
+import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.WholeNumberField;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-
-import dr.app.beauti.util.PanelUtils;
-import dr.app.gui.components.WholeNumberField;
-
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 
 /**
@@ -75,11 +74,11 @@ public class MLEDialog {
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addSpanningComponent(mleInfo);
 
-        pathStepsField.setValue(100);
+        pathStepsField.setValue(options.pathSteps);
         pathStepsField.setColumns(16);
         pathStepsField.setMinimumSize(pathStepsField.getPreferredSize());
         labelPathSteps = optionsPanel.addComponentWithLabel("Number of path steps:", pathStepsField);
-        /*pathStepsField.addKeyListener(new java.awt.event.KeyListener() {
+        pathStepsField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -87,15 +86,15 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.pathSteps = pathStepsField.getValue();
+                options.pathSteps = pathStepsField.getValue();
             }
-        });*/
+        });
 
-        chainLengthField.setValue(1000000);
+        chainLengthField.setValue(options.mleChainLength);
         chainLengthField.setColumns(16);
         chainLengthField.setMinimumSize(chainLengthField.getPreferredSize());
         labelChainLength = optionsPanel.addComponentWithLabel("Length of chains:", chainLengthField);
-        /*chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
+        chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -103,17 +102,17 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.mleChainLength = chainLengthField.getValue();
+                options.mleChainLength = chainLengthField.getValue();
             }
-        });*/
+        });
 
         optionsPanel.addSeparator();
 
-        logEveryField.setValue(1000);
+        logEveryField.setValue(options.mleLogEvery);
         logEveryField.setColumns(16);
         logEveryField.setMinimumSize(logEveryField.getPreferredSize());
         labelLogEvery = optionsPanel.addComponentWithLabel("Log likelihood every:", logEveryField);
-        /*logEveryField.addKeyListener(new java.awt.event.KeyListener() {
+        logEveryField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -121,9 +120,9 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.mleLogEvery = logEveryField.getValue();
+                options.mleLogEvery = logEveryField.getValue();
             }
-        });*/
+        });
 
         optionsPanel.addSeparator();
 
@@ -131,7 +130,7 @@ public class MLEDialog {
         logFileNameField.setEditable(false);
         logFileNameField.setMinimumSize(logFileNameField.getPreferredSize());
         labelLogFileName = optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
-        /*logFileNameField.addKeyListener(new java.awt.event.KeyListener() {
+        logFileNameField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -139,9 +138,9 @@ public class MLEDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.mleFileName = logFileNameField.getText();
+                options.mleFileName = logFileNameField.getText();
             }
-        });*/
+        });
 
         optionsPanel.addSeparator();
 
@@ -157,6 +156,7 @@ public class MLEDialog {
 
         optionsPanel.addSeparator();
 
+        operatorAnalysis.setSelected(options.printOperatorAnalysis);
         optionsPanel.addComponent(operatorAnalysis);
 
         operatorAnalysis.addActionListener(new java.awt.event.ActionListener() {
@@ -232,7 +232,12 @@ public class MLEDialog {
     }
 
     public void setOptions(MarginalLikelihoodEstimationOptions options) {
-        this.options = options;
+        //this.options = options;
+
+        /*System.err.println("setOptions: " + options);
+        System.err.println("options.pathSteps: " + options.pathSteps);
+        System.err.println("options.mleChainLength: " + options.mleChainLength);
+        System.err.println("options.mleLogEvery: " + options.mleLogEvery);*/
 
         pathStepsField.setValue(options.pathSteps);
         chainLengthField.setValue(options.mleChainLength);
@@ -240,16 +245,28 @@ public class MLEDialog {
 
         logFileNameField.setText(options.mleFileName);
 
+        operatorAnalysis.setSelected(options.printOperatorAnalysis);
+
         optionsPanel.validate();
         optionsPanel.repaint();
     }
 
     public void getOptions(MarginalLikelihoodEstimationOptions options) {
+        //this.options = options;
+
         options.pathSteps = pathStepsField.getValue();
         options.mleChainLength = chainLengthField.getValue();
         options.mleLogEvery = logEveryField.getValue();
 
+        options.printOperatorAnalysis = operatorAnalysis.isSelected();
+
         options.mleFileName = logFileNameField.getText();
+
+        /*System.err.println("getOptions: " + options);
+        System.err.println("options.pathSteps: " + options.pathSteps);
+        System.err.println("options.mleChainLength: " + options.mleChainLength);
+        System.err.println("options.mleLogEvery: " + options.mleLogEvery);*/
+
     }
 
 }

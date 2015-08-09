@@ -149,7 +149,7 @@ public class DebugUtils {
                 }
 
                 for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                    parameter.setParameterValueQuietly(dim, Double.parseDouble(fields[dim + 2]));
+                    parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 2]));
                 }
             }
 

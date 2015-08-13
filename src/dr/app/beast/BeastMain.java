@@ -474,11 +474,13 @@ public class BeastMain {
         if (!arguments.hasOption("beagle_SSE_off")) {
             beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
         }
-        if (arguments.hasOption("beagle_double")) {
-            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-        }
+//        if (arguments.hasOption("beagle_double")) {
+//            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+//        }
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+        } else {
+            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
         }
         if (arguments.hasOption("beagle_async")) {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
@@ -640,6 +642,8 @@ public class BeastMain {
                 }
                 if (dialog.preferBeagleSSE()) {
                     beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+                } else {
+                    beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
                 }
                 if (dialog.preferBeagleGPU()) {
                     beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();

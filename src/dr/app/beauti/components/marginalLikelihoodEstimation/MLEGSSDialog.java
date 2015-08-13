@@ -264,6 +264,7 @@ public class MLEGSSDialog {
 
     public void setFilenameStem(String fileNameStem, boolean addTxt) {
         logFileNameField.setText(fileNameStem + ".mle.log" + (addTxt ? ".txt" : ""));
+        options.mleFileName = logFileNameField.getText();
     }
 
     public void setOptions(MarginalLikelihoodEstimationOptions options) {

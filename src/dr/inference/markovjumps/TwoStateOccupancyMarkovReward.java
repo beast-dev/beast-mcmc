@@ -37,6 +37,10 @@ import dr.math.matrixAlgebra.Vector;
  * @author Marc Suchard
  * @author Christophe Fraiser
  * @author Andrew Rambaut
+ *
+ *
+ * https://en.wikipedia.org/wiki/Generalized_integer_gamma_distribution
+ *
  */
 
 
@@ -61,9 +65,9 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
 
         eigenSystem = new DefaultEigenSystem(2);
 
-        if (Q[idx(0, 0)] != Q[idx(1, 1)]) {
-            throw new IllegalArgumentException("Only currently implemented for equal rates models");
-        }
+//        if (Q[idx(0, 0)] != Q[idx(1, 1)]) {
+//            throw new IllegalArgumentException("Only currently implemented for equal rates models");
+//        }
     }
 
     private int idx(int i, int j) {
@@ -72,78 +76,278 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
 
     private double[] jumpProbabilities = null;
 
-    private double getAki(double lambda1, double lambda2, int k, int i) {
-//        double logA = Binomial.logChoose(k + i - 1, i) +
-//                k * Math.log(lambda1) + (k - 1) * Math.log(lambda2)
-//        int sign = 1;
-//        return sign * Math.exp(logA);
-        return Binomial.choose(k + i - 1, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
-                * Math.pow(lambda2, k - 1) / Math.pow(lambda2 - lambda1, k + i);
-    }
-
-    private double getBki(double lambda1, double lambda2, int k, int i) {
-        return Binomial.choose(k + i - 1, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
-                * Math.pow(lambda2, k - 1) / Math.pow(lambda1 - lambda2, k + i);
-    }
-
-    private double getCki(double lambda1, double lambda2, int k, int i) {
-        return Binomial.choose(k + i - 1, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
-                * Math.pow(lambda2, k) / Math.pow(lambda2 - lambda1, k + i);
-    }
-
-    private double getDki(double lambda1, double lambda2, int k, int i) {
-        return Binomial.choose(k + i, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
-                * Math.pow(lambda2, k) / Math.pow(lambda1 - lambda2, k + i + 1);
-    }
-
-
-    private void computeJumpProbabilities(double lambda1, double lambda2, double[] jumpProbabilities) {
-        jumpProbabilities = new double[maxK];
-
-//        if (lambda1 == lambda2) { // Poisson process
+//    private double getAki(double lambda1, double lambda2, int k, int i) {
+////        double logA = Binomial.logChoose(k + i - 1, i) +
+////                k * Math.log(lambda1) + (k - 1) * Math.log(lambda2)
+////        int sign = 1;
+////        return sign * Math.exp(logA);
+//        return Binomial.choose(k + i - 1, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
+//                * Math.pow(lambda2, k - 1) / Math.pow(lambda2 - lambda1, k + i);
+//    }
 //
-//        } else {
-//            for (int k = 0; k < maxK / 2; ++k) {
-//                double sumC = 0.0;
-//                double sumD = 0.0;
-//                for (int i = 1; i <= k + 1; ++i) {
-//                    sumC += getCki(lambda1, lambda2, k, k - i + 1) * Math
-//                }
-//                jumpProbabilities[2 * k] = sumC + sumD;
-//            }
-//        }
+//    private double getBki(double lambda1, double lambda2, int k, int i) {
+//        return Binomial.choose(k + i - 1, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
+//                * Math.pow(lambda2, k - 1) / Math.pow(lambda1 - lambda2, k + i);
+//    }
+//
+//    private double getCki(double lambda1, double lambda2, int k, int i) {
+//        return Binomial.choose(k + i - 1, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
+//                * Math.pow(lambda2, k) / Math.pow(lambda2 - lambda1, k + i);
+//    }
+//
+//    private double getDki(double lambda1, double lambda2, int k, int i) {
+//        return Binomial.choose(k + i, i) * Math.pow(-1, i) * Math.pow(lambda1, k)
+//                * Math.pow(lambda2, k) / Math.pow(lambda1 - lambda2, k + i + 1);
+//    }
+
+
+    private void computeCDForJumpProbabilities(double lambda1, double lambda2, double[][] C, double[][] D) {
+
+        if (lambda1 == lambda2) return;
+
+        for (int k = 0; k < maxK / 2; ++k) {
+            final double l1l2k = Math.pow(lambda1 * lambda2, k);
+
+            for (int i = 0; i <= k + 1; ++i) {
+                final double sign = Math.pow(-1, i);
+
+                if (k == 0 && i == 0) {
+                    C[k][i] = 1.0;
+                } else {
+                    C[k][i] = sign * l1l2k * Binomial.choose(k + i - 1, i)
+                            / Math.pow(lambda2 - lambda1, k + i);
+                }
+                D[k][i] = sign * l1l2k * Binomial.choose(k + i, i)
+                        / Math.pow(lambda1 - lambda2, k + i + 1);
+
+//                C[k][i] = C1(lambda1, lambda2, k, i);
+//                D[k][i] = D1(lambda1, lambda2, k, i);
+            }
+        }
     }
+
+//    private static double C1(double lambda1, double lambda2, int k, int index) {
+//        if (k == 0 && index == 0) return 1.0;
+//
+//        return Math.pow(-1, index) * Math.pow(lambda1 * lambda2, k) * Binomial.choose(k + index - 1, index) /
+//                Math.pow(lambda2 - lambda1, k + index);
+//    }
+//
+//    private static double D1(double lambda1, double lambda2, int k, int index) {
+//        return Math.pow(-1, index) * Math.pow(lambda1 * lambda2, k) * Binomial.choose(k + index, index) /
+//                Math.pow(lambda1 - lambda2, k + index + 1);
+//    }
+
+    private void computeJumpProbabilities(double lambda1, double lambda2, double time,
+                                          final double[][] C, final double[][] D, double[] jumpProbabilities) {
+
+//        jumpProbabilities = new double[maxK];
+
+        final double expLambda1Time = Math.exp(-lambda1 * time);
+        final double expLambda2Time = Math.exp(-lambda2 * time);
+
+        if (lambda1 == lambda2) {
+            for (int m = 1; m < maxK / 2 + 1; ++m) {
+                final int k = 2 * m;
+                jumpProbabilities[k] = expLambda1Time * Math.pow(lambda1 * time, k)
+                        / Math.exp(GammaFunction.lnGamma(k + 1));
+            }
+        } else {
+
+            for (int k = 1; k < maxK / 2; ++k) {
+                double sum = 0.0;
+                double multiplicativeFactor = 1.0;
+                for (int i = 1; i <= k + 1; ++i) {
+
+                    if (i > 1) {
+                        multiplicativeFactor *= time / (i - 1);
+                    }
+
+                    sum += C[k][k - i + 1]
+                            * multiplicativeFactor
+                            * expLambda1Time;
+
+                    if (i <= k) {
+                        sum += D[k][k - i]
+                                * multiplicativeFactor
+                                * expLambda2Time;
+                    }
+                }
+                jumpProbabilities[2 * k] = sum;
+            }
+        }
+    }
+
+    public double[][] getC() { return C; }
+
+    public double[][] getD() { return D; }
+
+    public double[] getJumpProbabilities() { return jumpProbabilities; }
 
     public double computeCdf(double x, double time, int i, int j) {
-        return 0.0;
+        throw new RuntimeException("Not yet implemented");
     }
 
     public double computePdf(double x, double time, int i, int j) {
 
-//        if (jumpProbabilities == null) {
-//            computeJumpProbabilities(Q[idx(0,0)], Q[idx(1,1)], jumpProbabilities);
-//        }
+        if (i != 0 || j != 0) throw new RuntimeException("Not yet implemented");
 
-        final double lambda = -Q[idx(0, 0)];
-        final double rate = 1.0 / lambda;
-        final double logLambdaTime = Math.log(lambda) + Math.log(time);
+        final double lambda0 = -Q[idx(0,0)];
+        final double lambda1 = -Q[idx(1,1)];
 
-        final double time2 = time - x;
+        final boolean symmetric = (lambda0 == lambda1);
 
-        final double multiplier = Math.exp(-lambda * time);
-
-        double sum = 0.0;
-
-        // if time - x > 0, then there must have been at least k = 2 jumps
-        for (int m = 1; m <= maxK / 2; ++m) {
-            final int k = 2 * m;
-            sum += Math.exp(k * logLambdaTime - GammaFunction.lnGamma(k + 1)
-                    + GammaDistribution.logPdf(x, m, rate)
-                    + GammaDistribution.logPdf(time - x, m + 1, rate)
-                    - GammaDistribution.logPdf(time, k + 1, rate)
-            );
+        if (!symmetric && C == null) {
+            C = new double[(maxK / 2) + 1][(maxK / 2) + 1];
+            D = new double[(maxK / 2) + 1][(maxK / 2) + 1];
+            computeCDForJumpProbabilities(lambda0, lambda1, C, D);
         }
-        return multiplier * sum;
+
+        if (jumpProbabilities == null) {
+            jumpProbabilities = new double[maxK + 1];
+            computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities);
+        }
+
+        if (symmetric) {
+            // Single rate (symmetric)
+//            final double lambda = -Q[idx(0, 0)];
+            final double scale = 1.0 / lambda0;
+//            final double logLambdaTime = Math.log(lambda) + Math.log(time);
+
+//            final double multiplier = Math.exp(-lambda * time);
+
+            double sum = 0.0;
+            // if time - x > 0, then there must have been at least k = 2 jumps
+            for (int m = 1; m <= maxK / 2; ++m) {
+                final int k = 2 * m;
+                sum +=  jumpProbabilities[k] *
+                        Math.exp(
+//                        k * logLambdaTime - GammaFunction.lnGamma(k + 1)
+                                + GammaDistribution.logPdf(x, m, scale)
+                                + GammaDistribution.logPdf(time - x, m + 1, scale)
+                                - GammaDistribution.logPdf(time, k + 1, scale)
+                );
+            }
+            return //multiplier *
+                    sum;
+        } else {
+
+            // Test partial fractions
+            GeneralizedIntegerGammaDistribution gigd = new GeneralizedIntegerGammaDistribution(4, 10, 0.2, 2.0);
+
+            System.err.println(gigd.generatingFunction(0.5));
+            System.err.println(gigd.generatingFunctionPartialFraction(0.5));
+            System.exit(-1);
+
+            // Two rate model
+            double sum = 0.0;
+            for (int m = 1; m <= maxK / 2; ++m) {
+                final int k = 2 * m;
+                sum += jumpProbabilities[k] +
+                        Math.exp(GammaDistribution.logPdf(x, m, lambda1) // TODO check which rate
+                                        * GammaDistribution.logPdf(time - x, m + 1, lambda0)) // TODO check which rate
+                                / GeneralizedIntegerGammaDistribution.pdf(time, m, m + 1, lambda1, lambda0);
+            }
+
+
+
+            return sum;
+        }
+    }
+
+    static class GeneralizedIntegerGammaDistribution {
+
+        private int shape1, shape2;
+        private double rate1, rate2;
+
+        private double[] A = null;
+        private double[] B = null;
+
+        GeneralizedIntegerGammaDistribution(int shape1, int shape2, double rate1, double rate2) {
+            this.shape1 = shape1; this.shape2 = shape2;
+            this.rate1 = rate1; this.rate2 = rate2;
+        }
+
+        public double generatingFunction(double s) {
+            return Math.pow(rate1 / (rate1 + s), shape1) * Math.pow(rate2 / (rate2 + s), shape2);
+        }
+
+
+//        http://www.ism.ac.jp/editsec/aism/pdf/034_3_0591.pdf
+        public double generatingFunctionPartialFraction(double s) {
+            if (A == null) {
+                computeCoefficients();
+            }
+            double sum = 0.0;
+
+            for (int i = 1; i <= shape1; ++i) {
+                sum += A[i] / Math.pow(rate1 + s, i);
+            }
+
+            for (int i = 1; i <= shape2; ++i) {
+                sum += B[i] / Math.pow(rate2 + s, i);
+            }
+
+//            double B1 = -rate1 * rate2 * rate2 * (Math.pow(rate1 - rate2, -1) + Math.pow(rate1 - rate2, -2));
+
+//            double A1 = rate1 * rate2 * rate2 * Math.pow(rate2 - rate1, -2);
+//            double B1 = -rate1 * rate2 * rate2 * Math.pow(rate1 - rate2, -2);
+//            double B2 =  rate1 * rate2 * rate2 * Math.pow(rate1 - rate2, -1);
+
+//            System.err.println("A1: " + A1 + " " + A[1]);
+//            System.err.println("B1: " + B1 + " " + B[1]);
+//            System.err.println("B2: " + B2 + " " + B[2]);
+
+//            double sum2 = A1 / (rate1 + s) + B1 / (rate2 + s) + B2 / ((rate2 + s) * (rate2 + s));
+
+//            return sum2;
+            return sum;
+        }
+
+        private void computeCoefficients() {
+            A = new double[shape1 + 1];
+            B = new double[shape2 + 1];
+
+            final double lambdaFactor = Math.pow(rate1, shape1) * Math.pow(rate2, shape2);
+
+            int sign = 1;
+            double factorial = 1;
+            for (int i = 1; i <= shape1; ++i) {
+                if (i > 1 && (shape2 + i - 2) > 1) {
+                    factorial *= shape2 + i - 2;
+                    factorial /= i - 1;
+                }
+//                System.err.println("A: " + Binomial.choose(shape2 + i - 1, i - 1));
+
+                System.err.println("A[" + (shape1 - i + 1) + "]: " + factorial);
+                A[shape1 - i + 1] =
+//                        Binomial.choose(shape2 + i - 1, i - 1) *
+                        factorial *
+                        sign * lambdaFactor / Math.pow(rate2 - rate1, shape2 + i - 1); // shape1 - i + 1
+                sign *= -1;
+            }
+
+            sign = 1;
+            factorial = 1;
+            for (int i = 1; i <= shape2; ++i) {
+                if (i > 1 && (shape1 + i - 2) > 1) {
+//                    System.err.println((shape1 + i - 2) + " " + i);
+                    factorial *= shape1 + i - 2;
+                    factorial /= i - 1;
+                }
+
+                System.err.println("B[" + (shape2 - i + 1) + "]: " + factorial);
+                B[shape2 - i + 1] =
+//                        Binomial.choose(shape1 + i - 1, i - 1) *
+                        factorial *
+                        sign * lambdaFactor / Math.pow(rate1 - rate2, shape1 + i - 1); // shape2 - i + 1
+                sign *= -1;
+            }
+        }
+
+        public static double pdf(double x, int shape1, int shape2, double rate1, double rate2) {
+            return 1.0;
+        }
     }
 
     public double[] computePdf(double x, double time) {
@@ -204,6 +408,47 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
         return i;
     }
 
+//    private static int getKMax(int n) {
+//        if (n % 2 == 0) {
+//            return n / 2;
+//        } else {
+//            return (n + 1) / 2;
+//        }
+//    }
+
+//    private static void hypgeoF11_k_2k(final double x, double[] result, double[] work) {
+//        final int len = result.length;
+//        if (len == 1 || x <= 0.0) return;
+//
+//        final int nmax = len - 1;
+//        final int kmax = getKMax(nmax);
+//        final double y = x / 2.0;
+//        final double lx = Math.log(0.25 * x);
+//        // TODO finish
+//
+//
+//
+//    }
+
+//    private static void pclt(double t, double lambda1, double lambda2, double[] result) {
+//
+//        final int len = result.length;
+//        final int nmax = len - 1;
+//        final int kmax = getKMax(nmax);
+//
+//        double[] work = new double[kmax + 1];
+//
+//        final double x = t * (lambda2 - lambda1);
+//        final double abs_x = Math.abs(x);
+//        final double log_l1 = Math.log(lambda1), log_l2 = Math.log(lambda2), log_t = Math.log(t);
+//        final double max_rate = Math.max(lambda1, lambda2);
+//        double log_gamma = 0.0;
+//
+//        hypgeoF11_k_2k(abs_x, result, work);
+//        // TODO finish
+//
+//    }
+
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Q: " + new Vector(Q) + "\n");
@@ -244,4 +489,7 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
     private final EigenSystem eigenSystem;
 
     private double maxTime;
+
+    private double[][] C = null;
+    private double[][] D = null;
 }

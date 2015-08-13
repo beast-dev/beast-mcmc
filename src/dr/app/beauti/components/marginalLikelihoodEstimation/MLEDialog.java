@@ -50,7 +50,7 @@ public class MLEDialog {
     private WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
     private WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
-    private JTextArea logFileNameField = new JTextArea("MLE.log");
+    private JTextArea logFileNameField = new JTextArea("mle.log");
 
     JCheckBox operatorAnalysis = new JCheckBox("Print operator analysis");
 
@@ -176,10 +176,10 @@ public class MLEDialog {
         mleTutorial.setColumns(56);
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
-        
-        JTextArea citationText = new JTextArea("Baele G, Lemey P, Bedford T, Rambaut A, Suchard MA, Alekseyenko AV (2012)\n" + 
-                "Mol Biol Evol 29(9), 2157-2167 [Advantages of PS/SS].\n" + 
-                "Baele G, Li WLS, Drummond AJ, Suchard MA, Lemey P (2013)\nMol Biol Evol 30(2), 239-243 " + 
+
+        JTextArea citationText = new JTextArea("Baele G, Lemey P, Bedford T, Rambaut A, Suchard MA, Alekseyenko AV (2012)\n" +
+                "Mol Biol Evol 29(9), 2157-2167 [Advantages of PS/SS].\n" +
+                "Baele G, Li WLS, Drummond AJ, Suchard MA, Lemey P (2013)\nMol Biol Evol 30(2), 239-243 " +
                 "[Importance of using proper priors].");
         citationText.setColumns(45);
         optionsPanel.addComponentWithLabel("Citation:", citationText);
@@ -229,6 +229,7 @@ public class MLEDialog {
 
     public void setFilenameStem(String fileNameStem, boolean addTxt) {
         logFileNameField.setText(fileNameStem + ".mle.log" + (addTxt ? ".txt" : ""));
+        options.mleFileName = logFileNameField.getText();
     }
 
     public void setOptions(MarginalLikelihoodEstimationOptions options) {

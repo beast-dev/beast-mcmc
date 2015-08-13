@@ -69,7 +69,7 @@ public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
     public int pathSteps = 100;
     public int mleChainLength = 1000000;
     public int mleLogEvery = 1000;
-    public String mleFileName = "MLE.log";
+    public String mleFileName = "mle.log";
     public String pathScheme = "betaquantile";
     //public String choiceParameterWorkingPrior = "normal";
     public String choiceTreeWorkingPrior = "Product of exponential distributions";

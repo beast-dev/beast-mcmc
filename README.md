@@ -23,6 +23,10 @@ We also include a program that can convert NEXUS files into this format.
 
 [BEAST Documentation Website](http://beast.bio.ed.ac.uk)
 
+
+# Acknowledgements
+- This project is supported in part through the National Science Foundation grant DMS 1264153.
+
 ---
 
 YourKit is kindly supporting open source projects with its full-featured Java Profiler.

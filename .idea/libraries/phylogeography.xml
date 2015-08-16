@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="phylogeography">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/release_phylogeography/common/lib/phylogeography.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

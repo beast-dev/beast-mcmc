@@ -1,7 +1,7 @@
 /*
  * TreeWorkingPriorParsers.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -382,7 +382,7 @@ public class TreeWorkingPriorParsers {
                 System.out.println("Overview of traceIndexParameter:");
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
-                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                        throw new XMLParseException("Not all traces could be linked to the required columns, problem with trace index: " + i + "; traceIndexParameter.length = " + traceIndexParameter.length);
                     }
                     System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
                 }
@@ -490,6 +490,7 @@ public class TreeWorkingPriorParsers {
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 10;
                     System.out.println("WARNING: Burn-in larger than total number of states - using 10%");
+                    System.out.println("Burnin: " + burnin);
                 }
                 traces.setBurnIn(burnin);
 
@@ -518,7 +519,7 @@ public class TreeWorkingPriorParsers {
                 System.out.println("Overview of traceIndexParameter:");
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
-                        throw new XMLParseException("Not all traces could be linked to the required columns.");
+                        throw new XMLParseException("Not all traces could be linked to the required columns, problem with trace index: " + i + "; traceIndexParameter.length = " + traceIndexParameter.length);
                     }
                     System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
                 }

@@ -1,3 +1,28 @@
+/*
+ * PartitionData.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.bss;
 
 import java.io.Serializable;
@@ -108,7 +133,7 @@ public class PartitionData implements Serializable {
     	"Constant Population",
         "Exponential Growth (Growth Rate)",
         "Exponential Growth (Doubling Time)",
-        "Logistic Growth (Growth Rate)",
+//        "Logistic Growth (Growth Rate)",
 //        "Logistic Growth (Doubling Time)",
 //        "Expansion (Growth Rate)",
 //        "Expansion (Doubling Time)",
@@ -887,17 +912,18 @@ public class PartitionData implements Serializable {
 	// ////////////////////
 	
 	public int clockModelIndex = 0;
-
+    public int LRC_INDEX = 1;
+	
 	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
 
 	public void resetClockModelIdref() {
 		this.clockModelIdref = BranchRateModel.BRANCH_RATES;
 	}
 	
-	public static String[] clockModels = { "Strict Clock", //
-			"Lognormal relaxed clock (Uncorrelated)", //
-			"Exponential relaxed clock (Uncorrelated)", //
-			"Inverse Gaussian relaxed clock" //
+	public static String[] clockModels = { "Strict Clock", // 0
+			"Lognormal relaxed clock (Uncorrelated)", // 1
+			"Exponential relaxed clock (Uncorrelated)", // 2
+			"Inverse Gaussian relaxed clock" // 3
 	};
 
 	public static String[] clockParameterNames = new String[] { "clock.rate", // StrictClock
@@ -928,6 +954,8 @@ public class PartitionData implements Serializable {
 			0.0 // ig.offset
 	};
 
+	public boolean lrcParametersInRealSpace = true;
+	
 	public BranchRateModel createClockRateModel() {
 
 		BranchRateModel branchRateModel = null;
@@ -938,7 +966,7 @@ public class PartitionData implements Serializable {
 			
 			branchRateModel = new StrictClockBranchRates(rateParameter);
 
-		} else if (this.clockModelIndex == 1) {// Lognormal relaxed clock
+		} else if (this.clockModelIndex == LRC_INDEX) {// Lognormal relaxed clock
 
 			double numberOfBranches = 2 * (createTreeModel().getTaxonCount() - 1);
 			Parameter rateCategoryParameter = new Parameter.Default(numberOfBranches);
@@ -946,7 +974,7 @@ public class PartitionData implements Serializable {
 			Parameter mean = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 1, clockParameterValues[1]);
 			Parameter stdev = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 1, clockParameterValues[2]);
 			//TODO: choose between log scale / real scale
-	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], false, false);
+	        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(mean, stdev, clockParameterValues[3], lrcParametersInRealSpace, lrcParametersInRealSpace);
 	        
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
 	        		rateCategoryParameter, //
@@ -989,9 +1017,6 @@ public class PartitionData implements Serializable {
 	        ParametricDistributionModel distributionModel = new InverseGaussianDistributionModel(
 					mean, stdev, clockParameterValues[8], false);
      
-//	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), rateCategoryParameter, 
-//	                distributionModel, 1, false, Double.NaN);
-	        
 	        branchRateModel = new DiscretizedBranchRates(createTreeModel(), //
 	        		rateCategoryParameter, //
 	                distributionModel, //
@@ -1024,7 +1049,7 @@ public class PartitionData implements Serializable {
 	}
 	
 	public static String[] siteRateModels = { "No Model", //
-			"Site Rate Model" //
+			"Gamma Site Rate Model" //
 	};
 
 	public static String[] siteRateModelParameterNames = new String[] {
@@ -1069,6 +1094,7 @@ public class PartitionData implements Serializable {
 	// //////////////////////////
 	// ---ANCESTRAL SEQUENCE---//
 	// //////////////////////////
+	
 	public String ancestralSequenceString = null;
 
 	public Sequence createAncestralSequence() {

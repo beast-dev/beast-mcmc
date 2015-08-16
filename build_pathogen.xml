@@ -89,6 +89,7 @@
     </target>
 
     <property name="version" value="1.5" />
+    <property name="packaging_tools" value="packaging_tools" />
     <property name="release_dir" value="release_pathogen" />
     <property name="name" value="Path-O-Gen" />
 
@@ -173,12 +174,12 @@
         <jarbundler dir="${Mac_package_dir}"
                         name="${name} v${version}"
                         mainclass="dr.app.pathogen.PathogenApp"
-                        stubfile="${Mac_dir}/universalJavaApplicationStub"
+                        stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
                         icon="${Mac_dir}/icons/Path-O-Gen.icns"
                         jvmversion="1.6+"
                         arguments=""
                         version="${version}"
-                        infostring="${name} v${version}, Copyright 2006-2015, Andrew Rambaut"
+                        copyright="${name} v${version}, Copyright 2006-2015, Andrew Rambaut"
                         bundleid="pathogen" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">

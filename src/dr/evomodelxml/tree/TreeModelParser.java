@@ -1,7 +1,7 @@
 /*
- * TreeTrace.java
+ * TreeModelParser.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -60,6 +60,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String LEAF_HEIGHTS = "leafHeights";
 
     public static final String FIRE_TREE_EVENTS = "fireTreeEvents";
+    public static final String FIX_HEIGHTS = "fixHeights";
 
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
@@ -68,6 +69,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         rules = new XMLSyntaxRule[]{
                 new ElementRule(Tree.class),
                 new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
+                AttributeRule.newBooleanRule(FIX_HEIGHTS, true),
                 new ElementRule(NODE_HEIGHTS,
                         new XMLSyntaxRule[]{
                                 AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
@@ -122,7 +124,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
-        TreeModel treeModel = new TreeModel(xo.getId(), tree);
+        boolean fixHeights = xo.getAttribute(FIX_HEIGHTS, false);
+
+        TreeModel treeModel = new TreeModel(xo.getId(), tree, fixHeights);
 
         Logger.getLogger("dr.evomodel").info("Creating the tree model, '" + xo.getId() + "'");
 

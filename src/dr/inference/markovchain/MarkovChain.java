@@ -1,7 +1,7 @@
 /*
  * MarkovChain.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -449,6 +449,10 @@ public final class MarkovChain implements Serializable {
 
     public boolean isStopped() {
         return isStopped;
+    }
+
+    public double evaluate() {
+        return evaluate(likelihood, prior);
     }
 
     protected double evaluate(Likelihood likelihood, Prior prior) {

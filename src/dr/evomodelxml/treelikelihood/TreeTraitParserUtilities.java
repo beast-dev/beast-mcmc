@@ -1,7 +1,7 @@
 /*
  * TreeTraitParserUtilities.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -56,6 +56,7 @@ public class TreeTraitParserUtilities {
     public static final String JITTER = "jitter";
     public static final String WINDOW = "window";
     public static final String DUPLICATES = "duplicatesOnly";
+    public static final String STANDARDIZE = "standardize";
 
     public void randomize(Parameter trait, double[] lower, double[] upper) {
         // Draws each dimension in each trait from U[lower, upper)
@@ -66,6 +67,10 @@ public class TreeTraitParserUtilities {
             trait.setParameterValue(i, newValue);
         }
     }
+
+//    public void standardize(Parameter trait) {
+//        for (int i = 0; i < trait.)
+//    }
 
     public static ElementRule randomizeRules(boolean optional) {
         return new ElementRule(TreeTraitParserUtilities.RANDOMIZE, new XMLSyntaxRule[]{

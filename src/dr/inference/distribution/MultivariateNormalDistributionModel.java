@@ -1,7 +1,7 @@
 /*
  * MultivariateNormalDistributionModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -43,9 +43,11 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
         this.mean = meanParameter;
         addVariable(meanParameter);
-        meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
-                meanParameter.getDimension()));
 
+        if (!(meanParameter instanceof DuplicatedParameter)) {
+            meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                    meanParameter.getDimension()));
+        }
         this.precision = precParameter;
         addVariable(precParameter);
 
@@ -96,6 +98,10 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         // no intermediates need to be recalculated...
+    }
+
+    public Likelihood getLikelihood() {
+        return null;
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

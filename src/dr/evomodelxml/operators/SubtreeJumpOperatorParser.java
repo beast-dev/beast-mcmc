@@ -1,3 +1,28 @@
+/*
+ * SubtreeJumpOperatorParser.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodelxml.operators;
 
 import dr.evomodel.operators.SubtreeJumpOperator;
@@ -34,14 +59,15 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
 //        final double targetAcceptance = xo.getAttribute(TARGET_ACCEPTANCE, 0.234);
 
-        final double size = xo.getAttribute("size", 1.0);
+        final double bias = xo.getAttribute("bias", 0.0);
+        final boolean arctanTransform = xo.getAttribute("arctanTransform", true);
 
-        if (Double.isInfinite(size) || size <= 0.0) {
-            throw new XMLParseException("size attribute must be positive and not infinite. was " + size +
+        if (Double.isInfinite(bias)) {
+            throw new XMLParseException("bias attribute must be not infinite. was " + bias +
            " for tree " + treeModel.getId() );
         }
 
-        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, size, mode);
+        SubtreeJumpOperator operator = new SubtreeJumpOperator(treeModel, weight, bias, arctanTransform, mode);
 //        operator.setTargetAcceptanceProbability(targetAcceptance);
 
         return operator;
@@ -61,9 +87,9 @@ public class SubtreeJumpOperatorParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            // No coercion at the moment.
-            //AttributeRule.newDoubleRule("size", true),
-            //AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
+            AttributeRule.newDoubleRule("bias", true),
+            AttributeRule.newBooleanRule("arctanTransform", true),
+            AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             new ElementRule(TreeModel.class)
     };
 

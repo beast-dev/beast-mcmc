@@ -1,7 +1,7 @@
 /*
  * FullyConjugateMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,17 +27,24 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.xml.Reportable;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Integrated multivariate trait likelihood that assumes a fully-conjugate prior on the root.
@@ -46,7 +53,7 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  */
-public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider {
+public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider, Reportable {
 
     public FullyConjugateMultivariateTraitLikelihood(String traitName,
                                                      MultivariateTraitTree treeModel,
@@ -277,9 +284,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(rootPriorMean, newPrec);
         double logPdf = mvn.logPdf(conditionalRootMean);
 
-        System.err.println("Got here subclass: " + loglikelihood);
-        System.err.println("logValue         : " + (logRemainders + logPdf));
-        System.err.println("");
+        if (Math.abs(loglikelihood - logRemainders - logPdf) > 1E-3) {
+
+            System.err.println("Got here subclass: " + loglikelihood);
+            System.err.println("logValue         : " + (logRemainders + logPdf));
+            System.err.println("logRemainder = " + logRemainders);
+            System.err.println("");
+        }
 //        System.err.println("logRemainders    : " + logRemainders);
 //        System.err.println("logPDF           : " + logPdf);
 //        System.exit(-1);
@@ -382,4 +393,170 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     protected boolean computeWishartStatistics = false;
     private double[] ascertainedData = null;
     private static final boolean DEBUG_ASCERTAINMENT = false;
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+//        sb.append(this.g)
+//        System.err.println("Hello");
+        sb.append("Tree:\n");
+        sb.append(treeModel.toString());
+        sb.append("\n\n");
+
+        double[][] treeVariance = computeTreeVariance(true);
+        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+        Matrix traitVariance = new Matrix(traitPrecision).inverse();
+
+        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+
+        sb.append("Tree variance:\n");
+        sb.append(new Matrix(treeVariance));
+        sb.append("\n\n");
+        sb.append("Trait variance:\n");
+        sb.append(traitVariance);
+        sb.append("\n\n");
+        sb.append("Joint variance:\n");
+        sb.append(new Matrix(jointVariance));
+        sb.append("\n\n");
+
+        double[] data = new double[jointVariance.length];
+        System.arraycopy(meanCache, 0, data, 0, jointVariance.length);
+
+        sb.append("Data:\n");
+        sb.append(new Vector(data));
+        sb.append("\n\n");
+
+        MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[data.length], new Matrix(jointVariance).inverse().toComponents());
+        double logDensity = mvn.logPdf(data);
+        sb.append("logLikelihood: " + getLogLikelihood() + " == " + logDensity + "\n\n");
+
+        final WishartSufficientStatistics sufficientStatistics = getWishartStatistics();
+        final double[][] outerProducts = sufficientStatistics.getScaleMatrix();
+
+        sb.append("Outer-products (DP):\n");
+        sb.append(new Matrix(outerProducts));
+        sb.append(sufficientStatistics.getDf() + "\n");
+
+        Matrix treePrecision = new Matrix(treeVariance).inverse();
+        final int n = data.length / traitPrecision.length;
+        final int p = traitPrecision.length;
+        double[][] tmp = new double[n][p];
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < p; ++j) {
+                tmp[i][j] = data[i * p + j];
+            }
+        }
+        Matrix y = new Matrix(tmp);
+
+        Matrix S = null;
+        try {
+            S = y.transpose().product(treePrecision).product(y); // Using Matrix-Normal form
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
+        sb.append("Outer-products (from tree variance:\n");
+        sb.append(S);
+        sb.append("\n\n");
+
+        return sb.toString();
+    }
+
+
+    private double[][] computeTreeVariance(boolean includeRoot) {
+        final int tipCount = treeModel.getExternalNodeCount();
+        double[][] variance = new double[tipCount][tipCount];
+
+        for (int i = 0; i < tipCount; i++) {
+
+            // Fill in diagonal
+            double marginalTime = getRescaledLengthToRoot(treeModel.getExternalNode(i));
+            variance[i][i] = marginalTime;
+
+            // Fill in upper right triangle,
+
+            for (int j = i + 1; j < tipCount; j++) {
+                NodeRef mrca = findMRCA(i, j);
+                variance[i][j] = getRescaledLengthToRoot(mrca);
+            }
+        }
+
+        // Make symmetric
+        for (int i = 0; i < tipCount; i++) {
+            for (int j = i + 1; j < tipCount; j++) {
+                variance[j][i] = variance[i][j];
+            }
+        }
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree conditional variance:\n" + new Matrix(variance));
+        }
+
+        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
+        }
+
+        if (includeRoot) {
+            for (int i = 0; i < variance.length; ++i) {
+                for (int j = 0; j < variance[i].length; ++j) {
+                    variance[i][j] += 1.0 / getPriorSampleSize();
+                }
+            }
+        }
+
+        return variance;
+    }
+
+    private NodeRef findMRCA(int iTip, int jTip) {
+        Set<String> leafNames = new HashSet<String>();
+        leafNames.add(treeModel.getTaxonId(iTip));
+        leafNames.add(treeModel.getTaxonId(jTip));
+        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+    }
+
+    private double[][] removeMissingTipsInTreeVariance(double[][] variance) {
+
+         final int tipCount = treeModel.getExternalNodeCount();
+         final int nonMissing = countNonMissingTips();
+
+         if (nonMissing == tipCount) { // Do nothing
+             return variance;
+         }
+
+         double[][] outVariance = new double[nonMissing][nonMissing];
+
+         int iReal = 0;
+         for (int i = 0; i < tipCount; i++) {
+             if (!missingTraits.isCompletelyMissing(i)) {
+
+                 int jReal = 0;
+                 for (int j = 0; j < tipCount; j++) {
+                     if (!missingTraits.isCompletelyMissing(i)) {
+
+                         outVariance[iReal][jReal] = variance[i][j];
+
+                         jReal++;
+                     }
+                 }
+                 iReal++;
+             }
+         }
+         return outVariance;
+     }
+
+    private int countNonMissingTips() {
+        int tipCount = treeModel.getExternalNodeCount();
+        for (int i = 0; i < tipCount; i++) {
+            if (missingTraits.isCompletelyMissing(i)) {
+                tipCount--;
+            }
+        }
+        return tipCount;
+    }
+
+
 }

@@ -1,18 +1,7 @@
-package dr.app.tools;
-
-import dr.app.beast.BeastVersion;
-import dr.app.util.Arguments;
-import dr.app.util.Utils;
-import dr.inference.trace.TraceException;
-import dr.util.Version;
-
-import java.io.*;
-import java.util.Hashtable;
-
 /*
  * MakeAncestralSequenceAnnotatedTree.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc A. Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,13 +21,18 @@ import java.util.Hashtable;
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- *
- *
- *
  */
 
+package dr.app.tools;
 
+import dr.app.beast.BeastVersion;
+import dr.app.util.Arguments;
+import dr.app.util.Utils;
+import dr.inference.trace.TraceException;
+import dr.util.Version;
+
+import java.io.*;
+import java.util.Hashtable;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;

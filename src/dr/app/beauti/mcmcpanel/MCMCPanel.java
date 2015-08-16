@@ -1,7 +1,7 @@
 /*
  * MCMCPanel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -62,10 +62,11 @@ public class MCMCPanel extends BeautiPanel {
     WholeNumberField logEveryField = new WholeNumberField(1, Integer.MAX_VALUE);
 
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
-    JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
+    JComboBox performMLECombo = new JComboBox(new String[] {"None", "path sampling/stepping-stone sampling", "generalized stepping-stone sampling"});
+//    JCheckBox performMLE = new JCheckBox("Perform marginal likelihood estimation (MLE) using path sampling/stepping-stone sampling");
     JButton buttonMLE = new JButton("Settings");
-    JCheckBox performMLEGSS = new JCheckBox("Perform marginal likelihood estimation (MLE) using generalized stepping-stone sampling");
-    JButton buttonMLEGSS = new JButton("Settings");
+    //    JCheckBox performMLEGSS = new JCheckBox("Perform marginal likelihood estimation (MLE) using generalized stepping-stone sampling");
+  //  JButton buttonMLEGSS = new JButton("Settings");
 
     public static final String DEFAULT_FILE_NAME_STEM = "untitled";
     JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
@@ -91,7 +92,7 @@ public class MCMCPanel extends BeautiPanel {
 
     private MLEDialog mleDialog = null;
     private MLEGSSDialog mleGssDialog = null;
-    private MarginalLikelihoodEstimationOptions mleOptions;
+    private MarginalLikelihoodEstimationOptions mleOptions = new MarginalLikelihoodEstimationOptions();
 
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
@@ -268,30 +269,34 @@ public class MCMCPanel extends BeautiPanel {
 
         JTextArea mleInfo = new JTextArea("Select the option below to perform marginal likelihood " +
                 "estimation (MLE) using path sampling (PS) / stepping-stone sampling (SS) " +
-                "which performs an additional analysis after the standard MCMC chain has finished.");
+                "or generalized stepping-stone sampling (GSS) which performs an additional" +
+                "analysis after the standard MCMC chain has finished.");
         mleInfo.setColumns(50);
         PanelUtils.setupComponent(mleInfo);
         optionsPanel.addSpanningComponent(mleInfo);
 
         //add PS/SS button
-        optionsPanel.addComponent(performMLE);
-        //will be false by default
-        //options.performMLE = false;
+        optionsPanel.addComponentWithLabel("Marginal likelihood estimation (MLE):", performMLECombo);
+
         optionsPanel.addComponent(buttonMLE);
         buttonMLE.setEnabled(false);
-        performMLE.addActionListener(new java.awt.event.ActionListener() {
+        performMLECombo.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (performMLE.isSelected()) {
+                if (performMLECombo.getSelectedIndex() == 1) {
                     mleOptions.performMLE = true;
                     buttonMLE.setEnabled(true);
-                    buttonMLEGSS.setEnabled(false);
-                    performMLEGSS.setEnabled(false);
+                    updateMLEFileNameStem();
+                } else if (performMLECombo.getSelectedIndex() == 2) {
+                    mleOptions.performMLEGSS = true;
+                    //set to true because product of exponentials is the default option
+                    options.logCoalescentEventsStatistic = true;
+                    buttonMLE.setEnabled(true);
                     updateMLEFileNameStem();
                 } else {
                     mleOptions.performMLE = false;
+                    mleOptions.printOperatorAnalysis = false;
+                    options.logCoalescentEventsStatistic = false;
                     buttonMLE.setEnabled(false);
-                    performMLEGSS.setEnabled(true);
-                    buttonMLEGSS.setEnabled(false);
                 }
             }
         });
@@ -299,7 +304,13 @@ public class MCMCPanel extends BeautiPanel {
             public void actionPerformed(ActionEvent e) {
                 updateMLEFileNameStem();
 
-                int result = mleDialog.showDialog();
+                int result = -1;
+
+                if (performMLECombo.getSelectedIndex() == 1) {
+                   result  = mleDialog.showDialog();
+                } else if (performMLECombo.getSelectedIndex() == 2) {
+                    result = mleGssDialog.showDialog();
+                }
 
                 if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
                     return;
@@ -308,50 +319,51 @@ public class MCMCPanel extends BeautiPanel {
             }
         });
 
-        JTextArea mleGssInfo = new JTextArea("Select the option below to perform marginal likelihood " +
-                "estimation (MLE) using generalized stepping-stone sampling (GSS) which " +
-                "performs an additional analysis after the standard MCMC chain has finished.");
-        mleGssInfo.setColumns(50);
-        PanelUtils.setupComponent(mleGssInfo);
-        optionsPanel.addSpanningComponent(mleGssInfo);
+//        JTextArea mleGssInfo = new JTextArea("Select the option below to perform marginal likelihood " +
+//                "estimation (MLE) using generalized stepping-stone sampling (GSS) which " +
+//                "performs an additional analysis after the standard MCMC chain has finished.");
+//        mleGssInfo.setColumns(50);
+//        PanelUtils.setupComponent(mleGssInfo);
+//        optionsPanel.addSpanningComponent(mleGssInfo);
 
-        //add GSS button
-        optionsPanel.addComponent(performMLEGSS);
-        //will be false by default
-        //options.performMLE = false; ??
-        optionsPanel.addComponent(buttonMLEGSS);
-        buttonMLEGSS.setEnabled(false);
-        performMLEGSS.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                if (performMLEGSS.isSelected()) {
-                    mleOptions.performMLEGSS = true;
-                    //set to true because product of exponentials is the default option
-                    options.logCoalescentEventsStatistic = true;
-                    buttonMLEGSS.setEnabled(true);
-                    buttonMLE.setEnabled(false);
-                    performMLE.setEnabled(false);
-                    updateMLEFileNameStem();
-                } else {
-                    mleOptions.performMLEGSS = false;
-                    options.logCoalescentEventsStatistic = false;
-                    buttonMLE.setEnabled(false);
-                    performMLE.setEnabled(true);
-                    buttonMLEGSS.setEnabled(false);
-                }
-            }
-        });
-        buttonMLEGSS.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                updateMLEFileNameStem();
-
-                int result = mleGssDialog.showDialog();
-
-                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                    return;
-                }
-
-            }
-        });
+//        //add GSS button
+//        optionsPanel.addComponent(performMLEGSS);
+//        //will be false by default
+//        //options.performMLE = false; ??
+//        optionsPanel.addComponent(buttonMLEGSS);
+//        buttonMLEGSS.setEnabled(false);
+//        performMLEGSS.addActionListener(new java.awt.event.ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                if (performMLEGSS.isSelected()) {
+//                    mleOptions.performMLEGSS = true;
+//                    //set to true because product of exponentials is the default option
+//                    options.logCoalescentEventsStatistic = true;
+//                    buttonMLEGSS.setEnabled(true);
+//                    buttonMLE.setEnabled(false);
+//                    performMLE.setEnabled(false);
+//                    updateMLEFileNameStem();
+//                } else {
+//                    mleOptions.performMLEGSS = false;
+//                    mleOptions.printOperatorAnalysis = false;
+//                    options.logCoalescentEventsStatistic = false;
+//                    buttonMLE.setEnabled(false);
+//                    performMLE.setEnabled(true);
+//                    buttonMLEGSS.setEnabled(false);
+//                }
+//            }
+//        });
+//        buttonMLEGSS.addActionListener(new java.awt.event.ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                updateMLEFileNameStem();
+//
+//                int result = mleGssDialog.showDialog();
+//
+//                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+//                    return;
+//                }
+//
+//            }
+//        });
 
 //        logFileNameField.addKeyListener(listener);
 //        treeFileNameField.addKeyListener(listener);
@@ -416,14 +428,27 @@ public class MCMCPanel extends BeautiPanel {
     public void setOptions(BeautiOptions options) {
         this.options = options;
 
+        /*System.err.println("mleOptions: " + mleOptions);
+        System.err.println("options.pathSteps: " + mleOptions.pathSteps);
+        System.err.println("options.mleChainLength: " + mleOptions.mleChainLength);
+        System.err.println("options.mleLogEvery: " + mleOptions.mleLogEvery);*/
+
         // get the MLE options
         mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+        /*if (mleOptions == null) {
+            mleOptions = new MarginalLikelihoodEstimationOptions();
+        }*/
+
+        /*System.err.println("mleOptions: " + mleOptions);
+        System.err.println("options.pathSteps: " + mleOptions.pathSteps);
+        System.err.println("options.mleChainLength: " + mleOptions.mleChainLength);
+        System.err.println("options.mleLogEvery: " + mleOptions.mleLogEvery);*/
 
         if (mleDialog != null) {
-            mleDialog.setOptions(mleOptions);
+            //mleDialog.setOptions(mleOptions);
         }
         if (mleGssDialog != null) {
-            mleGssDialog.setOptions(mleOptions);
+            //mleGssDialog.setOptions(mleOptions);
         }
 
         chainLengthField.setValue(options.chainLength);
@@ -538,11 +563,11 @@ public class MCMCPanel extends BeautiPanel {
         options.samplePriorOnly = samplePriorCheckBox.isSelected();
 
         if (mleDialog != null) {
-            mleDialog.getOptions(mleOptions);
+            //mleDialog.getOptions(mleOptions);
         }
 
         if (mleGssDialog != null) {
-            mleGssDialog.getOptions(mleOptions);
+            //mleGssDialog.getOptions(mleOptions);
         }
 
     }

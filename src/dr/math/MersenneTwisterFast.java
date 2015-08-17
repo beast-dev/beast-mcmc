@@ -98,7 +98,7 @@ class MersenneTwisterFast implements Serializable {
 
 	private int mt[]; // the array for the state vector
 	private int mti; // mti==N+1 means mt[N] is not initialized
-	private int mag01[];
+	private final int mag01[];
 
 	// a good initial seed (of int size, though stored in a long)
 	private static final long GOOD_SEED = 4357;
@@ -136,6 +136,11 @@ class MersenneTwisterFast implements Serializable {
 		} else {
 			setSeed(seed);
 		}
+
+		// mag01[x] = x * MATRIX_A  for x=0,1
+		mag01 = new int[2];
+		mag01[0] = 0x0;
+		mag01[1] = MATRIX_A;
 	}
 
 
@@ -169,10 +174,6 @@ class MersenneTwisterFast implements Serializable {
 		for (mti = 1; mti < N; mti++)
 			mt[mti] = (69069 * mt[mti - 1]); //& 0xffffffff;
 
-		// mag01[x] = x * MATRIX_A  for x=0,1
-		mag01 = new int[2];
-		mag01[0] = 0x0;
-		mag01[1] = MATRIX_A;
 	}
 
 	public final long getSeed() {
@@ -925,5 +926,17 @@ class MersenneTwisterFast implements Serializable {
 		}
 	}
 
+	public int[] getRandomState() {
+		int[] state = new int[mt.length + 1];
+		state[0] = mti;
+		System.arraycopy(mt, 0, state, 1, mt.length);
+
+		return state;
+	}
+
+	public void setRandomState(int[] rngState) {
+		mti = rngState[0];
+		System.arraycopy(rngState, 1, mt, 0, mt.length);
+	}
 
 }

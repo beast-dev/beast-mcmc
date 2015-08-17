@@ -45,6 +45,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 
 import java.io.*;
 
@@ -62,6 +63,13 @@ public class DebugUtils {
         try {
             fileOut = new FileOutputStream(file);
             PrintStream out = new PrintStream(fileOut);
+
+            int[] rngState = MathUtils.getRandomState();
+            out.print("rng");
+            for (int i = 0; i < rngState.length; i++) {
+                out.print("\t");
+                out.print(rngState[i]);
+            }
 
             out.print("state\t");
             out.println(state);
@@ -114,6 +122,23 @@ public class DebugUtils {
 
             String line = in.readLine();
             String[] fields = line.split("\t");
+            try {
+                if (!fields[0].equals("rng")) {
+                    throw new RuntimeException("Unable to read rng state from state file");
+                }
+
+                int[] rngState = new int[fields.length - 1];
+                for (int i = 0; i < rngState.length; i++) {
+                    rngState[i] = Integer.parseInt(fields[i + 1]);
+                }
+
+                MathUtils.setRandomState(rngState);
+            } catch (NumberFormatException nfe) {
+                throw new RuntimeException("Unable to read state number from state file");
+            }
+
+            line = in.readLine();
+            fields = line.split("\t");
             try {
                 if (!fields[0].equals("state")) {
                     throw new RuntimeException("Unable to read state number from state file");

@@ -236,9 +236,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 mc.setCurrentLength(loadedState);
 
                 double lnL = mc.evaluate();
-
                 if (lnL != savedLnL[0]) {
-                   throw new RuntimeException("Dumped lnL does not match loaded state");
+                   throw new RuntimeException("Dumped lnL does not match loaded state." + " saved lnL: " + savedLnL[0] + " computed lnL:" + lnL);
                 }
             }
 

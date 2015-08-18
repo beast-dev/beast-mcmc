@@ -31,6 +31,7 @@ import dr.app.beagle.evomodel.substmodel.EigenSystem;
 import dr.math.Binomial;
 import dr.math.GammaFunction;
 import dr.math.distributions.GammaDistribution;
+import dr.math.distributions.GeneralizedIntegerGammaDistribution;
 import dr.math.matrixAlgebra.Vector;
 
 /**
@@ -210,149 +211,37 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
 
         if (symmetric) {
             // Single rate (symmetric)
-//            final double lambda = -Q[idx(0, 0)];
             final double scale = 1.0 / lambda0;
-//            final double logLambdaTime = Math.log(lambda) + Math.log(time);
-
-//            final double multiplier = Math.exp(-lambda * time);
-
             double sum = 0.0;
+
             // if time - x > 0, then there must have been at least k = 2 jumps
             for (int m = 1; m <= maxK / 2; ++m) {
                 final int k = 2 * m;
                 sum +=  jumpProbabilities[k] *
                         Math.exp(
-//                        k * logLambdaTime - GammaFunction.lnGamma(k + 1)
                                 + GammaDistribution.logPdf(x, m, scale)
                                 + GammaDistribution.logPdf(time - x, m + 1, scale)
                                 - GammaDistribution.logPdf(time, k + 1, scale)
                 );
             }
-            return //multiplier *
-                    sum;
+            return sum;
         } else {
-
-            // Test partial fractions
-            GeneralizedIntegerGammaDistribution gigd = new GeneralizedIntegerGammaDistribution(4, 10, 0.2, 2.0);
-
-            System.err.println(gigd.generatingFunction(0.5));
-            System.err.println(gigd.generatingFunctionPartialFraction(0.5));
-            System.exit(-1);
-
             // Two rate model
             double sum = 0.0;
             for (int m = 1; m <= maxK / 2; ++m) {
                 final int k = 2 * m;
-                sum += jumpProbabilities[k] +
-                        Math.exp(GammaDistribution.logPdf(x, m, lambda1) // TODO check which rate
-                                        * GammaDistribution.logPdf(time - x, m + 1, lambda0)) // TODO check which rate
-                                / GeneralizedIntegerGammaDistribution.pdf(time, m, m + 1, lambda1, lambda0);
+                sum += jumpProbabilities[k] *
+                        GammaDistribution.pdf(x, m, 1.0 / lambda1) *
+                        GammaDistribution.pdf(time - x, m + 1, 1.0 / lambda0) /
+                        GeneralizedIntegerGammaDistribution.pdf(time, m, m + 1, lambda1, lambda0); // TODO Cache
             }
-
-
 
             return sum;
-        }
-    }
-
-    static class GeneralizedIntegerGammaDistribution {
-
-        private int shape1, shape2;
-        private double rate1, rate2;
-
-        private double[] A = null;
-        private double[] B = null;
-
-        GeneralizedIntegerGammaDistribution(int shape1, int shape2, double rate1, double rate2) {
-            this.shape1 = shape1; this.shape2 = shape2;
-            this.rate1 = rate1; this.rate2 = rate2;
-        }
-
-        public double generatingFunction(double s) {
-            return Math.pow(rate1 / (rate1 + s), shape1) * Math.pow(rate2 / (rate2 + s), shape2);
-        }
-
-
-//        http://www.ism.ac.jp/editsec/aism/pdf/034_3_0591.pdf
-        public double generatingFunctionPartialFraction(double s) {
-            if (A == null) {
-                computeCoefficients();
-            }
-            double sum = 0.0;
-
-            for (int i = 1; i <= shape1; ++i) {
-                sum += A[i] / Math.pow(rate1 + s, i);
-            }
-
-            for (int i = 1; i <= shape2; ++i) {
-                sum += B[i] / Math.pow(rate2 + s, i);
-            }
-
-//            double B1 = -rate1 * rate2 * rate2 * (Math.pow(rate1 - rate2, -1) + Math.pow(rate1 - rate2, -2));
-
-//            double A1 = rate1 * rate2 * rate2 * Math.pow(rate2 - rate1, -2);
-//            double B1 = -rate1 * rate2 * rate2 * Math.pow(rate1 - rate2, -2);
-//            double B2 =  rate1 * rate2 * rate2 * Math.pow(rate1 - rate2, -1);
-
-//            System.err.println("A1: " + A1 + " " + A[1]);
-//            System.err.println("B1: " + B1 + " " + B[1]);
-//            System.err.println("B2: " + B2 + " " + B[2]);
-
-//            double sum2 = A1 / (rate1 + s) + B1 / (rate2 + s) + B2 / ((rate2 + s) * (rate2 + s));
-
-//            return sum2;
-            return sum;
-        }
-
-        private void computeCoefficients() {
-            A = new double[shape1 + 1];
-            B = new double[shape2 + 1];
-
-            final double lambdaFactor = Math.pow(rate1, shape1) * Math.pow(rate2, shape2);
-
-            int sign = 1;
-            double factorial = 1;
-            for (int i = 1; i <= shape1; ++i) {
-                if (i > 1 && (shape2 + i - 2) > 1) {
-                    factorial *= shape2 + i - 2;
-                    factorial /= i - 1;
-                }
-//                System.err.println("A: " + Binomial.choose(shape2 + i - 1, i - 1));
-
-                System.err.println("A[" + (shape1 - i + 1) + "]: " + factorial);
-                A[shape1 - i + 1] =
-//                        Binomial.choose(shape2 + i - 1, i - 1) *
-                        factorial *
-                        sign * lambdaFactor / Math.pow(rate2 - rate1, shape2 + i - 1); // shape1 - i + 1
-                sign *= -1;
-            }
-
-            sign = 1;
-            factorial = 1;
-            for (int i = 1; i <= shape2; ++i) {
-                if (i > 1 && (shape1 + i - 2) > 1) {
-//                    System.err.println((shape1 + i - 2) + " " + i);
-                    factorial *= shape1 + i - 2;
-                    factorial /= i - 1;
-                }
-
-                System.err.println("B[" + (shape2 - i + 1) + "]: " + factorial);
-                B[shape2 - i + 1] =
-//                        Binomial.choose(shape1 + i - 1, i - 1) *
-                        factorial *
-                        sign * lambdaFactor / Math.pow(rate1 - rate2, shape1 + i - 1); // shape2 - i + 1
-                sign *= -1;
-            }
-        }
-
-        public static double pdf(double x, int shape1, int shape2, double rate1, double rate2) {
-            return 1.0;
         }
     }
 
     public double[] computePdf(double x, double time) {
-//        return computePdf(new double[]{x}, time)[0];
-        return null;
+        throw new RuntimeException("Not yet implemented");
     }
 
     private double[][] squareMatrix(final double[] mat) {

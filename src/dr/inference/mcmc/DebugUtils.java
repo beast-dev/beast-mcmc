@@ -68,7 +68,7 @@ public class DebugUtils {
             out.print("rng");
             for (int i = 0; i < rngState.length; i++) {
                 out.print("\t");
-                out.print(rngState[i]);
+                out.println(rngState[i]);
             }
 
             out.print("state\t");
@@ -122,23 +122,23 @@ public class DebugUtils {
 
             String line = in.readLine();
             String[] fields = line.split("\t");
-            try {
-                if (!fields[0].equals("rng")) {
-                    throw new RuntimeException("Unable to read rng state from state file");
+            if (fields[0].equals("rng")) {
+                // if there is a random number generator state present then load it...
+                try {
+                    int[] rngState = new int[fields.length - 1];
+                    for (int i = 0; i < rngState.length; i++) {
+                        rngState[i] = Integer.parseInt(fields[i + 1]);
+                    }
+
+                    MathUtils.setRandomState(rngState);
+                } catch (NumberFormatException nfe) {
+                    throw new RuntimeException("Unable to read state number from state file");
                 }
 
-                int[] rngState = new int[fields.length - 1];
-                for (int i = 0; i < rngState.length; i++) {
-                    rngState[i] = Integer.parseInt(fields[i + 1]);
-                }
-
-                MathUtils.setRandomState(rngState);
-            } catch (NumberFormatException nfe) {
-                throw new RuntimeException("Unable to read state number from state file");
+                line = in.readLine();
+                fields = line.split("\t");
             }
 
-            line = in.readLine();
-            fields = line.split("\t");
             try {
                 if (!fields[0].equals("state")) {
                     throw new RuntimeException("Unable to read state number from state file");

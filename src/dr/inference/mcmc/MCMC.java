@@ -236,7 +236,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 mc.setCurrentLength(loadedState);
 
                 double lnL = mc.evaluate();
-                if (lnL != savedLnL) { // we can set a particular TOL here such that if |diff| < TOL we say it's the same likelihood 
+                if (lnL != savedLnL) {
                    throw new RuntimeException("Dumped lnL does not match loaded state." + " saved lnL: " + savedLnL[0] + " computed lnL:" + lnL);
                 }
             }

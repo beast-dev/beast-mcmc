@@ -30,6 +30,9 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.evolution.datatype.DataType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc Suchard
  */
@@ -43,11 +46,13 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
         if (indicatorsParameter == null) {
             this.indicatorsParameter = new Parameter.Default(ratesParameter.getDimension(), 1.0);
+            System.err.println("HERE AA");
         } else {
             this.indicatorsParameter  = indicatorsParameter;
             addVariable(indicatorsParameter);
         }
 
+        setupDimensionNames(-1);
     }
 
     @Override
@@ -55,6 +60,27 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         for (int i = 0; i < rates.length; i++) {
             rates[i] = ratesParameter.getParameterValue(i) * indicatorsParameter.getParameterValue(i);
         }
+    }
+
+    @Override
+    protected void setupDimensionNames(int relativeTo) {
+        List<String> rateNames = new ArrayList<String>();
+        List<String> indicatorNames = new ArrayList<String>();
+
+        String ratePrefix = ratesParameter.getParameterName();
+        String indicatorPrefix = indicatorsParameter.getParameterName();
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                System.err.println(i + " " + j);
+                rateNames.add(getDimensionString(i, j, ratePrefix));
+                indicatorNames.add(getDimensionString(i, j, indicatorPrefix));
+            }
+        }
+
+        String[] tmp = new String[0];
+        ratesParameter.setDimensionNames(rateNames.toArray(tmp));
+        indicatorsParameter.setDimensionNames(indicatorNames.toArray(tmp));
     }
 
     public Parameter getIndicators() {

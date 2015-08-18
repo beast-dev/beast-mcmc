@@ -103,6 +103,19 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
         }
     }
 
+    protected void setupDimensionNames(int relativeTo) {
+        // Do nothing for this model
+    }
+
+    protected String getDimensionString(int i, int j, String prefix) {
+        String codes =  dataType.getCode(i) + "." + dataType.getCode(j);
+        if (prefix == null) {
+            return codes;
+        } else {
+            return prefix + "." + codes;
+        }
+    }
+
     /**
      * set which rate the others are relative to
      */

@@ -52,7 +52,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
             addVariable(indicatorsParameter);
         }
 
-        setupDimensionNames(-1);
+        setupIndicatorDimensionNames(-1);
     }
 
     @Override
@@ -62,24 +62,18 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         }
     }
 
-    @Override
-    protected void setupDimensionNames(int relativeTo) {
-        List<String> rateNames = new ArrayList<String>();
+    protected void setupIndicatorDimensionNames(int relativeTo) {
         List<String> indicatorNames = new ArrayList<String>();
 
-        String ratePrefix = ratesParameter.getParameterName();
         String indicatorPrefix = indicatorsParameter.getParameterName();
 
         for (int i = 0; i < dataType.getStateCount(); ++i) {
             for (int j = i + 1; j < dataType.getStateCount(); ++j) {
-                System.err.println(i + " " + j);
-                rateNames.add(getDimensionString(i, j, ratePrefix));
                 indicatorNames.add(getDimensionString(i, j, indicatorPrefix));
             }
         }
 
         String[] tmp = new String[0];
-        ratesParameter.setDimensionNames(rateNames.toArray(tmp));
         indicatorsParameter.setDimensionNames(indicatorNames.toArray(tmp));
     }
 

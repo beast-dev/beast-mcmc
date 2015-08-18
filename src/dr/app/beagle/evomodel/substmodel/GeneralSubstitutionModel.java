@@ -29,6 +29,9 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
 import dr.inference.model.DuplicatedParameter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
  * data type.
@@ -66,6 +69,8 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
             if (!(ratesParameter instanceof DuplicatedParameter))
                 ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                         ratesParameter.getDimension()));
+
+            setupDimensionNames(relativeTo);
         }
         setRatesRelativeTo(relativeTo);
     }
@@ -104,7 +109,23 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
     }
 
     protected void setupDimensionNames(int relativeTo) {
-        // Do nothing for this model
+        List<String> rateNames = new ArrayList<String>();
+
+        String ratePrefix = ratesParameter.getParameterName();
+
+        int index = 0;
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                if (index != relativeTo) {
+                    rateNames.add(getDimensionString(i, j, ratePrefix));
+                }
+            }
+            index++;
+        }
+
+        String[] tmp = new String[0];
+        ratesParameter.setDimensionNames(rateNames.toArray(tmp));
     }
 
     protected String getDimensionString(int i, int j, String prefix) {

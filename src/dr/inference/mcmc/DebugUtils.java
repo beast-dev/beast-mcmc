@@ -68,8 +68,9 @@ public class DebugUtils {
             out.print("rng");
             for (int i = 0; i < rngState.length; i++) {
                 out.print("\t");
-                out.println(rngState[i]);
+                out.print(rngState[i]);
             }
+            out.println();
 
             out.print("state\t");
             out.println(state);

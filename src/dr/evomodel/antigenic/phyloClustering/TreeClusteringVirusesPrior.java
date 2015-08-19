@@ -52,10 +52,13 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 
     public static final String TREE_CLUSTER_VIRUSES = "TreeClusterViruses";
     
-    
     private Parameter muPrecision;
     private Parameter p_on;
     private double initialK;
+    
+    private int startBase;
+    private int endBase;
+    private int numSites;
     
 	//Variables
     private Parameter indicators;
@@ -105,7 +108,9 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		 				double initialK_in,
 		 				Parameter muMean,
 		 				Parameter probSites_in,
-		 				Parameter siteIndicators_in
+		 				Parameter siteIndicators_in,
+		 				int startBase_in,
+		 				int endBase_in
 						){
 	 
 		super(TREE_CLUSTER_VIRUSES);	
@@ -121,7 +126,11 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		this.treeModel= treeModel_in;
 		
 		if(probSites_in != null){
-			treeMutations();
+			 this.startBase = startBase_in;
+			 this.endBase = endBase_in;
+		
+
+			treeMutations(); //this routine also calculates the number of sites and checks for error
 			this.probSites = probSites_in;
 			this.siteIndicators = siteIndicators_in;
 		}
@@ -140,7 +149,7 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		this.p_on = p_onValue;
 		this.initialK = initialK_in;
 		this.muMean = muMean;
-		
+				
 		System.out.println("sigmaSq = " + 1/muPrecision.getParameterValue(0));
 		System.out.println("p_on = " + p_onValue.getParameterValue(0));
 		
@@ -195,7 +204,8 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
          //genotype to phenotype
  		if(probSites_in != null){
 
-	         int numSites = 330;  //HARDCODED RIGHT NOW
+
+	         //int numSites = 330;  //HARDCODED RIGHT NOW
 	         probSites.setDimension(numSites); //initialize dimension of probSites
 	         //initialize the probability of each site
 	         double initial_p = 0.05;
@@ -294,14 +304,44 @@ private void treeMutations() {
     
  // Universal
 	String GENETIC_CODE_TABLES ="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLF";
+    int numCodons = -1; //needs to set it, when it looks at the sequence
 
-	 int numCodons = 330;
     for(int curIndex = 0; curIndex < numNodes; curIndex ++){
 		String ns =  (String) treeModel.getNodeAttribute( treeModel.getNode(curIndex), "states");
-
-		ns = ns.substring(3+27, ns.length() - 1);
-		//System.out.println(ns);
 		
+		if(endBase == -1){
+			endBase = ns.length() -1;
+		}
+		 
+		
+		 if( (endBase - startBase) % 3 != 0){
+			System.out.println("Nucleotide sequence needs to be triplet to convert to codon - check your startbase and endbase");
+			System.exit(0);
+		 }
+		 if(endBase > (ns.length()-1 ) ){
+			 System.out.println("the last base cannot be greater than the length of the nucleotide. Exit now.");
+			 System.exit(0);
+		 }
+		 if(startBase > (ns.length()-1 ) ){
+			 System.out.println("the start base cannot be greater than the length of the nucleotide. Exit now.");
+			 System.exit(0);
+		 }
+		 if(startBase > endBase){
+			 System.out.println("Start base cannot be greater than the end base");
+			 System.exit(0);
+		 }
+		 
+		numSites = (endBase - startBase)/3;
+	    numCodons = numSites;
+   
+		//System.out.println("startbase = " + startBase);
+		//System.out.println("endbase = " + endBase);
+		//System.out.println("numSites = " + numSites);
+	   
+		ns = ns.substring(startBase, endBase );
+		//ns = ns.substring(3+27, ns.length() - 1);
+		//System.out.println(ns);
+		//System.exit(0);
 		
 		//numCodons = ns.length()/3;  // or do I care about only 330?
 
@@ -443,7 +483,7 @@ public double getLogLikelihood() {
 
 	// p^k (1-p)^(numNodes - k)
 	//logL += K_value*Math.log( p_onValue ) + (N_nodes - K_value)*Math.log( 1- p_onValue);
-	int numSites = 330; 
+	//int numSites = 330; //now have a private variable 
 	double []probMutationSite = new double[numSites]; 
 	for(int i=0; i < numSites; i++){
 		//probMutationSite[i] = probSites.getParameterValue(i);
@@ -575,9 +615,9 @@ public LinkedList<Integer>[] getCausativeStatesPerNode(){
 public void sampleCausativeStates(){
 	    
 	
-    causalCount = new int[330];  //HARD CODED
-    nonCausalCount = new int[330]; //HARD CODED
-    for(int i=0; i < 330; i++){
+    causalCount = new int[numSites];  //HARD CODED
+    nonCausalCount = new int[numSites]; //HARD CODED
+    for(int i=0; i < numSites; i++){
     	causalCount[i] = 0;
     	nonCausalCount[i] = 0;
     }
@@ -1078,6 +1118,10 @@ private void setMembershipToClusterLabelIndexes(){
         public final static String INITIALNUMCLUSTERS = "initialK";
         public final static String MUMEAN = "muMean";
         
+        public final static String STARTBASE = "startNucleotide";
+        public final static String ENDBASE = "endNucleotide";
+
+        
         public String getParserName() {
             return TREE_CLUSTER_VIRUSES;
         }
@@ -1089,6 +1133,18 @@ private void setMembershipToClusterLabelIndexes(){
             	if (xo.hasAttribute(INITIALNUMCLUSTERS)) {
             		initialK = xo.getDoubleAttribute(INITIALNUMCLUSTERS);
             	}
+            	
+            	
+        		int startBase = 0;
+            	if (xo.hasAttribute(STARTBASE)) {
+            		startBase = xo.getIntegerAttribute(STARTBASE) - 1; //minus 1 because index begins at 0
+            	}
+        		
+        		int endBase = -1;
+            	if (xo.hasAttribute(ENDBASE)) {
+            		endBase = xo.getIntegerAttribute(ENDBASE) -1 ; //minus 1 because index begins at 0
+            	}
+        		
         		
             	
                 TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -1135,7 +1191,8 @@ private void setMembershipToClusterLabelIndexes(){
 		        cxo = xo.getChild(MUMEAN);
 		        Parameter muMean = (Parameter) cxo.getChild(Parameter.class);
 		        
-		        return new TreeClusteringVirusesPrior(treeModel, indicators, clusterLabels, clusterLabelsTreeNode, mu, hasDrift, virusLocations, virusLocationsTreeNode, muPrecision, probActiveNode, initialK, muMean, probSites, siteIndicators); 
+		        return new TreeClusteringVirusesPrior(treeModel, indicators, clusterLabels, clusterLabelsTreeNode, mu, hasDrift, virusLocations, virusLocationsTreeNode, muPrecision, probActiveNode, initialK, muMean, probSites, siteIndicators,
+		        		startBase, endBase); 
             }
 
             //************************************************************************
@@ -1159,6 +1216,9 @@ private void setMembershipToClusterLabelIndexes(){
                     //AttributeRule.newDoubleRule(MUVARIANCE, true, "the variance of mu"),
                     //AttributeRule.newDoubleRule(PROBACTIVENODE, true, "the prior probability of turning on a node"),
             		AttributeRule.newDoubleRule(INITIALNUMCLUSTERS, true, "the initial number of clusters"),
+            		AttributeRule.newDoubleRule(STARTBASE, true, "the start base in the sequence to consider in the genotype to phenotype model"),
+            		AttributeRule.newDoubleRule(ENDBASE, true, "the end base in the sequence to consider in the genotype to phenotype model"),
+
                     new ElementRule(EXCISIONPOINTS, Parameter.class),
                     new ElementRule(CLUSTERLABELS, Parameter.class),
                     new ElementRule(CLUSTERLABELSTREENODE, Parameter.class),
@@ -1179,6 +1239,18 @@ private void setMembershipToClusterLabelIndexes(){
     };
 
     String Atribute = null;
+
+
+	public int getNumSites() {
+		return numSites;
+	}
+	public int getStartBase() {
+		return startBase;
+	}
+	public int getEndBase() {
+		// TODO Auto-generated method stub
+		return endBase;
+	}
         
 }
 

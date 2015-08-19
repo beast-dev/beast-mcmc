@@ -109,15 +109,25 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 						){
 	 
 		super(TREE_CLUSTER_VIRUSES);	
-		System.out.println("loading the constructor for TreeClusterVIruses");
+		System.out.println("loading the constructor for TreeClusterViruses");
+		
+		if(probSites_in == null){
+			System.out.println("Antigenic Clustering only");
+		}
+		else{
+			System.out.println("Antigenic Genotype to Phenotype model");
+		}
 
 		this.treeModel= treeModel_in;
 		
-		treeMutations();
+		if(probSites_in != null){
+			treeMutations();
+			this.probSites = probSites_in;
+			this.siteIndicators = siteIndicators_in;
+		}
 		//this.K = K_in; //to be deleted
 		this.indicators = indicators_in;
-		this.probSites = probSites_in;
-		this.siteIndicators = siteIndicators_in;
+
 		this.clusterLabels = clusterLabels_in;
 		this.clusterLabelsTreeNode = clusterLabelsTreeNode_in;
 		this.mu = mu_in;
@@ -160,13 +170,21 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
  				while(sampleNew ==1){
  					int rSiteIndex = (int) (Math.floor(Math.random()*numNodes));
  					if( (int) indicators.getParameterValue(rSiteIndex) == 0){
- 						//added condition to avoid getting 0 probability:
- 				    	if(mutationList[rSiteIndex] != null){
- 						
-	 						//success sampling
-	 						indicators.setParameterValue(rSiteIndex, 1);
-	 						sampleNew = 0;
- 				    	}
+ 						//clustering only
+ 						if(probSites_in == null){
+ 							//success sampling
+ 							indicators.setParameterValue(rSiteIndex, 1);
+ 							sampleNew = 0;
+ 						}
+ 						//genotype to phenotype
+ 						else{
+ 							//added condition to avoid getting 0 probability:
+ 							if(mutationList[rSiteIndex] != null){				
+ 								//success sampling
+ 								indicators.setParameterValue(rSiteIndex, 1);
+ 								sampleNew = 0;
+ 							}
+ 						}//else
  					}
  				}
  				
@@ -174,26 +192,27 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
           
          addVariable(indicators);
          
-         
+         //genotype to phenotype
+ 		if(probSites_in != null){
 
-         int numSites = 330;  //HARDCODED RIGHT NOW
-         probSites.setDimension(numSites); //initialize dimension of probSites
-         //initialize the probability of each site
-         double initial_p = 0.05;
-         for(int k=0; k < numSites; k++){
-        	 //probSites.setParameterValue(k, initial_p);
-        	 probSites.setParameterValue(k, p_on.getParameterValue(0) );
-         }         
-         addVariable(probSites);
-    
-    
-         
-         siteIndicators.setDimension(numSites);
-         for(int k=0; k < numSites; k++){
-        	 siteIndicators.setParameterValue(k, 1);
-         }
-         addVariable(siteIndicators);
-
+	         int numSites = 330;  //HARDCODED RIGHT NOW
+	         probSites.setDimension(numSites); //initialize dimension of probSites
+	         //initialize the probability of each site
+	         double initial_p = 0.05;
+	         for(int k=0; k < numSites; k++){
+	        	 //probSites.setParameterValue(k, initial_p);
+	        	 probSites.setParameterValue(k, p_on.getParameterValue(0) );
+	         }         
+	         addVariable(probSites);
+	    
+	    
+	         
+	         siteIndicators.setDimension(numSites);
+	         for(int k=0; k < numSites; k++){
+	        	 siteIndicators.setParameterValue(k, 1);
+	         }
+	         addVariable(siteIndicators);
+ 		}
          
           
           clusterLabelsTreeNode.setDimension(treeModel.getNodeCount());
@@ -236,6 +255,8 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		  //loadIndicators();
 		 System.out.println("Finished loading the constructor for ClusterViruses");
 
+		 //genotype to phenotype
+		if(probSites_in != null){
 		 sampleCausativeStates();
 		 
 		 
@@ -255,6 +276,7 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 			 
 		 }
     	
+		}//genotype to phenotype
 
 		 //System.out.println("exit");
 		 //System.exit(0);
@@ -399,7 +421,13 @@ public double getLogLikelihood() {
 	
 	double muMeanParameter = muMean.getParameterValue(0);
 	//System.out.println("muMeanParameter = " + muMeanParameter);
-		//logL -= (K_value ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
+	
+	//clustering
+	if(probSites == null){
+		logL -= (K_value ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
+	}
+	//genotype to phenotype
+	else{
 	logL -= (N_nodes ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
 	
 	for(int i=0; i < ( N_nodes ) ; i++){
@@ -516,6 +544,7 @@ public double getLogLikelihood() {
 		sampleCausativeStates();
 	}
 
+	} //end of genotype to phenotype
 	return(logL);
 }
 
@@ -1084,10 +1113,16 @@ private void setMembershipToClusterLabelIndexes(){
                 Parameter indicators = (Parameter) cxo.getChild(Parameter.class);
   
                 cxo = xo.getChild(SITEINDICATORS);
-                Parameter siteIndicators = (Parameter) cxo.getChild(Parameter.class);
+                Parameter siteIndicators = null;
+                if(cxo != null){
+                  siteIndicators = (Parameter) cxo.getChild(Parameter.class);
+                }
                 
                 cxo = xo.getChild(PROBSITES);
-                Parameter probSites = (Parameter) cxo.getChild(Parameter.class);
+                Parameter probSites = null;
+                if(cxo != null){
+                	probSites = (Parameter) cxo.getChild(Parameter.class);
+                }
                 
                 cxo = xo.getChild(MUPRECISION);
                 Parameter muPrecision = (Parameter) cxo.getChild(Parameter.class);
@@ -1132,8 +1167,9 @@ private void setMembershipToClusterLabelIndexes(){
                  //   new ElementRule(OFFSETS, Parameter.class),
                     new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class), 
                     new ElementRule(INDICATORS, Parameter.class),
-                    new ElementRule(SITEINDICATORS, Parameter.class),
-                    new ElementRule(PROBSITES, Parameter.class),
+                    //make it so that it isn't required
+                  //  new ElementRule(SITEINDICATORS, Parameter.class),
+                  //  new ElementRule(PROBSITES, Parameter.class),
                     new ElementRule(TreeModel.class),
                     new ElementRule(MUPRECISION, Parameter.class),
                     new ElementRule(PROBACTIVENODE, Parameter.class),

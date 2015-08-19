@@ -106,19 +106,19 @@ public class InvGammaTest extends TestCase {
                 assertEquals(d.cdf(cdf[k]), cdf[k + 1], 1e-10);
             }
 
-            int count[] = new int[cdf.length];
-            final int N = 100000;
-            for(int k = 0; k < N; ++k) {
-                double x = d.nextInverseGamma();
-                for(int l = 0; l < cdf.length; l += 2) {
-                    if( x < cdf[l] ) {
-                        count[l / 2] += 1;
-                    }
-                }
-            }
-            for(int l = 0; l < cdf.length; l += 2) {
-                assertEquals(count[l / 2] / (double) N, cdf[l + 1], 5e-3);
-            }
+//            int count[] = new int[cdf.length];
+//            final int N = 100000;
+//            for(int k = 0; k < N; ++k) {
+//                double x = d.nextInverseGamma();
+//                for(int l = 0; l < cdf.length; l += 2) {
+//                    if( x < cdf[l] ) {
+//                        count[l / 2] += 1;
+//                    }
+//                }
+//            }
+//            for(int l = 0; l < cdf.length; l += 2) {
+//                assertEquals(count[l / 2] / (double) N, cdf[l + 1], 5e-3);
+//            }
         }
     }
 }

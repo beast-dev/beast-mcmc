@@ -62,7 +62,7 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
         for (int j = 0; j < dataType.getStateCount(); ++j) {
             for (int i = j + 1; i < dataType.getStateCount(); ++i) {
-                rateNames.add(getDimensionString(j, i, ratePrefix));
+                rateNames.add(getDimensionString(i, j, ratePrefix));
             }
         }
 

@@ -71,7 +71,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
 
         for (int j = 0; j < dataType.getStateCount(); ++j) {
             for (int i = j + 1; i < dataType.getStateCount(); ++i) {
-                indicatorNames.add(getDimensionString(j, i, indicatorPrefix));
+                indicatorNames.add(getDimensionString(i, j, indicatorPrefix));
             }
         }
 

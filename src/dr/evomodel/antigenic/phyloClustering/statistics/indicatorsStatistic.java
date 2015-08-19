@@ -32,7 +32,6 @@ public class indicatorsStatistic  extends Statistic.Abstract implements Variable
     //assume print in order... so before printing the first number, 
     //determine all the nodes that are active.
     public double getStatisticValue(int dim) {
-    	
         return (  indicators.getParameterValue(dim)  );
 
     }

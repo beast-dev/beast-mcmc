@@ -23,7 +23,27 @@ public class mergeAdjacencyMatrixPlots {
 
  		try {	
  			
- 	    	//int numdata = 115; // H1N1
+ 	    	int numdata = 115; // H1N1
+
+ 			String input="/Users/charles/Documents/researchData/clustering/forManuscripts-moreReplicates/H1N1/mds0_8/H1N1_mds.clusterLabels.log";
+ 			String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript7-31-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_8-adjacencyMatrix.txt";
+ 	    	
+ 	    	
+ 		//	String input="/Users/charles/Documents/researchData/clustering/forManuscripts-moreReplicates/H1N1/mds0_7/H1N1_mds.clusterLabels.log";
+ 		//	String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript7-31-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_7-adjacencyMatrix.txt";
+ 	    	
+ 	    	
+ 		//	String input="/Users/charles/Documents/researchData/clustering/forManuscripts-moreReplicates/H1N1/mds0_6/H1N1_mds.clusterLabels.log";
+ 		//	String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript7-31-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_6-adjacencyMatrix.txt";
+
+ 	    	
+ 		//	String input="/Users/charles/Documents/researchData/clustering/forManuscripts-moreReplicates/H1N1/mds0_5/H1N1_mds.clusterLabels.log";
+ 		//	String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript7-31-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_5-adjacencyMatrix.txt";
+
+ 		//	String input="/Users/charles/Documents/researchData/clustering/forManuscripts-moreReplicates/H1N1/mds0_4/H1N1_mds.clusterLabels.log";
+ 		//	String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript7-31-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_4-adjacencyMatrix.txt";
+
+ 	    	
  			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H1N1/C3b-mds0_1/H1N1_mds.clusterLabels.log";
  			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-adjacencyMatrix.txt";
  			
@@ -45,7 +65,7 @@ public class mergeAdjacencyMatrixPlots {
  			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H1N1/adjacencyMatrices/H1N1-C3b-mds0_1-sample6-adjacencyMatrix.txt";
 
  			
- 	    	int numdata = 402; //H3N2
+ 	    //	int numdata = 402; //H3N2
 			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_1/H3N2_mds.clusterLabels.log";
  			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_1-adjacencyMatrix.txt";
  			
@@ -67,8 +87,8 @@ public class mergeAdjacencyMatrixPlots {
  			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample4-adjacencyMatrix.txt";
  			//String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample5/H3N2_mds.clusterLabels.log";
  			//String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample5-adjacencyMatrix.txt";
- 			String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample6/H3N2_mds.clusterLabels.log";
- 			String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample6-adjacencyMatrix.txt";
+ 		//	String input="/Users/charles/Documents/researchData/clustering/forManuscript/H3N2/C3b-mds0_05-sample6/H3N2_mds.clusterLabels.log";
+ 		//	String output="/Users/charles/Documents/research/antigenic/GenoPheno/driver/clustering/analysisManuscript2-12-2015/H3N2/adjacencyMatrices/H3N2-C3b-mds0_05-sample6-adjacencyMatrix.txt";
 
  	    	
  			

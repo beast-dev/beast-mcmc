@@ -5,14 +5,17 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.antigenic.phyloClustering.misc.obsolete.TiterImporter;
@@ -26,6 +29,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.MCMCOperator;
 import dr.math.GammaFunction;
+import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.AbstractXMLObjectParser;
@@ -55,6 +59,7 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
     
 	//Variables
     private Parameter indicators;
+    private Parameter probSites;
     private MatrixParameter mu; //mu - means
     private Parameter clusterLabels;     //C
     private Parameter clusterLabelsTreeNode;
@@ -71,8 +76,21 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 	private boolean treeChanged = false; //a flag that becomes true when treeModel changes
 
 
+    private String[] mutationString;
+    private LinkedList<Integer>[] mutationList ;
+    private LinkedList<Integer>[] causalList ;
+    private int[] causalCount;
+    private int[] nonCausalCount;
+
+    private Parameter siteIndicators;
+
     
-    
+    public LinkedList<Integer>[] getMutationList(){
+    	return(mutationList);
+    }
+    public LinkedList<Integer>[] getCausalList(){
+    	return(causalList);
+    }
         
 	public TreeClusteringVirusesPrior (TreeModel treeModel_in,  
 		 				Parameter indicators_in, 
@@ -85,15 +103,21 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		 				Parameter muPrecision, 
 		 				Parameter p_onValue	,
 		 				double initialK_in,
-		 				Parameter muMean
+		 				Parameter muMean,
+		 				Parameter probSites_in,
+		 				Parameter siteIndicators_in
 						){
 	 
 		super(TREE_CLUSTER_VIRUSES);	
 		System.out.println("loading the constructor for TreeClusterVIruses");
 
 		this.treeModel= treeModel_in;
+		
+		treeMutations();
 		//this.K = K_in; //to be deleted
 		this.indicators = indicators_in;
+		this.probSites = probSites_in;
+		this.siteIndicators = siteIndicators_in;
 		this.clusterLabels = clusterLabels_in;
 		this.clusterLabelsTreeNode = clusterLabelsTreeNode_in;
 		this.mu = mu_in;
@@ -126,6 +150,8 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
         	  indicators.setParameterValue(i, 0);
           }
           
+          
+
  		 //initialize with the specified number of initial clusters.
  		 indicators.setParameterValue(  treeModel.getRoot().getNumber() , 1 );
  		 for(int k=0; k< (initialK -1); k++){
@@ -134,16 +160,41 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
  				while(sampleNew ==1){
  					int rSiteIndex = (int) (Math.floor(Math.random()*numNodes));
  					if( (int) indicators.getParameterValue(rSiteIndex) == 0){
- 						//success sampling
- 						indicators.setParameterValue(rSiteIndex, 1);
- 						sampleNew = 0;
+ 						//added condition to avoid getting 0 probability:
+ 				    	if(mutationList[rSiteIndex] != null){
+ 						
+	 						//success sampling
+	 						indicators.setParameterValue(rSiteIndex, 1);
+	 						sampleNew = 0;
+ 				    	}
  					}
  				}
  				
  		}
           
-          
-          addVariable(indicators);
+         addVariable(indicators);
+         
+         
+
+         int numSites = 330;  //HARDCODED RIGHT NOW
+         probSites.setDimension(numSites); //initialize dimension of probSites
+         //initialize the probability of each site
+         double initial_p = 0.05;
+         for(int k=0; k < numSites; k++){
+        	 //probSites.setParameterValue(k, initial_p);
+        	 probSites.setParameterValue(k, p_on.getParameterValue(0) );
+         }         
+         addVariable(probSites);
+    
+    
+         
+         siteIndicators.setDimension(numSites);
+         for(int k=0; k < numSites; k++){
+        	 siteIndicators.setParameterValue(k, 1);
+         }
+         addVariable(siteIndicators);
+
+         
           
           clusterLabelsTreeNode.setDimension(treeModel.getNodeCount());
           addVariable(clusterLabelsTreeNode);
@@ -185,10 +236,441 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		  //loadIndicators();
 		 System.out.println("Finished loading the constructor for ClusterViruses");
 
+		 sampleCausativeStates();
+		 
+		 
+		 for(int i=0; i< treeModel.getNodeCount(); i++){
+			 System.out.print( (int)indicators.getParameterValue(i) + "\t");
+			 System.out.print("node i=" + i +":\t");
+			 if(mutationList[i] != null){
+		    	Iterator itr = mutationList[i].iterator();
+		    	Iterator itr2 = causalList[i].iterator();
+		    	while(itr.hasNext()){
+		    		int curMutation = ((Integer) itr.next()).intValue();
+		    		int curCausalState = ((Integer) itr2.next()).intValue();
+	 				System.out.print(curMutation + "(" + curCausalState +")" + " ");    		
+		    	}
+			 }
+			 System.out.println("");
+			 
+		 }
+    	
+
+		 //System.out.println("exit");
+		 //System.exit(0);
+		 
+		 
 	}    
  
  
 
+private void treeMutations() {
+
+ 	int numNodes = treeModel.getNodeCount();
+    // Get sequences
+    String[] sequence = new String[numNodes];
+    
+ // Universal
+	String GENETIC_CODE_TABLES ="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLF";
+
+	 int numCodons = 330;
+    for(int curIndex = 0; curIndex < numNodes; curIndex ++){
+		String ns =  (String) treeModel.getNodeAttribute( treeModel.getNode(curIndex), "states");
+
+		ns = ns.substring(3+27, ns.length() - 1);
+		//System.out.println(ns);
+		
+		
+		//numCodons = ns.length()/3;  // or do I care about only 330?
+
+		//System.out.println(numCodons);
+		String codonSequence = "";
+		for(int codon=0; codon< numCodons; codon++){
+			
+			int nuc1 =  Nucleotides.NUCLEOTIDE_STATES[ns.charAt(codon*3)];
+			int nuc2 =  Nucleotides.NUCLEOTIDE_STATES[ns.charAt(codon*3+1)];
+			int nuc3 =  Nucleotides.NUCLEOTIDE_STATES[ns.charAt(codon*3+2)];
+			
+			int canonicalState = (nuc1 * 16) + (nuc2 * 4) + nuc3;
+			
+			codonSequence = codonSequence + GENETIC_CODE_TABLES.charAt(canonicalState);
+		}
+		System.out.println(codonSequence);
+        sequence[curIndex] = codonSequence;
+		
+    }
+
+    mutationList = new LinkedList[ numNodes];
+    mutationString = new String[treeModel.getNodeCount()];
+
+	NodeRef cNode = treeModel.getRoot();
+    LinkedList<NodeRef> visitlist = new LinkedList<NodeRef>();
+    
+    visitlist.add(cNode);
+    
+    int countProcessed=0;
+    while(visitlist.size() > 0){
+    	countProcessed++;
+    	//assign value to the current node...
+    	if(treeModel.getParent(cNode) == null){  //this means it is a root node
+    		//visiting the root
+    		System.out.println(cNode.getNumber() + ":\t" + "root");
+    	}
+    	else{
+    		//visiting
+    		System.out.print(cNode.getNumber() + ":\t");
+
+    		//String listMutations = "\"";
+    		mutationString[cNode.getNumber()]  = "\"";
+    		String nodeState =  sequence[cNode.getNumber()];
+    		String parentState =  sequence[treeModel.getParent(cNode).getNumber()];
+    		           
+    		int count = 0;
+    		for(int i=0; i < numCodons; i++){
+    			if(nodeState.charAt(i) != parentState.charAt(i)){
+    				count++;
+    				if(count>1){
+    					System.out.print(",");
+    					mutationString[cNode.getNumber()] =  mutationString[cNode.getNumber()] + ",";
+    				}
+    				System.out.print(i+1);
+    				mutationString[cNode.getNumber()] =  mutationString[cNode.getNumber()] + (i+1);  //i+1 so mutation starts from 1 - 330
+    				
+    			      // Make sure the list is initialized before adding to it
+    			      if (mutationList[cNode.getNumber()] == null) {
+    			    	  mutationList[cNode.getNumber()] = new LinkedList<Integer>();
+    			      }
+    			      mutationList[cNode.getNumber()].add((i+1));
+    				
+    			}
+    			
+    			//store in linked list
+    		}
+    		System.out.println("");
+    		mutationString[cNode.getNumber()]  = mutationString[cNode.getNumber()]  + "\"";
+    	}
+    	
+		//System.out.println(cNode.getNumber() + "\t" +  treeModel.getNodeAttribute(cNode, "states") );
+
+    	
+    	//add all the children to the queue
+			for(int childNum=0; childNum < treeModel.getChildCount(cNode); childNum++){
+				NodeRef node= treeModel.getChild(cNode,childNum);
+				visitlist.add(node);
+	        }
+			
+  			
+  		visitlist.pop(); //now that we have finished visiting this node, pops it out of the queue
+
+			if(visitlist.size() > 0){
+				cNode = visitlist.getFirst(); //set the new first node in the queue to visit
+			}
+			
+		
+   	}
+
+	
+}
+
+
+
+//new version, with probSites determining the indicators
+public double getLogLikelihood() {
+	
+	double N_nodes = (double) treeModel.getNodeCount();
+	
+	int K_value = 0; //K_int gets updated
+	for(int i=0; i < indicators.getDimension(); i++){
+		K_value += (int) indicators.getParameterValue(i);
+	}
+	//System.out.println("K_value" + K_value);
+
+	double logL = 0;
+	
+	double muVariance = 1/ muPrecision.getParameterValue(0);
+	double p_onValue = p_on.getParameterValue(0);
+	
+	//sync with the current value of p_on
+    //for(int k=0; k < treeModel.getNodeCount(); k++){
+   	 //probSites.setParameterValue(k, initial_p);
+   	// probSites.setParameterValue(k, p_on.getParameterValue(0) );
+    //} 
+	
+	
+	double muMeanParameter = muMean.getParameterValue(0);
+	//System.out.println("muMeanParameter = " + muMeanParameter);
+		//logL -= (K_value ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
+	logL -= (N_nodes ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
+	
+	for(int i=0; i < ( N_nodes ) ; i++){
+
+		double mu_i0 = mu.getParameter(i).getParameterValue(0);
+		double mu_i1 = mu.getParameter(i).getParameterValue(1);
+		
+		//if( (int) indicators.getParameterValue(i) == 1){   //Commented out because I am not using P(mu_i = 0 | I_i = 0) = 1
+			logL -=	0.5*(  (mu_i0 - muMeanParameter )*(mu_i0  - muMeanParameter ) + ( mu_i1 )*( mu_i1 )   )/muVariance;
+		//}
+		//System.out.println(logL);
+	}
+
+	// p^k (1-p)^(numNodes - k)
+	//logL += K_value*Math.log( p_onValue ) + (N_nodes - K_value)*Math.log( 1- p_onValue);
+	int numSites = 330; 
+	double []probMutationSite = new double[numSites]; 
+	for(int i=0; i < numSites; i++){
+		//probMutationSite[i] = probSites.getParameterValue(i);
+		probMutationSite[i] = probSites.getParameterValue(i) * siteIndicators.getParameterValue(i) ;  //with the null-ing out the probSites with siteIndicators
+ 	}
+	
+	//SHOULD I OMIT THE ROOT NODE BECAUSE IT SHOULD ALWAYS BE ON EVEN THOUGH THERE IS NO MUTATION ANYWAY?
+	//(N_nodes - 1)
+	for(int i=0; i < (N_nodes-1) ; i ++){
+		double prob_Node_i_On = 1;
+		double prob_allMutationsOff = 1;
+//		for( each mutation in the node i){
+//			prob_allMutationsOff = prob_allMutationsOff * (1 - probSites.getParameterValue(curMutation_node_i)); 
+//		}
+    	if(mutationList[i] != null){
+	    	Iterator itr = mutationList[i].iterator();
+	    	while(itr.hasNext()){
+	    		int curMutation = ((Integer) itr.next()).intValue();
+				prob_allMutationsOff = prob_allMutationsOff * (1 - probMutationSite[curMutation -1] );  //offset of 1 
+	    	}
+    	}
+
+	    
+		
+		prob_Node_i_On = 1 - prob_allMutationsOff;
+		if( (int) indicators.getParameterValue(i) == 1){
+			logL += Math.log(prob_Node_i_On);
+		}
+		else{
+			logL += Math.log(1-prob_Node_i_On);
+		}
+		//System.out.println(logL);
+		//System.out.println("node=" + i + " prob=" + prob_Node_i_On);
+	}
+	
+	
+
+//	int numSignificantSites = 0;
+//	for(int i=0; i < numSites; i++){
+//		if( (int) siteIndicators.getParameterValue(i) ==1){
+//			numSignificantSites++;
+//		}
+//	}
+//	int numNonSignificantSites = numSites - numSignificantSites;
+//	logL +=  (numSignificantSites*Math.log( 0.45   ) 
+//					+ numNonSignificantSites*Math.log( 0.55 )  );
+	
+	//System.out.println("#sig= " + numSignificantSites + " #nonsig=" + numNonSignificantSites);
+
+	//logL +=  (numSignificantSites*Math.log(0.2) + numNonSignificantSites*Math.log(0.8));
+	
+	
+
+	//transition matrix:
+	
+	// p(0->0) = 0.9, p(0->1) = 0.2
+	// p(1->0) = 0.6  p(1->1) = 0.4
+
+	logL += Math.log(0.5); //initial
+	int numSignificantSites = 0;
+	int num_00=0;
+	int num_01=0;
+	int num_10=0;
+	int num_11=0;
+	for(int i=1; i < numSites; i++){
+		if( (int) siteIndicators.getParameterValue(i-1) ==0){
+			if( (int) siteIndicators.getParameterValue(i) ==0){
+				num_00++;
+			}
+			else{
+				num_01++;
+			}
+		}
+		else{
+			if( (int) siteIndicators.getParameterValue(i) ==0){
+				num_10++;
+			}
+			else{
+				num_11++;
+			}
+		}
+	}
+	
+	double alpha = 0.95; //0 stay as 0
+	double beta = 0.50; // 1 stay as 1
+	//		0		1
+	//0 	0.9		0.1
+	//1		0.5		0.5
+	
+	logL +=  ( num_00*Math.log( alpha ) + num_01*Math.log( 1-alpha )  
+			  +num_10*Math.log( 1-beta ) + num_11*Math.log(beta ) );
+	
+	
+	
+//System.out.println(logL);
+// System.exit(0);
+	if(logL != Double.NEGATIVE_INFINITY){
+		sampleCausativeStates();
+	}
+
+	return(logL);
+}
+
+
+public int[] getCausalCount(){
+	return(causalCount);
+}
+
+public int[] getNonCausalCount(){
+	return(nonCausalCount);
+}
+
+public LinkedList<Integer>[] getMutationsPerNode(){
+	return(mutationList);
+}
+
+public LinkedList<Integer>[] getCausativeStatesPerNode(){
+	return(causalList);
+}
+
+
+//the thing is, if the log likelihood is negative inifinity, this shouldn't be called
+// because that means a siteInidicator gets flipped off... so then none of the mutation on the node is on..
+//this should produce a 0 likelihood.
+//so, no point of realizing the causal state if it is going to be rejected
+
+//as a matter of fact, I think causal state should only be updated upon an acceptance move 
+public void sampleCausativeStates(){
+	    
+	
+    causalCount = new int[330];  //HARD CODED
+    nonCausalCount = new int[330]; //HARD CODED
+    for(int i=0; i < 330; i++){
+    	causalCount[i] = 0;
+    	nonCausalCount[i] = 0;
+    }
+	
+	int N_nodes = (int) treeModel.getNodeCount();
+	
+	//resample the whole set of causal states
+    causalList = new LinkedList[ N_nodes];
+	
+	for(int curNode=0; curNode < (N_nodes-1) ; curNode ++){
+		double prob_Node_i_On = 1;
+		double prob_allMutationsOff = 1;
+//		for( each mutation in the node i){
+//			prob_allMutationsOff = prob_allMutationsOff * (1 - probSites.getParameterValue(curMutation_node_i)); 
+//		}
+		
+		if((int) indicators.getParameterValue(curNode) == 0 ){
+	    	if(mutationList[curNode] != null){
+	    		causalList[curNode] = new LinkedList<Integer>();
+		    	Iterator itr = mutationList[curNode].iterator();
+		    	while(itr.hasNext()){
+		    		int curMutation = ((Integer) itr.next()).intValue();
+		    		causalList[curNode].add(new Integer(0));
+		    		nonCausalCount[curMutation -1]++;
+		    	}
+	    	}
+		}
+		else{   //if indicator is 1... then need to sample to get the causal indicator (the mutation(s) that give(s) causal state =1
+	    	if(mutationList[curNode] != null){
+	  
+	    		
+	    		//count the number of mutations that has nonzero probabilities
+		    	//Iterator itr_it = mutationList[curNode].iterator();
+		    	//int count = 0;
+	    	   	//while(itr_it.hasNext()){
+		    	//	int curMutation = ((Integer) itr_it.next()).intValue();
+		    	//	if(probSites.getParameterValue(curMutation -1) * siteIndicators.getParameterValue(curMutation -1) >0){
+		    	//		count++;
+		    	//	}
+		    	//}
+	    	   	//int numMutations = count;  		
+	    		int numMutations = mutationList[curNode].size();
+
+	    		causalList[curNode] = new LinkedList<Integer>();
+	    		double[] probM = new double[numMutations];
+		    	Iterator itr = mutationList[curNode].iterator();
+		    	int count = 0;
+		    	while(itr.hasNext()){
+		    		int curMutation = ((Integer) itr.next()).intValue();
+					//prob_allMutationsOff = prob_allMutationsOff * (1 - probSites.getParameterValue(curMutation));
+		    		//probM[count]=	probSites.getParameterValue(curMutation -1);
+		    		//if(probSites.getParameterValue(curMutation -1) * siteIndicators.getParameterValue(curMutation -1) >0){
+		    			probM[count]=	probSites.getParameterValue(curMutation -1) * siteIndicators.getParameterValue(curMutation -1);
+		    			count++;
+		    		//}
+		    	}
+		    	   	
+		    	
+		    	//System.out.println("numMutations = " + numMutations);
+		    	//generate all possibilities - the binary tuples (I think I actually don't have to realize it..)
+		    	//int numMutations = 3; //num mutations
+		    	double[] probPossibilities = new double[ (int) Math.pow(2,numMutations)];
+		        //double[] probM = {0.05, 0.1, 0.2};
+		        
+		    	for(int kk=0; kk < Math.pow(2, numMutations); kk++){
+		    	    int input = kk;
+		    		    
+		    	    int[] bits = new int[numMutations];
+		    	    for (int i = (numMutations-1); i >= 0; i--) {
+		    	        bits[i] = ( (input & (1 << i)) != 0  ) ? 1 : 0;;
+		    	    }
+		        	probPossibilities[kk] = 1;
+		    	    for(int curM=0; curM < numMutations; curM++){
+		    	    	if(bits[curM] == 1){
+		    	    		probPossibilities[kk] = probPossibilities[kk] * probM[curM];
+		    	    	}
+		    	    	else{
+		    	    		probPossibilities[kk] = probPossibilities[kk] * (1- probM[curM]);
+		    	    	}
+		    	    }
+		    	}
+		    	probPossibilities[0] = 0; //zero out the 0,0,0
+	    	
+		    	//sample from the possibilities.. and then reconstruct back the binary tuple
+		        int choice = MathUtils.randomChoicePDF(probPossibilities);
+		        //System.out.println("choice is " + choice);
+
+   		        int[] bits = new int[numMutations];
+		        for (int i = (numMutations-1); i >= 0; i--) {
+		            bits[i] = ( (choice & (1 << i)) != 0  ) ? 1 : 0;;
+			        causalList[curNode].add(new Integer(bits[i]));
+			        
+			        if(bits[i] ==1){
+			        	causalCount[mutationList[curNode].get(i).intValue() -1 ]++;
+			        }
+			        else{
+			        	nonCausalCount[mutationList[curNode].get(i).intValue()-1]++;
+			        }
+		        }
+		        //System.out.print(choice + " = " + Arrays.toString(bits) + "\t");
+		    	    
+		     
+		      
+		     
+		    	//System.exit(0);
+		    	
+		    	
+	    	}
+		}
+	}
+	
+	/*
+	for(int i=0; i < 330; i++){
+		System.out.println(i + "\t" + causalCount[i] + " " + nonCausalCount[i]);
+	}
+	System.out.println("=====================");
+	*/
+}
+    
+
+
+/*
 public double getLogLikelihood() {
 	
 	double N_nodes = (double) treeModel.getNodeCount();
@@ -223,9 +705,9 @@ public double getLogLikelihood() {
 	logL += K_value*Math.log( p_onValue ) + (N_nodes - K_value)*Math.log( 1- p_onValue);
 	return(logL);
 }
+*/
+   
 
-    
-    
 
 private void loadIndicators() {
 
@@ -553,6 +1035,9 @@ private void setMembershipToClusterLabelIndexes(){
     	public final static String VIRUS_LOCATIONSTREENODE = "virusLocationsTreeNodes";
     	
     	public final static String INDICATORS = "indicators";
+    	public final static String PROBSITES = "probSites";
+    	public final static String SITEINDICATORS = "siteIndicators";
+
 
         boolean integrate = false;
         
@@ -597,7 +1082,12 @@ private void setMembershipToClusterLabelIndexes(){
                 
                 cxo = xo.getChild(INDICATORS);
                 Parameter indicators = (Parameter) cxo.getChild(Parameter.class);
+  
+                cxo = xo.getChild(SITEINDICATORS);
+                Parameter siteIndicators = (Parameter) cxo.getChild(Parameter.class);
                 
+                cxo = xo.getChild(PROBSITES);
+                Parameter probSites = (Parameter) cxo.getChild(Parameter.class);
                 
                 cxo = xo.getChild(MUPRECISION);
                 Parameter muPrecision = (Parameter) cxo.getChild(Parameter.class);
@@ -610,7 +1100,7 @@ private void setMembershipToClusterLabelIndexes(){
 		        cxo = xo.getChild(MUMEAN);
 		        Parameter muMean = (Parameter) cxo.getChild(Parameter.class);
 		        
-		        return new TreeClusteringVirusesPrior(treeModel, indicators, clusterLabels, clusterLabelsTreeNode, mu, hasDrift, virusLocations, virusLocationsTreeNode, muPrecision, probActiveNode, initialK, muMean); 
+		        return new TreeClusteringVirusesPrior(treeModel, indicators, clusterLabels, clusterLabelsTreeNode, mu, hasDrift, virusLocations, virusLocationsTreeNode, muPrecision, probActiveNode, initialK, muMean, probSites, siteIndicators); 
             }
 
             //************************************************************************
@@ -642,6 +1132,8 @@ private void setMembershipToClusterLabelIndexes(){
                  //   new ElementRule(OFFSETS, Parameter.class),
                     new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class), 
                     new ElementRule(INDICATORS, Parameter.class),
+                    new ElementRule(SITEINDICATORS, Parameter.class),
+                    new ElementRule(PROBSITES, Parameter.class),
                     new ElementRule(TreeModel.class),
                     new ElementRule(MUPRECISION, Parameter.class),
                     new ElementRule(PROBACTIVENODE, Parameter.class),

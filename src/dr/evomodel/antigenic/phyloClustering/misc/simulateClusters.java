@@ -53,8 +53,11 @@ public class simulateClusters  {
 	//simulate HI data
 
 
-	public simulateClusters(TreeModel treeModel_in, Parameter indicators_in ,int K, int numSera, MatrixParameter vLoc_in,Parameter virusOffsets_in,
-			String HIFile, String distClusterFile, int seedNum){	
+	public simulateClusters(TreeModel treeModel_in, Parameter indicators_in ,int nClusters, int seraPerCluster, MatrixParameter vLoc_in,Parameter virusOffsets_in,
+			String HIFile, String distClusterFile, int seedNum, int minSize,
+	        double meanHomologousTiter,
+	        double unitPerTransition,
+	        double measurementNoiseVar){	
 		
 			Random generator = new Random(seedNum);
 			//Random generator = new Random();
@@ -70,6 +73,14 @@ public class simulateClusters  {
 			this.virusOffsets = virusOffsets_in;
 
 
+			System.out.println("sera per cluster = " + seraPerCluster);
+			System.out.println("nClusters = " + nClusters);
+			System.out.println("minimum cluster size = " + minSize);
+			System.out.println("meanHomologousTiter = " + meanHomologousTiter);
+			System.out.println("unit per transition = " + unitPerTransition);
+			System.out.println("measurement noise variance = " + measurementNoiseVar);
+			
+			System.out.println("seedNum = " + seedNum);
 			
 	        //initialize excision points
 	          //indicators.setDimension(treeModel.getNodeCount());
@@ -89,15 +100,7 @@ public class simulateClusters  {
 //	      	correspondingTreeIndexForVirus = Tree_Clustering_Shared_Routines.setMembershipTreeToVirusIndexes(numdata, virusLocations, numNodes, treeModel);
 	        setMembershipToClusterLabelIndexes(); 
 
-	       int nClusters = K;
-	        //int nClusters = 6;
-	        int minSize = 10; //minimum number of viruses per cluster
-			//Simulate HI measurements
-	        int seraPerCluster = numSera;
-	        double maxSerumTiter = 10; //log2
-	        double unitPerTransition = 2;
-	        double measurementNoiseVar = 1;
-	        
+   
 
 	        distCluster = new double[nClusters][];
 	        for(int i=0; i < nClusters; i++){
@@ -287,7 +290,7 @@ public class simulateClusters  {
 	        		
 	        		for(int v=0; v< numdata; v++){
 		        		double[] meanTiter = new double[1];
-		        		meanTiter[0] = maxSerumTiter - distCluster[c][clusterLabels[v]]*unitPerTransition;
+		        		meanTiter[0] = meanHomologousTiter - distCluster[c][clusterLabels[v]]*unitPerTransition;
 		        		double[][] prec = new double[1][1];
 		        		prec[0][0] = 1/measurementNoiseVar;
 		        
@@ -551,6 +554,12 @@ public class simulateClusters  {
         public final static String FILE_NAME2 = "distClusterFile";
 
         public final static String SEEDNUM = "seed";
+        public final static String MINSIZECLUSTER = "minClusterSize";
+        
+        
+        public final static String MEANHOMOLOGOUSTITER = "meanHomologousLog2Titer";
+        public final static String UNITPERTRANSITION = "log2TiterDiffPerTransition";
+        public final static String MEASUREMENTNOISEVAR = "measurementNoiseVariance";
         
         public String getParserName() {
             return CLASSNAME;
@@ -574,6 +583,24 @@ public class simulateClusters  {
             		seedNum = xo.getIntegerAttribute(SEEDNUM);
             	}
             	
+            	int minSizeCluster = 5;
+            	if (xo.hasAttribute(MINSIZECLUSTER)) {
+            		minSizeCluster = xo.getIntegerAttribute(MINSIZECLUSTER);
+            	}
+            	
+
+    	        double meanHomologousTiter = 10; //log2
+    	        if(xo.hasAttribute(MEANHOMOLOGOUSTITER)){
+    	        	meanHomologousTiter = xo.getDoubleAttribute(MEANHOMOLOGOUSTITER);
+    	        }
+    	        double unitPerTransition = 2;
+    	        if(xo.hasAttribute(UNITPERTRANSITION)){
+    	        	unitPerTransition = xo.getDoubleAttribute(UNITPERTRANSITION);
+    	        }
+    	        double measurementNoiseVar = 1;
+            	if(xo.hasAttribute(MEASUREMENTNOISEVAR)){
+            		measurementNoiseVar = xo.getDoubleAttribute(MEASUREMENTNOISEVAR);
+            	}
             	
                 TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
                 XMLObject cxo  = xo.getChild(INDICATORS);
@@ -587,8 +614,27 @@ public class simulateClusters  {
                 String fileName = xo.getStringAttribute(FILE_NAME);
                 String fileName2 = xo.getStringAttribute(FILE_NAME2);
                 
-		        return new simulateClusters(treeModel, indicators, initialK, numSera, virusLocations, virusOffsets, fileName, fileName2, seedNum); 
+                
+
+		        return new simulateClusters(treeModel, indicators, initialK, numSera, virusLocations, virusOffsets, fileName, fileName2, seedNum, minSizeCluster,
+		        		meanHomologousTiter, unitPerTransition, measurementNoiseVar); 
             }
+        
+        	private final XMLSyntaxRule[] rules = {
+                AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
+                AttributeRule.newStringRule(FILE_NAME2, false, "The name of the file containing the assay table"),
+                AttributeRule.newIntegerRule(INITIALNUMCLUSTERS, true, "the initial number of clusters"),
+                AttributeRule.newIntegerRule(SEEDNUM, true, "the initial number of clusters"),
+                AttributeRule.newIntegerRule(NUMSERA, true, "number of sera to simulate"),
+                AttributeRule.newIntegerRule(MINSIZECLUSTER, true, "The minimum cluster size of a virus"),
+                AttributeRule.newDoubleRule(MEANHOMOLOGOUSTITER, true, "the expected log2 titer of a homologous virus"),
+                AttributeRule.newDoubleRule(UNITPERTRANSITION, true, "the expected decrease in log2 titer value per major transition"),
+                AttributeRule.newDoubleRule(MEASUREMENTNOISEVAR, true, "the variance of the measurement noise in the log2 titer value"),
+                new ElementRule(TreeModel.class),
+                new ElementRule(INDICATORS, Parameter.class),
+                new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
+                new ElementRule(VIRUS_OFFSETS, Parameter.class),                     
+        };
 
             //************************************************************************
             // AbstractXMLObjectParser implementation
@@ -607,17 +653,7 @@ public class simulateClusters  {
             }
             
             
-            private final XMLSyntaxRule[] rules = {
-                    AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
-                    AttributeRule.newStringRule(FILE_NAME2, false, "The name of the file containing the assay table"),
-                    AttributeRule.newIntegerRule(INITIALNUMCLUSTERS, true, "the initial number of clusters"),
-                    AttributeRule.newIntegerRule(SEEDNUM, true, "the initial number of clusters"),
-                    AttributeRule.newIntegerRule(NUMSERA, true, "number of sera to simulate"),
-                    new ElementRule(TreeModel.class),
-                    new ElementRule(INDICATORS, Parameter.class),
-                    new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
-                    new ElementRule(VIRUS_OFFSETS, Parameter.class),                     
-            };
+
             
     };
 

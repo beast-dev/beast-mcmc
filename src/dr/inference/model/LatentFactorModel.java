@@ -31,6 +31,7 @@ import dr.util.Citation;
 
 import java.lang.reflect.Array;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Vector;
 
 
@@ -79,8 +80,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double storedLogDetCol;
     private boolean[][] changed;
     private boolean[][] storedChanged;
-    private boolean RecomputeResiduals=false;
-    private boolean RecomputeFactors=false;
+    private boolean RecomputeResiduals=true;
+    private boolean RecomputeFactors=true;
     private Vector<Integer> changedValues;
     private boolean factorsKnown=false;
     private boolean storedFactorsKnown=false;
@@ -265,14 +266,30 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         int n=Left.getRowDimension();
         int p=Right.getColumnDimension();
 
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j < p; j++) {
-                if((changed[i][j]==true && continuous.getParameterValue(i)!=0) || newModel){
-                double sum = 0;
-                for (int k = 0; k < dim; k++)
-                    sum += Left.getParameterValue(i, k) * Right.getParameterValue(k,j);
-                answer[i*p+j]=sum;
-                //changed[i][j]=false;
+        if(factorsKnown==false && RecomputeFactors!=true || LxFKnown==false && RecomputeResiduals!=true){
+            double sum=0;
+            ListIterator<Integer> li=changedValues.listIterator();
+            while(li.hasNext()){
+                int index=li.next();
+                int i=index%data.getRowDimension();
+                int j=index/data.getRowDimension();
+            for (int k = 0; k < dim; k++) {
+//                System.out.println(data.getColumnDimension());
+//                System.out.println(index);
+                sum += Left.getParameterValue(i, k) *
+                        Right.getParameterValue(k,j);}
+            answer[i*p+j]=sum;  }
+        }
+        else {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < p; j++) {
+                    if ((changed[i][j] == true && continuous.getParameterValue(i) != 0) || newModel) {
+                        double sum = 0;
+                        for (int k = 0; k < dim; k++)
+                            sum += Left.getParameterValue(i, k) * Right.getParameterValue(k, j);
+                        answer[i * p + j] = sum;
+                        //changed[i][j]=false;
+                    }
                 }
             }
         }
@@ -543,9 +560,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
             if(!RecomputeFactors){
                 factorsKnown=false;
+                int row=index/factors.getRowDimension();
                 if(index!=-1)
-                    for (int i = 0; i <data.getRowDimension() ; i++) {
-                        changedValues.add(index);
+                    for (int i = 0; i <data.getRowDimension(); i++) {
+                        changedValues.add(row*data.getRowDimension()+i);
                     }
 
             }

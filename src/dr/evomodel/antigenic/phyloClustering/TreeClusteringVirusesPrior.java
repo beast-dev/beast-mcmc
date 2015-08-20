@@ -86,6 +86,9 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
     private int[] nonCausalCount;
 
     private Parameter siteIndicators;
+    private String gp_prior;
+    private double prob00=0.95;
+    private double prob11=0.5;
 
     
     public LinkedList<Integer>[] getMutationList(){
@@ -110,7 +113,10 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		 				Parameter probSites_in,
 		 				Parameter siteIndicators_in,
 		 				int startBase_in,
-		 				int endBase_in
+		 				int endBase_in,
+		 				String gp_prior_in,
+		 				double prob00_in,
+		 				double prob11_in
 						){
 	 
 		super(TREE_CLUSTER_VIRUSES);	
@@ -128,11 +134,13 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		if(probSites_in != null){
 			 this.startBase = startBase_in;
 			 this.endBase = endBase_in;
-		
+			 this.gp_prior = gp_prior_in;
 
 			treeMutations(); //this routine also calculates the number of sites and checks for error
 			this.probSites = probSites_in;
 			this.siteIndicators = siteIndicators_in;
+			this.prob00 = prob00_in;
+			this.prob11 = prob11_in;
 		}
 		//this.K = K_in; //to be deleted
 		this.indicators = indicators_in;
@@ -203,20 +211,24 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
          
          //genotype to phenotype
  		if(probSites_in != null){
-
-
 	         //int numSites = 330;  //HARDCODED RIGHT NOW
-	         probSites.setDimension(numSites); //initialize dimension of probSites
-	         //initialize the probability of each site
-	         double initial_p = 0.05;
-	         for(int k=0; k < numSites; k++){
-	        	 //probSites.setParameterValue(k, initial_p);
-	        	 probSites.setParameterValue(k, p_on.getParameterValue(0) );
-	         }         
+ 			if(gp_prior.compareTo("generic") == 0 ){
+ 				probSites.setDimension(1);
+ 				probSites.setParameterValue(0, p_on.getParameterValue(0));
+ 			}
+ 			else{
+ 				probSites.setDimension(numSites); //initialize dimension of probSites
+ 		         //initialize the probability of each site
+ 		         //double initial_p = 0.05;
+ 		         for(int k=0; k < numSites; k++){
+ 		        	 //probSites.setParameterValue(k, initial_p);
+ 		        	 probSites.setParameterValue(k, p_on.getParameterValue(0) );
+ 		         }  
+ 			}
 	         addVariable(probSites);
 	    
 	    
-	         
+	         //MAYBE ONLY INITIALIZE IT IF IT USES THE SHRINKAGE OR CORRELATION PRIOR?
 	         siteIndicators.setDimension(numSites);
 	         for(int k=0; k < numSites; k++){
 	        	 siteIndicators.setParameterValue(k, 1);
@@ -462,14 +474,6 @@ public double getLogLikelihood() {
 	double muMeanParameter = muMean.getParameterValue(0);
 	//System.out.println("muMeanParameter = " + muMeanParameter);
 	
-	//clustering
-	if(probSites == null){
-		logL -= (K_value ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
-	}
-	//genotype to phenotype
-	else{
-	logL -= (N_nodes ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
-	
 	for(int i=0; i < ( N_nodes ) ; i++){
 
 		double mu_i0 = mu.getParameter(i).getParameterValue(0);
@@ -481,6 +485,166 @@ public double getLogLikelihood() {
 		//System.out.println(logL);
 	}
 
+	
+	//clustering
+	if(probSites == null){
+		logL -= (K_value ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
+	}
+	//genotype to phenotype
+	else{
+		logL -= (N_nodes ) * ( Math.log(2)  + Math.log(Math.PI)+ Math.log(muVariance)  );
+		
+		//4 priors:
+			//generic:  assumes that each $\pi_j = \pi$, where $\pi \sim Beta(\alpha,\beta)$. The posterior $\pi$ is estimated from the MCMC run.
+			//Saturated prior: allows each $\pi_j$ to be different. $\pi_j$ is assumed to follow the hierarchical $Beta(\alpha, \beta)$ distribution, where $\alpha$ and $\beta$ are fixed according to plausible prior belief. The $Beta$ distribution is chosen because it is conjugate to the categorical distribution, so Gibbs sampling can be accomplished for $\pi$ (See details in the Implementation). 
+			//Shrinkage Prior: models the belief about epitope and non-epitope sites. Here, we define a latent vector of binary indicators for amino acid positions $\delta = (\delta_1, \dots, \delta_L)$, where $\delta_k= 1$ if position $j$ is an epitope site and 0 otherwise. 		
+			//Correlation prior: models the correlation among amino acid positions being epitopes or not (Figure \ref{correlationPrior}). This prior is motivated by the knowledge that groups of epitope sites tend to occur at adjacent positions.
+
+		double priorContribution = 0;
+		if(gp_prior.compareTo("correlation") == 0 ){
+			priorContribution = correlationPriorComputation();
+		}
+		else if(gp_prior.compareTo("shrinkage") == 0 ){
+			priorContribution = shrinkagePriorComputation();
+		}
+		else if(gp_prior.compareTo("generic") == 0 ){
+			priorContribution = genericPriorComputation();
+		}
+		//saturated
+		else if(gp_prior.compareTo("saturated") == 0 ){
+			priorContribution = saturatedPriorComputation();
+		}
+		else{
+			System.out.println("Prior unknown. quit now");
+			System.exit(0);
+		}
+	
+		logL += priorContribution;
+//System.out.println(logL);
+// System.exit(0);
+	if(logL != Double.NEGATIVE_INFINITY){
+		sampleCausativeStates();
+	}
+
+	} //end of genotype to phenotype
+	return(logL);
+}
+
+
+private double saturatedPriorComputation() {
+	double contribution = 0;
+	double N_nodes = (double) treeModel.getNodeCount();
+	
+	double []probMutationSite = new double[numSites]; 
+	for(int i=0; i < numSites; i++){
+		probMutationSite[i] = probSites.getParameterValue(i);  //with the null-ing out the probSites with siteIndicators
+ 	}
+	
+	//OMIT THE ROOT NODE BECAUSE THERE IS NO MUTATION ANYWAY
+	//(N_nodes - 1)
+	for(int i=0; i < (N_nodes-1) ; i ++){
+		double prob_Node_i_On = 1;
+		double prob_allMutationsOff = 1;
+    	if(mutationList[i] != null){
+	    	Iterator itr = mutationList[i].iterator();
+	    	while(itr.hasNext()){
+	    		int curMutation = ((Integer) itr.next()).intValue();
+				prob_allMutationsOff = prob_allMutationsOff * (1 - probMutationSite[curMutation -1] );  //offset of 1 
+	    	}
+    	}  
+		
+		prob_Node_i_On = 1 - prob_allMutationsOff;
+		if( (int) indicators.getParameterValue(i) == 1){
+			contribution += Math.log(prob_Node_i_On);
+		}
+		else{
+			contribution += Math.log(1-prob_Node_i_On);
+		}
+	}
+	return(contribution);
+}
+private double genericPriorComputation() {
+	double contribution = 0;
+	double N_nodes = (double) treeModel.getNodeCount();
+	
+	double probMutationSite = probSites.getParameterValue(0); // a single value.. not a vector
+	
+	//OMIT THE ROOT NODE BECAUSE THERE IS NO MUTATION ANYWAY
+	//(N_nodes - 1)
+	for(int i=0; i < (N_nodes-1) ; i ++){
+		double prob_Node_i_On = 1;
+		double prob_allMutationsOff = 1;
+    	if(mutationList[i] != null){
+	    	Iterator itr = mutationList[i].iterator();
+	    	while(itr.hasNext()){
+	    		int curMutation = ((Integer) itr.next()).intValue();
+				prob_allMutationsOff = prob_allMutationsOff * (1 - probMutationSite );  //offset of 1 
+	    	}
+    	}  
+		
+		prob_Node_i_On = 1 - prob_allMutationsOff;
+		if( (int) indicators.getParameterValue(i) == 1){
+			contribution += Math.log(prob_Node_i_On);
+		}
+		else{
+			contribution += Math.log(1-prob_Node_i_On);
+		}
+	}
+	return(contribution);
+}
+
+private double shrinkagePriorComputation() {
+	double contribution = 0;
+	double N_nodes = (double) treeModel.getNodeCount();
+	
+	double []probMutationSite = new double[numSites]; 
+	for(int i=0; i < numSites; i++){
+		probMutationSite[i] = probSites.getParameterValue(i) * siteIndicators.getParameterValue(i) ;  //with the null-ing out the probSites with siteIndicators
+ 	}
+	
+	//OMIT THE ROOT NODE BECAUSE THERE IS NO MUTATION ANYWAY
+	//(N_nodes - 1)
+	for(int i=0; i < (N_nodes-1) ; i ++){
+		double prob_Node_i_On = 1;
+		double prob_allMutationsOff = 1;
+    	if(mutationList[i] != null){
+	    	Iterator itr = mutationList[i].iterator();
+	    	while(itr.hasNext()){
+	    		int curMutation = ((Integer) itr.next()).intValue();
+				prob_allMutationsOff = prob_allMutationsOff * (1 - probMutationSite[curMutation -1] );  //offset of 1 
+	    	}
+    	}  
+		
+		prob_Node_i_On = 1 - prob_allMutationsOff;
+		if( (int) indicators.getParameterValue(i) == 1){
+			contribution += Math.log(prob_Node_i_On);
+		}
+		else{
+			contribution += Math.log(1-prob_Node_i_On);
+		}
+	}
+	
+	
+
+	int numSignificantSites = 0;
+	for(int i=0; i < numSites; i++){
+		if( (int) siteIndicators.getParameterValue(i) ==1){
+			numSignificantSites++;
+		}
+	}
+	int numNonSignificantSites = numSites - numSignificantSites;
+	contribution +=  (numSignificantSites*Math.log( 0.45   ) + numNonSignificantSites*Math.log( 0.55 )  );
+	//contribution +=  (numSignificantSites*Math.log(0.2) + numNonSignificantSites*Math.log(0.8));
+	//contribution += numSignificantSites*Math.log(p_on.getParameterValue(0)) + numNonSignificantSites*Math.log(1-p_on.getParameterValue(0));
+	//System.out.println("#sig= " + numSignificantSites + " #nonsig=" + numNonSignificantSites);
+		
+	
+	return(contribution);
+}
+private double correlationPriorComputation() {
+	double contribution = 0;
+	double N_nodes = (double) treeModel.getNodeCount();
+	
 	// p^k (1-p)^(numNodes - k)
 	//logL += K_value*Math.log( p_onValue ) + (N_nodes - K_value)*Math.log( 1- p_onValue);
 	//int numSites = 330; //now have a private variable 
@@ -490,7 +654,7 @@ public double getLogLikelihood() {
 		probMutationSite[i] = probSites.getParameterValue(i) * siteIndicators.getParameterValue(i) ;  //with the null-ing out the probSites with siteIndicators
  	}
 	
-	//SHOULD I OMIT THE ROOT NODE BECAUSE IT SHOULD ALWAYS BE ON EVEN THOUGH THERE IS NO MUTATION ANYWAY?
+	//OMIT THE ROOT NODE BECAUSE THERE IS NO MUTATION ANYWAY
 	//(N_nodes - 1)
 	for(int i=0; i < (N_nodes-1) ; i ++){
 		double prob_Node_i_On = 1;
@@ -510,10 +674,10 @@ public double getLogLikelihood() {
 		
 		prob_Node_i_On = 1 - prob_allMutationsOff;
 		if( (int) indicators.getParameterValue(i) == 1){
-			logL += Math.log(prob_Node_i_On);
+			contribution += Math.log(prob_Node_i_On);
 		}
 		else{
-			logL += Math.log(1-prob_Node_i_On);
+			contribution += Math.log(1-prob_Node_i_On);
 		}
 		//System.out.println(logL);
 		//System.out.println("node=" + i + " prob=" + prob_Node_i_On);
@@ -542,7 +706,7 @@ public double getLogLikelihood() {
 	// p(0->0) = 0.9, p(0->1) = 0.2
 	// p(1->0) = 0.6  p(1->1) = 0.4
 
-	logL += Math.log(0.5); //initial
+	contribution += Math.log(0.5); //initial
 	int numSignificantSites = 0;
 	int num_00=0;
 	int num_01=0;
@@ -567,28 +731,17 @@ public double getLogLikelihood() {
 		}
 	}
 	
-	double alpha = 0.95; //0 stay as 0
-	double beta = 0.50; // 1 stay as 1
+	double alpha = prob00; //0 stay as 0
+	double beta = prob11; // 1 stay as 1
 	//		0		1
 	//0 	0.9		0.1
 	//1		0.5		0.5
 	
-	logL +=  ( num_00*Math.log( alpha ) + num_01*Math.log( 1-alpha )  
+	contribution +=  ( num_00*Math.log( alpha ) + num_01*Math.log( 1-alpha )  
 			  +num_10*Math.log( 1-beta ) + num_11*Math.log(beta ) );
 	
-	
-	
-//System.out.println(logL);
-// System.exit(0);
-	if(logL != Double.NEGATIVE_INFINITY){
-		sampleCausativeStates();
-	}
-
-	} //end of genotype to phenotype
-	return(logL);
+	return(contribution);
 }
-
-
 public int[] getCausalCount(){
 	return(causalCount);
 }
@@ -648,6 +801,7 @@ public void sampleCausativeStates(){
 		else{   //if indicator is 1... then need to sample to get the causal indicator (the mutation(s) that give(s) causal state =1
 	    	if(mutationList[curNode] != null){
 	  
+	    		//System.out.println("cur node is " + curNode);
 	    		
 	    		//count the number of mutations that has nonzero probabilities
 		    	//Iterator itr_it = mutationList[curNode].iterator();
@@ -670,7 +824,15 @@ public void sampleCausativeStates(){
 					//prob_allMutationsOff = prob_allMutationsOff * (1 - probSites.getParameterValue(curMutation));
 		    		//probM[count]=	probSites.getParameterValue(curMutation -1);
 		    		//if(probSites.getParameterValue(curMutation -1) * siteIndicators.getParameterValue(curMutation -1) >0){
-		    			probM[count]=	probSites.getParameterValue(curMutation -1) * siteIndicators.getParameterValue(curMutation -1);
+		    		  if(gp_prior.compareTo("generic") == 0 ){
+		    			   probM[count]=	probSites.getParameterValue(0);
+		    		   }
+		    		  else if(gp_prior.compareTo("saturated") == 0 ){
+		    			   probM[count]=	probSites.getParameterValue(curMutation -1) ;
+		    		   }
+		    		  else if(gp_prior.compareTo("correlation") == 0 ||gp_prior.compareTo("shrinkage") == 0   ){
+		    			   probM[count]=	probSites.getParameterValue(curMutation -1) * siteIndicators.getParameterValue(curMutation -1);
+		    		   }
 		    			count++;
 		    		//}
 		    	}
@@ -1121,6 +1283,10 @@ private void setMembershipToClusterLabelIndexes(){
         public final static String STARTBASE = "startNucleotide";
         public final static String ENDBASE = "endNucleotide";
 
+        public final static String PROB00 = "prob00";
+        public final static String PROB11 = "prob11";
+        
+        public final static String GP_PRIOR_OPTION = "gp_prior";
         
         public String getParserName() {
             return TREE_CLUSTER_VIRUSES;
@@ -1133,7 +1299,16 @@ private void setMembershipToClusterLabelIndexes(){
             	if (xo.hasAttribute(INITIALNUMCLUSTERS)) {
             		initialK = xo.getDoubleAttribute(INITIALNUMCLUSTERS);
             	}
-            	
+
+        		double prob00 = 0.95;
+            	if (xo.hasAttribute(PROB00)) {
+            		initialK = xo.getDoubleAttribute(PROB00);
+            	}
+        		double prob11 = 0.5;
+            	if (xo.hasAttribute(PROB11)) {
+            		initialK = xo.getDoubleAttribute(PROB11);
+            	}
+
             	
         		int startBase = 0;
             	if (xo.hasAttribute(STARTBASE)) {
@@ -1145,7 +1320,11 @@ private void setMembershipToClusterLabelIndexes(){
             		endBase = xo.getIntegerAttribute(ENDBASE) -1 ; //minus 1 because index begins at 0
             	}
         		
-        		
+        		String gp_prior = "";
+            	if (xo.hasAttribute(GP_PRIOR_OPTION)) {
+            		gp_prior = xo.getStringAttribute(GP_PRIOR_OPTION) ; //minus 1 because index begins at 0
+            	}
+            	
             	
                 TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
@@ -1192,7 +1371,7 @@ private void setMembershipToClusterLabelIndexes(){
 		        Parameter muMean = (Parameter) cxo.getChild(Parameter.class);
 		        
 		        return new TreeClusteringVirusesPrior(treeModel, indicators, clusterLabels, clusterLabelsTreeNode, mu, hasDrift, virusLocations, virusLocationsTreeNode, muPrecision, probActiveNode, initialK, muMean, probSites, siteIndicators,
-		        		startBase, endBase); 
+		        		startBase, endBase, gp_prior, prob00, prob11); 
             }
 
             //************************************************************************
@@ -1217,8 +1396,12 @@ private void setMembershipToClusterLabelIndexes(){
                     //AttributeRule.newDoubleRule(PROBACTIVENODE, true, "the prior probability of turning on a node"),
             		AttributeRule.newDoubleRule(INITIALNUMCLUSTERS, true, "the initial number of clusters"),
             		AttributeRule.newDoubleRule(STARTBASE, true, "the start base in the sequence to consider in the genotype to phenotype model"),
-            		AttributeRule.newDoubleRule(ENDBASE, true, "the end base in the sequence to consider in the genotype to phenotype model"),
+            		AttributeRule.newIntegerRule(ENDBASE, true, "the end base in the sequence to consider in the genotype to phenotype model"),
+            		AttributeRule.newIntegerRule(STARTBASE, true, "the start base in the sequence to consider in the genotype to phenotype model"),
+            		AttributeRule.newDoubleRule(PROB00, true, "correlation prior - the probability of staying at state 0 for adjacent siteIndicator"),
+            		AttributeRule.newDoubleRule(PROB11, true, "correlation prior - the probability of staying at state 1 for adjacent siteIndicator"),
 
+            		
                     new ElementRule(EXCISIONPOINTS, Parameter.class),
                     new ElementRule(CLUSTERLABELS, Parameter.class),
                     new ElementRule(CLUSTERLABELSTREENODE, Parameter.class),

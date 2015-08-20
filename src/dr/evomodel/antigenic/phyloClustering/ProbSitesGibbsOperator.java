@@ -51,7 +51,8 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
        int[] nonCausalCount = clusterPrior.getNonCausalCount();
 		       
        //int numSites = 330;
-       int numSites = clusterPrior.getNumSites();
+       int numSites = probSites.getDimension();
+       
  	   int whichSite = (int) (Math.floor(Math.random()*numSites)); //choose from possibilities
 
  	   //SHOULD GET IT FROM THE PRIOR SPECIFICATION COZ THEY SHOULD MATCH

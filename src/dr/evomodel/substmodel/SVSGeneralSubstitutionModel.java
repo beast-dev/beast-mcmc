@@ -26,11 +26,13 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.*;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
-import dr.xml.*;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <b>A general model of sequence substitution with stochastic variable selection</b>. A general reversible class for any
@@ -167,7 +169,12 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
             }
         }
     }
-    
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
+    }
+
     @Override
     public boolean isUsed() {
         return super.isUsed() && isUsed;

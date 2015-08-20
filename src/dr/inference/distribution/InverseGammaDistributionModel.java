@@ -30,10 +30,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
-import dr.math.distributions.GammaDistribution;
 import dr.math.distributions.InverseGammaDistribution;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.GammaDistributionImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

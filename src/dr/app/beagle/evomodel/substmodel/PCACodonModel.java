@@ -26,10 +26,6 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.Codons;
-import dr.app.beagle.evomodel.substmodel.BaseSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.DefaultEigenSystem;
-import dr.app.beagle.evomodel.substmodel.EigenSystem;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.parsers.PCACodonModelParser;
 import dr.inference.model.Parameter;
 

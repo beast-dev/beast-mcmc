@@ -40,6 +40,8 @@ import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <b>A general irreversible class for any
@@ -560,6 +562,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
 
     public void makeDirty() {
 
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
     }
 
     @Override

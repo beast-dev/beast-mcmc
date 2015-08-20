@@ -25,15 +25,12 @@
 
 package dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.matrixAlgebra.Vector;
-import dr.xml.*;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**

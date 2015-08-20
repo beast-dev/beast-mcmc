@@ -29,7 +29,6 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialGrowth;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.EmergingEpidemicModelParser;
-import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 

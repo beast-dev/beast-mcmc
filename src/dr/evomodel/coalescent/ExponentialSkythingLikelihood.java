@@ -25,14 +25,12 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.ExponentialBSPGrowth;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.BayesianSkylineLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.inference.model.Variable;
 import dr.math.MathUtils;
 
 import java.util.Date;

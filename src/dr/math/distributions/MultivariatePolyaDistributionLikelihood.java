@@ -31,6 +31,10 @@ import dr.inference.model.*;
 import dr.math.GammaFunction;
 import dr.xml.*;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Package: MultivariatePolyaDistributionLikelihood
  * Description:
@@ -236,6 +240,11 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
 
     public boolean evaluateEarly() {
         return false;
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
     }
 
     public void setUsed() {

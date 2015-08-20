@@ -29,6 +29,7 @@ import dr.inference.loggers.Loggable;
 import dr.util.Identifiable;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -64,6 +65,12 @@ public interface Likelihood extends Loggable, Identifiable {
      * @return  A detailed name of likelihood for debugging.
      */
     String prettyName();
+
+	/**
+	 * Get the set of sub-component likelihoods that this likelihood uses
+	 * @return
+	 */
+	Set<Likelihood> getLikelihoodSet();
 
     /**
      * @return is the likelihood used in the MCMC?
@@ -131,6 +138,10 @@ public interface Likelihood extends Loggable, Identifiable {
 		}
 
 		protected abstract double calculateLogLikelihood();
+
+		public Set<Likelihood> getLikelihoodSet() {
+			return new HashSet<Likelihood>(Arrays.asList(this));
+		}
 
 		public String toString() {
             // don't call any "recalculating" stuff like getLogLikelihood() in toString -
@@ -211,5 +222,6 @@ public interface Likelihood extends Loggable, Identifiable {
 
     // set to store all created likelihoods
     final static Set<Likelihood> FULL_LIKELIHOOD_SET = new HashSet<Likelihood>();
+	final static Set<Likelihood> CONNECTED_LIKELIHOOD_SET = new HashSet<Likelihood>();
 
 }

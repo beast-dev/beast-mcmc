@@ -51,8 +51,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     private final Parameter parameter;
 
     // the index of the root node.
-    private int rootNodeNumber;
-    private int storedRootNodeNumber;
+    private final Parameter rootNodeNumber;
 
     private boolean includeRoot = false;
 
@@ -100,8 +99,9 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         addModel(tree);
         addVariable(parameter);
 
-        rootNodeNumber = tree.getRoot().getNumber();
-        storedRootNodeNumber = rootNodeNumber;
+        rootNodeNumber = new Parameter.Default(parameter.getId() + ".rootNodeNumber");
+        rootNodeNumber.setParameterValue(0, tree.getRoot().getNumber());
+        addVariable(rootNodeNumber);
     }
 
     public int getParameterSize() {
@@ -127,11 +127,11 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     }
 
     protected void storeState() {
-        storedRootNodeNumber = rootNodeNumber;
+        //rootNodeNumber.storeParameterValues();
     }
 
     protected void restoreState() {
-        rootNodeNumber = storedRootNodeNumber;
+        //rootNodeNumber.restoreParameterValues();
     }
 
     protected void acceptState() {
@@ -145,7 +145,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         assert (!tree.isRoot(node) || includeRoot) : "root node doesn't have a parameter value!";
 
-        assert tree.getRoot().getNumber() == rootNodeNumber :
+        assert tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
                 "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
 
         int nodeNumber = node.getNumber();
@@ -157,7 +157,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         assert (!tree.isRoot(node) && !includeRoot) : "root node doesn't have a parameter value!";
 
-        assert tree.getRoot().getNumber() == rootNodeNumber :
+        assert tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
                 "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
 
         int nodeNumber = node.getNumber();
@@ -179,32 +179,33 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         if (!includeRoot) {
 
+            final int oldRootNodeNumber = rootNodeNumber.getValue(0).intValue();
             final int newRootNodeNumber = tree.getRoot().getNumber();
 
-            if (rootNodeNumber > newRootNodeNumber) {
+            if (oldRootNodeNumber > newRootNodeNumber) {
 
                 final double oldValue = parameter.getParameterValue(newRootNodeNumber);
 
-                final int end = Math.min(parameter.getDimension() - 1, rootNodeNumber);
+                final int end = Math.min(parameter.getDimension() - 1, oldRootNodeNumber);
                 for (int i = newRootNodeNumber; i < end; i++) {
                     parameter.setParameterValue(i, parameter.getParameterValue(i + 1));
                 }
 
                 parameter.setParameterValue(end, oldValue);
 
-            } else if (rootNodeNumber < newRootNodeNumber) {
+            } else if (oldRootNodeNumber < newRootNodeNumber) {
 
                 final int end = Math.min(parameter.getDimension() - 1, newRootNodeNumber);
 
                 final double oldValue = parameter.getParameterValue(end);
 
-                for (int i = end; i > rootNodeNumber; i--) {
+                for (int i = end; i > oldRootNodeNumber; i--) {
                     parameter.setParameterValue(i, parameter.getParameterValue(i - 1));
                 }
 
-                parameter.setParameterValue(rootNodeNumber, oldValue);
+                parameter.setParameterValue(oldRootNodeNumber, oldValue);
             }
-            rootNodeNumber = newRootNodeNumber;
+            rootNodeNumber.setParameterValue(0, newRootNodeNumber);
         }
     }
 

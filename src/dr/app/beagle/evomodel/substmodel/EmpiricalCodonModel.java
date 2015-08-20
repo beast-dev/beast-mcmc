@@ -31,10 +31,6 @@ import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
 import dr.evolution.datatype.Nucleotides;
-import dr.app.beagle.evomodel.substmodel.BaseSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.DefaultEigenSystem;
-import dr.app.beagle.evomodel.substmodel.EigenSystem;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.parsers.EmpiricalCodonModelParser;
 import dr.inference.model.Parameter;
 

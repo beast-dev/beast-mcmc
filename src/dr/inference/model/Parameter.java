@@ -164,6 +164,7 @@ public interface Parameter extends Statistic, Variable<Double> {
     boolean isUsed();
 
     public final static Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
+    public final static Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
 
     /**
      * Abstract base class for parameters

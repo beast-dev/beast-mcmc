@@ -25,8 +25,7 @@
 
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
@@ -169,6 +168,11 @@ public class BranchLikelihood implements Likelihood {
 	public String prettyName() {
 		return Abstract.getPrettyName(this);
 	}// END: prettyName
+
+	@Override
+	public Set<Likelihood> getLikelihoodSet() {
+		return new HashSet<Likelihood>(Arrays.asList(this));
+	}
 
 	@Override
 	public boolean isUsed() {

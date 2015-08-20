@@ -34,9 +34,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Marc Suchard
@@ -235,6 +233,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         System.err.println(new Vector(probability));
     }
 
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
+    }
 
     @Override
     public boolean isUsed() {

@@ -30,8 +30,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.evolution.datatype.DataType;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Marc Suchard
@@ -134,6 +133,11 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
      */
     public String prettyName() {
         return "SVSGeneralSubstitutionModel-connectedness";
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
     }
 
     @Override

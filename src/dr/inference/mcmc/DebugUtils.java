@@ -78,7 +78,7 @@ public class DebugUtils {
             out.print("lnL\t");
             out.println(lnL);
 
-            for (Parameter parameter : Parameter.FULL_PARAMETER_SET) {
+            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
                 out.print(parameter.getParameterName());
                 out.print("\t");
                 out.print(parameter.getDimension());
@@ -103,6 +103,11 @@ public class DebugUtils {
             System.err.println("Unable to write file: " + ioe.getMessage());
             return false;
         }
+
+//        for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+//            System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
+//        }
+
         return true;
     }
 
@@ -121,17 +126,18 @@ public class DebugUtils {
             FileReader fileIn = new FileReader(file);
             BufferedReader in = new BufferedReader(fileIn);
 
+            int[] rngState = null;
+
             String line = in.readLine();
             String[] fields = line.split("\t");
             if (fields[0].equals("rng")) {
                 // if there is a random number generator state present then load it...
                 try {
-                    int[] rngState = new int[fields.length - 1];
+                    rngState = new int[fields.length - 1];
                     for (int i = 0; i < rngState.length; i++) {
                         rngState[i] = Integer.parseInt(fields[i + 1]);
                     }
 
-                    MathUtils.setRandomState(rngState);
                 } catch (NumberFormatException nfe) {
                     throw new RuntimeException("Unable to read state number from state file");
                 }
@@ -162,7 +168,7 @@ public class DebugUtils {
                 throw new RuntimeException("Unable to read lnL from state file");
             }
 
-            for (Parameter parameter : Parameter.FULL_PARAMETER_SET) {
+            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
                 line = in.readLine();
                 fields = line.split("\t");
 //                if (!fields[0].equals(parameter.getParameterName())) {
@@ -174,14 +180,21 @@ public class DebugUtils {
                     System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension());
                 }
 
-                for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                    parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 2]));
+                if (fields[0].equals("branchRates.categories.rootNodeNumber")) {
+                    System.out.println("eek");
+                    double value = Double.parseDouble(fields[2]);
+                    parameter.setParameterValue(0, 160.0);
+                } else {
+                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                        parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 2]));
+                    }
                 }
+
             }
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
             // which may not be associated with the right node
-            for (Model model : Model.FULL_MODEL_SET) {
+            for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
                     line = in.readLine();
                     fields = line.split("\t");
@@ -196,9 +209,13 @@ public class DebugUtils {
                 }
             }
 
+            if (rngState != null) {
+                MathUtils.setRandomState(rngState);
+            }
+
             in.close();
             fileIn.close();
-            for (Likelihood likelihood : Likelihood.FULL_LIKELIHOOD_SET) {
+            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
                 likelihood.makeDirty();
             }
         } catch (IOException ioe) {

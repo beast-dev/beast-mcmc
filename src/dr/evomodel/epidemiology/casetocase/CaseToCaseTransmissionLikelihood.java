@@ -31,7 +31,6 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.math.*;
-import dr.math.distributions.GammaDistribution;
 import dr.xml.*;
 
 import java.math.BigDecimal;

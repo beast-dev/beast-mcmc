@@ -89,6 +89,15 @@ public final class MarkovChain implements Serializable {
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
         this.evaluationTestThreshold = evaluationTestThreshold;
 
+        Likelihood.CONNECTED_LIKELIHOOD_SET.add(likelihood);
+        Likelihood.CONNECTED_LIKELIHOOD_SET.addAll(likelihood.getLikelihoodSet());
+
+        for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
+            if (!Likelihood.CONNECTED_LIKELIHOOD_SET.contains(l)) {
+                System.err.println("WARNING: Likelihood component, " + l.getId() + ", created but not used in the MCMC");
+            }
+        }
+
         currentScore = evaluate(likelihood, prior);
     }
 

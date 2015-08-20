@@ -32,7 +32,6 @@ import dr.math.distributions.NormalGammaDistribution;
 import dr.math.functionEval.GammaFunction;
 import dr.xml.*;
 import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.TDistribution;
 import org.apache.commons.math.distribution.TDistributionImpl;
 
 import java.util.ArrayList;

@@ -32,6 +32,10 @@ import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
 import dr.math.distributions.NormalDistribution;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 
 /**
  * This class gives an SIR trajectory and hands off a rate of coalescence at a given point in time.
@@ -162,6 +166,11 @@ public class SIRModel extends DemographicModel implements Likelihood {
 
     public boolean evaluateEarly() {
         return false;
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
     }
 
     public boolean isUsed() {

@@ -25,9 +25,7 @@
 
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
@@ -406,6 +404,11 @@ public class BeagleBranchLikelihood implements Likelihood {
 	@Override
 	public String prettyName() {
 		return Abstract.getPrettyName(this);
+	}
+
+	@Override
+	public Set<Likelihood> getLikelihoodSet() {
+		return new HashSet<Likelihood>(Arrays.asList(this));
 	}
 
 	@Override

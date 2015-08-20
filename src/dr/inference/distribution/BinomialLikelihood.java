@@ -30,8 +30,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.Binomial;
-import dr.math.Polynomial;
-import dr.math.matrixAlgebra.Vector;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

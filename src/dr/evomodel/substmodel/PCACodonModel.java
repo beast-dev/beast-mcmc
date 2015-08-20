@@ -26,10 +26,7 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.Codons;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.AbstractCodonModel;
 import dr.evomodelxml.substmodel.PCACodonModelParser;
-import dr.evomodel.substmodel.AbstractPCARateMatrix;
 import dr.inference.model.Parameter;
 
 /**

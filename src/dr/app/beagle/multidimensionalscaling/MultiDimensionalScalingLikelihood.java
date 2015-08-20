@@ -65,7 +65,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
      * @param mdsPrecision
      * @param locationsParameter
      * @param dataTable
-     * @param includeTruncation
+     * @param isLeftTruncated
      */
     public MultiDimensionalScalingLikelihood(
             int mdsDimension,

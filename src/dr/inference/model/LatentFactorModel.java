@@ -83,6 +83,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private boolean RecomputeResiduals=true;
     private boolean RecomputeFactors=true;
     private Vector<Integer> changedValues;
+    private Vector<Integer> storedChangedValues;
     private boolean factorsKnown=false;
     private boolean storedFactorsKnown=false;
 
@@ -102,6 +103,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         for (int i = 0; i <data.getDimension(); i++) {
             changedValues.add(i);
         }
+        storedChangedValues=new Vector<Integer>();
 //        data = new Matrix(dataIn.getParameterAsMatrix());
 //        factors = new Matrix(factorsIn.getParameterAsMatrix());
 //        loadings = new Matrix(loadingsIn.getParameterAsMatrix());
@@ -266,13 +268,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         int n=Left.getRowDimension();
         int p=Right.getColumnDimension();
 
-        if(factorsKnown==false && RecomputeFactors!=true || LxFKnown==false && RecomputeResiduals!=true){
+        if((factorsKnown==false && RecomputeFactors!=true) || (LxFKnown==false && RecomputeResiduals!=true)){
             double sum=0;
             ListIterator<Integer> li=changedValues.listIterator();
             while(li.hasNext()){
                 int index=li.next();
                 int i=index%data.getRowDimension();
                 int j=index/data.getRowDimension();
+                sum=0;
             for (int k = 0; k < dim; k++) {
 //                System.out.println(data.getColumnDimension());
 //                System.out.println(index);
@@ -309,7 +312,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private void subtract(MatrixParameter Left, double[] Right, double[] answer){
         int row=Left.getRowDimension();
         int col=Left.getColumnDimension();
-        if(!RecomputeResiduals && LxFKnown || !RecomputeFactors && !factorsKnown){
+        if((!RecomputeResiduals && LxFKnown) || (!RecomputeFactors && !factorsKnown)){
             while(!changedValues.isEmpty()){
                 int id=changedValues.remove(0);
                 int tcol=id/row;
@@ -475,6 +478,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
         System.arraycopy(LxF, 0, storedLxF, 0, residual.length);
         System.arraycopy(changed, 0, storedChanged, 0, changed.length);
+//        for (int i = 0; i <changedValues.size() ; i++) {
+//            storedChangedValues.addElement(changedValues.elementAt(i));    ;
+//        }
+
 
     }
 
@@ -502,6 +509,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         logDetCol=storedLogDetCol;
         logDetColKnown=storedLogDetColKnown;
         factorsKnown=storedFactorsKnown;
+//        changedValues=storedChangedValues;
+//        storedChangedValues=new Vector<Integer>();
 
 //        System.out.println(data.getParameterValue(10, 19));
 

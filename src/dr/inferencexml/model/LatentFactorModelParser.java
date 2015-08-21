@@ -44,6 +44,8 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public static final String SCALE_DATA="scaleData";
     public static final String CONTINUOUS="continuous";
     public static final String COMPUTE_RESIDUALS_FOR_DISCRETE="computeResidualsForDiscrete";
+    public static final String RECOMPUTE_RESIDUALS="recomputeResiduals";
+    public static final String RECOMPUTE_FACTORS="recomputeFactors";
 
 
     public String getParserName() {
@@ -59,6 +61,8 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
         DiagonalMatrix colPrecision = (DiagonalMatrix) xo.getChild(COLUMN_PRECISION).getChild(MatrixParameter.class);
         boolean newModel= xo.getAttribute(COMPUTE_RESIDUALS_FOR_DISCRETE, true);
+        boolean computeResiduals= xo.getAttribute(RECOMPUTE_RESIDUALS, true);
+        boolean computeFactors=xo.getAttribute(RECOMPUTE_FACTORS, true);
         Parameter continuous=null;
         if(xo.getChild(CONTINUOUS)!=null)
             continuous=(Parameter) xo.getChild(CONTINUOUS).getChild(Parameter.class);
@@ -76,13 +80,15 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        }
 
 
-        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous, newModel);
+        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous, newModel,computeResiduals,computeFactors);
     }
 
     private static final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(NUMBER_OF_FACTORS),
             AttributeRule.newBooleanRule(SCALE_DATA, true),
             AttributeRule.newBooleanRule(COMPUTE_RESIDUALS_FOR_DISCRETE, true),
+            AttributeRule.newBooleanRule(RECOMPUTE_FACTORS, true),
+            AttributeRule.newBooleanRule(RECOMPUTE_RESIDUALS, true),
             new ElementRule(DATA, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameter.class),
             }),

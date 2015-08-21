@@ -98,9 +98,11 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
-                             boolean scaleData, Parameter continuous, boolean newModel
+                             boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeFactors,  boolean recomputeResiduals
     ) {
         super("");
+        this.RecomputeResiduals=recomputeResiduals;
+        this.RecomputeFactors=recomputeFactors;
         changedValues=new Vector<Integer>();
         for (int i = 0; i <data.getDimension(); i++) {
             changedValues.add(i);

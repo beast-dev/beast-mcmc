@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="tracer">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/release_tracer/Windows/Tracer v1.6pre/lib/tracer.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>

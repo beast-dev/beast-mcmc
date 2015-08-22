@@ -90,7 +90,7 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
     private double prob00=0.95;
     private double prob11=0.5;
 
-    
+
     public LinkedList<Integer>[] getMutationList(){
     	return(mutationList);
     }
@@ -116,7 +116,8 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		 				int endBase_in,
 		 				String gp_prior_in,
 		 				double prob00_in,
-		 				double prob11_in
+		 				double prob11_in,
+		 				double initial_probSiteValue
 						){
 	 
 		super(TREE_CLUSTER_VIRUSES);	
@@ -135,12 +136,22 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 			 this.startBase = startBase_in;
 			 this.endBase = endBase_in;
 			 this.gp_prior = gp_prior_in;
+			 
+	 		System.out.println("gp prior = " + gp_prior);
+	 		if(gp_prior.compareTo("generic") == 0 ||gp_prior.compareTo("saturated") == 0||
+	 				gp_prior.compareTo("shrinkage") == 0||gp_prior.compareTo("correlated") == 0){
+	 		}
+	 		else{
+	 			System.out.println("Prior is incorrectly specified - choose from [generic/saturated/shrinkage/correlated]");
+	 			System.exit(0);
+	 		}
 
 			treeMutations(); //this routine also calculates the number of sites and checks for error
 			this.probSites = probSites_in;
 			this.siteIndicators = siteIndicators_in;
 			this.prob00 = prob00_in;
 			this.prob11 = prob11_in;
+	
 		}
 		//this.K = K_in; //to be deleted
 		this.indicators = indicators_in;
@@ -154,7 +165,7 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		this.virusLocationsTreeNode = virusLocationsTreeNode_in;
         
 		this.muPrecision = muPrecision;
-		this.p_on = p_onValue;
+		this.p_on = p_onValue; // this is shared by the clustering-only   and also the saturated prior in genotype to phenotype
 		this.initialK = initialK_in;
 		this.muMean = muMean;
 				
@@ -214,7 +225,7 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 	         //int numSites = 330;  //HARDCODED RIGHT NOW
  			if(gp_prior.compareTo("generic") == 0 ){
  				probSites.setDimension(1);
- 				probSites.setParameterValue(0, p_on.getParameterValue(0));
+ 				probSites.setParameterValue(0, initial_probSiteValue);
  			}
  			else{
  				probSites.setDimension(numSites); //initialize dimension of probSites
@@ -222,13 +233,13 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
  		         //double initial_p = 0.05;
  		         for(int k=0; k < numSites; k++){
  		        	 //probSites.setParameterValue(k, initial_p);
- 		        	 probSites.setParameterValue(k, p_on.getParameterValue(0) );
+ 		        	 probSites.setParameterValue(k, initial_probSiteValue );
  		         }  
  			}
 	         addVariable(probSites);
 	    
 	    
-	         //MAYBE ONLY INITIALIZE IT IF IT USES THE SHRINKAGE OR CORRELATION PRIOR?
+	         //MAYBE ONLY INITIALIZE IT IF IT USES THE SHRINKAGE OR correlated PRIOR?
 	         siteIndicators.setDimension(numSites);
 	         for(int k=0; k < numSites; k++){
 	        	 siteIndicators.setParameterValue(k, 1);
@@ -275,13 +286,13 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 		   //setClusterLabelsParameter();
 	 
 		  //loadIndicators();
-		 System.out.println("Finished loading the constructor for ClusterViruses");
+		 //System.out.println("Finished loading the constructor for TreeClusteringVirusesPrior");
 
 		 //genotype to phenotype
 		if(probSites_in != null){
 		 sampleCausativeStates();
 		 
-		 
+		 /*
 		 for(int i=0; i< treeModel.getNodeCount(); i++){
 			 System.out.print( (int)indicators.getParameterValue(i) + "\t");
 			 System.out.print("node i=" + i +":\t");
@@ -297,6 +308,7 @@ public class TreeClusteringVirusesPrior extends AbstractModelLikelihood {
 			 System.out.println("");
 			 
 		 }
+		 */
     	
 		}//genotype to phenotype
 
@@ -369,7 +381,7 @@ private void treeMutations() {
 			
 			codonSequence = codonSequence + GENETIC_CODE_TABLES.charAt(canonicalState);
 		}
-		System.out.println(codonSequence);
+		//System.out.println(codonSequence);
         sequence[curIndex] = codonSequence;
 		
     }
@@ -388,11 +400,11 @@ private void treeMutations() {
     	//assign value to the current node...
     	if(treeModel.getParent(cNode) == null){  //this means it is a root node
     		//visiting the root
-    		System.out.println(cNode.getNumber() + ":\t" + "root");
+    		//System.out.println(cNode.getNumber() + ":\t" + "root");
     	}
     	else{
     		//visiting
-    		System.out.print(cNode.getNumber() + ":\t");
+    		//System.out.print(cNode.getNumber() + ":\t");
 
     		//String listMutations = "\"";
     		mutationString[cNode.getNumber()]  = "\"";
@@ -404,10 +416,10 @@ private void treeMutations() {
     			if(nodeState.charAt(i) != parentState.charAt(i)){
     				count++;
     				if(count>1){
-    					System.out.print(",");
+    					//System.out.print(",");
     					mutationString[cNode.getNumber()] =  mutationString[cNode.getNumber()] + ",";
     				}
-    				System.out.print(i+1);
+    				//System.out.print(i+1);
     				mutationString[cNode.getNumber()] =  mutationString[cNode.getNumber()] + (i+1);  //i+1 so mutation starts from 1 - 330
     				
     			      // Make sure the list is initialized before adding to it
@@ -420,7 +432,7 @@ private void treeMutations() {
     			
     			//store in linked list
     		}
-    		System.out.println("");
+    		//System.out.println("");
     		mutationString[cNode.getNumber()]  = mutationString[cNode.getNumber()]  + "\"";
     	}
     	
@@ -498,11 +510,11 @@ public double getLogLikelihood() {
 			//generic:  assumes that each $\pi_j = \pi$, where $\pi \sim Beta(\alpha,\beta)$. The posterior $\pi$ is estimated from the MCMC run.
 			//Saturated prior: allows each $\pi_j$ to be different. $\pi_j$ is assumed to follow the hierarchical $Beta(\alpha, \beta)$ distribution, where $\alpha$ and $\beta$ are fixed according to plausible prior belief. The $Beta$ distribution is chosen because it is conjugate to the categorical distribution, so Gibbs sampling can be accomplished for $\pi$ (See details in the Implementation). 
 			//Shrinkage Prior: models the belief about epitope and non-epitope sites. Here, we define a latent vector of binary indicators for amino acid positions $\delta = (\delta_1, \dots, \delta_L)$, where $\delta_k= 1$ if position $j$ is an epitope site and 0 otherwise. 		
-			//Correlation prior: models the correlation among amino acid positions being epitopes or not (Figure \ref{correlationPrior}). This prior is motivated by the knowledge that groups of epitope sites tend to occur at adjacent positions.
+			//correlated prior: models the correlation among amino acid positions being epitopes or not (Figure \ref{correlationPrior}). This prior is motivated by the knowledge that groups of epitope sites tend to occur at adjacent positions.
 
 		double priorContribution = 0;
-		if(gp_prior.compareTo("correlation") == 0 ){
-			priorContribution = correlationPriorComputation();
+		if(gp_prior.compareTo("correlated") == 0 ){
+			priorContribution = correlatedPriorComputation();
 		}
 		else if(gp_prior.compareTo("shrinkage") == 0 ){
 			priorContribution = shrinkagePriorComputation();
@@ -537,7 +549,7 @@ private double saturatedPriorComputation() {
 	
 	double []probMutationSite = new double[numSites]; 
 	for(int i=0; i < numSites; i++){
-		probMutationSite[i] = probSites.getParameterValue(i);  //with the null-ing out the probSites with siteIndicators
+		probMutationSite[i] = probSites.getParameterValue(i);  
  	}
 	
 	//OMIT THE ROOT NODE BECAUSE THERE IS NO MUTATION ANYWAY
@@ -633,15 +645,15 @@ private double shrinkagePriorComputation() {
 		}
 	}
 	int numNonSignificantSites = numSites - numSignificantSites;
-	contribution +=  (numSignificantSites*Math.log( 0.45   ) + numNonSignificantSites*Math.log( 0.55 )  );
+	//contribution +=  (numSignificantSites*Math.log( 0.45   ) + numNonSignificantSites*Math.log( 0.55 )  );
 	//contribution +=  (numSignificantSites*Math.log(0.2) + numNonSignificantSites*Math.log(0.8));
-	//contribution += numSignificantSites*Math.log(p_on.getParameterValue(0)) + numNonSignificantSites*Math.log(1-p_on.getParameterValue(0));
+	contribution += numSignificantSites*Math.log(p_on.getParameterValue(0)) + numNonSignificantSites*Math.log(1-p_on.getParameterValue(0));
 	//System.out.println("#sig= " + numSignificantSites + " #nonsig=" + numNonSignificantSites);
 		
 	
 	return(contribution);
 }
-private double correlationPriorComputation() {
+private double correlatedPriorComputation() {
 	double contribution = 0;
 	double N_nodes = (double) treeModel.getNodeCount();
 	
@@ -830,7 +842,7 @@ public void sampleCausativeStates(){
 		    		  else if(gp_prior.compareTo("saturated") == 0 ){
 		    			   probM[count]=	probSites.getParameterValue(curMutation -1) ;
 		    		   }
-		    		  else if(gp_prior.compareTo("correlation") == 0 ||gp_prior.compareTo("shrinkage") == 0   ){
+		    		  else if(gp_prior.compareTo("correlated") == 0 ||gp_prior.compareTo("shrinkage") == 0   ){
 		    			   probM[count]=	probSites.getParameterValue(curMutation -1) * siteIndicators.getParameterValue(curMutation -1);
 		    		   }
 		    			count++;
@@ -1286,6 +1298,10 @@ private void setMembershipToClusterLabelIndexes(){
         public final static String PROB00 = "prob00";
         public final static String PROB11 = "prob11";
         
+
+        
+        public final static String INITIAL_PROBSITE_VALUE = "initialProbSite";
+        
         public final static String GP_PRIOR_OPTION = "gp_prior";
         
         public String getParserName() {
@@ -1302,13 +1318,22 @@ private void setMembershipToClusterLabelIndexes(){
 
         		double prob00 = 0.95;
             	if (xo.hasAttribute(PROB00)) {
-            		initialK = xo.getDoubleAttribute(PROB00);
+            		prob00 = xo.getDoubleAttribute(PROB00);
             	}
         		double prob11 = 0.5;
             	if (xo.hasAttribute(PROB11)) {
-            		initialK = xo.getDoubleAttribute(PROB11);
+            		prob11 = xo.getDoubleAttribute(PROB11);
             	}
 
+            	double initial_probSiteValue = 0.05;
+            	if (xo.hasAttribute(INITIAL_PROBSITE_VALUE)) {
+            		initial_probSiteValue = xo.getDoubleAttribute(INITIAL_PROBSITE_VALUE);
+            	}            	
+
+            	
+
+
+            	
             	
         		int startBase = 0;
             	if (xo.hasAttribute(STARTBASE)) {
@@ -1371,7 +1396,7 @@ private void setMembershipToClusterLabelIndexes(){
 		        Parameter muMean = (Parameter) cxo.getChild(Parameter.class);
 		        
 		        return new TreeClusteringVirusesPrior(treeModel, indicators, clusterLabels, clusterLabelsTreeNode, mu, hasDrift, virusLocations, virusLocationsTreeNode, muPrecision, probActiveNode, initialK, muMean, probSites, siteIndicators,
-		        		startBase, endBase, gp_prior, prob00, prob11); 
+		        		startBase, endBase, gp_prior, prob00, prob11, initial_probSiteValue); 
             }
 
             //************************************************************************
@@ -1398,9 +1423,10 @@ private void setMembershipToClusterLabelIndexes(){
             		AttributeRule.newDoubleRule(STARTBASE, true, "the start base in the sequence to consider in the genotype to phenotype model"),
             		AttributeRule.newIntegerRule(ENDBASE, true, "the end base in the sequence to consider in the genotype to phenotype model"),
             		AttributeRule.newIntegerRule(STARTBASE, true, "the start base in the sequence to consider in the genotype to phenotype model"),
-            		AttributeRule.newDoubleRule(PROB00, true, "correlation prior - the probability of staying at state 0 for adjacent siteIndicator"),
-            		AttributeRule.newDoubleRule(PROB11, true, "correlation prior - the probability of staying at state 1 for adjacent siteIndicator"),
-
+            		AttributeRule.newDoubleRule(PROB00, true, "correlated prior - the probability of staying at state 0 for adjacent siteIndicator"),
+            		AttributeRule.newDoubleRule(PROB11, true, "correlated prior - the probability of staying at state 1 for adjacent siteIndicator"),
+            		AttributeRule.newStringRule(GP_PRIOR_OPTION, true, "specifying the prior for probSites (and siteIndicators)"),
+            		AttributeRule.newDoubleRule(INITIAL_PROBSITE_VALUE, true, "the initial value of the probSite"),
             		
                     new ElementRule(EXCISIONPOINTS, Parameter.class),
                     new ElementRule(CLUSTERLABELS, Parameter.class),
@@ -1411,8 +1437,8 @@ private void setMembershipToClusterLabelIndexes(){
                     new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class), 
                     new ElementRule(INDICATORS, Parameter.class),
                     //make it so that it isn't required
-                  //  new ElementRule(SITEINDICATORS, Parameter.class),
-                  //  new ElementRule(PROBSITES, Parameter.class),
+                    new ElementRule(SITEINDICATORS, Parameter.class, "the indicator of a site having probability greater than 0 of being associated with antigenic transition", true),
+                    new ElementRule(PROBSITES, Parameter.class, "the probability that mutation on a site is associated with antigenic transition", true),
                     new ElementRule(TreeModel.class),
                     new ElementRule(MUPRECISION, Parameter.class),
                     new ElementRule(PROBACTIVENODE, Parameter.class),

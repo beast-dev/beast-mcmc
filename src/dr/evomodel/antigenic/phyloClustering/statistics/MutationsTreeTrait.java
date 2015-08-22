@@ -60,11 +60,13 @@ public class MutationsTreeTrait implements TreeTraitProvider {
 	     // Universal
     		String GENETIC_CODE_TABLES ="KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLF";
 
-    		 int numCodons = 330;
+    		int numCodons = clusterPrior.getNumSites();
+    		 //int numCodons = 330;
 	        for(int curIndex = 0; curIndex < numNodes; curIndex ++){
 	    		String ns =  (String) treeModel.getNodeAttribute( treeModel.getNode(curIndex), "states");
 	
-	    		ns = ns.substring(3+27, ns.length() - 1);
+	    		ns = ns.substring(clusterPrior.getStartBase(), clusterPrior.getEndBase() );
+	    		//ns = ns.substring(3+27, ns.length() - 1);
 	    		//System.out.println(ns);
 	    		
 	    		
@@ -82,7 +84,7 @@ public class MutationsTreeTrait implements TreeTraitProvider {
 	    			
 	    			codonSequence = codonSequence + GENETIC_CODE_TABLES.charAt(canonicalState);
 	    		}
-				System.out.println(codonSequence);
+				//System.out.println(codonSequence);
 	            sequence[curIndex] = codonSequence;
 	    		
 	        }
@@ -101,11 +103,11 @@ public class MutationsTreeTrait implements TreeTraitProvider {
 		    	//assign value to the current node...
 		    	if(treeModel.getParent(cNode) == null){  //this means it is a root node
 		    		//visiting the root
-		    		System.out.println(cNode.getNumber() + ":\t" + "root");
+		    		//System.out.println(cNode.getNumber() + ":\t" + "root");
 		    	}
 		    	else{
 		    		//visiting
-		    		System.out.print(cNode.getNumber() + ":\t");
+		    		//System.out.print(cNode.getNumber() + ":\t");
 
 		    		//String listMutations = "\"";
 		    		mutationString[cNode.getNumber()]  = "\"";
@@ -117,16 +119,16 @@ public class MutationsTreeTrait implements TreeTraitProvider {
 		    			if(nodeState.charAt(i) != parentState.charAt(i)){
 		    				count++;
 		    				if(count>1){
-		    					System.out.print(",");
+		    					//System.out.print(",");
 		    					mutationString[cNode.getNumber()] =  mutationString[cNode.getNumber()] + ",";
 		    				}
-		    				System.out.print(i+1);
+		    				//System.out.print(i+1);
 		    				mutationString[cNode.getNumber()] =  mutationString[cNode.getNumber()] + (i+1);  //i+1 so mutation starts from 1 - 330
 		    			}
 		    			
 		    			//store in linked list
 		    		}
-		    		System.out.println("");
+		    		//System.out.println("");
 		    		mutationString[cNode.getNumber()]  = mutationString[cNode.getNumber()]  + "\"";
 		    	}
 		    	

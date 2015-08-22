@@ -53,7 +53,8 @@ public class muMeanTranslateInactiveMu1Operator extends AbstractCoercableOperato
 	
 
 	public double doOperation() throws OperatorFailedException {
-       
+       System.out.println("run here stop");
+       System.exit(0);
 		//unbounded walk
         double change = (2.0 * MathUtils.nextDouble() - 1.0) * windowSize;
         

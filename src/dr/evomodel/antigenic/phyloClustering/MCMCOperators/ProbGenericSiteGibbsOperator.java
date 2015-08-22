@@ -27,20 +27,31 @@ import dr.xml.XMLSyntaxRule;
  * @author Charles Cheung
  * @author Trevor Bedford
  */
-public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements GibbsOperator {
+public class ProbGenericSiteGibbsOperator  extends SimpleMCMCOperator implements GibbsOperator {
 	
-    public final static String CLASSNAME_OPERATOR = "ProbSitesGibbsOperator";
+    public final static String CLASSNAME_OPERATOR = "ProbGenericSiteGibbsOperator";
 
     private TreeClusteringVirusesPrior clusterPrior;
     private Parameter probSites;
     private int numSites;
     
-    public ProbSitesGibbsOperator(double weight, TreeClusteringVirusesPrior clusterPrior_in, Parameter probSites_in) {  	
+    private double probSite_alpha = 1;
+    private double probSite_beta = 1;
+    
+    
+    public ProbGenericSiteGibbsOperator(double weight, TreeClusteringVirusesPrior clusterPrior_in, Parameter probSites_in, 
+    		double probSite_alpha_in,
+				double probSite_beta_in) {  	
     	clusterPrior = clusterPrior_in;
     	probSites = probSites_in;
     	numSites = clusterPrior.getNumSites();
         setWeight(weight);
-   
+		this.probSite_alpha = probSite_alpha_in;
+		this.probSite_beta = probSite_beta_in;
+		
+		//System.out.println("shape = "+ probSite_alpha_in);
+		//System.out.println("shapeB = " + probSite_beta_in);
+
     }
     
 
@@ -51,14 +62,22 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
        int[] nonCausalCount = clusterPrior.getNonCausalCount();
 		       
        //int numSites = 330;
-       int numSites = probSites.getDimension();
+       int numSites = clusterPrior.getNumSites();
        
- 	   int whichSite = (int) (Math.floor(Math.random()*numSites)); //choose from possibilities
-
+       double numCausals = 0;
+       double numNonCausals = 0;
+       for(int i=0; i < numSites; i++){
+    	   numCausals = numCausals + causalCount[i];
+    	   numNonCausals = numNonCausals + nonCausalCount[i];
+       }
+       //System.out.println("perform a Gibbs move on the number of sites");
+       //System.out.println("# causals = " + numCausals);
+       //System.out.println("# noncausals = " + numNonCausals);
+       
  	   //SHOULD GET IT FROM THE PRIOR SPECIFICATION COZ THEY SHOULD MATCH
- 	   double value = Beta.staticNextDouble(causalCount[whichSite]+1, nonCausalCount[whichSite]+1); //posterior
+ 	   double value = Beta.staticNextDouble(numCausals+ probSite_alpha, numNonCausals+probSite_beta); //posterior
  	   
- 	   probSites.setParameterValue(whichSite, value);
+ 	   probSites.setParameterValue(0, value);
  	   
  	  // System.out.println("hehe: " + whichSite + "," + probSites.getParameterValue(whichSite));
  	   
@@ -100,6 +119,8 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
 
 
     	public final static String PROBSITES = "probSites";
+        public final static String PROBSITE_ALPHA = "shape";
+        public final static String PROBSITE_BETA = "shapeB";
 
         public String getParserName() {
              return CLASSNAME_OPERATOR;
@@ -120,7 +141,17 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
 
              TreeClusteringVirusesPrior clusterPrior = (TreeClusteringVirusesPrior) xo.getChild(TreeClusteringVirusesPrior.class);
 
-             return new ProbSitesGibbsOperator(weight, clusterPrior, probSites);
+      		double probSite_alpha = 1;
+        	if (xo.hasAttribute(PROBSITE_ALPHA)) {
+        		probSite_alpha = xo.getDoubleAttribute(PROBSITE_ALPHA);
+        	}
+    		double probSite_beta = 1;
+        	if (xo.hasAttribute(PROBSITE_BETA)) {
+        		probSite_beta = xo.getDoubleAttribute(PROBSITE_BETA);
+        	}
+                          
+             
+             return new ProbGenericSiteGibbsOperator(weight, clusterPrior, probSites, probSite_alpha, probSite_beta);
 
          }
 
@@ -145,6 +176,9 @@ public class ProbSitesGibbsOperator  extends SimpleMCMCOperator implements Gibbs
                  AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
  	            new ElementRule(TreeClusteringVirusesPrior.class),
                 new ElementRule(PROBSITES, Parameter.class),
+         		AttributeRule.newDoubleRule(PROBSITE_ALPHA, true, "the alpha parameter in the Beta prior"),
+         		AttributeRule.newDoubleRule(PROBSITE_BETA, true, "the beta parameter in the Beta prior"),
+
          };
      
      };

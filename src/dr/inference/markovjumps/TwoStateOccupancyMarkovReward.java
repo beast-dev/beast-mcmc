@@ -206,8 +206,10 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
 
         if (jumpProbabilities == null) {
             jumpProbabilities = new double[maxK + 1];
-            computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities);
+//            computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities);   // Error: probs are function of time
         }
+        computeJumpProbabilities(lambda0, lambda1, time, C, D, jumpProbabilities); // are function of time.
+        // TODO Could cache computeJumpProbabilities(key = time) in HashMap
 
         if (symmetric) {
             // Single rate (symmetric)
@@ -235,7 +237,7 @@ public class TwoStateOccupancyMarkovReward implements MarkovReward {
                         GammaDistribution.pdf(time - x, m + 1, 1.0 / lambda0) /
                         GeneralizedIntegerGammaDistribution.pdf(time, m, m + 1, lambda1, lambda0); // TODO Cache
             }
-
+            // TODO Remove code duplication in if (symmetric) { } else { }
             return sum;
         }
     }

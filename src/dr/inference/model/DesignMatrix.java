@@ -68,9 +68,9 @@ public class DesignMatrix extends MatrixParameter {
         return value;
     }
 
-    public double getParameterValue(int index) {
-        throw new RuntimeException("Univariate value from a design matrix");
-    }
+//    public double getParameterValue(int index) {
+//        throw new RuntimeException("Univariate value from a design matrix");
+//    }
 
     public void addParameter(Parameter param) {
         super.addParameter(param);

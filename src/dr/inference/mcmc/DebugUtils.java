@@ -48,6 +48,8 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DebugUtils {
 
@@ -89,7 +91,7 @@ public class DebugUtils {
                 out.println();
             }
 
-            for (Model model : Model.FULL_MODEL_SET) {
+            for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
                     out.print(model.getModelName());
                     out.print("\t");
@@ -194,19 +196,42 @@ public class DebugUtils {
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
             // which may not be associated with the right node
+            Set<String> expectedTreeModelNames = new HashSet<String>();
             for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
-                    line = in.readLine();
-                    fields = line.split("\t");
-                    if (!fields[0].equals(model.getModelName())) {
-                        throw new RuntimeException("Unable to match state parameter: " + fields[0] + ", expecting " + model.getModelName());
-                    }
-                    NewickImporter importer = new NewickImporter(fields[1]);
-                    Tree tree = importer.importNextTree();
-                    ((TreeModel) model).beginTreeEdit();
-                    ((TreeModel) model).adoptTreeStructure(tree);
-                    ((TreeModel) model).endTreeEdit();
+                    expectedTreeModelNames.add(model.getModelName());
                 }
+            }
+
+            // Read in all (possibly more than one) tree
+            while((line = in.readLine()) != null) {
+                fields = line.split("\t");
+                boolean treeFound = false;
+
+                for (Model model : Model.CONNECTED_MODEL_SET) {
+                    if (model instanceof TreeModel && fields[0].equals(model.getModelName())) {
+                        treeFound = true;
+                        NewickImporter importer = new NewickImporter(fields[1]);
+                        Tree tree = importer.importNextTree();
+                        ((TreeModel) model).beginTreeEdit();
+                        ((TreeModel) model).adoptTreeStructure(tree);
+                        ((TreeModel) model).endTreeEdit();
+
+                        expectedTreeModelNames.remove(model.getModelName());
+                    }
+                }
+
+                if (!treeFound) {
+                    throw new RuntimeException("Unable to match state parameter: " + fields[0]);
+                }
+            }
+
+            if (expectedTreeModelNames.size() > 0) {
+                StringBuilder sb = new StringBuilder();
+                for (String notFoundName : expectedTreeModelNames) {
+                    sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
+                }
+                throw new RuntimeException(sb.toString());
             }
 
             if (rngState != null) {

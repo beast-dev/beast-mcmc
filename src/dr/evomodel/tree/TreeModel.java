@@ -67,7 +67,7 @@ public class TreeModel extends AbstractModel implements MultivariateTraitTree {
 
     public TreeModel(String id, Tree tree, boolean fixHeights) {
 
-        this(TREE_MODEL, tree, false, fixHeights);
+        this(id, tree, false, fixHeights);
         setId(id);
     }
 

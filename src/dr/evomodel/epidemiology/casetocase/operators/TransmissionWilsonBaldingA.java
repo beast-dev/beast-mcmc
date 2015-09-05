@@ -27,19 +27,16 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -93,7 +90,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         int eligibleNodeCount = eligibleNodes.size();
 
         final NodeRef iP = tree.getParent(i);
-        Integer[] samePaintings = c2cLikelihood.samePartition(iP, false);
+        Integer[] samePaintings = c2cLikelihood.samePartitionElement(iP, false);
         HashSet<Integer> possibleDestinations = new HashSet<Integer>();
         // we can insert the node above OR BELOW any node in the same partition
         for (Integer samePainting : samePaintings) {
@@ -131,7 +128,6 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
             if(PiP!=null){
                 PiPCase = branchMap.get(PiP.getNumber());
             }
-
 
             // what happens on i's branch
 
@@ -227,8 +223,8 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
     private boolean eligibleForMove(NodeRef node, TreeModel tree, BranchMapModel branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
-
-        return  (!tree.isRoot(node) && ((tree.getParent(tree.getParent(node))!=null
+        return  (!tree.isRoot(node)
+                && ((tree.getParent(tree.getParent(node))!=null
                 && branchMap.get(tree.getParent(node).getNumber())
                 ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
                 || branchMap.get(tree.getParent(node).getNumber())==branchMap.get(getOtherChild(tree,
@@ -296,7 +292,4 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
             };
         }
     };
-
-
-
 }

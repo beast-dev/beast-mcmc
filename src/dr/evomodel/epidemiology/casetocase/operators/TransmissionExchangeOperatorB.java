@@ -121,10 +121,6 @@ public class TransmissionExchangeOperatorB extends AbstractTreeOperator {
             jCase.setInfectionBranchPosition(MathUtils.nextDouble());
         }
 
-/*
-        Intuitively it would seem this is a lot more likely to succeed than operator A.
-*/
-
         exchangeNodes(tree, i, j, iP, jP);
 
         ArrayList<NodeRef> reverseCandidatesIfirst = getPossibleExchanges(tree, i);

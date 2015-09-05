@@ -105,9 +105,6 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
         double logq = 0;
 
-        final NodeRef root = tree.getRoot();
-        final double oldTreeHeight = tree.getNodeHeight(root);
-
         NodeRef i;
 
         // 1. choose a random eligible node

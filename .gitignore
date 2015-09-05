@@ -5,12 +5,3 @@ bin/
 build/
 dist/
 out/
-.idea/
-
-beast-mcmc.properties
-
-beast-mcmc.xml
-
-module_beast-mcmc.xml
-
-src/META-INF/MANIFEST.MF

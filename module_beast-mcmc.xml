@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_beast-mcmc" default="compile.module.beast-mcmc">
+  <dirname property="module.beast-mcmc.basedir" file="${ant.file.module_beast-mcmc}"/>
+  
+  <property name="module.jdk.home.beast-mcmc" value="${project.jdk.home}"/>
+  <property name="module.jdk.bin.beast-mcmc" value="${project.jdk.bin}"/>
+  <property name="module.jdk.classpath.beast-mcmc" value="${project.jdk.classpath}"/>
+  
+  <property name="compiler.args.beast-mcmc" value="-encoding UTF-8 -source 1.6 ${compiler.args}"/>
+  
+  <property name="beast-mcmc.output.dir" value="${module.beast-mcmc.basedir}/out/production/beast-mcmc"/>
+  <property name="beast-mcmc.testoutput.dir" value="${module.beast-mcmc.basedir}/out/test/beast-mcmc"/>
+  
+  <path id="beast-mcmc.module.bootclasspath">
+    <!-- Paths to be included in compilation bootclasspath -->
+  </path>
+  
+  <path id="beast-mcmc.module.production.classpath">
+    <path refid="${module.jdk.classpath.beast-mcmc}"/>
+    <path refid="library.tracer1.classpath"/>
+    <path refid="library.tracer.classpath"/>
+    <path refid="library.phylogeography.classpath"/>
+    <path refid="library.lib1.classpath"/>
+  </path>
+  
+  <path id="beast-mcmc.runtime.production.module.classpath">
+    <pathelement location="${beast-mcmc.output.dir}"/>
+    <path refid="library.tracer1.classpath"/>
+    <path refid="library.tracer.classpath"/>
+    <path refid="library.phylogeography.classpath"/>
+    <path refid="library.lib1.classpath"/>
+  </path>
+  
+  <path id="beast-mcmc.module.classpath">
+    <path refid="${module.jdk.classpath.beast-mcmc}"/>
+    <pathelement location="${beast-mcmc.output.dir}"/>
+    <path refid="library.tracer1.classpath"/>
+    <path refid="library.tracer.classpath"/>
+    <path refid="library.phylogeography.classpath"/>
+    <path refid="library.lib1.classpath"/>
+  </path>
+  
+  <path id="beast-mcmc.runtime.module.classpath">
+    <pathelement location="${beast-mcmc.testoutput.dir}"/>
+    <pathelement location="${beast-mcmc.output.dir}"/>
+    <path refid="library.tracer1.classpath"/>
+    <path refid="library.tracer.classpath"/>
+    <path refid="library.phylogeography.classpath"/>
+    <path refid="library.lib1.classpath"/>
+  </path>
+  
+  
+  <patternset id="excluded.from.module.beast-mcmc">
+    <patternset refid="ignored.files"/>
+  </patternset>
+  
+  <patternset id="excluded.from.compilation.beast-mcmc">
+    <patternset refid="excluded.from.module.beast-mcmc"/>
+  </patternset>
+  
+  <path id="beast-mcmc.module.sourcepath">
+    <dirset dir="${module.beast-mcmc.basedir}">
+      <include name="src"/>
+    </dirset>
+  </path>
+  
+  
+  <target name="compile.module.beast-mcmc" depends="compile.module.beast-mcmc.production,compile.module.beast-mcmc.tests" description="Compile module beast-mcmc"/>
+  
+  <target name="compile.module.beast-mcmc.production" depends="register.custom.compilers" description="Compile module beast-mcmc; production classes">
+    <mkdir dir="${beast-mcmc.output.dir}"/>
+    <javac2 destdir="${beast-mcmc.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}" memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.beast-mcmc}/javac">
+      <compilerarg line="${compiler.args.beast-mcmc}"/>
+      <bootclasspath refid="beast-mcmc.module.bootclasspath"/>
+      <classpath refid="beast-mcmc.module.production.classpath"/>
+      <src refid="beast-mcmc.module.sourcepath"/>
+      <patternset refid="excluded.from.compilation.beast-mcmc"/>
+    </javac2>
+    
+    <copy todir="${beast-mcmc.output.dir}">
+      <fileset dir="${module.beast-mcmc.basedir}/src">
+        <patternset refid="compiler.resources"/>
+        <type type="file"/>
+      </fileset>
+    </copy>
+  </target>
+  
+  <target name="compile.module.beast-mcmc.tests" depends="register.custom.compilers,compile.module.beast-mcmc.production" description="compile module beast-mcmc; test classes" unless="skip.tests"/>
+  
+  <target name="clean.module.beast-mcmc" description="cleanup module">
+    <delete dir="${beast-mcmc.output.dir}"/>
+    <delete dir="${beast-mcmc.testoutput.dir}"/>
+  </target>
+</project>

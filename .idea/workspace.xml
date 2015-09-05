@@ -1,0 +1,1528 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ArtifactsWorkspaceSettings">
+    <artifacts-to-build>
+      <artifact name="beast-mcmc:jar" />
+    </artifacts-to-build>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="14421373-2851-4287-babe-50b1e322fdf5" name="Default" comment="" />
+    <list id="0f9761a4-0e1a-41f6-9e46-3f0b6f168a33" name="Log file now includes index case information (cherry picked from commit 9c9bf32)" comment="Log file now includes index case information&#10;(cherry picked from commit 9c9bf32)" />
+    <ignored path="beast-mcmc.iws" />
+    <ignored path=".idea/workspace.xml" />
+    <ignored path="$PROJECT_DIR$/out/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="TRACKING_ENABLED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
+  <component name="CreatePatchCommitExecutor">
+    <option name="PATCH_PATH" value="" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
+  <component name="FavoritesManager">
+    <favorites_list name="beast-mcmc" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file leaf-file-name="CaseToCaseTransmissionLikelihood.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="35" selection-start-line="1" selection-start-column="35" selection-end-line="1" selection-end-column="35" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#6478#6479#0" expanded="true" />
+                <element signature="e#6514#6515#0" expanded="true" />
+                <element signature="e#6545#6546#0" expanded="true" />
+                <element signature="e#6572#6573#0" expanded="true" />
+                <element signature="e#6630#6631#0" expanded="true" />
+                <element signature="e#6667#6668#0" expanded="true" />
+                <element signature="e#7295#7309#0" expanded="true" />
+                <element signature="e#13595#13622#0" expanded="true" />
+                <element signature="e#17153#17164#0" expanded="true" />
+                <element signature="e#18726#18727#0" expanded="true" />
+                <element signature="e#18761#18762#0" expanded="true" />
+                <element signature="e#18798#18799#0" expanded="true" />
+                <element signature="e#18833#18834#0" expanded="true" />
+                <element signature="e#18873#18874#0" expanded="true" />
+                <element signature="e#18909#18910#0" expanded="true" />
+                <element signature="e#18953#18954#0" expanded="true" />
+                <element signature="e#18996#18997#0" expanded="true" />
+                <element signature="e#20150#20151#0" expanded="true" />
+                <element signature="e#20186#20187#0" expanded="true" />
+                <element signature="e#20453#20454#0" expanded="true" />
+                <element signature="e#20522#20523#0" expanded="true" />
+                <element signature="e#20563#20564#0" expanded="true" />
+                <element signature="e#20630#20631#0" expanded="true" />
+                <element signature="e#21504#21515#0" expanded="true" />
+                <element signature="e#21625#21626#0" expanded="true" />
+                <element signature="e#21692#21693#0" expanded="true" />
+                <element signature="e#21814#21815#0" expanded="true" />
+                <element signature="e#21883#21884#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="CaseToCaseTreeLikelihood.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CaseToCaseTreeLikelihood.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="27" selection-start-line="1" selection-start-column="27" selection-end-line="1" selection-end-column="27" />
+              <folding>
+                <element signature="imports" expanded="true" />
+                <element signature="e#6528#6529#0" expanded="true" />
+                <element signature="e#6581#6582#0" expanded="true" />
+                <element signature="e#6622#6623#0" expanded="true" />
+                <element signature="e#6672#6673#0" expanded="true" />
+                <element signature="e#6735#6736#0" expanded="true" />
+                <element signature="e#6802#6803#0" expanded="true" />
+                <element signature="e#6947#6948#0" expanded="true" />
+                <element signature="e#7006#7007#0" expanded="true" />
+                <element signature="e#7051#7052#0" expanded="true" />
+                <element signature="e#7109#7110#0" expanded="true" />
+                <element signature="e#7176#7177#0" expanded="true" />
+                <element signature="e#7257#7258#0" expanded="true" />
+                <element signature="e#7685#7686#0" expanded="true" />
+                <element signature="e#7716#7717#0" expanded="true" />
+                <element signature="e#7756#7757#0" expanded="true" />
+                <element signature="e#7795#7796#0" expanded="true" />
+                <element signature="e#8877#8878#0" expanded="true" />
+                <element signature="e#8928#8929#0" expanded="true" />
+                <element signature="e#10091#10092#0" expanded="true" />
+                <element signature="e#10159#10160#0" expanded="true" />
+                <element signature="e#10925#10939#0" expanded="true" />
+                <element signature="e#12866#12875#0" expanded="true" />
+                <element signature="e#14001#14010#0" expanded="true" />
+                <element signature="e#14915#14924#0" expanded="true" />
+                <element signature="e#15421#15430#0" expanded="true" />
+                <element signature="e#16126#16127#0" expanded="true" />
+                <element signature="e#16188#16189#0" expanded="true" />
+                <element signature="e#17269#17283#0" expanded="true" />
+                <element signature="e#20126#20127#0" expanded="true" />
+                <element signature="e#20176#20177#0" expanded="true" />
+                <element signature="e#22108#22109#0" expanded="true" />
+                <element signature="e#22140#22141#0" expanded="true" />
+                <element signature="e#22195#22196#0" expanded="true" />
+                <element signature="e#22249#22250#0" expanded="true" />
+                <element signature="e#23087#23088#0" expanded="true" />
+                <element signature="e#23140#23141#0" expanded="true" />
+                <element signature="e#24177#24178#0" expanded="true" />
+                <element signature="e#24230#24231#0" expanded="true" />
+                <element signature="e#24276#24277#0" expanded="true" />
+                <element signature="e#24327#24328#0" expanded="true" />
+                <element signature="e#24372#24373#0" expanded="true" />
+                <element signature="e#24424#24425#0" expanded="true" />
+                <element signature="e#24538#24539#0" expanded="true" />
+                <element signature="e#24593#24594#0" expanded="true" />
+                <element signature="e#24638#24639#0" expanded="true" />
+                <element signature="e#24709#24710#0" expanded="true" />
+                <element signature="e#24859#24860#0" expanded="true" />
+                <element signature="e#24910#24911#0" expanded="true" />
+                <element signature="e#25230#25231#0" expanded="true" />
+                <element signature="e#25299#25300#0" expanded="true" />
+                <element signature="e#25370#25371#0" expanded="true" />
+                <element signature="e#25426#25427#0" expanded="true" />
+                <element signature="e#25857#25871#0" expanded="true" />
+                <element signature="e#31541#31549#0" expanded="true" />
+                <element signature="e#32675#32683#0" expanded="true" />
+                <element signature="e#33435#33443#0" expanded="true" />
+                <element signature="e#35832#35833#0" expanded="true" />
+                <element signature="e#35887#35888#0" expanded="true" />
+                <element signature="e#36950#36951#0" expanded="true" />
+                <element signature="e#37025#37026#0" expanded="true" />
+                <element signature="e#38238#38266#0" expanded="true" />
+                <element signature="e#40554#40568#0" expanded="true" />
+                <element signature="e#40814#40828#0" expanded="true" />
+                <element signature="e#48903#48904#0" expanded="true" />
+                <element signature="e#48963#48964#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="InfectionBranchMovementOperator.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/InfectionBranchMovementOperator.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="23" column="3" selection-start-line="23" selection-start-column="3" selection-end-line="23" selection-end-column="3" />
+              <folding>
+                <element signature="e#0#9539#0" expanded="true" />
+                <element signature="imports" expanded="true" />
+                <element signature="e#2130#2131#0" expanded="true" />
+                <element signature="e#2187#2188#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="InfectionBranchGibbsOperator.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/InfectionBranchGibbsOperator.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="47" column="13" selection-start-line="47" selection-start-column="13" selection-end-line="47" selection-end-column="13" />
+              <folding>
+                <element signature="e#0#8104#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="TransmissionExchangeOperatorB.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionExchangeOperatorB.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="32" selection-start-line="1" selection-start-column="32" selection-end-line="1" selection-end-column="32" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="TransmissionSubtreeSlideA.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionSubtreeSlideA.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="23" selection-end-column="3" />
+              <folding>
+                <element signature="e#0#18766#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="TransmissionSubtreeSlideB.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionSubtreeSlideB.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="TransmissionWilsonBaldingA.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionWilsonBaldingA.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="TransmissionWilsonBaldingB.java" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionWilsonBaldingB.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="WithinCaseCoalescent.java" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/WithinCaseCoalescent.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.025773196">
+              <caret line="1" column="23" selection-start-line="1" selection-start-column="23" selection-end-line="1" selection-end-column="23" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="HARD" />
+  </component>
+  <component name="GradleLocalSettings">
+    <option name="externalProjectsViewState">
+      <projects_view />
+    </option>
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/periodpriors/OneOverStDevPeriodPriorDistribution.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/substmodel/ComplexSubstitutionModel.java" />
+        <option value="$PROJECT_DIR$/src/dr/inference/model/MatrixParameter.java" />
+        <option value="$PROJECT_DIR$/src/dr/inference/operators/MultivariateNormalOperator.java" />
+        <option value="$PROJECT_DIR$/src/dr/inference/distribution/GeneralizedLinearModel.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CategoryOutbreak.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/periodpriors/AbstractPeriodPriorDistribution.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/periodpriors/NormalPeriodPriorDistribution.java" />
+        <option value="$PROJECT_DIR$/src/dr/inference/markovchain/MarkovChain.java" />
+        <option value="$PROJECT_DIR$/src/dr/app/tools/LogCombiner.java" />
+        <option value="$PROJECT_DIR$/src/dr/inferencexml/distribution/GeneralizedLinearModelParser.java" />
+        <option value="$PROJECT_DIR$/src/dr/app/beast/BeastMain.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionExchangeOperatorA.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/InfectionBranchMovementOperator.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionExchangeOperatorB.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionSubtreeSlideA.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionSubtreeSlideB.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionWilsonBaldingA.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionWilsonBaldingB.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CaseToCaseTreeLikelihood.java" />
+        <option value="$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/WithinCaseCoalescent.java" />
+      </list>
+    </option>
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="Bundled (Maven 3)" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="NamedScopeManager">
+    <order />
+  </component>
+  <component name="ProjectFrameBounds">
+    <option name="y" value="22" />
+    <option name="width" value="1920" />
+    <option name="height" value="1002" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="false">
+    <OptionsSetting value="true" id="Add" />
+    <OptionsSetting value="true" id="Remove" />
+    <OptionsSetting value="true" id="Checkout" />
+    <OptionsSetting value="true" id="Update" />
+    <OptionsSetting value="true" id="Status" />
+    <OptionsSetting value="true" id="Edit" />
+    <ConfirmationsSetting value="0" id="Add" />
+    <ConfirmationsSetting value="0" id="Remove" />
+  </component>
+  <component name="ProjectView">
+    <navigator currentView="ProjectPane" proportions="" version="1">
+      <flattenPackages />
+      <showMembers />
+      <showModules />
+      <showLibraryContents />
+      <hideEmptyPackages />
+      <abbreviatePackageNames />
+      <autoscrollToSource />
+      <autoscrollFromSource />
+      <sortByType />
+    </navigator>
+    <panes>
+      <pane id="Scratches" />
+      <pane id="Scope" />
+      <pane id="ProjectPane">
+        <subPane>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dr" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dr" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="evomodel" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dr" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="evomodel" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="epidemiology" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dr" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="evomodel" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="epidemiology" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="casetocase" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="beast-mcmc" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="src" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="dr" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="evomodel" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="epidemiology" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="casetocase" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="operators" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
+      <pane id="PackagesPane" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="GoToClass.includeLibraries" value="false" />
+    <property name="GoToClass.toSaveIncludeLibraries" value="false" />
+    <property name="GoToFile.includeJavaFiles" value="false" />
+    <property name="MemberChooser.sorted" value="false" />
+    <property name="MemberChooser.showClasses" value="true" />
+    <property name="MemberChooser.copyJavadoc" value="false" />
+    <property name="GenerateAntBuildDialog.generateSingleFile" value="false" />
+    <property name="GenerateAntBuildDialog.enableUiFormCompile" value="true" />
+    <property name="GenerateAntBuildDialog.forceTargetJdk" value="true" />
+    <property name="GenerateAntBuildDialog.backupFiles" value="true" />
+    <property name="GenerateAntBuildDialog.inclineRuntiemClasspath" value="false" />
+    <property name="GenerateAntBuildDialog.generateIdeaHomeProperty" value="false" />
+    <property name="GenerateAntBuildDialog.outputFileNameProperty" value="beast-mcmc" />
+    <property name="project.structure.last.edited" value="Artifacts" />
+    <property name="project.structure.proportion" value="0.15" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/commons-math-2.2.jar!/" />
+    <property name="recentsLimit" value="5" />
+    <property name="restartRequiresConfirmation" value="true" />
+    <property name="dynamic.classpath" value="false" />
+    <property name="FullScreen" value="false" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth0" value="251" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder0" value="0" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth1" value="261" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder1" value="1" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth2" value="264" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder2" value="2" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth3" value="1059" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder3" value="3" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth0" value="257" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder0" value="0" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth1" value="259" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder1" value="1" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth2" value="262" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder2" value="2" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth3" value="1057" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder3" value="3" />
+    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+    <property name="settings.editor.splitter.proportion" value="0.2" />
+  </component>
+  <component name="RunManager" selected="Application.BEAST">
+    <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
+      <module name="" />
+      <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea" />
+      <option name="PROGRAM_PARAMETERS" />
+      <method />
+    </configuration>
+    <configuration default="true" type="AndroidRunConfigurationType" factoryName="Android Application">
+      <module name="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="DEPLOY" value="true" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="TARGET_SELECTION_MODE" value="EMULATOR" />
+      <option name="USE_LAST_SELECTED_DEVICE" value="false" />
+      <option name="PREFERRED_AVD" value="" />
+      <option name="USE_COMMAND_LINE" value="true" />
+      <option name="COMMAND_LINE" value="" />
+      <option name="WIPE_USER_DATA" value="false" />
+      <option name="DISABLE_BOOT_ANIMATION" value="false" />
+      <option name="NETWORK_SPEED" value="full" />
+      <option name="NETWORK_LATENCY" value="none" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
+      <option name="FILTER_LOGCAT_AUTOMATICALLY" value="true" />
+      <method />
+    </configuration>
+    <configuration default="true" type="AndroidTestRunConfigurationType" factoryName="Android Tests">
+      <module name="" />
+      <option name="TESTING_TYPE" value="0" />
+      <option name="INSTRUMENTATION_RUNNER_CLASS" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="PACKAGE_NAME" value="" />
+      <option name="TARGET_SELECTION_MODE" value="EMULATOR" />
+      <option name="USE_LAST_SELECTED_DEVICE" value="false" />
+      <option name="PREFERRED_AVD" value="" />
+      <option name="USE_COMMAND_LINE" value="true" />
+      <option name="COMMAND_LINE" value="" />
+      <option name="WIPE_USER_DATA" value="false" />
+      <option name="DISABLE_BOOT_ANIMATION" value="false" />
+      <option name="NETWORK_SPEED" value="full" />
+      <option name="NETWORK_LATENCY" value="none" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="true" />
+      <option name="FILTER_LOGCAT_AUTOMATICALLY" value="true" />
+      <method />
+    </configuration>
+    <configuration default="true" type="Applet" factoryName="Applet">
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <module />
+      <method />
+    </configuration>
+    <configuration default="true" type="Application" factoryName="Application">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <option name="MAIN_CLASS_NAME" value="dr.app.beast.BeastMain" />
+      <option name="VM_PARAMETERS" value="" />
+      <option name="PROGRAM_PARAMETERS" value="-overwrite H5N1_HA_discrete_traits.xml" />
+      <option name="WORKING_DIRECTORY" value="file:///Applications/Phylogenetics software/BEAST v1.8.2/examples/Phylogeography" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="ENABLE_SWING_INSPECTOR" value="false" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <module name="" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="GradleRunConfiguration" factoryName="Gradle">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list />
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <method />
+    </configuration>
+    <configuration default="true" type="JUnit" factoryName="JUnit">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <module name="" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="PACKAGE_NAME" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="METHOD_NAME" />
+      <option name="TEST_OBJECT" value="class" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="singleModule" />
+      </option>
+      <envs />
+      <patterns />
+      <method />
+    </configuration>
+    <configuration default="true" type="JarApplication" factoryName="JAR Application">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="true" type="Remote" factoryName="Remote">
+      <option name="USE_SOCKET_TRANSPORT" value="true" />
+      <option name="SERVER_MODE" value="false" />
+      <option name="SHMEM_ADDRESS" value="javadebug" />
+      <option name="HOST" value="localhost" />
+      <option name="PORT" value="5005" />
+      <method />
+    </configuration>
+    <configuration default="true" type="TestNG" factoryName="TestNG">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <module name="" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <option name="SUITE_NAME" />
+      <option name="PACKAGE_NAME" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="METHOD_NAME" />
+      <option name="GROUP_NAME" />
+      <option name="TEST_OBJECT" value="CLASS" />
+      <option name="VM_PARAMETERS" value="-ea" />
+      <option name="PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="OUTPUT_DIRECTORY" />
+      <option name="ANNOTATION_TYPE" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <option name="TEST_SEARCH_SCOPE">
+        <value defaultName="singleModule" />
+      </option>
+      <option name="USE_DEFAULT_REPORTERS" value="false" />
+      <option name="PROPERTIES_FILE" />
+      <envs />
+      <properties />
+      <listeners />
+      <method />
+    </configuration>
+    <configuration default="false" name="BEAST" type="Application" factoryName="Application">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <option name="MAIN_CLASS_NAME" value="dr.app.beast.BeastMain" />
+      <option name="VM_PARAMETERS" value="" />
+      <option name="PROGRAM_PARAMETERS" value="-seed 1 -overwrite HANAPB2_try16j_ptXX.xml" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/../../Netherlands H7N7/Actual Full Analysis/try16/" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="ENABLE_SWING_INSPECTOR" value="false" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <module name="beast-mcmc" />
+      <envs />
+      <method />
+    </configuration>
+    <configuration default="false" name="LogCombiner" type="Application" factoryName="Application">
+      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
+      <option name="MAIN_CLASS_NAME" value="dr.app.tools.LogCombiner" />
+      <option name="VM_PARAMETERS" value="" />
+      <option name="PROGRAM_PARAMETERS" value="-trees -burnin 10000000 -resample 100000 HANAPB2_try16f_pt1.fancytrees.txt HANAPB2_try16f_pt2.fancytrees.txt HANAPB2_try16f_pt3.fancytrees.txt HANAPB2_try16f_pt4.fancytrees.txt HANAPB2_try16f_pt5.fancytrees.txt HANAPB2_try16f_pt6.fancytrees.txt HANAPB2_try16f_pt7.fancytrees.txt HANAPB2_try16f_pt8.fancytrees.txt HANAPB2_try16f_pt9.fancytrees.txt HANAPB2_try16f_pt10.fancytrees.txt HANAPB2_try16h_combined.fancytrees.txt" />
+      <option name="WORKING_DIRECTORY" value="file://$PROJECT_DIR$/../../Netherlands H7N7/Actual Full Analysis/try16" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" value="" />
+      <option name="ENABLE_SWING_INSPECTOR" value="false" />
+      <option name="ENV_VARIABLES" />
+      <option name="PASS_PARENT_ENVS" value="true" />
+      <module name="beast-mcmc" />
+      <envs />
+      <method />
+    </configuration>
+    <list size="2">
+      <item index="0" class="java.lang.String" itemvalue="Application.BEAST" />
+      <item index="1" class="java.lang.String" itemvalue="Application.LogCombiner" />
+    </list>
+  </component>
+  <component name="ShelveChangesManager" show_recycled="false" />
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="14421373-2851-4287-babe-50b1e322fdf5" name="Default" comment="" />
+      <created>1434121616243</created>
+      <option name="number" value="Default" />
+      <updated>1434121616243</updated>
+    </task>
+    <task id="LOCAL-00001" summary="Various bits of cleaning up">
+      <created>1441038045412</created>
+      <option name="number" value="00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1441038045412</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Log file now includes index case information">
+      <created>1441393632852</created>
+      <option name="number" value="00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1441393632852</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Testing?&#10;&#10;Conflicts:&#10;&#9;src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java&#10;Long-overdue update">
+      <created>1441455549699</created>
+      <option name="number" value="00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1441455549699</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Testing?&#10;&#10;Conflicts:&#10;&#9;src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java&#10;Alternative decomposition, treating removal times as latent variables rather than conditioning on them">
+      <created>1441459153925</created>
+      <option name="number" value="00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1441459153925</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
+    <servers />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="22" width="1920" height="1002" extended-state="6" />
+    <editor active="false" />
+    <layout>
+      <window_info id="Palette&#9;" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="UI Designer" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Designer" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32967034" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4021978" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Version Control" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32967034" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32967034" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32967034" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.24973376" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2513312" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.36923078" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+    </layout>
+  </component>
+  <component name="Vcs.Log.UiProperties">
+    <option name="RECENTLY_FILTERED_USER_GROUPS">
+      <collection />
+    </option>
+    <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
+      <collection />
+    </option>
+  </component>
+  <component name="VcsContentAnnotationSettings">
+    <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Various bits of cleaning up" />
+    <MESSAGE value="Log file now includes index case information" />
+    <MESSAGE value="Testing?&#10;&#10;Conflicts:&#10;&#9;src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java&#10;" />
+    <MESSAGE value="Testing?&#10;&#10;Conflicts:&#10;&#9;src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java&#10;Long-overdue update" />
+    <MESSAGE value="Testing?&#10;&#10;Conflicts:&#10;&#9;src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java&#10;Alternative decomposition, treating removal times as latent variables rather than conditioning on them" />
+    <option name="LAST_COMMIT_MESSAGE" value="Testing?&#10;&#10;Conflicts:&#10;&#9;src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java&#10;Alternative decomposition, treating removal times as latent variables rather than conditioning on them" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/evomodel/newtreelikelihood/TreeLikelihood.java</url>
+          <line>308</line>
+          <properties />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/inference/distribution/GeneralizedLinearModel.java</url>
+          <line>134</line>
+          <properties />
+          <option name="timeStamp" value="46" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/evomodel/substmodel/AbstractSubstitutionModel.java</url>
+          <line>330</line>
+          <properties />
+          <option name="timeStamp" value="51" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/evomodel/substmodel/ComplexSubstitutionModel.java</url>
+          <line>244</line>
+          <properties />
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/evomodel/substmodel/ComplexSubstitutionModel.java</url>
+          <line>150</line>
+          <properties />
+          <option name="timeStamp" value="61" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/WithinCaseCoalescent.java</url>
+          <line>374</line>
+          <properties />
+          <option name="timeStamp" value="92" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/WithinCaseCoalescent.java</url>
+          <line>405</line>
+          <properties />
+          <option name="timeStamp" value="93" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/WithinCaseCoalescent.java</url>
+          <line>397</line>
+          <properties />
+          <option name="timeStamp" value="94" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="185" />
+    </breakpoint-manager>
+    <watches-manager />
+  </component>
+  <component name="antWorkspaceConfiguration">
+    <option name="IS_AUTOSCROLL_TO_SOURCE" value="false" />
+    <option name="FILTER_TARGETS" value="false" />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/substmodel/AbstractSubstitutionModel.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="433" column="0" selection-start-line="433" selection-start-column="0" selection-end-line="433" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#36078#0" expanded="false" />
+            <element signature="imports" expanded="false" />
+            <element signature="e#1918#1919#0" expanded="false" />
+            <element signature="e#1954#1955#0" expanded="false" />
+            <element signature="e#2889#2890#0" expanded="false" />
+            <element signature="e#2922#2923#0" expanded="false" />
+            <element signature="e#5376#5377#0" expanded="false" />
+            <element signature="e#5408#5409#0" expanded="false" />
+            <element signature="e#5490#5491#0" expanded="false" />
+            <element signature="e#5521#5522#0" expanded="false" />
+            <element signature="e#12038#12050#0" expanded="false" />
+            <element signature="e#12184#12185#0" expanded="false" />
+            <element signature="e#12208#12209#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/treelikelihood/TreeLikelihood.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="475" column="0" selection-start-line="475" selection-start-column="0" selection-end-line="475" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/substmodel/SubstitutionModel.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="46" column="9" selection-start-line="46" selection-start-column="9" selection-end-line="46" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inference/distribution/CachedDistributionLikelihood.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.09070295">
+          <caret line="12" column="11" selection-start-line="12" selection-start-column="11" selection-end-line="12" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inferencexml/distribution/CachedDistributionLikelihoodParser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.44217688">
+          <caret line="34" column="36" selection-start-line="34" selection-start-column="36" selection-end-line="34" selection-end-column="36" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/math/MathUtils.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="184" column="27" selection-start-line="184" selection-start-column="23" selection-end-line="184" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/app/tools/TreeAnnotator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="441" column="20" selection-start-line="441" selection-start-column="20" selection-end-line="441" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/operators/ExchangeOperator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="39" column="13" selection-start-line="39" selection-start-column="13" selection-end-line="39" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inferencexml/distribution/DistributionModelParser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="45" column="57" selection-start-line="45" selection-start-column="57" selection-end-line="45" selection-end-column="57" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/periodpriors/IndividualPrior.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="15" column="13" selection-start-line="15" selection-start-column="13" selection-end-line="15" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evolution/coalescent/Coalescent.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="206" column="0" selection-start-line="206" selection-start-column="0" selection-end-line="206" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/math/functionEval/GammaFunction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="92" column="21" selection-start-line="92" selection-start-column="21" selection-end-line="92" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/coalescent/AsymptoticGrowthModel.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="105" column="157" selection-start-line="105" selection-start-column="0" selection-end-line="105" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evolution/coalescent/LinearGrowth.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="64" column="0" selection-start-line="64" selection-start-column="0" selection-end-line="64" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/math/GammaFunction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="58" column="85" selection-start-line="58" selection-start-column="13" selection-end-line="58" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/math/distributions/TDistribution.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="66" column="25" selection-start-line="66" selection-start-column="25" selection-end-line="66" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inferencexml/distribution/PriorParsers.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="46" column="56" selection-start-line="46" selection-start-column="56" selection-end-line="46" selection-end-column="56" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/treelikelihood/AbstractTreeLikelihood.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="284" column="0" selection-start-line="284" selection-start-column="0" selection-end-line="284" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CategoryOutbreak.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="137" column="0" selection-start-line="137" selection-start-column="0" selection-end-line="137" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inference/model/Parameter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="535" column="0" selection-start-line="535" selection-start-column="0" selection-end-line="535" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/SpatialKernel.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="98" column="0" selection-start-line="98" selection-start-column="0" selection-end-line="98" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/operators/WilsonBalding.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="40" column="13" selection-start-line="40" selection-start-column="13" selection-end-line="40" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evolution/tree/SubtreeSlide.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="37" column="2" selection-start-line="37" selection-start-column="2" selection-end-line="37" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/operators/SubtreeSlideOperator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="274" column="29" selection-start-line="274" selection-start-column="16" selection-end-line="274" selection-end-column="29" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/AbstractOutbreak.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="84" column="0" selection-start-line="84" selection-start-column="0" selection-end-line="84" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inference/model/CompoundLikelihood.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="196" column="0" selection-start-line="196" selection-start-column="0" selection-end-line="196" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inferencexml/distribution/NormalDistributionModelParser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="13" column="31" selection-start-line="13" selection-start-column="31" selection-end-line="13" selection-end-column="31" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/periodpriors/AbstractPeriodPriorDistribution.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="53" column="0" selection-start-line="53" selection-start-column="0" selection-end-line="53" selection-end-column="0" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/periodpriors/NormalPeriodPriorDistribution.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="139" column="0" selection-start-line="139" selection-start-column="0" selection-end-line="139" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/xml/ElementRule.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="133" column="11" selection-start-line="133" selection-start-column="11" selection-end-line="133" selection-end-column="11" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inference/markovchain/MarkovChain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="197" column="38" selection-start-line="197" selection-start-column="38" selection-end-line="197" selection-end-column="38" />
+          <folding>
+            <element signature="e#0#21000#0" expanded="false" />
+            <element signature="imports" expanded="false" />
+            <element signature="e#16642#16643#0" expanded="false" />
+            <element signature="e#16670#16671#0" expanded="false" />
+            <element signature="e#16711#16712#0" expanded="false" />
+            <element signature="e#16744#16745#0" expanded="false" />
+            <element signature="e#16775#16776#0" expanded="false" />
+            <element signature="e#16819#16820#0" expanded="false" />
+            <element signature="e#16864#16865#0" expanded="false" />
+            <element signature="e#16895#16896#0" expanded="false" />
+            <element signature="e#16932#16933#0" expanded="false" />
+            <element signature="e#16963#16964#0" expanded="false" />
+            <element signature="e#17002#17003#0" expanded="false" />
+            <element signature="e#17037#17038#0" expanded="false" />
+            <element signature="e#17073#17074#0" expanded="false" />
+            <element signature="e#17105#17106#0" expanded="false" />
+            <element signature="e#17143#17144#0" expanded="false" />
+            <element signature="e#17179#17180#0" expanded="false" />
+            <element signature="e#17235#17236#0" expanded="false" />
+            <element signature="e#17285#17286#0" expanded="false" />
+            <element signature="e#17324#17325#0" expanded="false" />
+            <element signature="e#17359#17360#0" expanded="false" />
+            <element signature="e#17391#17392#0" expanded="false" />
+            <element signature="e#17424#17425#0" expanded="false" />
+            <element signature="e#17458#17459#0" expanded="false" />
+            <element signature="e#17490#17491#0" expanded="false" />
+            <element signature="e#17522#17523#0" expanded="false" />
+            <element signature="e#17572#17573#0" expanded="false" />
+            <element signature="e#19462#19463#0" expanded="false" />
+            <element signature="e#19501#19502#0" expanded="false" />
+            <element signature="e#19576#19577#0" expanded="false" />
+            <element signature="e#19618#19619#0" expanded="false" />
+            <element signature="e#19690#19691#0" expanded="false" />
+            <element signature="e#19729#19730#0" expanded="false" />
+            <element signature="e#19804#19805#0" expanded="false" />
+            <element signature="e#19846#19847#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evolution/io/NexusImporter.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="71" column="17" selection-start-line="71" selection-start-column="8" selection-end-line="71" selection-end-column="17" />
+          <folding>
+            <element signature="e#0#50116#0" expanded="false" />
+            <element signature="imports" expanded="false" />
+            <element signature="e#2745#2746#0" expanded="false" />
+            <element signature="e#2782#2783#0" expanded="false" />
+            <element signature="e#3054#3055#0" expanded="false" />
+            <element signature="e#3085#3086#0" expanded="false" />
+            <element signature="e#3141#3142#0" expanded="false" />
+            <element signature="e#3179#3180#0" expanded="false" />
+            <element signature="e#3300#3301#0" expanded="false" />
+            <element signature="e#3340#3341#0" expanded="false" />
+            <element signature="e#3376#3377#0" expanded="false" />
+            <element signature="e#3411#3412#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inference/loggers/LogColumn.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="108" column="0" selection-start-line="108" selection-start-column="0" selection-end-line="108" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#3617#0" expanded="false" />
+            <element signature="e#2773#2774#0" expanded="false" />
+            <element signature="e#2829#2830#0" expanded="false" />
+            <element signature="e#2869#2870#0" expanded="false" />
+            <element signature="e#2912#2913#0" expanded="false" />
+            <element signature="e#3558#3559#0" expanded="false" />
+            <element signature="e#3606#3607#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/inferencexml/distribution/GeneralizedLinearModelParser.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="25" column="0" selection-start-line="25" selection-start-column="0" selection-end-line="25" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#10998#0" expanded="false" />
+            <element signature="imports" expanded="false" />
+            <element signature="e#9647#9648#0" expanded="false" />
+            <element signature="e#9675#9676#0" expanded="false" />
+            <element signature="e#10955#10956#0" expanded="false" />
+            <element signature="e#10994#10995#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/app/beast/BeastMain.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="45" column="20" selection-start-line="45" selection-start-column="20" selection-end-line="45" selection-end-column="20" />
+          <folding>
+            <element signature="e#0#33551#0" expanded="false" />
+            <element signature="e#2609#2610#0" expanded="false" />
+            <element signature="e#2666#2667#0" expanded="false" />
+            <element signature="e#13489#13490#0" expanded="false" />
+            <element signature="e#13537#13538#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/app/tools/LogCombiner.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="128" column="52" selection-start-line="128" selection-start-column="52" selection-end-line="128" selection-end-column="52" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/math/matrixAlgebra/LUPDecomposition.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="50" column="15" selection-start-line="50" selection-start-column="15" selection-end-line="50" selection-end-column="15" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/math/matrixAlgebra/RobustSingularValueDecomposition.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="44" column="14" selection-start-line="44" selection-start-column="14" selection-end-line="44" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.idea/compiler.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="19" column="16" selection-start-line="19" selection-start-column="16" selection-end-line="19" selection-end-column="16" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/test/dr/math/GeneralizedIntegerGammaTest.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="42" column="0" selection-start-line="42" selection-start-column="0" selection-end-line="42" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionExchangeOperatorA.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="24" column="0" selection-start-line="24" selection-start-column="0" selection-end-line="24" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#8530#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/InfectionBranchMovementOperator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="23" column="3" selection-start-line="23" selection-start-column="3" selection-end-line="23" selection-end-column="3" />
+          <folding>
+            <element signature="e#0#9539#0" expanded="true" />
+            <element signature="imports" expanded="true" />
+            <element signature="e#2130#2131#0" expanded="true" />
+            <element signature="e#2187#2188#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/InfectionBranchGibbsOperator.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="47" column="13" selection-start-line="47" selection-start-column="13" selection-end-line="47" selection-end-column="13" />
+          <folding>
+            <element signature="e#0#8104#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionExchangeOperatorB.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="32" selection-start-line="1" selection-start-column="32" selection-end-line="1" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionSubtreeSlideA.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="23" selection-end-column="3" />
+          <folding>
+            <element signature="e#0#18766#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionSubtreeSlideB.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionWilsonBaldingA.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/operators/TransmissionWilsonBaldingB.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="28" selection-start-line="1" selection-start-column="28" selection-end-line="1" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CaseToCaseTransmissionLikelihood.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="35" selection-start-line="1" selection-start-column="35" selection-end-line="1" selection-end-column="35" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#6478#6479#0" expanded="true" />
+            <element signature="e#6514#6515#0" expanded="true" />
+            <element signature="e#6545#6546#0" expanded="true" />
+            <element signature="e#6572#6573#0" expanded="true" />
+            <element signature="e#6630#6631#0" expanded="true" />
+            <element signature="e#6667#6668#0" expanded="true" />
+            <element signature="e#7295#7309#0" expanded="true" />
+            <element signature="e#13595#13622#0" expanded="true" />
+            <element signature="e#17153#17164#0" expanded="true" />
+            <element signature="e#18726#18727#0" expanded="true" />
+            <element signature="e#18761#18762#0" expanded="true" />
+            <element signature="e#18798#18799#0" expanded="true" />
+            <element signature="e#18833#18834#0" expanded="true" />
+            <element signature="e#18873#18874#0" expanded="true" />
+            <element signature="e#18909#18910#0" expanded="true" />
+            <element signature="e#18953#18954#0" expanded="true" />
+            <element signature="e#18996#18997#0" expanded="true" />
+            <element signature="e#20150#20151#0" expanded="true" />
+            <element signature="e#20186#20187#0" expanded="true" />
+            <element signature="e#20453#20454#0" expanded="true" />
+            <element signature="e#20522#20523#0" expanded="true" />
+            <element signature="e#20563#20564#0" expanded="true" />
+            <element signature="e#20630#20631#0" expanded="true" />
+            <element signature="e#21504#21515#0" expanded="true" />
+            <element signature="e#21625#21626#0" expanded="true" />
+            <element signature="e#21692#21693#0" expanded="true" />
+            <element signature="e#21814#21815#0" expanded="true" />
+            <element signature="e#21883#21884#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/CaseToCaseTreeLikelihood.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="1" column="27" selection-start-line="1" selection-start-column="27" selection-end-line="1" selection-end-column="27" />
+          <folding>
+            <element signature="imports" expanded="true" />
+            <element signature="e#6528#6529#0" expanded="true" />
+            <element signature="e#6581#6582#0" expanded="true" />
+            <element signature="e#6622#6623#0" expanded="true" />
+            <element signature="e#6672#6673#0" expanded="true" />
+            <element signature="e#6735#6736#0" expanded="true" />
+            <element signature="e#6802#6803#0" expanded="true" />
+            <element signature="e#6947#6948#0" expanded="true" />
+            <element signature="e#7006#7007#0" expanded="true" />
+            <element signature="e#7051#7052#0" expanded="true" />
+            <element signature="e#7109#7110#0" expanded="true" />
+            <element signature="e#7176#7177#0" expanded="true" />
+            <element signature="e#7257#7258#0" expanded="true" />
+            <element signature="e#7685#7686#0" expanded="true" />
+            <element signature="e#7716#7717#0" expanded="true" />
+            <element signature="e#7756#7757#0" expanded="true" />
+            <element signature="e#7795#7796#0" expanded="true" />
+            <element signature="e#8877#8878#0" expanded="true" />
+            <element signature="e#8928#8929#0" expanded="true" />
+            <element signature="e#10091#10092#0" expanded="true" />
+            <element signature="e#10159#10160#0" expanded="true" />
+            <element signature="e#10925#10939#0" expanded="true" />
+            <element signature="e#12866#12875#0" expanded="true" />
+            <element signature="e#14001#14010#0" expanded="true" />
+            <element signature="e#14915#14924#0" expanded="true" />
+            <element signature="e#15421#15430#0" expanded="true" />
+            <element signature="e#16126#16127#0" expanded="true" />
+            <element signature="e#16188#16189#0" expanded="true" />
+            <element signature="e#17269#17283#0" expanded="true" />
+            <element signature="e#20126#20127#0" expanded="true" />
+            <element signature="e#20176#20177#0" expanded="true" />
+            <element signature="e#22108#22109#0" expanded="true" />
+            <element signature="e#22140#22141#0" expanded="true" />
+            <element signature="e#22195#22196#0" expanded="true" />
+            <element signature="e#22249#22250#0" expanded="true" />
+            <element signature="e#23087#23088#0" expanded="true" />
+            <element signature="e#23140#23141#0" expanded="true" />
+            <element signature="e#24177#24178#0" expanded="true" />
+            <element signature="e#24230#24231#0" expanded="true" />
+            <element signature="e#24276#24277#0" expanded="true" />
+            <element signature="e#24327#24328#0" expanded="true" />
+            <element signature="e#24372#24373#0" expanded="true" />
+            <element signature="e#24424#24425#0" expanded="true" />
+            <element signature="e#24538#24539#0" expanded="true" />
+            <element signature="e#24593#24594#0" expanded="true" />
+            <element signature="e#24638#24639#0" expanded="true" />
+            <element signature="e#24709#24710#0" expanded="true" />
+            <element signature="e#24859#24860#0" expanded="true" />
+            <element signature="e#24910#24911#0" expanded="true" />
+            <element signature="e#25230#25231#0" expanded="true" />
+            <element signature="e#25299#25300#0" expanded="true" />
+            <element signature="e#25370#25371#0" expanded="true" />
+            <element signature="e#25426#25427#0" expanded="true" />
+            <element signature="e#25857#25871#0" expanded="true" />
+            <element signature="e#31541#31549#0" expanded="true" />
+            <element signature="e#32675#32683#0" expanded="true" />
+            <element signature="e#33435#33443#0" expanded="true" />
+            <element signature="e#35832#35833#0" expanded="true" />
+            <element signature="e#35887#35888#0" expanded="true" />
+            <element signature="e#36950#36951#0" expanded="true" />
+            <element signature="e#37025#37026#0" expanded="true" />
+            <element signature="e#38238#38266#0" expanded="true" />
+            <element signature="e#40554#40568#0" expanded="true" />
+            <element signature="e#40814#40828#0" expanded="true" />
+            <element signature="e#48903#48904#0" expanded="true" />
+            <element signature="e#48963#48964#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/dr/evomodel/epidemiology/casetocase/WithinCaseCoalescent.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.025773196">
+          <caret line="1" column="23" selection-start-line="1" selection-start-column="23" selection-end-line="1" selection-end-column="23" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <last-edited>beast-mcmc:jar</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+                <option value="0.5" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <last-edited>Detection</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <last-edited>BEAST</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <last-edited>1.6</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <last-edited>beast-mcmc</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+                <option value="0.6" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <last-edited>1.8</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <last-edited>lib1</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>

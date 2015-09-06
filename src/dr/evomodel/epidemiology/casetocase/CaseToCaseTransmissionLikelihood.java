@@ -92,8 +92,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     public CaseToCaseTransmissionLikelihood(String name, CategoryOutbreak outbreak,
                                             CaseToCaseTreeLikelihood treeLikelihood, SpatialKernel spatialKernal,
                                             Parameter transmissionRate,
-                                            ParametricDistributionModel intialInfectionTimePrior,
-                                            HashMap<AbstractCase, Double> indexCasePrior){
+                                            ParametricDistributionModel intialInfectionTimePrior){
         super(name);
         this.outbreak = outbreak;
         this.treeLikelihood = treeLikelihood;
@@ -109,7 +108,21 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         this.hasLatentPeriods = treeLikelihood.hasLatentPeriods();
 
         this.intialInfectionTimePrior = intialInfectionTimePrior;
-        this.indexCasePrior = indexCasePrior;
+
+
+        HashMap<AbstractCase, Double> weightMap = outbreak.getWeightMap();
+
+        double totalWeights = 0;
+
+        for(AbstractCase aCase : weightMap.keySet()){
+            totalWeights += weightMap.get(aCase);
+        }
+
+        indexCasePrior = new HashMap<AbstractCase, Double>();
+
+        for(AbstractCase aCase : outbreak.getCases()){
+            indexCasePrior.put(aCase, weightMap.get(aCase)/totalWeights );
+        }
 
         sortEvents();
     }
@@ -563,7 +576,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
             return new CaseToCaseTransmissionLikelihood(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD,
-                    (CategoryOutbreak)c2cTL.getOutbreak(), c2cTL, kernel, transmissionRate, iitp, null);
+                    (CategoryOutbreak)c2cTL.getOutbreak(), c2cTL, kernel, transmissionRate, iitp);
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

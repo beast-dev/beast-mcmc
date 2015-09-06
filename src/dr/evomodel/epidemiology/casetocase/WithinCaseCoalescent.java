@@ -105,11 +105,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         //checkPartitions();
 
-        if(DEBUG){
-
-            super.debugOutputTree("bleh.nex", true);
-        }
-
         double logL = 0;
 
         explodeTree();
@@ -129,8 +124,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
-
-
 
                     if (children.size() != 0) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,

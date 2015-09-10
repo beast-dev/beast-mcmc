@@ -71,7 +71,7 @@ public class EmpiricalTreeDistributionModelParser extends AbstractXMLObjectParse
         try {
             FileReader reader = new FileReader(file);
             NexusImporter importer = new NexusImporter(reader);
-            trees = importer.importTrees(taxa);
+            trees = importer.importTrees(taxa, true); // Re-order taxon numbers to original TaxonList order
 
         } catch (FileNotFoundException e) {
             throw new XMLParseException(e.getMessage());

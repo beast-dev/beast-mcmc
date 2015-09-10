@@ -82,6 +82,8 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public double calculateLogLikelihood() {
         double sumOfSquaredResiduals = singleton.getSumOfSquaredResiduals(instance);
 
+        // TODO Missing - n / 2 * log(2 * pi)
+
         double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
                         (0.5 * precision * sumOfSquaredResiduals);
 

@@ -84,7 +84,7 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
         // TODO Missing - n / 2 * log(2 * pi)
 
-        double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
+        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount -
                         (0.5 * precision * sumOfSquaredResiduals);
 
         if (isLeftTruncated) {

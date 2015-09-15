@@ -58,7 +58,7 @@ public class CataclysmicDemographic extends ExponentialGrowth {
 	 * sets the decline rate.
 	 */
 	public void setDeclineRate(double d) { 
-		if (d <= 0) throw new IllegalArgumentException();
+//		if (d <= 0) throw new IllegalArgumentException();
 		this.d = d; 
 	}
 	
@@ -85,9 +85,9 @@ public class CataclysmicDemographic extends ExponentialGrowth {
 		double d = getDeclineRate();
 
 		if (t < catTime) {
-			return getN0() * Math.exp(t * d);
+			return getN0() * Math.exp(-t * d);
 		} else {
-			double spikeHeight = getN0() * Math.exp(catTime * d);
+			double spikeHeight = getN0() * Math.exp(-catTime * d);
 			//System.out.println("Spike height = " + spikeHeight);
 			t -= catTime;
 		

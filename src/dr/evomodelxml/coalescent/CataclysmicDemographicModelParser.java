@@ -40,6 +40,7 @@ public class CataclysmicDemographicModelParser extends AbstractXMLObjectParser {
     public static final String GROWTH_RATE = "growthRate";
     public static final String SPIKE_SIZE = "spikeFactor";
     public static final String TIME_OF_CATACLYSM = "timeOfCataclysm";
+    public static final String DECLINE_RATE = "declineRate";
 
     public static final String CATACLYSM_MODEL = "cataclysm";
 
@@ -57,13 +58,24 @@ public class CataclysmicDemographicModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(GROWTH_RATE);
         Parameter rParam = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(SPIKE_SIZE);
-        Parameter N1Param = (Parameter) cxo.getChild(Parameter.class);
+        Parameter secondParam = null;
+        boolean useSpike = true;
+
+        if (xo.hasChildNamed(SPIKE_SIZE)) {
+            cxo = xo.getChild(SPIKE_SIZE);
+            secondParam = (Parameter) cxo.getChild(Parameter.class);
+        } else if (xo.hasChildNamed(DECLINE_RATE)) {
+            cxo = xo.getChild(DECLINE_RATE);
+            secondParam = (Parameter) cxo.getChild(Parameter.class);
+            useSpike = false;
+        } else {
+            throw new XMLParseException("Must provide either a spike factor or decline rate");
+        }
 
         cxo = xo.getChild(TIME_OF_CATACLYSM);
         Parameter tParam = (Parameter) cxo.getChild(Parameter.class);
 
-        return new CataclysmicDemographicModel(N0Param, N1Param, rParam, tParam, units);
+        return new CataclysmicDemographicModel(N0Param, secondParam, rParam, tParam, units, useSpike);
     }
 
     //************************************************************************
@@ -88,9 +100,12 @@ public class CataclysmicDemographicModelParser extends AbstractXMLObjectParser {
             new ElementRule(GROWTH_RATE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                     "The rate of exponential growth before the cataclysmic event."),
-            new ElementRule(SPIKE_SIZE,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
-                    "The factor larger the population size was at its height."),
+            new XORRule(
+                    new ElementRule(SPIKE_SIZE,
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
+                        "The factor larger the population size was at its height."),
+                    new ElementRule(DECLINE_RATE,
+                            new XMLSyntaxRule[] { new ElementRule(Parameter.class)})),
             new ElementRule(TIME_OF_CATACLYSM,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)},
                     "The time of the cataclysmic event that lead to exponential decline."),

@@ -70,7 +70,7 @@ public class MultiEpochExponentialModel extends DemographicModel {
         this.transitionTimeParameter = transitionTimeParameter;
         addVariable(transitionTimeParameter);
         transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
-                Double.NEGATIVE_INFINITY, transitionTimeParameter.getDimension()));
+                0.0, transitionTimeParameter.getDimension()));
 
         setUnits(units);
     }
@@ -85,8 +85,10 @@ public class MultiEpochExponentialModel extends DemographicModel {
             multiEpochExponential.setGrowthRate(i, growthRateParameter.getParameterValue(i));
         }
 
+        double totalTime = 0.0;
         for (int i = 0; i < transitionTimeParameter.getDimension(); ++i) {
-            multiEpochExponential.setTransitionTime(i, transitionTimeParameter.getParameterValue(i));
+            totalTime += transitionTimeParameter.getParameterValue(i);
+            multiEpochExponential.setTransitionTime(i, totalTime);
         }
 
         return multiEpochExponential;

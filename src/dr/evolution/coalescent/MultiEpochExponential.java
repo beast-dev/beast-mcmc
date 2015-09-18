@@ -53,11 +53,11 @@ public class MultiEpochExponential extends ConstantPopulation {
 
     public double getDemographic(double t) {
 
-        double logDemographic = Math.log(getN0()); // TODO work on log-scale
+        double logDemographic = 0.0;
         double lastTransitionTime = 0.0;
         int currentEpoch = 0;
 
-        // Account for all epoch until t
+        // Account for all epochs before t
         while (currentEpoch < transitionTime.length && t > transitionTime[currentEpoch]) {
             logDemographic += -rate[currentEpoch] * (transitionTime[currentEpoch] - lastTransitionTime);
             lastTransitionTime = transitionTime[currentEpoch];
@@ -67,7 +67,49 @@ public class MultiEpochExponential extends ConstantPopulation {
         // Account for epoch that holds t
         logDemographic += -rate[currentEpoch] * (t - lastTransitionTime);
 
-        return Math.exp(logDemographic);
+        return getN0() * Math.exp(logDemographic);
+    }
+
+    private double getAnalyticIntegral(double start, double finish) {
+
+        double integral = 0.0;
+        double logDemographic = 0.0;
+        double lastTransitionTime = 0.0;
+        int currentEpoch = 0;
+
+        // Account for all epochs before start
+        while (currentEpoch < transitionTime.length && start > transitionTime[currentEpoch]) {
+            logDemographic += -rate[currentEpoch] * (transitionTime[currentEpoch] - lastTransitionTime);
+            lastTransitionTime = transitionTime[currentEpoch];
+            ++currentEpoch;
+        }
+
+        // Account for all epochs before finish
+        while (currentEpoch < transitionTime.length && finish > transitionTime[currentEpoch]) {
+
+            // Add to integral
+            if (rate[currentEpoch] == 0.0) {
+                integral += (transitionTime[currentEpoch] - start) / Math.exp(logDemographic);
+            } else {
+                integral += (Math.exp(transitionTime[currentEpoch] * rate[currentEpoch]) -
+                        Math.exp(start * rate[currentEpoch])) / Math.exp(logDemographic) / rate[currentEpoch];
+            }
+
+            // Update demographic function
+            logDemographic += -rate[currentEpoch] * (transitionTime[currentEpoch] - lastTransitionTime);
+            start = lastTransitionTime = transitionTime[currentEpoch];
+            ++currentEpoch;
+        }
+
+        // End of integral
+        if (rate[currentEpoch] == 0.0) {
+            integral += (finish - start) / Math.exp(logDemographic);
+        } else {
+            integral += (Math.exp(finish * rate[currentEpoch]) -
+                                    Math.exp(start * rate[currentEpoch])) / Math.exp(logDemographic) / rate[currentEpoch];
+        }
+
+        return integral / getN0();
     }
 
     /**
@@ -75,7 +117,19 @@ public class MultiEpochExponential extends ConstantPopulation {
      */
     public double getIntegral(double start, double finish) {
         // TODO An analytic solution exists
-        return getNumericalIntegral(start, finish);
+        double analytic = getAnalyticIntegral(start, finish);
+
+        if (DEBUG) {
+            double numeric = getNumericalIntegral(start, finish);
+
+            if (Math.abs(analytic - numeric) > 1E-10) {
+                System.err.println(analytic);
+                System.err.println(numeric);
+                throw new RuntimeException("Error in analytic calculation");
+            }
+        }
+
+        return analytic;
     }
 
     public double getIntensity(double t) { throw new RuntimeException("Not implemented!"); }
@@ -114,4 +168,6 @@ public class MultiEpochExponential extends ConstantPopulation {
 
     final private double[] transitionTime;
     final private double[] rate;
+
+    static final private boolean DEBUG = true;
 }

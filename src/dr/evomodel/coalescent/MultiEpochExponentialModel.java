@@ -63,10 +63,6 @@ public class MultiEpochExponentialModel extends DemographicModel {
         growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
                 growthRateParameter.getDimension()));
 
-        this.ancestralGrowthRateParameter = ancestralGrowthRateParameter;
-        addVariable(ancestralGrowthRateParameter);
-        ancestralGrowthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-
         this.transitionTimeParameter = transitionTimeParameter;
         addVariable(transitionTimeParameter);
         transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
@@ -100,7 +96,6 @@ public class MultiEpochExponentialModel extends DemographicModel {
 
     Parameter N0Parameter = null;
     Parameter growthRateParameter = null;
-    Parameter ancestralGrowthRateParameter = null;
     Parameter transitionTimeParameter = null;
     MultiEpochExponential multiEpochExponential = null;
 }

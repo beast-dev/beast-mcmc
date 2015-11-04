@@ -234,8 +234,8 @@ public final class MarkovChain implements Serializable {
                 operatorSucceeded = false;
             }
 
-            double score = 0.0;
-            double deviation = 0.0;
+            double score = Double.NaN;
+            double deviation = Double.NaN;
 
             //    System.err.print("" + currentState + ": ");
             if (operatorSucceeded) {

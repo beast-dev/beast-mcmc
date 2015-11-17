@@ -218,11 +218,11 @@ public class OperatorsGenerator extends Generator {
     }
 
     private void writeParameter1Ref(XMLWriter writer, Operator operator) {
-        writer.writeIDref(ParameterParser.PARAMETER, operator.parameter1.getName());
+        writer.writeIDref(ParameterParser.PARAMETER, operator.getParameter1Name());
     }
 
     private void writeParameter2Ref(XMLWriter writer, Operator operator) {
-        writer.writeIDref(ParameterParser.PARAMETER, operator.parameter2.getName());
+        writer.writeIDref(ParameterParser.PARAMETER, operator.getParameter2Name());
     }
 
     private void writeOperatorRef(XMLWriter writer, Operator operator) {
@@ -348,6 +348,9 @@ public class OperatorsGenerator extends Generator {
 
         if (operator.getBaseName().startsWith(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
 
+            if (operator.parameter1.getOptions() == null) {
+                throw new IllegalArgumentException("no options set");
+            }
             int[] parameterWeights = ((PartitionSubstitutionModel) operator.parameter1.getOptions()).getPartitionCodonWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {

@@ -62,7 +62,7 @@ import java.util.logging.Logger;
  */
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
-        public final static boolean DEBUG = false;
+    public final static boolean DEBUG = false;
 
     private static final long serialVersionUID = 2778103564318492601L;
 
@@ -77,11 +77,11 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     Map<PartitionClockModel, PartitionClockModelPanel> modelPanels = new HashMap<PartitionClockModel, PartitionClockModelPanel>();
     TitledBorder modelBorder;
 
-    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean rate of molecular clock model to: ");
-    RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
+//    JCheckBox relativeRateCheck = new JCheckBox("Partition rates specified relative to overall rate");
+//    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean rate of molecular clock model to: ");
+//    RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
     BeautiFrame frame = null;
-//    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
     private CloneModelDialog cloneModelDialog = null;
@@ -119,19 +119,13 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(addModelAction);
-//        actionPanel1.setRemoveAction(removeModelAction);
-
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
-//        controlPanel1.add(actionPanel1);
 
-        JPanel panel = new JPanel(new BorderLayout(0, 0));
-        panel.setOpaque(false);
-        panel.add(scrollPane, BorderLayout.CENTER);
-//        panel.add(controlPanel1, BorderLayout.SOUTH);
-        panel.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
+        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
+        panel1.setOpaque(false);
+        panel1.add(scrollPane, BorderLayout.CENTER);
+        panel1.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
 
         JToolBar toolBar = new JToolBar();
         toolBar.setFloatable(false);
@@ -141,30 +135,40 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         JButton button = new JButton(cloneModelsAction);
         PanelUtils.setupComponent(button);
         toolBar.add(button);
-        panel.add(toolBar, BorderLayout.SOUTH);
+        panel1.add(toolBar, BorderLayout.SOUTH);
 
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         modelPanelParent.setOpaque(false);
-        modelBorder = new TitledBorder("Substitution Model");
+        modelBorder = new TitledBorder("Clock Model");
         modelPanelParent.setBorder(modelBorder);
 
-        setCurrentModel(null);
-
-        JScrollPane scrollPane2 = new JScrollPane(modelPanelParent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane2.setOpaque(false);
-        scrollPane2.setBorder(null);
-        scrollPane2.getViewport().setOpaque(false);
-
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, scrollPane2);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, modelPanelParent);
         splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
 
+        setCurrentModel(null);
+
+//        OptionsPanel optionsPanel = new OptionsPanel();
+//        optionsPanel.addComponent(fixedMeanRateCheck);
+//        optionsPanel.addComponentWithLabel("Mean Rate:", meanRateField);
+
+//        JPanel panel2 = new JPanel();
+//        panel2.setOpaque(false);
+//        panel2.setLayout(new BorderLayout(0, 0));
+//        panel2.add(optionsPanel, BorderLayout. NORTH);
+//        panel2.add(splitPane, BorderLayout.CENTER);
+
+        JScrollPane scrollPane2 = new JScrollPane(splitPane, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane2.setOpaque(false);
+        scrollPane2.setBorder(null);
+        scrollPane2.getViewport().setOpaque(false);
+
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-        add(splitPane, BorderLayout.CENTER);
+        add(scrollPane2, BorderLayout.CENTER);
     }
 
     private void resetPanel() {
@@ -225,13 +229,13 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         if (modelTable.getSelectedRowCount() == 1) {
             int selRow = modelTable.getSelectedRow();
 
-        if (selRow >= options.getPartitionClockModels().size()) {
-            selRow = 0;
+            if (selRow >= options.getPartitionClockModels().size()) {
+                selRow = 0;
                 modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        }
+            }
 
-        if (selRow >= 0) {
-            setCurrentModel(options.getPartitionClockModels().get(selRow));
+            if (selRow >= 0) {
+                setCurrentModel(options.getPartitionClockModels().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
             }
         } else {
@@ -278,8 +282,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         cloneModelsAction.setEnabled(true);
 
-            updateBorder();
-        }
+        updateBorder();
+    }
 
     private void setCurrentModels(java.util.List<PartitionClockModel> models) {
         modelPanelParent.removeAll();
@@ -318,27 +322,27 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         }
 
 
-            java.util.List<PartitionClockModel> sourceModels = new ArrayList<PartitionClockModel>();
+        java.util.List<PartitionClockModel> sourceModels = new ArrayList<PartitionClockModel>();
 
-            for (PartitionClockModel model : options.getPartitionClockModels()) {
-                    sourceModels.add(model);
-            }
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            sourceModels.add(model);
+        }
 
-            int result = cloneModelDialog.showDialog(sourceModels);
+        int result = cloneModelDialog.showDialog(sourceModels);
 
-            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
+        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
 
         PartitionClockModel sourceModel = cloneModelDialog.getSourceModel();
-            for (PartitionClockModel model : getSelectedModels()) {
-                if (!model.equals(sourceModel)) {
-                    throw new UnsupportedOperationException("Not implemented yet");
+        for (PartitionClockModel model : getSelectedModels()) {
+            if (!model.equals(sourceModel)) {
+                throw new UnsupportedOperationException("Not implemented yet");
 //                    model.copyFrom(sourceModel);
-                }
             }
+        }
 
-            repaint();
+        repaint();
 
     }
 

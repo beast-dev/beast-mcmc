@@ -200,7 +200,7 @@ public class PartitionClockModel extends PartitionOptions {
                     throw new IllegalArgumentException("Unknown clock model");
             }
 
-            Parameter rateParam = getClockRateParam();
+            Parameter rateParam = getClockRateParameter();
 
 //            if (this.getDataPartitions().get(0) instanceof TraitData) {
 //                rateParam.priorType = PriorType.ONE_OVER_X_PRIOR; // 1/location.clock.rate
@@ -226,11 +226,11 @@ public class PartitionClockModel extends PartitionOptions {
         }
     }
 
-    public Parameter getClockRateParam() {
-        return getClockRateParam(clockType, clockDistributionType);
+    public Parameter getClockRateParameter() {
+        return getClockRateParameter(clockType, clockDistributionType);
     }
 
-    private Parameter getClockRateParam(ClockType clockType, ClockDistributionType clockDistributionType) {
+    private Parameter getClockRateParameter(ClockType clockType, ClockDistributionType clockDistributionType) {
         Parameter rateParam = null;
         switch (clockType) {
             case STRICT_CLOCK:
@@ -397,7 +397,7 @@ public class PartitionClockModel extends PartitionOptions {
     // important to set all clock rate rateParam.isFixed same, which keeps isEstimatedRate() correct when change clock type
     public void setEstimatedRate(boolean isEstimatedRate) {
 //        for (ClockType clockType : new ClockType[]{ClockType.STRICT_CLOCK, ClockType.UNCORRELATED, ClockType.RANDOM_LOCAL_CLOCK}) {
-//            Parameter rateParam = getClockRateParam(clockType, );
+//            Parameter rateParam = getClockRateParameter(clockType, );
 //            rateParam.isFixed = !isEstimatedRate;
 //        }
         //TODO a trouble to deal with clockDistributionType, when try to set all rate parameters
@@ -410,12 +410,12 @@ public class PartitionClockModel extends PartitionOptions {
     }
 
     public boolean isEstimatedRate() {
-        Parameter rateParam = getClockRateParam();
+        Parameter rateParam = getClockRateParameter();
         return !rateParam.isFixed;
     }
 
     public void setUseReferencePrior(boolean useReferencePrior) {
-        Parameter rateParam = getClockRateParam();
+        Parameter rateParam = getClockRateParameter();
         if (useReferencePrior) {
             rateParam.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;
         } else {
@@ -429,7 +429,7 @@ public class PartitionClockModel extends PartitionOptions {
 
     public void setRate(double rate, boolean isUpdatedByUser) {
         this.rate = rate;
-        Parameter rateParam = getClockRateParam();
+        Parameter rateParam = getClockRateParameter();
         rateParam.initial = rate;
         if (isUpdatedByUser) rateParam.setPriorEdited(true);
     }

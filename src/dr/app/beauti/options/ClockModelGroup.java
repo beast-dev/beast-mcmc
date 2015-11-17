@@ -31,6 +31,7 @@ import dr.evolution.datatype.DataType;
 import java.io.Serializable;
 
 /**
+ * @deprecated
  * @author Alexei Drummond
  * @author Walter Xie
  */
@@ -81,14 +82,14 @@ public class ClockModelGroup implements Serializable {
         this.fixMeanRate = fixMeanRate;
         for (PartitionClockModel model : options.getPartitionClockModels(this)) {
             model.setRate(fixMeanRate, false);
-        }
+    }
     }
 
     public boolean contain(DataType dataType, BeautiOptions options) {
         for (AbstractPartitionData pd : options.getDataPartitions(this)) {
            if (pd.getDataType().getType() == dataType.getType()) {
                 return true;
-            }
+        }
         }
         return false;
     }

@@ -32,6 +32,7 @@ import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
+import dr.app.beauti.types.RateParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
@@ -114,7 +115,7 @@ public class BeautiOptions extends ModelOptions {
 
 //        rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
 //        meanSubstitutionRate = 1.0;
-        unlinkPartitionRates = true;
+        rateParameterizationMode = RateParameterizationType.PARTITION_ABSOLUTE_RATES;
 
         units = Units.Type.SUBSTITUTIONS;
 
@@ -1394,7 +1395,7 @@ public class BeautiOptions extends ModelOptions {
     // list of starting tree from user import
     public List<Tree> userTrees = new ArrayList<Tree>();
 
-    public boolean unlinkPartitionRates = true;
+    public RateParameterizationType rateParameterizationMode = RateParameterizationType.PARTITION_ABSOLUTE_RATES;
 
     public Units.Type units = Units.Type.YEARS;
 

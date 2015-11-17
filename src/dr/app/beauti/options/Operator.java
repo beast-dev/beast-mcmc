@@ -58,6 +58,7 @@ public class Operator implements Serializable {
 
     private ClockModelGroup clockModelGroup = null;
 
+
     public static class Builder {
         // Required para
         private final String baseName;
@@ -172,10 +173,26 @@ public class Operator implements Serializable {
         return prefix;
     }
 
+    public String getParameter1Name() {
+        String name = parameter1.getName();
+        if (prefix != null) {
+            name = prefix + name;
+        }
+        return name;
+    }
+
+    public String getParameter2Name() {
+        String name = parameter2.getName();
+        if (prefix != null) {
+            name = prefix + name;
+        }
+        return name;
+    }
+
     public String getName() {
         String name = baseName;
         if (prefix != null) {
-            name = prefix + baseName;
+            name = prefix + name;
         }
         return name;
     }

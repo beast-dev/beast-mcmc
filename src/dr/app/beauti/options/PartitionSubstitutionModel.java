@@ -253,8 +253,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
 
         // A vector of relative rates across all partitions...
-        createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
-        //createAllMusParameter(this, "allMus", "all the relative rates regarding codon positions");
+//        createNonNegativeParameterDirichletPrior(this, "allMus", "relative rates amongst partitions parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+        createAllMusParameter(this, "allMus", "all the relative rates regarding codon positions");
 
         // This only works if the partitions are of the same size...
 //      createOperator("centeredMu", "Relative rates",
@@ -338,7 +338,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void selectParameters(List<Parameter> params) {
         setAvgRootAndRate();
-        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
+        boolean includeRelativeRates = getCodonPartitionCount() > 1 ||
+                options.getPartitionSubstitutionModels().size() > 1;
 
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
@@ -419,21 +420,19 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
 
                 if (includeRelativeRates) {
-//                    if (codonHeteroPattern.equals("123")) {
-//                        params.add(getParameter("CP1.mu"));
-//                        params.add(getParameter("CP1.mu"));
-//                        params.add(getParameter("CP2.mu"));
-//                        params.add(getParameter("CP3.mu"));
-//                    } else if (codonHeteroPattern.equals("112")) {
-//                        params.add(getParameter("CP1+2.mu"));
-//                        params.add(getParameter("CP3.mu"));
-//                    } else {
-//                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
-//                    }
-                    params.add(getParameter("allMus"));
-
+                    if (codonHeteroPattern.equals("123")) {
+                        params.add(getParameter("CP1.mu"));
+                        params.add(getParameter("CP1.mu"));
+                        params.add(getParameter("CP2.mu"));
+                        params.add(getParameter("CP3.mu"));
+                    } else if (codonHeteroPattern.equals("112")) {
+                        params.add(getParameter("CP1+2.mu"));
+                        params.add(getParameter("CP3.mu"));
+                    } else {
+                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+                    }
                 } else { // no codon partitioning
-//TODO
+                    params.add(getParameter("mu"));
                 }
 
                 // only AMINO_ACIDS not addFrequency
@@ -441,9 +440,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.AMINO_ACIDS:
-//                if (includeRelativeRates) {
-//                    params.add(getParameter("mu"));
-//                }
+                if (includeRelativeRates) {
+                    params.add(getParameter("mu"));
+                }
                 break;
 
             case DataType.TWO_STATES:
@@ -463,9 +462,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     default:
                         throw new IllegalArgumentException("Unknown binary substitution model");
                 }
-//                if (includeRelativeRates) {
-//                    params.add(getParameter("mu"));
-//                }
+                if (includeRelativeRates) {
+                    params.add(getParameter("mu"));
+                }
 
                 // only AMINO_ACIDS not addFrequency
                 addFrequencyParams(params, includeRelativeRates);
@@ -544,10 +543,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
-        if (includeRelativeRates) {
+        if (includeRelativeRates && options.rateParameterizationMode == RateParameterizationType.PARTITION_ABSOLUTE_RATES) {
             params.add(getParameter("allMus"));
-//                    params.add(getParameter("mu"));
         }
+
     }
 
     private void addFrequencyParams(List<Parameter> params, boolean includeRelativeRates) {

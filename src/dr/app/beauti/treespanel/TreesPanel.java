@@ -178,7 +178,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         } else {
             options.unLinkTreePriors(currentTreeModel);
         }
-        setCurrentModelAndPrior(currentTreeModel); // this is important to make panel refreshing
+//        setCurrentModelAndPrior(currentTreeModel); // this is important to make panel refreshing
 
         fireTreePriorsChanged();
     }
@@ -211,10 +211,10 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 
-                List<ClockModelGroup> groupList = options.clockModelOptions.getClockModelGroups();// all data partitions
-                for (ClockModelGroup clockModelGroup : groupList) { // todo correct?
-                    options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup); // fix 1st partition
-                }
+//                List<ClockModelGroup> groupList = options.clockModelOptions.getClockModelGroups();// all data partitions
+//                for (ClockModelGroup clockModelGroup : groupList) { // todo correct?
+//                    options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup); // fix 1st partition
+//                }
 
             } else {
 //                if (options.hasData() && options.contains(Microsatellite.INSTANCE)) {

@@ -101,7 +101,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                if (treePriorCombo.getSelectedItem() != null) {
+                if (!settingOptions && treePriorCombo.getSelectedItem() != null) {
                     partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
                     setupPanel();
                     parent.fireTreePriorsChanged();
@@ -462,9 +462,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         } else {
 
-            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER)) {
+            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
                 treePriorCombo.addItem(treePriorType);
             }
+
+            // REMOVED due to unresolved issues with model
+            // treePriorCombo.addItem(TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER);
+
 
             // would be much better to disable these rather than removing them
             if (isMultiLocus) {

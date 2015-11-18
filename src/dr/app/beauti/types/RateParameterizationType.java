@@ -1,5 +1,5 @@
 /*
- * FixRateType.java
+ * RateParameterizationMode.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,25 +26,15 @@
 package dr.app.beauti.types;
 
 /**
- * @deprecated
- * @author Alexei Drummond
- * @author Walter Xie
- */
-public enum FixRateType {
-	FIX_MEAN("Estimate relative clock rates (fixed mean)"), //
-    RELATIVE_TO("Estimate clock rates relative to"),
-	TIP_CALIBRATED("Tip times calibrated"), //
-	NODE_CALIBRATED("Internal node(s) calibrated"), //
-	RATE_CALIBRATED("Rate is calibrated"), //
-    CUSTOMIZED("Customize clock rates");
+ * RateParameterizationMode
+ *
+ * @author Andrew Rambaut
+ * @version $Id$
+ *
+*/
 
-	FixRateType(String name) {
-        this.name = name;
-    }
+public enum RateParameterizationType {
 
-    public String toString() {
-        return name;
-    }
-
-    private final String name;
+    PARTITION_RELATIVE_RATES,
+    PARTITION_ABSOLUTE_RATES
 }

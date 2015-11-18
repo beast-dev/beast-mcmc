@@ -82,6 +82,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
     protected void initModelParametersAndOpererators() {
 
+        double taxonCount = getTaxonCount();
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
@@ -92,7 +93,7 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
 
         createScaleOperator("treeModel.rootHeight", demoTuning, demoWeights);
-        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
+        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformly",
                 "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
 
         createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
@@ -145,7 +146,7 @@ public class PartitionTreeModel extends PartitionOptions {
         if (!fixedTree) {
             Operator subtreeSlideOp = getOperator("subtreeSlide");
             if (!subtreeSlideOp.tuningEdited) {
-                subtreeSlideOp.tuning = getInitialRootHeight() / 10.0;
+                subtreeSlideOp.tuning = Math.max(0.00001, getInitialRootHeight() / 10.0);
             }
 
             operators.add(subtreeSlideOp);

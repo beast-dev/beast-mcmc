@@ -168,6 +168,13 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
     }
 
     public double getOneTransitionProbabilityEntry(double distance, int parentState, int childState){
+        if  (parentState < 0 || parentState >= stateCount) {
+            throw new RuntimeException("parentState out of bounds");
+        }
+        if  (childState < 0 || childState >= stateCount) {
+            throw new RuntimeException("childState out of bounds");
+        }
+
         if(dataType.isAmbiguousState(childState)){
             return 1.0;
         }

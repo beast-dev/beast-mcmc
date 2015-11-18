@@ -253,7 +253,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
 
         // A vector of relative rates across all partitions...
-        createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");
+//        createNonNegativeParameterDirichletPrior(this, "allMus", "relative rates amongst partitions parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+        createAllMusParameter(this, "allMus", "all the relative rates regarding codon positions");
 
         // This only works if the partitions are of the same size...
 //      createOperator("centeredMu", "Relative rates",
@@ -337,7 +338,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void selectParameters(List<Parameter> params) {
         setAvgRootAndRate();
-        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
+        boolean includeRelativeRates = getCodonPartitionCount() > 1 ||
+                options.getPartitionSubstitutionModels().size() > 1;
 
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
@@ -420,6 +422,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (includeRelativeRates) {
                     if (codonHeteroPattern.equals("123")) {
                         params.add(getParameter("CP1.mu"));
+                        params.add(getParameter("CP1.mu"));
                         params.add(getParameter("CP2.mu"));
                         params.add(getParameter("CP3.mu"));
                     } else if (codonHeteroPattern.equals("112")) {
@@ -428,9 +431,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     } else {
                         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
                     }
-
                 } else { // no codon partitioning
-//TODO
+                    params.add(getParameter("mu"));
                 }
 
                 // only AMINO_ACIDS not addFrequency
@@ -541,7 +543,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
-        if (hasCodon()) getParameter("allMus");
+        if (includeRelativeRates && options.rateParameterizationMode == RateParameterizationType.PARTITION_ABSOLUTE_RATES) {
+            params.add(getParameter("allMus"));
+        }
+
     }
 
     private void addFrequencyParams(List<Parameter> params, boolean includeRelativeRates) {
@@ -706,7 +711,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (phase == MicroSatModelType.Phase.ONE_PHASE) {
 
                 } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
-                      ops.add(getOperator("randomWalkGeom"));
+                    ops.add(getOperator("randomWalkGeom"));
                 } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
 //                    ops.add(getOperator("randomWalkGeom"));
 //                    ops.add(getOperator("onePhaseProb"));
@@ -752,15 +757,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
-        if (hasCodon()) {
+        if (includeRelativeRates) {
             Operator deltaMuOperator = getOperator("deltaMu");
-
-            // update delta mu operator weight
-            deltaMuOperator.weight = 0.0;
-            for (PartitionSubstitutionModel pm : options.getPartitionSubstitutionModels()) {
-                deltaMuOperator.weight += pm.getCodonPartitionCount();
-            }
-
             ops.add(deltaMuOperator);
         }
     }
@@ -1037,7 +1035,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
-            options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
+                options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

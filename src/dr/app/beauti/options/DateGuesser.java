@@ -277,7 +277,7 @@ public class DateGuesser implements Serializable {
             throw new GuessDatesException("Date group not defined in regular expression");
         }
 
-        parseDate(label, matcher.group(0), values);
+        parseDate(label, matcher.group(1), values);
     }
 
 

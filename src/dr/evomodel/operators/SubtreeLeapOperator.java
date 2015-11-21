@@ -253,20 +253,20 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
         return Math.abs(MathUtils.nextGaussian() * size);
     }
 
-    private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> directChildren) {
+    private int getIntersectingEdges(Tree tree, NodeRef node, double height, List<NodeRef> edges) {
 
         final NodeRef parent = tree.getParent(node);
 
         if (tree.getNodeHeight(parent) < height) return 0;
 
         if (tree.getNodeHeight(node) < height) {
-            directChildren.add(node);
+            edges.add(node);
             return 1;
         }
 
         int count = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
-            count += getIntersectingEdges(tree, tree.getChild(node, i), height, directChildren);
+            count += getIntersectingEdges(tree, tree.getChild(node, i), height, edges);
         }
         return count;
     }

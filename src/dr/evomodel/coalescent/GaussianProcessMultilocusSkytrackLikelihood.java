@@ -31,7 +31,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 //import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 //import no.uib.cipr.matrix.DenseVector;

@@ -31,6 +31,10 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.xml.*;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author Marc Suchard
  */
@@ -77,6 +81,11 @@ public class GMRFDensityComponent implements Likelihood {
 
     public String prettyName() {
         return skyride.prettyName() + tag;
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
     }
 
     public boolean isUsed() {

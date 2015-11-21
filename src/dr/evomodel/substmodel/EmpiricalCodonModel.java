@@ -28,8 +28,6 @@ package dr.evomodel.substmodel;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.AbstractCodonModel;
 import dr.evomodelxml.substmodel.EmpiricalCodonModelParser;
 import dr.inference.model.Parameter;
 import java.util.logging.Logger;

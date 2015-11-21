@@ -78,7 +78,7 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
         this.minimum = minimum;
         this.maximum = maximum;
         this.
-        addVariable(mean);
+                addVariable(mean);
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         addVariable(stdev);
         stdev.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));

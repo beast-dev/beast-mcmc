@@ -1,5 +1,5 @@
 /*
- * ExponentialConstantModel.java
+ * MultiEpochExponentialModel.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,47 +26,33 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ExpConstant;
-import dr.evomodelxml.coalescent.ExponentialConstantModelParser;
+import dr.evolution.coalescent.ExponentialExponential;
+import dr.evolution.coalescent.MultiEpochExponential;
 import dr.inference.model.Parameter;
 
 /**
- * Exponential growth followed by constant size.
- *
- * @author Matthew Hall
+ * @author Marc A. Suchard
+ * @author Andrew Rambaut
  */
-public class ExponentialConstantModel extends DemographicModel {
-
-    //
-    // Public stuff
-    //
+public class MultiEpochExponentialModel extends DemographicModel {
 
     /**
      * Construct demographic model with default settings
      */
-    public ExponentialConstantModel(Parameter N0Parameter,
-                                    Parameter growthRateParameter,
-                                    Parameter transitionTimeParameter,
-                                    Type units) {
-
-        this(ExponentialConstantModelParser.EXPONENTIAL_CONSTANT_MODEL,
-                N0Parameter,
-                growthRateParameter,
-                transitionTimeParameter,
-                units);
-    }
-
-    /**
-     * Construct demographic model with default settings
-     */
-    public ExponentialConstantModel(String name, Parameter N0Parameter,
-                                    Parameter growthRateParameter,
-                                    Parameter transitionTimeParameter,
-                                    Type units) {
+    public MultiEpochExponentialModel(String name,
+                                      Parameter N0Parameter,
+                                      Parameter growthRateParameter,
+                                      Parameter transitionTimeParameter,
+                                      Type units) {
 
         super(name);
 
-        exponentialConstant = new ExpConstant(units);
+        int numEpoch = growthRateParameter.getDimension();
+        if (numEpoch != transitionTimeParameter.getDimension() + 1) {
+            throw new IllegalArgumentException("Invalid parameter dimensions");
+        }
+
+        multiEpochExponential = new MultiEpochExponential(units, numEpoch);
 
         this.N0Parameter = N0Parameter;
         addVariable(N0Parameter);
@@ -74,12 +60,13 @@ public class ExponentialConstantModel extends DemographicModel {
 
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
-        growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                growthRateParameter.getDimension()));
 
         this.transitionTimeParameter = transitionTimeParameter;
         addVariable(transitionTimeParameter);
         transitionTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY,
-                Double.NEGATIVE_INFINITY, 1));
+                0.0, transitionTimeParameter.getDimension()));
 
         setUnits(units);
     }
@@ -88,13 +75,19 @@ public class ExponentialConstantModel extends DemographicModel {
     // general functions
 
     public DemographicFunction getDemographicFunction() {
-        exponentialConstant.setN0(N0Parameter.getParameterValue(0));
+        multiEpochExponential.setN0(N0Parameter.getParameterValue(0));
 
-        exponentialConstant.setGrowthRate(growthRateParameter.getParameterValue(0));
+        for (int i = 0; i < growthRateParameter.getDimension(); ++i) {
+            multiEpochExponential.setGrowthRate(i, growthRateParameter.getParameterValue(i));
+        }
 
-        exponentialConstant.setTransitionTime(transitionTimeParameter.getParameterValue(0));
+        double totalTime = 0.0;
+        for (int i = 0; i < transitionTimeParameter.getDimension(); ++i) {
+            totalTime += transitionTimeParameter.getParameterValue(i);
+            multiEpochExponential.setTransitionTime(i, totalTime);
+        }
 
-        return exponentialConstant;
+        return multiEpochExponential;
     }
 
     //
@@ -104,5 +97,5 @@ public class ExponentialConstantModel extends DemographicModel {
     Parameter N0Parameter = null;
     Parameter growthRateParameter = null;
     Parameter transitionTimeParameter = null;
-    ExpConstant exponentialConstant = null;
+    MultiEpochExponential multiEpochExponential = null;
 }

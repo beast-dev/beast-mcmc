@@ -1,5 +1,8 @@
 package dr.app.beagle.evomodel.branchmodel;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -7,7 +10,9 @@ import java.util.List;
 import dr.app.beagle.evomodel.parsers.BranchAssignmentModelParser;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -56,6 +61,20 @@ public class BranchAssignmentModel extends AbstractModel implements BranchModel 
 		// for (int i = 0; i < modelIndexMap.size() + 1; i++) {
 		// substitutionModels.add(null);
 		// }
+		
+//	try {	
+//		
+//		File file = new File("/home/filip/Dropbox/BeagleSequenceSimulator/branchSpecificSimulations/annotated_tree.nexus");
+//		BufferedReader reader;
+//		
+//		reader = new BufferedReader(new FileReader(file));
+//		NexusImporter importer = new NexusImporter(reader);
+//		Tree tree = importer.importTree(null);
+//		this.treeModel = new TreeModel(tree);
+//		
+//	} catch ( Exception e) {
+//		e.printStackTrace();
+//	} 
 		
 		for (NodeRef node : this.treeModel.getNodes()) {
 			if (!treeModel.isRoot(node)) {

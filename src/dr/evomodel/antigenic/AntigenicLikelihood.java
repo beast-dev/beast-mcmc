@@ -25,7 +25,6 @@
 
 package dr.evomodel.antigenic;
 
-import dr.evolution.util.*;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.LogTricks;

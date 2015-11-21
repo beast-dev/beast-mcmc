@@ -28,6 +28,10 @@ package dr.inference.model;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * @author Joseph Heled
  *         Date: 16/04/2009
@@ -42,6 +46,11 @@ public abstract class AbstractModelLikelihood extends AbstractModel implements L
 
     public String prettyName() {
         return Likelihood.Abstract.getPrettyName(this);
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
     }
 
     @Override

@@ -153,7 +153,7 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
             sumOfSquaredResidualsKnown = true;
         }
 
-        double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
+        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount -
                 (0.5 * precision * sumOfSquaredResiduals);
 
         if (isLeftTruncated) {

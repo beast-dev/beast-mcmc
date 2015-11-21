@@ -43,14 +43,15 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
     public static final String PSEUDO_PRIOR = "pseudoPrior";
-    public static final String WORKING_PRIOR = "referencePrior";
+    public static final String REFERENCE_PRIOR = "referencePrior";
+    public static final String WORKING_PRIOR = "workingPrior";
 
     public String getParserName() {
         return COMPOUND_LIKELIHOOD;
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, WORKING_PRIOR};
+        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, REFERENCE_PRIOR, WORKING_PRIOR};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

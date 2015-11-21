@@ -29,6 +29,8 @@ import dr.evomodel.continuous.SoftThresholdLikelihood;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A likelihood function which is simply the product of a set of likelihood functions.
@@ -112,6 +114,14 @@ public class PathLikelihood implements Likelihood {
 
     public Likelihood getDestinationLikelihood() {
         return destination;
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        Set<Likelihood> set = new HashSet<Likelihood>();
+        set.add(source);
+        set.add(destination);
+        return set;
     }
 
     public void makeDirty() {

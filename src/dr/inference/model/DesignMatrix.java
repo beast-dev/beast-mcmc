@@ -68,9 +68,9 @@ public class DesignMatrix extends MatrixParameter {
         return value;
     }
 
-    public double getParameterValue(int index) {
-        throw new RuntimeException("Univariate value from a design matrix");
-    }
+//    public double getParameterValue(int index) {
+//        throw new RuntimeException("Univariate value from a design matrix");
+//    }
 
     public void addParameter(Parameter param) {
         super.addParameter(param);
@@ -202,7 +202,8 @@ public class DesignMatrix extends MatrixParameter {
                     if (i == 0)
                         dim = parameter.getDimension();
                     else if (dim != parameter.getDimension())
-                        throw new XMLParseException("All parameters must have the same dimension to construct a rectangular design matrix");
+                        throw new XMLParseException("Parameter " + (i+1) +" has dimension "+ parameter.getDimension()+ " and not "+dim+". "+
+                                "All parameters must have the same dimension to construct a rectangular design matrix");
                 }
             }
 

@@ -93,47 +93,47 @@ public class MathUtils {
 			System.out.println(i + "\t" + pdf[i]);
 		}
 		throw new Error("randomChoicePDF falls through -- negative, infinite or NaN components in input " +
-                "distribution, or all zeroes?");
+				"distribution, or all zeroes?");
 	}
 
-    /**
-     * @param logpdf array of unnormalised log probabilities
-     * @return a sample according to an unnormalised probability distribution
-     *
-     * Use this if probabilities are rounding to zero when converted to real space
-     */
-    public static int randomChoiceLogPDF(double[] logpdf) {
+	/**
+	 * @param logpdf array of unnormalised log probabilities
+	 * @return a sample according to an unnormalised probability distribution
+	 * <p/>
+	 * Use this if probabilities are rounding to zero when converted to real space
+	 */
+	public static int randomChoiceLogPDF(double[] logpdf) {
 
-        double scalingFactor=Double.NEGATIVE_INFINITY;
+		double scalingFactor = Double.NEGATIVE_INFINITY;
 
-        for (double aLogpdf : logpdf) {
-            if (aLogpdf > scalingFactor) {
-                scalingFactor = aLogpdf;
-            }
-        }
+		for (double aLogpdf : logpdf) {
+			if (aLogpdf > scalingFactor) {
+				scalingFactor = aLogpdf;
+			}
+		}
 
-        if(scalingFactor == Double.NEGATIVE_INFINITY){
-            throw new Error("randomChoiceLogPDF falls through -- all -INF components in input distribution");
-        }
+		if (scalingFactor == Double.NEGATIVE_INFINITY) {
+			throw new Error("randomChoiceLogPDF falls through -- all -INF components in input distribution");
+		}
 
-        for(int j=0; j<logpdf.length; j++){
-            logpdf[j] = logpdf[j] - scalingFactor;
-        }
+		for (int j = 0; j < logpdf.length; j++) {
+			logpdf[j] = logpdf[j] - scalingFactor;
+		}
 
-        double[] pdf = new double[logpdf.length];
+		double[] pdf = new double[logpdf.length];
 
-        for(int j=0; j<logpdf.length; j++){
-            pdf[j] = Math.exp(logpdf[j]);
-        }
+		for (int j = 0; j < logpdf.length; j++) {
+			pdf[j] = Math.exp(logpdf[j]);
+		}
 
-        return randomChoicePDF(pdf);
+		return randomChoicePDF(pdf);
 
-    }
+	}
 
-    /**
+	/**
 	 * @param array to normalize
 	 * @return a new double array where all the values sum to 1.
-	 *         Relative ratios are preserved.
+	 * Relative ratios are preserved.
 	 */
 	public static double[] getNormalized(double[] array) {
 		double[] newArray = new double[array.length];
@@ -232,7 +232,7 @@ public class MathUtils {
 			return random.nextGaussian();
 		}
 	}
-	
+
 	//Mean = alpha / lambda
 	//Variance = alpha / (lambda*lambda)
 
@@ -242,14 +242,14 @@ public class MathUtils {
 		}
 	}
 
-    //Mean = alpha/(alpha+beta)
-    //Variance = (alpha*beta)/(alpha+beta)^2*(alpha+beta+1)
+	//Mean = alpha/(alpha+beta)
+	//Variance = (alpha*beta)/(alpha+beta)^2*(alpha+beta+1)
 
-    public static double nextBeta(double alpha, double beta){
-        double x = nextGamma(alpha, 1);
-        double y = nextGamma(beta, 1);
-        return x/(x+y);
-    }
+	public static double nextBeta(double alpha, double beta) {
+		double x = nextGamma(alpha, 1);
+		double y = nextGamma(beta, 1);
+		return x / (x + y);
+	}
 
 
 	/**
@@ -279,27 +279,26 @@ public class MathUtils {
 		}
 	}
 
-    /**
+	/**
 	 * Access a default instance of this class, access is synchronized
 	 */
 	public static double nextInverseGaussian(double mu, double lambda) {
 		synchronized (random) {
 			/* CODE TAKEN FROM WIKIPEDIA. TESTING DONE WITH RESULTS GENERATED IN R AND LOOK COMPARABLE */
-            double v = random.nextGaussian();   // sample from a normal distribution with a mean of 0 and 1 standard deviation
-            double y = v * v;
-            double x = mu + (mu * mu * y)/(2 * lambda) - (mu/(2 * lambda)) * Math.sqrt(4 * mu * lambda * y + mu * mu * y * y);
-            double test = MathUtils.nextDouble();  // sample from a uniform distribution between 0 and 1
-            if (test <= (mu) / (mu + x)) {
-                return x;
-            }
-            else {
-                return (mu * mu) / x;
-            }
+			double v = random.nextGaussian();   // sample from a normal distribution with a mean of 0 and 1 standard deviation
+			double y = v * v;
+			double x = mu + (mu * mu * y) / (2 * lambda) - (mu / (2 * lambda)) * Math.sqrt(4 * mu * lambda * y + mu * mu * y * y);
+			double test = MathUtils.nextDouble();  // sample from a uniform distribution between 0 and 1
+			if (test <= (mu) / (mu + x)) {
+				return x;
+			} else {
+				return (mu * mu) / x;
+			}
 		}
 	}
 
 
-    /**
+	/**
 	 * Access a default instance of this class, access is synchronized
 	 */
 	public static float nextFloat() {
@@ -344,15 +343,14 @@ public class MathUtils {
 		}
 	}
 
-    /**
-     *
-     * @param low
-     * @param high
-     * @return  uniform between low and high
-     */
-    public static double uniform(double low, double high) {
-        return low + nextDouble() * (high - low);
-    }
+	/**
+	 * @param low
+	 * @param high
+	 * @return uniform between low and high
+	 */
+	public static double uniform(double low, double high) {
+		return low + nextDouble() * (high - low);
+	}
 
 	/**
 	 * Shuffles an array.
@@ -414,40 +412,53 @@ public class MathUtils {
 	}
 
 
-    public static double logHyperSphereVolume(int dimension, double radius) {
-        return dimension * (0.5723649429247001 + Math.log(radius)) +
-                -GammaFunction.lnGamma(dimension / 2.0 + 1.0);
-    }
-
-/**
- * Returns sqrt(a^2 + b^2) without under/overflow.
- */
-    public static double hypot(double a, double b) {
-	double r;
-	if (Math.abs(a) > Math.abs(b)) {
-		r = b/a;
-		r = Math.abs(a)*Math.sqrt(1+r*r);
-	} else if (b != 0) {
-		r = a/b;
-		r = Math.abs(b)*Math.sqrt(1+r*r);
-	} else {
-		r = 0.0;
+	public static double logHyperSphereVolume(int dimension, double radius) {
+		return dimension * (0.5723649429247001 + Math.log(radius)) +
+				-GammaFunction.lnGamma(dimension / 2.0 + 1.0);
 	}
-	return r;
-    }
-    
-    /**
-     * return double *.????
-     * @param value
-     * @param sf
-     * @return
-     */
-    public static double round(double value, int sf) {
-        NumberFormatter formatter = new NumberFormatter(sf);
-        try {
-            return NumberFormat.getInstance().parse(formatter.format(value)).doubleValue();
-        } catch (ParseException e) {
-            return value;
-        }
-    }
+
+	/**
+	 * Returns sqrt(a^2 + b^2) without under/overflow.
+	 */
+	public static double hypot(double a, double b) {
+		double r;
+		if (Math.abs(a) > Math.abs(b)) {
+			r = b / a;
+			r = Math.abs(a) * Math.sqrt(1 + r * r);
+		} else if (b != 0) {
+			r = a / b;
+			r = Math.abs(b) * Math.sqrt(1 + r * r);
+		} else {
+			r = 0.0;
+		}
+		return r;
+	}
+
+	/**
+	 * return double *.????
+	 *
+	 * @param value
+	 * @param sf
+	 * @return
+	 */
+	public static double round(double value, int sf) {
+		NumberFormatter formatter = new NumberFormatter(sf);
+		try {
+			return NumberFormat.getInstance().parse(formatter.format(value)).doubleValue();
+		} catch (ParseException e) {
+			return value;
+		}
+	}
+
+	public static int[] getRandomState() {
+		synchronized (random) {
+			return random.getRandomState();
+		}
+	}
+
+	public static void setRandomState(int[] rngState) {
+		synchronized (random) {
+			random.setRandomState(rngState);
+		}
+	}
 }

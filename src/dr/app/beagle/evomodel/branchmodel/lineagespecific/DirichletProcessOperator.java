@@ -51,17 +51,17 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 	private double intensity;
 	private int mhSteps;
 
-	private Parameter zParameter;
-	// private CountableRealizationsParameter countableRealizationsParameter;
-	private Parameter parameter;
+	private Parameter categoriesParameter;
+	 private CountableRealizationsParameter allParameters;
+	private Parameter uniqueParameters;
 
 	private CompoundLikelihood likelihood;
 
 	public DirichletProcessOperator(DirichletProcessPrior dpp, //
-			Parameter zParameter, //
-			// CountableRealizationsParameter countableRealizationsParameter,
-			Parameter parameter, //
-			CompoundLikelihood likelihood, //
+			Parameter categoriesParameter, //
+			Parameter uniqueParameters, //
+			 CountableRealizationsParameter allParameters,
+			Likelihood likelihood, //
 			int mhSteps, //
 			double weight//
 	) {
@@ -69,24 +69,26 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 		this.dpp = dpp;
 		this.intensity = dpp.getGamma();
 		this.uniqueRealizationCount = dpp.getCategoryCount();
-		this.realizationCount = zParameter.getDimension();
+		this.realizationCount = categoriesParameter.getDimension();
 
-		this.zParameter = zParameter;
-		// this.countableRealizationsParameter = countableRealizationsParameter;
-		this.parameter = parameter;
-		this.likelihood = likelihood;
-
+		this.categoriesParameter = categoriesParameter;
+		 this.allParameters = allParameters;
+		this.uniqueParameters = uniqueParameters;
+		this.likelihood = (CompoundLikelihood) likelihood;
+//		this.likelihood =  likelihood;
+		
 		this.mhSteps = mhSteps;
+		
 		setWeight(weight);
 
 	}// END: Constructor
 
 	public Parameter getParameter() {
-		return zParameter;
+		return categoriesParameter;
 	}// END: getParameter
 
 	public Variable getVariable() {
-		return zParameter;
+		return categoriesParameter;
 	}// END: getVariable
 
 	@Override
@@ -111,47 +113,114 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			int[] occupancy = new int[uniqueRealizationCount];
 			for (int i = 0; i < realizationCount; i++) {
 				if (i != index) {
-					int j = (int) zParameter.getParameterValue(i);
+					int j = (int) categoriesParameter.getParameterValue(i);
 					occupancy[j]++;
 				}// END: i check
 			}// END: i loop
+
+			
+	        double[] existingValues = new double[uniqueRealizationCount];
+	        int counter = 0;
+	        int singletonIndex = -1;
+	        for(int i = 0; i < uniqueRealizationCount;i++){
+	            if(occupancy[i] > 0) {
+	            	
+	                occupancy[counter] = occupancy[i];
+	                existingValues[counter++] = dpp.getUniqueParameter(i) .getParameterValue(0);
+
+	            } else {
+	            
+	            	singletonIndex = i;
+
+	            }//END: occupancy check
+	            
+	        }//END: i loop
 			
 			
-
-			// TODO: set parameters at index values 
-			int category = (int) zParameter.getParameterValue(index);
-			
-			for (int i = 0; i < uniqueRealizationCount; i++) {
-			
-				double candidate =0;
-				if (occupancy[i] == 0) {// draw new
-
-					// draw from base model
-
-					 candidate = dpp.baseModel.nextRandom()[0];
-
-				} else {// draw existing
-
-					// likelihood for component x_index
-
-					 candidate = dpp.getUniqueParameter(i)
-							.getParameterValue(0);
-
-
-				}// END: occupancy check
+			// Propose new value(s)
+			double[] baseProposals = new double[realizationCount];
+			for (int i = 0; i < baseProposals.length; i++) {
 				
-				parameter.setParameterValue(category, candidate);
+				baseProposals[i] = dpp.baseModel.nextRandom()[0];
 				
-				
-			}// END: i loop
+			}
 			
-			double loglike = likelihood.getLogLikelihood();
-			System.out.println(loglike);
-			System.exit(-1);
-			
+	        // If a singleton
+            if(singletonIndex > -1) {
+            	
+                baseProposals[0] = uniqueParameters.getParameterValue(singletonIndex);
+
+            }
+
+			double[] logClusterProbs = new double[uniqueRealizationCount];
+            
+            // draw existing
+            int i;
+            for(i = 0; i < counter; i++) {
+            
+            	  logClusterProbs[i] = Math.log(occupancy[i] / (realizationCount - 1 + intensity));
+            	  
+            	  double value =  allParameters.getParameterValue(index);
+            	  double candidate = existingValues[i];
+            	  allParameters.setParameterValue(index, candidate);
+				  likelihood.makeDirty();
+            	  
+            	  logClusterProbs[i] = logClusterProbs[i] + likelihood.getLikelihood(index) .getLogLikelihood();
+//				  logClusterProbs[i] = logClusterProbs[i] + likelihood .getLogLikelihood();
+				  
+//            	  System.out.println(likelihood.getLikelihood(index) .getLogLikelihood() + " " + likelihood .getLogLikelihood());
+            	  
+            	  allParameters.setParameterValue(index, value);
+            	  likelihood.makeDirty();
+            	  
+            }
+            
+            // draw new
+            for(; i < logClusterProbs.length; i++){
+
+            	logClusterProbs[i] = Math.log((intensity) / (realizationCount - 1 + intensity)); 
+//            	logClusterProbs[i] = Math.log(intensity / uniqueRealizationCount / (realizationCount - 1 + intensity));
+            	
+            	  double value =  allParameters.getParameterValue(index);
+            	 double candidate = baseProposals[i - counter];
+            	 allParameters.setParameterValue(index, candidate);
+ 				 likelihood.makeDirty();
+ 				 
+            	 logClusterProbs[i] = logClusterProbs[i] + likelihood.getLikelihood(index).getLogLikelihood();
+// 				 logClusterProbs[i] = logClusterProbs[i] + likelihood.getLogLikelihood();
+ 				 
+//           	  System.out.println(likelihood.getLikelihood(index) .getLogLikelihood() + " " + likelihood .getLogLikelihood());
+            	 
+            	 allParameters.setParameterValue(index, value);
+            	 likelihood.makeDirty();
+            	 
+            }
+            
+            double smallestVal = logClusterProbs[0];
+            for(i = 1; i < uniqueRealizationCount; i++){
+                
+            	if(smallestVal > logClusterProbs[i]) {
+                    smallestVal = logClusterProbs[i];
+                }
+            
+            }
+            
+            
+            double[] clusterProbs = new double[uniqueRealizationCount];
+            for(i = 0; i < clusterProbs.length;i++) {
+                    clusterProbs[i] = Math.exp(logClusterProbs[i]-smallestVal);
+            
+            }
+
+//            dr.app.bss.Utils.printArray(clusterProbs);
+//         	System.exit(-1);
+            
+			// sample
+			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
+			categoriesParameter.setParameterValue(index, sampledCluster);
+            
+            
 		}//END: index loop
-		
-		
 		
 		
 	}//END: doOp
@@ -167,7 +236,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 				if (i != index) {
 
-					int j = (int) zParameter.getParameterValue(i);
+					int j = (int) categoriesParameter.getParameterValue(i);
 					occupancy[j]++;
 
 				}// END: i check
@@ -182,8 +251,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 			Likelihood clusterLikelihood = (Likelihood) likelihood.getLikelihood(index);
 //			Likelihood clusterLikelihood = likelihood;
 			
-			int category = (int) zParameter.getParameterValue(index);
-			double value = parameter.getParameterValue(category);
+			int category = (int) categoriesParameter.getParameterValue(index);
+			double value = uniqueParameters.getParameterValue(category);
 			
 			double[] clusterProbs = new double[uniqueRealizationCount];
 			
@@ -196,13 +265,11 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 					double candidate = dpp.baseModel.nextRandom()[0];
 
-					parameter.setParameterValue(category, candidate);
+					uniqueParameters.setParameterValue(category, candidate);
 					double loglike = clusterLikelihood.getLogLikelihood();
-					parameter.setParameterValue(category, value);
+					uniqueParameters.setParameterValue(category, value);
 
-					logprob = Math.log((intensity)
-							/ (realizationCount - 1 + intensity))
-							+ loglike;
+					logprob = Math.log((intensity) / (realizationCount - 1 + intensity)) + loglike;
 
 				} else {// draw existing
 
@@ -211,25 +278,18 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 					double candidate = dpp.getUniqueParameter(i)
 							.getParameterValue(0);
 
-					parameter.setParameterValue(category, candidate);
+					uniqueParameters.setParameterValue(category, candidate);
 					double loglike = clusterLikelihood.getLogLikelihood();
-					parameter.setParameterValue(category, value);
+					uniqueParameters.setParameterValue(category, value);
 
-					logprob = Math.log(occupancy[i])
-							/ (realizationCount - 1 + intensity) + loglike;
+					logprob = Math.log(occupancy[i]) / (realizationCount - 1 + intensity) + loglike;
 
 				}// END: occupancy check
 
 				clusterProbs[i] = logprob;
 			}// END: i loop
 
-			
-			//////////////////////////////////////
-			
 			dr.app.bss.Utils.exponentiate(clusterProbs);
-
-//			dr.app.bss.Utils.printArray(clusterProbs);
-//			System.exit(-1);
 
 			if (DEBUG) {
 				System.out.println("P(z[index] | z[-index]): ");
@@ -238,7 +298,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements
 
 			// sample
 			int sampledCluster = MathUtils.randomChoicePDF(clusterProbs);
-			zParameter.setParameterValue(index, sampledCluster);
+			categoriesParameter.setParameterValue(index, sampledCluster);
 
 			if (DEBUG) {
 				System.out

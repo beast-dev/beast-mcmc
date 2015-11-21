@@ -28,7 +28,9 @@ package dr.inference.model;
 import dr.util.NumberFormatter;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -72,6 +74,17 @@ public class TestThreadedCompoundLikelihood implements Likelihood {
     public final Likelihood getLikelihood(int i) {
         return likelihoods.get(i);
     }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        Set<Likelihood> set = new HashSet<Likelihood>();
+        for (Likelihood l : likelihoods) {
+            set.add(l);
+            set.addAll(l.getLikelihoodSet());
+        }
+        return set;
+    }
+
 
     // **************************************************************
     // Likelihood IMPLEMENTATION

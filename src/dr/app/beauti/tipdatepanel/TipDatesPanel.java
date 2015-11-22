@@ -55,6 +55,7 @@ import java.util.EnumSet;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Tommy Lam
  * @version $Id: DataPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TipDatesPanel extends BeautiPanel implements Exportable {

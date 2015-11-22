@@ -30,16 +30,18 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 
-import java.io.Serializable;
+import java.io.*;
 import java.text.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.HashMap;
 
 /**
  * @author Andrew Rambaut
+ * @author Tommy Lam
  */
 public class DateGuesser implements Serializable {
     private static final long serialVersionUID = -9106689400887615213L;
@@ -47,7 +49,8 @@ public class DateGuesser implements Serializable {
     public enum GuessType {
         ORDER,
         PREFIX,
-        REGEX
+        REGEX,
+        LOAD
     }
 
     public boolean guessDates = false;
@@ -56,6 +59,8 @@ public class DateGuesser implements Serializable {
     public int order = 0;
     public String prefix;
     public String regex;
+    public File loadFile;
+    public HashMap<String, String> load;
     public double offset = 0.0;
     public double unlessLessThan = 0.0;
     public double offset2 = 0.0;
@@ -76,10 +81,30 @@ public class DateGuesser implements Serializable {
         guessDates(taxa);
     }
 
+ 	private void loadDateFromFileToHash(File loadfn) {
+         try{
+ 			if (guessType == GuessType.LOAD) {
+ 				load = new HashMap<String, String>();
+ 				BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(loadfn)));
+ 				String line = br.readLine();
+ 				while(line != null && line.matches(".+\t.+")) {
+ 					String[] taxa_date = line.split("\t");
+ 					load.put(taxa_date[0], taxa_date[1]);
+ 					line = br.readLine();
+ 				}
+ 				br.close();
+ 			}
+  		} catch (Exception ee) {
+  			// catch here for convenience
+  		}
+ 	}
+
     public void guessDates(List<Taxon> taxonList) {
 
         dateFormat = new SimpleDateFormat(calendarDateFormat);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+ 		if(guessType == GuessType.LOAD && this.loadFile != null) loadDateFromFileToHash(this.loadFile);
 
         for (int i = 0; i < taxonList.size(); i++) {
             // Allocates a Date object and initializes it to represent the specified number of milliseconds since the
@@ -99,6 +124,9 @@ public class DateGuesser implements Serializable {
                     case REGEX:
                         guessDateFromRegex(taxonList.get(i).getId(), regex, values);
                         break;
+                    case LOAD:
+                         guessDateFromLoad(taxonList.get(i).getId(), load, values);
+                         break;
                     default:
                         throw new IllegalArgumentException("unknown GuessType");
                 }
@@ -277,7 +305,19 @@ public class DateGuesser implements Serializable {
             throw new GuessDatesException("Date group not defined in regular expression");
         }
 
-        parseDate(label, matcher.group(1), values);
+        parseDate(label, matcher.group(0), values);
+    }
+
+
+    private void guessDateFromLoad(String label, HashMap<String, String> myload, double[] values) throws GuessDatesException {
+         String dateStr = "";
+         if (myload.containsKey(label)) {
+             dateStr = (String)(myload.get(label));
+         } else {
+             throw new GuessDatesException("The imported table doesn't contain the taxon label, " + label);
+         }
+
+         parseDate(label, dateStr, values);
     }
 
 

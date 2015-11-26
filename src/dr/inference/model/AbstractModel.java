@@ -1,7 +1,7 @@
 /*
  * AbstractModel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -53,6 +53,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
      * list then it does nothing.
      */
     public void addModel(Model model) {
+        Model.CONNECTED_MODEL_SET.add(model);
 
         if (!models.contains(model)) {
             models.add(model);
@@ -74,6 +75,10 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
     }
 
     public final void addVariable(Variable variable) {
+        if (variable instanceof Parameter) {
+            Parameter.CONNECTED_PARAMETER_SET.add((Parameter)variable);
+        }
+
         if (!variables.contains(variable)) {
             variables.add(variable);
             variable.addVariableListener(this);
@@ -121,7 +126,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
         return listenerHelper.getListenerCount() > 0;
     }
 
-    
+
     /**
      * Fires a model changed event.
      */

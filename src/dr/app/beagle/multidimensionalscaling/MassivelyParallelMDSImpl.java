@@ -1,7 +1,7 @@
 /*
  * MassivelyParallelMDSImpl.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -82,7 +82,9 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     public double calculateLogLikelihood() {
         double sumOfSquaredResiduals = singleton.getSumOfSquaredResiduals(instance);
 
-        double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
+        // TODO Missing - n / 2 * log(2 * pi)
+
+        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount -
                         (0.5 * precision * sumOfSquaredResiduals);
 
         if (isLeftTruncated) {

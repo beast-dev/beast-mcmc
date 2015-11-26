@@ -1,7 +1,7 @@
 /*
  * TwoEpochDemographicModel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -61,13 +61,13 @@ public class TwoEpochDemographicModel extends DemographicModel {
         this.demo1 = demo1;
         addModel(demo1);
         for (int i = 0; i < demo1.getVariableCount(); i++) {
-            addVariable((Parameter)demo1.getVariable(i));
+            addVariable((Parameter) demo1.getVariable(i));
         }
 
         this.demo2 = demo2;
         addModel(demo2);
         for (int i = 0; i < demo2.getVariableCount(); i++) {
-            addVariable((Parameter)demo2.getVariable(i));
+            addVariable((Parameter) demo2.getVariable(i));
         }
 
         this.transitionTimeParameter = transitionTimeParameter;

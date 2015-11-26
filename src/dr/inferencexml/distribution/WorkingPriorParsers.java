@@ -1,7 +1,7 @@
 /*
  * WorkingPriorParsers.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,9 +46,13 @@ public class WorkingPriorParsers {
     public final static boolean DEBUG = true;
 
     public static final String NORMAL_REFERENCE_PRIOR = "normalReferencePrior";
+    public static final String NORMAL_WORKING_PRIOR = "normalWorkingPrior";
     public static final String LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR = "logTransformedNormalReferencePrior";
+    public static final String LOG_TRANSFORMED_NORMAL_WORKING_PRIOR = "logTransformedNormalWorkingPrior";
     public static final String LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR = "logitTransformedNormalReferencePrior";
+    public static final String LOGIT_TRANSFORMED_NORMAL_WORKING_PRIOR = "logitTransformedNormalWorkingPrior";
     public static final String GAMMA_REFERENCE_PRIOR = "gammaReferencePrior";
+    public static final String GAMMA_WORKING_PRIOR = "gammaWorkingPrior";
     public static final String PARAMETER_COLUMN = "parameterColumn";
     public static final String DIMENSION = "dimension";
 
@@ -59,6 +63,10 @@ public class WorkingPriorParsers {
 
         public String getParserName() {
             return GAMMA_REFERENCE_PRIOR;
+        }
+
+        public String[] getParserNames() {
+            return new String[]{getParserName(), GAMMA_WORKING_PRIOR};
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -151,6 +159,10 @@ public class WorkingPriorParsers {
 
         public String getParserName() {
             return LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR;
+        }
+
+        public String[] getParserNames() {
+            return new String[]{getParserName(), LOG_TRANSFORMED_NORMAL_WORKING_PRIOR};
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -305,6 +317,10 @@ public class WorkingPriorParsers {
 
         public String getParserName() {
             return LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR;
+        }
+
+        public String[] getParserNames() {
+            return new String[]{getParserName(), LOGIT_TRANSFORMED_NORMAL_WORKING_PRIOR};
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -462,6 +478,10 @@ public class WorkingPriorParsers {
 
         public String getParserName() {
             return NORMAL_REFERENCE_PRIOR;
+        }
+
+        public String[] getParserNames() {
+            return new String[]{getParserName(), NORMAL_WORKING_PRIOR};
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {

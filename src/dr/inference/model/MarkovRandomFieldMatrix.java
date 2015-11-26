@@ -1,7 +1,7 @@
 /*
  * MarkovRandomFieldMatrix.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -35,6 +35,8 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
     private Parameter diagonalParameter;
     private Parameter offDiagonalParameter;
 
+    private final Parameter nuggetParameter;
+
     private final Transform diagonalTransform;
     private final Transform offDiagonalTransform;
 
@@ -42,23 +44,39 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 
     private int dim;
 
-    public MarkovRandomFieldMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation) {
-        this(diagonals, offDiagonal, asCorrelation, null, null);
-    }
+//    public MarkovRandomFieldMatrix(String name, int dim, Parameter diagonals, Parameter offDiagonal,
+//                                   Parameter nugget,
+//                                   boolean asCorrelation) {
+//        this(name, dim, diagonals, offDiagonal, nugget, asCorrelation, null, null);
+//    }
 
-    public MarkovRandomFieldMatrix(Parameter diagonals, Parameter offDiagonal, boolean asCorrelation,
+    public MarkovRandomFieldMatrix(String name, int dim, Parameter diagonals, Parameter offDiagonal,
+                                   Parameter nugget,
+                                   boolean asCorrelation,
                                    Transform diagonalTransform, Transform offDiagonalTransform) {
-        super(MATRIX_PARAMETER);
+        super(name);
         diagonalParameter = diagonals;
         offDiagonalParameter = offDiagonal;
+        nuggetParameter = nugget;
+
         addParameter(diagonalParameter);
         addParameter(offDiagonalParameter);
-        dim = diagonalParameter.getDimension();
+        addParameter(nuggetParameter);
+
+        this.dim = dim;
         this.asCorrelation = asCorrelation;
 
         this.diagonalTransform = (diagonalTransform != null) ? diagonalTransform : Transform.NONE;
         this.offDiagonalTransform = (offDiagonalTransform != null) ? offDiagonalTransform : Transform.NONE;
     }
+
+//    public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+//        if (variable == diagonalParameter || variable == offDiagonalParameter || variable == nuggetParameter) {
+//            fireParameterChangedEvent(-1, ChangeType.ALL_VALUES_CHANGED);
+//        } else {
+//            throw new IllegalArgumentException("Unknown variable '" + variable.getVariableName() + "'");
+//        }
+//    }
 
 //    public double[] getAttributeValue() {
 //        double[] stats = new double[dim * dim];
@@ -72,9 +90,15 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 //        return stats;
 //    }
 //
-//    public int getDimension() {
-//        return dim * dim;
-//    }
+    public int getDimension() {
+        return dim * dim;
+    }
+
+    public String getDimensionName(int i) {
+        int row = i / dim;
+        int col = i % dim;
+        return getParameterName() + "_" + (row + 1) + "_" + (col + 1);
+    }
 
     private double getDiagonalParameterValue(int i) {
         return diagonalTransform.inverse(diagonalParameter.getParameterValue(i));
@@ -82,6 +106,10 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 
     private double getOffDiagonalParameterValue(int i) {
         return offDiagonalTransform.inverse(offDiagonalParameter.getParameterValue(i));
+    }
+
+    private double getNuggetValue(int i) {
+        return nuggetParameter.getParameterValue(i);
     }
 
     public double getParameterValue(int i) {
@@ -92,11 +120,17 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 
     public double getParameterValue(int row, int col) {
         if (row == col) {
-            return getDiagonalParameterValue(row);
+            double diag = getDiagonalParameterValue(0);
+            if (row > 0 && row < (dim - 1)) {
+                diag *= 2; // TODO Assumes RW-1 model
+            }
+            diag += getNuggetValue(0);
+            return diag;
+//            return getDiagonalParameterValue(row);
         } else if (row == (col - 1) || row == (col + 1)) {
             if (asCorrelation) {
                 return -getOffDiagonalParameterValue(0) *
-                        Math.sqrt(getDiagonalParameterValue(row) * getDiagonalParameterValue(col));
+                        Math.sqrt(getDiagonalParameterValue(0) * getDiagonalParameterValue(0));
             }
             return getOffDiagonalParameterValue(0);
         }
@@ -116,10 +150,10 @@ public class MarkovRandomFieldMatrix extends MatrixParameter {
 //    }
 
     public int getColumnDimension() {
-        return diagonalParameter.getDimension();
+        return dim;
     }
 
     public int getRowDimension() {
-        return diagonalParameter.getDimension();
+        return dim;
     }
 }

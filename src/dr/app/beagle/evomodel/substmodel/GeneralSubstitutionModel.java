@@ -1,7 +1,7 @@
 /*
  * GeneralSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,6 +28,9 @@ package dr.app.beagle.evomodel.substmodel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
 import dr.inference.model.DuplicatedParameter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <b>A general model of sequence substitution</b>. A general reversible class for any
@@ -66,6 +69,8 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
             if (!(ratesParameter instanceof DuplicatedParameter))
                 ratesParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0,
                         ratesParameter.getDimension()));
+
+            setupDimensionNames(relativeTo);
         }
         setRatesRelativeTo(relativeTo);
     }
@@ -100,6 +105,35 @@ public class GeneralSubstitutionModel extends BaseSubstitutionModel {
             } else {
                 rates[i] = ratesParameter.getParameterValue(i - 1);
             }
+        }
+    }
+
+    protected void setupDimensionNames(int relativeTo) {
+        List<String> rateNames = new ArrayList<String>();
+
+        String ratePrefix = ratesParameter.getParameterName();
+
+        int index = 0;
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                if (index != relativeTo) {
+                    rateNames.add(getDimensionString(i, j, ratePrefix));
+                }
+            }
+            index++;
+        }
+
+        String[] tmp = new String[0];
+        ratesParameter.setDimensionNames(rateNames.toArray(tmp));
+    }
+
+    protected String getDimensionString(int i, int j, String prefix) {
+        String codes =  dataType.getCode(i) + "." + dataType.getCode(j);
+        if (prefix == null) {
+            return codes;
+        } else {
+            return prefix + "." + codes;
         }
     }
 

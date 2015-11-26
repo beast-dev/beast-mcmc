@@ -1,9 +1,7 @@
-package dr.app.phylogeography.tools;
-
 /*
  * RateIndicatorBF.java
  *
- * Copyright (C) 2002-2010 BEAST Development Team
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -24,6 +22,8 @@ package dr.app.phylogeography.tools;
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
+
+package dr.app.phylogeography.tools;
 
 import dr.app.tools.TimeSlicer;
 import dr.app.util.Arguments;

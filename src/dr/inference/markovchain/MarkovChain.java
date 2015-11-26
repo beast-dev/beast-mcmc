@@ -1,7 +1,7 @@
 /*
  * MarkovChain.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -88,6 +88,15 @@ public final class MarkovChain implements Serializable {
         this.fullEvaluationCount = fullEvaluationCount;
         this.minOperatorCountForFullEvaluation = minOperatorCountForFullEvaluation;
         this.evaluationTestThreshold = evaluationTestThreshold;
+
+        Likelihood.CONNECTED_LIKELIHOOD_SET.add(likelihood);
+        Likelihood.CONNECTED_LIKELIHOOD_SET.addAll(likelihood.getLikelihoodSet());
+
+        for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
+            if (!Likelihood.CONNECTED_LIKELIHOOD_SET.contains(l)) {
+                System.err.println("WARNING: Likelihood component, " + l.getId() + ", created but not used in the MCMC");
+            }
+        }
 
         currentScore = evaluate(likelihood, prior);
     }
@@ -449,6 +458,10 @@ public final class MarkovChain implements Serializable {
 
     public boolean isStopped() {
         return isStopped;
+    }
+
+    public double evaluate() {
+        return evaluate(likelihood, prior);
     }
 
     protected double evaluate(Likelihood likelihood, Prior prior) {

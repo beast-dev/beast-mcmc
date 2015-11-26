@@ -1,7 +1,7 @@
 /*
  * Parameter.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,13 +26,11 @@
 package dr.inference.model;
 
 import dr.inference.parallel.MPIServices;
+import dr.xml.Reportable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a multi-dimensional continuous parameter.
@@ -165,17 +163,21 @@ public interface Parameter extends Statistic, Variable<Double> {
 
     boolean isUsed();
 
+    public final static Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
+    public final static Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
+
     /**
      * Abstract base class for parameters
      */
-    public abstract class Abstract extends Statistic.Abstract implements Parameter {
+    public abstract class Abstract extends Statistic.Abstract implements Parameter, Reportable {
 
         protected Abstract() {
+            FULL_PARAMETER_SET.add(this);
         }
 
         protected Abstract(final String name) {
             super(name);
-
+            FULL_PARAMETER_SET.add(this);
         }
 
         // **************************************************************
@@ -429,6 +431,34 @@ public interface Parameter extends Statistic, Variable<Double> {
                 }
             }
             return buffer.toString();
+        }
+
+        public String getReport() {
+            StringBuilder sb = new StringBuilder();
+            Bounds bounds = null;
+            try {
+                bounds = getBounds();
+            } catch (NullPointerException e) {
+                // Do nothing
+            }
+
+            for (int i = 0; i < getDimension(); ++i) {
+                if (getDimensionName(i) != null) {
+                    sb.append(getDimensionName(i)).append("=");
+                }
+                sb.append(String.valueOf(getParameterValue(i)));
+
+                if (bounds != null) {
+                    sb.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
+                    sb.append(", ").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+                }
+
+                if (i < getDimension() - 1) {
+                    sb.append(", ");
+                }
+            }
+
+            return sb.toString();
         }
 
         public Element createElement(Document document) {
@@ -781,5 +811,4 @@ public interface Parameter extends Statistic, Variable<Double> {
         private final double[] uppers, lowers;
     }
 
-    final static Set<Parameter> FULL_PARAMETER_SET = new HashSet<Parameter>();
 }

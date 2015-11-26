@@ -1,19 +1,7 @@
-package dr.inference.distribution;
-
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.inferencexml.distribution.InverseGaussianDistributionModelParser;
-import dr.math.UnivariateFunction;
-import dr.math.distributions.InverseGaussianDistribution;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
 /*
  * InverseGaussianDistributionModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -35,6 +23,17 @@ import org.w3c.dom.Element;
  * Boston, MA  02110-1301  USA
  */
 
+package dr.inference.distribution;
+
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.inferencexml.distribution.InverseGaussianDistributionModelParser;
+import dr.math.UnivariateFunction;
+import dr.math.distributions.InverseGaussianDistribution;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * @author Wai Lok Sibon Li

@@ -1,7 +1,7 @@
 /*
  * MultiDimensionalScalingLikelihood.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -65,7 +65,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
      * @param mdsPrecision
      * @param locationsParameter
      * @param dataTable
-     * @param includeTruncation
+     * @param isLeftTruncated
      */
     public MultiDimensionalScalingLikelihood(
             int mdsDimension,
@@ -164,19 +164,29 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter) {
-        if (locationsParameter.getColumnDimension() > 0){
+        final boolean exisitingParameter = locationsParameter.getColumnDimension() > 0;
+
+        if (exisitingParameter){
             if (locationsParameter.getColumnDimension() != locationCount){
                 throw new RuntimeException("locationsParameter column dimension ("+locationsParameter.getColumnDimension()+") is not equal to the locationCount ("+locationCount+")");
             }
             if (locationsParameter.getRowDimension() != mdsDimension){
                 throw new RuntimeException("locationsParameter row dimension ("+locationsParameter.getRowDimension()+") is not equal to the mdsDimension ("+mdsDimension+")");
             }
-        } else{
+        } else {
             locationsParameter.setColumnDimension(mdsDimension);
             locationsParameter.setRowDimension(locationCount);
         }
+
         for (int i = 0; i < locationLabels.length; i++) {
-            locationsParameter.getParameter(i).setId(locationLabels[i]);
+            if (exisitingParameter) {
+                if (locationsParameter.getParameter(i).getParameterName().compareTo(locationLabels[i]) != 0) {
+                    throw new RuntimeException("Mismatched trait parameter name (" + locationsParameter.getParameter(i).getParameterName() +
+                            ") and data dimension name (" + locationLabels[i] + ")");
+                }
+            } else {
+                locationsParameter.getParameter(i).setId(locationLabels[i]);
+            }
         }
 
         for (int i = 0; i < locationsParameter.getParameterCount(); ++i) {

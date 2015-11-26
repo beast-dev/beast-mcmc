@@ -1,7 +1,7 @@
 /*
  * MarginalLikelihoodEstimationGenerator.java
  *
- * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -80,6 +80,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
     protected void generate(final InsertionPoint point, final Object item, final String prefix, final XMLWriter writer) {
         MarginalLikelihoodEstimationOptions component = (MarginalLikelihoodEstimationOptions) options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+
+        /*System.err.println("generate component: " + component);
+        System.err.println("options.pathSteps: " + component.pathSteps);
+        System.err.println("options.mleChainLength: " + component.mleChainLength);
+        System.err.println("options.mleLogEvery: " + component.mleLogEvery);*/
 
         switch (point) {
             case AFTER_MCMC:

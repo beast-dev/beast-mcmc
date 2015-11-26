@@ -1,7 +1,7 @@
 /*
  * CataclysmicDemographicModel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -44,15 +44,17 @@ public class CataclysmicDemographicModel extends DemographicModel {
     /**
      * Construct demographic model with default settings
      */
-    public CataclysmicDemographicModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, Type units) {
+    public CataclysmicDemographicModel(Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter,
+                Type units, boolean useSpike) {
 
-        this(CataclysmicDemographicModelParser.CATACLYSM_MODEL, N0Parameter, N1Parameter, growthRateParameter, timeParameter, units);
+        this(CataclysmicDemographicModelParser.CATACLYSM_MODEL, N0Parameter, N1Parameter, growthRateParameter, timeParameter, units, useSpike);
     }
 
     /**
      * Construct demographic model with default settings
      */
-    public CataclysmicDemographicModel(String name, Parameter N0Parameter, Parameter N1Parameter, Parameter growthRateParameter, Parameter timeParameter, Type units) {
+    public CataclysmicDemographicModel(String name, Parameter N0Parameter, Parameter secondParam, Parameter growthRateParameter,
+                Parameter timeParameter, Type units, boolean useSpike) {
 
         super(name);
 
@@ -62,9 +64,14 @@ public class CataclysmicDemographicModel extends DemographicModel {
         addVariable(N0Parameter);
         N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.N1Parameter = N1Parameter;
-        addVariable(N1Parameter);
-        N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        if (useSpike) {
+            this.N1Parameter = secondParam;
+            N1Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+            addVariable(N1Parameter);
+        } else {
+            this.declineRateParameter = secondParam;
+            addVariable(declineRateParameter);
+        }
 
         this.growthRateParameter = growthRateParameter;
         addVariable(growthRateParameter);
@@ -95,9 +102,9 @@ public class CataclysmicDemographicModel extends DemographicModel {
           */ // ..collapse to...
 
         double t = timeParameter.getParameterValue(0);
-        double declineRate = Math.log(N1Parameter.getParameterValue(0)) / t;
+        double declineRate = (declineRateParameter == null) ? Math.log(N1Parameter.getParameterValue(0)) / t :
+                declineRateParameter.getParameterValue(0);
         cataclysm.setDeclineRate(declineRate);
-
 
         return cataclysm;
     }
@@ -110,5 +117,6 @@ public class CataclysmicDemographicModel extends DemographicModel {
     Parameter N1Parameter = null;
     Parameter growthRateParameter = null;
     Parameter timeParameter = null;
+    Parameter declineRateParameter = null;
     CataclysmicDemographic cataclysm = null;
 }

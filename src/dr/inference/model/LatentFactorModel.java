@@ -25,9 +25,11 @@
 
 package dr.inference.model;
 
+import cern.colt.matrix.linalg.Blas;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
+import org.netlib.blas.Dgemm;
 
 import java.lang.reflect.Array;
 import java.util.List;
@@ -98,7 +100,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
-                             boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeFactors,  boolean recomputeResiduals
+                             boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeResiduals,  boolean recomputeFactors
     ) {
         super("");
         this.RecomputeResiduals=recomputeResiduals;

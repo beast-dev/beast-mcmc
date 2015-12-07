@@ -53,6 +53,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
      * list then it does nothing.
      */
     public void addModel(Model model) {
+        Model.CONNECTED_MODEL_SET.add(model);
 
         if (!models.contains(model)) {
             models.add(model);
@@ -74,6 +75,10 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
     }
 
     public final void addVariable(Variable variable) {
+        if (variable instanceof Parameter) {
+            Parameter.CONNECTED_PARAMETER_SET.add((Parameter)variable);
+        }
+
         if (!variables.contains(variable)) {
             variables.add(variable);
             variable.addVariableListener(this);
@@ -121,7 +126,7 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
         return listenerHelper.getListenerCount() > 0;
     }
 
-    
+
     /**
      * Fires a model changed event.
      */

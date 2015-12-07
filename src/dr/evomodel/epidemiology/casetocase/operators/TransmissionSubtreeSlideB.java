@@ -106,9 +106,6 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
         double logq;
 
-        final NodeRef root = tree.getRoot();
-        final double oldTreeHeight = tree.getNodeHeight(root);
-
         NodeRef i;
 
         // 1. choose a random eligible node avoiding root
@@ -352,13 +349,11 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                         newiPCase = newChildCase;
                     }
 
-
                     if(resampleInfectionTimes) {
                         //whichever we picked for iP, it's the new child's case whose infection branch is modified
                         // (even if this infection branch is iP's branch)
 
                         newChildCase.setInfectionBranchPosition(MathUtils.nextDouble());
-
                     }
 
                     logq += Math.log(2);

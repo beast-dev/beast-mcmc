@@ -26,6 +26,7 @@
 package dr.inference.model;
 
 import dr.inference.parallel.MPIServices;
+import dr.xml.Reportable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -163,11 +164,12 @@ public interface Parameter extends Statistic, Variable<Double> {
     boolean isUsed();
 
     public final static Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();
+    public final static Set<Parameter> CONNECTED_PARAMETER_SET = new LinkedHashSet<Parameter>();
 
     /**
      * Abstract base class for parameters
      */
-    public abstract class Abstract extends Statistic.Abstract implements Parameter {
+    public abstract class Abstract extends Statistic.Abstract implements Parameter, Reportable {
 
         protected Abstract() {
             FULL_PARAMETER_SET.add(this);
@@ -429,6 +431,34 @@ public interface Parameter extends Statistic, Variable<Double> {
                 }
             }
             return buffer.toString();
+        }
+
+        public String getReport() {
+            StringBuilder sb = new StringBuilder();
+            Bounds bounds = null;
+            try {
+                bounds = getBounds();
+            } catch (NullPointerException e) {
+                // Do nothing
+            }
+
+            for (int i = 0; i < getDimension(); ++i) {
+                if (getDimensionName(i) != null) {
+                    sb.append(getDimensionName(i)).append("=");
+                }
+                sb.append(String.valueOf(getParameterValue(i)));
+
+                if (bounds != null) {
+                    sb.append("[").append(String.valueOf(bounds.getLowerLimit(i)));
+                    sb.append(", ").append(String.valueOf(bounds.getUpperLimit(i))).append("]");
+                }
+
+                if (i < getDimension() - 1) {
+                    sb.append(", ");
+                }
+            }
+
+            return sb.toString();
         }
 
         public Element createElement(Document document) {

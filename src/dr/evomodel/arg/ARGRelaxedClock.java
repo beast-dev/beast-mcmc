@@ -29,8 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel.Node;
 import dr.evomodel.branchratemodel.AbstractBranchRateModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;

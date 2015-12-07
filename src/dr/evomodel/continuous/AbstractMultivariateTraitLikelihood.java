@@ -34,7 +34,6 @@ import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
-import dr.math.MathUtils;
 import dr.math.distributions.MultivariateDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.stats.DiscreteStatistics;
@@ -43,7 +42,6 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 import dr.xml.*;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

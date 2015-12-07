@@ -37,7 +37,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * This Branch Rate Model takes a ancestral state likelihood and

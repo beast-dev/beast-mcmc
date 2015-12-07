@@ -52,13 +52,13 @@ public class CataclysmicDemographic extends ExponentialGrowth {
 	/**
 	 * returns the positive-valued decline rate
 	 */
-	public final double getDeclineRate() { return d; }
+	public final double getDeclineRate() { return -d; }
 	
 	/**
 	 * sets the decline rate.
 	 */
 	public void setDeclineRate(double d) { 
-		if (d <= 0) throw new IllegalArgumentException();
+//		if (d <= 0) throw new IllegalArgumentException();
 		this.d = d; 
 	}
 	

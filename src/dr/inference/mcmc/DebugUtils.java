@@ -48,6 +48,8 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DebugUtils {
 
@@ -70,6 +72,7 @@ public class DebugUtils {
                 out.print("\t");
                 out.print(rngState[i]);
             }
+            out.println();
 
             out.print("\nstate\t");
             out.println(state);
@@ -77,7 +80,7 @@ public class DebugUtils {
             out.print("lnL\t");
             out.println(lnL);
 
-            for (Parameter parameter : Parameter.FULL_PARAMETER_SET) {
+            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
                 out.print(parameter.getParameterName());
                 out.print("\t");
                 out.print(parameter.getDimension());
@@ -88,7 +91,7 @@ public class DebugUtils {
                 out.println();
             }
 
-            for (Model model : Model.FULL_MODEL_SET) {
+            for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
                     out.print(model.getModelName());
                     out.print("\t");
@@ -102,6 +105,11 @@ public class DebugUtils {
             System.err.println("Unable to write file: " + ioe.getMessage());
             return false;
         }
+
+//        for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+//            System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
+//        }
+
         return true;
     }
 
@@ -120,25 +128,26 @@ public class DebugUtils {
             FileReader fileIn = new FileReader(file);
             BufferedReader in = new BufferedReader(fileIn);
 
+            int[] rngState = null;
+
             String line = in.readLine();
             String[] fields = line.split("\t");
-            try {
-                if (!fields[0].equals("rng")) {
-                    throw new RuntimeException("Unable to read rng state from state file");
+            if (fields[0].equals("rng")) {
+                // if there is a random number generator state present then load it...
+                try {
+                    rngState = new int[fields.length - 1];
+                    for (int i = 0; i < rngState.length; i++) {
+                        rngState[i] = Integer.parseInt(fields[i + 1]);
+                    }
+
+                } catch (NumberFormatException nfe) {
+                    throw new RuntimeException("Unable to read state number from state file");
                 }
 
-                int[] rngState = new int[fields.length - 1];
-                for (int i = 0; i < rngState.length; i++) {
-                    rngState[i] = Integer.parseInt(fields[i + 1]);
-                }
-
-                MathUtils.setRandomState(rngState);
-            } catch (NumberFormatException nfe) {
-                throw new RuntimeException("Unable to read state number from state file");
+                line = in.readLine();
+                fields = line.split("\t");
             }
 
-            line = in.readLine();
-            fields = line.split("\t");
             try {
                 if (!fields[0].equals("state")) {
                     throw new RuntimeException("Unable to read state number from state file");
@@ -161,7 +170,7 @@ public class DebugUtils {
                 throw new RuntimeException("Unable to read lnL from state file");
             }
 
-            for (Parameter parameter : Parameter.FULL_PARAMETER_SET) {
+            for (Parameter parameter : Parameter.CONNECTED_PARAMETER_SET) {
                 line = in.readLine();
                 fields = line.split("\t");
 //                if (!fields[0].equals(parameter.getParameterName())) {
@@ -173,31 +182,65 @@ public class DebugUtils {
                     System.err.println("Unable to match state parameter dimension: " + dimension + ", expecting " + parameter.getDimension());
                 }
 
-                for (int dim = 0; dim < parameter.getDimension(); dim++) {
-                    parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 2]));
+                if (fields[0].equals("branchRates.categories.rootNodeNumber")) {
+                    System.out.println("eek");
+                    double value = Double.parseDouble(fields[2]);
+                    parameter.setParameterValue(0, 160.0);
+                } else {
+                    for (int dim = 0; dim < parameter.getDimension(); dim++) {
+                        parameter.setParameterValue(dim, Double.parseDouble(fields[dim + 2]));
+                    }
                 }
+
             }
 
             // load the tree models last as we get the node heights from the tree (not the parameters which
             // which may not be associated with the right node
-            for (Model model : Model.FULL_MODEL_SET) {
+            Set<String> expectedTreeModelNames = new HashSet<String>();
+            for (Model model : Model.CONNECTED_MODEL_SET) {
                 if (model instanceof TreeModel) {
-                    line = in.readLine();
-                    fields = line.split("\t");
-                    if (!fields[0].equals(model.getModelName())) {
-                        throw new RuntimeException("Unable to match state parameter: " + fields[0] + ", expecting " + model.getModelName());
-                    }
-                    NewickImporter importer = new NewickImporter(fields[1]);
-                    Tree tree = importer.importNextTree();
-                    ((TreeModel) model).beginTreeEdit();
-                    ((TreeModel) model).adoptTreeStructure(tree);
-                    ((TreeModel) model).endTreeEdit();
+                    expectedTreeModelNames.add(model.getModelName());
                 }
+            }
+
+            // Read in all (possibly more than one) tree
+            while((line = in.readLine()) != null) {
+                fields = line.split("\t");
+                boolean treeFound = false;
+
+                for (Model model : Model.CONNECTED_MODEL_SET) {
+                    if (model instanceof TreeModel && fields[0].equals(model.getModelName())) {
+                        treeFound = true;
+                        NewickImporter importer = new NewickImporter(fields[1]);
+                        Tree tree = importer.importNextTree();
+                        ((TreeModel) model).beginTreeEdit();
+                        ((TreeModel) model).adoptTreeStructure(tree);
+                        ((TreeModel) model).endTreeEdit();
+
+                        expectedTreeModelNames.remove(model.getModelName());
+                    }
+                }
+
+                if (!treeFound) {
+                    throw new RuntimeException("Unable to match state parameter: " + fields[0]);
+                }
+            }
+
+            if (expectedTreeModelNames.size() > 0) {
+                StringBuilder sb = new StringBuilder();
+                for (String notFoundName : expectedTreeModelNames) {
+                    sb.append("Expecting, but unable to match state parameter:" + notFoundName + "\n");
+                }
+                throw new RuntimeException(sb.toString());
+            }
+
+            if (rngState != null) {
+                MathUtils.setRandomState(rngState);
             }
 
             in.close();
             fileIn.close();
-            for (Likelihood likelihood : Likelihood.FULL_LIKELIHOOD_SET) {
+            for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
                 likelihood.makeDirty();
             }
         } catch (IOException ioe) {

@@ -28,7 +28,6 @@ package dr.evomodel.epidemiology.casetocase.periodpriors;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Parameter;
 import dr.math.distributions.NormalDistribution;
-import dr.math.functionEval.GammaFunction;
 import dr.xml.*;
 
 import java.util.ArrayList;

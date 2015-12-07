@@ -32,6 +32,8 @@ import dr.xml.*;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -51,13 +53,14 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     public final static String MULTIDIMENSIONAL_SCALING_LIKELIHOOD = "multiDimensionalScalingLikelihood";
 
-    public MultiDimensionalScalingLikelihood(
-            int mdsDimension,
-            Parameter mdsPrecision,
-            MatrixParameter locationsParameter,
-            DataTable<double[]> dataTable) {
-        this(mdsDimension, mdsPrecision, locationsParameter, dataTable, false);
-    }
+//    public MultiDimensionalScalingLikelihood(
+//            int mdsDimension,
+//            Parameter mdsPrecision,
+//            MatrixParameter locationsParameter,
+//            DataTable<double[]> dataTable,
+//            boolean reorderData) {
+//        this(mdsDimension, mdsPrecision, locationsParameter, dataTable, false, reorderData);
+//    }
 
     /**
      * A simple constructor for a fully specified symmetrical data matrix
@@ -65,14 +68,16 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
      * @param mdsPrecision
      * @param locationsParameter
      * @param dataTable
-     * @param includeTruncation
+     * @param isLeftTruncated
+     * @param reorderData
      */
     public MultiDimensionalScalingLikelihood(
             int mdsDimension,
             Parameter mdsPrecision,
             MatrixParameter locationsParameter,
             DataTable<double[]> dataTable,
-            boolean isLeftTruncated) {
+            boolean isLeftTruncated,
+            boolean reorderData) {
 
         super(MULTIDIMENSIONAL_SCALING_LIKELIHOOD);
 
@@ -80,11 +85,23 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.isLeftTruncated = isLeftTruncated;
 
         // construct a compact data table
-        String[] rowLabels = dataTable.getRowLabels();
-        String[] columnLabels = dataTable.getRowLabels();
+        String[] rowLabelsOriginal = dataTable.getRowLabels();
+//        String[] columnLabels = dataTable.getRowLabels();
 
         int rowCount = dataTable.getRowCount();
         locationCount = rowCount;
+
+        int[] permute = null;
+        if (reorderData) {
+            permute = getPermutation(rowLabelsOriginal, locationsParameter);
+        } else {
+            permute = new int[locationCount];
+            for (int i = 0; i < locationCount; ++i) {
+                permute[i] = i; // identity
+            }
+        }
+
+        String[] rowLabels = new String[locationCount];
 
         int observationCount = rowCount * rowCount;
         double[] observations = new double[observationCount];
@@ -93,10 +110,12 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         double[][] tmp = new double[rowCount][rowCount];
 
         for (int i = 0; i < rowCount; i++) {
-            double[] dataRow = dataTable.getRow(i);
+            rowLabels[i] = rowLabelsOriginal[permute[i]];
+
+            double[] dataRow = dataTable.getRow(permute[i]);
 
             for (int j = i + 1; j < rowCount; j++) {
-                tmp[i][j] = tmp[j][i] = dataRow[j];
+                tmp[i][j] = tmp[j][i] = dataRow[permute[j]];
             }
         }
 
@@ -107,11 +126,35 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
                 observationTypes[u] = ObservationType.POINT;
                 u++;
             }
-
         }
 
         initialize(mdsDimension, mdsPrecision, isLeftTruncated, locationsParameter,
                 rowLabels, observations, observationTypes);
+    }
+
+    private int[] getPermutation(String[] source, MatrixParameter destination) {
+
+        if (source.length != destination.getColumnDimension()) {
+            throw new IllegalArgumentException("Dimension mismatch");
+        }
+
+        final int length = source.length;
+
+        Map<String,Integer> map = new HashMap<String, Integer>(destination.getColumnDimension());
+        for (int i = 0; i < length; ++i) {
+            map.put(source[i],i);
+        }
+
+        int[] permute = new int[length];
+        for (int i = 0; i < length; ++i) {
+            Integer p = map.get(destination.getParameter(i).getParameterName());
+            if (p == null) {
+                throw new IllegalArgumentException("Missing label");
+            }
+            permute[i] = p;
+        }
+
+        return permute;
     }
 
     private MultiDimensionalScalingCore getCore() {
@@ -164,19 +207,29 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter) {
-        if (locationsParameter.getColumnDimension() > 0){
+        final boolean exisitingParameter = locationsParameter.getColumnDimension() > 0;
+
+        if (exisitingParameter){
             if (locationsParameter.getColumnDimension() != locationCount){
                 throw new RuntimeException("locationsParameter column dimension ("+locationsParameter.getColumnDimension()+") is not equal to the locationCount ("+locationCount+")");
             }
             if (locationsParameter.getRowDimension() != mdsDimension){
                 throw new RuntimeException("locationsParameter row dimension ("+locationsParameter.getRowDimension()+") is not equal to the mdsDimension ("+mdsDimension+")");
             }
-        } else{
+        } else {
             locationsParameter.setColumnDimension(mdsDimension);
             locationsParameter.setRowDimension(locationCount);
         }
+
         for (int i = 0; i < locationLabels.length; i++) {
-            locationsParameter.getParameter(i).setId(locationLabels[i]);
+            if (exisitingParameter) {
+                if (locationsParameter.getParameter(i).getParameterName().compareTo(locationLabels[i]) != 0) {
+                    throw new RuntimeException("Mismatched trait parameter name (" + locationsParameter.getParameter(i).getParameterName() +
+                            ") and data dimension name (" + locationLabels[i] + ")");
+                }
+            } else {
+                locationsParameter.getParameter(i).setId(locationLabels[i]);
+            }
         }
 
         for (int i = 0; i < locationsParameter.getParameterCount(); ++i) {
@@ -268,6 +321,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         public static final String MDS_PRECISION = "mdsPrecision";
         public static final String INCLUDE_TRUNCATION = "includeTruncation";
         public static final String USE_OLD = "useOld";
+        public static final String FORCE_REORDER = "forceReorder";
 
         public String getParserName() {
             return MULTIDIMENSIONAL_SCALING_LIKELIHOOD;
@@ -297,12 +351,14 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             boolean includeTrauncation = xo.getAttribute(INCLUDE_TRUNCATION, false);
 
+            boolean forceReorder = xo.getAttribute(FORCE_REORDER, false);
+
             if (useOld) {
                 System.err.println("USE OLD");
                 return new MultidimensionalScalingLikelihood(mdsDimension, includeTrauncation, mdsPrecision, locationsParameter, distanceTable);
             } else {
                 return new MultiDimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter,
-                        distanceTable, includeTrauncation);
+                        distanceTable, includeTrauncation, forceReorder);
             }
         }
 
@@ -325,6 +381,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 AttributeRule.newBooleanRule(USE_OLD, true),
                 AttributeRule.newBooleanRule(INCLUDE_TRUNCATION, true),
+                AttributeRule.newBooleanRule(FORCE_REORDER, true),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 

@@ -167,6 +167,7 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
             long debugWriteEvery = Long.parseLong(System.getProperty(DUMP_EVERY));
             mc.addMarkovChainListener(new DebugChainListener(this, debugWriteEvery, true));
         }
+
     }
 
     /**
@@ -236,9 +237,17 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 mc.setCurrentLength(loadedState);
 
                 double lnL = mc.evaluate();
+
+                DebugUtils.writeStateToFile(new File("tmp.dump"), loadedState, lnL);
+
                 if (lnL != savedLnL[0]) {
-                   throw new RuntimeException("Dumped lnL does not match loaded state." + " saved lnL: " + savedLnL[0] + " computed lnL:" + lnL);
+                        throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + savedLnL[0] +
+                                ", recomputed lnL: " + lnL + " (difference " + (savedLnL[0] - lnL) + ")");
                 }
+
+//                for (Likelihood likelihood : Likelihood.CONNECTED_LIKELIHOOD_SET) {
+//                    System.err.println(likelihood.getId() + ": " + likelihood.getLogLikelihood());
+//                }
             }
 
             mc.addMarkovChainListener(chainListener);
@@ -274,7 +283,8 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
                 double lnL2 = mc.evaluate();
 
                 if (lnL1 != lnL2) {
-                    throw new RuntimeException("Likelihood different after state load");
+                    throw new RuntimeException("Dumped lnL does not match loaded state: stored lnL: " + lnL1 +
+                            ", recomputed lnL: " + lnL2 + " (difference " + (lnL2 - lnL1) + ")");
                 }
                 // TEST Code end
             }
@@ -632,4 +642,3 @@ public class MCMC implements Identifiable, Spawnable, Loggable {
 
     private String id = null;
 }
-

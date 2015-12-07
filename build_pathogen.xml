@@ -24,6 +24,10 @@
         <mkdir dir="${dist}"/>
     </target>
 
+    <target name="clean">
+        <delete dir="${build}"/>
+    </target>
+
     <target name="compile" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
         <javac source="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">

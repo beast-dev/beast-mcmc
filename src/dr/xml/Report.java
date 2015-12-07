@@ -61,7 +61,7 @@ public class Report {
                 item = object.toString();
             }
             writer.print(item.trim());
-            writer.print(" ");
+            writer.print("\n");
         }
         writer.println();
         writer.flush();

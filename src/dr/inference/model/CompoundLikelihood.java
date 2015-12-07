@@ -29,9 +29,7 @@ import dr.app.beagle.evomodel.branchmodel.lineagespecific.BeagleBranchLikelihood
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -156,6 +154,15 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         }//END: if unroll check
         
     }//END: addLikelihood
+
+    public Set<Likelihood> getLikelihoodSet() {
+        Set<Likelihood> set = new HashSet<Likelihood>();
+        for (Likelihood l : likelihoods) {
+            set.add(l);
+            set.addAll(l.getLikelihoodSet());
+        }
+        return set;
+    }
 
     public int getLikelihoodCount() {
         return likelihoods.size();

@@ -27,19 +27,16 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Implements branch exchange operations that leave the transmission tree unchanged. As this already severely
@@ -114,8 +111,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         if(resampleInfectionTimes){
             BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
-
-
             AbstractCase iCase = branchMap.get(i.getNumber());
             AbstractCase jCase = branchMap.get(j.getNumber());
             AbstractCase parentCase = branchMap.get(iP.getNumber());
@@ -129,13 +124,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
             }
 
         }
-
-/*
-        I tend to think that this may fail quite a lot of the time due to lack of candidates... a version that does
-        actually adjust heights might be necessary in the long run. Narrow exchange might be much more likely to
-        actually succeed in changing the tree if the paintings allow the tree to be changed in that way; might
-        have to investigate which problem is more serious.
-*/
 
         exchangeNodes(tree, i, j, iP, jP);
 
@@ -157,7 +145,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         if(parent==null){
             throw new RuntimeException("Can't exchange the root node");
         }
-        Integer[] possibleParentSwaps = c2cLikelihood.samePartition(parent, false);
+        Integer[] possibleParentSwaps = c2cLikelihood.samePartitionElement(parent, false);
         for(Integer index: possibleParentSwaps){
             NodeRef newParent = tree.getNode(index);
             if(!tree.isExternal(newParent) && newParent!=parent){

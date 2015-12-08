@@ -269,6 +269,14 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public int getFactorDimension(){return factors.getRowDimension();}
 
+    public double[] getResidual()
+        {
+            if(!residualKnown)
+                {computeResiduals();}
+            residualKnown=true;
+            return residual;
+        }
+
     private void Multiply(MatrixParameter Left, MatrixParameter Right, double[] answer){
         int dim=Left.getColumnDimension();
         int n=Left.getRowDimension();

@@ -42,7 +42,7 @@ import java.util.Map;
  */
 public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
-    public static final String NATIVE_MDS = "native_mds";
+    public static final String REQUIRED_FLAGS_PROPERTY = "mds.required.flags";
 
     public enum ObservationType {
         POINT,
@@ -158,21 +158,28 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     private MultiDimensionalScalingCore getCore() {
-        int computeMode = 0;
-        String r = System.getProperty(NATIVE_MDS);
+        long computeMode = 0;
+        String r = System.getProperty(REQUIRED_FLAGS_PROPERTY);
         if (r != null) {
-            computeMode = Integer.parseInt(r.trim());
+            computeMode = Long.parseLong(r.trim());
         }
 
         MultiDimensionalScalingCore core;
-        switch (computeMode) {
-            case 1:
-                System.err.println("Attempting to use a native MDS core; may the force be with you ....");
-                core = new MassivelyParallelMDSImpl();
-                break;
-            default:
-                core = new MultiDimensionalScalingCoreImpl2();
+        if (computeMode > 0) {
+            System.err.println("Attempting to use a native MDS core with flag: " + computeMode + "; may the force be with you ....");
+            core = new MassivelyParallelMDSImpl();
+            flags = computeMode;
+        } else {
+            core = new MultiDimensionalScalingCoreImpl2();
         }
+//        switch (computeMode) {
+//            case 1:
+//                System.err.println("Attempting to use a native MDS core; may the force be with you ....");
+//                core = new MassivelyParallelMDSImpl();
+//                break;
+//            default:
+//                core = new MultiDimensionalScalingCoreImpl2();
+//        }
         return core;
     }
 
@@ -186,7 +193,14 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
             final ObservationType[] observationTypes) {
 
         this.mdsCore = getCore();
-        this.mdsCore.initialize(mdsDimension, locationCount, isLeftTruncated);
+
+        if (isLeftTruncated) {
+            flags |= MultiDimensionalScalingCore.LEFT_TRUNCATION;
+        }
+
+        System.err.println("Initializing with flags: " + flags);
+
+        this.mdsCore.initialize(mdsDimension, locationCount, flags);
         this.locationLabels = locationLabels;
 
         this.locationsParameter = locationsParameter;
@@ -404,4 +418,6 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     private boolean likelihoodKnown = false;
     private double logLikelihood;
     private double storedLogLikelihood;
+
+    private long flags = 0;
 }

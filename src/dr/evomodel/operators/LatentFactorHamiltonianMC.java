@@ -69,10 +69,11 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     }
 
     private double[] getMatrix(int nfac, double[] residual){
-        double answer[]=new double[nfac];
+        double answer[]=new double[this.nfac];
         for (int i = 0; i <this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
-                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*residual[j*ntaxa+nfac];
+                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
+                        residual[j*ntaxa+nfac];
             }
         }
         return answer;
@@ -116,7 +117,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
-                factors.setParameterValueQuietly(j, randel);
+                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+stepSize*momentum[j]);
                 factors.fireParameterChangedEvent(factors.getRowDimension()*randel+j,null);
             }
 

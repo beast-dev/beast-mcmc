@@ -285,9 +285,11 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
         if(preP==null){
             preP=new double[treeModel.getNodeCount()];
+            storedPreP=new double[treeModel.getNodeCount()];
         }
         if(!dimKnown){
             preMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+            storedPreMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
         }
 
         final int thisNumber = node.getNumber();
@@ -402,8 +404,6 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
     private void setup(){
-        if(!likelihoodKnown){
-
             double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
             double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
 
@@ -420,7 +420,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             {doPreOrderTraversal(treeModel.getRoot());}
             dimKnown=true;
 
-        }
+
     }
 
 

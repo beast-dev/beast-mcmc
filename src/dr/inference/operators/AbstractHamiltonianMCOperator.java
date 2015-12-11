@@ -14,7 +14,7 @@ public abstract class AbstractHamiltonianMCOperator extends AbstractCoercableOpe
     private double momentumSd;
     protected double[] momentum;
 
-    private void drawMomentum(int size){
+    protected void drawMomentum(int size){
         momentum=new double[size];
         for (int i = 0; i <size ; i++) {
             momentum[i]= (Double) (new NormalDistribution(0.0, momentumSd)).nextRandom();

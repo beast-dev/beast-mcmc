@@ -41,15 +41,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         this.nSteps=nSteps;
     }
 
-    private double[] getMatrix(int nfac, double[] residual){
-        double answer[]=new double[nfac];
-        for (int i = 0; i <this.nfac ; i++) {
-            for (int j = 0; j < ntraits; j++) {
-                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*residual[j*ntaxa+nfac];
-            }
-        }
-        return answer;
-    }
+
 
     @Override
     public double getCoercableParameter() {
@@ -76,25 +68,77 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         return "Latent Factor Hamiltonian Monte Carlo";
     }
 
-    @Override
-    public double doOperation() throws OperatorFailedException {
-        int randel = MathUtils.nextInt(ntaxa);
+    private double[] getMatrix(int nfac, double[] residual){
+        double answer[]=new double[nfac];
+        for (int i = 0; i <this.nfac ; i++) {
+            for (int j = 0; j < ntraits; j++) {
+                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*residual[j*ntaxa+nfac];
+            }
+        }
+        return answer;
+    }
 
+    private double[] getGradient(int randel, double[] mean, double[][] prec){
         double[] residual=lfm.getResidual();
         double[] derivative=getMatrix(randel, residual);
-
-        double[] mean=tree.getConditionalMean(randel);
-        double[][] prec=tree.getConditionalVariance(randel);
-
 
 
         for (int i = 0; i <mean.length ; i++) {
             double sumi=0;
             for (int j = 0; j <mean.length ; j++) {
-                sumi+=prec[i][j]*mean[j];
+                sumi+=prec[i][j]*(factors.getParameterValue(j, randel)-mean[j]);
             }
-            derivative[i]+=sumi;
+            derivative[i]-=sumi;
         }
-        return 0;
+        return derivative;
+    }
+
+    @Override
+    public double doOperation() throws OperatorFailedException {
+        int randel = MathUtils.nextInt(ntaxa);
+
+
+
+        double[] mean=tree.getConditionalMean(randel);
+        double[][] prec=tree.getConditionalVariance(randel);
+
+        double[] derivative=getGradient(randel, mean, prec);
+        drawMomentum(lfm.getFactorDimension());
+
+        double prop=0;
+        for (int i = 0; i <lfm.getFactorDimension() ; i++) {
+            prop+=momentum[i]*momentum[i]/2;
+        }
+
+        for (int i = 0; i <lfm.getFactorDimension() ; i++) {
+            momentum[i] = momentum[i] - stepSize / 2 * derivative[i];
+        }
+
+        for (int i = 0; i <nSteps ; i++) {
+            for (int j = 0; j <lfm.getFactorDimension() ; j++) {
+                factors.setParameterValueQuietly(j, randel);
+                factors.fireParameterChangedEvent(factors.getRowDimension()*randel+j,null);
+            }
+
+
+            if(i!=nSteps){
+                derivative=getGradient(randel,mean,prec);
+
+                for (int j = 0; j <lfm.getFactorDimension() ; j++) {
+                    momentum[j] = momentum[j] - stepSize * derivative[j];
+                }
+            }
+        }
+
+        for (int i = 0; i <lfm.getFactorDimension() ; i++) {
+            momentum[i] = momentum[i] - stepSize / 2 * derivative[i];
+        }
+
+        double res=0;
+        for (int i = 0; i <lfm.getFactorDimension() ; i++) {
+            res+=momentum[i]*momentum[i]/2;
+        }
+
+        return res-prop;
     }
 }

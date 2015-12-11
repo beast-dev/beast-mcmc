@@ -1,6 +1,8 @@
 package dr.evomodel.operators;
 
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
+import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
@@ -13,7 +15,7 @@ import dr.math.MathUtils;
  */
 public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private LatentFactorModel lfm;
-    private AbstractMultivariateTraitLikelihood tree;
+    private FullyConjugateMultivariateTraitLikelihood tree;
     private MatrixParameter factors;
     private MatrixParameter loadings;
     private MatrixParameter Precision;
@@ -24,8 +26,8 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private int nSteps;
 
 
-    public LatentFactorHamiltonianMC(LatentFactorModel lfm, AbstractMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps){
-        super(mode);
+    public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
+        super(mode, momentumSd);
         setWeight(weight);
         this.lfm=lfm;
         this.tree=tree;
@@ -81,6 +83,18 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         double[] residual=lfm.getResidual();
         double[] derivative=getMatrix(randel, residual);
 
+        double[] mean=tree.getConditionalMean(randel);
+        double[][] prec=tree.getConditionalVariance(randel);
+
+
+
+        for (int i = 0; i <mean.length ; i++) {
+            double sumi=0;
+            for (int j = 0; j <mean.length ; j++) {
+                sumi+=prec[i][j]*mean[j];
+            }
+            derivative[i]+=sumi;
+        }
         return 0;
     }
 }

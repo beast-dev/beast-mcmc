@@ -100,4 +100,15 @@ public class NativeMDSSingleton {
 
     public native void setParameters(int instance, double[] parameters);
 
+    public native double[] getPairwiseData(int instance);
+
+//jsize size = env->GetArrayLength( arr );
+//std::vector<double> input( size );
+//env->GetDoubleArrayRegion( arr, 0, size, &input[0] );
+//
+////  ...
+//
+//jdoubleArray output = env->NewDoubleArray( results.size() );
+//env->SetDoubleArrayRegion( output, 0, results.size(), &results[0] );
+
 }

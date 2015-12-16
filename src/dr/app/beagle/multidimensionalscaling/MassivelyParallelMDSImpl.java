@@ -68,6 +68,11 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     }
 
     @Override
+    public double[] getPairwiseData() {
+        return singleton.getPairwiseData(instance);
+    }
+
+    @Override
     public void updateLocation(int locationIndex, double[] location) {
         singleton.updateLocations(instance, locationIndex, location);
     }

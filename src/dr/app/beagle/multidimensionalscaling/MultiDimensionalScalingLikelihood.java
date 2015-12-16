@@ -183,6 +183,10 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         return core;
     }
 
+    public int getMdsDimension() { return mdsDimension; }
+
+    public int getLocationCount() { return locationCount; }
+
     protected void initialize(
             final int mdsDimension,
             final Parameter mdsPrecision,

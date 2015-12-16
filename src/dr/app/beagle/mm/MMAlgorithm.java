@@ -1,5 +1,5 @@
 /*
- * MultiDimensionalScalingMM.java
+ * MMAlgorithm.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -32,19 +32,10 @@ import dr.xml.*;
 /**
  * Created by msuchard on 12/15/15.
  */
-public class MMAlgorithm {
+public abstract class MMAlgorithm {
 
     public static final double DEFAULT_TOLERANCE = 1E-6;
     public static final int DEFAULT_MAX_ITERATIONS = 1000;
-
-    private final MultiDimensionalScalingLikelihood likelihood;
-    private final FullyConjugateMultivariateTraitLikelihood tree;
-
-    public MMAlgorithm(MultiDimensionalScalingLikelihood likelihood,
-                       FullyConjugateMultivariateTraitLikelihood tree) {
-        this.likelihood = likelihood;
-        this.tree = tree;
-    }
 
     public double[] findMode(final double[] startingValue) throws NotConvergedException {
         return findMode(startingValue, DEFAULT_TOLERANCE, DEFAULT_MAX_ITERATIONS);
@@ -74,9 +65,7 @@ public class MMAlgorithm {
         return next;
     }
 
-    private void mmUpdate(final double[] current, double[] next) {
-        // Do nothing yet
-    }
+    protected abstract void mmUpdate(final double[] current, double[] next);
 
     private double convergenceCriterion(final double[] current, final double[] previous) {
         double norm = 0.0;
@@ -92,45 +81,4 @@ public class MMAlgorithm {
     class NotConvergedException extends Exception {
         // Nothing interesting
     }
-
-   // **************************************************************
-    // XMLObjectParser
-    // **************************************************************
-
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public static final String MDS_STARTING_VALUES = "mdsModeFinder";
-
-        public String getParserName() {
-            return MDS_STARTING_VALUES;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            return new MMAlgorithm();
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "Provides a mode finder for a MDS model on a tree";
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                new ElementRule(MultiDimensionalScalingLikelihood.class),
-                new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
-        };
-
-        public Class getReturnType() {
-            return MMAlgorithm.class;
-        }
-    };
-
-
 }

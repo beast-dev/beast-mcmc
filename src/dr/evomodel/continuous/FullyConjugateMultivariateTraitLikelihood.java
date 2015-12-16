@@ -394,6 +394,54 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     private double[] ascertainedData = null;
     private static final boolean DEBUG_ASCERTAINMENT = false;
 
+    private double vectorMin(double[] vec) {
+        double min = Double.MAX_VALUE;
+        for (int i = 0; i < vec.length; ++i) {
+            min = Math.min(min, vec[i]);
+        }
+        return min;
+    }
+
+    private double matrixMin(double[][] mat) {
+        double min = Double.MAX_VALUE;
+        for (int i = 0; i < mat.length; ++i) {
+            min = Math.min(min, vectorMin(mat[i]));
+        }
+        return min;
+    }
+
+    private double vectorMax(double[] vec) {
+        double max = - Double.MAX_VALUE;
+        for (int i = 0; i < vec.length; ++i) {
+            max = Math.max(max, vec[i]);
+        }
+        return max;
+    }
+
+    private double matrixMax(double[][] mat) {
+        double max = -Double.MAX_VALUE;
+        for (int i = 0; i < mat.length; ++i) {
+            max = Math.max(max, vectorMax(mat[i]));
+        }
+        return max;
+    }
+
+    private double vectorSum(double[] vec) {
+        double sum = 0.0;
+        for (int i = 0; i < vec.length; ++i) {
+            sum += vec[i];
+        }
+        return sum;
+    }
+
+    private double matrixSum(double[][] mat) {
+        double sum = 0.0;
+        for (int i = 0; i < mat.length; ++i) {
+            sum += vectorSum(mat[i]);
+        }
+        return sum;
+    }
+
     @Override
     public String getReport() {
         StringBuilder sb = new StringBuilder();
@@ -411,19 +459,22 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
         sb.append("Tree variance:\n");
         sb.append(new Matrix(treeVariance));
+        sb.append(matrixMin(treeVariance)).append("\t").append(matrixMax(treeVariance)).append("\t").append(matrixSum(treeVariance));
         sb.append("\n\n");
         sb.append("Trait variance:\n");
         sb.append(traitVariance);
         sb.append("\n\n");
-        sb.append("Joint variance:\n");
-        sb.append(new Matrix(jointVariance));
-        sb.append("\n\n");
+//        sb.append("Joint variance:\n");
+//        sb.append(new Matrix(jointVariance));
+//        sb.append("\n\n");
 
         double[] data = new double[jointVariance.length];
         System.arraycopy(meanCache, 0, data, 0, jointVariance.length);
 
         sb.append("Data:\n");
-        sb.append(new Vector(data));
+        sb.append(new Vector(data)).append("\n");
+        sb.append(data.length).append("\t").append(vectorMin(data)).append("\t").append(vectorMax(data)).append("\t").append(vectorSum(data));
+        sb.append(treeModel.getNodeTaxon(treeModel.getExternalNode(0)).getId());
         sb.append("\n\n");
 
         MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[data.length], new Matrix(jointVariance).inverse().toComponents());

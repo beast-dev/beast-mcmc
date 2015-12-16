@@ -188,6 +188,9 @@ public class OperatorsGenerator extends Generator {
             case INTEGER_UNIFORM:
                 writeIntegerUniformOperator(operator, writer);
                 break;
+            case SUBTREE_LEAP:
+                writeSubtreeLeapOperator(operator, writer);
+                break;
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, writer);
                 break;
@@ -563,6 +566,17 @@ public class OperatorsGenerator extends Generator {
         writeParameter2Ref(writer, operator);
         writer.writeCloseTag(ScaleOperatorParser.INDICATORS);
         writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
+    }
+
+    private void writeSubtreeLeapOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(SubtreeLeapOperatorParser.SUBTREE_LEAP,
+                new Attribute[]{
+                        new Attribute.Default<Double>("size", operator.tuning),
+                        getWeightAttribute(operator.weight)
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
     private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {

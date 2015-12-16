@@ -59,6 +59,8 @@ public enum OperatorType {
     UNIFORM("uniform"),
     INTEGER_UNIFORM("integerUniform"),
     SUBTREE_SLIDE("subtreeSlide"),
+    SUBTREE_JUMP("subtreeJump"),
+    SUBTREE_LEAP("subtreeLeap"),
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),

@@ -32,6 +32,7 @@ import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
+import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
@@ -1431,6 +1432,8 @@ public class BeautiOptions extends ModelOptions {
     public SiteModelOptions siteModelOptions = new SiteModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
+
+    public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
 
     public boolean useStarBEAST = false;
     public List<Taxa> speciesSets = new ArrayList<Taxa>();

@@ -42,24 +42,18 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
 
     private NativeMDSSingleton singleton = null;
     private int instance = -1; // Get instance # via initialization
-    private final long flags = 0;
 
-    private static final long LEFT_TRUNCATION = 1 << 5;
+//    private static final long LEFT_TRUNCATION = 1 << 5;
 
     public MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
     }
 
     @Override
-    public void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated) {
-        long flags = this.flags;
-        if (isLeftTruncated) {
-            flags |= LEFT_TRUNCATION;
-        }
-
+    public void initialize(int embeddingDimension, int locationCount, long flags) {
+        this.isLeftTruncated = (flags & LEFT_TRUNCATION) != 0;
         instance = singleton.initialize(embeddingDimension, locationCount, flags);
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
-        this.isLeftTruncated = isLeftTruncated;
     }
 
     @Override

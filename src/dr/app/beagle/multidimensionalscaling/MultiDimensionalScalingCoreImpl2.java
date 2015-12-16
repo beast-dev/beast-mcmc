@@ -44,7 +44,7 @@ import dr.math.distributions.NormalDistribution;
 public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScalingCore {
 
     @Override
-    public void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated) {
+    public void initialize(int embeddingDimension, int locationCount, long flags) {
         this.embeddingDimension = embeddingDimension;
         this.locationCount = locationCount;
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
@@ -55,6 +55,8 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
         storedSquaredResiduals = null;
         residualsKnown = false;
         sumOfSquaredResidualsKnown = false;
+
+        isLeftTruncated = (flags & MultiDimensionalScalingCore.LEFT_TRUNCATION) != 0;
 
         if (isLeftTruncated) {
             truncations = new double[locationCount][locationCount];

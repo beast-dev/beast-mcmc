@@ -34,6 +34,7 @@ import dr.inference.distribution.LogisticRegression;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
 /**
@@ -56,6 +57,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 //    public static final String LOG_TRANSFORM = "logDependentTransform";
     public static final String RANDOM_EFFECTS = "randomEffects";
     public static final String CHECK_IDENTIFIABILITY = "checkIdentifiability";
+    public static final String CHECK_FULL_RANK = "checkFullRank";
 
     public String getParserName() {
         return GLM_LIKELIHOOD;
@@ -63,6 +65,8 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+
+        System.err.println("PASSED 0");
         XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
         Parameter dependentParam = null;
         if (cxo != null)
@@ -110,9 +114,11 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
             glm.addScaleParameter(scaleParameter, scaleDesign);
         }
-
+        System.err.println("START 0");
         addIndependentParameters(xo, glm, dependentParam);
+        System.err.println("START 1");
         addRandomEffects(xo, glm, dependentParam);
+        System.err.println("START 2");
 
         boolean checkIdentifiability = xo.getAttribute(CHECK_IDENTIFIABILITY, true);
         if (checkIdentifiability) {
@@ -120,7 +126,10 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("All design matrix predictors are not identifiable in "+  xo.getId());
             }
         }
-
+        System.err.println("PASSED B");
+        checkFullRankOfMatrix = xo.getAttribute(CHECK_FULL_RANK,true);
+//        System.err.println(checkFullRankOfMatrix);
+        System.err.println("PASSED C");
         return glm;
     }
 
@@ -155,11 +164,22 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                     if (indicator.getDimension() != independentParam.getDimension())
                         throw new XMLParseException("dim(" + independentParam.getId() + ") != dim(" + indicator.getId() + ")");
                 }
-                checkFullRank(designMatrix);
+//                System.err.println("A");
+                if (checkFullRankOfMatrix) {
+                    checkFullRank(designMatrix);
+                }
+//                System.err.println("B");
+
+//                System.err.println(new Matrix(designMatrix.getParameterAsMatrix()));
+//                System.exit(-1);
+
                 glm.addIndependentParameter(independentParam, designMatrix, indicator);
+//                System.err.println("C");
             }
         }
     }
+
+    private boolean checkFullRankOfMatrix;
 
     private void checkFullRank(DesignMatrix designMatrix) throws XMLParseException {
         int fullRank = designMatrix.getColumnDimension();
@@ -214,6 +234,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(FAMILY),
             AttributeRule.newBooleanRule(CHECK_IDENTIFIABILITY, true),
+            AttributeRule.newBooleanRule(CHECK_FULL_RANK, true),
             new ElementRule(DEPENDENT_VARIABLES,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(INDEPENDENT_VARIABLES,

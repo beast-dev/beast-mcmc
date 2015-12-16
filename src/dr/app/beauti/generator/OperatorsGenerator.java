@@ -46,6 +46,7 @@ import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inferencexml.model.CompoundParameterParser;
@@ -95,7 +96,9 @@ public class OperatorsGenerator extends Generator {
         operatorAttributes = new Attribute[] {
                 new Attribute.Default<String>(XMLParser.ID, "operators"),
                 new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE,
-                        (shouldLogCool ? SimpleOperatorSchedule.LOG_STRING : SimpleOperatorSchedule.DEFAULT_STRING))
+                        (shouldLogCool ?
+                                OperatorSchedule.OptimizationTransform.LOG.toString() :
+                                OperatorSchedule.OptimizationTransform.DEFAULT.toString()))
         };
 
         writer.writeComment("Define operators");

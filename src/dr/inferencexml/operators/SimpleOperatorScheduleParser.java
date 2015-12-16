@@ -58,12 +58,11 @@ public class SimpleOperatorScheduleParser extends AbstractXMLObjectParser {
             String type = xo.getStringAttribute(OPTIMIZATION_SCHEDULE);
             Logger.getLogger("dr.inference").info("Optimization Schedule: " + type);
 
-            if (type.equals(OperatorSchedule.LOG_STRING))
-                schedule.setOptimizationSchedule(OperatorSchedule.LOG_SCHEDULE);
-            else if (type.equals(OperatorSchedule.SQRT_STRING))
-                schedule.setOptimizationSchedule(OperatorSchedule.SQRT_SCHEDULE);
-            else if (!type.equals(OperatorSchedule.DEFAULT_STRING))
+            try {
+                schedule.setOptimizationSchedule(OperatorSchedule.OptimizationTransform.valueOf(type.toUpperCase()));
+            } catch (IllegalArgumentException iae) {
                 throw new RuntimeException("Unsupported optimization schedule");
+            }
         }
 
         for (int i = 0; i < xo.getChildCount(); i++) {

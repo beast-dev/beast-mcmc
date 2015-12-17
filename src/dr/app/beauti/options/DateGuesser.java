@@ -32,12 +32,9 @@ import dr.evolution.util.Units;
 
 import java.io.*;
 import java.text.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.HashMap;
 
 /**
  * @author Andrew Rambaut
@@ -49,8 +46,7 @@ public class DateGuesser implements Serializable {
     public enum GuessType {
         ORDER,
         PREFIX,
-        REGEX,
-        LOAD
+        REGEX
     }
 
     public boolean guessDates = false;
@@ -81,32 +77,29 @@ public class DateGuesser implements Serializable {
         guessDates(taxa);
     }
 
- 	private void loadDateFromFileToHash(File loadfn) {
-         try{
- 			if (guessType == GuessType.LOAD) {
- 				load = new HashMap<String, String>();
- 				BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(loadfn)));
- 				String line = br.readLine();
- 				while(line != null && line.matches(".+\t.+")) {
- 					String[] taxa_date = line.split("\t");
- 					load.put(taxa_date[0], taxa_date[1]);
- 					line = br.readLine();
- 				}
- 				br.close();
- 			}
-  		} catch (Exception ee) {
-  			// catch here for convenience
-  		}
- 	}
+    public void guessDates(TaxonList taxonList, Map<Taxon, String> taxonDateMap) {
+        // To avoid duplicating code, add all the taxa into a list and
+        // pass it to guessDates(List<Taxon> taxonList)
+        List<Taxon> taxa = new ArrayList<Taxon>();
+        for (Taxon taxon : taxonList) {
+            taxa.add(taxon);
+        }
+
+        guessDates(taxa, taxonDateMap);
+    }
 
     public void guessDates(List<Taxon> taxonList) {
+        guessDates(taxonList, null);
+    }
+
+    public void guessDates(List<Taxon> taxonList, Map<Taxon, String> taxonDateMap) {
 
         dateFormat = new SimpleDateFormat(calendarDateFormat);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
 
- 		if(guessType == GuessType.LOAD && this.loadFile != null) loadDateFromFileToHash(this.loadFile);
-
         for (int i = 0; i < taxonList.size(); i++) {
+            Taxon taxon = taxonList.get(i);
+
             // Allocates a Date object and initializes it to represent the specified number of milliseconds since the
             // standard base time known as "the epoch", namely January 1, 1970, 00:00:00 GMT
             java.util.Date origin = new java.util.Date(0);
@@ -114,25 +107,28 @@ public class DateGuesser implements Serializable {
             double[] values = new double[2];
 
             try {
-                switch (guessType) {
-                    case ORDER:
-                        guessDateFromOrder(taxonList.get(i).getId(), order, fromLast, values);
-                        break;
-                    case PREFIX:
-                        guessDateFromPrefix(taxonList.get(i).getId(), prefix, order, fromLast, values);
-                        break;
-                    case REGEX:
-                        guessDateFromRegex(taxonList.get(i).getId(), regex, values);
-                        break;
-                    case LOAD:
-                         guessDateFromLoad(taxonList.get(i).getId(), load, values);
-                         break;
-                    default:
-                        throw new IllegalArgumentException("unknown GuessType");
+
+                if (taxonDateMap != null) {
+                    String dateString = taxonDateMap.get(taxon);
+                    parseDate(taxon.getId(), dateString, values);
+                } else {
+                    switch (guessType) {
+                        case ORDER:
+                            guessDateFromOrder(taxonList.get(i).getId(), order, fromLast, values);
+                            break;
+                        case PREFIX:
+                            guessDateFromPrefix(taxonList.get(i).getId(), prefix, order, fromLast, values);
+                            break;
+                        case REGEX:
+                            guessDateFromRegex(taxonList.get(i).getId(), regex, values);
+                            break;
+                        default:
+                            throw new IllegalArgumentException("unknown GuessType");
+                    }
                 }
 
             } catch (GuessDatesException gfe) {
-                //
+                // @todo catch errors and give to user
             }
 
             double d = values[0];
@@ -148,9 +144,11 @@ public class DateGuesser implements Serializable {
                 }
             }
 
+            // @todo if any taxa aren't set then return warning
+
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
             date.setPrecision(values[1]);
-            taxonList.get(i).setAttribute("date", date);
+            taxon.setAttribute("date", date);
         }
     }
 
@@ -309,15 +307,15 @@ public class DateGuesser implements Serializable {
     }
 
 
-    private void guessDateFromLoad(String label, HashMap<String, String> myload, double[] values) throws GuessDatesException {
-         String dateStr = "";
-         if (myload.containsKey(label)) {
-             dateStr = (String)(myload.get(label));
-         } else {
-             throw new GuessDatesException("The imported table doesn't contain the taxon label, " + label);
-         }
+    private void parseDateFromValue(String label, HashMap<String, String> myload, double[] values) throws GuessDatesException {
+        String dateStr = "";
+        if (myload.containsKey(label)) {
+            dateStr = (String)(myload.get(label));
+        } else {
+            throw new GuessDatesException("The imported table doesn't contain the taxon label, " + label);
+        }
 
-         parseDate(label, dateStr, values);
+        parseDate(label, dateStr, values);
     }
 
 
@@ -361,7 +359,7 @@ public class DateGuesser implements Serializable {
                         p = 1.0;
 
                     } catch (ParseException pe3) {
-                        throw new GuessDatesException("Badly formatted date in taxon label, " + label);
+                        throw new GuessDatesException("Badly formatted date for taxon, " + label);
                     }
                 }
             }
@@ -373,14 +371,14 @@ public class DateGuesser implements Serializable {
 
                 d = date.getTimeValue();
             } catch (ParseException pe) {
-                throw new GuessDatesException("Badly formatted date in taxon label, " + label);
+                throw new GuessDatesException("Badly formatted date for taxon, " + label);
             }
 
         } else {
             try {
                 d = Double.parseDouble(value);
             } catch (NumberFormatException nfe) {
-                throw new GuessDatesException("Badly formatted date in taxon label, " + label);
+                throw new GuessDatesException("Badly formatted date for taxon, " + label);
             }
         }
 

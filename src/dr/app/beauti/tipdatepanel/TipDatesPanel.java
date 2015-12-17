@@ -28,17 +28,18 @@ package dr.app.beauti.tipdatepanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentOptions;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
-import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.options.GuessDatesException;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.TipDateSamplingType;
+import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
+import dr.app.util.Utils;
 import dr.evolution.util.*;
+import dr.evolution.util.Date;
 import dr.evoxml.util.DateUnitsType;
+import dr.util.DataTable;
 import jam.framework.Exportable;
 import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
@@ -46,11 +47,17 @@ import jam.table.TableRenderer;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EnumSet;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -72,6 +79,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     SetDatesAction setDatesAction = new SetDatesAction();
     ClearDatesAction clearDatesAction = new ClearDatesAction();
     GuessDatesAction guessDatesAction = new GuessDatesAction();
+    ImportDatesAction importDatesAction = new ImportDatesAction();
 
     SetPrecisionAction setPrecisionAction = new SetPrecisionAction();
 
@@ -162,6 +170,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         JButton button = new JButton(guessDatesAction);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
+
+        button = new JButton(importDatesAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
 
@@ -265,6 +277,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         clearDatesAction.setEnabled(false);
         guessDatesAction.setEnabled(false);
+        importDatesAction.setEnabled(false);
         setDatesAction.setEnabled(false);
         setPrecisionAction.setEnabled(false);
         directionCombo.setEnabled(false);
@@ -285,6 +298,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 boolean enabled = usingTipDates.isSelected();
                 clearDatesAction.setEnabled(enabled);
                 guessDatesAction.setEnabled(enabled);
+                importDatesAction.setEnabled(enabled);
                 setDatesAction.setEnabled(enabled);
                 setPrecisionAction.setEnabled(enabled);
                 unitsLabel.setEnabled(enabled);
@@ -578,7 +592,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         String warningMessage = null;
 
-            if (selRows.length > 0) {
+        if (selRows.length > 0) {
             Taxa selectedTaxa = new Taxa();
 
             for (int row : selRows) {
@@ -601,6 +615,129 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         dataTableModel.fireTableDataChanged();
     }
+
+    public void importDates() {
+
+        File[] files = frame.selectImportFiles("Import Dates File...", false, new FileNameExtensionFilter[]{
+                new FileNameExtensionFilter("Tab-delimited text files", "txt", "tab", "dat")});
+
+        DataTable<String[]> dataTable;
+
+        if (files != null && files.length != 0) {
+            try {
+                // Load the file as a table
+                dataTable = DataTable.Text.parse(new FileReader(files[0]));
+
+            } catch (FileNotFoundException fnfe) {
+                JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                        "Unable to open file",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                        "Unable to read file",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            } catch (Exception ex) {
+                ex.printStackTrace(System.err);
+                JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                        "Error reading file",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+                return;
+            }
+        } else {
+            return;
+        }
+
+        if (dataTable.getColumnCount() == 0) {
+            // expecting at least 2 columns - labels and dates
+            JOptionPane.showMessageDialog(frame,
+                    "Expecting a tab delimited file with at\n" +
+                            "least 2 columns (taxon labels and dates).",
+                    "Incompatible values", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String[] columnLabels = dataTable.getColumnLabels();
+        String[] taxonNames = dataTable.getRowLabels();
+
+        // assume the first column contains the dates
+        int dateColumn = 0;
+
+        if (columnLabels.length > 1) {
+            List<Integer> dateColumns = new ArrayList<Integer>();
+
+            // see if there is a column labelled 'dates' or something
+            for (int i = 0; i < dataTable.getColumnCount(); i++) {
+                if (columnLabels[i].toLowerCase().contains("date")) {
+                    dateColumns.add(i);
+                }
+            }
+
+            if (dateColumns.size() > 0) {
+                // if there are multiple date column possibilities, take the first
+                // @todo - allow the user to select the column to use
+                dateColumn = dateColumns.get(0);
+            }
+        }
+
+        Map<Taxon, String> taxonDateMap = new HashMap<Taxon, String>();
+        int matchCount = 0;
+        int mismatchCount = 0;
+
+        String[] values = dataTable.getColumn(dateColumn);
+
+        int j = 0;
+        for (final String taxonName : taxonNames) {
+
+            final int index = options.taxonList.getTaxonIndex(taxonName);
+            if (index >= 0) {
+                taxonDateMap.put(options.taxonList.getTaxon(index), values[j]);
+                matchCount ++;
+            } else {
+                mismatchCount ++;
+            }
+            j++;
+        }
+
+        if (guessDatesDialog == null) {
+            guessDatesDialog = new GuessDatesDialog(frame);
+        }
+
+        guessDatesDialog.setDescription("Parse date values from file");
+
+        int result = guessDatesDialog.showDialog(true);
+
+        if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+
+        DateGuesser guesser = options.dateGuesser;
+
+        guesser.guessDates = true;
+        guessDatesDialog.setupGuesser(guesser);
+
+        String warningMessage = null;
+
+        guesser.guessDates(options.taxonList, taxonDateMap);
+
+        if (warningMessage != null) {
+            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
+                    "Error guessing dates",
+                    JOptionPane.WARNING_MESSAGE);
+        }
+
+        // adjust the dates to the current timescale...
+        timeScaleChanged();
+
+        dataTableModel.fireTableDataChanged();
+    }
+
+    public boolean isMissingValue(String value) {
+        return (value.equals("?") || value.equals("NA") || value.length() == 0);
+    }
+
 
     public class SetDatesAction extends AbstractAction {
         /**
@@ -647,6 +784,22 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             guessDates();
+        }
+    }
+
+    public class ImportDatesAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = 8514706149822252033L;
+
+        public ImportDatesAction() {
+            super("Import Dates");
+            setToolTipText("Use this tool to import the sampling dates from a file");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            importDates();
         }
     }
 

@@ -786,7 +786,7 @@ public class BeautiFrame extends DocumentFrame {
      * @param title
      * @return
      */
-    private File[] selectImportFiles(final String title, boolean multipleSelection, FileNameExtensionFilter[] fileNameExtensionFilters) {
+    public File[] selectImportFiles(final String title, boolean multipleSelection, FileNameExtensionFilter[] fileNameExtensionFilters) {
         if (Boolean.parseBoolean(System.getProperty("use.native.choosers", Boolean.toString(OSType.isMac())))) {
             FileDialog importDialog = fileDialogs.get(title);
             if (importDialog == null) {

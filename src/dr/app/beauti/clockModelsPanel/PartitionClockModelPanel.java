@@ -99,6 +99,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 break;
 
             case RANDOM_LOCAL_CLOCK:
+            case FIXED_LOCAL_CLOCK:
                 break;
 
             default:

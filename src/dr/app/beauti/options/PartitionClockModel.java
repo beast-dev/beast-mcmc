@@ -39,7 +39,7 @@ import java.util.List;
 public class PartitionClockModel extends PartitionOptions {
     private static final long serialVersionUID = -6904595851602060488L;
 
-    private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = false;
+    private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = true;
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;

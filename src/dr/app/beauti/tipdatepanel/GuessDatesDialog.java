@@ -292,6 +292,10 @@ public class GuessDatesDialog {
         dateFormatText.setText(defaultDateFormatText);
     }
 
+    public int showDialog() {
+        return showDialog(false);
+    }
+
     public int showDialog(boolean parsingFromFile) {
 
         setupPanel(parsingFromFile);

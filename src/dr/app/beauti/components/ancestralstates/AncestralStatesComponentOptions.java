@@ -98,6 +98,15 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         getOptions(partition).countingStates = isCountingStates;
     }
 
+    public boolean isCompleteHistoryLogging(final AbstractPartitionData partition) {
+        return getOptions(partition).isCompleteHistoryLogging;
+    }
+
+    public void setCompleteHistoryLogging(final AbstractPartitionData partition, boolean isCompleteHistoryLogging) {
+        getOptions(partition).isCompleteHistoryLogging = isCompleteHistoryLogging;
+    }
+
+
     public boolean dNdSRobustCounting(final AbstractPartitionData partition) {
         return getOptions(partition).dNdSRobustCounting;
     }
@@ -125,6 +134,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         boolean reconstructAtMRCA = false;
         String mrcaTaxonSetName = null;
         boolean countingStates = false;
+        boolean isCompleteHistoryLogging = false;
         boolean dNdSRobustCounting = false;
     };
 

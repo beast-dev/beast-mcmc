@@ -25,10 +25,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.OperatorType;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.StartingTreeType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.types.*;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
@@ -75,14 +72,12 @@ public class PartitionTreeModel extends PartitionOptions {
         userStartingTree = source.userStartingTree;
 
         isNewick = source.isNewick;
-        fixedTree = source.fixedTree;
 //        initialRootHeight = source.initialRootHeight;
         ploidyType = source.ploidyType;
     }
 
     protected void initModelParametersAndOpererators() {
 
-        double taxonCount = getTaxonCount();
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
@@ -93,7 +88,7 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.TREE_BIT_MOVE, -1.0, treeWeights);
 
         createScaleOperator("treeModel.rootHeight", demoTuning, demoWeights);
-        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformly",
+        createOperator("uniformHeights", "Internal node heights", "Draws new internal node heights uniformally",
                 "treeModel.internalNodeHeights", OperatorType.UNIFORM, -1, branchWeights);
 
         createOperator("subtreeSlide", "Tree", "Performs the subtree-slide rearrangement of the tree", "tree",
@@ -104,6 +99,10 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
+
+        createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
+                OperatorType.SUBTREE_LEAP, 1.0, options.taxonList.getTaxonCount());
+
     }
 
     /**
@@ -142,21 +141,51 @@ public class PartitionTreeModel extends PartitionOptions {
     public void selectOperators(List<Operator> operators) {
         setAvgRootAndRate();
 
-        // if not a fixed tree then sample tree space
-        if (!fixedTree) {
-            Operator subtreeSlideOp = getOperator("subtreeSlide");
-            if (!subtreeSlideOp.tuningEdited) {
-                subtreeSlideOp.tuning = Math.max(0.00001, getInitialRootHeight() / 10.0);
-            }
-
-            operators.add(subtreeSlideOp);
-            operators.add(getOperator("narrowExchange"));
-            operators.add(getOperator("wideExchange"));
-            operators.add(getOperator("wilsonBalding"));
+        Operator subtreeSlideOp = getOperator("subtreeSlide");
+        if (!subtreeSlideOp.tuningEdited) {
+            subtreeSlideOp.tuning = getInitialRootHeight() / 10.0;
         }
+
+        operators.add(subtreeSlideOp);
+        operators.add(getOperator("narrowExchange"));
+        operators.add(getOperator("wideExchange"));
+        operators.add(getOperator("wilsonBalding"));
 
         operators.add(getOperator("treeModel.rootHeight"));
         operators.add(getOperator("uniformHeights"));
+
+        operators.add(getOperator("subtreeLeap"));
+
+        boolean defaultInUse;
+        boolean branchesInUse;
+        boolean newMixInUse;
+
+        // if not a fixed tree then sample tree space
+        if (options.operatorSetType == OperatorSetType.DEFAULT) {
+            defaultInUse = true;
+            branchesInUse = true;
+            newMixInUse = false;
+        } else if (options.operatorSetType == OperatorSetType.NEW_TREE_MIX) {
+            defaultInUse = false;
+            branchesInUse = false;
+            newMixInUse = true;
+        } else if (options.operatorSetType == OperatorSetType.FIXED_TREE_TOPOLOGY) {
+            defaultInUse = false;
+            branchesInUse = true;
+            newMixInUse = false;
+        } else {
+            throw new IllegalArgumentException("Unknown operator set type");
+        }
+
+        getOperator("subtreeSlide").inUse = defaultInUse;
+        getOperator("narrowExchange").inUse = defaultInUse;
+        getOperator("wideExchange").inUse = defaultInUse;
+        getOperator("wilsonBalding").inUse = defaultInUse;
+
+        getOperator("treeModel.rootHeight").inUse = branchesInUse;
+        getOperator("uniformHeights").inUse = branchesInUse;
+
+        getOperator("subtreeLeap").inUse = newMixInUse;
     }
 
     /////////////////////////////////////////////////////////////

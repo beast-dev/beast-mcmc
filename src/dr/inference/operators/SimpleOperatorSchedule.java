@@ -46,7 +46,7 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 	double totalWeight = 0;
 	int current = 0;
 	boolean sequential = false;
-	int optimizationSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
+	OptimizationTransform optimizationSchedule = OptimizationTransform.DEFAULT;
 
 	public SimpleOperatorSchedule() {
 		operators = new Vector<MCMCOperator>();
@@ -115,14 +115,17 @@ public class SimpleOperatorSchedule implements OperatorSchedule, Loggable {
 
 	public double getOptimizationTransform(double d) {
         switch( optimizationSchedule ) {
-            case LOG_SCHEDULE:  return Math.log(d);
-            case SQRT_SCHEDULE: return Math.sqrt(d);
+			case DEFAULT:
+            case LOG:  return Math.log(d);
+            case SQRT: return Math.sqrt(d);
+			case LINEAR: return d;
+
+			default: throw new UnsupportedOperationException("Unknown enum value");
         }
-		return d;
 	}
 
-	public void setOptimizationSchedule(int schedule) {
-		optimizationSchedule = schedule;
+	public void setOptimizationSchedule(OptimizationTransform optimizationSchedule) {
+		this.optimizationSchedule = optimizationSchedule;
 	}
 
     public int getMinimumAcceptAndRejectCount() {

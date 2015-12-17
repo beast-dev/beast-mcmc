@@ -139,7 +139,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     // only init in PartitionSubstitutionModel
     protected void initModelParametersAndOpererators() {
-        double substWeights = 0.1;
+        double substWeights = 1.0;
 
         //Substitution model parameters
         createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25);

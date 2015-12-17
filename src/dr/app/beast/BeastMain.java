@@ -499,7 +499,7 @@ public class BeastMain {
         }
 
         if (arguments.hasOption("beagle_rescale")) {
-            System.setProperty("beagle.rescale", Integer.toString(arguments.getIntegerOption("beagle_rescale")));
+            System.setProperty("beagle.rescale", Long.toString(arguments.getLongOption("beagle_rescale")));
         }
 
         // ============= Other settings =============

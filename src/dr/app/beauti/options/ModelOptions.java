@@ -50,11 +50,11 @@ public class ModelOptions implements Serializable {
     protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
     public static final double demoTuning = 0.75;
-    public static final double demoWeights = 3.0;
+    public static final double demoWeights = 30.0;
 
-    protected static final double branchWeights = 1.0; // per node
-    protected static final double treeWeights = 1.0; // per node
-    protected static final double rateWeights = 1.0; // per node
+    protected static final double branchWeights = 300.0;
+    protected static final double treeWeights = 150.0;
+    protected static final double rateWeights = 30.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
 

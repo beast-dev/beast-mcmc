@@ -510,9 +510,50 @@ public class BranchRatesModelGenerator extends Generator {
 
     }
 
+    /**
+     * Write the branch rates model reference.
+     *
+     * @param model  PartitionClockModel
+     * @param writer the writer
+     */
+    public void writeBranchRatesModelRef(PartitionClockModel model, XMLWriter writer) {
+        String tag = "";
+        String id = "";
+
+        switch (model.getClockType()) {
+            case STRICT_CLOCK:
+                tag = StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES;
+                id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                break;
+
+            case UNCORRELATED:
+                tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                break;
+
+            case RANDOM_LOCAL_CLOCK:
+                tag = RandomLocalClockModelParser.LOCAL_BRANCH_RATES;
+                id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                break;
+
+            case FIXED_LOCAL_CLOCK:
+                tag = LocalClockModelParser.LOCAL_CLOCK_MODEL;
+                id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                break;
+            case AUTOCORRELATED:
+                tag = ACLikelihoodParser.AC_LIKELIHOOD;
+                throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+        writer.writeIDref(tag, id);
+    }
+
     public void writeAllClockRateRefs(PartitionClockModel model, XMLWriter writer) {
         writer.writeIDref(ParameterParser.PARAMETER, getClockRateString(model));
     }
+
 
     public String getClockRateString(PartitionClockModel model) {
         setModelPrefix(model.getPrefix());
@@ -637,11 +678,7 @@ public class BranchRatesModelGenerator extends Generator {
     public void writeClockLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
             PartitionClockModel clockModel = partition.getPartitionClockModel();
-
-            if (clockModel != null && clockModel.getClockType() == ClockType.AUTOCORRELATED) {
-                throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
-//                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
-            }
+            writeBranchRatesModelRef(clockModel, writer);
         }
     }
 

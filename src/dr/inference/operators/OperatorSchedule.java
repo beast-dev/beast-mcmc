@@ -71,11 +71,21 @@ public interface OperatorSchedule extends Serializable {
      */
     int getMinimumAcceptAndRejectCount();
 
-    final int DEFAULT_SCHEDULE = 0;
-    final int LOG_SCHEDULE = 1;
-    final int SQRT_SCHEDULE = 2;
+    public enum OptimizationTransform {
+        DEFAULT("default"),
+        LOG("log"),
+        SQRT("sqrt"),
+        LINEAR("linear");
 
-    final String DEFAULT_STRING = "default";
-    final String LOG_STRING = "log";
-    final String SQRT_STRING = "sqrt";
+        OptimizationTransform(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
+    };
 }

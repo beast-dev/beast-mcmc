@@ -220,7 +220,8 @@ public class InverseGaussianDistribution implements Distribution {
      */
     public static double quantile(double z, double m, double shape) {
         if(z < 0.01 || z > 0.99) {
-            throw new RuntimeException("Quantile is too low/high to calculate (numerical estimation for extreme values is incomplete");
+	    System.err.print("Quantile is " + z);
+            throw new RuntimeException("Quantile is too low/high to calculate (numerical estimation for extreme values is incomplete)");
         }
 
         /* Approximation method used by Mudholkar GS, Natarajan R (1999)

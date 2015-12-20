@@ -50,14 +50,16 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
         return traitModel;
     }
 
+    public double getLogLikelihood() { return traitModel.getLogLikelihood(); }
+
     //    boolean firstTime=true;
     public double[] nextRandomFast() {
 
-        double[] random = new double[traitModel.getTreeModel().getExternalNodeCount()*traitModel.getDimTrait()];
+        double[] random = new double[traitModel.getTreeModel().getExternalNodeCount() * traitModel.getDimTrait()];
         NodeRef root = traitModel.getTreeModel().getRoot();
-        double[] traitStart=traitModel.getPriorMean();
-        double[][] varianceCholesky=null;
-        double[][] temp= new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
+        double[] traitStart = traitModel.getPriorMean();
+        double[][] varianceCholesky = null;
+        double[][] temp = new SymmetricMatrix(traitModel.getDiffusionModel().getPrecisionmatrix()).inverse().toComponents();
         try {
             varianceCholesky = (new CholeskyDecomposition(temp).getL());
         } catch (IllegalDimension illegalDimension) {
@@ -97,7 +99,7 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
     private void nextRandomFast(double[] currentValue, NodeRef currentNode, double[] random, double[][] varianceCholesky) {
 
         double rescaledLength = (traitModel.getTreeModel().isRoot(currentNode)) ?
-            1.0 / traitModel.getPriorSampleSize() :
+                1.0 / traitModel.getPriorSampleSize() :
                 traitModel.getRescaledBranchLengthForPrecision(currentNode);
 
         double scale = Math.sqrt(rescaledLength);

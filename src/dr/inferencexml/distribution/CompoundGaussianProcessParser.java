@@ -33,6 +33,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Variable;
 import dr.math.distributions.CompoundGaussianProcess;
 import dr.math.distributions.GaussianProcessRandomGenerator;
+import dr.util.Attribute;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -54,30 +55,53 @@ public class CompoundGaussianProcessParser extends AbstractXMLObjectParser {
 
         List<GaussianProcessRandomGenerator> gpList = new ArrayList<GaussianProcessRandomGenerator>();
         List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+        List<Integer> copyList = new ArrayList<Integer>();
 
         for (int i = 0; i < xo.getChildCount(); ++i) {
             Object obj = xo.getChild(i);
             GaussianProcessRandomGenerator gp = null;
             Likelihood likelihood = null;
-
-            if (obj instanceof MultivariateDistributionLikelihood) {
+            int copies = -1;
+            if (obj instanceof DistributionLikelihood) {
+                DistributionLikelihood dl = (DistributionLikelihood) obj;
+                if (!(dl.getDistribution() instanceof GaussianProcessRandomGenerator)) {
+                    throw new XMLParseException("Not a Gaussian process");
+                }
+                likelihood = dl;
+                gp = (GaussianProcessRandomGenerator) dl.getDistribution();
+                copies = 0;
+                for (Attribute<double[]> datum : dl.getDataList()) {
+//                    Double draw = (Double) gp.nextRandom();
+//                    System.err.println("DL: " + datum.getAttributeName() + " " + datum.getAttributeValue().length + " " + "1");
+                    copies += datum.getAttributeValue().length;
+                }
+            } else if (obj instanceof MultivariateDistributionLikelihood) {
                 MultivariateDistributionLikelihood mdl = (MultivariateDistributionLikelihood) obj;
                 if (!(mdl.getDistribution() instanceof GaussianProcessRandomGenerator)) {
                     throw new XMLParseException("Not a Gaussian process");
                 }
                 likelihood = mdl;
                 gp = (GaussianProcessRandomGenerator) mdl.getDistribution();
+                copies = 0;
+                double[] draw = (double[]) gp.nextRandom();
+                for (Attribute<double[]> datum : mdl.getDataList()) {
+//                    System.err.println("ML: " + datum.getAttributeName() + " " + datum.getAttributeValue().length + " " + draw.length);
+                    copies += datum.getAttributeValue().length / draw.length;
+                }
             } else if (obj instanceof GaussianProcessRandomGenerator) {
                 gp = (GaussianProcessRandomGenerator) obj;
                 likelihood = gp.getLikelihood();
+                copies = 1;
             } else {
                 throw new XMLParseException("Not a Gaussian process");
             }
             gpList.add(gp);
             likelihoodList.add(likelihood);
+            copyList.add(copies);
         }
 
-        return new CompoundGaussianProcess(gpList, likelihoodList);
+//        System.exit(-1);
+        return new CompoundGaussianProcess(gpList, likelihoodList, copyList);
     }
 
     //************************************************************************

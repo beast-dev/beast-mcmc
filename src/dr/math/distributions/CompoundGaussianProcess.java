@@ -25,6 +25,7 @@
 
 package dr.math.distributions;
 
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 
@@ -38,12 +39,15 @@ import java.util.List;
 public class CompoundGaussianProcess implements GaussianProcessRandomGenerator {
 
     private final List<GaussianProcessRandomGenerator> gpList;
-//    private final List<Likelihood> likelihoodList;
+    private final List<Integer> copyList;
+    private final List<Likelihood> likelihoodList;
     private final CompoundLikelihood compoundLikelihood;
 
-    public CompoundGaussianProcess(List<GaussianProcessRandomGenerator> gpList, List<Likelihood> likelihoodList) {
+    public CompoundGaussianProcess(List<GaussianProcessRandomGenerator> gpList, List<Likelihood> likelihoodList,
+                                   List<Integer> copyList) {
         this.gpList = gpList;
-//        this.likelihoodList = likelihoodList;
+        this.copyList = copyList;
+        this.likelihoodList = likelihoodList;
         compoundLikelihood = new CompoundLikelihood(likelihoodList);
     }
 
@@ -55,11 +59,24 @@ public class CompoundGaussianProcess implements GaussianProcessRandomGenerator {
 
         int size = 0;
         List<double[]> randomList = new ArrayList<double[]>();
+        int index = 0;
         for (GaussianProcessRandomGenerator gp : gpList) {
-            double[] vector = (double[]) gp.nextRandom();
-            randomList.add(vector);
-            size += vector.length;
-//            System.err.println("Drew len = " + vector.length);
+            final int copies = copyList.get(index);
+            if (likelihoodList.get(index) instanceof DistributionLikelihood) { // Univariate
+                double[] vector = new double[copies];
+                for (int i = 0; i < copies; ++i) {
+                    vector[i] = (Double) gp.nextRandom();
+                }
+                randomList.add(vector);
+                size += vector.length;
+            } else {
+                for (int i = 0; i < copyList.get(index); ++i) {
+                    double[] vector = (double[]) gp.nextRandom();
+                    randomList.add(vector);
+                    size += vector.length;
+                }
+            }
+            ++index;
         }
 
         double[] result = new double[size];
@@ -68,9 +85,6 @@ public class CompoundGaussianProcess implements GaussianProcessRandomGenerator {
             System.arraycopy(vector, 0, result, offset, vector.length);
             offset += vector.length;
         }
-
-//        System.err.println("Done with draw\n");
-
         return result;
     }
 

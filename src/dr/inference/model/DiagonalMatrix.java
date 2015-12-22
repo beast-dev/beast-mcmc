@@ -47,6 +47,8 @@ public class DiagonalMatrix extends MatrixParameter {
 //		Parameter.Default(name, parameters);
 //	}
 
+    public Parameter getDiagonalParameter() { return diagonalParameter; }
+
     public double getParameterValue(int row, int col) {
         if (row != col)
             return 0.0;

@@ -51,6 +51,16 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         this.precision = precParameter;
         addVariable(precParameter);
 
+        Parameter single = null;
+        if (precParameter instanceof DiagonalMatrix) {
+            DiagonalMatrix dm = (DiagonalMatrix) precParameter;
+            if (dm.getDiagonalParameter() instanceof DuplicatedParameter) {
+                single = dm.getDiagonalParameter();
+            }
+        }
+        hasSinglePrecision = (single != null);
+        singlePrecision = single;
+
         distribution = createNewDistribution();
         distributionKnown = true;
     }
@@ -126,11 +136,17 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     // **************************************************************
 
     private MultivariateNormalDistribution createNewDistribution() {
-        return new MultivariateNormalDistribution(getMean(), getScaleMatrix());
+        if (hasSinglePrecision) {
+            return new MultivariateNormalDistribution(getMean(), singlePrecision.getParameterValue(0));
+        } else {
+            return new MultivariateNormalDistribution(getMean(), getScaleMatrix());
+        }
     }
 
     private final Parameter mean;
     private final MatrixParameter precision;
+    private final boolean hasSinglePrecision;
+    private final Parameter singlePrecision;
     private MultivariateNormalDistribution distribution;
     private MultivariateNormalDistribution storedDistribution;
 

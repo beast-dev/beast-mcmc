@@ -385,21 +385,22 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
 
 
-        MatrixParameter precisionParam = (MatrixParameter) diffusionModel.getPrecisionParameter();
-        double[][] answer=new double[getRootNodeTrait().length][ getRootNodeTrait().length];
+        double[][] precisionParam =diffusionModel.getPrecisionmatrix();
+//        double[][] answer=new double[getRootNodeTrait().length][ getRootNodeTrait().length];
         double p = preP[taxa];
 
         double[][] thisP = new double[dim][dim];
 
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j < dim; j++) {
-
-                thisP[i][j] = p * precisionParam.getParameterValue(i, j);
+//                System.out.println("P: "+p);
+//                System.out.println("I: "+i+", J: "+j+" value:"+precisionParam[i][j]);
+                thisP[i][j] = p * precisionParam[i][ j];
 
             }
         }
 
-        return answer;
+        return thisP;
 
     }
 

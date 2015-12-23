@@ -27,11 +27,19 @@ package dr.app.beagle.evomodel.newtreelikelihood;
 
 import beagle.Beagle;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
+import dr.app.beagle.evomodel.treelikelihood.EvolutionaryProcessDelegate;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.*;
 import dr.xml.Reportable;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
@@ -45,7 +53,7 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = false;
 
-    public NewAbstractTreeLikelihood(String name, TreeModel treeModel) {
+    public NewAbstractTreeLikelihood(String name, TreeModel treeModel, Map<Set<String>, Parameter> partialsRestrictions) {
 
         super(name);
 
@@ -53,9 +61,7 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
         addModel(treeModel);
 
         nodeCount = treeModel.getNodeCount();
-
-        this.tipCount = treeModel.getExternalNodeCount();
-
+        tipCount = treeModel.getExternalNodeCount();
         internalNodeCount = nodeCount - tipCount;
 
         // one partials buffer for each tip and two for each internal node (for store restore)
@@ -67,6 +73,19 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
         }
 
         likelihoodKnown = false;
+
+        // Partials restrictions
+        this.partialsRestrictions = partialsRestrictions;
+//            hasRestrictedPartials = (partialsRestrictions != null);
+        if (hasRestrictedPartials) {
+            numRestrictedPartials = partialsRestrictions.size();
+            updateRestrictedNodePartials = true;
+            partialsMap = new Parameter[treeModel.getNodeCount()];
+//            partials = new double[stateCount * patternCount * categoryCount];
+        } else {
+            numRestrictedPartials = 0;
+            updateRestrictedNodePartials = false;
+        }
     }
 
 
@@ -118,99 +137,205 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
 
 //    protected abstract boolean hasBranchSpecificEvolutionaryProcess();
 
-//    protected boolean updateBranchSpecificEvolutionaryProcess(final Tree tree, final NodeRef parent,
-//                                                              final NodeRef node, final boolean flip) {
-//
-//        final double branchRate;
-//
-//        synchronized (branchRateModel) {
-//            branchRate = branchRateModel.getBranchRate(tree, node);
-//        }
-//        final double parentHeight = tree.getNodeHeight(parent);
-//        final double nodeHeight = tree.getNodeHeight(node);
-//
-//        // Get the operational time of the branch
-//        final double branchLength = branchRate * (parentHeight - nodeHeight);
-//        if (branchLength < 0.0) {
-//            throw new RuntimeException("Negative branch length: " + branchLength);
-//        }
-//
-//        if (flip) {
-//            substitutionModelDelegate.flipMatrixBuffer(nodeNum);
-//        }
-//        branchUpdateIndices[branchUpdateCount] = nodeNum;
-//        branchLengths[branchUpdateCount] = branchLength;
-//        branchUpdateCount++;
-//
-//        return true;
-//    }
-
-    protected boolean updateBranchSpecificEvolutionaryProcess(final Tree tree, final NodeRef parent,
+    protected boolean updateBranchSpecificEvolutionaryProcess(final Tree tree, final int nodeNum, final NodeRef parent,
                                                               final NodeRef node, final boolean flip) {
         return false;
     }
 
-
-//    protected void handlePartialsScaling(final int nodeNum, final int x) {
-//        if (useScaleFactors) {
-//            // get the index of this scaling buffer
-//            int n = nodeNum - tipCount;
-//
-//            if (recomputeScaleFactors) {
-//                // flip the indicator: can take either n or (internalNodeCount + 1) - n
-//                scaleBufferHelper.flipOffset(n);
-//
-//                // store the index
-//                scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
-//
-//                operations[x + 1] = scaleBufferIndices[n]; // Write new scaleFactor
-//                operations[x + 2] = Beagle.NONE;
-//
-//            } else {
-//                operations[x + 1] = Beagle.NONE;
-//                operations[x + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
-//            }
-//
-//        } else {
-//
-//            if (useAutoScaling) {
-//                scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
-//            }
-//            operations[x + 1] = Beagle.NONE; // Not using scaleFactors
-//            operations[x + 2] = Beagle.NONE;
-//        }
-//    }
-
-    protected void handlePartialsScaling(final int nodeNum, final int x) {
+    protected void handlePartialsScaling(final int[] operations, final int nodeNum, final int x) {
         // Do nothing
     }
 
-//    protected void handleEvolutionaryProcess(final NodeRef child1, final NodeRef child2, final int x) {
-//        operations[x + 4] = substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
-//        operations[x + 6] = substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
-//    }
-
-    protected void handleEvolutionaryProcess(final NodeRef child1, final NodeRef child2, final int x) {
-        // Do nothing
-    }
-
-
-//    protected void handleRestrictedPartials(final int nodeNum) {
-//        if (hasRestrictedPartials) {
-//            // Test if this set of partials should be restricted
-//            if (updateRestrictedNodePartials) {
-//                // Recompute map
-//                computeNodeToRestrictionMap();
-//                updateRestrictedNodePartials = false;
-//            }
-//            if (partialsMap[nodeNum] != null) {
-//
-//            }
-//        }
+//    protected void handleEvolutionaryProcess(final int[] operations, final NodeRef child1, final NodeRef child2, final int x) {
+//        // Do nothing
 //    }
 
     protected void handleRestrictedPartials(final int nodeNum) {
         // Do nothing
+    }
+
+    protected void setEvolutionaryProcessDelegate(final EvolutionaryProcessDelegate delegate) {
+        this.evolutionaryProcessDelegate = delegate;
+    }
+
+    protected void prepareStorage() {
+        if (branchUpdateIndices == null) {
+            branchUpdateIndices = new int[nodeCount];
+            branchLengths = new double[nodeCount];
+//            scaleBufferIndices = new int[internalNodeCount];
+//            storedScaleBufferIndices = new int[internalNodeCount];
+        }
+
+        if (operations == null) {
+            operations = new int[numRestrictedPartials + 1][internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
+            operationCount = new int[numRestrictedPartials + 1];
+        }
+    }
+
+    protected void prepareScaling() {
+        // Do nothing
+    }
+
+    protected void prepareTips() {
+        // Do nothing
+    }
+
+    protected void updateRootInformation() {
+        // Do nothing
+    }
+
+    protected int accumulateScaleFactors() {
+        return Beagle.NONE;
+    }
+
+    protected void updateSiteModelAction() {
+        // Do nothing
+    }
+
+    protected double computedAscertainedLogLikelihood() {
+        throw new RuntimeException("Not an ascertained model");
+    }
+
+    protected boolean doRescalingNow(boolean firstAttempt) {
+        return false;
+    }
+
+    /**
+      * Calculate the log likelihood of the current state.
+      *
+      * @return the log likelihood.
+      */
+    protected double calculateLogLikelihood() {
+
+        prepareStorage();
+
+        prepareScaling();
+
+        prepareTips();
+
+        branchUpdateCount = 0;
+        operationListCount = 0;
+
+        if (hasRestrictedPartials) {
+            for (int i = 0; i <= numRestrictedPartials; i++) {
+                operationCount[i] = 0;
+            }
+        } else {
+            operationCount[0] = 0;
+        }
+
+        final NodeRef root = treeModel.getRoot();
+        postOrderTraverse(treeModel, root, null, true);
+
+        if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
+            evolutionaryProcessDelegate.updateSubstitutionModels(beagle);
+
+            // we are currently assuming a no-category model...
+        }
+
+        if (updateSiteModel) {
+            updateSiteModelAction();
+        }
+
+        if (branchUpdateCount > 0) {
+            evolutionaryProcessDelegate.updateTransitionMatrices(
+                    beagle,
+                    branchUpdateIndices,
+                    branchLengths,
+                    branchUpdateCount);
+        }
+
+        if (COUNT_TOTAL_OPERATIONS) {
+            totalMatrixUpdateCount += branchUpdateCount;
+
+            for (int i = 0; i <= numRestrictedPartials; i++) {
+                totalOperationCount += operationCount[i];
+            }
+        }
+
+        double logL;
+        boolean done;
+        boolean firstRescaleAttempt = true;
+
+        do {
+
+            if (hasRestrictedPartials) {
+                for (int i = 0; i <= numRestrictedPartials; i++) {
+                    beagle.updatePartials(operations[i], operationCount[i], Beagle.NONE);
+                    if (i < numRestrictedPartials) {
+                        //                        restrictNodePartials(restrictedIndices[i]);
+                    }
+                }
+            } else {
+                beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
+            }
+
+            int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
+
+            int cumulateScaleBufferIndex = accumulateScaleFactors();
+
+            updateRootInformation();
+
+            double[] sumLogLikelihoods = new double[1];
+
+            beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+                    new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
+
+            logL = sumLogLikelihoods[0];
+
+            if (ascertainedSitePatterns) {
+                logL = computedAscertainedLogLikelihood();
+            }
+
+            if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+                everUnderflowed = true;
+                logL = Double.NEGATIVE_INFINITY;
+
+                if (doRescalingNow(firstRescaleAttempt)) {
+
+                    branchUpdateCount = 0;
+
+                    if (hasRestrictedPartials) {
+                        for (int i = 0; i <= numRestrictedPartials; i++) {
+                            operationCount[i] = 0;
+                        }
+                    } else {
+                        operationCount[0] = 0;
+                    }
+
+                    // traverse again but without flipping partials indices as we
+                    // just want to overwrite the last attempt. We will flip the
+                    // scale buffer indices though as we are recomputing them.
+                    postOrderTraverse(treeModel, root, null, false);
+
+                    done = false; // Run through do-while loop again
+                    firstRescaleAttempt = false; // Only try to rescale once
+                } else {
+                    // we have already tried a rescale, not rescaling or always rescaling
+                    // so just return the likelihood...
+                    done = true;
+                }
+            } else {
+                done = true; // No under-/over-flow, then done
+            }
+
+        } while (!done);
+
+        // If these are needed...
+        //beagle.getSiteLogLikelihoods(patternLogLikelihoods);
+
+        //********************************************************************
+        // after traverse all nodes and patterns have been updated --
+        //so change flags to reflect this.
+        for (int i = 0; i < nodeCount; i++) {
+            updateNode[i] = false;
+        }
+
+        updateSubstitutionModel = false;
+        updateSiteModel = false;
+        //********************************************************************
+
+        return logL;
     }
 
     /**
@@ -222,7 +347,7 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
      * @param flip           flip
      * @return boolean
      */
-    protected boolean traverse(final Tree tree, final NodeRef node, final int[] operatorNumber, final boolean flip) {
+    final protected boolean postOrderTraverse(final Tree tree, final NodeRef node, final int[] operatorNumber, final boolean flip) {
 
         boolean update = false;
 
@@ -236,7 +361,7 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
 
         // First update the evolutionary process for this branch
         if (parent != null && updateNode[nodeNum]) {
-            update = updateBranchSpecificEvolutionaryProcess(tree, parent, node, flip);
+            update = updateBranchSpecificEvolutionaryProcess(tree, nodeNum, parent, node, flip);
         }
 
         // If the node is internal, update the partial likelihoods.
@@ -245,43 +370,36 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
             // Traverse down the two child nodes
             final NodeRef child1 = tree.getChild(node, 0);
             final int[] op1 = {-1};
-            final boolean update1 = traverse(tree, child1, op1, flip);
+            final boolean update1 = postOrderTraverse(tree, child1, op1, flip);
 
             final NodeRef child2 = tree.getChild(node, 1);
             final int[] op2 = {-1};
-            final boolean update2 = traverse(tree, child2, op2, flip);
+            final boolean update2 = postOrderTraverse(tree, child2, op2, flip);
 
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
                 final int x = operationCount[operationListCount] * Beagle.OPERATION_TUPLE_SIZE;
+                final int[] operations = this.operations[operationListCount];
 
                 if (flip) {
                     // first flip the partialBufferHelper
                     partialBufferHelper.flipOffset(nodeNum);
                 }
 
-                final int[] operations = this.operations[operationListCount];
-
                 operations[x] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-                handlePartialsScaling(nodeNum, x);
-
-//                operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
-//                operations[x + 4] = substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
-//                operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
-//                operations[x + 6] = substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
+                handlePartialsScaling(operations, nodeNum, x);
 
                 operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
+                operations[x + 4] = evolutionaryProcessDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
                 operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
-
-                handleEvolutionaryProcess(child1, child2, x);
-
-                operationCount[operationListCount]++;
-
-                update = true;
+                operations[x + 6] = evolutionaryProcessDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
 
                 handleRestrictedPartials(nodeNum);
+
+                ++operationCount[operationListCount];
+                update = true;
             }
         }
 
@@ -301,8 +419,10 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
     // **************************************************************
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (COUNT_TOTAL_OPERATIONS)
+        if (COUNT_TOTAL_OPERATIONS) {
             totalModelChangedCount++;
+        }
+
         likelihoodKnown = false;
     }
 
@@ -336,17 +456,21 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
     }
 
     public final double getLogLikelihood() {
-        if (COUNT_TOTAL_OPERATIONS)
+        if (COUNT_TOTAL_OPERATIONS) {
             totalGetLogLikelihoodCount++;
+        }
+
         if (CompoundLikelihood.DEBUG_PARALLEL_EVALUATION) {
             System.err.println((likelihoodKnown ? "lazy" : "evaluate"));
         }
+
         if (!likelihoodKnown) {
             if (COUNT_TOTAL_OPERATIONS)
                 totalCalculateLikelihoodCount++;
             logLikelihood = calculateLogLikelihood();
             likelihoodKnown = true;
         }
+
         return logLikelihood;
     }
 
@@ -354,8 +478,10 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
      * Forces a complete recalculation of the likelihood next time getLikelihood is called
      */
     public void makeDirty() {
-        if (COUNT_TOTAL_OPERATIONS)
+        if (COUNT_TOTAL_OPERATIONS) {
             totalMakeDirtyCount++;
+        }
+
         likelihoodKnown = false;
         updateAllNodes();
     }
@@ -364,7 +490,7 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
     	return likelihoodKnown;
     }
 
-    protected abstract double calculateLogLikelihood();
+//    protected abstract double calculateLogLikelihood();
 
     public String getReport() {
         if (hasInitialized) {
@@ -409,17 +535,54 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
     protected double[] branchLengths;
     protected int branchUpdateCount;
 
+    protected static final boolean hasRestrictedPartials = false;
+    protected final int numRestrictedPartials;
+    protected final Map<Set<String>, Parameter> partialsRestrictions;
+    protected Parameter[] partialsMap;
+    protected double[] partials;
+    protected boolean updateRestrictedNodePartials;
+
     /**
      * Flags to specify which nodes are to be updated
      */
     protected boolean[] updateNode;
 
     protected final BufferIndexHelper partialBufferHelper;
+    protected EvolutionaryProcessDelegate evolutionaryProcessDelegate;
 
     private double logLikelihood;
     private double storedLogLikelihood;
     protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
+
+    // Scale factor info
+    protected boolean everUnderflowed = false;
+//    protected boolean implementsScaling = false;
+//    protected boolean recomputeScaleFactors = false;
+
+
+    /**
+     * the BEAGLE library instance
+     */
+    protected Beagle beagle;
+
+    /**
+     * Flag to specify that the substitution model has changed
+     */
+    protected boolean updateSubstitutionModel;
+
+    /**
+     * Flag to specify that the site model has changed
+     */
+    protected boolean updateSiteModel;
+
+    /**
+     * Flag to specify if site patterns are ascertained
+     */
+    protected boolean ascertainedSitePatterns = false;
+
+
+
 
     protected boolean hasInitialized = false;
 

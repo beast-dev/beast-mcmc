@@ -48,6 +48,7 @@ public enum PriorType {
     INVERSE_GAMMA_PRIOR("Inverse Gamma", true, true, true),
     BETA_PRIOR("Beta", true, true, true),
     ONE_OVER_X_PRIOR("1/x", true, true, false),
+    DIRICHLET_PRIOR("Dirichlet", false, false, false),
     CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
@@ -204,8 +205,11 @@ public enum PriorType {
                 buffer.append(NumberUtil.formatDecimal(parameter.scale, 10, 6));
                 buffer.append("]");
                 break;
+            case DIRICHLET_PRIOR:
+                buffer.append("Dirichlet [1,1]");
+                break;
             case ONE_OVER_X_PRIOR:
-                buffer.append("1/x"); // rename Jeffreys prior to 1/x prior everywhere in Beauti
+                buffer.append("1/x");
                 break;
             case POISSON_PRIOR:
                 buffer.append("Poisson [");

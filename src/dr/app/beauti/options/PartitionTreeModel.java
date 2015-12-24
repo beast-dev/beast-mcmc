@@ -46,6 +46,7 @@ public class PartitionTreeModel extends PartitionOptions {
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
+    private boolean fixedTree = false;
 //    private double initialRootHeight = 1.0;
 
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to

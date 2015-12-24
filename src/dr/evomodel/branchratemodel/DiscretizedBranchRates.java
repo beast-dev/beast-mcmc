@@ -143,7 +143,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             NodeRef node = treeModel.getNode(i);
             if (!treeModel.isRoot(node)) {
-                int rateCategory = (int) Math.round(rateCategories.getNodeValue(treeModel, node));
+                int rateCategory = (int) (rateCategories.getNodeValue(treeModel, node) + 0.5);
                 treeRate += rates[currentRateArrayIndex][rateCategory] * treeModel.getBranchLength(node);
                 treeTime += treeModel.getBranchLength(node);
 
@@ -196,7 +196,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             setupRates();
         }
 
-        int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
+        int rateCategory = (int) (rateCategories.getNodeValue(tree, node) + 0.5);
 
         //System.out.println(rates[rateCategory] + "\t"  + rateCategory);
         return rates[currentRateArrayIndex][rateCategory] * scaleFactor;

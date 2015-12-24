@@ -76,7 +76,17 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
             throw new IllegalArgumentException("Invalid bracket angle");
         }
 
-        // TODO Must set priorMean if guassianProcess does not have a 0-mean.
+        // Check dimensions of variable and gaussianProcess
+        int dimVariable = variable.getDimension();
+        double[] draw = (double[]) gaussianProcess.nextRandom();
+        int dimDraw = draw.length;
+
+        if (dimVariable != dimDraw) {
+            throw new IllegalArgumentException("Dimension of variable (" + dimVariable +
+                    ") does not match dimension of Gaussian process draw (" + dimDraw + ")" );
+        }
+
+        // TODO Must set priorMean if gaussianProcess does not have a 0-mean.
     }
 
     public Variable<Double> getVariable() {

@@ -1,8 +1,6 @@
 package dr.evomodel.operators;
 
-import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
-import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
@@ -72,7 +70,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         double answer[]=new double[this.nfac];
         for (int i = 0; i <this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
-                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
+                answer[i] -=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
                         residual[j*ntaxa+nfac];
             }
         }
@@ -101,14 +99,14 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
         double[] mean=tree.getConditionalMean(randel);
-        double[][] prec=tree.getConditionalVariance(randel);
+        double[][] prec=tree.getConditionalPrecision(randel);
 
         double[] derivative=getGradient(randel, mean, prec);
         drawMomentum(lfm.getFactorDimension());
 
         double prop=0;
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
-            prop+=momentum[i]*momentum[i]/2;
+            prop+=momentum[i]*momentum[i]/(2*getMomentumSd()*getMomentumSd());
         }
 
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
@@ -117,7 +115,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
-                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+stepSize*momentum[j]);
+                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+stepSize*momentum[j]/(getMomentumSd()*getMomentumSd()));
                 factors.fireParameterChangedEvent(factors.getRowDimension()*randel+j,null);
             }
 
@@ -137,9 +135,8 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         double res=0;
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
-            res+=momentum[i]*momentum[i]/2;
+            res+=momentum[i]*momentum[i]/(2*getMomentumSd()*getMomentumSd());
         }
-
-        return res-prop;
+        return prop-res;
     }
 }

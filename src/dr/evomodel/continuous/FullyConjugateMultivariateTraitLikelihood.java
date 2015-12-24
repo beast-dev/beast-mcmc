@@ -379,7 +379,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return answer;
     }
 
-    public double[][] getConditionalVariance(int taxa){
+    public double[][] getConditionalPrecision(int taxa){
          setup();
 
 

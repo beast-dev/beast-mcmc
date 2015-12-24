@@ -11,6 +11,9 @@ public abstract class AbstractHamiltonianMCOperator extends AbstractCoercableOpe
         this.momentumSd=momentumSd;
     }
 
+    protected double getMomentumSd()
+    {return momentumSd;}
+
     private double momentumSd;
     protected double[] momentum;
 

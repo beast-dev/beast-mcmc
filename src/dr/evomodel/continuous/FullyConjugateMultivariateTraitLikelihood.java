@@ -240,12 +240,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
             dimKnown=false;
         }
+        PostPreKnown=false;
         super.handleVariableChangedEvent(variable,index,type);
     }
 
     @Override
     public void storeState() {
         super.storeState();
+        storedPostPreKnown=PostPreKnown;
         storedDimKnown=dimKnown;
         if(preP!=null)
          System.arraycopy(preP, 0, storedPreP, 0,preP.length);
@@ -257,6 +259,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     @Override
     public void restoreState() {
         super.restoreState();
+        PostPreKnown=storedPostPreKnown;
         priorInformationKnown = false;
         preP=storedPreP;
         preMeans=storedPreMeans;
@@ -379,6 +382,11 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return answer;
     }
 
+    public double getPrecisionFactor(int taxa){
+        setup();
+        return preP[taxa];
+    }
+
     public double[][] getConditionalPrecision(int taxa){
          setup();
 
@@ -387,7 +395,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
         double[][] precisionParam =diffusionModel.getPrecisionmatrix();
 //        double[][] answer=new double[getRootNodeTrait().length][ getRootNodeTrait().length];
-        double p = preP[taxa];
+        double p = getPrecisionFactor(taxa);
 
         double[][] thisP = new double[dim][dim];
 
@@ -405,6 +413,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
     private void setup(){
+        if(!PostPreKnown){
             double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
             double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
 
@@ -417,10 +426,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             // Use dynamic programming to compute conditional likelihoods at each internal node
             postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, computeWishartStatistics);
 
-            if(!dimKnown || !likelihoodKnown)
-            {doPreOrderTraversal(treeModel.getRoot());}
-            dimKnown=true;
-
+            doPreOrderTraversal(treeModel.getRoot());}
+        PostPreKnown=true;
 
     }
 
@@ -557,6 +564,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
 
     double[] storedPreP;
     double[][] storedPreMeans;
+
+    Boolean PostPreKnown=false;
+    Boolean storedPostPreKnown=false;
 
     private boolean priorInformationKnown = false;
     private double zBz; // Prior sum-of-squares contribution

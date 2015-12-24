@@ -22,6 +22,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private int ntraits;
     private double stepSize;
     private int nSteps;
+    private boolean diffusionSN=true;
 
 
     public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
@@ -77,17 +78,23 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         return answer;
     }
 
-    private double[] getGradient(int randel, double[] mean, double[][] prec){
+    private double[] getGradient(int randel, double[] mean, double[][] prec, double precfactor){
         double[] residual=lfm.getResidual();
         double[] derivative=getMatrix(randel, residual);
 
-
-        for (int i = 0; i <mean.length ; i++) {
-            double sumi=0;
-            for (int j = 0; j <mean.length ; j++) {
-                sumi+=prec[i][j]*(factors.getParameterValue(j, randel)-mean[j]);
+        if(diffusionSN){
+            for (int i = 0; i <mean.length ; i++) {
+                derivative[i]-=(factors.getParameterValue(i, randel)-mean[i])*precfactor;
             }
-            derivative[i]-=sumi;
+        }
+        else{
+            for (int i = 0; i <mean.length ; i++) {
+                double sumi=0;
+                for (int j = 0; j <mean.length ; j++) {
+                    sumi+=prec[i][j]*(factors.getParameterValue(j, randel)-mean[j]);
+                }
+                derivative[i]-=sumi;
+            }
         }
         return derivative;
     }
@@ -99,9 +106,16 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
         double[] mean=tree.getConditionalMean(randel);
-        double[][] prec=tree.getConditionalPrecision(randel);
+        double precfactor=0;
+        double[][] prec=null;
+        if(diffusionSN){
+            precfactor=tree.getPrecisionFactor(randel);
+        }
+        else {
+            prec = tree.getConditionalPrecision(randel);
+        }
 
-        double[] derivative=getGradient(randel, mean, prec);
+        double[] derivative=getGradient(randel, mean, prec, precfactor);
         drawMomentum(lfm.getFactorDimension());
 
         double prop=0;
@@ -121,7 +135,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
             if(i!=nSteps){
-                derivative=getGradient(randel,mean,prec);
+                derivative=getGradient(randel,mean,prec, precfactor);
 
                 for (int j = 0; j <lfm.getFactorDimension() ; j++) {
                     momentum[j] = momentum[j] - stepSize * derivative[j];

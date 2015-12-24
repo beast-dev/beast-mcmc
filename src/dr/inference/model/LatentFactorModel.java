@@ -613,9 +613,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
             if(!RecomputeLoadings){
                 loadingsKnown=false;
-                int col=index%factors.getRowDimension();
+                int col=index%loadings.getRowDimension();
                 if(index!=-1){
-                    for (int i = 0; i <loadings.getColumnDimension() ; i++) {
+                    for (int i = 0; i <data.getColumnDimension() ; i++) {
                         changedValues.add(i*data.getRowDimension()+col);
                     }
                 }

@@ -1,7 +1,7 @@
 /*
  * LoadingsGibbsOperator.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -212,7 +212,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     private void copy(int i, double[] random) {
         TransposedBlockUpperTriangularMatrixParameter changing = (TransposedBlockUpperTriangularMatrixParameter) LFM.getLoadings();
         for (int j = 0; j < random.length; j++) {
-            changing.setParameterValue(i, j, random[j]);
+            changing.setParameterValueQuietly(i, j, random[j]);
         }
     }
 
@@ -312,6 +312,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                 currentMean = meanArray.listIterator();
             }
             drawI(i, currentPrecision, currentMidMean, currentMean);
+            LFM.getLoadings().fireParameterChangedEvent();
 //            LFM.getLoadings().fireParameterChangedEvent();
         }
         return 0;

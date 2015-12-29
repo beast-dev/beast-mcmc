@@ -1,3 +1,28 @@
+/*
+ * Utils.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.bss;
 
 import java.awt.Desktop;
@@ -323,7 +348,7 @@ public class Utils {
 	public static final String SAVE_ICON = "icons/save.png";
 	public static final String TEXT_FILE_ICON = "icons/file.png";
 
-	public static double[] UNIFORM_CODON_FREQUENCIES = new double[] {
+	public static final double[] UNIFORM_CODON_FREQUENCIES = new double[] {
 			0.0163936, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
@@ -338,6 +363,8 @@ public class Utils {
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344 };
 
+	public static final String STOP_CODONS[] = new String[] { "TAA", "TAG", "TGA" };
+	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
@@ -1063,6 +1090,14 @@ public class Utils {
 		System.out.println();
 	}// END: printArray
 
+	public static void printArray(boolean[] x) {
+		for (int i = 0; i < x.length; i++) {
+			System.out.print(x[i] + " ");
+		}
+		System.out.println();
+		
+	}
+	
 	public static void printArray(String[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);

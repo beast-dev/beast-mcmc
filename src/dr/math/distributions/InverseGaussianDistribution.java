@@ -1,7 +1,7 @@
 /*
  * InverseGaussianDistribution.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -220,7 +220,8 @@ public class InverseGaussianDistribution implements Distribution {
      */
     public static double quantile(double z, double m, double shape) {
         if(z < 0.01 || z > 0.99) {
-            throw new RuntimeException("Quantile is too low/high to calculate (numerical estimation for extreme values is incomplete");
+	    System.err.print("Quantile is " + z);
+            throw new RuntimeException("Quantile is too low/high to calculate (numerical estimation for extreme values is incomplete)");
         }
 
         /* Approximation method used by Mudholkar GS, Natarajan R (1999)

@@ -1,7 +1,7 @@
 /*
  * BinomialLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,8 +30,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.Binomial;
-import dr.math.Polynomial;
-import dr.math.matrixAlgebra.Vector;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 

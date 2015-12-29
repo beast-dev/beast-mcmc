@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * ModelOptions.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -10,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -48,11 +50,11 @@ public class ModelOptions implements Serializable {
     protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
     public static final double demoTuning = 0.75;
-    public static final double demoWeights = 3.0;
+    public static final double demoWeights = 30.0;
 
-    protected static final double branchWeights = 30.0;
-    protected static final double treeWeights = 15.0;
-    protected static final double rateWeights = 3.0;
+    protected static final double branchWeights = 300.0;
+    protected static final double treeWeights = 150.0;
+    protected static final double rateWeights = 30.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
 
@@ -68,6 +70,11 @@ public class ModelOptions implements Serializable {
     public Parameter createZeroOneParameterUniformPrior(String name, String description, double initial) {
         return new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
                 .initial(initial).isZeroOne(true).build(parameters);
+    }
+
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PriorScaleType scaleType, double initial) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR).isNonNegative(true)
+                .initial(initial).build(parameters);
     }
 
     public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {

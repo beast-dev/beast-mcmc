@@ -1,6 +1,31 @@
 /*
  * BeautiFrame.java
  *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+/*
+ * BeautiFrame.java
+ *
  * (c) 2002-2005 BEAST Development Core Team
  *
  * This package may be distributed under the
@@ -9,6 +34,7 @@
 package dr.app.beauti;
 
 import dr.app.beauti.ancestralStatesPanel.AncestralStatesPanel;
+import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
@@ -97,7 +123,7 @@ public class BeautiFrame extends DocumentFrame {
     private SpeciesSetPanel speciesSetPanel;
     private SiteModelsPanel siteModelsPanel;
     private AncestralStatesPanel ancestralStatesPanel;
-    private OldClockModelsPanel clockModelsPanel;
+    private ClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
@@ -161,7 +187,8 @@ public class BeautiFrame extends DocumentFrame {
         speciesSetPanel = new SpeciesSetPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         ancestralStatesPanel = new AncestralStatesPanel(this);
-        clockModelsPanel = new OldClockModelsPanel(this);
+        clockModelsPanel = new ClockModelsPanel(this);
+//        clockModelsPanel = new OldClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
@@ -759,7 +786,7 @@ public class BeautiFrame extends DocumentFrame {
      * @param title
      * @return
      */
-    private File[] selectImportFiles(final String title, boolean multipleSelection, FileNameExtensionFilter[] fileNameExtensionFilters) {
+    public File[] selectImportFiles(final String title, boolean multipleSelection, FileNameExtensionFilter[] fileNameExtensionFilters) {
         if (Boolean.parseBoolean(System.getProperty("use.native.choosers", Boolean.toString(OSType.isMac())))) {
             FileDialog importDialog = fileDialogs.get(title);
             if (importDialog == null) {

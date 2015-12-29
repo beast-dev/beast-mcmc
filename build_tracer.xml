@@ -217,6 +217,7 @@
                         name="${name} v${version}"
                         mainclass="dr.app.tracer.application.TracerApp"
                         stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
+						useJavaXKey="true"
                         icon="${Mac_dir}/icons/Tracer.icns"
                         jvmversion="1.6+"
                         vmoptions="-Xmx1024M"

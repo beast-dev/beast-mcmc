@@ -1,7 +1,7 @@
 /*
  * PartitionTreePriorPanel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -462,9 +462,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         } else {
 
-            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER)) {
+            for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING)) {
                 treePriorCombo.addItem(treePriorType);
             }
+
+            // REMOVED due to unresolved issues with model
+            // treePriorCombo.addItem(TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER);
+
 
             // would be much better to disable these rather than removing them
             if (isMultiLocus) {

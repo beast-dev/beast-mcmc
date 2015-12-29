@@ -1,7 +1,7 @@
 /*
- * MultiDimensionalScalingCoreImpl.java
+ * MultiDimensionalScalingCoreImpl2.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -44,7 +44,7 @@ import dr.math.distributions.NormalDistribution;
 public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScalingCore {
 
     @Override
-    public void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated) {
+    public void initialize(int embeddingDimension, int locationCount, long flags) {
         this.embeddingDimension = embeddingDimension;
         this.locationCount = locationCount;
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
@@ -55,6 +55,8 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
         storedSquaredResiduals = null;
         residualsKnown = false;
         sumOfSquaredResidualsKnown = false;
+
+        isLeftTruncated = (flags & MultiDimensionalScalingCore.LEFT_TRUNCATION) != 0;
 
         if (isLeftTruncated) {
             truncations = new double[locationCount][locationCount];
@@ -153,7 +155,7 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
             sumOfSquaredResidualsKnown = true;
         }
 
-        double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
+        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount -
                 (0.5 * precision * sumOfSquaredResiduals);
 
         if (isLeftTruncated) {

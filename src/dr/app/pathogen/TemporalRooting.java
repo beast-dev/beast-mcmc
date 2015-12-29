@@ -1,7 +1,7 @@
 /*
- * RootToTip.java
+ * TemporalRooting.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -436,7 +436,9 @@ public class TemporalRooting {
         double sum_y = 0.0;
         double sum_ty = 0.0;
         double sum_tc = 0.0;
-
+        double Nd = N;
+        double nd = n;  // need to set these naughty guys to doubles
+        
         for (int i = 0; i < N; i++) {
             sum_tt += t[i] * t[i];
             sum_t += t[i];
@@ -444,14 +446,13 @@ public class TemporalRooting {
             sum_ty += t[i] * y[i];
             sum_tc += t[i] * c[i];
         }
-        double y_bar = sum_y / N;
-        double t_bar = sum_t / N;
+        double y_bar = sum_y / Nd;
+        double t_bar = sum_t / Nd;
 
-        double C = sum_tt - (sum_t * sum_t / N);
+        double C = sum_tt - (sum_t * sum_t / Nd);
         double sumAB = 0.0;
         double sumAA = 0.0;
-        double Nd = N;
-        double nd = n;  // need to set these naughty ones to doubles
+      
         for (int i = 0; i < N; i++) {
             double Ai = 2*c[i] - 
             		    ((2*nd-Nd)/Nd) +
@@ -462,7 +463,6 @@ public class TemporalRooting {
             sumAB += Ai * Bi;
             sumAA += Ai * Ai;
         }
-
         double x = -sumAB / (sumLength * sumAA);
         x = Math.min(Math.max(x, 0.0), 1.0);
 
@@ -593,3 +593,4 @@ public class TemporalRooting {
     }
 
 }
+

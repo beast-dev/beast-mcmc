@@ -1,7 +1,7 @@
 /*
  * TreeAnnotator.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,7 @@
 package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
+import dr.app.phylogeography.tools.DiscreteTreeToKML;
 import dr.app.util.Arguments;
 import dr.evolution.io.Importer;
 import dr.evolution.io.NewickImporter;
@@ -125,7 +126,7 @@ public class TreeAnnotator {
                          final int burninStates,
                          HeightsSummary heightsOption,
                          double posteriorLimit,
-                         double hpd2D,
+                         double[] hpd2D,
                          Target targetOption,
                          String targetTreeFileName,
                          String inputFileName,
@@ -846,8 +847,20 @@ public class TreeAnnotator {
                                         if (variationInSecond && !variationInFirst)
                                             annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
 
-                                        if (variationInFirst && variationInSecond)
-                                            annotate2DHPDAttribute(tree, node, name, "_" + (int) (100 * hpd2D) + "%HPD", hpd2D, valuesArray);
+                                        if (variationInFirst && variationInSecond){
+
+                                            for (int l = 0; l < hpd2D.length; l++) {
+
+                                                if (hpd2D[l] > 1) {
+                                                    System.err.println("no HPD for proportion > 1 (" + hpd2D[l] + ")");
+                                                } else if (hpd2D[l] < 0){
+                                                    System.err.println("no HPD for proportion < 0 (" + hpd2D[l] + ")");
+                                                }  else {
+                                                    annotate2DHPDAttribute(tree, node, name, "_" + (int) (100 * hpd2D[l]) + "%HPD", hpd2D[l], valuesArray);
+                                                }
+
+                                           }
+                                        }
                                     }
                                 }
                             }
@@ -1206,7 +1219,8 @@ public class TreeAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-    double hpd2D = 0.80;
+//PL:    double hpd2D = 0.80;
+    double[] hpd2D = {0.80};
 
     private final List<TreeAnnotationPlugin> plugins = new ArrayList<TreeAnnotationPlugin>();
 
@@ -1269,6 +1283,28 @@ public class TreeAnnotator {
         progressStream.println();
     }
 
+    public static double[] parseVariableLengthDoubleArray(String inString) throws Arguments.ArgumentException {
+
+        List<Double> returnList = new ArrayList<Double>();
+        StringTokenizer st = new StringTokenizer(inString,",");
+        while(st.hasMoreTokens()) {
+            try {
+                returnList.add(Double.parseDouble(st.nextToken()));
+            } catch (NumberFormatException e) {
+                throw new Arguments.ArgumentException();
+            }
+
+        }
+
+        if (returnList.size()>0) {
+            double[] doubleArray = new double[returnList.size()];
+            for(int i=0; i<doubleArray.length; i++)
+                doubleArray[i] = returnList.get(i);
+            return doubleArray;
+        }
+        return null;
+    }
+
     //Main method
     public static void main(String[] args) throws IOException {
 
@@ -1322,7 +1358,7 @@ public class TreeAnnotator {
             int burninStates = dialog.getBurninStates();
             int burninTrees = dialog.getBurninTrees();
             double posteriorLimit = dialog.getPosteriorLimit();
-            double hpd2D = 0.80;
+            double[] hpd2D = {0.80};
             Target targetOption = dialog.getTargetOption();
             HeightsSummary heightsOption = dialog.getHeightsOption();
 
@@ -1383,7 +1419,7 @@ public class TreeAnnotator {
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
                         new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
-                        new Arguments.RealOption("hpd2D", "the HPD interval to be used for the bivariate traits")
+                        new Arguments.StringOption("hpd2D", "the HPD interval to be used for the bivariate traits", "specifies a (vector of comma seperated) HPD proportion(s)")
                 });
 
         try {
@@ -1432,9 +1468,13 @@ public class TreeAnnotator {
             posteriorLimit = arguments.getRealOption("limit");
         }
 
-        double hpd2D = 0.80;
+        double[] hpd2D = {80};
         if (arguments.hasOption("hpd2D")) {
-            hpd2D = arguments.getRealOption("hpd2D");
+            try {
+                hpd2D = parseVariableLengthDoubleArray(arguments.getStringOption("hpd2D"));
+            } catch (Arguments.ArgumentException e) {
+                System.err.println("Error reading " + arguments.getStringOption("hpd2D"));
+            }
         }
 
         Target target = Target.MAX_CLADE_CREDIBILITY;

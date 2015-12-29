@@ -1,7 +1,7 @@
 /*
- * PartitionModelPanel.java
+ * AncestralStatesOptionsPanel.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -59,6 +59,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             + "Suchard (2012). This model requires a 3-partition codon model to be<br>"
             + "selected in the Site model for this partition and NO Site Heterogeneity Model.</html>";
 
+    private static final String COMPLETE_HISTORY_LOGGING_TOOL_TIP = "<html>"
+            + "Log a complete history of realised state changes to the tree log file.<br>"
+            + "This can make the files very large but can be useful for post hoc analysis.</html>";
+
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
@@ -73,6 +77,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             "Reconstruct state change counts");
     private JCheckBox dNdSRobustCountingCheck = new JCheckBox(
             "Reconstruct synonymous/non-synonymous change counts");
+    private JCheckBox completeHistoryLoggingCheck = new JCheckBox(
+            "Reconstruct complete change history on tree");
 
 
     private JTextArea dNnSText = new JTextArea(
@@ -123,6 +129,9 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         PanelUtils.setupComponent(dNdSRobustCountingCheck);
         dNdSRobustCountingCheck.setToolTipText(DNDS_ROBUST_COUNTING_TOOL_TIP);
 
+        PanelUtils.setupComponent(completeHistoryLoggingCheck);
+        completeHistoryLoggingCheck.setToolTipText(COMPLETE_HISTORY_LOGGING_TOOL_TIP);
+
         // ////////////////////////
         PanelUtils.setupComponent(errorModelCombo);
         errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
@@ -137,6 +146,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCombo.setSelectedItem(ancestralStatesComponent.getMRCATaxonSet(partition));
         countingCheck.setSelected(ancestralStatesComponent.isCountingStates(partition));
         dNdSRobustCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
+        completeHistoryLoggingCheck.setSelected(ancestralStatesComponent.isCompleteHistoryLogging(partition));
 
         sequenceErrorComponent = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
 //        sequenceErrorComponent.createParameters(options); // this cannot create correct param here, because of improper design
@@ -160,6 +170,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 //                    boolean enableSimpleCounting = !dNdSRobustCountingCheck.isSelected();
 //                    countingCheck.setEnabled(enableSimpleCounting);
 //                }
+                completeHistoryLoggingCheck.setEnabled(countingCheck.isSelected() || dNdSRobustCountingCheck.isSelected());
             }
         };
 
@@ -168,6 +179,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCombo.addItemListener(listener);
         countingCheck.addItemListener(listener);
         dNdSRobustCountingCheck.addItemListener(listener);
+        completeHistoryLoggingCheck.addItemListener(listener);
 
         errorModelCombo.addItemListener(listener);
     }
@@ -190,6 +202,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         ancestralStatesComponent.setCountingStates(partition, countingCheck.isSelected());
 //        ancestralStatesComponent.setDNdSRobustCounting(partition, robustCountingCheck.isSelected());
         ancestralStatesComponent.setDNdSRobustCounting(partition, dNdSRobustCountingCheck.isSelected());
+        ancestralStatesComponent.setCompleteHistoryLogging(partition, completeHistoryLoggingCheck.isSelected());
 
         sequenceErrorComponent.setSequenceErrorType(partition, (SequenceErrorType)errorModelCombo.getSelectedItem());
         sequenceErrorComponent.createParameters(options);
@@ -287,7 +300,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             countingCheck.setEnabled(enableSimpleCounting);
 
             if (dNdSRobustCountingAvailable) {
-                addSeparator();
+//                addSeparator();
                 text = new JTextArea(
                         "Renaissance counting: select this option to reconstruct counts of synonymous and nonsynonymous " +
                                 "changes using Robust Counting. This approach is described in O'Brien, Minin " +
@@ -315,6 +328,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                     dNdSRobustCountingCheck.setSelected(false);
                 }
             }
+
+            addComponent(completeHistoryLoggingCheck);
+            completeHistoryLoggingCheck.setEnabled(countingCheck.isSelected() || dNdSRobustCountingCheck.isSelected());
+
         }
 
         if (errorModelAvailable) {

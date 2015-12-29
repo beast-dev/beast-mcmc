@@ -1,7 +1,7 @@
 /*
  * GammaDistribution.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -159,6 +159,13 @@ public class GammaDistribution implements Distribution {
                 return 1.0 / scale;
             else
                 return 0.0;
+        }
+
+        if (shape == 0.0)  // uninformative
+            return 1.0 / x;
+
+        if (shape == -0.5) { // Gelman 2008, hierarchical variance, -1 degrees of freedom
+            return Math.sqrt(x);
         }
 
         final double xs = x / scale;

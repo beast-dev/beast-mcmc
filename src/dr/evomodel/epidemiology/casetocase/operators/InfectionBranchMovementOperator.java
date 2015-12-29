@@ -1,15 +1,36 @@
+/*
+ * InfectionBranchMovementOperator.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.*;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
-
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * This operator finds a branch that corresponds to a transmission event, and moves that event up one branch or down
@@ -95,7 +116,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         double hr = 0;
 
-        assert map.get(parent.getNumber())==map.get(node.getNumber()) : "Partition problem";
+        assert map.get(parent.getNumber()) == map.get(node.getNumber()) : "Partition problem";
 
         NodeRef sibling = node;
         for(int i=0; i<tree.getChildCount(parent); i++){
@@ -106,19 +127,16 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         AbstractCase infectorCase = map.get(parent.getNumber());
 
-        if(!extended || c2cLikelihood.tipLinked(parent)){
+        if(!extended || c2cLikelihood.isAncestral(parent)){
 
             if(resampleInfectionTimes){
-
                 infectorCase.setInfectionBranchPosition(MathUtils.nextDouble());
-
             }
 
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map.get(grandparent.getNumber())==map.get(parent.getNumber())){
-
                 for(Integer ancestor: c2cLikelihood.samePartitionDownTree(parent, true)){
-                    newMap[ancestor]=map.get(node.getNumber());
+                    newMap[ancestor] = map.get(node.getNumber());
                 }
                 newMap[grandparent.getNumber()]=map.get(node.getNumber());
             }
@@ -156,15 +174,13 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         NodeRef parent = tree.getParent(node);
 
-        AbstractCase infectorCase = map.get(parent.getNumber());
-
-        assert map.get(parent.getNumber())==map.get(node.getNumber()) : "Partition problem";
-        // check if either child is not tip-linked (at most one is not, and if so it must have been in the same
+        assert map.get(parent.getNumber()) == map.get(node.getNumber()) : "Partition problem";
+        // check if either child is not ancestral (at most one is not, and if so it must have been in the same
         // partition as both the other child and 'node')
         for(int i=0; i<tree.getChildCount(node); i++){
             NodeRef child = tree.getChild(node, i);
-            if(!c2cLikelihood.tipLinked(child)){
-                assert map.get(child.getNumber())==map.get(node.getNumber()) : "Partition problem";
+            if(!c2cLikelihood.isAncestral(child)){
+                assert map.get(child.getNumber()) == map.get(node.getNumber()) : "Partition problem";
                 for(Integer descendant: c2cLikelihood.samePartitionUpTree(child, true)){
                     newMap[descendant]=map.get(parent.getNumber());
                 }

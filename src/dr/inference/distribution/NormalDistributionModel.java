@@ -1,7 +1,7 @@
 /*
  * NormalDistributionModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,13 +25,11 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.inferencexml.distribution.NormalDistributionModelParser;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
+import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.RandomGenerator;
 import org.w3c.dom.Document;
@@ -44,7 +42,7 @@ import org.w3c.dom.Element;
  * @version $Id: NormalDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel, RandomGenerator {
+public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel, GaussianProcessRandomGenerator {
     /**
      * Constructor.
      */
@@ -185,5 +183,10 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     public double logPdf(Object x) {
         double v = (Double) x;
         return logPdf(v);
+    }
+
+    @Override
+    public Likelihood getLikelihood() {
+        return null;
     }
 }

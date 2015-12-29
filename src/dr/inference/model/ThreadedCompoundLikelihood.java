@@ -1,7 +1,7 @@
 /*
- * CompoundLikelihood.java
+ * ThreadedCompoundLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,7 +26,9 @@
 package dr.inference.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -66,6 +68,16 @@ public class ThreadedCompoundLikelihood implements Likelihood {
 
 			//System.err.println("LikelihoodCallers size: " + likelihoodCallers.size());
 		}
+	}
+
+	@Override
+	public Set<Likelihood> getLikelihoodSet() {
+		Set<Likelihood> set = new HashSet<Likelihood>();
+		for (Likelihood l : likelihoods) {
+			set.add(l);
+			set.addAll(l.getLikelihoodSet());
+		}
+		return set;
 	}
 
 	public int getLikelihoodCount() {

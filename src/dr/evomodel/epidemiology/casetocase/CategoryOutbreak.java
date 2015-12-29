@@ -1,3 +1,28 @@
+/*
+ * CategoryOutbreak.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.util.Taxa;
@@ -34,6 +59,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
     private final HashSet<String> infectiousCategories;
     private final HashMap<String, Parameter> latentMap;
     private final HashMap<String, AbstractPeriodPriorDistribution> infectiousMap;
+    private final HashMap<AbstractCase, Double> weightMap;
     private double[][] distances;
 
 
@@ -52,23 +78,26 @@ public class CategoryOutbreak extends AbstractOutbreak {
         for(Parameter hyperprior : latentMap.values()){
             addVariable(hyperprior);
         }
+        weightMap = new HashMap<AbstractCase, Double>();
     }
 
 
     private void addCase(String caseID, double examTime, double cullTime, Parameter coords,
-                         Parameter infectionPosition, Taxa associatedTaxa, String infectiousCategory,
-                         String latentCategory){
+                         Parameter infectionPosition, Taxa associatedTaxa, double indexPriorWeight,
+                         String infectiousCategory, String latentCategory){
         CategoryCase thisCase;
 
         if(latentCategory==null){
             thisCase =  new CategoryCase(caseID, examTime, cullTime, coords, infectionPosition, associatedTaxa,
-                    infectiousCategory);
+                    indexPriorWeight, infectiousCategory);
         } else {
             thisCase =
                     new CategoryCase(caseID, examTime, cullTime, coords, infectionPosition, associatedTaxa,
-                            infectiousCategory, latentCategory);
+                            indexPriorWeight, infectiousCategory, latentCategory);
             latentCategories.add(latentCategory);
         }
+        weightMap.put(thisCase, indexPriorWeight);
+
         infectiousCategories.add(infectiousCategory);
         cases.add(thisCase);
         infectedSize++;
@@ -77,7 +106,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
     private void addNoninfectedCase(String caseID, Parameter coords){
         CategoryCase thisCase = new CategoryCase(caseID, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, coords,
-                null, null, null);
+                null, null, 0.0, null);
         thisCase.setEverInfected(false);
 
         cases.add(thisCase);
@@ -85,7 +114,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
     }
 
 
-
+    public HashMap<AbstractCase, Double> getWeightMap(){
+        return weightMap;
+    }
 
     public HashSet<String> getLatentCategories(){
         return latentCategories;
@@ -183,10 +214,12 @@ public class CategoryOutbreak extends AbstractOutbreak {
         private String infectiousCategory;
         private String latentCategory;
         private Parameter coords;
+        private double indexPriorWeight;
 
 
         private CategoryCase(String name, String caseID, double examTime, double cullTime, Parameter coords,
-                             Parameter infectionBranchPosition, Taxa associatedTaxa, String infectiousCategory){
+                             Parameter infectionBranchPosition, Taxa associatedTaxa, double indexPriorWeight,
+                             String infectiousCategory){
             super(name);
             wasEverInfected = true;
             this.caseID = caseID;
@@ -199,30 +232,41 @@ public class CategoryOutbreak extends AbstractOutbreak {
             endOfInfectiousTime = cullTime;
             this.associatedTaxa = associatedTaxa;
             this.coords = coords;
+            this.indexPriorWeight = indexPriorWeight;
             latentCategory = null;
+        }
+
+        private CategoryCase(String name, String caseID, double examTime, double cullTime, Parameter coords,
+                             Parameter infectionBranchPosition, Taxa associatedTaxa,
+                             String infectiousCategory){
+            this(name, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa, 1.0,
+                    infectiousCategory);
+
         }
 
 
         private CategoryCase(String name, String caseID, double examTime, double cullTime, Parameter coords,
-                             Parameter infectionBranchPosition, Taxa associatedTaxa, String infectiousCategory,
-                             String latentCategory){
-            this(name, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa, infectiousCategory);
+                             Parameter infectionBranchPosition, Taxa associatedTaxa, double indexPriorWeight,
+                             String infectiousCategory, String latentCategory){
+            this(name, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa, indexPriorWeight,
+                    infectiousCategory);
             this.latentCategory = latentCategory;
         }
 
 
         private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
-                             Parameter infectionBranchPosition, Taxa associatedTaxa, String infectiousCategory){
+                             Parameter infectionBranchPosition, Taxa associatedTaxa, double indexPriorWeight,
+                             String infectiousCategory){
             this(CATEGORY_CASE, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa,
-                    infectiousCategory);
+                    indexPriorWeight, infectiousCategory);
         }
 
 
         private CategoryCase(String caseID, double examTime, double cullTime, Parameter coords,
-                             Parameter infectionBranchPosition, Taxa associatedTaxa,
+                             Parameter infectionBranchPosition, Taxa associatedTaxa, double indexPriorWeight,
                              String infectiousCategory, String latentCategory){
             this(CATEGORY_CASE, caseID, examTime, cullTime, coords, infectionBranchPosition, associatedTaxa,
-                    infectiousCategory, latentCategory);
+                    indexPriorWeight, infectiousCategory, latentCategory);
         }
 
         //noninfected susceptible constructor
@@ -235,7 +279,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
             return infectiousCategory;
         }
 
-
+        public double getIndexPriorWeight() { return indexPriorWeight;}
 
         public boolean culledYet(double time) {
             return time>endOfInfectiousTime;
@@ -290,6 +334,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
         public static final String LATENT_CATEGORY = "latentCategory";
         public static final String INFECTIOUS_CATEGORY = "infectiousCategory";
         public static final String WAS_EVER_INFECTED = "wasEverInfected";
+        public static final String INDEX_PRIOR_WEIGHT = "indexPriorWeight";
 
         //for the normal-gamma priors
 
@@ -405,6 +450,13 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 } else if (expectLatentPeriods) {
                     throw new XMLParseException("Case " + farmID + " not assigned a latent periods distribution");
                 }
+
+                double indexPriorWeight = 1;
+
+                if(xo.hasAttribute(INDEX_PRIOR_WEIGHT)){
+                    indexPriorWeight = Double.parseDouble((String)xo.getAttribute(INDEX_PRIOR_WEIGHT));
+                }
+
                 final Parameter ibp = (Parameter) xo.getElementFirstChild(INFECTION_TIME_BRANCH_POSITION);
 
 
@@ -414,7 +466,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
                         taxa.addTaxon((Taxon) xo.getChild(i));
                     }
                 }
-                outbreak.addCase(farmID, examTime, cullTime, coords, ibp, taxa, infectiousCategory, latentCategory);
+                outbreak.addCase(farmID, examTime, cullTime, coords, ibp, taxa, indexPriorWeight, infectiousCategory, latentCategory);
             } else {
                 outbreak.addNoninfectedCase(farmID, coords);
 
@@ -449,7 +501,9 @@ public class CategoryOutbreak extends AbstractOutbreak {
                         " along which the infection of this case occurs that it actually does occur", true),
                 new ElementRule(COORDINATES, Parameter.class, "The spatial coordinates of this case", true),
                 new StringAttributeRule(LATENT_CATEGORY, "The category of latent period", true),
-                new StringAttributeRule(INFECTIOUS_CATEGORY, "The category of infectious period", true)
+                new StringAttributeRule(INFECTIOUS_CATEGORY, "The category of infectious period", true),
+                new StringAttributeRule(INDEX_PRIOR_WEIGHT, "The weight of this case in the prior probabilty for the" +
+                        "index case", true)
         };
 
 

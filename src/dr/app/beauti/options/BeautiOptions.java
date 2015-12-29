@@ -1,7 +1,7 @@
 /*
  * BeautiOptions.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,6 +32,7 @@ import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
+import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
@@ -119,7 +120,7 @@ public class BeautiOptions extends ModelOptions {
         units = Units.Type.SUBSTITUTIONS;
 
         // Operator schedule options
-        coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
+        optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
 
         // MCMC options
         chainLength = 10000000;
@@ -1399,7 +1400,7 @@ public class BeautiOptions extends ModelOptions {
     public Units.Type units = Units.Type.YEARS;
 
     // Operator schedule options
-    public int coolingSchedule = OperatorSchedule.DEFAULT_SCHEDULE;
+    public OperatorSchedule.OptimizationTransform optimizationTransform = OperatorSchedule.OptimizationTransform.DEFAULT;
 
     // MCMC options
     public int chainLength = 10000000;
@@ -1431,6 +1432,8 @@ public class BeautiOptions extends ModelOptions {
     public SiteModelOptions siteModelOptions = new SiteModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
+
+    public OperatorSetType operatorSetType = OperatorSetType.DEFAULT;
 
     public boolean useStarBEAST = false;
     public List<Taxa> speciesSets = new ArrayList<Taxa>();

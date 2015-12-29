@@ -42,9 +42,26 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     private double[][] cholesky = null;
     private Double logDet = null;
 
+    private final boolean hasSinglePrecision;
+    private final double singlePrecision;
+
     public MultivariateNormalDistribution(double[] mean, double[][] precision) {
         this.mean = mean;
         this.precision = precision;
+        this.hasSinglePrecision = false;
+        this.singlePrecision = 1.0;
+    }
+
+    public MultivariateNormalDistribution(double[] mean, double singlePrecision) {
+        this.mean = mean;
+        this.hasSinglePrecision = true;
+        this.singlePrecision = singlePrecision;
+
+        final int dim = mean.length;
+        this.precision = new double[dim][dim];
+        for (int i = 0; i < dim; ++i) {
+            this.precision[i][i] = singlePrecision;
+        }
     }
 
     public String getType() {
@@ -133,7 +150,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     }
 
     public double logPdf(double[] x) {
-        return logPdf(x, mean, precision, getLogDet(), 1.0);
+        if (hasSinglePrecision) {
+            return logPdf(x, mean, singlePrecision, 1.0);
+        } else {
+            return logPdf(x, mean, precision, getLogDet(), 1.0);
+        }
     }
 
     // scale only modifies precision

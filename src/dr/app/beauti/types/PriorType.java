@@ -1,3 +1,28 @@
+/*
+ * PriorType.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.types;
 
 import dr.app.beauti.options.Parameter;
@@ -23,6 +48,7 @@ public enum PriorType {
     INVERSE_GAMMA_PRIOR("Inverse Gamma", true, true, true),
     BETA_PRIOR("Beta", true, true, true),
     ONE_OVER_X_PRIOR("1/x", true, true, false),
+    DIRICHLET_PRIOR("Dirichlet", false, false, false),
     CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
@@ -179,8 +205,11 @@ public enum PriorType {
                 buffer.append(NumberUtil.formatDecimal(parameter.scale, 10, 6));
                 buffer.append("]");
                 break;
+            case DIRICHLET_PRIOR:
+                buffer.append("Dirichlet [1,1]");
+                break;
             case ONE_OVER_X_PRIOR:
-                buffer.append("1/x"); // rename Jeffreys prior to 1/x prior everywhere in Beauti
+                buffer.append("1/x");
                 break;
             case POISSON_PRIOR:
                 buffer.append("Poisson [");

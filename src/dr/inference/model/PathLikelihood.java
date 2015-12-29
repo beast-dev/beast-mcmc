@@ -1,7 +1,7 @@
 /*
  * PathLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,6 +29,8 @@ import dr.evomodel.continuous.SoftThresholdLikelihood;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A likelihood function which is simply the product of a set of likelihood functions.
@@ -112,6 +114,14 @@ public class PathLikelihood implements Likelihood {
 
     public Likelihood getDestinationLikelihood() {
         return destination;
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        Set<Likelihood> set = new HashSet<Likelihood>();
+        set.add(source);
+        set.add(destination);
+        return set;
     }
 
     public void makeDirty() {

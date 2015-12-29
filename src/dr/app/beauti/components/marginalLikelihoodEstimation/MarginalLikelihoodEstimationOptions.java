@@ -1,7 +1,7 @@
 /*
  * MarginalLikelihoodEstimationOptions.java
  *
- * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
 
-    MarginalLikelihoodEstimationOptions() {
+    public MarginalLikelihoodEstimationOptions() {
     }
 
     @Override
@@ -69,7 +69,7 @@ public class MarginalLikelihoodEstimationOptions implements ComponentOptions {
     public int pathSteps = 100;
     public int mleChainLength = 1000000;
     public int mleLogEvery = 1000;
-    public String mleFileName = "MLE.log";
+    public String mleFileName = "mle.log";
     public String pathScheme = "betaquantile";
     //public String choiceParameterWorkingPrior = "normal";
     public String choiceTreeWorkingPrior = "Product of exponential distributions";

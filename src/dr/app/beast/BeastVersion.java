@@ -1,7 +1,7 @@
 /*
  * BeastVersion.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,12 +29,10 @@ import dr.util.Version;
 
 /**
  * This class provides a mechanism for returning the version number of the
- * dr software. It relies on the administrator of the dr source using the
- * module tagging system in CVS. The method getVersionString() will return
- * the version of dr under the following condition: <BR>
- * 1. the dr source has been checked out *by tag* before being packaged for
- * distribution.
- * <p/>
+ * dr software.
+ *
+ * This is manually updated as required. The REVISION string is no longer used
+ * since switching to GitHub.
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -52,7 +50,9 @@ public class BeastVersion implements Version {
 
     private static final boolean IS_PRERELEASE = true;
 
-    private static final String REVISION = "$Rev$";
+    // this is now being manually updated since the move to GitHub. Using date in yyyymmdd format (suffix
+    // with b,c,d etc if multiple revisions in a day.
+    private static final String REVISION = "GitHub 20150808";
 
     public String getVersion() {
         return VERSION;

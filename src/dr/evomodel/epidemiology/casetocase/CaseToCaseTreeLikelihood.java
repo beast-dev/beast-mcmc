@@ -1,3 +1,28 @@
+/*
+ * CaseToCaseTreeLikelihood.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,8 +35,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 
 import dr.app.tools.NexusExporter;
 import dr.evolution.tree.FlexibleNode;
@@ -256,11 +279,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     a descendant of it
      */
 
-    public boolean tipLinked(NodeRef node){
-        return tipLinked(node, branchMap);
+    public boolean isAncestral(NodeRef node){
+        return isAncestral(node, branchMap);
     }
 
-    private boolean tipLinked(NodeRef node, BranchMapModel map){
+    private boolean isAncestral(NodeRef node, BranchMapModel map){
         NodeRef tip = treeModel.getNode(tipMap.get(map.get(node.getNumber())));
         if(tip==node){
             return true;
@@ -408,11 +431,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return out;
     }
 
-    public Integer[] samePartition(NodeRef node, boolean flagForRecalc){
-        return samePartition(node, branchMap, flagForRecalc);
+    public Integer[] samePartitionElement(NodeRef node, boolean flagForRecalc){
+        return samePartitionElement(node, branchMap, flagForRecalc);
     }
 
-    private Integer[] samePartition(NodeRef node, BranchMapModel map, boolean flagForRecalc){
+    private Integer[] samePartitionElement(NodeRef node, BranchMapModel map, boolean flagForRecalc){
         HashSet<Integer> out = new HashSet<Integer>();
         out.add(node.getNumber());
         out.addAll(samePartitionDownTree(node, map, flagForRecalc));
@@ -426,7 +449,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     private Integer[] getAllChildInfectionNodes(AbstractCase thisCase){
         HashSet<Integer> out = new HashSet<Integer>();
         NodeRef tip = treeModel.getNode(tipMap.get(thisCase));
-        Integer[] partition = samePartition(tip, false);
+        Integer[] partition = samePartitionElement(tip, false);
         for (Integer i : partition) {
             NodeRef node = treeModel.getNode(i);
             if (!treeModel.isExternal(node)) {
@@ -1039,7 +1062,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         boolean foundProblem = false;
         for(int i=0; i<treeModel.getInternalNodeCount(); i++){
             boolean foundTip = false;
-            for(Integer nodeNumber : samePartition(treeModel.getInternalNode(i), map, false)){
+            for(Integer nodeNumber : samePartitionElement(treeModel.getInternalNode(i), map, false)){
                 if(treeModel.isExternal(treeModel.getNode(nodeNumber))){
                     foundTip = true;
                 }
@@ -1138,7 +1161,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             return;
         }
         branchMap.set(node.getNumber(), thisCase, true);
-        if(tipLinked(node)){
+        if(isAncestral(node)){
             for(int i=0; i<treeModel.getChildCount(node); i++){
                 specificallyPartitionUpwards(treeModel.getChild(node, i), thisCase, map);
             }
@@ -1393,6 +1416,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     infectionNode.setHeight(heightToBreakBranch);
                     infectionNode.setLength(oldParent.getHeight() - heightToBreakBranch);
                     infectionNode.setAttribute(PARTITIONS_KEY, getNodePartition(treeModel, originalParent));
+                    infectionNode.setAttribute("Time", heightToTime(heightToBreakBranch));
                     newNode.setLength(nodeTime - infectionTime);
 
                     outTree.addChild(oldParent, infectionNode);
@@ -1406,6 +1430,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     outTree.beginTreeEdit();
                     FlexibleNode infectionNode = new FlexibleNode();
                     infectionNode.setHeight(heightToInstallRoot);
+                    infectionNode.setAttribute("Time", heightToTime(heightToInstallRoot));
                     infectionNode.setAttribute(PARTITIONS_KEY, "The_Ether");
                     outTree.addChild(infectionNode, newNode);
                     newNode.setLength(heightToInstallRoot - getHeight(originalNode));

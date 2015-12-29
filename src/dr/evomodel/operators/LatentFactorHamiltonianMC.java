@@ -67,12 +67,12 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         return "Latent Factor Hamiltonian Monte Carlo";
     }
 
-    private double[] getMatrix(int nfac, double[] residual){
+    private double[] getMatrix(int element, double[] residual){
         double answer[]=new double[this.nfac];
         for (int i = 0; i <this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
-                answer[i] -=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
-                        residual[j*ntaxa+nfac];
+                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
+                        residual[j*ntaxa+element];
             }
         }
         return answer;
@@ -119,7 +119,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         drawMomentum(lfm.getFactorDimension());
 
         double prop=0;
-        for (int i = 0; i <lfm.getFactorDimension() ; i++) {
+        for (int i = 0; i <momentum.length ; i++) {
             prop+=momentum[i]*momentum[i]/(2*getMomentumSd()*getMomentumSd());
         }
 
@@ -144,11 +144,13 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         }
 
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
+            derivative=getGradient(randel,mean,prec, precfactor);
+
             momentum[i] = momentum[i] - stepSize / 2 * derivative[i];
         }
 
         double res=0;
-        for (int i = 0; i <lfm.getFactorDimension() ; i++) {
+        for (int i = 0; i <momentum.length ; i++) {
             res+=momentum[i]*momentum[i]/(2*getMomentumSd()*getMomentumSd());
         }
         return prop-res;

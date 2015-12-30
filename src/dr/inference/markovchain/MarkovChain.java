@@ -256,7 +256,11 @@ public final class MarkovChain implements Serializable {
                 score = evaluate(likelihood, prior);
 
                 if (PROFILE) {
-                    mcmcOperator.addEvaluationTime(System.currentTimeMillis() - elapsedTime);
+                    long duration = System.currentTimeMillis() - elapsedTime;
+                    if (DEBUG) {
+                        System.out.println("Time: " + duration);
+                    }
+                    mcmcOperator.addEvaluationTime(duration);
                 }
 
                 String diagnosticOperator = "";

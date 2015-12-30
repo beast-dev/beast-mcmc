@@ -169,6 +169,14 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         return super.getParameter(index);
     }
 
+    @Override
+    public void copyParameterValues(double[] destination, int offset) {
+        final int length = getDimension();
+        for (int i = 0; i < length; ++i) {
+            destination[offset + i] = getParameterValue(i);
+        }
+    }
+
     public String toSymmetricString() {
         StringBuilder sb = new StringBuilder("{");
         int dim = getRowDimension();

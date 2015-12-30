@@ -150,6 +150,19 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     }
 
     @Override
+    public double[] getParameterValues() {
+        double[] destination = new double[getDimension()];
+        copyParameterValues(destination, 0);
+        return destination;
+    }
+
+    @Override
+    public void copyParameterValues(double[] destination, int offset) {
+        final double[] source = ((Parameter.Default) singleParameter).inspectParameterValues();
+        System.arraycopy(source, 0, destination, offset, source.length);
+    }
+
+    @Override
     public void setParameterValue(int row, int col, double value) {
         singleParameter.setParameterValue(index(row, col), value);
     }

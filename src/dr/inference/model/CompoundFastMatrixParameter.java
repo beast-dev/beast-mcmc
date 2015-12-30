@@ -41,9 +41,12 @@ public class CompoundFastMatrixParameter extends CompoundParameter implements Ma
 
     private final List<MatrixParameterInterface> columns = new ArrayList<MatrixParameterInterface>();
     private final List<Integer> offsets = new ArrayList<Integer>();
+    private final List<MatrixParameterInterface> matrices;
 
     public CompoundFastMatrixParameter(String name, List<MatrixParameterInterface> matrices) {
         super(name, compoundMatrices(matrices));
+
+        this.matrices = matrices;
 
         rowDimension = matrices.get(0).getRowDimension();
         colDimension = 0;
@@ -134,6 +137,25 @@ public class CompoundFastMatrixParameter extends CompoundParameter implements Ma
     @Override
     public Parameter getUniqueParameter(int index) {
         return getParameter(index);
+    }
+
+    @Override
+    public void copyParameterValues(double[] destination, int offset) {
+        for (MatrixParameterInterface matrix : matrices) {
+            matrix.copyParameterValues(destination, offset);
+            offset += matrix.getRowDimension() * matrix.getColumnDimension();
+        }
+    }
+
+    @Override
+    public double[] getParameterValues() {
+        int length = 0;
+        for (MatrixParameterInterface matrix : matrices) {
+            length += matrix.getRowDimension() * matrix.getColumnDimension();
+        }
+        double[] rtn = new double[length];
+        copyParameterValues(rtn, 0);
+        return rtn;
     }
 
     public final static String COMPOUND_FAST_MATRIX_PARAMETER = "compoundFastMatrixParameter";

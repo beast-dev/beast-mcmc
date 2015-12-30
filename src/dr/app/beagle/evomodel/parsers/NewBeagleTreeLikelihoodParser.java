@@ -27,12 +27,10 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.newtreelikelihood.NewBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.newtreelikelihood.NewBeagleSequenceLikelihood;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.AbstractTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
@@ -69,7 +67,7 @@ public class NewBeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_LIKELIHOOD;
     }
 
-    protected NewBeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected NewBeagleSequenceLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
@@ -77,7 +75,7 @@ public class NewBeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
-        return new NewBeagleTreeLikelihood(
+        return new NewBeagleSequenceLikelihood(
                 patternList,
                 treeModel,
                 branchModel,
@@ -180,7 +178,7 @@ public class NewBeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 
             Patterns subPatterns = new Patterns(patternList, i, instanceCount);
 
-            NewBeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
+            NewBeagleSequenceLikelihood treeLikelihood = createTreeLikelihood(
                     subPatterns,
                     treeModel,
                     branchModel,

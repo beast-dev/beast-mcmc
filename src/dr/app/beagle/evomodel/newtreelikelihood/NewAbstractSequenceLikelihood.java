@@ -38,7 +38,6 @@ package dr.app.beagle.evomodel.newtreelikelihood;
  * $LastChangedRevision$
  */
 
-import dr.app.beagle.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.tree.TreeModel;
@@ -47,10 +46,10 @@ import dr.inference.model.Parameter;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class NewAbstractSequenceTreeLikelihood extends NewAbstractTreeLikelihood {
+public abstract class NewAbstractSequenceLikelihood extends NewAbstractLikelihoodOnTree {
 
-    public NewAbstractSequenceTreeLikelihood(String name, PatternList patternList, TreeModel treeModel,
-                                             Map<Set<String>, Parameter> partialsRestrictions) {
+    public NewAbstractSequenceLikelihood(String name, PatternList patternList, TreeModel treeModel,
+                                         Map<Set<String>, Parameter> partialsRestrictions) {
         super(name, treeModel, partialsRestrictions);
 
         this.patternList = patternList;

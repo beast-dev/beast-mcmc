@@ -37,4 +37,8 @@ public interface EvolutionaryProcessDelegate {
     void updateSubstitutionModels(Beagle beagle);
 
     void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount);
+
+    void storeState();
+
+    void restoreState();
 }

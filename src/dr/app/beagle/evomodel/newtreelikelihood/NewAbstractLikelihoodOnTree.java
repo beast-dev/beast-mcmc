@@ -28,18 +28,14 @@ package dr.app.beagle.evomodel.newtreelikelihood;
 import beagle.Beagle;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.app.beagle.evomodel.treelikelihood.EvolutionaryProcessDelegate;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.*;
 import dr.xml.Reportable;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * AbstractTreeLikelihood - a base class for likelihood calculators of sites on a tree.
@@ -49,11 +45,11 @@ import java.util.logging.Logger;
  * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
-public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
+public abstract class NewAbstractLikelihoodOnTree extends AbstractModelLikelihood implements Reportable {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = false;
 
-    public NewAbstractTreeLikelihood(String name, TreeModel treeModel, Map<Set<String>, Parameter> partialsRestrictions) {
+    public NewAbstractLikelihoodOnTree(String name, TreeModel treeModel, Map<Set<String>, Parameter> partialsRestrictions) {
 
         super(name);
 
@@ -88,6 +84,11 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
         }
     }
 
+    public void getPartials(int number, double[] partials) {
+        int cumulativeBufferIndex = Beagle.NONE;
+        /* No need to rescale partials */
+        beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
+    }
 
     /**
      * Set update flag for a node and its children
@@ -417,8 +418,36 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
     // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
-
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+
+        fireModelChanged();
+
+        if (model == treeModel) {
+            if (object instanceof TreeModel.TreeChangedEvent) {
+
+                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+                    // If a node event occurs the node and its two child nodes
+                    // are flagged for updating (this will result in everything
+                    // above being updated as well. Node events occur when a node
+                    // is added to a branch, removed from a branch or its height or
+                    // rate changes.
+                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
+                    updateRestrictedNodePartials = true;
+
+                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+                    // Full tree events result in a complete updating of the tree likelihood
+                    // This event type is now used for EmpiricalTreeDistributions.
+                    //                    System.err.println("Full tree update event - these events currently aren't used\n" +
+                    //                            "so either this is in error or a new feature is using them so remove this message.");
+                    updateAllNodes();
+                    updateRestrictedNodePartials = true;
+                } else {
+                    // Other event types are ignored (probably trait changes).
+                    //System.err.println("Another tree event has occured (possibly a trait change).");
+                }
+            }
+        }
+
         if (COUNT_TOTAL_OPERATIONS) {
             totalModelChangedCount++;
         }
@@ -430,6 +459,8 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
      * Stores the additional state other than model components
      */
     protected void storeState() {
+        partialBufferHelper.storeState();
+        evolutionaryProcessDelegate.storeState();
 
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
@@ -439,6 +470,13 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
      * Restore the additional stored state
      */
     protected void restoreState() {
+
+        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
+
+        partialBufferHelper.restoreState();
+        evolutionaryProcessDelegate.restoreState();
+
+        updateRestrictedNodePartials = true;
 
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
@@ -484,6 +522,10 @@ public abstract class NewAbstractTreeLikelihood extends AbstractModelLikelihood 
 
         likelihoodKnown = false;
         updateAllNodes();
+
+        updateSiteModel = true;
+        updateSubstitutionModel = true;
+        updateRestrictedNodePartials = true;
     }
     
     public boolean isLikelihoodKnown() {

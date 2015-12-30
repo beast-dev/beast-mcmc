@@ -51,6 +51,10 @@ public class CompoundGaussianProcess implements GaussianProcessRandomGenerator {
         compoundLikelihood = new CompoundLikelihood(likelihoodList);
     }
 
+    public boolean contains(Likelihood likelihood) {
+        return likelihoodList.contains(likelihood);
+    }
+
     @Override
     public Likelihood getLikelihood() { return compoundLikelihood; }
 

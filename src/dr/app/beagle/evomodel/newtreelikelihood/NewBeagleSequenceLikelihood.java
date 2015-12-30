@@ -35,7 +35,10 @@ import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.*;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.app.beagle.evomodel.treelikelihood.SubstitutionModelDelegate;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
@@ -69,7 +72,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
-public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood implements ThreadAwareLikelihood {
+public class NewBeagleSequenceLikelihood extends NewAbstractSequenceLikelihood implements ThreadAwareLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -96,36 +99,34 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
     private static final int RESCALE_FREQUENCY = 100;
     private static final int RESCALE_TIMES = 1;
 
-    public NewBeagleTreeLikelihood(PatternList patternList,
-                                TreeModel treeModel,
-                                BranchModel branchModel,
-                                SiteRateModel siteRateModel,
-                                BranchRateModel branchRateModel,
-                                TipStatesModel tipStatesModel,
-                                boolean useAmbiguities,
-                                PartialsRescalingScheme rescalingScheme) {
+    public NewBeagleSequenceLikelihood(PatternList patternList,
+                                       TreeModel treeModel,
+                                       BranchModel branchModel,
+                                       SiteRateModel siteRateModel,
+                                       BranchRateModel branchRateModel,
+                                       TipStatesModel tipStatesModel,
+                                       boolean useAmbiguities,
+                                       PartialsRescalingScheme rescalingScheme) {
 
         this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme, null);
     }
 
-    public NewBeagleTreeLikelihood(PatternList patternList,
-                                TreeModel treeModel,
-                                BranchModel branchModel,
-                                SiteRateModel siteRateModel,
-                                BranchRateModel branchRateModel,
-                                TipStatesModel tipStatesModel,
-                                boolean useAmbiguities,
-                                PartialsRescalingScheme rescalingScheme,
-                                Map<Set<String>, Parameter> partialsRestrictions) {
+    public NewBeagleSequenceLikelihood(PatternList patternList,
+                                       TreeModel treeModel,
+                                       BranchModel branchModel,
+                                       SiteRateModel siteRateModel,
+                                       BranchRateModel branchRateModel,
+                                       TipStatesModel tipStatesModel,
+                                       boolean useAmbiguities,
+                                       PartialsRescalingScheme rescalingScheme,
+                                       Map<Set<String>, Parameter> partialsRestrictions) {
 
         super(BeagleTreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel, partialsRestrictions);
-
-        System.err.println("HERE!!!");
 
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");
 
-            logger.info("Using BEAGLE TreeLikelihood");
+            logger.info("Using NEW BEAGLE SequenceLikelihood");
 
             this.siteRateModel = siteRateModel;
             addModel(this.siteRateModel);
@@ -145,38 +146,16 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
 
             this.categoryCount = this.siteRateModel.getCategoryCount();
 
-//            this.tipCount = treeModel.getExternalNodeCount();
-//
-//            internalNodeCount = nodeCount - tipCount;
-
             int compactPartialsCount = tipCount;
             if (useAmbiguities) {
                 // if we are using ambiguities then we don't use tip partials
                 compactPartialsCount = 0;
             }
 
-//            // one partials buffer for each tip and two for each internal node (for store restore)
-//            partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
-
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
-            // Attempt to get the resource order from the System Property
-            if (resourceOrder == null) {
-                resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
-            }
-            if (preferredOrder == null) {
-                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
-            }
-            if (requiredOrder == null) {
-                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
-            }
-            if (scalingOrder == null) {
-                scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
-            }
-            if (extraBufferOrder == null) {
-                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
-            }
+            readEnvironmentProperties();
 
             int extraBufferCount = -1; // default
             if (extraBufferOrder.size() > 0) {
@@ -262,6 +241,10 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
                 }
             }
 
+            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                everUnderflowed = false; // If false, BEAST does not rescale until first under-/over-flow.
+            }
+
             if (!BeagleFlag.PRECISION_SINGLE.isSet(preferenceFlags)) {
                 // if single precision not explicitly set then prefer double
                 preferenceFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
@@ -288,33 +271,8 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
                     requirementFlags
             );
 
-            InstanceDetails instanceDetails = beagle.getDetails();
-            ResourceDetails resourceDetails = null;
-
-            if (instanceDetails != null) {
-                resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
-                if (resourceDetails != null) {
-                    StringBuilder sb = new StringBuilder("  Using BEAGLE resource ");
-                    sb.append(resourceDetails.getNumber()).append(": ");
-                    sb.append(resourceDetails.getName()).append("\n");
-                    if (resourceDetails.getDescription() != null) {
-                        String[] description = resourceDetails.getDescription().split("\\|");
-                        for (String desc : description) {
-                            if (desc.trim().length() > 0) {
-                                sb.append("    ").append(desc.trim()).append("\n");
-                            }
-                        }
-                    }
-                    sb.append("    with instance flags: ").append(instanceDetails.toString());
-                    logger.info(sb.toString());
-                } else {
-                    logger.info("  Error retrieving BEAGLE resource for instance: " + instanceDetails.toString());
-                }
-            } else {
-                logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
-            }
-            logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+            printInstanceDetails(beagle, logger, useAmbiguities, patternList,
+                    this.rescalingScheme, rescalingFrequency);
 
             if (tipStatesModel != null) {
                 tipStatesModel.setTree(treeModel);
@@ -365,36 +323,7 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
                 ascertainedSitePatterns = true;
             }
 
-//            this.partialsRestrictions = partialsRestrictions;
-////            hasRestrictedPartials = (partialsRestrictions != null);
-//            if (hasRestrictedPartials) {
-//                numRestrictedPartials = partialsRestrictions.size();
-//                updateRestrictedNodePartials = true;
-//                partialsMap = new Parameter[treeModel.getNodeCount()];
-//                partials = new double[stateCount * patternCount * categoryCount];
-//            } else {
-//                numRestrictedPartials = 0;
-//                updateRestrictedNodePartials = false;
-//            }
-
             beagle.setPatternWeights(patternWeights);
-
-            String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
-            if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
-                    resourceDetails != null &&
-                    (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
-                // If auto scaling in BEAGLE is not supported then do it here
-                this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
-                rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
-            }
-            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-                rescaleMessage += " (rescaling every " + rescalingFrequency + " evaluations)";
-            }
-            logger.info(rescaleMessage);
-
-            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-                everUnderflowed = false; // If false, BEAST does not rescale until first under-/over-flow.
-            }
 
             updateSubstitutionModel = true;
             updateSiteModel = true;
@@ -404,6 +333,72 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
         }
         this.useAmbiguities = useAmbiguities;
         hasInitialized = true;
+    }
+
+
+    private static void readEnvironmentProperties() {
+        // Attempt to get the resource order from the System Property
+        if (resourceOrder == null) {
+            resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
+        }
+        if (preferredOrder == null) {
+            preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+        }
+        if (requiredOrder == null) {
+            requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+        }
+        if (scalingOrder == null) {
+            scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
+        }
+        if (extraBufferOrder == null) {
+            extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+        }
+    }
+
+    private static void printInstanceDetails(Beagle beagle, Logger logger, boolean useAmbiguities,
+                                             PatternList patternList, PartialsRescalingScheme rescalingScheme,
+                                             int rescalingFrequency) {
+
+        InstanceDetails instanceDetails = beagle.getDetails();
+        ResourceDetails resourceDetails = null;
+
+        if (instanceDetails != null) {
+            resourceDetails = BeagleFactory.getResourceDetails(instanceDetails.getResourceNumber());
+            if (resourceDetails != null) {
+                StringBuilder sb = new StringBuilder("  Using BEAGLE resource ");
+                sb.append(resourceDetails.getNumber()).append(": ");
+                sb.append(resourceDetails.getName()).append("\n");
+                if (resourceDetails.getDescription() != null) {
+                    String[] description = resourceDetails.getDescription().split("\\|");
+                    for (String desc : description) {
+                        if (desc.trim().length() > 0) {
+                            sb.append("    ").append(desc.trim()).append("\n");
+                        }
+                    }
+                }
+                sb.append("    with instance flags: ").append(instanceDetails.toString());
+                logger.info(sb.toString());
+            } else {
+                logger.info("  Error retrieving BEAGLE resource for instance: " + instanceDetails.toString());
+            }
+        } else {
+            logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
+        }
+        logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
+        logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
+
+        String rescaleMessage = "  Using rescaling scheme : " + rescalingScheme.getText();
+        if (rescalingScheme == PartialsRescalingScheme.AUTO &&
+                resourceDetails != null &&
+                (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
+            // If auto scaling in BEAGLE is not supported then do it here
+            rescalingScheme = PartialsRescalingScheme.DYNAMIC;
+            rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + rescalingScheme.getText();
+        }
+        if (rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+            rescaleMessage += " (rescaling every " + rescalingFrequency + " evaluations)";
+        }
+        logger.info(rescaleMessage);
     }
 
     private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
@@ -601,32 +596,33 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
      */
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
-        fireModelChanged();
+//        fireModelChanged();
+        super.handleModelChangedEvent(model, object, index);
 
         if (model == treeModel) {
-            if (object instanceof TreeModel.TreeChangedEvent) {
-
-                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
-                    // If a node event occurs the node and its two child nodes
-                    // are flagged for updating (this will result in everything
-                    // above being updated as well. Node events occur when a node
-                    // is added to a branch, removed from a branch or its height or
-                    // rate changes.
-                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
-                    updateRestrictedNodePartials = true;
-
-                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
-                    // Full tree events result in a complete updating of the tree likelihood
-                    // This event type is now used for EmpiricalTreeDistributions.
-//                    System.err.println("Full tree update event - these events currently aren't used\n" +
-//                            "so either this is in error or a new feature is using them so remove this message.");
-                    updateAllNodes();
-                    updateRestrictedNodePartials = true;
-                } else {
-                    // Other event types are ignored (probably trait changes).
-                    //System.err.println("Another tree event has occured (possibly a trait change).");
-                }
-            }
+//            if (object instanceof TreeModel.TreeChangedEvent) {
+//
+//                if (((TreeModel.TreeChangedEvent) object).isNodeChanged()) {
+//                    // If a node event occurs the node and its two child nodes
+//                    // are flagged for updating (this will result in everything
+//                    // above being updated as well. Node events occur when a node
+//                    // is added to a branch, removed from a branch or its height or
+//                    // rate changes.
+//                    updateNodeAndChildren(((TreeModel.TreeChangedEvent) object).getNode());
+//                    updateRestrictedNodePartials = true;
+//
+//                } else if (((TreeModel.TreeChangedEvent) object).isTreeChanged()) {
+//                    // Full tree events result in a complete updating of the tree likelihood
+//                    // This event type is now used for EmpiricalTreeDistributions.
+////                    System.err.println("Full tree update event - these events currently aren't used\n" +
+////                            "so either this is in error or a new feature is using them so remove this message.");
+//                    updateAllNodes();
+//                    updateRestrictedNodePartials = true;
+//                } else {
+//                    // Other event types are ignored (probably trait changes).
+//                    //System.err.println("Another tree event has occured (possibly a trait change).");
+//                }
+//            }
 
         } else if (model == branchRateModel) {
             if (index == -1) {
@@ -640,13 +636,12 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
             }
 
         } else if (model == branchModel) {
-//            if (index == -1) {
-//                updateSubstitutionModel = true;
-//                updateAllNodes();
-//            } else {
-//                updateNode(treeModel.getNode(index));
-//            }
-
+            // if (index == -1) {
+            //     updateSubstitutionModel = true;
+            //     updateAllNodes();
+            // } else {
+            //     updateNode(treeModel.getNode(index));
+            // }
             makeDirty();
 
         } else if (model == siteRateModel) {
@@ -669,16 +664,16 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
             throw new RuntimeException("Unknown componentChangedEvent");
         }
 
-        super.handleModelChangedEvent(model, object, index);
+//        super.handleModelChangedEvent(model, object, index);
     }
 
-    @Override
-    public void makeDirty() {
-        super.makeDirty();
-        updateSiteModel = true;
-        updateSubstitutionModel = true;
-        updateRestrictedNodePartials = true;
-    }
+//    @Override
+//    public void makeDirty() {
+//        super.makeDirty();
+//        updateSiteModel = true;
+//        updateSubstitutionModel = true;
+//        updateRestrictedNodePartials = true;
+//    }
 // **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
@@ -687,8 +682,8 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
      * Stores the additional state other than model components
      */
     protected void storeState() {
-        partialBufferHelper.storeState();
-        substitutionModelDelegate.storeState();
+//        partialBufferHelper.storeState();
+//        substitutionModelDelegate.storeState();
 
         if (useScaleFactors || useAutoScaling) { // Only store when actually used
             scaleBufferHelper.storeState();
@@ -704,10 +699,10 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
      * Restore the additional stored state
      */
     protected void restoreState() {
-        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
-
-        partialBufferHelper.restoreState();
-        substitutionModelDelegate.restoreState();
+//        updateSiteModel = true; // this is required to upload the categoryRates to BEAGLE after the restore
+//
+//        partialBufferHelper.restoreState();
+//        substitutionModelDelegate.restoreState();
 
         if (useScaleFactors || useAutoScaling) {
             scaleBufferHelper.restoreState();
@@ -717,238 +712,10 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
 //            rescalingCount = storedRescalingCount;
         }
 
-        updateRestrictedNodePartials = true;
+//        updateRestrictedNodePartials = true;
 
         super.restoreState();
 
-    }
-
-    // **************************************************************
-    // Likelihood IMPLEMENTATION
-    // **************************************************************
-
-    /**
-     * Calculate the log likelihood of the current state.
-     *
-     * @return the log likelihood.
-     */
-//    protected double calculateLogLikelihood() {
-//
-//        if (patternLogLikelihoods == null) {
-//            patternLogLikelihoods = new double[patternCount];
-//        }
-//
-//        if (branchUpdateIndices == null) {
-//            branchUpdateIndices = new int[nodeCount];
-//            branchLengths = new double[nodeCount];
-//            scaleBufferIndices = new int[internalNodeCount];
-//            storedScaleBufferIndices = new int[internalNodeCount];
-//        }
-//
-//        if (operations == null) {
-//            operations = new int[numRestrictedPartials + 1][internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
-//            operationCount = new int[numRestrictedPartials + 1];
-//        }
-//
-//        recomputeScaleFactors = false;
-//
-//        if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
-//            useScaleFactors = true;
-//            recomputeScaleFactors = true;
-//        } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC && everUnderflowed) {
-//            useScaleFactors = true;
-//            if (rescalingCountInner < RESCALE_TIMES) {
-//                recomputeScaleFactors = true;
-//                makeDirty();
-////                System.err.println("Recomputing scale factors");
-//            }
-//
-//            rescalingCountInner++;
-//            rescalingCount++;
-//            if (rescalingCount > rescalingFrequency) {
-//                rescalingCount = 0;
-//                rescalingCountInner = 0;
-//            }
-//        } else if (this.rescalingScheme == PartialsRescalingScheme.DELAYED && everUnderflowed) {
-//            useScaleFactors = true;
-//            recomputeScaleFactors = true;
-//            rescalingCount++;
-//        }
-//
-//        if (tipStatesModel != null) {
-//            int tipCount = treeModel.getExternalNodeCount();
-//            for (int index = 0; index < tipCount; index++) {
-//                if (updateNode[index]) {
-//                    if (tipStatesModel.getModelType() == TipStatesModel.Type.PARTIALS) {
-//                        tipStatesModel.getTipPartials(index, tipPartials);
-//                        beagle.setTipPartials(index, tipPartials);
-//                    } else {
-//                        tipStatesModel.getTipStates(index, tipStates);
-//                        beagle.setTipStates(index, tipStates);
-//                    }
-//                }
-//            }
-//        }
-//
-//        branchUpdateCount = 0;
-//        operationListCount = 0;
-//
-//        if (hasRestrictedPartials) {
-//            for (int i = 0; i <= numRestrictedPartials; i++) {
-//                operationCount[i] = 0;
-//            }
-//        } else {
-//            operationCount[0] = 0;
-//        }
-//
-//        final NodeRef root = treeModel.getRoot();
-//        postOrderTraverse(treeModel, root, null, true);
-//
-//        if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
-//            substitutionModelDelegate.updateSubstitutionModels(beagle);
-//
-//            // we are currently assuming a no-category model...
-//        }
-//
-//        if (updateSiteModel) {
-//            double[] categoryRates = this.siteRateModel.getCategoryRates();
-//            beagle.setCategoryRates(categoryRates);
-//        }
-//
-//        if (branchUpdateCount > 0) {
-//            substitutionModelDelegate.updateTransitionMatrices(
-//                    beagle,
-//                    branchUpdateIndices,
-//                    branchLengths,
-//                    branchUpdateCount);
-//        }
-//
-//        if (COUNT_TOTAL_OPERATIONS) {
-//            totalMatrixUpdateCount += branchUpdateCount;
-//
-//            for (int i = 0; i <= numRestrictedPartials; i++) {
-//                totalOperationCount += operationCount[i];
-//            }
-//        }
-//
-//        double logL;
-//        boolean done;
-//        boolean firstRescaleAttempt = true;
-//
-//        do {
-//
-//            if (hasRestrictedPartials) {
-//                for (int i = 0; i <= numRestrictedPartials; i++) {
-//                    beagle.updatePartials(operations[i], operationCount[i], Beagle.NONE);
-//                    if (i < numRestrictedPartials) {
-////                        restrictNodePartials(restrictedIndices[i]);
-//                    }
-//                }
-//            } else {
-//                beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
-//            }
-//
-//            int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
-//
-//            double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-//
-//            // This should probably explicitly be the state frequencies for the root node...
-//            double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
-//
-//            int cumulateScaleBufferIndex = Beagle.NONE;
-//            if (useScaleFactors) {
-//
-//                if (recomputeScaleFactors) {
-//                    scaleBufferHelper.flipOffset(internalNodeCount);
-//                    cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-//                    beagle.resetScaleFactors(cumulateScaleBufferIndex);
-//                    beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
-//                } else {
-//                    cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-//                }
-//            } else if (useAutoScaling) {
-//                beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
-//            }
-//
-//            // these could be set only when they change but store/restore would need to be considered
-//            beagle.setCategoryWeights(0, categoryWeights);
-//            beagle.setStateFrequencies(0, frequencies);
-//
-//            double[] sumLogLikelihoods = new double[1];
-//
-//            beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-//                    new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
-//
-//            logL = sumLogLikelihoods[0];
-//
-//            if (ascertainedSitePatterns) {
-//                // Need to correct for ascertainedSitePatterns
-//                beagle.getSiteLogLikelihoods(patternLogLikelihoods);
-//                logL = getAscertainmentCorrectedLogLikelihood((AscertainedSitePatterns) patternList,
-//                        patternLogLikelihoods, patternWeights);
-//            }
-//
-//            if (Double.isNaN(logL) || Double.isInfinite(logL)) {
-//                everUnderflowed = true;
-//                logL = Double.NEGATIVE_INFINITY;
-//
-//                if (firstRescaleAttempt && (rescalingScheme == PartialsRescalingScheme.DYNAMIC || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
-//                    // we have had a potential under/over flow so attempt a rescaling
-//                    if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount == 0)) {
-//                        Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
-//                    }
-//                    useScaleFactors = true;
-//                    recomputeScaleFactors = true;
-//
-//                    branchUpdateCount = 0;
-//
-//                    if (hasRestrictedPartials) {
-//                        for (int i = 0; i <= numRestrictedPartials; i++) {
-//                            operationCount[i] = 0;
-//                        }
-//                    } else {
-//                        operationCount[0] = 0;
-//                    }
-//
-//                    // traverse again but without flipping partials indices as we
-//                    // just want to overwrite the last attempt. We will flip the
-//                    // scale buffer indices though as we are recomputing them.
-//                    postOrderTraverse(treeModel, root, null, false);
-//
-//                    done = false; // Run through do-while loop again
-//                    firstRescaleAttempt = false; // Only try to rescale once
-//                } else {
-//                    // we have already tried a rescale, not rescaling or always rescaling
-//                    // so just return the likelihood...
-//                    done = true;
-//                }
-//            } else {
-//                done = true; // No under-/over-flow, then done
-//            }
-//
-//        } while (!done);
-//
-//        // If these are needed...
-//        //beagle.getSiteLogLikelihoods(patternLogLikelihoods);
-//
-//        //********************************************************************
-//        // after traverse all nodes and patterns have been updated --
-//        //so change flags to reflect this.
-//        for (int i = 0; i < nodeCount; i++) {
-//            updateNode[i] = false;
-//        }
-//
-//        updateSubstitutionModel = false;
-//        updateSiteModel = false;
-//        //********************************************************************
-//
-//        return logL;
-//    }
-
-    public void getPartials(int number, double[] partials) {
-        int cumulativeBufferIndex = Beagle.NONE;
-        /* No need to rescale partials */
-        beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
     }
 
     public boolean arePartialsRescaled() {
@@ -1035,7 +802,6 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
                 operations[x + 1] = Beagle.NONE;
                 operations[x + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
             }
-
         } else {
 
             if (useAutoScaling) {
@@ -1086,19 +852,13 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
         if (flip) {
             substitutionModelDelegate.flipMatrixBuffer(nodeNum);
         }
+
         branchUpdateIndices[branchUpdateCount] = nodeNum;
         branchLengths[branchUpdateCount] = branchLength;
         branchUpdateCount++;
 
         return true;
     }
-
-//    @Override
-//    final protected void handleEvolutionaryProcess(final int[] operations, final NodeRef child1, final NodeRef child2, final int x) {
-//        operations[x + 4] = substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
-//        operations[x + 6] = substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
-//    }
-
 
     @Override
     final protected void prepareTips() {
@@ -1208,31 +968,12 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
     // INSTANCE VARIABLES
     // **************************************************************
 
-//    private int[] branchUpdateIndices;
-//    private double[] branchLengths;
-//    private int branchUpdateCount;
 
+    // Member variables for rescaling
     private int[] scaleBufferIndices;
     private int[] storedScaleBufferIndices;
 
-//    private int[][] operations;
-//    private int operationListCount;
-//    private int[] operationCount;
-    //    private final boolean hasRestrictedPartials;
-//    private static final boolean hasRestrictedPartials = false;
-
-//    private final int numRestrictedPartials;
-//    private final Map<Set<String>, Parameter> partialsRestrictions;
-//    private Parameter[] partialsMap;
-//    private double[] partials;
-//    private boolean updateRestrictedNodePartials;
-//    private int[] restrictedIndices;
-
-//    protected BufferIndexHelper partialBufferHelper;
     protected BufferIndexHelper scaleBufferHelper;
-
-//    protected final int tipCount;
-//    protected final int internalNodeCount;
 
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;
@@ -1240,10 +981,8 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
     protected boolean useScaleFactors = false;
     private boolean useAutoScaling = false;
     private boolean recomputeScaleFactors = false;
-//    private boolean everUnderflowed = false;
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
-//    private int storedRescalingCount;
 
     /**
      * the branch-site model for these sites
@@ -1289,34 +1028,6 @@ public class NewBeagleTreeLikelihood extends NewAbstractSequenceTreeLikelihood i
      * an array used to transfer tip states
      */
     protected int[] tipStates;
-
-//    /**
-//     * the BEAGLE library instance
-//     */
-//    protected Beagle beagle;
-//
-//    /**
-//     * Flag to specify that the substitution model has changed
-//     */
-//    protected boolean updateSubstitutionModel;
-//
-//    /**
-//     * Flag to specify that the site model has changed
-//     */
-//    protected boolean updateSiteModel;
-//
-////    /***
-////     * Flag to specify if LikelihoodCore supports dynamic rescaling
-////     */
-////    private boolean dynamicRescaling = false;
-//
-//
-//    /**
-//     * Flag to specify if site patterns are ascertained
-//     */
-//
-//    private boolean ascertainedSitePatterns = false;
-
 
     /**
      * Flag to specify if ambiguity codes are in use

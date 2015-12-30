@@ -900,6 +900,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
                     branchUpdateCount = 0;
 
+                    updateAllNodes();
+
                     if (hasRestrictedPartials) {
                         for (int i = 0; i <= numRestrictedPartials; i++) {
                             operationCount[i] = 0;

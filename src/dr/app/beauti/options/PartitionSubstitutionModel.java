@@ -349,6 +349,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 params.add(getParameter("CP1.kappa"));
                                 params.add(getParameter("CP2.kappa"));
@@ -376,6 +378,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 params.add(getParameter("CP1+2.kappa"));
                                 params.add(getParameter("CP3.kappa"));
@@ -404,6 +408,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     }
                 } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
+                        case JC:
+                            break;
                         case HKY:
                             params.add(getParameter("kappa"));
                             break;
@@ -565,6 +571,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 ops.add(getOperator("CP1.kappa"));
                                 ops.add(getOperator("CP2.kappa"));
@@ -594,6 +602,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 ops.add(getOperator("CP1+2.kappa"));
                                 ops.add(getOperator("CP3.kappa"));
@@ -625,6 +635,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                 } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
+                        case JC:
+                            break;
                         case HKY:
                             ops.add(getOperator("kappa"));
                             break;

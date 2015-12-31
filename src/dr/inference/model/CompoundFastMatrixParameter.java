@@ -148,6 +148,14 @@ public class CompoundFastMatrixParameter extends CompoundParameter implements Ma
     }
 
     @Override
+    public void setAllParameterValuesQuietly(double[] values, int offset) {
+        for (MatrixParameterInterface matrix : matrices) {
+            matrix.setAllParameterValuesQuietly(values, offset);
+            offset += matrix.getRowDimension() * matrix.getColumnDimension();
+        }
+    }
+
+    @Override
     public double[] getParameterValues() {
         int length = 0;
         for (MatrixParameterInterface matrix : matrices) {

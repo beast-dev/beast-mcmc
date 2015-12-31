@@ -55,4 +55,8 @@ public interface MatrixParameterInterface extends Variable<Double> {
     Parameter getUniqueParameter(int index);
 
     void copyParameterValues(double[] destination, int offset);
+
+//    void setAllParameterValuesQuietly(double[] values);
+
+    void setAllParameterValuesQuietly(double[] values, int offset);
 }

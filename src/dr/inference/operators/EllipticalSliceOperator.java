@@ -240,9 +240,13 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         }
     }
 
-    private void setIndividualValues(double[] x) {
-        for (int i = 0; i < x.length; ++i) {
-            variable.setParameterValueQuietly(i, x[i]);
+    private void setAllParameterValues(double[] x) {
+        if (variable instanceof MatrixParameterInterface) {
+            ((MatrixParameterInterface) variable).setAllParameterValuesQuietly(x, 0);
+        } else {
+            for (int i = 0; i < x.length; ++i) {
+                variable.setParameterValueQuietly(i, x[i]);
+            }
         }
     }
 
@@ -250,7 +254,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 
         transformPoint(x);
 
-        setIndividualValues(x);
+        setAllParameterValues(x);
 
 ////        boolean switchSign = x[0] > 0.0;
 //        for (int i = 0; i < x.length; ++i) {
@@ -259,7 +263,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 ////            }
 //            variable.setParameterValueQuietly(i, x[i]);
 //        }
-        
+
         if (signalConstituentParameters) {
             variable.fireParameterChangedEvent();
         } else {

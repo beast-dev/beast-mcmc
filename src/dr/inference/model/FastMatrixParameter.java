@@ -163,6 +163,12 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     }
 
     @Override
+    public void setAllParameterValuesQuietly(double[] values, int offset) {
+        final double[] destination = ((Parameter.Default) singleParameter).inspectParameterValues();
+        System.arraycopy(values, offset, destination, 0, destination.length);
+    }
+
+    @Override
     public void setParameterValue(int row, int col, double value) {
         singleParameter.setParameterValue(index(row, col), value);
     }

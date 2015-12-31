@@ -177,6 +177,13 @@ public class MatrixParameter extends CompoundParameter implements MatrixParamete
         }
     }
 
+    @Override
+    public void setAllParameterValuesQuietly(double[] values, int offset) {
+        for (int i = 0; i < getDimension(); ++i) {
+            setParameterValueQuietly(i, values[offset + i]);
+        }
+    }
+
     public String toSymmetricString() {
         StringBuilder sb = new StringBuilder("{");
         int dim = getRowDimension();

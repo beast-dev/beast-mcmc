@@ -265,6 +265,19 @@ public class ParameterPriorGenerator extends Generator {
             case LOGNORMAL_HPM_PRIOR:
                 // Do nothing, densities are already in a distributionLikelihood
                 break;
+            case DIRICHLET_PRIOR:
+                int dimensions = parameter.getParameterDimensionWeights().length;
+                String counts = "1.0";
+                for (int i = 1; i < dimensions; i++) {
+                   counts += " 1.0";
+                }
+                writer.writeOpenTag(PriorParsers.DIRICHLET_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.COUNTS, counts),
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.DIRICHLET_PRIOR);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }

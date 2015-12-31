@@ -47,6 +47,8 @@ import java.util.Set;
 public class PartitionSubstitutionModel extends PartitionOptions {
     private static final long serialVersionUID = -2570346396317131108L;
 
+    private final static boolean USE_DIRICHLET_PRIOR_FOR_MUS = false;
+
     // Instance variables
 
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
@@ -253,16 +255,18 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
 
         // A vector of relative rates across all partitions...
-        createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
-        //createAllMusParameter(this, "allMus", "all the relative rates regarding codon positions");
 
-        // This only works if the partitions are of the same size...
-//      createOperator("centeredMu", "Relative rates",
-//              "Scales codon position rates relative to each other maintaining mean", "allMus",
-//              OperatorType.CENTERED_SCALE, 0.75, 3.0);
-        createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-                "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
-                OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
+        if (USE_DIRICHLET_PRIOR_FOR_MUS) {
+            createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+            createOperator("scaleMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+                    "Scale codon position rates relative to each other", "allMus",
+                    OperatorType.SCALE_INDEPENDENTLY, 0.75, 3.0);
+        } else {
+            createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+            createOperator("deltaMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+                    "Scale codon position rates relative to each other maintaining mean", "allMus",
+                    OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
+        }
 
         createScaleOperator("kappa", demoTuning, substWeights);
         createScaleOperator("CP1.kappa", demoTuning, substWeights);
@@ -416,24 +420,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                         default:
                             throw new IllegalArgumentException("Unknown nucleotides substitution model");
                     }
-                }
-
-                if (includeRelativeRates) {
-//                    if (codonHeteroPattern.equals("123")) {
-//                        params.add(getParameter("CP1.mu"));
-//                        params.add(getParameter("CP1.mu"));
-//                        params.add(getParameter("CP2.mu"));
-//                        params.add(getParameter("CP3.mu"));
-//                    } else if (codonHeteroPattern.equals("112")) {
-//                        params.add(getParameter("CP1+2.mu"));
-//                        params.add(getParameter("CP3.mu"));
-//                    } else {
-//                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
-//                    }
-                    params.add(getParameter("allMus"));
-
-                } else { // no codon partitioning
-//TODO
                 }
 
                 // only AMINO_ACIDS not addFrequency
@@ -759,8 +745,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
 
         if (includeRelativeRates) {
-            Operator deltaMuOperator = getOperator("deltaMu");
-            ops.add(deltaMuOperator);
+            Operator muOperator;
+
+            if (USE_DIRICHLET_PRIOR_FOR_MUS) {
+                muOperator = getOperator("scaleMus");
+            } else {
+                muOperator = getOperator("deltaMus");
+            }
+            ops.add(muOperator);
         }
     }
 

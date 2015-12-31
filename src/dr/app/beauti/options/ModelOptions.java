@@ -72,14 +72,18 @@ public class ModelOptions implements Serializable {
                 .initial(initial).isZeroOne(true).build(parameters);
     }
 
-    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PriorScaleType scaleType, double initial) {
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR).isNonNegative(true)
-                .initial(initial).build(parameters);
+                .partitionOptions(options).initial(initial).build(parameters);
     }
 
     public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {
+        return createNonNegativeParameterInfinitePrior(name, description, null, scaleType, initial);
+    }
+
+    public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NONE_IMPROPER).isNonNegative(true)
-                .initial(initial).build(parameters);
+                .partitionOptions(options).initial(initial).build(parameters);
     }
 
     public Parameter createNonNegativeParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,

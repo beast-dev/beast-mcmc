@@ -261,7 +261,16 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         removeAll();
 
         if (ancestralReconstructionAvailable) {
-            addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
+            if (partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 2) {
+                // mergedPatterns for codon positions 1&2 will always be compressed...
+                // so cannot do any of this stuff. Disable it and provide an explanation.
+                addSpanningComponent(new JLabel("<html>Unable to provide these options with the 1+2,3 codon<br>" +
+                        "position model. Use a 1,2,3 codon position model instead.<br><html>"));
+            }
+
+
+            JLabel label1 = new JLabel("Ancestral State Reconstruction:");
+            addSpanningComponent(label1);
 
             addComponent(ancestralReconstructionCheck);
 
@@ -273,42 +282,64 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             panel.add(mrcaReconstructionCheck);
             panel.add(mrcaReconstructionCombo);
             addComponent(panel);
+
+            boolean enabled = true;
+
+            if (partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 2) {
+                // mergedPatterns for codon positions 1&2 will always be compressed...
+                // so cannot do any of this stuff. Disable it and provide an explanation.
+                ancestralReconstructionCheck.setEnabled(false);
+                enabled = false;
+            }
+
+            label1.setEnabled(enabled);
+            panel.setEnabled(enabled);
+            ancestralReconstructionCheck.setEnabled(enabled);
+            mrcaReconstructionCheck.setEnabled(enabled);
+            mrcaReconstructionCombo.setEnabled(enabled);
         }
 
         if (countingAvailable) {
             if (ancestralReconstructionAvailable) {
                 addSeparator();
             }
-            addSpanningComponent(new JLabel("State Change Count Reconstruction:"));
 
-            JTextArea text = new JTextArea(
+            JLabel label2 = new JLabel("State Change Count Reconstruction:");
+            addSpanningComponent(label2);
+
+            JTextArea text1 = new JTextArea(
                     "Select this option to reconstruct counts of state changes using " +
                             "Markov Jumps. This approach is described in Minin & Suchard (2008).");
-            text.setColumns(40);
-            PanelUtils.setupComponent(text);
-            addComponent(text);
+            text1.setColumns(40);
+            PanelUtils.setupComponent(text1);
+            addComponent(text1);
 
             addComponent(countingCheck);
 
             boolean enableSimpleCounting = true;
 
             // TODO Simple counting is currently not available for codon partitioned models due to BEAUti limitation
-            if (ancestralStatesComponent.dNdSRobustCountingAvailable(partition)) {
+            if (ancestralStatesComponent.dNdSRobustCountingAvailable(partition) || partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 2) {
                 enableSimpleCounting = false;
                 countingCheck.setSelected(false);
             }
+
             countingCheck.setEnabled(enableSimpleCounting);
+            label2.setEnabled(enableSimpleCounting);
+            text1.setEnabled(enableSimpleCounting);
+
+            JTextArea text2 = null;
 
             if (dNdSRobustCountingAvailable) {
 //                addSeparator();
-                text = new JTextArea(
+                text2 = new JTextArea(
                         "Renaissance counting: select this option to reconstruct counts of synonymous and nonsynonymous " +
                                 "changes using Robust Counting. This approach is described in O'Brien, Minin " +
                                 "& Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard " +
                                 "(2012):");
-                text.setColumns(40);
-                PanelUtils.setupComponent(text);
-                addComponent(text);
+                text2.setColumns(40);
+                PanelUtils.setupComponent(text2);
+                addComponent(text2);
 
                 addComponent(dNdSRobustCountingCheck);
 
@@ -323,6 +354,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
                 ancestralStatesComponent.setDNdSRobustCounting(partition, enableRC && dNdSRobustCountingCheck.isSelected());
 
+                text2.setEnabled(enableRC);
                 dNnSText.setEnabled(enableRC);
                 if (!enableRC) {
                     dNdSRobustCountingCheck.setSelected(false);
@@ -338,9 +370,18 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             if (ancestralReconstructionAvailable || countingAvailable) {
                 addSeparator();
             }
-            addSpanningComponent(new JLabel("Sequence error model:"));
-            addComponentWithLabel("Error Model:", errorModelCombo);
+            JLabel label3 = new JLabel("Sequence error model:");
+            addSpanningComponent(label3);
+            JLabel label4 = addComponentWithLabel("Error Model:", errorModelCombo);
+
+            boolean enabled = (partition.getPartitionSubstitutionModel().getCodonPartitionCount() != 2);
+
+            label3.setEnabled(enabled);
+            label4.setEnabled(enabled);
+            errorModelCombo.setEnabled(enabled);
+
         }
+
         isUpdating = false;
 
     }

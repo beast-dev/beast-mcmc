@@ -240,17 +240,26 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         }
     }
 
+    private void setIndividualValues(double[] x) {
+        for (int i = 0; i < x.length; ++i) {
+            variable.setParameterValueQuietly(i, x[i]);
+        }
+    }
+
     private void setVariable(double[] x) {
 
         transformPoint(x);
 
-//        boolean switchSign = x[0] > 0.0;
-        for (int i = 0; i < x.length; ++i) {
-//            if (switchSign) {
-//                x[i] *= -1;
-//            }
-            variable.setParameterValueQuietly(i, x[i]);
-        }
+        setIndividualValues(x);
+
+////        boolean switchSign = x[0] > 0.0;
+//        for (int i = 0; i < x.length; ++i) {
+////            if (switchSign) {
+////                x[i] *= -1;
+////            }
+//            variable.setParameterValueQuietly(i, x[i]);
+//        }
+        
         if (signalConstituentParameters) {
             variable.fireParameterChangedEvent();
         } else {

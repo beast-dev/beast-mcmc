@@ -106,6 +106,9 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createUpDownOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
+        createUpDownOperator("upDownUCGDMeanHeights", "UCGD scale and heights",
+                "Scales UCGD scale inversely to node heights of the tree", model.getParameter(ClockType.UCGD_SCALE),
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
 
 
         // These are statistics which could have priors on...
@@ -189,8 +192,13 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                                 addBranchRateCategories(ops);
                                 break;
                             case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-//                            break;
+//                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+                                op = getOperator("upDownUCGDMeanHeights");
+                                op.setClockModelGroup(model.getClockModelGroup());
+                                ops.add(op);
+
+                                addBranchRateCategories(ops);
+                            break;
                             case CAUCHY:
                                 throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;

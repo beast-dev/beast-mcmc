@@ -101,6 +101,10 @@ public class PartitionClockModel extends PartitionOptions {
             new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
                     prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
                     .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+            new Parameter.Builder(ClockType.UCGD_SCALE, "uncorrelated gamma relaxed clock scale").
+                    prior(PriorType.CTMC_RATE_REFERENCE_PRIOR).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
         } else {
             new Parameter.Builder("clock.rate", "substitution rate").
                     prior(PriorType.UNDEFINED).initial(rate)
@@ -113,10 +117,18 @@ public class PartitionClockModel extends PartitionOptions {
             new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
                     prior(PriorType.UNDEFINED).initial(rate)
                     .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+            new Parameter.Builder(ClockType.UCGD_SCALE, "uncorrelated gamma relaxed clock scale").
+                    prior(PriorType.UNDEFINED).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
         }
 
         new Parameter.Builder(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev").
                 scaleType(PriorScaleType.LOG_STDEV_SCALE).prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
+                .initial(1.0 / 3.0).mean(1.0 / 3.0).offset(0.0).partitionOptions(this).build(parameters);
+
+        new Parameter.Builder(ClockType.UCGD_SHAPE, "uncorrelated gamma relaxed clock shape").
+                prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
                 .initial(1.0 / 3.0).mean(1.0 / 3.0).offset(0.0).partitionOptions(this).build(parameters);
 
         // Random local clock
@@ -128,6 +140,8 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCGD_SCALE, demoTuning, rateWeights);
+        createScaleOperator(ClockType.UCGD_SHAPE, demoTuning, rateWeights);
         // Random local clock
         createScaleOperator(ClockType.LOCAL_CLOCK + ".relativeRates", demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + ".changes", OperatorType.BITFLIP, 1, treeWeights);
@@ -173,26 +187,22 @@ public class PartitionClockModel extends PartitionOptions {
                 case UNCORRELATED:
                     switch (clockDistributionType) {
                         case LOGNORMAL:
-//                            rateParam = getParameter(ClockType.UCLD_MEAN);
                             params.add(getParameter(ClockType.UCLD_STDEV));
                             break;
                         case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
-//                            rateParam = getParameter(ClockType.UCGD_SCALE);
-//                            params.add(getParameter(ClockType.UCGD_SHAPE));
-//                            break;
+//                            throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
+                            params.add(getParameter(ClockType.UCGD_SHAPE));
+                            break;
                         case CAUCHY:
                             throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                            break;
                         case EXPONENTIAL:
-//                            rateParam = getParameter(ClockType.UCED_MEAN);
                             break;
                     }
                     break;
 
                 case AUTOCORRELATED:
                     throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
-//                    rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
 //                    params.add(getParameter("branchRates.var"));
 //                    break;
 
@@ -245,9 +255,9 @@ public class PartitionClockModel extends PartitionOptions {
                         rateParam = getParameter(ClockType.UCLD_MEAN);
                         break;
                     case GAMMA:
-                        throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
-//                            rateParam = getParameter(ClockType.UCGD_SCALE);
-//                            break;
+//                        throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
+                            rateParam = getParameter(ClockType.UCGD_SCALE);
+                            break;
                     case CAUCHY:
                         throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                            break;
@@ -305,13 +315,13 @@ public class PartitionClockModel extends PartitionOptions {
                                 ops.add(getOperator(ClockType.UCLD_STDEV));
                                 break;
                             case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
-//                                ops.add(getOperator(ClockType.UCGD_SCALE));
-//                                ops.add(getOperator(ClockType.UCGD_SHAPE));
+//                                throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
+                                ops.add(getOperator(ClockType.UCGD_SCALE));
+                                ops.add(getOperator(ClockType.UCGD_SHAPE));
 //                                break;
                             case CAUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
-//                                break;
+//                                throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
+                                break;
                             case EXPONENTIAL:
                                 ops.add(getOperator(ClockType.UCED_MEAN));
                                 break;
@@ -337,12 +347,12 @@ public class PartitionClockModel extends PartitionOptions {
                                 ops.add(getOperator(ClockType.UCLD_STDEV));
                                 break;
                             case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
-//                                ops.add(getOperator(ClockType.UCGD_SCALE));
-//                                break;
+//                                throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
+                                ops.add(getOperator(ClockType.UCGD_SCALE));
+                                break;
                             case CAUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
-//                                break;
+//                                throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
+                                break;
                             case EXPONENTIAL:
                                 break;
                         }

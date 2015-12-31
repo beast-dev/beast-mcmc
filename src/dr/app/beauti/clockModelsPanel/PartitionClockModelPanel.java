@@ -35,6 +35,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -44,8 +45,15 @@ public class PartitionClockModelPanel extends OptionsPanel {
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
-    private JComboBox clockTypeCombo = new JComboBox(ClockType.values());
-    private JComboBox clockDistributionCombo = new JComboBox(ClockDistributionType.values());
+    private JComboBox clockTypeCombo = new JComboBox(EnumSet.range(
+            ClockType.STRICT_CLOCK, ClockType.FIXED_LOCAL_CLOCK).toArray());
+    private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
+            ClockDistributionType.LOGNORMAL,
+// Gamma needs to be paramterised as mean and shape to be equivalent to the others
+//            ClockDistributionType.GAMMA,
+//            ClockDistributionType.CAUCHY,
+            ClockDistributionType.EXPONENTIAL
+    });
 
     protected final PartitionClockModel model;
 

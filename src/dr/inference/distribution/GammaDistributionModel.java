@@ -49,7 +49,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     public static final String ONE_P_GAMMA_DISTRIBUTION_MODEL = "onePGammaDistributionModel";
 
     /**
-     * Construct a constant mutation rate model.
+     * Construct a gamma distribution model.
      */
     public GammaDistributionModel(Variable<Double> shape, Variable<Double> scale) {
 
@@ -66,7 +66,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     }
 
     /**
-     * Construct a constant mutation rate model.
+     * Construct a gamma distribution model.
      */
     public GammaDistributionModel(Variable<Double> shape) {
 

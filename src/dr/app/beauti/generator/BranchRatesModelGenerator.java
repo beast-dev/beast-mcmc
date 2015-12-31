@@ -45,6 +45,7 @@ import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
+import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.inferencexml.model.CompoundParameterParser;
@@ -136,8 +137,19 @@ public class BranchRatesModelGenerator extends Generator {
                             writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
                             break;
                         case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-//                            break;
+//                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+                            writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+
+                            if (activeTrees.indexOf(tree) < 1) {
+                                writeParameter("scale", ClockType.UCGD_SCALE, model, writer);
+                                writeParameter("shape", ClockType.UCGD_SHAPE, model, writer);
+                            } else {
+                                writeParameterRef("scale", modelPrefix + ClockType.UCGD_SCALE, writer);
+                                writeParameterRef("shape", modelPrefix + ClockType.UCGD_SHAPE, writer);
+                            }
+
+                            writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                            break;
                         case CAUCHY:
                             throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
@@ -570,11 +582,11 @@ public class BranchRatesModelGenerator extends Generator {
                     case LOGNORMAL:
                         return modelPrefix + ClockType.UCLD_MEAN;
                     case GAMMA:
-                        throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
-//                        return modelPrefix + ClockType.UCGD_SCALE;
+//                        throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
+                        return modelPrefix + ClockType.UCGD_SCALE;
                     case CAUCHY:
                         throw new UnsupportedOperationException("Uncorrelated Cauchy model not supported yet");
-//                        return modelPrefix + ClockType.UCCD_MEAN;
+//                        return null;
                     case EXPONENTIAL:
                         return modelPrefix + ClockType.UCED_MEAN;
                 }
@@ -616,8 +628,12 @@ public class BranchRatesModelGenerator extends Generator {
                         break;
                     case GAMMA:
                         throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
+//                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SCALE);
+//                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SHAPE);
+//                        break;
                     case CAUCHY:
                         throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
+//                        break;
                     case EXPONENTIAL:
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
                         break;

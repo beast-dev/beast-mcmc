@@ -190,8 +190,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         return r;
     }
 
-    private void setVariable(double[] x) {
-
+    private void transformPoint(double[] x) {
         if (translationInvariant) {
             int dim = 2; // TODO How to determine?
 
@@ -239,6 +238,11 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 //            System.err.println("");
 //            System.exit(-1);
         }
+    }
+
+    private void setVariable(double[] x) {
+
+        transformPoint(x);
 
 //        boolean switchSign = x[0] > 0.0;
         for (int i = 0; i < x.length; ++i) {

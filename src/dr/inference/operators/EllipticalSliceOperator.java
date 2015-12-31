@@ -190,8 +190,7 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         return r;
     }
 
-    private void setVariable(double[] x) {
-
+    private void transformPoint(double[] x) {
         if (translationInvariant) {
             int dim = 2; // TODO How to determine?
 
@@ -239,14 +238,32 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 //            System.err.println("");
 //            System.exit(-1);
         }
+    }
 
-//        boolean switchSign = x[0] > 0.0;
-        for (int i = 0; i < x.length; ++i) {
-//            if (switchSign) {
-//                x[i] *= -1;
-//            }
-            variable.setParameterValueQuietly(i, x[i]);
+    private void setAllParameterValues(double[] x) {
+        if (variable instanceof MatrixParameterInterface) {
+            ((MatrixParameterInterface) variable).setAllParameterValuesQuietly(x, 0);
+        } else {
+            for (int i = 0; i < x.length; ++i) {
+                variable.setParameterValueQuietly(i, x[i]);
+            }
         }
+    }
+
+    private void setVariable(double[] x) {
+
+        transformPoint(x);
+
+        setAllParameterValues(x);
+
+////        boolean switchSign = x[0] > 0.0;
+//        for (int i = 0; i < x.length; ++i) {
+////            if (switchSign) {
+////                x[i] *= -1;
+////            }
+//            variable.setParameterValueQuietly(i, x[i]);
+//        }
+
         if (signalConstituentParameters) {
             variable.fireParameterChangedEvent();
         } else {

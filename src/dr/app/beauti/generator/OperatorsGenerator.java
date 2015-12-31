@@ -48,7 +48,6 @@ import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.RateBitExchangeOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;

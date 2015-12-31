@@ -187,6 +187,11 @@ public class PairedSitePatterns implements SiteList {
 		return Utils.empiricalStateFrequencies(this);
 	}
 
+	@Override
+	public boolean areUnique() {
+		return false;
+	}
+
 	// **************************************************************
 	// TaxonList IMPLEMENTATION
 	// **************************************************************

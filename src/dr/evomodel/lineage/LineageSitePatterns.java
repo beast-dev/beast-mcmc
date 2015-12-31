@@ -480,6 +480,11 @@ public class LineageSitePatterns extends AbstractModel implements SiteList, dr.u
         return PatternList.Utils.empiricalStateFrequencies(this);
     }
 
+    @Override
+    public boolean areUnique() {
+        return unique;
+    }
+
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************

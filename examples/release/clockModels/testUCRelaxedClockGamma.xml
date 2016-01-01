@@ -185,14 +185,14 @@
 	<discretizedBranchRates id="branchRates">
 		<treeModel idref="treeModel"/>
 		<distribution>
-			<logNormalDistributionModel meanInRealSpace="true">
+			<gammaDistributionModel>
 				<mean>
-					<parameter id="ucld.mean" value="1.0" lower="0.0"/>
+					<parameter id="ucgd.mean" value="0.001" lower="0.0"/>
 				</mean>
-				<stdev>
-					<parameter id="ucld.stdev" value="0.3333333333333333" lower="0.0"/>
-				</stdev>
-			</logNormalDistributionModel>
+				<shape>
+					<parameter id="ucgd.shape" value="0.3333333333333333" lower="0.0"/>
+				</shape>
+			</gammaDistributionModel>
 		</distribution>
 		<rateCategories>
 			<parameter id="branchRates.categories"/>
@@ -249,10 +249,10 @@
 			<parameter idref="frequencies"/>
 		</deltaExchange>
 		<scaleOperator scaleFactor="0.75" weight="30">
-			<parameter idref="ucld.mean"/>
+			<parameter idref="ucgd.mean"/>
 		</scaleOperator>
 		<scaleOperator scaleFactor="0.75" weight="30">
-			<parameter idref="ucld.stdev"/>
+			<parameter idref="ucgd.shape"/>
 		</scaleOperator>
 		<subtreeSlide size="38.0" gaussian="true" weight="150">
 			<treeModel idref="treeModel"/>
@@ -277,7 +277,7 @@
 		</scaleOperator>
 		<upDownOperator scaleFactor="0.75" weight="30">
 			<up>
-				<parameter idref="ucld.mean"/>
+				<parameter idref="ucgd.mean"/>
 			</up>
 			<down>
 				<parameter idref="treeModel.allInternalNodeHeights"/>
@@ -292,7 +292,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testUCRelaxedClockLogNormal.ops">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testUCRelaxedClockGamma.ops">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -302,11 +302,11 @@
 					<parameter idref="frequencies"/>
 				</uniformPrior>
 				<exponentialPrior mean="0.3333333333333333" offset="0.0">
-					<parameter idref="ucld.stdev"/>
+					<parameter idref="ucgd.shape"/>
 				</exponentialPrior>
 				<ctmcScalePrior>
 					<ctmcScale>
-						<parameter idref="ucld.mean"/>
+						<parameter idref="ucgd.mean"/>
 					</ctmcScale>
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
@@ -336,13 +336,13 @@
 			<column label="rootHeight" sf="6" width="12">
 				<parameter idref="treeModel.rootHeight"/>
 			</column>
-			<column label="ucld.mean" sf="6" width="12">
-				<parameter idref="ucld.mean"/>
+			<column label="ucgd.mean" sf="6" width="12">
+				<parameter idref="ucgd.mean"/>
 			</column>
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="testUCRelaxedClockLogNormal.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testUCRelaxedClockGamma.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -350,8 +350,8 @@
 			<parameter idref="constant.popSize"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
-			<parameter idref="ucld.mean"/>
-			<parameter idref="ucld.stdev"/>
+			<parameter idref="ucgd.mean"/>
+			<parameter idref="ucgd.shape"/>
 			<rateStatistic idref="meanRate"/>
 			<rateStatistic idref="coefficientOfVariation"/>
 			<rateCovarianceStatistic idref="covariance"/>
@@ -361,7 +361,7 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testUCRelaxedClockLogNormal.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testUCRelaxedClockGamma.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
 				<discretizedBranchRates idref="branchRates"/>

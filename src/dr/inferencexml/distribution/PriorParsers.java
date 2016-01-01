@@ -569,7 +569,7 @@ public class PriorParsers {
 
             final double shape = xo.getDoubleAttribute(SHAPE);
             final double scale = xo.getDoubleAttribute(SCALE);
-            final double offset = xo.getDoubleAttribute(OFFSET);
+            final double offset = xo.getAttribute(OFFSET, 0.0);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new InverseGammaDistribution(shape, scale), offset);
 
@@ -591,7 +591,7 @@ public class PriorParsers {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
-                AttributeRule.newDoubleRule(OFFSET),
+                AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

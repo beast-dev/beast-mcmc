@@ -46,8 +46,7 @@ public class GammaDistributionModelParser extends AbstractXMLObjectParser {
 
         double offset = xo.getAttribute(OFFSET, 0.0);
 
-        XMLObject cxo = xo.getChild(SHAPE);
-        Parameter shapeParameter = (Parameter) cxo.getChild(Statistic.class);
+        Parameter shapeParameter = (Parameter) xo.getElementFirstChild(SHAPE);
 
         Parameter parameter2;
         GammaDistributionModel.GammaParameterizationType parameterization;

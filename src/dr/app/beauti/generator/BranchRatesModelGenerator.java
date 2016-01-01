@@ -76,7 +76,6 @@ public class BranchRatesModelGenerator extends Generator {
         setModelPrefix(model.getPrefix());
 
         Attribute[] attributes;
-        int categoryCount = 0;
         String treePrefix;
         List<PartitionTreeModel> activeTrees = options.getPartitionTreeModels(options.getDataPartitions(model));
 
@@ -91,6 +90,30 @@ public class BranchRatesModelGenerator extends Generator {
                 writeParameter("rate", "clock.rate", model, writer);
                 writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
 
+                for (PartitionTreeModel tree : activeTrees) {
+                    treePrefix = tree.getPrefix();
+
+                    PartitionClockModelTreeModelLink clockTree = options.getPartitionClockTreeLink(model, tree);
+                    if (clockTree == null) {
+                        throw new IllegalArgumentException("Cannot find PartitionClockTreeLink, given clock model = " + model.getName()
+                                + ", tree model = " + tree.getName());
+                    }
+                    writer.writeText("");
+                    writer.writeOpenTag(
+                            RateStatisticParser.RATE_STATISTIC,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
+                                    new Attribute.Default<String>("name", options.noDuplicatedPrefix(modelPrefix, treePrefix) + "meanRate"),
+                                    new Attribute.Default<String>("mode", "mean"),
+                                    new Attribute.Default<String>("internal", "true"),
+                                    new Attribute.Default<String>("external", "true")
+                            }
+                    );
+                    writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
+                    writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix)
+                            + BranchRateModel.BRANCH_RATES);
+                    writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
+                }
                 break;
 
             case UNCORRELATED:
@@ -137,14 +160,13 @@ public class BranchRatesModelGenerator extends Generator {
                             writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
                             break;
                         case GAMMA:
-//                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
                             writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
 
                             if (activeTrees.indexOf(tree) < 1) {
-                                writeParameter("scale", ClockType.UCGD_SCALE, model, writer);
+                                writeParameter("mean", ClockType.UCGD_MEAN, model, writer);
                                 writeParameter("shape", ClockType.UCGD_SHAPE, model, writer);
                             } else {
-                                writeParameterRef("scale", modelPrefix + ClockType.UCGD_SCALE, writer);
+                                writeParameterRef("mean", modelPrefix + ClockType.UCGD_MEAN, writer);
                                 writeParameterRef("shape", modelPrefix + ClockType.UCGD_SHAPE, writer);
                             }
 
@@ -363,12 +385,12 @@ public class BranchRatesModelGenerator extends Generator {
 
                 writer.writeOpenTag("rates");
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
-                        (XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".relativeRates")
+                                (XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".relativeRates")
                         , true);
                 writer.writeCloseTag("rates");
                 writer.writeOpenTag("rateIndicator");
                 writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
-                        (XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".changes")
+                                (XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".changes")
                         , true);
                 writer.writeCloseTag("rateIndicator");
 
@@ -582,8 +604,7 @@ public class BranchRatesModelGenerator extends Generator {
                     case LOGNORMAL:
                         return modelPrefix + ClockType.UCLD_MEAN;
                     case GAMMA:
-//                        throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
-                        return modelPrefix + ClockType.UCGD_SCALE;
+                        return modelPrefix + ClockType.UCGD_MEAN;
                     case CAUCHY:
                         throw new UnsupportedOperationException("Uncorrelated Cauchy model not supported yet");
 //                        return null;
@@ -627,10 +648,9 @@ public class BranchRatesModelGenerator extends Generator {
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
                         break;
                     case GAMMA:
-                        throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
-//                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SCALE);
-//                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SHAPE);
-//                        break;
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_MEAN);
+                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SHAPE);
+                        break;
                     case CAUCHY:
                         throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
 //                        break;
@@ -654,6 +674,9 @@ public class BranchRatesModelGenerator extends Generator {
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:
+                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
+                    writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
+                }
                 break;
 
             case UNCORRELATED:

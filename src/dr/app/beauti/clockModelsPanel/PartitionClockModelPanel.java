@@ -49,8 +49,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
             ClockType.STRICT_CLOCK, ClockType.FIXED_LOCAL_CLOCK).toArray());
     private JComboBox clockDistributionCombo = new JComboBox (new ClockDistributionType[] {
             ClockDistributionType.LOGNORMAL,
-// Gamma needs to be paramterised as mean and shape to be equivalent to the others
-//            ClockDistributionType.GAMMA,
+            ClockDistributionType.GAMMA,
 //            ClockDistributionType.CAUCHY,
             ClockDistributionType.EXPONENTIAL
     });

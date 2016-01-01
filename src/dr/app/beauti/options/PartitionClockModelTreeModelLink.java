@@ -106,8 +106,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createUpDownOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
-        createUpDownOperator("upDownUCGDMeanHeights", "UCGD scale and heights",
-                "Scales UCGD scale inversely to node heights of the tree", model.getParameter(ClockType.UCGD_SCALE),
+        createUpDownOperator("upDownUCGDMeanHeights", "UCGD mean and heights",
+                "Scales UCGD mean inversely to node heights of the tree", model.getParameter(ClockType.UCGD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
 
 

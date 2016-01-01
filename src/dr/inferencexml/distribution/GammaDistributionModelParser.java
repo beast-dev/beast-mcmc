@@ -26,31 +26,69 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
+import dr.xml.*;
 
-/**
- */
-public class GammaDistributionModelParser extends DistributionModelParser {
+public class GammaDistributionModelParser extends AbstractXMLObjectParser {
+
+    public static final String MEAN = "mean";
+    public static final String SHAPE = "shape";
+    public static final String SCALE = "scale";
+    public static final String RATE = "rate";
+    public static final String OFFSET = "offset";
 
     public String getParserName() {
         return GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL;
     }
 
-    ParametricDistributionModel parseDistributionModel(Parameter[] parameters, double offset) {
-        return new GammaDistributionModel(parameters[0], parameters[1]);
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        double offset = xo.getAttribute(OFFSET, 0.0);
+
+        XMLObject cxo = xo.getChild(SHAPE);
+        Parameter shapeParameter = (Parameter) cxo.getChild(Statistic.class);
+
+        Parameter parameter2;
+        GammaDistributionModel.GammaParameterizationType parameterization;
+
+        if (xo.hasChildNamed(SCALE)) {
+            parameter2 = (Parameter)xo.getElementFirstChild(SCALE);
+            parameterization = GammaDistributionModel.GammaParameterizationType.ShapeScale;
+        } else if (xo.hasChildNamed(RATE)) {
+            parameter2 = (Parameter)xo.getElementFirstChild(RATE);
+            parameterization = GammaDistributionModel.GammaParameterizationType.ShapeRate;
+        } else if (xo.hasChildNamed(MEAN)) {
+            parameter2 = (Parameter)xo.getElementFirstChild(MEAN);
+            parameterization = GammaDistributionModel.GammaParameterizationType.ShapeMean;
+        } else {
+            parameter2 = null;
+            parameterization = GammaDistributionModel.GammaParameterizationType.OneParameter;
+        }
+
+        return new GammaDistributionModel(parameterization, shapeParameter, parameter2, offset);
     }
 
-    public String[] getParameterNames() {
-        return new String[]{SHAPE, SCALE};
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
     }
+
+    private final XMLSyntaxRule[] rules = {
+            new ElementRule(SHAPE,
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, "Shape parameter"),
+            new XORRule( new ElementRule[] {
+                    new ElementRule(SCALE,  new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, "Scale parameter"),
+                    new ElementRule(RATE,  new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, "Rate parameter"),
+                    new ElementRule(MEAN,  new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, "Mean parameter") }, true),
+            AttributeRule.newDoubleRule(OFFSET, true)
+    };
 
     public String getParserDescription() {
-        return "A model of a gamma distribution.";
-    }
-
-    public boolean allowOffset() {
-        return false;
+        return "The gamma probability distribution.";
     }
 
     public Class getReturnType() {

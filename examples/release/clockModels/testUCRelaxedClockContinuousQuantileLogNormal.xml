@@ -182,33 +182,34 @@
 	</coalescentLikelihood>
 
 	<!-- The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )-->
-	<discretizedBranchRates id="branchRates">
+	<continuousBranchRates id="branchRates">
 		<treeModel idref="treeModel"/>
 		<distribution>
-			<gammaDistributionModel>
+			<logNormalDistributionModel meanInRealSpace="true">
 				<mean>
-					<parameter id="ucgd.mean" value="0.001" lower="0.0"/>
+					<parameter id="ucld.mean" value="1.0" lower="0.0"/>
 				</mean>
-				<shape>
-					<parameter id="ucgd.shape" value="0.3333333333333333" lower="0.0"/>
-				</shape>
-			</gammaDistributionModel>
+				<stdev>
+					<parameter id="ucld.stdev" value="0.3333333333333333" lower="0.0"/>
+				</stdev>
+			</logNormalDistributionModel>
 		</distribution>
-		<rateCategories>
-			<parameter id="branchRates.categories"/>
-		</rateCategories>
-	</discretizedBranchRates>
+		<rateCategoryQuantiles>
+			<parameter id="branchRates.quantiles" value="0.5" lower="0.0" upper="1.0"/>
+		</rateCategoryQuantiles>
+	</continuousBranchRates>
+	
 	<rateStatistic id="meanRate" name="meanRate" mode="mean" internal="true" external="true">
 		<treeModel idref="treeModel"/>
-		<discretizedBranchRates idref="branchRates"/>
+		<continuousBranchRates idref="branchRates"/>
 	</rateStatistic>
 	<rateStatistic id="coefficientOfVariation" name="coefficientOfVariation" mode="coefficientOfVariation" internal="true" external="true">
 		<treeModel idref="treeModel"/>
-		<discretizedBranchRates idref="branchRates"/>
+		<continuousBranchRates idref="branchRates"/>
 	</rateStatistic>
 	<rateCovarianceStatistic id="covariance" name="covariance">
 		<treeModel idref="treeModel"/>
-		<discretizedBranchRates idref="branchRates"/>
+		<continuousBranchRates idref="branchRates"/>
 	</rateCovarianceStatistic>
 
 	<!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
@@ -249,10 +250,10 @@
 			<parameter idref="frequencies"/>
 		</deltaExchange>
 		<scaleOperator scaleFactor="0.75" weight="30">
-			<parameter idref="ucgd.mean"/>
+			<parameter idref="ucld.mean"/>
 		</scaleOperator>
 		<scaleOperator scaleFactor="0.75" weight="30">
-			<parameter idref="ucgd.shape"/>
+			<parameter idref="ucld.stdev"/>
 		</scaleOperator>
 		<subtreeSlide size="38.0" gaussian="true" weight="150">
 			<treeModel idref="treeModel"/>
@@ -277,22 +278,19 @@
 		</scaleOperator>
 		<upDownOperator scaleFactor="0.75" weight="30">
 			<up>
-				<parameter idref="ucgd.mean"/>
+				<parameter idref="ucld.mean"/>
 			</up>
 			<down>
 				<parameter idref="treeModel.allInternalNodeHeights"/>
 			</down>
 		</upDownOperator>
-		<swapOperator size="1" weight="100" autoOptimize="false">
-			<parameter idref="branchRates.categories"/>
-		</swapOperator>
-		<uniformIntegerOperator weight="100">
-			<parameter idref="branchRates.categories"/>
-		</uniformIntegerOperator>
+		<uniformOperator weight="300" lower="0.0" upper="1.0">
+			<parameter idref="branchRates.quantiles"/>
+		</uniformOperator>
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testUCRelaxedClockGamma.ops">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true" operatorAnalysis="testUCRelaxedClockContinuousQuantileLogNormal.ops">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -301,12 +299,12 @@
 				<uniformPrior lower="0.0" upper="1.0">
 					<parameter idref="frequencies"/>
 				</uniformPrior>
-				<inverseGammaPrior shape="1.0" scale="5.0">
-					<parameter idref="ucgd.shape"/>
-				</inverseGammaPrior>
+				<exponentialPrior mean="0.3333333333333333" offset="0.0">
+					<parameter idref="ucld.stdev"/>
+				</exponentialPrior>
 				<ctmcScalePrior>
 					<ctmcScale>
-						<parameter idref="ucgd.mean"/>
+						<parameter idref="ucld.mean"/>
 					</ctmcScale>
 					<treeModel idref="treeModel"/>
 				</ctmcScalePrior>
@@ -317,7 +315,7 @@
 			</prior>
 			<likelihood id="likelihood">
 				<treeLikelihood idref="treeLikelihood"/>
-				<discretizedBranchRates idref="branchRates"/>
+				<continuousBranchRates idref="branchRates"/>
 			</likelihood>
 		</posterior>
 		<operators idref="operators"/>
@@ -336,13 +334,13 @@
 			<column label="rootHeight" sf="6" width="12">
 				<parameter idref="treeModel.rootHeight"/>
 			</column>
-			<column label="ucgd.mean" sf="6" width="12">
-				<parameter idref="ucgd.mean"/>
+			<column label="ucld.mean" sf="6" width="12">
+				<parameter idref="ucld.mean"/>
 			</column>
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="testUCRelaxedClockGamma.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testUCRelaxedClockContinuousQuantileLogNormal.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -350,21 +348,21 @@
 			<parameter idref="constant.popSize"/>
 			<parameter idref="kappa"/>
 			<parameter idref="frequencies"/>
-			<parameter idref="ucgd.mean"/>
-			<parameter idref="ucgd.shape"/>
+			<parameter idref="ucld.mean"/>
+			<parameter idref="ucld.stdev"/>
 			<rateStatistic idref="meanRate"/>
 			<rateStatistic idref="coefficientOfVariation"/>
 			<rateCovarianceStatistic idref="covariance"/>
 			<treeLikelihood idref="treeLikelihood"/>
-			<discretizedBranchRates idref="branchRates"/>
+			<continuousBranchRates idref="branchRates"/>
 			<coalescentLikelihood idref="coalescent"/>
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testUCRelaxedClockGamma.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testUCRelaxedClockContinuousQuantileLogNormal.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<trait name="rate" tag="rate">
-				<discretizedBranchRates idref="branchRates"/>
+				<continuousBranchRates idref="branchRates"/>
 			</trait>
 			<posterior idref="posterior"/>
 		</logTree>

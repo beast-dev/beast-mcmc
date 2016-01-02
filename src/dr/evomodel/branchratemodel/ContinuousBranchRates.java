@@ -32,6 +32,7 @@ import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.ContinuousBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.*;
+import dr.math.MathUtils;
 
 /**
  *
@@ -89,6 +90,8 @@ public class ContinuousBranchRates extends AbstractBranchRateModel {
         Parameter.DefaultBounds bound = new Parameter.DefaultBounds(1.0, 0.0, rateCategoryQuantilesParameter.getDimension());
         rateCategoryQuantilesParameter.addBounds(bound);
 
+        randomizeRates();
+
         addModel(model);
         addModel(rateCategoryQuantiles);
 
@@ -144,7 +147,22 @@ public class ContinuousBranchRates extends AbstractBranchRateModel {
     /**
      * Calculates the actual rates corresponding to the quantiles.
      */
-    protected void computeRates() {
+    private void randomizeRates() {
+
+        for (int i = 0; i < treeModel.getNodeCount(); i++) {
+            if (!treeModel.isRoot(treeModel.getNode(i))) {
+                double r = MathUtils.nextDouble();
+                rateCategoryQuantiles.setNodeValue(treeModel, treeModel.getNode(i), r);
+            }
+        }
+
+        updateRates = false;
+    }
+
+    /**
+     * Calculates the actual rates corresponding to the quantiles.
+     */
+    private void computeRates() {
 
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             if (!treeModel.isRoot(treeModel.getNode(i))) {

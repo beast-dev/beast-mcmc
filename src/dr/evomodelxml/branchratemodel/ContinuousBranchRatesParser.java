@@ -41,6 +41,7 @@ public class ContinuousBranchRatesParser extends AbstractXMLObjectParser {
     public static final String CONTINUOUS_BRANCH_RATES = "continuousBranchRates";
     public static final String DISTRIBUTION = "distribution";
     public static final String RATE_CATEGORY_QUANTILES = "rateCategoryQuantiles";
+    public static final String RATE_QUANTILES = "rateQuantiles";
     public static final String SINGLE_ROOT_RATE = "singleRootRate";
     public static final String NORMALIZE = "normalize";
     public static final String NORMALIZE_BRANCH_RATE_TO = "normalizeBranchRateTo";
@@ -58,11 +59,16 @@ public class ContinuousBranchRatesParser extends AbstractXMLObjectParser {
         TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
 
-        Parameter rateCategoryQuantilesParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORY_QUANTILES);
+        Parameter rateQuantilesParameter;
+        if (xo.hasChildNamed(RATE_QUANTILES)) {
+            rateQuantilesParameter = (Parameter) xo.getElementFirstChild(RATE_QUANTILES);
+        } else {
+            rateQuantilesParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORY_QUANTILES);
+        }
 
         Logger.getLogger("dr.evomodel").info("Using continuous relaxed clock model.");
         Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
-        Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryQuantilesParameter.getDimension());
+        Logger.getLogger("dr.evomodel").info("   rate categories = " + rateQuantilesParameter.getDimension());
         if(normalize) {
             Logger.getLogger("dr.evomodel").info("   mean rate is normalized to " + normalizeBranchRateTo);
         }
@@ -71,7 +77,7 @@ public class ContinuousBranchRatesParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
         }
 
-        return new ContinuousBranchRates(tree, rateCategoryQuantilesParameter, distributionModel, normalize, normalizeBranchRateTo);
+        return new ContinuousBranchRates(tree, rateQuantilesParameter, distributionModel, normalize, normalizeBranchRateTo);
     }
 
     //************************************************************************
@@ -97,6 +103,9 @@ public class ContinuousBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(NORMALIZE_BRANCH_RATE_TO, true, "The mean rate to normalize to, if normalizing"),
             new ElementRule(TreeModel.class),
             new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
-            new ElementRule(RATE_CATEGORY_QUANTILES, Parameter.class, "The quantiles for", false),
+            new XORRule(
+                    new ElementRule(RATE_QUANTILES, Parameter.class, "The quantiles for each branch", false),
+                    new ElementRule(RATE_CATEGORY_QUANTILES, Parameter.class, "The quantiles for each branch", false)
+            )
     };
 }

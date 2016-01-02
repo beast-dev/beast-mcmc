@@ -84,7 +84,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
         }
 
-        final boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
+        final boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, true);
         final boolean keepRates = xo.getAttribute(KEEP_RATES, false);
 
         if (randomizeRates && keepRates) {

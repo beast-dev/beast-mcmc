@@ -26,6 +26,8 @@
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
+import dr.app.beauti.generator.ComponentGenerator;
+import dr.app.beauti.generator.TreePriorGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -74,6 +76,8 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
         switch (point) {
             case AFTER_MCMC:
                 return true;
+            case IN_FILE_LOG_PARAMETERS:
+                return options.logCoalescentEventsStatistic;
         }
         return false;
     }
@@ -90,6 +94,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             case AFTER_MCMC:
                 writeMLE(writer, component);
                 break;
+            case IN_FILE_LOG_PARAMETERS:
+                if (options.logCoalescentEventsStatistic) {
+                    writeCoalescentEventsStatistic(writer);
+                }
+            break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
         }
@@ -812,6 +821,26 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
         }
 
     }
+
+    private void writeCoalescentEventsStatistic(XMLWriter writer) {
+            writer.writeOpenTag("coalescentEventsStatistic");
+            // coalescentLikelihood
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                PartitionTreePrior prior = model.getPartitionTreePrior();
+                TreePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+                writer.writeText("");
+            }
+
+            /*for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
+                    writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+                } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+                    writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
+                }
+            }*/
+            writer.writeCloseTag("coalescentEventsStatistic");
+    }
+
 
     private void writeParameterIdref(XMLWriter writer, Parameter parameter) {
         if (parameter.isStatistic) {

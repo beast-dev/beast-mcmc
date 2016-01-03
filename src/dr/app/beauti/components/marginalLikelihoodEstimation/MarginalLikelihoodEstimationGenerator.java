@@ -55,7 +55,7 @@ import java.util.List;
  */
 public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerator {
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     private BeautiOptions beautiOptions = null;
 

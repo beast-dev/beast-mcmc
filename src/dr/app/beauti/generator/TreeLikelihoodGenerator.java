@@ -177,34 +177,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
 
-        switch (clockModel.getClockType()) {
-            case STRICT_CLOCK:
-                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-            case UNCORRELATED:
-                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-            case RANDOM_LOCAL_CLOCK:
-                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, clockModel.getPrefix()
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-            case FIXED_LOCAL_CLOCK:
-                writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, clockModel.getPrefix()
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-
-
-            case AUTOCORRELATED:
-                throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
-//            	writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
-//                        + BranchRateModel.BRANCH_RATES);
-//                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown clock model");
-        }
+        BranchRatesModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, prefix, writer);
 

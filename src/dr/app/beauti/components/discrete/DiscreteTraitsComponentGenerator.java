@@ -28,6 +28,8 @@ package dr.app.beauti.components.discrete;
 import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
+import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.generator.BranchRatesModelGenerator;
 import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
@@ -402,27 +404,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
         writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getName() + "." + AbstractSubstitutionModel.MODEL);
 
-        switch (clockModel.getClockType()) {
-            case STRICT_CLOCK:
-                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
-                        clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
-                break;
-            case UNCORRELATED:
-                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
-                        clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
-                break;
-            case RANDOM_LOCAL_CLOCK:
-                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
-                        clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
-                break;
-            case AUTOCORRELATED:
-                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
-                        clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown clock model");
-        }
+        BranchRatesModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
         if (substModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             int stateCount = options.getStatesForDiscreteModel(substModel).size();

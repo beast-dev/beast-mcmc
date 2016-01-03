@@ -35,10 +35,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.LocalClockModelParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -581,7 +578,6 @@ public class LogGenerator extends Generator {
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-                // assume the first clock model is the one... (not sure if this makes sense)
                 PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
                 String tag = "";
                 String id = "";
@@ -593,7 +589,9 @@ public class LogGenerator extends Generator {
                         break;
 
                     case UNCORRELATED:
-                        tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                        tag = model.isContinuousQuantile() ?
+                                ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                                DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
                         id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
 
@@ -635,7 +633,9 @@ public class LogGenerator extends Generator {
                     break;
 
                 case UNCORRELATED:
-                    writeTreeTrait(writer, DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                    writeTreeTrait(writer, model.isContinuousQuantile() ?
+                                    ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                                    DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                             options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
                     break;

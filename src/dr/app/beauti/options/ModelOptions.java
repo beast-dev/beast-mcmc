@@ -67,6 +67,11 @@ public class ModelOptions implements Serializable {
         return new Parameter.Builder(name, description).initial(initial).isFixed(true).build(parameters);
     }
 
+    public Parameter createZeroOneParameter(String name, String description, double initial) {
+        return new Parameter.Builder(name, description)
+                .initial(initial).isZeroOne(true).build(parameters);
+    }
+
     public Parameter createZeroOneParameterUniformPrior(String name, String description, double initial) {
         return new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
                 .initial(initial).isZeroOne(true).build(parameters);

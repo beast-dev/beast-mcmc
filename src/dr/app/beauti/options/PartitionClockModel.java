@@ -43,6 +43,8 @@ public class PartitionClockModel extends PartitionOptions {
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
+    private boolean continuousQuantile = false;
+
     private double rate; // move to initModelParametersAndOpererators() to initial
 
     private ClockModelGroup clockModelGroup = null;
@@ -399,6 +401,14 @@ public class PartitionClockModel extends PartitionOptions {
 
     public void setClockDistributionType(final ClockDistributionType clockDistributionType) {
         this.clockDistributionType = clockDistributionType;
+    }
+
+    public boolean isContinuousQuantile() {
+        return continuousQuantile;
+    }
+
+    public void setContinuousQuantile(boolean continuousQuantile) {
+        this.continuousQuantile = continuousQuantile;
     }
 
     // important to set all clock rate rateParam.isFixed same, which keeps isEstimatedRate() correct when change clock type

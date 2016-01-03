@@ -53,6 +53,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
 //            ClockDistributionType.CAUCHY,
             ClockDistributionType.EXPONENTIAL
     });
+    private JCheckBox continuousQuantileCheck = new JCheckBox("Use continuous quantile parameterization.");
 
     protected final PartitionClockModel model;
 
@@ -77,12 +78,24 @@ public class PartitionClockModelPanel extends OptionsPanel {
         clockDistributionCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 model.setClockDistributionType((ClockDistributionType) clockDistributionCombo.getSelectedItem());
-                setupPanel();
             }
         });
         clockDistributionCombo.setToolTipText("<html>Select the distribution that describes the variation in rate.</html>");
 
         clockDistributionCombo.setSelectedItem(model.getClockDistributionType());
+
+        PanelUtils.setupComponent(continuousQuantileCheck);
+        continuousQuantileCheck.setToolTipText("<html>" +
+                "Select this option to use the continuous quantile form of the relaxed<br>" +
+                "clock model described by Li & Drummond (2012) MBE 29:751-61 instead of<br>" +
+                "the discretized categorical form.<html>");
+        continuousQuantileCheck.setSelected(model.isContinuousQuantile());
+        continuousQuantileCheck.addItemListener(
+                new ItemListener() {
+                    public void itemStateChanged(ItemEvent ev) {
+                        model.setContinuousQuantile(continuousQuantileCheck.isSelected());
+                    }
+                });
 
         setupPanel();
         setOpaque(false);
@@ -101,6 +114,14 @@ public class PartitionClockModelPanel extends OptionsPanel {
                 break;
 
             case UNCORRELATED:
+                addComponent(new JLabel(
+                        "<html>" +
+                                "Using the uncorrelated relaxed clock model of Drummond, Ho, Phillips & <br>" +
+                                "Rambaut (2006) PLoS Biology 4, e88.<html>"));
+                addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
+                addComponent(continuousQuantileCheck);
+                break;
+
             case AUTOCORRELATED:
                 addComponentWithLabel("Relaxed Distribution:", clockDistributionCombo);
                 break;

@@ -32,13 +32,11 @@ import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.ContinuousBranchRates;
 import dr.evomodel.branchratemodel.LocalClockModel;
 import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.LocalClockModelParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.tree.RateCovarianceStatisticParser;
 import dr.evomodelxml.tree.RateStatisticParser;
@@ -119,6 +117,13 @@ public class BranchRatesModelGenerator extends Generator {
             case UNCORRELATED:
                 writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )");
 
+                String branchRateElementName = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+
+                if (model.isContinuousQuantile()) {
+                    writer.writeComment("  Continuous quantile implementation (Li & Drummond (2012) Mol Biol Evol 29:751-61)");
+                    branchRateElementName = ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES;
+                }
+
                 for (PartitionTreeModel tree : activeTrees) {
                     treePrefix = tree.getPrefix();
 
@@ -137,7 +142,7 @@ public class BranchRatesModelGenerator extends Generator {
                     attributes = new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix)
                             + BranchRateModel.BRANCH_RATES)};
                     //}
-                    writer.writeOpenTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, attributes);
+                    writer.writeOpenTag(branchRateElementName, attributes);
                     // tree
                     writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 
@@ -190,23 +195,19 @@ public class BranchRatesModelGenerator extends Generator {
 
                     writer.writeCloseTag("distribution");
 
-                    writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                    // AR - this parameter will now set its dimension automatically when BEAST is run
-//                    if (!options.hasIdenticalTaxa()) {
-//                        for (AbstractPartitionData dataPartition : options.dataPartitions) {
-//                            if (dataPartition.getPartitionClockModel().equals(model)) {
-//                                categoryCount = (dataPartition.getTaxonCount() - 1) * 2;
-//                            }
-//                        }
-//                    } else {
-//                        categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
-//                    }
-//                    writeParameter(clockTree.getParameter("branchRates.categories"), categoryCount, writer);
-                    writeParameter(clockTree.getParameter("branchRates.categories"), -1, writer);
-                    writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                    writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
+                    if (model.isContinuousQuantile()) {
+                        writer.writeOpenTag(ContinuousBranchRatesParser.RATE_QUANTILES);
+                        writeParameter(clockTree.getParameter("branchRates.quantiles"), -1, writer);
+                        writer.writeCloseTag(ContinuousBranchRatesParser.RATE_QUANTILES);
+                        writer.writeCloseTag(branchRateElementName);
+                    } else {
+                        writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
+                        writeParameter(clockTree.getParameter("branchRates.categories"), -1, writer);
+                        writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
+                        writer.writeCloseTag(branchRateElementName);
+                    }
 
-                    writer.writeText("");
+                      writer.writeText("");
                     writer.writeOpenTag(
                             RateStatisticParser.RATE_STATISTIC,
                             new Attribute[]{
@@ -218,7 +219,7 @@ public class BranchRatesModelGenerator extends Generator {
                             }
                     );
                     writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix)
+                    writer.writeIDref(branchRateElementName, options.noDuplicatedPrefix(modelPrefix, treePrefix)
                             + BranchRateModel.BRANCH_RATES);
                     writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
 
@@ -234,7 +235,7 @@ public class BranchRatesModelGenerator extends Generator {
                             }
                     );
                     writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix)
+                    writer.writeIDref(branchRateElementName, options.noDuplicatedPrefix(modelPrefix, treePrefix)
                             + BranchRateModel.BRANCH_RATES);
                     writer.writeCloseTag(RateStatisticParser.RATE_STATISTIC);
 
@@ -247,7 +248,7 @@ public class BranchRatesModelGenerator extends Generator {
                             }
                     );
                     writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-                    writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
+                    writer.writeIDref(branchRateElementName, options.noDuplicatedPrefix(modelPrefix, treePrefix) + BranchRateModel.BRANCH_RATES);
                     writer.writeCloseTag(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC);
                 }
 
@@ -550,7 +551,7 @@ public class BranchRatesModelGenerator extends Generator {
      * @param model  PartitionClockModel
      * @param writer the writer
      */
-    public void writeBranchRatesModelRef(PartitionClockModel model, XMLWriter writer) {
+    public static void writeBranchRatesModelRef(PartitionClockModel model, XMLWriter writer) {
         String tag = "";
         String id = "";
 
@@ -561,7 +562,9 @@ public class BranchRatesModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                tag = model.isContinuousQuantile() ?
+                        ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                        DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
                 id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                 break;
 

@@ -48,6 +48,7 @@ import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;

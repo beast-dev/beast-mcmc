@@ -25,8 +25,10 @@
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.generator.ComponentGenerator;
+import dr.app.beauti.generator.Generator;
 import dr.app.beauti.generator.TreePriorGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
@@ -48,6 +50,7 @@ import dr.util.Attribute;
 import dr.xml.XMLParser;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -64,6 +67,38 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
     MarginalLikelihoodEstimationGenerator(final BeautiOptions options) {
         super(options);
         this.beautiOptions = options;
+    }
+
+    @Override
+    public void checkOptions() throws GeneratorException {
+        MarginalLikelihoodEstimationOptions mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+
+        //++++++++++++++++ Improper priors ++++++++++++++++++
+        if (mleOptions.performMLE) {
+            for (Parameter param : options.selectParameters()) {
+                if (param.isPriorImproper() || (param.priorType == PriorType.ONE_OVER_X_PRIOR && !param.getBaseName().contains("popSize"))) {
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\nhas an improper prior and will not sample correctly when estimating " +
+                            "the marginal likelihood. " +
+                            "\nPlease check the Prior panel.", BeautiFrame.PRIORS);
+                }
+            }
+        }
+
+        //++++++++++++++++ Coalescent Events available for GSS ++++++++++++++++++
+        if (mleOptions.performMLEGSS) {
+            EnumSet<TreePriorType> allowedTypes = EnumSet.of(
+                    TreePriorType.CONSTANT, TreePriorType.EXPONENTIAL, TreePriorType.LOGISTIC, TreePriorType.EXPANSION, TreePriorType.SKYGRID, TreePriorType.GMRF_SKYRIDE
+            );
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                PartitionTreePrior prior = model.getPartitionTreePrior();
+                if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
+                    throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
+                            "on standard parameteric coalescent tree priors and the Skyride and Skygrid models. " +
+                            "\nPlease check the Trees panel.", BeautiFrame.TREES);
+                }
+            }
+        }
     }
 
     public boolean usesInsertionPoint(final InsertionPoint point) {
@@ -786,8 +821,6 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             }
 
             //TODO: take care of anything else I missed
-
-
 
             if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
                 writer.writeIDref("productOfExponentialsPosteriorMeansLoess", "exponentials");

@@ -294,6 +294,7 @@ public class MCMCPanel extends BeautiPanel {
                     updateMLEFileNameStem();
                 } else {
                     mleOptions.performMLE = false;
+                    mleOptions.performMLEGSS = false;
                     mleOptions.printOperatorAnalysis = false;
                     options.logCoalescentEventsStatistic = false;
                     buttonMLE.setEnabled(false);

@@ -468,6 +468,11 @@ public class Patterns implements PatternList {
         return PatternList.Utils.empiricalStateFrequencies(this);
     }
 
+    @Override
+    public boolean areUnique() {
+        return true;
+    }
+
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************

@@ -34,6 +34,7 @@
 package dr.app.beauti;
 
 import dr.app.beauti.ancestralStatesPanel.AncestralStatesPanel;
+import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
@@ -47,6 +48,7 @@ import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
@@ -122,7 +124,7 @@ public class BeautiFrame extends DocumentFrame {
     private SpeciesSetPanel speciesSetPanel;
     private SiteModelsPanel siteModelsPanel;
     private AncestralStatesPanel ancestralStatesPanel;
-    private OldClockModelsPanel clockModelsPanel;
+    private ClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
@@ -186,7 +188,8 @@ public class BeautiFrame extends DocumentFrame {
         speciesSetPanel = new SpeciesSetPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         ancestralStatesPanel = new AncestralStatesPanel(this);
-        clockModelsPanel = new OldClockModelsPanel(this);
+        clockModelsPanel = new ClockModelsPanel(this);
+//        clockModelsPanel = new OldClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
@@ -784,7 +787,7 @@ public class BeautiFrame extends DocumentFrame {
      * @param title
      * @return
      */
-    private File[] selectImportFiles(final String title, boolean multipleSelection, FileNameExtensionFilter[] fileNameExtensionFilters) {
+    public File[] selectImportFiles(final String title, boolean multipleSelection, FileNameExtensionFilter[] fileNameExtensionFilters) {
         if (Boolean.parseBoolean(System.getProperty("use.native.choosers", Boolean.toString(OSType.isMac())))) {
             FileDialog importDialog = fileDialogs.get(title);
             if (importDialog == null) {

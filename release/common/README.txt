@@ -1,4 +1,4 @@
-                    BEAST v1.8.2 2002-2015
+                    BEAST v1.8.3 2002-2016
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 5th March 2015
+Last updated: a.rambaut@ed.ac.uk - 3rd January 2016
 
 Contents:
 1) INTRODUCTION
@@ -129,6 +129,7 @@ BEAST arguments:
      -errors         "Specify maximum number of numerical errors before stopping"
      -threads        "The number of computational threads to use (default auto)"
      -java           "Use Java only, no native implementations"
+     -threshold      "Full evaluation test threshold (default 0.1)"
      -beagle         "Use BEAGLE library if available (default on)"
      -beagle_off     "Don't use BEAGLE library"
      -beagle_info          "BEAGLE: show information on available resources"
@@ -137,10 +138,23 @@ BEAST arguments:
      -beagle_CPU           "BEAGLE: use CPU instance"
      -beagle_GPU           "BEAGLE: use GPU instance if available"
      -beagle_SSE           "BEAGLE: use SSE extensions if available"
+     -beagle_SSE_off       "BEAGLE: turn off use of SSE extensions"
+     -beagle_cuda          "BEAGLE: use CUDA parallization if available"
+     -beagle_opencl        "BEAGLE: use OpenCL parallization if available"
      -beagle_single        "BEAGLE: use single precision if available"
      -beagle_double        "BEAGLE: use double precision if available"
+     -beagle_async         "BEAGLE: use asynchronous kernels if available"
      -beagle_scaling       "BEAGLE: specify scaling scheme to use"
-     -help"          "Print this information and stop"
+     -beagle_rescale       "BEAGLE: frequency of rescaling (dynamic scaling only)"
+     -mc3_chains    "number of chains"
+     -mc3_delta     "temperature increment parameter"
+     -mc3_temperatures     "a comma-separated list of the hot chain temperatures"
+     -mc3_swap      "frequency at which chains temperatures will be swapped"
+     -load_dump     "Specify a filename to load a dumped state from"
+     -dump_state    "Specify a state at which to write a dump file"
+     -dump_every    "Specify a frequency to write a dump file"
+     -version       "Print the version and credits and stop"
+     -help"         "Print this information and stop"
 
 For example:
 
@@ -206,7 +220,7 @@ The website for beast is here:
 
 Source code distributed under the GNU Lesser General Public License:
 
-<http://code.google.com/p/beast-mcmc/>
+<https://github.com/beast-dev/beast-mcmc/>
 
 ___________________________________________________________________________
 8) ACKNOWLEDGMENTS

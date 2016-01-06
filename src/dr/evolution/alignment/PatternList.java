@@ -93,6 +93,12 @@ public interface PatternList extends TaxonList, Identifiable {
     double[] getStateFrequencies();
 
     /**
+     * Are the patterns only the unique ones (i.e., compressed)?
+     * @return are unique?
+     */
+    boolean areUnique();
+
+    /**
      * Helper routines for pattern lists.
      */
     public static class Utils {

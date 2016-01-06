@@ -46,8 +46,8 @@ import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.ParameterParser;
+import dr.inference.operators.OperatorSchedule;
 import dr.inference.operators.RateBitExchangeOperator;
-import dr.inference.operators.SimpleOperatorSchedule;
 import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;
@@ -95,7 +95,9 @@ public class OperatorsGenerator extends Generator {
         operatorAttributes = new Attribute[] {
                 new Attribute.Default<String>(XMLParser.ID, "operators"),
                 new Attribute.Default<String>(SimpleOperatorScheduleParser.OPTIMIZATION_SCHEDULE,
-                        (shouldLogCool ? SimpleOperatorSchedule.LOG_STRING : SimpleOperatorSchedule.DEFAULT_STRING))
+                        (shouldLogCool ?
+                                OperatorSchedule.OptimizationTransform.LOG.toString() :
+                                OperatorSchedule.OptimizationTransform.DEFAULT.toString()))
         };
 
         writer.writeComment("Define operators");
@@ -184,6 +186,9 @@ public class OperatorsGenerator extends Generator {
                 break;
             case INTEGER_UNIFORM:
                 writeIntegerUniformOperator(operator, writer);
+                break;
+            case SUBTREE_LEAP:
+                writeSubtreeLeapOperator(operator, writer);
                 break;
             case SUBTREE_SLIDE:
                 writeSubtreeSlideOperator(operator, writer);
@@ -348,7 +353,7 @@ public class OperatorsGenerator extends Generator {
 
         if (operator.getBaseName().startsWith(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
 
-            int[] parameterWeights = ((PartitionSubstitutionModel) operator.parameter1.getOptions()).getPartitionCodonWeights();
+            int[] parameterWeights = operator.parameter1.getParameterDimensionWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];
@@ -560,6 +565,17 @@ public class OperatorsGenerator extends Generator {
         writeParameter2Ref(writer, operator);
         writer.writeCloseTag(ScaleOperatorParser.INDICATORS);
         writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
+    }
+
+    private void writeSubtreeLeapOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(SubtreeLeapOperatorParser.SUBTREE_LEAP,
+                new Attribute[]{
+                        new Attribute.Default<Double>("size", operator.tuning),
+                        getWeightAttribute(operator.weight)
+                }
+        );
+        writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+        writer.writeCloseTag(SubtreeLeapOperatorParser.SUBTREE_LEAP);
     }
 
     private void writeSubtreeSlideOperator(Operator operator, XMLWriter writer) {

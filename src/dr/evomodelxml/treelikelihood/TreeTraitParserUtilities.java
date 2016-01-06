@@ -26,10 +26,7 @@
 package dr.evomodelxml.treelikelihood;
 
 import dr.evolution.tree.MultivariateTraitTree;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
-import dr.inference.model.ParameterParser;
+import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.xml.*;
 
@@ -258,7 +255,7 @@ public class TreeTraitParserUtilities {
         List<Integer> missingIndices = null;
 
         boolean isMatrixParameter = false;
-        if (parameter instanceof MatrixParameter) {
+        if (parameter instanceof MatrixParameter || parameter instanceof FastMatrixParameter) {
             traitParameter = (CompoundParameter) parameter;
             isMatrixParameter = true;
         } else

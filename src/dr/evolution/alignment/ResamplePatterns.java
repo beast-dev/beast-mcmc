@@ -140,7 +140,12 @@ public abstract class ResamplePatterns implements PatternList, dr.util.XHTMLable
 		return PatternList.Utils.empiricalStateFrequencies(this);
 	}
 
-   // **************************************************************
+	@Override
+	public boolean areUnique() {
+		return patterns.areUnique();
+	}
+
+	// **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************
 

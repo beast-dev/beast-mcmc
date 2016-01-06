@@ -37,6 +37,7 @@ public abstract class DistributionModelParser extends AbstractXMLObjectParser {
     public static final String MEAN = "mean";
     public static final String SHAPE = "shape";
     public static final String SCALE = "scale";
+    public static final String RATE = "rate";
 
     /**
      * @param parameters an array of the parsed parameters, in order of the getParameterNames() array.

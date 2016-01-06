@@ -455,6 +455,11 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return PatternList.Utils.empiricalStateFrequencies(this);
     }
 
+    @Override
+    public boolean areUnique() {
+        return false;
+    }
+
     public void setReportCountStatistics(boolean report) {
         countStatistics = report;
     }

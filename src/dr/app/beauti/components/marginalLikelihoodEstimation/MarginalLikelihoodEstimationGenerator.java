@@ -25,7 +25,11 @@
 
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.generator.BaseComponentGenerator;
+import dr.app.beauti.generator.ComponentGenerator;
+import dr.app.beauti.generator.Generator;
+import dr.app.beauti.generator.TreePriorGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -46,6 +50,7 @@ import dr.util.Attribute;
 import dr.xml.XMLParser;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -55,13 +60,51 @@ import java.util.List;
  */
 public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerator {
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     private BeautiOptions beautiOptions = null;
 
     MarginalLikelihoodEstimationGenerator(final BeautiOptions options) {
         super(options);
         this.beautiOptions = options;
+    }
+
+    @Override
+    public void checkOptions() throws GeneratorException {
+        MarginalLikelihoodEstimationOptions mleOptions = (MarginalLikelihoodEstimationOptions)options.getComponentOptions(MarginalLikelihoodEstimationOptions.class);
+
+        //++++++++++++++++ Improper priors ++++++++++++++++++
+        if (mleOptions.performMLE) {
+            for (Parameter param : options.selectParameters()) {
+                if (param.isPriorImproper() || (param.priorType == PriorType.ONE_OVER_X_PRIOR && !param.getBaseName().contains("popSize"))) {
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\nhas an improper prior and will not sample correctly when estimating " +
+                            "the marginal likelihood. " +
+                            "\nPlease check the Prior panel.", BeautiFrame.PRIORS);
+                }
+            }
+        }
+
+        //++++++++++++++++ Coalescent Events available for GSS ++++++++++++++++++
+        if (mleOptions.performMLEGSS) {
+            EnumSet<TreePriorType> allowedTypes = EnumSet.of(
+                    TreePriorType.CONSTANT, TreePriorType.EXPONENTIAL, TreePriorType.LOGISTIC, TreePriorType.EXPANSION, TreePriorType.SKYGRID, TreePriorType.GMRF_SKYRIDE
+            );
+            EnumSet<TreePriorType> allowedMCMTypes = EnumSet.of(TreePriorType.CONSTANT, TreePriorType.EXPONENTIAL, TreePriorType.LOGISTIC, TreePriorType.EXPANSION);
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                PartitionTreePrior prior = model.getPartitionTreePrior();
+                if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
+                    throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
+                            "on standard parameteric coalescent tree priors and the Skyride and Skygrid models. " +
+                            "\nPlease check the Trees panel.", BeautiFrame.TREES);
+                }
+                if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {
+                    throw new GeneratorException("A Matching Coalescent Model cannot be constructed for\n" +
+                            "the Skyride and Skygrid models. Please check the Marginal Likelihood\n" +
+                            "Estimation settings via the MCMC panel.");
+                }
+            }
+        }
     }
 
     public boolean usesInsertionPoint(final InsertionPoint point) {
@@ -74,6 +117,8 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
         switch (point) {
             case AFTER_MCMC:
                 return true;
+            case IN_FILE_LOG_PARAMETERS:
+                return options.logCoalescentEventsStatistic;
         }
         return false;
     }
@@ -90,6 +135,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             case AFTER_MCMC:
                 writeMLE(writer, component);
                 break;
+            case IN_FILE_LOG_PARAMETERS:
+                if (options.logCoalescentEventsStatistic) {
+                    writeCoalescentEventsStatistic(writer);
+                }
+            break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
         }
@@ -179,12 +229,12 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 List<Attribute> attributes = new ArrayList<Attribute>();
                 attributes.add(new Attribute.Default<String>(XMLParser.ID, "exponentials"));
                 attributes.add(new Attribute.Default<String>("fileName", beautiOptions.logFileName));
-                attributes.add(new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10));
+                attributes.add(new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10)));
                 attributes.add(new Attribute.Default<String>("parameterColumn", "coalescentEventsStatistic"));
                 attributes.add(new Attribute.Default<String>("dimension", "" + (beautiOptions.taxonList.getTaxonCount()-1)));
 
                 writer.writeOpenTag(TreeWorkingPriorParsers.PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS, attributes);
-                writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.ID, TreeModel.TREE_MODEL), true);
+                writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
                 writer.writeCloseTag(TreeWorkingPriorParsers.PRODUCT_OF_EXPONENTIALS_POSTERIOR_MEANS_LOESS);
 
             } else {
@@ -403,7 +453,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                 new Attribute[]{
                                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                         new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "kappa"),
-                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                                 });
                                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa");
                                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -413,7 +463,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix() + "kappa"),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa");
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -427,7 +477,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                 new Attribute[]{
                                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                         new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "kappa1"),
-                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                                 });
                                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa1");
                                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -435,7 +485,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                 new Attribute[]{
                                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                         new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "kappa2"),
-                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                                 });
                                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "kappa2");
                                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -445,7 +495,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix() + "kappa1"),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa1");
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -453,7 +503,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix() + "kappa2"),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa2");
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -468,7 +518,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                     new Attribute[]{
                                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                             new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + rateName),
-                                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                                     });
                                             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + rateName);
                                             writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -480,7 +530,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                 new Attribute[]{
                                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                         new Attribute.Default<String>("parameterColumn", model.getPrefix() + rateName),
-                                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                                 });
                                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -498,7 +548,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "frequencies"),
                                                     new Attribute.Default<Integer>("dimension", 4),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "frequencies");
                                     writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -509,7 +559,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                                 new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                 new Attribute.Default<String>("parameterColumn", model.getPrefix() + "frequencies"),
                                                 new Attribute.Default<Integer>("dimension", 4),
-                                                new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                         });
                                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "frequencies");
                                 writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -529,7 +579,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "alpha"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "alpha");
                             writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -539,7 +589,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", model.getPrefix() + "alpha"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "alpha");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -553,7 +603,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "pInv"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "pInv");
                             writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -563,7 +613,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", model.getPrefix() + "pInv"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "pInv");
                         writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -579,7 +629,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", model.getPrefix() + "clock.rate"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -593,7 +643,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -601,7 +651,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_STDEV),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -610,7 +660,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_MEAN),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
                                     writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
@@ -618,7 +668,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                     new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCLD_STDEV),
-                                                    new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                    new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -630,7 +680,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                         new Attribute[]{
                                                 new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                                 new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCED_MEAN),
-                                                new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                                new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                         });
                                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
                                 writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -654,7 +704,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", "constant.popSize"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, "constant.popSize");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -665,7 +715,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", "exponential.popSize"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, "exponential.popSize");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -675,7 +725,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", "exponential.growthRate"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, "exponential.growthRate");
                             writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
@@ -684,7 +734,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", "exponential.doublingTime"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, "exponential.doublingTime");
                             writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -697,7 +747,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", "logistic.popSize"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, "logistic.popSize");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -707,7 +757,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", "logistic.growthRate"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, "logistic.growthRate");
                             writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
@@ -716,7 +766,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", "logistic.doublingTime"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, "logistic.doublingTime");
                             writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -726,7 +776,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", "logistic.t50"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, "logistic.t50");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -738,7 +788,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", "expansion.popSize"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, "expansion.popSize");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -748,7 +798,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", "expansion.growthRate"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, "expansion.growthRate");
                             writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
@@ -757,7 +807,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     new Attribute[]{
                                             new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                             new Attribute.Default<String>("parameterColumn", "expansion.doublingTime"),
-                                            new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength * 0.10)
+                                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
                                     });
                             writer.writeIDref(ParameterParser.PARAMETER, "expansion.doublingTime");
                             writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -767,7 +817,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 new Attribute[]{
                                         new Attribute.Default<String>("fileName", beautiOptions.logFileName),
                                         new Attribute.Default<String>("parameterColumn", "expansion.ancestralProportion"),
-                                        new Attribute.Default<String>("burnin", "" + beautiOptions.chainLength*0.10)
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, "expansion.ancestralProportion");
                         writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
@@ -777,8 +827,6 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             }
 
             //TODO: take care of anything else I missed
-
-
 
             if (options.choiceTreeWorkingPrior.equals("Product of exponential distributions")) {
                 writer.writeIDref("productOfExponentialsPosteriorMeansLoess", "exponentials");
@@ -812,6 +860,26 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
         }
 
     }
+
+    private void writeCoalescentEventsStatistic(XMLWriter writer) {
+            writer.writeOpenTag("coalescentEventsStatistic");
+            // coalescentLikelihood
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                PartitionTreePrior prior = model.getPartitionTreePrior();
+                TreePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+                writer.writeText("");
+            }
+
+            /*for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
+                    writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
+                } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
+                    writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
+                }
+            }*/
+            writer.writeCloseTag("coalescentEventsStatistic");
+    }
+
 
     private void writeParameterIdref(XMLWriter writer, Parameter parameter) {
         if (parameter.isStatistic) {

@@ -77,8 +77,9 @@ public class MG94HKYCodonModel extends MG94CodonModel {
 
     protected void setupRelativeRates(double[] rates) {
 
-        double alpha = getAlpha();
-        double beta = getBeta();
+        double alpha = getAlpha() / numSynTransitions;
+        double beta = getBeta() / numNonsynTransitions;
+
         double kappa = getKappa();
         for (int i = 0; i < rateCount; i++) {
             switch (rateMap[i]) {

@@ -1009,9 +1009,9 @@ public class TreePriorGenerator extends Generator {
         writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
     }
 
-    public void writePriorLikelihoodReferenceLog(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
+    public static void writePriorLikelihoodReferenceLog(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
         //tree model prefix
-        setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
+        String modelPrefix = model.getPrefix(); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
 
         switch (prior.getNodeHeightPrior()) {
 

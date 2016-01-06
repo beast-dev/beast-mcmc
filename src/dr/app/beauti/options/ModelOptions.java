@@ -50,11 +50,11 @@ public class ModelOptions implements Serializable {
     protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
     public static final double demoTuning = 0.75;
-    public static final double demoWeights = 3.0;
+    public static final double demoWeights = 30.0;
 
-    protected static final double branchWeights = 30.0;
-    protected static final double treeWeights = 15.0;
-    protected static final double rateWeights = 3.0;
+    protected static final double branchWeights = 300.0;
+    protected static final double treeWeights = 150.0;
+    protected static final double rateWeights = 30.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
 
@@ -67,14 +67,28 @@ public class ModelOptions implements Serializable {
         return new Parameter.Builder(name, description).initial(initial).isFixed(true).build(parameters);
     }
 
+    public Parameter createZeroOneParameter(String name, String description, double initial) {
+        return new Parameter.Builder(name, description)
+                .initial(initial).isZeroOne(true).build(parameters);
+    }
+
     public Parameter createZeroOneParameterUniformPrior(String name, String description, double initial) {
         return new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
                 .initial(initial).isZeroOne(true).build(parameters);
     }
 
+    public Parameter createNonNegativeParameterDirichletPrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial) {
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.DIRICHLET_PRIOR).isNonNegative(true)
+                .partitionOptions(options).initial(initial).build(parameters);
+    }
+
     public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {
+        return createNonNegativeParameterInfinitePrior(name, description, null, scaleType, initial);
+    }
+
+    public Parameter createNonNegativeParameterInfinitePrior(String name, String description, PartitionOptions options, PriorScaleType scaleType, double initial) {
         return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NONE_IMPROPER).isNonNegative(true)
-                .initial(initial).build(parameters);
+                .partitionOptions(options).initial(initial).build(parameters);
     }
 
     public Parameter createNonNegativeParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,

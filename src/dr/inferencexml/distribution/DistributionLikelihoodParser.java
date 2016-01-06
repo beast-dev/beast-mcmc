@@ -28,6 +28,7 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Statistic;
+import dr.math.distributions.RandomGenerator;
 import dr.xml.*;
 
 /**

@@ -85,7 +85,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
 
-    private final CacheHelper cacheHelper;
+    protected final CacheHelper cacheHelper;
 
     public IntegratedMultivariateTraitLikelihood(String traitName,
                                                  MultivariateTraitTree treeModel,

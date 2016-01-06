@@ -312,7 +312,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
                 currentMean = meanArray.listIterator();
             }
             drawI(i, currentPrecision, currentMidMean, currentMean);
-            LFM.getLoadings().fireParameterChangedEvent();
+            LFM.getLoadings().fireParameterChangedEvent(i, null);
 //            LFM.getLoadings().fireParameterChangedEvent();
         }
         return 0;

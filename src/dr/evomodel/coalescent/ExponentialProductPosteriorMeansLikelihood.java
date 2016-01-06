@@ -38,7 +38,7 @@ public class ExponentialProductPosteriorMeansLikelihood extends Likelihood.Abstr
 	
 	//not used at the moment
 	public final static boolean FIXED_TREE = false;
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 	
 	private TreeModel treeModel;
 	private double[] posteriorMeans;

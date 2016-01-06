@@ -162,6 +162,11 @@ public class MLEGSSDialog {
         treeWorkingPrior.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 String selection = (String)((JComboBox)e.getSource()).getSelectedItem();
+                if (selection.equals("Matching coalescent model")) {
+                    beautiOptions.logCoalescentEventsStatistic = false;
+                } else {
+                    beautiOptions.logCoalescentEventsStatistic = true;
+                }
                 TreePriorType treePrior = beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior();
                 boolean mcmAllowed = false;
                 if (treePrior.equals(TreePriorType.CONSTANT) || treePrior.equals(TreePriorType.EXPONENTIAL)

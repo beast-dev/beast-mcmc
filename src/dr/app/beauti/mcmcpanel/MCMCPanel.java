@@ -284,6 +284,7 @@ public class MCMCPanel extends BeautiPanel {
             public void actionPerformed(ActionEvent e) {
                 if (performMLECombo.getSelectedIndex() == 1) {
                     mleOptions.performMLE = true;
+                    options.logCoalescentEventsStatistic = false;
                     buttonMLE.setEnabled(true);
                     updateMLEFileNameStem();
                 } else if (performMLECombo.getSelectedIndex() == 2) {

@@ -90,12 +90,18 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
             EnumSet<TreePriorType> allowedTypes = EnumSet.of(
                     TreePriorType.CONSTANT, TreePriorType.EXPONENTIAL, TreePriorType.LOGISTIC, TreePriorType.EXPANSION, TreePriorType.SKYGRID, TreePriorType.GMRF_SKYRIDE
             );
+            EnumSet<TreePriorType> allowedMCMTypes = EnumSet.of(TreePriorType.CONSTANT, TreePriorType.EXPONENTIAL, TreePriorType.LOGISTIC, TreePriorType.EXPANSION);
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 PartitionTreePrior prior = model.getPartitionTreePrior();
                 if (!allowedTypes.contains(prior.getNodeHeightPrior())) {
                     throw new GeneratorException("Generalized stepping stone sampling can only be performed\n" +
                             "on standard parameteric coalescent tree priors and the Skyride and Skygrid models. " +
                             "\nPlease check the Trees panel.", BeautiFrame.TREES);
+                }
+                if (mleOptions.choiceTreeWorkingPrior.equals("Matching coalescent model") && !allowedMCMTypes.contains(prior.getNodeHeightPrior())) {
+                    throw new GeneratorException("A Matching Coalescent Model cannot be constructed for\n" +
+                            "the Skyride and Skygrid models. Please check the Marginal Likelihood\n" +
+                            "Estimation settings via the MCMC panel.");
                 }
             }
         }

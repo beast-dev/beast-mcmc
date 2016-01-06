@@ -33,7 +33,7 @@ import dr.inference.model.Statistic;
  */
 public class CoalescentEventsStatistic extends Statistic.Abstract {
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     private static final boolean FULL_FINAL_INTERVAL = true;
     private static final boolean LOG_COMBINATIONS = true;
@@ -77,16 +77,31 @@ public class CoalescentEventsStatistic extends Statistic.Abstract {
     public double getStatisticValue(int i) {
         //System.err.println(treeModel);
         //i will go from 0 to getDimension()
+        //GMRFSkyrideLikelihood
+        if (DEBUG) {
+            System.err.println("getStatisticValue(int i)");
+        }
         if (i == 0) {
+            if (DEBUG) {
+                System.err.println("coalescentValues.length = " + coalescentValues.length);
+            }
             //reset array of coalescent events
             for (int j = 0; j < coalescentValues.length; j++) {
                 coalescentValues[j] = 0.0;
             }
             //recalculate everything
             int counter = 0;
+            if (DEBUG) {
+                System.err.println("coalescent.getCoalescentIntervalDimension() = " + coalescent.getCoalescentIntervalDimension());
+            }
             for (int j = 0; j < coalescent.getCoalescentIntervalDimension(); j++) {
                 if (coalescent instanceof GMRFSkyrideLikelihood) {
+                    if (DEBUG) {
+                        System.err.println("counter = " + counter);
+                        System.err.println("((GMRFSkyrideLikelihood)coalescent).getSufficientStatistics()[" + j + "] = " + ((GMRFSkyrideLikelihood)coalescent).getSufficientStatistics()[j]);
+                    }
                     this.coalescentValues[counter] = ((GMRFSkyrideLikelihood)coalescent).getSufficientStatistics()[j];
+                    counter++;
                 } else {
                     //System.err.println(coalescent.getCoalescentIntervalType(j) + "   " + coalescent.getCoalescentInterval(j));
                     if (coalescent.getCoalescentIntervalType(j) == IntervalType.COALESCENT) {

@@ -14,6 +14,10 @@ public abstract class AbstractHamiltonianMCOperator extends AbstractCoercableOpe
     protected double getMomentumSd()
     {return momentumSd;}
 
+    protected void setMomentumSd(double momentum){
+        momentumSd=momentum;
+    }
+
     private double momentumSd;
     protected double[] momentum;
 

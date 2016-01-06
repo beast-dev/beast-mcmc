@@ -129,7 +129,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
-                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+stepSize*momentum[j]/(getMomentumSd()*getMomentumSd()));
+                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+stepSize*momentum[j]);
             }
             factors.fireParameterChangedEvent(factors.getRowDimension()*randel,null);
 
@@ -143,8 +143,8 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             }
         }
 
+        derivative=getGradient(randel,mean,prec, precfactor);
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
-            derivative=getGradient(randel,mean,prec, precfactor);
 
             momentum[i] = momentum[i] - stepSize / 2 * derivative[i];
         }

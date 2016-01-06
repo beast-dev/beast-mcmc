@@ -274,9 +274,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public double[] getResidual()
         {
-            if(!residualKnown)
-                {computeResiduals();}
-            residualKnown=true;
+            computeResiduals();
             return residual;
         }
 

@@ -698,6 +698,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 TreePriorType nodeHeightPrior = model.getNodeHeightPrior();
                 TreePriorParameterizationType parameterization = model.getParameterization();
 
+                if (DEBUG) {
+                    System.err.println("nodeHeightPrior: " + nodeHeightPrior);
+                }
+
                 switch (nodeHeightPrior) {
                     case CONSTANT:
                         writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
@@ -823,6 +827,34 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
 
                         break;
+
+                    case GMRF_SKYRIDE:
+
+                        writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "skyride.logPopSize"),
+                                        new Attribute.Default<Integer>("dimension", beautiOptions.taxonList.getTaxonCount() - 1),
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "skyride.logPopSize");
+                        writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "skyride.precision"),
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "skyride.precision");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        break;
+
+                    //case SKYGRID:
+
+                        //break;
+
                 }
             }
 

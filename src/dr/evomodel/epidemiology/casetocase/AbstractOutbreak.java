@@ -186,6 +186,11 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return out;
     }
 
+    @Override
+    public boolean areUnique() {
+        return false;
+    }
+
     public DataType getDataType(){
         return caseDataType;
     }

@@ -27,6 +27,8 @@ package dr.evoxml;
 
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.SimpleSiteList;
+import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -62,7 +64,8 @@ public class AttributePatternsParser extends AbstractXMLObjectParser {
             throw new XMLParseException("dataType expected for attributePatterns element");
         }
 
-        Patterns patterns = new Patterns(dataType, taxa);
+        // using a SimpleSiteList rather than Patterns to allow ancestral reconstruction
+        SimpleSiteList patterns = new SimpleSiteList(dataType, taxa);
 
         int[] pattern = new int[taxa.getTaxonCount()];
 

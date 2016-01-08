@@ -35,10 +35,17 @@ package dr.app.beagle.multidimensionalscaling;
 
 public interface MultiDimensionalScalingCore {
 
+    public static final long USE_NATIVE_MDS = 1 << 0;       // 1
+
+    public static final long SINGLE_PRECISION = 1 << 2;     // 4
+    public static final long MULTI_CORE = 1 << 3;           // 8
+    public static final long OPENCL_VECTORIZATION = 1 << 4; // 16
+    public static final long LEFT_TRUNCATION = 1 << 5;      // 32
+
     /**
      * initializes arrays.
      */
-    void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated);
+    void initialize(int embeddingDimension, int locationCount, long flags);
 
     /**
      * sets the observation data

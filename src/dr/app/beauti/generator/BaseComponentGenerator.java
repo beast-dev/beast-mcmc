@@ -41,6 +41,11 @@ public abstract class BaseComponentGenerator extends Generator implements Compon
         super(options, null);
     }
 
+    @Override
+    public void checkOptions() throws GeneratorException {
+        // default is to do nothing
+    }
+
     public void generateAtInsertionPoint(Generator generator, final InsertionPoint point, final Object item, final XMLWriter writer) {
         callingGenerator = generator;
         writer.writeComment("START " + getCommentLabel());

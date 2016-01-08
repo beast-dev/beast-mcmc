@@ -26,6 +26,7 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
@@ -60,6 +61,9 @@ public class PriorParsers {
     public static final String OFFSET = "offset";
     public static final String UNINFORMATIVE = "uninformative";
     public static final String HALF_T_PRIOR = "halfTPrior";
+    public static final String DIRICHLET_PRIOR = "dirichletPrior";
+    public static final String COUNTS = "counts";
+
 
     /**
      * A special parser that reads a convenient short form of priors on parameters.
@@ -565,7 +569,7 @@ public class PriorParsers {
 
             final double shape = xo.getDoubleAttribute(SHAPE);
             final double scale = xo.getDoubleAttribute(SCALE);
-            final double offset = xo.getDoubleAttribute(OFFSET);
+            final double offset = xo.getAttribute(OFFSET, 0.0);
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new InverseGammaDistribution(shape, scale), offset);
 
@@ -587,7 +591,7 @@ public class PriorParsers {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
-                AttributeRule.newDoubleRule(OFFSET),
+                AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 
@@ -689,5 +693,49 @@ public class PriorParsers {
             return Likelihood.class;
         }
     };
+
+    /**
+     * A special parser that reads a convenient short form of priors on parameters.
+     */
+    public static XMLObjectParser DIRICHLET_PRIOR_PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return DIRICHLET_PRIOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            double[] counts = xo.getDoubleArrayAttribute(COUNTS);
+
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new DirichletDistribution(counts));
+            for (int j = 0; j < xo.getChildCount(); j++) {
+                if (xo.getChild(j) instanceof Statistic) {
+                    likelihood.addData((Statistic) xo.getChild(j));
+                } else {
+                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
+                }
+            }
+
+            return likelihood;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                AttributeRule.newDoubleArrayRule(COUNTS),
+                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
+        };
+
+        public String getParserDescription() {
+            return "Calculates the prior probability of some data under a Dirichlet distribution.";
+        }
+
+        public Class getReturnType() {
+            return MultivariateDistributionLikelihood.class;
+        }
+    };
+
 
 }

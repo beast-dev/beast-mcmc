@@ -53,7 +53,7 @@ public final class MarkovChain implements Serializable {
     private final static boolean DEBUG = false;
     private final static boolean PROFILE = true;
 
-    public static final double EVALUATION_TEST_THRESHOLD = 1e-6;
+    public static final double EVALUATION_TEST_THRESHOLD = 1e-1;
 
     private final OperatorSchedule schedule;
     private final Acceptor acceptor;
@@ -234,8 +234,8 @@ public final class MarkovChain implements Serializable {
                 operatorSucceeded = false;
             }
 
-            double score = 0.0;
-            double deviation = 0.0;
+            double score = Double.NaN;
+            double deviation = Double.NaN;
 
             //    System.err.print("" + currentState + ": ");
             if (operatorSucceeded) {
@@ -256,7 +256,11 @@ public final class MarkovChain implements Serializable {
                 score = evaluate(likelihood, prior);
 
                 if (PROFILE) {
-                    mcmcOperator.addEvaluationTime(System.currentTimeMillis() - elapsedTime);
+                    long duration = System.currentTimeMillis() - elapsedTime;
+                    if (DEBUG) {
+                        System.out.println("Time: " + duration);
+                    }
+                    mcmcOperator.addEvaluationTime(duration);
                 }
 
                 String diagnosticOperator = "";

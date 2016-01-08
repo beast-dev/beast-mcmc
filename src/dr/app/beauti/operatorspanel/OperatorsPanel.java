@@ -29,6 +29,8 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Operator;
+import dr.app.beauti.types.OperatorSetType;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.RealNumberCellEditor;
 import jam.framework.Exportable;
 import jam.table.HeaderRenderer;
@@ -58,6 +60,12 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
     OperatorTableModel operatorTableModel = null;
 
     JCheckBox autoOptimizeCheck = null;
+
+    JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[] {
+            OperatorSetType.DEFAULT,
+            OperatorSetType.NEW_TREE_MIX,
+            OperatorSetType.FIXED_TREE_TOPOLOGY
+    });
 
     public List<Operator> operators = new ArrayList<Operator>();
 
@@ -126,12 +134,29 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         toolBar1.setOpaque(false);
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         toolBar1.add(autoOptimizeCheck);
+        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
+        final JLabel label = new JLabel("Operator mix: ");
+        toolBar1.add(label);
+        PanelUtils.setupComponent(operatorSetCombo);
+        toolBar1.add(operatorSetCombo);
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
+
+
+        operatorSetCombo.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        options.operatorSetType = (OperatorSetType)operatorSetCombo.getSelectedItem();
+                        operators = options.selectOperators();
+                        operatorTableModel.fireTableDataChanged();
+                        operatorsChanged();
+                    }
+                }
+        );
     }
 
     public final void operatorsChanged() {
@@ -140,6 +165,8 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
+
+        operatorSetCombo.setSelectedItem(options.operatorSetType);
 
         autoOptimizeCheck.setSelected(options.autoOptimize);
         operators = options.selectOperators();

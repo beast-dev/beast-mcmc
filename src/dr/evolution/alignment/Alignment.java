@@ -133,7 +133,13 @@ public interface Alignment extends SequenceList, SiteList
 		public double[] getStateFrequencies() {
 			return PatternList.Utils.empiricalStateFrequencies(this);
 		}
-	    // **************************************************************
+
+		@Override
+		public boolean areUnique() {
+			return false;
+		}
+
+		// **************************************************************
 	    // Identifiable IMPLEMENTATION
 	    // **************************************************************
 

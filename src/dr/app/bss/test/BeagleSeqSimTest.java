@@ -690,8 +690,8 @@ public class BeagleSeqSimTest {
 
 			if (calculateLikelihood) {
 
-				// NewBeagleTreeLikelihood nbtl = new
-				// NewBeagleTreeLikelihood(alignment, treeModel,
+				// NewBeagleSequenceLikelihood nbtl = new
+				// NewBeagleSequenceLikelihood(alignment, treeModel,
 				// substitutionModel, (SiteModel) siteRateModel,
 				// branchRateModel, null, false,
 				// PartialsRescalingScheme.DEFAULT);

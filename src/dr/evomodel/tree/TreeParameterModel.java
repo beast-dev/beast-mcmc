@@ -145,7 +145,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         assert (!tree.isRoot(node) || includeRoot) : "root node doesn't have a parameter value!";
 
-        assert tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
+        assert !includeRoot || tree.getRoot().getNumber() == rootNodeNumber.getValue(0).intValue() :
                 "INTERNAL ERROR! node with number " + rootNodeNumber + " should be the root node.";
 
         int nodeNumber = node.getNumber();

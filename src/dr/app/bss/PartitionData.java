@@ -983,7 +983,8 @@ public class PartitionData implements Serializable {
 	                false, // 
 	                Double.NaN, //
 	                true, //randomizeRates
-	                false // keepRates
+	                false, // keepRates
+					false // cacheRates
 	                );
 
 		} else if(this.clockModelIndex == 2) { // Exponential relaxed clock
@@ -1004,7 +1005,8 @@ public class PartitionData implements Serializable {
 	                false, // 
 	                Double.NaN, //
 	                true, //randomizeRates
-	                false // keepRates
+					false, // keepRates
+					false // cacheRates
 	                );
 	        
 		} else if(this.clockModelIndex == 3) { // Inverse Gaussian
@@ -1024,7 +1026,8 @@ public class PartitionData implements Serializable {
 	                false, // 
 	                Double.NaN, //
 	                true, //randomizeRates
-	                false // keepRates
+					false, // keepRates
+					false // cacheRates
 	                );
 	        
 		} else {

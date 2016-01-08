@@ -77,6 +77,12 @@ public abstract class Generator {
         }
     }
 
+    public final void checkComponentOptions() throws GeneratorException {
+        for (ComponentGenerator component : components) {
+                component.checkOptions();
+        }
+    }
+
     public String getModelPrefix() {
         return modelPrefix;
     }

@@ -348,7 +348,7 @@ public class Utils {
 	public static final String SAVE_ICON = "icons/save.png";
 	public static final String TEXT_FILE_ICON = "icons/file.png";
 
-	public static double[] UNIFORM_CODON_FREQUENCIES = new double[] {
+	public static final double[] UNIFORM_CODON_FREQUENCIES = new double[] {
 			0.0163936, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
@@ -363,6 +363,8 @@ public class Utils {
 			0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344,
 			0.01639344 };
 
+	public static final String STOP_CODONS[] = new String[] { "TAA", "TAG", "TGA" };
+	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
@@ -1088,6 +1090,14 @@ public class Utils {
 		System.out.println();
 	}// END: printArray
 
+	public static void printArray(boolean[] x) {
+		for (int i = 0; i < x.length; i++) {
+			System.out.print(x[i] + " ");
+		}
+		System.out.println();
+		
+	}
+	
 	public static void printArray(String[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);

@@ -120,7 +120,7 @@ public class BeagleSequenceSimulator {
 				partition.setPartitionNumber(partitionCount);
                 partition.setOutputAncestralSequences(outputAncestralSequences);
 				
-				simulatePartitionCallers.add(new simulatePartitionCallable(
+				simulatePartitionCallers.add(new SimulatePartitionCallable(
 						partition
 //						, partitionCount
 						));
@@ -144,12 +144,12 @@ public class BeagleSequenceSimulator {
 		return alignment;
 	}// END: simulate
 
-	private class simulatePartitionCallable implements Callable<Void> {
+	private class SimulatePartitionCallable implements Callable<Void> {
 
 		private Partition partition;
 //        private int partitionNumber;
 		
-		private simulatePartitionCallable(Partition partition
+		private SimulatePartitionCallable(Partition partition
 //				, int partitionNumber
 				) {
 			this.partition = partition;
@@ -170,7 +170,7 @@ public class BeagleSequenceSimulator {
 			return null;
 		}// END: call
 
-	}// END: simulatePartitionCallable class
+	}// END: SimulatePartitionCallable class
 
 	private SimpleAlignment compileAlignment() {
 

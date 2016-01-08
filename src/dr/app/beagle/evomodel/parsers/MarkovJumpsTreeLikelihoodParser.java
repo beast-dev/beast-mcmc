@@ -93,6 +93,10 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         boolean reportUnconditionedColumns = xo.getAttribute(REPORT_UNCONDITIONED_COLUMNS, false);
         int nSimulants = xo.getAttribute(NUMBER_OF_SIMULANTS, 1);
 
+        if (patternList.areUnique()) {
+            throw new XMLParseException("Markov Jumps reconstruction cannot be used with compressed (unique) patterns.");
+        }
+
         MarkovJumpsBeagleTreeLikelihood treeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patternList,
                 treeModel,

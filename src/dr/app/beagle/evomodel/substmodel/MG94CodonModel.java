@@ -40,8 +40,8 @@ public class MG94CodonModel extends AbstractCodonModel {
     protected Parameter alphaParameter;
     protected Parameter betaParameter;
 
-    private final int numSynTransitions;
-    private final int numNonsynTransitions;
+    protected final int numSynTransitions;
+    protected final int numNonsynTransitions;
 
     public MG94CodonModel(Codons codonDataType, Parameter alphaParameter, Parameter betaParameter,
                           FrequencyModel freqModel) {
@@ -80,11 +80,11 @@ public class MG94CodonModel extends AbstractCodonModel {
         return count;
     }
 
-    private int getNumSynTransitions() {
+    protected int getNumSynTransitions() {
         return 2 * countRates(1, 2);
     }
 
-    private int getNumNonsynTransitions() {
+    protected int getNumNonsynTransitions() {
         return 2 * countRates(3, 4);
     }
 

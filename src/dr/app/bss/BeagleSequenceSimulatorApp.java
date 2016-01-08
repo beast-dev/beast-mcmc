@@ -149,8 +149,16 @@ public class BeagleSequenceSimulatorApp {
 		
 		if (args.length > 0) {
 			
+			try {
+			
 				BeagleSequenceSimulatorConsoleApp app = new BeagleSequenceSimulatorConsoleApp();
 				app.simulate(args);
+				
+			} catch (UnsupportedClassVersionError e) {
+
+				Utils.handleException(e, "Your Java Runtime Environment is too old. Please update");
+
+			}//END: try-catch block
 				
 		} else {
 
@@ -164,17 +172,16 @@ public class BeagleSequenceSimulatorApp {
 
 			} catch (UnsupportedClassVersionError e) {
 
-				System.out
-						.println("Your Java Runtime Environment is too old. Please update");
-
+				Utils.handleException(e, "Your Java Runtime Environment is too old. Please update");
+				
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				Utils.handleException(e, e.getMessage());
 			} catch (InstantiationException e) {
-				e.printStackTrace();
+				Utils.handleException(e, e.getMessage());
 			} catch (IllegalAccessException e) {
-				e.printStackTrace();
+				Utils.handleException(e, e.getMessage());
 			} catch (UnsupportedLookAndFeelException e) {
-				e.printStackTrace();
+				Utils.handleException(e, e.getMessage());
 			}// END: try catch block
 
 		}// END: command line check

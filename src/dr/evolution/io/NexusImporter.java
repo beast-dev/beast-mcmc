@@ -826,6 +826,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                 } else {
                     taxon = new Taxon(token3);
                 }
+
+                if (translationList.containsKey(token2)) {
+                    throw new BadFormatException("Translation list uses the key, " + token2 + ", more than once.");
+                }
                 translationList.put(token2, taxon);
 
             } while (getLastDelimiter() != ';');

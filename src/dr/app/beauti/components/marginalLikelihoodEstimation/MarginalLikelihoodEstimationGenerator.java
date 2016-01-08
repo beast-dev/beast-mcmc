@@ -139,7 +139,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                 if (options.logCoalescentEventsStatistic) {
                     writeCoalescentEventsStatistic(writer);
                 }
-            break;
+                break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
         }
@@ -851,9 +851,28 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                         break;
 
-                    //case SKYGRID:
+                    case SKYGRID:
 
-                        //break;
+                        writer.writeOpenTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "skygrid.logPopSize"),
+                                        new Attribute.Default<Integer>("dimension", model.getSkyGridCount()),
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.logPopSize");
+                        writer.writeCloseTag(WorkingPriorParsers.NORMAL_REFERENCE_PRIOR);
+
+                        writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                new Attribute[]{
+                                        new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                        new Attribute.Default<String>("parameterColumn", "skygrid.precision"),
+                                        new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength * 0.10))
+                                });
+                        writer.writeIDref(ParameterParser.PARAMETER, "skygrid.precision");
+                        writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+
+                        break;
 
                 }
             }
@@ -894,13 +913,13 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
     }
 
     private void writeCoalescentEventsStatistic(XMLWriter writer) {
-            writer.writeOpenTag("coalescentEventsStatistic");
-            // coalescentLikelihood
-            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                PartitionTreePrior prior = model.getPartitionTreePrior();
-                TreePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
-                writer.writeText("");
-            }
+        writer.writeOpenTag("coalescentEventsStatistic");
+        // coalescentLikelihood
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            PartitionTreePrior prior = model.getPartitionTreePrior();
+            TreePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
+            writer.writeText("");
+        }
 
             /*for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
@@ -909,7 +928,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                     writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
                 }
             }*/
-            writer.writeCloseTag("coalescentEventsStatistic");
+        writer.writeCloseTag("coalescentEventsStatistic");
     }
 
 

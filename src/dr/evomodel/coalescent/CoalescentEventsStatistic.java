@@ -53,7 +53,9 @@ public class CoalescentEventsStatistic extends Statistic.Abstract {
         if (DEBUG) {
             System.err.println("CoalescentIntervalDimension: " + coalescent.getCoalescentIntervalDimension());
         }
-        if (coalescent instanceof GMRFSkyrideLikelihood) {
+        if (coalescent instanceof GMRFMultilocusSkyrideLikelihood) {
+            throw new RuntimeException("coalescentEventsStatistic not yet implemented for the Bayesian Skygrid model.");
+        } else if (coalescent instanceof GMRFSkyrideLikelihood) {
             this.coalescentEvents = coalescent.getCoalescentIntervalDimension();
         } else {
             for (int i = 0; i < coalescent.getCoalescentIntervalDimension(); i++) {

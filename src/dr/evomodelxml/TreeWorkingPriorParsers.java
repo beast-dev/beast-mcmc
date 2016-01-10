@@ -68,7 +68,7 @@ import dr.xml.XMLSyntaxRule;
  */
 public class TreeWorkingPriorParsers {
 
-    public final static boolean DEBUG = true;
+    public final static boolean DEBUG = false;
 
     public static final String CONSTANT_TREE_TOPOLOGY_PRIOR = "constantTreeTopologyPrior";
     public static final String CONTEMPORANEOUS_COALESCENT_CONSTANT = "contemporaneousCoalescentConstantLikelihood";
@@ -255,7 +255,9 @@ public class TreeWorkingPriorParsers {
 
                 int traceIndexParameter = -1;
 
-                System.out.println("Looking for the following column:" + parameterName);
+                if (DEBUG) {
+                    System.err.println("Looking for the following column:" + parameterName);
+                }
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
                     if (traceName.trim().equals(parameterName)) {
@@ -263,10 +265,12 @@ public class TreeWorkingPriorParsers {
                         break;
                     }
                 }
-                System.out.println("Overview of traceIndexParameter:");
+                if (DEBUG) {
+                    System.err.println("Overview of traceIndexParameter:");
+                }
                 if (traceIndexParameter == -1) {
                     throw new XMLParseException("Not all traces could be linked to the required columns.");
-                } else {
+                } else if (DEBUG) {
                     System.out.println("  traceIndexParameter: " + traceIndexParameter);
                 }
 
@@ -279,7 +283,9 @@ public class TreeWorkingPriorParsers {
                     posteriorMean += parameterSamples[i];
                 }
                 posteriorMean /= ((double)parameterSamples.length);
-                System.err.println("Variable column -> " + posteriorMean);
+                if (DEBUG) {
+                    System.err.println("Variable column -> " + posteriorMean);
+                }
                 //posteriorMean = Math.log(posteriorMean);
                 //System.err.println("Log transformed: " + posteriorMean);
 
@@ -366,9 +372,11 @@ public class TreeWorkingPriorParsers {
                 for (int i = 1; i <= columnNames.length; i++) {
                     columnNames[i-1] = parameterName + i;
                 }
-                System.out.println("Looking for the following columns:");
-                for (int i = 0; i < columnNames.length; i++) {
-                    System.out.println("  " + columnNames[i]);
+                if (DEBUG) {
+                    System.err.println("Looking for the following columns:");
+                    for (int i = 0; i < columnNames.length; i++) {
+                        System.err.println("  " + columnNames[i]);
+                    }
                 }
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
@@ -379,12 +387,15 @@ public class TreeWorkingPriorParsers {
                         }
                     }
                 }
-                System.out.println("Overview of traceIndexParameter:");
+                if (DEBUG) {
+                    System.err.println("Overview of traceIndexParameter:");
+                }
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
                         throw new XMLParseException("Not all traces could be linked to the required columns, problem with trace index: " + i + "; traceIndexParameter.length = " + traceIndexParameter.length);
+                    } else if (DEBUG) {
+                        System.err.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i]);
                     }
-                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
                 }
 
                 Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
@@ -405,20 +416,11 @@ public class TreeWorkingPriorParsers {
 
                     //mean = 1.0/mean;
 
-                    System.err.println("Variable column: " + i + " -> " + mean);
+                    if (DEBUG) {
+                        System.err.println("Variable column: " + i + " -> " + mean);
+                    }
                     posteriorMeans[i] = Math.log(mean);
                 }
-
-                //Test: hard coding posterior means
-                /*posteriorMeans[0] = 3.667;
-				posteriorMeans[1] = 3.245;
-				posteriorMeans[2] = 3.196;
-				posteriorMeans[3] = 3.167;
-				posteriorMeans[4] = 3.17;
-				posteriorMeans[5] = 3.126;
-				posteriorMeans[6] = 3.422;
-				posteriorMeans[7] = 3.412;
-				posteriorMeans[8] = 3.058;*/
 
                 return new ExponentialProductPosteriorMeansLikelihood(treeModel, posteriorMeans);
 
@@ -503,9 +505,11 @@ public class TreeWorkingPriorParsers {
                 for (int i = 1; i <= columnNames.length; i++) {
                     columnNames[i-1] = parameterName + i;
                 }
-                System.out.println("Looking for the following columns:");
-                for (int i = 0; i < columnNames.length; i++) {
-                    System.out.println("  " + columnNames[i]);
+                if (DEBUG) {
+                    System.err.println("Looking for the following columns:");
+                    for (int i = 0; i < columnNames.length; i++) {
+                        System.err.println("  " + columnNames[i]);
+                    }
                 }
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
@@ -516,12 +520,16 @@ public class TreeWorkingPriorParsers {
                         }
                     }
                 }
-                System.out.println("Overview of traceIndexParameter:");
+                if (DEBUG) {
+                    System.err.println("Overview of traceIndexParameter:");
+                }
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
                         throw new XMLParseException("Not all traces could be linked to the required columns, problem with trace index: " + i + "; traceIndexParameter.length = " + traceIndexParameter.length);
                     }
-                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                    if (DEBUG) {
+                        System.err.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i]);
+                    }
                 }
 
                 Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
@@ -542,15 +550,19 @@ public class TreeWorkingPriorParsers {
 
                     //mean = 1.0/mean;
 
-                    System.err.println("Variable column: " + i + " -> " + mean);
+                    if (DEBUG) {
+                        System.err.println("Variable column: " + i + " -> " + mean);
+                    }
                     posteriorMeans[i] = Math.log(mean);
                 }
 
                 try {
                     //Print log posterior means
-                    System.err.println("Log Posterior Means:");
-                    for (int i = 0; i < posteriorMeans.length; i++) {
-                        System.err.println(posteriorMeans[i]);
+                    if (DEBUG) {
+                        System.err.println("Log Posterior Means:");
+                        for (int i = 0; i < posteriorMeans.length; i++) {
+                            System.err.println(posteriorMeans[i]);
+                        }
                     }
                     //Call Loess interpolator here
                     LoessInterpolator loess = new LoessInterpolator(1.0, 2);
@@ -560,9 +572,12 @@ public class TreeWorkingPriorParsers {
                     }
 
                     double[] loessOutput = loess.smooth(xvalues, posteriorMeans);
-                    System.err.println("Loess output:");
-                    for (int i = 0; i < loessOutput.length; i++) {
-                        System.err.println(loessOutput[i]);
+
+                    if (DEBUG) {
+                        System.err.println("Loess output:");
+                        for (int i = 0; i < loessOutput.length; i++) {
+                            System.err.println(loessOutput[i]);
+                        }
                     }
 
                     posteriorMeans = loessOutput;
@@ -659,9 +674,11 @@ public class TreeWorkingPriorParsers {
                 for (int i = 1; i <= columnNames.length; i++) {
                     columnNames[i-1] = parameterName + i;
                 }
-                System.out.println("Looking for the following columns:");
-                for (int i = 0; i < columnNames.length; i++) {
-                    System.out.println("  " + columnNames[i]);
+                if (DEBUG) {
+                    System.err.println("Looking for the following columns:");
+                    for (int i = 0; i < columnNames.length; i++) {
+                        System.err.println("  " + columnNames[i]);
+                    }
                 }
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
@@ -672,12 +689,16 @@ public class TreeWorkingPriorParsers {
                         }
                     }
                 }
-                System.out.println("Overview of traceIndexParameter:");
+                if (DEBUG) {
+                    System.err.println("Overview of traceIndexParameter:");
+                }
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
                         throw new XMLParseException("Not all traces could be linked to the required columns.");
                     }
-                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                    if (DEBUG) {
+                        System.err.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i]);
+                    }
                 }
 
                 Double[][] parameterSamples = new Double[dimension][traces.getStateCount()];
@@ -695,7 +716,9 @@ public class TreeWorkingPriorParsers {
                         mean += parameterSamples[i][j];
                     }
                     mean /= ((double)parameterSamples[i].length);
-                    System.err.println("Variable column: " + i + " -> " + mean);
+                    if (DEBUG) {
+                        System.err.println("Variable column: " + i + " -> " + mean);
+                    }
                     posteriorMeans[i] = Math.log(mean);
                 }
 
@@ -782,9 +805,11 @@ public class TreeWorkingPriorParsers {
                 for (int i = 1; i <= columnNames.length; i++) {
                     columnNames[i-1] = parameterName + i;
                 }
-                System.out.println("Looking for the following columns:");
-                for (int i = 0; i < columnNames.length; i++) {
-                    System.out.println("  " + columnNames[i]);
+                if (DEBUG) {
+                    System.err.println("Looking for the following columns:");
+                    for (int i = 0; i < columnNames.length; i++) {
+                        System.err.println("  " + columnNames[i]);
+                    }
                 }
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
@@ -795,12 +820,16 @@ public class TreeWorkingPriorParsers {
                         }
                     }
                 }
-                System.out.println("Overview of traceIndexParameter:");
+                if (DEBUG) {
+                    System.err.println("Overview of traceIndexParameter:");
+                }
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
                         throw new XMLParseException("Not all traces could be linked to the required columns.");
                     }
-                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                    if (DEBUG) {
+                        System.err.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i]);
+                    }
                 }
 
                 boolean[] flags = new boolean[dimension];
@@ -846,7 +875,9 @@ public class TreeWorkingPriorParsers {
                         //scales[i] = variance/mean;
                         //shapes[i] = mean/scales[i];
                         //System.err.println("Variable column: " + i + " -> " + shapes[i] + "   " + scales[i]);
-                        System.err.println("Variable column: " + i + " -> " + means[i] + "   " + variances[i]);
+                        if (DEBUG) {
+                            System.err.println("Variable column: " + i + " -> " + means[i] + "   " + variances[i]);
+                        }
                     } else {
                         //constant column
                         double mean = 0.0;
@@ -861,7 +892,9 @@ public class TreeWorkingPriorParsers {
                         //System.err.println("mean = " + mean + "   variance = " + variance);
                         //scales[i] = variance/mean;
                         //shapes[i] = mean/scales[i];
-                        System.err.println("Constant column: " + i + " -> " + means[i] + "   " + variances[i]);
+                        if (DEBUG) {
+                            System.err.println("Constant column: " + i + " -> " + means[i] + "   " + variances[i]);
+                        }
                     } 
                 }
 
@@ -979,9 +1012,11 @@ public class TreeWorkingPriorParsers {
                 for (int i = 1; i <= columnNames.length; i++) {
                     columnNames[i-1] = parameterName + i;
                 }
-                System.out.println("Looking for the following columns:");
-                for (int i = 0; i < columnNames.length; i++) {
-                    System.out.println("  " + columnNames[i]);
+                if (DEBUG) {
+                    System.err.println("Looking for the following columns:");
+                    for (int i = 0; i < columnNames.length; i++) {
+                        System.err.println("  " + columnNames[i]);
+                    }
                 }
                 for (int i = 0; i < traces.getTraceCount(); i++) {
                     String traceName = traces.getTraceName(i);
@@ -992,12 +1027,16 @@ public class TreeWorkingPriorParsers {
                         }
                     }
                 }
-                System.out.println("Overview of traceIndexParameter:");
+                if (DEBUG) {
+                    System.err.println("Overview of traceIndexParameter:");
+                }
                 for (int i = 0; i < traceIndexParameter.length; i++) {
                     if (traceIndexParameter[i] == -1) {
                         throw new XMLParseException("Not all traces could be linked to the required columns.");
                     }
-                    System.out.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i] );
+                    if (DEBUG) {
+                        System.err.println("  traceIndexParameter[" + i + "]: " + traceIndexParameter[i]);
+                    }
                 }
 
                 boolean[] flags = new boolean[dimension];
@@ -1036,7 +1075,9 @@ public class TreeWorkingPriorParsers {
                         variance /= ((double)(parameterSamples[i].length-1));
                         scales[i] = variance/mean;
                         shapes[i] = mean/scales[i];
-                        System.err.println("Variable column: " + i + " -> " + shapes[i] + "   " + scales[i]);
+                        if (DEBUG) {
+                            System.err.println("Variable column: " + i + " -> " + shapes[i] + "   " + scales[i]);
+                        }
                     } /*else {
                     	   double mean = 0.0;
                            for (int j = 0; j < parameterSamples[i].length; j++) {
@@ -1052,10 +1093,12 @@ public class TreeWorkingPriorParsers {
                        } */
                 }
 
-                System.err.println("Columns to be evaluated:");
-                for (int i = 0; i < flags.length; i++) {
-                    if (flags[i]) {
-                        System.err.println("Column " + i);
+                if (DEBUG) {
+                    System.err.println("Columns to be evaluated:");
+                    for (int i = 0; i < flags.length; i++) {
+                        if (flags[i]) {
+                            System.err.println("Column " + i);
+                        }
                     }
                 }
 

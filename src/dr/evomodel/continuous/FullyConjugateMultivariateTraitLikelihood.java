@@ -29,9 +29,7 @@ import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
@@ -237,9 +235,35 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         super.handleModelChangedEvent(model, object, index);
     }
 
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
+        if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
+            dimKnown=false;
+        }
+        PostPreKnown=false;
+        super.handleVariableChangedEvent(variable,index,type);
+    }
+
+    @Override
+    public void storeState() {
+        super.storeState();
+        storedPostPreKnown=PostPreKnown;
+        storedDimKnown=dimKnown;
+        if(preP!=null)
+         System.arraycopy(preP, 0, storedPreP, 0,preP.length);
+        if(preMeans!=null)
+         System.arraycopy(preMeans, 0, storedPreMeans, 0, preMeans.length);
+
+    }
+
+    @Override
     public void restoreState() {
         super.restoreState();
+        PostPreKnown=storedPostPreKnown;
         priorInformationKnown = false;
+        preP=storedPreP;
+        preMeans=storedPreMeans;
+        dimKnown=storedDimKnown;
     }
 
     public void makeDirty() {
@@ -259,6 +283,154 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     public boolean getComputeWishartSufficientStatistics() {
         return computeWishartStatistics;
     }
+
+    public void doPreOrderTraversal(NodeRef node) {
+
+        if(preP==null){
+            preP=new double[treeModel.getNodeCount()];
+            storedPreP=new double[treeModel.getNodeCount()];
+        }
+        if(!dimKnown){
+            preMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+            storedPreMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+        }
+
+        final int thisNumber = node.getNumber();
+
+
+        if (treeModel.isRoot(node)) {
+            preP[thisNumber] = rootPriorSampleSize;
+            for (int j = 0; j < dim; j++) {
+                preMeans[thisNumber][j] = rootPriorMean[j];
+            }
+
+
+        } else {
+
+            final NodeRef parentNode = treeModel.getParent(node);
+            final NodeRef sibNode = getSisterNode(node);
+
+            final int parentNumber = parentNode.getNumber();
+            final int sibNumber = sibNode.getNumber();
+
+
+
+	/*
+
+			  if (treeModel.isRoot(parentNode)){
+				  //partial precisions
+				    final double precisionParent = rootPriorSampleSize;
+			        final double precisionSib = postP[sibNumber];
+			        final double thisPrecision=1/treeModel.getBranchLength(node);
+			        double tp= precisionParent + precisionSib;
+			        preP[thisNumber]= tp*thisPrecision/(tp+thisPrecision);
+
+			        //partial means
+
+			        for (int j =0; j<dim;j++){
+			        	preMeans[thisNumber][j] = (precisionParent*preMeans[parentNumber][j] + precisionSib*rootPriorMean[j])/(precisionParent+precisionSib);
+			        }
+
+			  }else{
+	*/
+            //partial precisions
+            final double precisionParent = preP[parentNumber];
+            final double precisionSib = upperPrecisionCache[sibNumber];
+            final double thisPrecision = 1 / getRescaledBranchLengthForPrecision(node);
+            double tp = precisionParent + precisionSib;
+            preP[thisNumber] = tp * thisPrecision / (tp + thisPrecision);
+
+            //partial means
+
+            for (int j = 0; j < dim; j++) {
+                preMeans[thisNumber][j] = (precisionParent * preMeans[parentNumber][j] + precisionSib * cacheHelper.getMeanCache()[sibNumber*dim+j]) / (precisionParent + precisionSib);
+            }
+        }
+
+        if (treeModel.isExternal(node)) {
+            return;
+        } else {
+            doPreOrderTraversal(treeModel.getChild(node, 0));
+            doPreOrderTraversal(treeModel.getChild(node, 1));
+
+        }
+
+    }
+
+    public NodeRef getSisterNode(NodeRef node) {
+        NodeRef sib0 = treeModel.getChild(treeModel.getParent(node), 0);
+        NodeRef sib1 = treeModel.getChild(treeModel.getParent(node), 1);
+
+
+        if (sib0 == node) {
+            return sib1;
+        } else return sib0;
+
+    }
+
+    public double[] getConditionalMean(int taxa){
+        setup();
+
+
+            double[] answer=new double[getRootNodeTrait().length];
+
+        double[] mean = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            mean[i] = preMeans[taxa][i];
+        }
+
+        return answer;
+    }
+
+    public double getPrecisionFactor(int taxa){
+        setup();
+        return preP[taxa];
+    }
+
+    public double[][] getConditionalPrecision(int taxa){
+         setup();
+
+
+
+
+        double[][] precisionParam =diffusionModel.getPrecisionmatrix();
+//        double[][] answer=new double[getRootNodeTrait().length][ getRootNodeTrait().length];
+        double p = getPrecisionFactor(taxa);
+
+        double[][] thisP = new double[dim][dim];
+
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+//                System.out.println("P: "+p);
+//                System.out.println("I: "+i+", J: "+j+" value:"+precisionParam[i][j]);
+                thisP[i][j] = p * precisionParam[i][ j];
+
+            }
+        }
+
+        return thisP;
+
+    }
+
+    private void setup(){
+        if(!PostPreKnown){
+            double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
+            double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
+
+            final boolean computeWishartStatistics = getComputeWishartSufficientStatistics();
+
+            if (computeWishartStatistics) {
+                wishartStatistics = new WishartSufficientStatistics(dimTrait);
+            }
+
+            // Use dynamic programming to compute conditional likelihoods at each internal node
+            postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, computeWishartStatistics);
+
+            doPreOrderTraversal(treeModel.getRoot());}
+        PostPreKnown=true;
+
+    }
+
 
     protected void checkLogLikelihood(double loglikelihood, double logRemainders,
                                       double[] conditionalRootMean, double conditionalRootPrecision,
@@ -387,8 +559,20 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     protected double[] rootPriorMean;
     protected double rootPriorSampleSize;
 
+    double[] preP;
+    double[][] preMeans;
+
+    double[] storedPreP;
+    double[][] storedPreMeans;
+
+    Boolean PostPreKnown=false;
+    Boolean storedPostPreKnown=false;
+
     private boolean priorInformationKnown = false;
     private double zBz; // Prior sum-of-squares contribution
+
+    private boolean dimKnown=false;
+    private boolean storedDimKnown=false;
 
     protected boolean computeWishartStatistics = false;
     private double[] ascertainedData = null;

@@ -29,6 +29,7 @@ package dr.inference.distribution;
 import dr.inference.model.*;
 import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.MomentDistributionModelParser;
+import dr.math.MathUtils;
 import dr.math.distributions.RandomGenerator;
 
 //@author Max Tolkoff
@@ -48,9 +49,9 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         addVariable(precision);
 //        precision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        this.cutoff=cutoff;
+        this.cutoff=cutoff;  if(cutoff!=null){
         addVariable(cutoff);
-        cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, cutoff.getDimension()));
+        cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, cutoff.getDimension()));}
         addVariable(data);
         this.data=data;
         untruncated=new NormalDistributionModel(mean, precision, true);
@@ -87,6 +88,7 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         if(data.getDimension()!=cutoff.getDimension()){
             throw new RuntimeException("Incorrect number of cutoffs");
         }
+        if(cutoff!=null){
         for (int i = 0; i <data.getDimension() ; i++) {
             if (Math.sqrt(precision.getParameterValue(0) * cutoff.getParameterValue(i)) > Math.abs(data.getParameterValue(i)) && data.getParameterValue(i)!=0)
                 return Double.NEGATIVE_INFINITY;
@@ -94,6 +96,11 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
                 sum+=-1000-Math.log(precision.getParameterValue(0));
             else
                 sum+=untruncated.logPdf(data.getParameterValue(i));//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
+        }         }
+        else{
+            for (int i = 0; i <data.getDimension() ; i++) {
+                sum+= untruncated.logPdf(data.getParameterValue(i))+2* StrictMath.log(data.getParameterValue(i))+StrictMath.log(precision.getParameterValue(0));
+            }
         }
         sumKnown=true;
         return sum;

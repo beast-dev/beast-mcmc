@@ -71,7 +71,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         double answer[]=new double[this.nfac];
         for (int i = 0; i <this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
-                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
+                answer[i] -=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
                         residual[j*ntaxa+element];
             }
         }
@@ -84,7 +84,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         if(diffusionSN){
             for (int i = 0; i <mean.length ; i++) {
-                derivative[i]-=(factors.getParameterValue(i, randel)-mean[i])*precfactor;
+                derivative[i]+=(factors.getParameterValue(i, randel)-mean[i])*precfactor;
             }
         }
         else{
@@ -93,7 +93,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
                 for (int j = 0; j <mean.length ; j++) {
                     sumi+=prec[i][j]*(factors.getParameterValue(j, randel)-mean[j]);
                 }
-                derivative[i]-=sumi;
+                derivative[i]+=sumi;
             }
         }
         return derivative;

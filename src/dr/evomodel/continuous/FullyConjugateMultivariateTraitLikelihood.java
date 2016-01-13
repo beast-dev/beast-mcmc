@@ -293,6 +293,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         if(!dimKnown){
             preMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
             storedPreMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+            dimKnown=true;
         }
 
         final int thisNumber = node.getNumber();
@@ -372,14 +373,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         setup();
 
 
-            double[] answer=new double[getRootNodeTrait().length];
+//            double[] answer=new double[getRootNodeTrait().length];
 
         double[] mean = new double[dim];
         for (int i = 0; i < dim; i++) {
             mean[i] = preMeans[taxa][i];
         }
 
-        return answer;
+        return mean;
     }
 
     public double getPrecisionFactor(int taxa){

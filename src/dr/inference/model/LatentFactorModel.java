@@ -84,9 +84,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double storedLogDetCol;
     private boolean[][] changed;
     private boolean[][] storedChanged;
-    private boolean RecomputeResiduals=false;
-    private boolean RecomputeFactors=false;
-    private boolean RecomputeLoadings=false;
+    private boolean RecomputeResiduals;
+    private boolean RecomputeFactors;
+    private boolean RecomputeLoadings;
     private Vector<Integer> changedValues;
     private Vector<Integer> storedChangedValues;
     private boolean factorsKnown=false;
@@ -108,6 +108,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         super("");
         this.RecomputeResiduals=recomputeResiduals;
         this.RecomputeFactors=recomputeFactors;
+        this.RecomputeLoadings=recomputeLoadings;
         changedValues=new Vector<Integer>();
         for (int i = 0; i <data.getDimension(); i++) {
             changedValues.add(i);

@@ -29,15 +29,23 @@ import dr.evolution.coalescent.IntervalType;
 
 /**
  * @author Guy Baele
- * @author Marc Suchard
+ * @author Marc A. Suchard
  */
 public interface CoalescentIntervalProvider {
 
-    public int getCoalescentIntervalDimension();
+    //Old interface does not require the coalescent to do the actual calculations
+    /*public int getCoalescentIntervalDimension();
 
     public double getCoalescentInterval(int i);
 
     public int getCoalescentIntervalLineageCount(int i);
 
-    public IntervalType getCoalescentIntervalType(int i);
+    public IntervalType getCoalescentIntervalType(int i);*/
+
+
+    //New interface
+    public int getNumberOfCoalescentEvents();
+
+    public double getCoalescentEventsStatisticValue(int i);
+
 }

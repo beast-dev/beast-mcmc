@@ -44,19 +44,27 @@ public class CoalescentIntervalStatistic extends Statistic.Abstract {
     }
 
     public int getDimension() {
-        return coalescent.getCoalescentIntervalDimension();
+
+        throw new RuntimeException("the use of CoalescentIntervalStatistic has been deprecated");
+
+        //return coalescent.getCoalescentIntervalDimension();
+
     }
 
     public double getStatisticValue(int i) {
-        double interval = coalescent.getCoalescentInterval(i);
+
+        throw new RuntimeException("the use of CoalescentIntervalStatistic has been deprecated");
+
+        /*double interval = coalescent.getCoalescentInterval(i);
 
         if (rescaleToNe) {
             int lineages = coalescent.getCoalescentIntervalLineageCount(i);
             interval *= Binomial.choose2(lineages);
             // TODO Double-check; maybe need to return 1/interval or divide by choose2(lineages)
-        }
+        }*/
 
-        return interval;
+        //return interval;
+
     }
     
     public String getStatisticName() {

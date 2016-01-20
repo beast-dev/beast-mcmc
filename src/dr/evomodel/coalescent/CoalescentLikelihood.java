@@ -77,7 +77,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
         double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
 
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-			Logger.getLogger("warning").severe("CoalescentLikelihood is " + Double.toString(lnL));
+			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demoModel.getId() + " is " + Double.toString(lnL));
 		}
 
 		return lnL;

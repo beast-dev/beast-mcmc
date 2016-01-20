@@ -284,7 +284,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         int n=Left.getRowDimension();
         int p=Right.getColumnDimension();
 
-        if((factorsKnown==false && !RecomputeFactors) || (!dataKnown && !RecomputeResiduals) || loadingsKnown && !RecomputeLoadings){
+        if((factorsKnown==false && !RecomputeFactors) || (!dataKnown && !RecomputeResiduals) || (!loadingsKnown && !RecomputeLoadings)){
             double sum;
             ListIterator<Integer> li=changedValues.listIterator();
             while(li.hasNext()){
@@ -583,7 +583,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             }
         }
         if(variable==factors){
-            factorsKnown=false;
+
 
 
 
@@ -592,6 +592,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //            }
 
             if(!RecomputeFactors){
+                factorsKnown=false;
                 int row=index/factors.getRowDimension();
                 if(index!=-1)
                     for (int i = 0; i <data.getRowDimension(); i++) {
@@ -610,9 +611,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             likelihoodKnown = false;
         }
         if(variable==loadings){
-            loadingsKnown=false;
             if(!RecomputeLoadings){
-
+                loadingsKnown=false;
                 int col=index%loadings.getRowDimension();
                 if(index!=-1){
                     for (int i = 0; i <data.getColumnDimension() ; i++) {

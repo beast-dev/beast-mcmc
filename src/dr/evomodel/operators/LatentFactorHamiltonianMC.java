@@ -3,6 +3,7 @@ package dr.evomodel.operators;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
@@ -131,7 +132,9 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
                 factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+stepSize*momentum[j]);
             }
-            factors.fireParameterChangedEvent(factors.getRowDimension()*randel,null);
+//            System.out.println("randel");
+//            System.out.println(randel);
+            ((Parameter.Default) factors.getParameter(randel)).fireParameterChangedEvent(0, null);
 
 
             if(i!=nSteps){

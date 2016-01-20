@@ -84,9 +84,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private double storedLogDetCol;
     private boolean[][] changed;
     private boolean[][] storedChanged;
-    private boolean RecomputeResiduals=false;
-    private boolean RecomputeFactors=false;
-    private boolean RecomputeLoadings=false;
+    private boolean RecomputeResiduals;
+    private boolean RecomputeFactors;
+    private boolean RecomputeLoadings;
     private Vector<Integer> changedValues;
     private Vector<Integer> storedChangedValues;
     private boolean factorsKnown=false;
@@ -108,6 +108,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         super("");
         this.RecomputeResiduals=recomputeResiduals;
         this.RecomputeFactors=recomputeFactors;
+        this.RecomputeLoadings=recomputeLoadings;
         changedValues=new Vector<Integer>();
         for (int i = 0; i <data.getDimension(); i++) {
             changedValues.add(i);
@@ -283,8 +284,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         int n=Left.getRowDimension();
         int p=Right.getColumnDimension();
 
-        if((factorsKnown==false && !RecomputeFactors) || (!dataKnown && !RecomputeResiduals) || loadingsKnown && !RecomputeLoadings){
-            double sum=0;
+        if((factorsKnown==false && !RecomputeFactors) || (!dataKnown && !RecomputeResiduals) || (!loadingsKnown && !RecomputeLoadings)){
+            double sum;
             ListIterator<Integer> li=changedValues.listIterator();
             while(li.hasNext()){
                 int index=li.next();
@@ -480,9 +481,9 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
      */
     @Override
     protected void storeState() {
-        data.storeParameterValues();
-        loadings.storeValues();
-        factors.storeValues();
+//        data.storeParameterValues();
+//        loadings.storeValues();
+//        factors.storeValues();
         storedLogLikelihood = logLikelihood;
         storedLikelihoodKnown = likelihoodKnown;
         storedLogDetColKnown=logDetColKnown;
@@ -513,19 +514,21 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     @Override
     protected void restoreState() {
         changed=storedChanged;
-        data.restoreParameterValues();
-        loadings.restoreValues();
-        factors.restoreValues();
+//        data.restoreParameterValues();
+//        loadings.restoreValues();
+//        factors.restoreValues();
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = storedLikelihoodKnown;
         trace=storedTrace;
         traceKnown=storedTraceKnown;
         residualKnown=storedResidualKnown;
         LxFKnown=storedLxFKnown;
+        double[] temp=residual;
         residual=storedResidual;
-        storedResidual=new double[residual.length];
+        storedResidual=temp;
+        temp=LxF;
         LxF=storedLxF;
-        storedLxF=new double[LxF.length];
+        storedLxF=temp;
         logDetCol=storedLogDetCol;
         logDetColKnown=storedLogDetColKnown;
         factorsKnown=storedFactorsKnown;
@@ -608,7 +611,6 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             likelihoodKnown = false;
         }
         if(variable==loadings){
-
             if(!RecomputeLoadings){
                 loadingsKnown=false;
                 int col=index%loadings.getRowDimension();

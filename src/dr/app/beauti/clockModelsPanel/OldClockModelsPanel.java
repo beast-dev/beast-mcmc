@@ -57,6 +57,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Walter Xie
  * @version $Id: ClockModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
+ * @deprecated
  */
 public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 

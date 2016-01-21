@@ -50,7 +50,7 @@ public enum ClockType {
     final public static String UCED_MEAN = "uced.mean";
     final public static String UCLD_MEAN = "ucld.mean";
     final public static String UCLD_STDEV = "ucld.stdev";
-    final public static String UCGD_SCALE = "ucgd.scale";
+    final public static String UCGD_MEAN = "ucgd.mean";
     final public static String UCGD_SHAPE = "ucgd.shape";
 
     final public static String ACLD_MEAN = "acld.mean";

@@ -58,11 +58,18 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
 
         Microsatellite microsatellite = (Microsatellite)xo.getChild(Microsatellite.class);
 
-        String[] strLengths = ((String)xo.getElementFirstChild(MICROSAT_SEQ)).split(",");
+        String[] strLengths = ((String) xo.getElementFirstChild(MICROSAT_SEQ)).split(",");
         int[] pattern = new int[strLengths.length];
-        for(int i = 0; i < strLengths.length; i++){
-            pattern[i] = microsatellite.getState(strLengths[i]);
+        try {
+            for (int i = 0; i < strLengths.length; i++) {
+                pattern[i] = microsatellite.getState(strLengths[i]);
+            }
+        } catch (NumberFormatException nfe) {
+            throw new XMLParseException("Unable to parse microsatellite data: " + nfe.getMessage());
+        } catch (IllegalArgumentException iae) {
+            throw new XMLParseException("Unable to parse microsatellite data: " + iae.getMessage());
         }
+
         Patterns microsatPat = new Patterns(microsatellite, taxonList);
         microsatPat.addPattern(pattern);
         microsatPat.setId((String)xo.getAttribute(ID));
@@ -81,21 +88,21 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
 
     public static void printDetails(Patterns microsatPat){
         Logger.getLogger("dr.evoxml").info(
-            "    Locus name: "+microsatPat.getId()+
-            "\n    Number of Taxa: "+microsatPat.getPattern(0).length+
-            "\n    min: "+((Microsatellite)microsatPat.getDataType()).getMin()+" "+
-            "max: "+((Microsatellite)microsatPat.getDataType()).getMax()+
-            "\n    state count: "+microsatPat.getDataType().getStateCount()+"\n");
+                "    Locus name: "+microsatPat.getId()+
+                        "\n    Number of Taxa: "+microsatPat.getPattern(0).length+
+                        "\n    min: "+((Microsatellite)microsatPat.getDataType()).getMin()+" "+
+                        "max: "+((Microsatellite)microsatPat.getDataType()).getMax()+
+                        "\n    state count: "+microsatPat.getDataType().getStateCount()+"\n");
     }
 
     public static void printMicrosatContent(Patterns microsatPat){
         Logger.getLogger("dr.evoxml").info(
-            "    Locus name: "+ microsatPat.getId());
-            int[] pat = microsatPat.getPattern(0);
-            for(int i = 0; i < pat.length; i++){
-                Logger.getLogger("dr.evoxml").info("    Taxon: "+microsatPat.getTaxon(i)+" "+"state: "+pat[i]);
-            }
-            Logger.getLogger("dr.evoxml").info("\n");
+                "    Locus name: "+ microsatPat.getId());
+        int[] pat = microsatPat.getPattern(0);
+        for(int i = 0; i < pat.length; i++){
+            Logger.getLogger("dr.evoxml").info("    Taxon: "+microsatPat.getTaxon(i)+" "+"state: "+pat[i]);
+        }
+        Logger.getLogger("dr.evoxml").info("\n");
     }
 
 
@@ -117,7 +124,7 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
     };
 
     public String getParserDescription() {
-       return "This element represents a microsatellite pattern.";
+        return "This element represents a microsatellite pattern.";
     }
 
     public Class getReturnType() {

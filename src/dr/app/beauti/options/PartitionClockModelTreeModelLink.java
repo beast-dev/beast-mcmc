@@ -65,6 +65,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createParameterGammaPrior("branchRates.var", "autocorrelated lognormal relaxed clock rate variance",
                 PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, false);
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
+        createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
 
 //        {
 //            final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", PriorScaleType.ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -97,6 +98,9 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
+        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
+                "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights);
+
         createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
@@ -105,6 +109,9 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
         createUpDownOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
+        createUpDownOperator("upDownUCGDMeanHeights", "UCGD mean and heights",
+                "Scales UCGD mean inversely to node heights of the tree", model.getParameter(ClockType.UCGD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
 
 
@@ -185,12 +192,13 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                                 op = getOperator("upDownUCLDMeanHeights");
                                 op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
-
-                                addBranchRateCategories(ops);
                                 break;
                             case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-//                            break;
+//                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+                                op = getOperator("upDownUCGDMeanHeights");
+                                op.setClockModelGroup(model.getClockModelGroup());
+                                ops.add(op);
+                            break;
                             case CAUCHY:
                                 throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
@@ -198,9 +206,13 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                                 op = getOperator("upDownUCEDMeanHeights");
                                 op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
-
-                                addBranchRateCategories(ops);
                                 break;
+                        }
+                        if (model.isContinuousQuantile()) {
+                            ops.add(getOperator("uniformBranchRateQuantiles"));
+                        } else {
+                            ops.add(getOperator("swapBranchRateCategories"));
+                            ops.add(getOperator("uniformBranchRateCategories"));
                         }
                         break;
 
@@ -236,13 +248,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
             }
         }
     }
-
-    private void addBranchRateCategories(List<Operator> ops) {
-        ops.add(getOperator("swapBranchRateCategories"));
-//        ops.add(getOperator("randomWalkBranchRateCategories"));
-        ops.add(getOperator("uniformBranchRateCategories"));
-    }
-//TODO    ops.add(tree.getOperator("treeBitMove"));
 
     /**
      * return a list of parameters that are required

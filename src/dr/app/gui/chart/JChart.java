@@ -521,7 +521,8 @@ public class JChart extends JPanel {
         }
         int n = axis.getMajorTickCount();
         for (int i = 0; i < n; i++) {
-            label = axis.format(axis.getMajorTickValue(i));
+            double value = axis.getMajorTickValue(i);
+            label = axis.format(value);
             width = g2.getFontMetrics().stringWidth(label);
             if (maxWidth < width)
                 maxWidth = width;

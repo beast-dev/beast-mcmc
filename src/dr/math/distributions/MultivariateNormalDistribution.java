@@ -42,9 +42,26 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     private double[][] cholesky = null;
     private Double logDet = null;
 
+    private final boolean hasSinglePrecision;
+    private final double singlePrecision;
+
     public MultivariateNormalDistribution(double[] mean, double[][] precision) {
         this.mean = mean;
         this.precision = precision;
+        this.hasSinglePrecision = false;
+        this.singlePrecision = 1.0;
+    }
+
+    public MultivariateNormalDistribution(double[] mean, double singlePrecision) {
+        this.mean = mean;
+        this.hasSinglePrecision = true;
+        this.singlePrecision = singlePrecision;
+
+        final int dim = mean.length;
+        this.precision = new double[dim][dim];
+        for (int i = 0; i < dim; ++i) {
+            this.precision[i][i] = singlePrecision;
+        }
     }
 
     public String getType() {
@@ -133,7 +150,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
     }
 
     public double logPdf(double[] x) {
-        return logPdf(x, mean, precision, getLogDet(), 1.0);
+        if (hasSinglePrecision) {
+            return logPdf(x, mean, singlePrecision, 1.0);
+        } else {
+            return logPdf(x, mean, precision, getLogDet(), 1.0);
+        }
     }
 
     // scale only modifies precision
@@ -219,7 +240,6 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return result;
     }
 
-
     public static void nextMultivariateNormalCholesky(double[] mean, double[][] cholesky, double sqrtScale, double[] result) {
 
         final int dim = mean.length;
@@ -233,6 +253,25 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         for (int i = 0; i < dim; i++) {
             for (int j = 0; j <= i; j++) {
                 result[i] += cholesky[i][j] * epsilon[j];
+                // caution: decomposition returns lower triangular
+            }
+        }
+    }
+
+    public static void nextMultivariateNormalCholesky(final double[] mean, final int meanOffset, final double[][] cholesky,
+                                                      final double sqrtScale, final double[] result, final int resultOffset,
+                                                      final double[] epsilon) {
+
+        final int dim = epsilon.length;
+
+        System.arraycopy(mean, meanOffset, result, resultOffset, dim);
+
+        for (int i = 0; i < dim; i++)
+            epsilon[i] = MathUtils.nextGaussian() * sqrtScale;
+
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j <= i; j++) {
+                result[resultOffset + i] += cholesky[i][j] * epsilon[j];
                 // caution: decomposition returns lower triangular
             }
         }

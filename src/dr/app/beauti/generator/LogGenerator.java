@@ -35,10 +35,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.LocalClockModelParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -314,25 +311,6 @@ public class LogGenerator extends Generator {
             branchRatesModelGenerator.writeLogStatistic(model, writer);
         }
 
-        if (options.logCoalescentEventsStatistic) {
-            writer.writeOpenTag("coalescentEventsStatistic");
-            // coalescentLikelihood
-            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                PartitionTreePrior prior = model.getPartitionTreePrior();
-                treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
-                writer.writeText("");
-            }
-
-            /*for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-                    writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
-                } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
-                    writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
-                }
-            }*/
-            writer.writeCloseTag("coalescentEventsStatistic");
-        }
-
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
@@ -581,7 +559,6 @@ public class LogGenerator extends Generator {
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-                // assume the first clock model is the one... (not sure if this makes sense)
                 PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
                 String tag = "";
                 String id = "";
@@ -593,7 +570,9 @@ public class LogGenerator extends Generator {
                         break;
 
                     case UNCORRELATED:
-                        tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                        tag = model.isContinuousQuantile() ?
+                                ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                                DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
                         id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
 
@@ -635,7 +614,9 @@ public class LogGenerator extends Generator {
                     break;
 
                 case UNCORRELATED:
-                    writeTreeTrait(writer, DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                    writeTreeTrait(writer, model.isContinuousQuantile() ?
+                                    ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                                    DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                             options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
                     break;

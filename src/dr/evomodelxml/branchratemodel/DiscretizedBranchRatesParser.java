@@ -47,6 +47,8 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
     public static final String NORMALIZE_BRANCH_RATE_TO = "normalizeBranchRateTo";
     public static final String RANDOMIZE_RATES = "randomizeRates";
     public static final String KEEP_RATES = "keepRates";
+    public static final String CACHED_RATES = "cachedRates";
+
     //public static final String NORMALIZED_MEAN = "normalizedMean";
 
 
@@ -84,8 +86,10 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
             Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
         }
 
-        final boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, false);
+        final boolean randomizeRates = xo.getAttribute(RANDOMIZE_RATES, true);
         final boolean keepRates = xo.getAttribute(KEEP_RATES, false);
+
+        final boolean cachedRates = xo.getAttribute(CACHED_RATES, false);
 
         if (randomizeRates && keepRates) {
             throw new XMLParseException("Unable to both randomize and keep current rate categories");
@@ -96,7 +100,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
         }*/
 
         return new DiscretizedBranchRates(tree, rateCategoryParameter, distributionModel, overSampling, normalize,
-                normalizeBranchRateTo, randomizeRates, keepRates);
+                normalizeBranchRateTo, randomizeRates, keepRates, cachedRates);
     }
 
     //************************************************************************
@@ -125,6 +129,7 @@ public class DiscretizedBranchRatesParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(NORMALIZE_BRANCH_RATE_TO, true, "The mean rate to normalize to, if normalizing"),
             AttributeRule.newBooleanRule(RANDOMIZE_RATES, true, "Randomize initial categories"),
             AttributeRule.newBooleanRule(KEEP_RATES, true, "Keep current rate category specification"),
+            AttributeRule.newBooleanRule(CACHED_RATES, true, "Cache rates between steps (default off)"),
             new ElementRule(TreeModel.class),
             new ElementRule(DISTRIBUTION, ParametricDistributionModel.class, "The distribution model for rates among branches", false),
             new ElementRule(RATE_CATEGORIES, Parameter.class, "The rate categories parameter", false),

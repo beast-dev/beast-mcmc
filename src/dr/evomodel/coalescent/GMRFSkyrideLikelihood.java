@@ -358,12 +358,20 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return coalescentIntervals[i];
     }
 
-    public int getCoalescentIntervalLineageCount(int i) {
+    /*public int getCoalescentIntervalLineageCount(int i) {
         throw new RuntimeException("Not yet implemented");
     }
 
     public IntervalType getCoalescentIntervalType(int i) {
-        throw new RuntimeException("Not yet implemented");
+        throw new RuntimeException("getCoalescentIntervalType(int i) in GMRFSkyrideLikelihood not yet implemented");
+    }*/
+
+    public int getNumberOfCoalescentEvents() {
+        return tree.getExternalNodeCount() - 1;
+    }
+
+    public double getCoalescentEventsStatisticValue(int i) {
+        return sufficientStatistics[i];
     }
 
     public double[] getCoalescentIntervalHeights() {

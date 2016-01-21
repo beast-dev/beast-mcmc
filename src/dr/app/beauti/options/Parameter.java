@@ -25,6 +25,7 @@
 
 package dr.app.beauti.options;
 
+import cern.colt.bitvector.QuickBitVector;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.math.distributions.Distribution;
@@ -492,6 +493,14 @@ public class Parameter implements Serializable {
     public void setMeanInRealSpace(boolean meanInRealSpace) {
         this.meanInRealSpace = meanInRealSpace;
     }
+
+    public int[] getParameterDimensionWeights() {
+        if (getOptions() != null && getOptions() instanceof PartitionSubstitutionModel) {
+            return ((PartitionSubstitutionModel)getOptions()).getPartitionCodonWeights();
+        }
+        return new int[] { 1 };
+    }
+
 
     @Override
     public String toString() {

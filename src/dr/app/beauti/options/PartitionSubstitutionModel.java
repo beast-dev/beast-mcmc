@@ -47,6 +47,8 @@ import java.util.Set;
 public class PartitionSubstitutionModel extends PartitionOptions {
     private static final long serialVersionUID = -2570346396317131108L;
 
+    private final static boolean USE_DIRICHLET_PRIOR_FOR_MUS = false;
+
     // Instance variables
 
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
@@ -139,7 +141,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     // only init in PartitionSubstitutionModel
     protected void initModelParametersAndOpererators() {
-        double substWeights = 0.1;
+        double substWeights = 1.0;
 
         //Substitution model parameters
         createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25);
@@ -253,15 +255,18 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
 
         // A vector of relative rates across all partitions...
-        createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");
 
-        // This only works if the partitions are of the same size...
-//      createOperator("centeredMu", "Relative rates",
-//              "Scales codon position rates relative to each other maintaining mean", "allMus",
-//              OperatorType.CENTERED_SCALE, 0.75, 3.0);
-        createOperator("deltaMu", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-                "Currently use to scale codon position rates relative to each other maintaining mean", "allMus",
-                OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
+        if (USE_DIRICHLET_PRIOR_FOR_MUS) {
+            createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+            createOperator("scaleMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+                    "Scale codon position rates relative to each other", "allMus",
+                    OperatorType.SCALE_INDEPENDENTLY, 0.75, 3.0);
+        } else {
+            createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+            createOperator("deltaMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+                    "Scale codon position rates relative to each other maintaining mean", "allMus",
+                    OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
+        }
 
         createScaleOperator("kappa", demoTuning, substWeights);
         createScaleOperator("CP1.kappa", demoTuning, substWeights);
@@ -344,6 +349,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 params.add(getParameter("CP1.kappa"));
                                 params.add(getParameter("CP2.kappa"));
@@ -371,6 +378,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 params.add(getParameter("CP1+2.kappa"));
                                 params.add(getParameter("CP3.kappa"));
@@ -399,6 +408,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     }
                 } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
+                        case JC:
+                            break;
                         case HKY:
                             params.add(getParameter("kappa"));
                             break;
@@ -417,30 +428,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     }
                 }
 
-                if (includeRelativeRates) {
-                    if (codonHeteroPattern.equals("123")) {
-                        params.add(getParameter("CP1.mu"));
-                        params.add(getParameter("CP2.mu"));
-                        params.add(getParameter("CP3.mu"));
-                    } else if (codonHeteroPattern.equals("112")) {
-                        params.add(getParameter("CP1+2.mu"));
-                        params.add(getParameter("CP3.mu"));
-                    } else {
-                        throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
-                    }
-
-                } else { // no codon partitioning
-//TODO
-                }
-
                 // only AMINO_ACIDS not addFrequency
                 addFrequencyParams(params, includeRelativeRates);
                 break;
 
             case DataType.AMINO_ACIDS:
-                if (includeRelativeRates) {
-                    params.add(getParameter("mu"));
-                }
+//                if (includeRelativeRates) {
+//                    params.add(getParameter("mu"));
+//                }
                 break;
 
             case DataType.TWO_STATES:
@@ -460,9 +455,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     default:
                         throw new IllegalArgumentException("Unknown binary substitution model");
                 }
-                if (includeRelativeRates) {
-                    params.add(getParameter("mu"));
-                }
+//                if (includeRelativeRates) {
+//                    params.add(getParameter("mu"));
+//                }
 
                 // only AMINO_ACIDS not addFrequency
                 addFrequencyParams(params, includeRelativeRates);
@@ -541,7 +536,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
-        if (hasCodon()) getParameter("allMus");
+        if (includeRelativeRates) {
+            params.add(getParameter("allMus"));
+//                    params.add(getParameter("mu"));
+        }
     }
 
     private void addFrequencyParams(List<Parameter> params, boolean includeRelativeRates) {
@@ -573,6 +571,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 ops.add(getOperator("CP1.kappa"));
                                 ops.add(getOperator("CP2.kappa"));
@@ -602,6 +602,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                     } else if (codonHeteroPattern.equals("112")) {
                         switch (nucSubstitutionModel) {
+                            case JC:
+                                break;
                             case HKY:
                                 ops.add(getOperator("CP1+2.kappa"));
                                 ops.add(getOperator("CP3.kappa"));
@@ -633,6 +635,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                 } else { // no codon partitioning, or unlinkedSubstitutionModel
                     switch (nucSubstitutionModel) {
+                        case JC:
+                            break;
                         case HKY:
                             ops.add(getOperator("kappa"));
                             break;
@@ -706,7 +710,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (phase == MicroSatModelType.Phase.ONE_PHASE) {
 
                 } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
-                      ops.add(getOperator("randomWalkGeom"));
+                    ops.add(getOperator("randomWalkGeom"));
                 } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
 //                    ops.add(getOperator("randomWalkGeom"));
 //                    ops.add(getOperator("onePhaseProb"));
@@ -752,16 +756,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
-        if (hasCodon()) {
-            Operator deltaMuOperator = getOperator("deltaMu");
+        if (includeRelativeRates) {
+            Operator muOperator;
 
-            // update delta mu operator weight
-            deltaMuOperator.weight = 0.0;
-            for (PartitionSubstitutionModel pm : options.getPartitionSubstitutionModels()) {
-                deltaMuOperator.weight += pm.getCodonPartitionCount();
+            if (USE_DIRICHLET_PRIOR_FOR_MUS) {
+                muOperator = getOperator("scaleMus");
+            } else {
+                muOperator = getOperator("deltaMus");
             }
-
-            ops.add(deltaMuOperator);
+            ops.add(muOperator);
         }
     }
 
@@ -1037,7 +1040,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
-            options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
+                options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

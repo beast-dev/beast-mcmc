@@ -39,42 +39,82 @@ import org.w3c.dom.Element;
 /**
  * A class that acts as a model for gamma distributed data.
  *
+ * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: GammaDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class GammaDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
+    public enum GammaParameterizationType {
+        ShapeScale,
+        ShapeRate,
+        ShapeMean,
+        OneParameter
+    }
+
     public static final String GAMMA_DISTRIBUTION_MODEL = "gammaDistributionModel";
     public static final String ONE_P_GAMMA_DISTRIBUTION_MODEL = "onePGammaDistributionModel";
 
     /**
-     * Construct a constant mutation rate model.
+     * Construct a gamma distribution model with a default shape scale parameterization.
      */
     public GammaDistributionModel(Variable<Double> shape, Variable<Double> scale) {
-
-        super(GAMMA_DISTRIBUTION_MODEL);
-
-        this.shape = shape;
-        this.scale = scale;
-        addVariable(shape);
-        shape.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        if (scale != null) {
-            addVariable(scale);
-            scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        }
+        this(GammaParameterizationType.ShapeScale, shape, scale, 0.0);
     }
 
     /**
-     * Construct a constant mutation rate model.
+     * Construct a one parameter gamma distribution model.
      */
     public GammaDistributionModel(Variable<Double> shape) {
+        this(GammaParameterizationType.OneParameter, shape, null, 0.0);
+    }
+
+
+    /**
+     * Construct a gamma distribution model.
+     */
+    public GammaDistributionModel(GammaParameterizationType parameterization, Variable<Double> shape, Variable<Double> parameter2, double offset) {
 
         super(GAMMA_DISTRIBUTION_MODEL);
 
+        this.offset = offset;
+
+        this.parameterization = parameterization;
         this.shape = shape;
         addVariable(shape);
         shape.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        switch (parameterization) {
+            case ShapeScale:
+                this.scale = parameter2;
+                addVariable(scale);
+                scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+                rate = null;
+                mean = null;
+                break;
+            case ShapeRate:
+                this.rate = parameter2;
+                addVariable(rate);
+                rate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+                scale = null;
+                mean = null;
+                break;
+            case ShapeMean:
+                this.mean = parameter2;
+                addVariable(mean);
+                mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+                scale = null;
+                rate = null;
+                break;
+            case OneParameter:
+                scale = null;
+                rate = null;
+                mean = null;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown parameterization type");
+        }
     }
 
     // *****************************************************************
@@ -82,27 +122,30 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     // *****************************************************************
 
     public double pdf(double x) {
-        return GammaDistribution.pdf(x, getShape(), getScale());
+        if (x < offset) return 0.0;
+        return GammaDistribution.pdf(x - offset, getShape(), getScale());
     }
 
     public double logPdf(double x) {
-        return GammaDistribution.logPdf(x, getShape(), getScale());
+        if (x < offset) return Double.NEGATIVE_INFINITY;
+        return GammaDistribution.logPdf(x - offset, getShape(), getScale());
     }
 
     public double cdf(double x) {
-        return GammaDistribution.cdf(x, getShape(), getScale());
+        if (x < offset) return 0.0;
+        return GammaDistribution.cdf(x - offset, getShape(), getScale());
     }
 
     public double quantile(double y) {
         try {
-            return (new GammaDistributionImpl(getShape(), getScale())).inverseCumulativeProbability(y);
+            return (new GammaDistributionImpl(getShape(), getScale())).inverseCumulativeProbability(y) + offset;
         } catch (MathException e) {
             return Double.NaN;
         }
     }
 
     public double mean() {
-        return GammaDistribution.mean(getShape(), getScale());
+        return GammaDistribution.mean(getShape(), getScale()) + offset;
     }
 
     public double variance() {
@@ -119,7 +162,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         }
 
         public final double getLowerBound() {
-            return 0.0;
+            return offset;
         }
 
         public final double getUpperBound() {
@@ -161,15 +204,32 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     }
 
     public double getScale() {
-        if (scale == null) return (1.0 / getShape());
-        return scale.getValue(0);
+        switch (parameterization) {
+            case ShapeScale:
+                return scale.getValue(0);
+            case ShapeRate:
+                return (1.0 / rate.getValue(0));
+            case ShapeMean:
+                return (mean.getValue(0) / getShape());
+            case OneParameter:
+                return (1.0 / getShape());
+            default:
+                throw new IllegalArgumentException("Unknown parameterization type");
+        }
     }
 
     // **************************************************************
     // Private instance variables
     // **************************************************************
 
-    private Variable<Double> shape = null;
-    private Variable<Double> scale = null;
+    private final GammaParameterizationType parameterization;
+
+    private final Variable<Double> shape;
+    private final Variable<Double> scale;
+    private final Variable<Double> rate;
+    private final Variable<Double> mean;
+
+    private final double offset;
+
 }
 

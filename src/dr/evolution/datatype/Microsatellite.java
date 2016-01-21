@@ -124,7 +124,7 @@ public class Microsatellite extends DataType {
             }else{
                 return getState(Integer.parseInt(srtRawLength));
             }
-        }catch(java.lang.NumberFormatException exp){
+        } catch(java.lang.NumberFormatException exp) {
             throw new java.lang.NumberFormatException(srtRawLength+" can not be converted. State needs to be an integer or unknown (?).");
         }
 
@@ -136,7 +136,10 @@ public class Microsatellite extends DataType {
      * @return int      the state of microsatellite allele corresponding to the length
      */
     public int getState(int rawLength){
-        if(rawLength > UNKNOWN_STATE_LENGTH){
+        if(rawLength != UNKNOWN_STATE_LENGTH){
+            if (rawLength < min) {
+                throw new java.lang.IllegalArgumentException("Microsatellite length value is less, (" + rawLength + ") than the specified minimum (" + min + ").");
+            }
             return (int)Math.ceil(((double)rawLength - min)/unitLength);
         }else{
             return stateCount;

@@ -1,4 +1,4 @@
-                    BEAST v1.8.2 2002-2015
+                    BEAST v1.8.3 2002-2016
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
@@ -17,8 +17,38 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 5th March 2015
-All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
+Last updated: a.rambaut@ed.ac.uk - 3rd January 2016
+All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
+
+================================================================================
+
+Version 1.8.3 released XXth January 2016
+
+    New Features:
+        Generalized Stepping Stone sampling for Marginal Likelihood Estimation.
+		Continuous quantile version of uncorrelated relaxed clock as option in
+		BEAUti [from Li & Drummond 2012, MBE].
+		Option in BEAUti to log complete histories in Markov Jump Counting.
+        Jukes-Cantor added as an option for BEAUti nucleotide substition model.
+        New tree transition kernel (SubTreeLeap operator) implementd in BEAST.
+        Defaulting to randomizing rate categories for DiscretizedBranchRates.
+        BEAUti 'guess dates' options are now persistent from run to run (and
+        shared with Path-O-Gen/Tempest).
+        Transmission tree model of Hall et al (2016) implemented.
+        Fast, general multidimensional scaling (MDS) implemented.
+        Clock panel in BEAUti simplified.
+        Parameter linking available in Priors panel in BEAUti.
+
+	Bug Fixes:
+	    Issue 779:  Ancestral sequence reconstruction broken with
+	                <mergePatterns> elements.
+        Issue 772:  BEAUTi should include BranchRatesModels in prior density.
+        Issue 768:  BEAUti creates a subtree slide operator with size zero when
+                    data is invariable.
+        Issue 758:  Full evaluation error.
+        Issue 304:  Label individual transition rate dimensions for CTM models
+                    in log files.
+
 
 ================================================================================
 
@@ -67,7 +97,7 @@ Version 1.8.1 released 20th September 2014
 					traits.	
 		Issue 722:	Complex charsets in nexus files don't parse.
 		Issue 714:	sets block not recognized in 1.8.
-		Issue 709:	MCMC tab in Beautie v1.8.0 problem with multiple unlinked 
+		Issue 709:	MCMC tab in Beautie v1.8.0 problem with multiple unlinked
 					loci.
 
 ================================================================================

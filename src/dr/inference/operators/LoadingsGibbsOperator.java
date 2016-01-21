@@ -28,6 +28,7 @@ package dr.inference.operators;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.TransposedBlockUpperTriangularMatrixParameter;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
@@ -118,7 +119,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
         priorMeanPrecision = this.prior.getMean() * priorPrecision;
     }
 
-    private void getPrecisionOfTruncated(MatrixParameter full, int newRowDimension, int row, double[][] answer) {
+    private void getPrecisionOfTruncated(MatrixParameterInterface full, int newRowDimension, int row, double[][] answer) {
 
 //        MatrixParameter answer=new MatrixParameter(null);
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
@@ -149,8 +150,8 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
 //        System.out.println(answer.getRowDimension());
 //        System.out.println(answer.getColumnDimension());
-        MatrixParameter data = LFM.getScaledData();
-        MatrixParameter Left = LFM.getFactors();
+        MatrixParameterInterface data = LFM.getScaledData();
+        MatrixParameterInterface Left = LFM.getFactors();
         int p = data.getColumnDimension();
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;

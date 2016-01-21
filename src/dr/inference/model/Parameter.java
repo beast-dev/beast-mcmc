@@ -161,6 +161,8 @@ public interface Parameter extends Statistic, Variable<Double> {
 
     public void fireParameterChangedEvent();
 
+    public void fireParameterChangedEvent(int index, Parameter.ChangeType type);
+
     boolean isUsed();
 
     public final static Set<Parameter> FULL_PARAMETER_SET = new LinkedHashSet<Parameter>();

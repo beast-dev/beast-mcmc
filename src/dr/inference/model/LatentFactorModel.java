@@ -25,13 +25,10 @@
 
 package dr.inference.model;
 
-import cern.colt.matrix.linalg.Blas;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
-import org.netlib.blas.Dgemm;
 
-import java.lang.reflect.Array;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Vector;
@@ -47,10 +44,10 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //    private Matrix factors;
 //    private Matrix loadings;
 
-    private final MatrixParameter data;
-    private final MatrixParameter factors;
+    private final MatrixParameterInterface data;
+    private final MatrixParameterInterface factors;
     private final MatrixParameter loadings;
-    private MatrixParameter sData;
+    private MatrixParameterInterface sData;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
     private final Parameter continuous;
@@ -101,7 +98,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private double pathParameter=1.0;
 
-    public LatentFactorModel(MatrixParameter data, MatrixParameter factors, MatrixParameter loadings,
+    public LatentFactorModel(MatrixParameterInterface data, MatrixParameterInterface factors, MatrixParameter loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
                              boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeResiduals,  boolean recomputeFactors, boolean recomputeLoadings
     ) {
@@ -116,17 +113,17 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         storedChangedValues=new Vector<Integer>();
 //        data = new Matrix(dataIn.getParameterAsMatrix());
 //        factors = new Matrix(factorsIn.getParameterAsMatrix());
-//        loadings = new Matrix(loadingsIn.getParameterAsMatrix());
+//        loadings = new Matrix(loadingsIn.getParameterAsMatrix();
         this.newModel=newModel;
         this.scaleData=scaleData;
         this.data = data;
         this.factors = factors;
         // Put default bounds on factors
-        for (int i = 0; i < factors.getParameterCount(); ++i) {
-            Parameter p = factors.getParameter(i);
-            System.err.println(p.getId() + " " + p.getDimension());
-            p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, p.getDimension()));
-        }
+//        for (int i = 0; i < factors.getColumnDimension(); ++i) {
+//            Parameter p = factors.getParameter(i);
+//            System.err.println(p.getId() + " " + p.getDimension());
+//            p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, p.getDimension()));
+//        }
         this.continuous=continuous;
 
         this.loadings = loadings;
@@ -243,13 +240,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        Matrix ans=residual;
 //        return ans;
 //    }
-    public MatrixParameter getFactors(){return factors;}
+    public MatrixParameterInterface getFactors(){return factors;}
 
     public MatrixParameter getColumnPrecision(){return colPrecision;}
 
     public MatrixParameter getLoadings(){return loadings;}
 
-    public MatrixParameter getData(){return data;}
+    public MatrixParameterInterface getData(){return data;}
 
     public Parameter returnIntermediate(){
         if(!residualKnown && checkLoadings()){
@@ -267,7 +264,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //    }
 
 
-    public MatrixParameter getScaledData(){return data;}
+    public MatrixParameterInterface getScaledData(){return data;}
 
     public Parameter getContinuous(){return continuous;}
 
@@ -279,7 +276,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             return residual;
         }
 
-    private void Multiply(MatrixParameter Left, MatrixParameter Right, double[] answer){
+    private void Multiply(MatrixParameterInterface Left, MatrixParameterInterface Right, double[] answer){
         int dim=Left.getColumnDimension();
         int n=Left.getRowDimension();
         int p=Right.getColumnDimension();
@@ -326,7 +323,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         }
     }
 
-    private void subtract(MatrixParameter Left, double[] Right, double[] answer){
+    private void subtract(MatrixParameterInterface Left, double[] Right, double[] answer){
         int row=Left.getRowDimension();
         int col=Left.getColumnDimension();
         if((!RecomputeResiduals && !dataKnown) || (!RecomputeFactors && !factorsKnown) ||(!RecomputeLoadings && !loadingsKnown)){

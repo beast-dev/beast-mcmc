@@ -46,7 +46,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private final MatrixParameterInterface data;
     private final MatrixParameterInterface factors;
-    private final MatrixParameter loadings;
+    private final MatrixParameterInterface loadings;
     private MatrixParameterInterface sData;
     private final DiagonalMatrix rowPrecision;
     private final DiagonalMatrix colPrecision;
@@ -98,7 +98,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     private double pathParameter=1.0;
 
-    public LatentFactorModel(MatrixParameterInterface data, MatrixParameterInterface factors, MatrixParameter loadings,
+    public LatentFactorModel(MatrixParameterInterface data, MatrixParameterInterface factors, MatrixParameterInterface loadings,
                              DiagonalMatrix rowPrecision, DiagonalMatrix colPrecision,
                              boolean scaleData, Parameter continuous, boolean newModel, boolean recomputeResiduals,  boolean recomputeFactors, boolean recomputeLoadings
     ) {
@@ -176,8 +176,19 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        System.out.println(new Matrix(factors.getParameterAsMatrix()));
 
 
-        if (nTaxa * dimData != data.getDimension()) {
-            throw new RuntimeException("LOADINGS MATRIX AND FACTOR MATRIX MUST HAVE EXTERNAL DIMENSIONS WHOSE PRODUCT IS EQUAL TO THE NUMBER OF DATA POINTS\n");
+        if (nTaxa != data.getColumnDimension()) {
+            throw new RuntimeException("DATA COLUMNS MUST HAVE THE SAME DIMENSION AS FACTOR COLUMNS\n");
+//            System.exit(10);
+        }
+        if (dimData != data.getRowDimension()) {
+            System.out.println(dimData);
+            System.out.println(data.getRowDimension());
+            System.out.println(loadings.getRowDimension());
+            throw new RuntimeException("DATA ROWS MUST HAVE THE SAME DIMENSION AS LOADINGS ROWS\n");
+//            System.exit(10);
+        }
+        if (factors.getRowDimension() != loadings.getColumnDimension()) {
+            throw new RuntimeException("LOADINGS AND FACTORS MUST HAVE THE SAME NUMBER OF FACTORS\n");
 //            System.exit(10);
         }
         if (dimData < dimFactors) {
@@ -244,7 +255,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     public MatrixParameter getColumnPrecision(){return colPrecision;}
 
-    public MatrixParameter getLoadings(){return loadings;}
+    public MatrixParameterInterface getLoadings(){return loadings;}
 
     public MatrixParameterInterface getData(){return data;}
 

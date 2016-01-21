@@ -62,7 +62,7 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
 
     private void setPrecision(int i) {
         MatrixParameterInterface factors = LFM.getFactors();
-        MatrixParameter loadings = LFM.getLoadings();
+        MatrixParameterInterface loadings = LFM.getLoadings();
         DiagonalMatrix precision = (DiagonalMatrix) LFM.getColumnPrecision();
         MatrixParameterInterface data = LFM.getScaledData();
         double di = 0;

@@ -66,7 +66,7 @@ public class FactorGibbsOperator extends SimpleMCMCOperator implements GibbsOper
     }
 
     private void getPrecision(double[][] precision) {
-        MatrixParameter Loadings = LFM.getLoadings();
+        MatrixParameterInterface Loadings = LFM.getLoadings();
         MatrixParameter Precision = LFM.getColumnPrecision();
         int outerDim = Loadings.getRowDimension();
         int innerDim = Loadings.getColumnDimension();

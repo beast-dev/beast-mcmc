@@ -27,6 +27,7 @@ package dr.inferencexml.model;
 
 import dr.inference.model.BlockUpperTriangularMatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.TransposedBlockUpperTriangularMatrixParameter;
 import dr.xml.*;
 
 /**
@@ -34,7 +35,8 @@ import dr.xml.*;
  */
 public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObjectParser {
     private static final String BLOCK_UPPER_TRIANGULAR_MATRIX="blockUpperTriangularMatrixParameter";
-    private static final String COLUMN_DIMENSION="columnDimension";
+    private static final String ROWS="rows";
+    private static final String COLUMNS="columns";
     private static final String TRANSPOSE="transpose";
     private static final String DIAGONAL_RESTRICTION="diagonalRestriction";
 
@@ -55,21 +57,23 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
 //            temp=(Parameter) xo.getChild(xo.getChildCount()-1);
 //            colDim=temp.getDimension();
 //        }
+        int rows=xo.getAttribute(ROWS,1);
+        int cols=xo.getAttribute(COLUMNS,1)      ;
 
-        Parameter[] params=new Parameter[xo.getChildCount()];
+//        Parameter[] params=new Parameter[xo.getChildCount()];
 
 
 
-        for (int i = 0; i < xo.getChildCount(); i++) {
-            temp = (Parameter) xo.getChild(i);
-            params[i]=temp;}
+//        for (int i = 0; i < xo.getChildCount(); i++) {
+//            temp = (Parameter) xo.getChild(i);
+//            params[i]=temp;}
 
-        BlockUpperTriangularMatrixParameter ltmp=new BlockUpperTriangularMatrixParameter(name, params, diagonalRestriction);
+//        BlockUpperTriangularMatrixParameter ltmp=new BlockUpperTriangularMatrixParameter(name, params, diagonalRestriction);
         if(transpose){
-            return ltmp.transposeBlock();
+            return new TransposedBlockUpperTriangularMatrixParameter(name, rows, cols);
         }
         else {
-            return ltmp;  //To change body of implemented methods use File | Settings | File Templates.
+            return new BlockUpperTriangularMatrixParameter(name, rows, cols);  //To change body of implemented methods use File | Settings | File Templates.
         }
     }
 
@@ -79,10 +83,11 @@ public class BlockUpperTriangularMatrixParameterParser extends AbstractXMLObject
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
+//            new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
             AttributeRule.newBooleanRule(TRANSPOSE, true),
-            AttributeRule.newIntegerRule(COLUMN_DIMENSION, true),
-            AttributeRule.newBooleanRule(DIAGONAL_RESTRICTION, true),
+            AttributeRule.newIntegerRule(COLUMNS, true),
+            AttributeRule.newIntegerRule(ROWS, true),
+
     };
 
 

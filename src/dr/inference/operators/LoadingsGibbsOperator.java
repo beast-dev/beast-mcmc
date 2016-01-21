@@ -211,7 +211,7 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
     }
 
     private void copy(int i, double[] random) {
-        TransposedBlockUpperTriangularMatrixParameter changing = (TransposedBlockUpperTriangularMatrixParameter) LFM.getLoadings();
+       MatrixParameterInterface changing = LFM.getLoadings();
         for (int j = 0; j < random.length; j++) {
             changing.setParameterValueQuietly(i, j, random[j]);
         }

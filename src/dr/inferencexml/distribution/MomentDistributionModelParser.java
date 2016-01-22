@@ -44,7 +44,9 @@ public class MomentDistributionModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         Parameter mean=(Parameter) xo.getChild(MEAN).getChild(0);
         Parameter prec=(Parameter) xo.getChild(PREC).getChild(0);
-        Parameter cutoff=(Parameter) xo.getChild(CUTOFF).getChild(0);
+        Parameter cutoff=null;
+        if(xo.hasAttribute(CUTOFF)){
+        cutoff=(Parameter) xo.getChild(CUTOFF).getChild(0);}
         Parameter data=(Parameter) xo.getChild(DATA).getChild(0);
 
         return new MomentDistributionModel(mean, prec, cutoff, data);
@@ -64,7 +66,7 @@ public class MomentDistributionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(CUTOFF,
                             new XMLSyntaxRule[]{
                                             new ElementRule(Parameter.class, true)
-                                    }
+                                    },true
                     ),
                     new ElementRule(PREC,
                             new XMLSyntaxRule[]{

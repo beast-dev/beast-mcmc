@@ -3,6 +3,7 @@ package dr.evomodelxml.operators;
 import dr.evomodel.operators.LoadingsHamiltonianMC;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
+import dr.inference.model.MatrixParameter;
 import dr.inference.operators.CoercionMode;
 import dr.xml.*;
 
@@ -10,7 +11,7 @@ import dr.xml.*;
  * Created by max on 1/11/16.
  */
 public class LoadingsHamiltonianMCParser extends AbstractXMLObjectParser {
-    public static final String LOADINGS_HAMILTONIAN_MC_PARSER="loadingsHamiltonianMCParser";
+    public static final String LOADINGS_HAMILTONIAN_MC="loadingsHamiltonianMC";
     public static final String WEIGHT="weight";
     public static final String STEP_SIZE="stepSize";
     public static final String N_STEPS="nSteps";
@@ -26,8 +27,9 @@ public class LoadingsHamiltonianMCParser extends AbstractXMLObjectParser {
         int nSteps=xo.getIntegerAttribute(N_STEPS);
         double stepSize=xo.getDoubleAttribute(STEP_SIZE);
         double momentumSd= xo.getDoubleAttribute(MOMENTUM_SD);
+        MatrixParameter loadings=(MatrixParameter) xo.getChild(MatrixParameter.class);
 
-        return new LoadingsHamiltonianMC(lfm, prior, weight, mode, stepSize, nSteps, momentumSd);
+        return new LoadingsHamiltonianMC(lfm, prior, weight, mode, stepSize, nSteps, momentumSd, loadings);
     }
 
     @Override
@@ -42,6 +44,7 @@ public class LoadingsHamiltonianMCParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MOMENTUM_SD),
             new ElementRule(LatentFactorModel.class),
             new ElementRule(MomentDistributionModel.class),
+            new ElementRule(MatrixParameter.class),
     };
 
 
@@ -57,6 +60,6 @@ public class LoadingsHamiltonianMCParser extends AbstractXMLObjectParser {
 
     @Override
     public String getParserName() {
-        return LOADINGS_HAMILTONIAN_MC_PARSER;
+        return LOADINGS_HAMILTONIAN_MC;
     }
 }

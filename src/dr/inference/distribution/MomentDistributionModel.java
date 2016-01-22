@@ -85,10 +85,11 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         {
             sum=0;
         }
-        if(data.getDimension()!=cutoff.getDimension()){
-            throw new RuntimeException("Incorrect number of cutoffs");
-        }
+
         if(cutoff!=null){
+            if(data.getDimension()!=cutoff.getDimension()){
+                throw new RuntimeException("Incorrect number of cutoffs");
+            }
         for (int i = 0; i <data.getDimension() ; i++) {
             if (Math.sqrt(precision.getParameterValue(0) * cutoff.getParameterValue(i)) > Math.abs(data.getParameterValue(i)) && data.getParameterValue(i)!=0)
                 return Double.NEGATIVE_INFINITY;

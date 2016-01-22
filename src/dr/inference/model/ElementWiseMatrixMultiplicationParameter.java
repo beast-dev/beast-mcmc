@@ -13,6 +13,9 @@ public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
     public ElementWiseMatrixMultiplicationParameter(String name, MatrixParameter[] matList) {
         super(name);
         this.matlist=matList;
+        for (int i = 0; i <matList.length ; i++) {
+            addParameter(matList[i]);
+        }
     }
 
     @Override

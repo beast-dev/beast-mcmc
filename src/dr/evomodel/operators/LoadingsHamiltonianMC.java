@@ -24,13 +24,13 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     private int nSteps;
 
 
-    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
+    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd, MatrixParameter loadings){
         super(mode, momentumSd);
         setWeight(weight);
         this.lfm=lfm;
         this.prior=prior;
         this.factors=lfm.getFactors();
-        this.loadings=lfm.getLoadings();
+        this.loadings=loadings;
         this.Precision=lfm.getColumnPrecision();
         nfac=lfm.getFactorDimension();
         ntaxa=lfm.getFactors().getColumnDimension();
@@ -78,7 +78,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
 
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
             for (int j = 0; j <ntraits ; j++) {
-                momentum[i*ntraits+j] = momentum[i*ntraits+j] - stepSize / 2 * derivative[i][j];
+                momentum[i*ntraits+j] = momentum[i*ntraits+j] - stepSize / 2 * derivative[j][i];
             }
 
         }
@@ -86,7 +86,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
                 for (int k = 0; k <ntraits ; k++) {
-                    loadings.setParameterValueQuietly(j,k, loadings.getParameterValue(j,k)+stepSize*momentum[j*ntraits+k]);
+                    loadings.setParameterValueQuietly(k,j, loadings.getParameterValue(k,j)+stepSize*momentum[j*ntraits+k]);
                 }
 
             }
@@ -98,7 +98,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
 
                 for (int j = 0; j <lfm.getFactorDimension() ; j++) {
                     for (int k = 0; k <ntraits ; k++) {
-                        momentum[j*ntraits+k] = momentum[j*ntraits+k] - stepSize * derivative[j][k];
+                        momentum[j*ntraits+k] = momentum[j*ntraits+k] - stepSize * derivative[k][j];
                     }
 
                 }
@@ -108,7 +108,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         derivative=getGradient();
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
             for (int j = 0; j <ntraits ; j++) {
-                momentum[i*ntraits+j] = momentum[i*ntraits+j] - stepSize / 2 * derivative[i][j];
+                momentum[i*ntraits+j] = momentum[i*ntraits+j] - stepSize / 2 * derivative[j][i];
             }
 
         }
@@ -127,7 +127,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         for (int i = 0; i <ntaxa; i++) {
             for (int j = 0; j <ntraits; j++) {
                 for (int k = 0; k <lfm.getFactorDimension() ; k++) {
-                    answer[j][k]-=residual[i*ntaxa+j]*factors.getParameterValue(i,k);
+                    answer[j][k]-=residual[i*ntaxa+j]*factors.getParameterValue(k,i);
                 }
             }
 
@@ -145,7 +145,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         double[][] answer=getLFMDerivative();
         for (int i = 0; i <loadings.getRowDimension() ; i++) {
             for (int j = 0; j <loadings.getColumnDimension() ; j++) {
-                answer[i][j]-=2/loadings.getParameterValue(i,j)-(loadings.getParameterValue(i,j)-prior.getMean()[0])/prior.getScaleMatrix()[0][0];
+                answer[i][j]+=2/loadings.getParameterValue(i,j)-(loadings.getParameterValue(i,j)-prior.getMean()[0])/prior.getScaleMatrix()[0][0];
             }
 
         }

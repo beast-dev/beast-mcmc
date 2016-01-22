@@ -72,7 +72,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         double answer[]=new double[this.nfac];
         for (int i = 0; i <this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
-                answer[i] +=loadings.getParameterValue(i,j)*Precision.getParameterValue(j,j)*
+                answer[i] +=loadings.getParameterValue(j,i)*Precision.getParameterValue(j,j)*
                         residual[j*ntaxa+element];
             }
         }

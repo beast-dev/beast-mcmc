@@ -127,7 +127,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         for (int i = 0; i <ntaxa; i++) {
             for (int j = 0; j <ntraits; j++) {
                 for (int k = 0; k <lfm.getFactorDimension() ; k++) {
-                    answer[j][k]-=residual[i*ntaxa+j]*factors.getParameterValue(k,i);
+                    answer[j][k]+=residual[i*ntaxa+j]*factors.getParameterValue(k,i);
                 }
             }
 
@@ -145,7 +145,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         double[][] answer=getLFMDerivative();
         for (int i = 0; i <loadings.getRowDimension() ; i++) {
             for (int j = 0; j <loadings.getColumnDimension() ; j++) {
-                answer[i][j]+=2/loadings.getParameterValue(i,j)-(loadings.getParameterValue(i,j)-prior.getMean()[0])/prior.getScaleMatrix()[0][0];
+                answer[i][j]-=2/loadings.getParameterValue(i,j)-(loadings.getParameterValue(i,j)-prior.getMean()[0])/prior.getScaleMatrix()[0][0];
             }
 
         }

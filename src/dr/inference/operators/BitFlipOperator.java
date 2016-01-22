@@ -38,16 +38,20 @@ import dr.math.MathUtils;
  */
 public class BitFlipOperator extends SimpleMCMCOperator {
 
-    public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum, TreeModel treeModel) {
+    public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum, TreeModel treeModel, boolean allowNegative) {
 
         this.parameter = parameter;
         this.usesPriorOnSum = usesPriorOnSum;
-
-        if (treeModel != null) {
+        this.allowNegative=allowNegative;
+        if (treeModel != null ) {
             indicators = new TreeParameterModel(treeModel, parameter, true);
             bitFlipHelper = new DriftBitFlipHelper();
             tree = treeModel;
-        } else {
+        }
+        else if(allowNegative){
+            bitFlipHelper = new TripleBitFlipHelper();
+        }
+        else {
             bitFlipHelper = new BitFlipHelper();
         }
 
@@ -55,7 +59,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     }
 
     public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum) {
-        this(parameter, weight, usesPriorOnSum, null);
+        this(parameter, weight, usesPriorOnSum, null, false);
     }
 
     /**
@@ -133,7 +137,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             throw new RuntimeException("expected 1 or 0 or -1");
         }
 
-        if (!usesPriorOnSum) {
+        if (!usesPriorOnSum && !allowNegative) {
             logq = 0;
         }
 
@@ -173,6 +177,41 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             throw new RuntimeException("expected 1 or 0");
         }
 
+    }
+
+    class TripleBitFlipHelper extends BitFlipHelper{
+        public double flipOne(int pos, int dim, double sum){
+            double rand = MathUtils.nextDouble();
+            if(rand<.5){
+                parameter.setParameterValue(pos,0);
+            }
+            else{
+                    parameter.setParameterValue(pos,-1);
+            }
+            return -Math.log(2);
+        }
+
+        public double flipZero(int pos, int dim, double sum){
+            double rand = MathUtils.nextDouble();
+            if(rand<.5){
+                parameter.setParameterValue(pos,1);
+            }
+            else{
+                parameter.setParameterValue(pos,-1);
+            }
+            return -Math.log(2);
+        }
+
+        public double flipNegOne(int pos, int dim, double sum){
+            double rand = MathUtils.nextDouble();
+            if(rand<.5){
+                parameter.setParameterValue(pos,1);
+            }
+            else{
+                parameter.setParameterValue(pos,0);
+            }
+            return -Math.log(2);
+        }
     }
 
     class DriftBitFlipHelper extends BitFlipHelper {
@@ -318,4 +357,5 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     private Parameter parameter = null;
 //    private int bits;
     private boolean usesPriorOnSum = true;
+    private boolean allowNegative=false;
 }

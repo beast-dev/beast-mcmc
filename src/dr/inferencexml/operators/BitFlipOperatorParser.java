@@ -39,6 +39,7 @@ public class BitFlipOperatorParser extends AbstractXMLObjectParser {
     public static final String BIT_FLIP_OPERATOR = "bitFlipOperator";
     public static final String BITS = "bits";
     public static final String USES_SUM_PRIOR = "usesPriorOnSum";
+    public static final String ALLOW_NEGATIVE = "allowNegative";
     // public static final String FOR_DRIFT = "forDrift";
 
     public String getParserName() {
@@ -53,12 +54,14 @@ public class BitFlipOperatorParser extends AbstractXMLObjectParser {
 
         boolean usesPriorOnSum = xo.getAttribute(USES_SUM_PRIOR, true);
 
+        boolean allowNegative=xo.getAttribute(ALLOW_NEGATIVE, false);
+
         // boolean forDrift = xo.getAttribute(FOR_DRIFT,false);
 
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
 
-        return new BitFlipOperator(parameter, weight, usesPriorOnSum, treeModel);
+        return new BitFlipOperator(parameter, weight, usesPriorOnSum, treeModel, allowNegative);
     }
 
     //************************************************************************
@@ -81,6 +84,7 @@ public class BitFlipOperatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
 //                AttributeRule.newIntegerRule(BITS,true),
             AttributeRule.newBooleanRule(USES_SUM_PRIOR, true),
+            AttributeRule.newBooleanRule(ALLOW_NEGATIVE, true),
             //  AttributeRule.newBooleanRule(FOR_DRIFT,true),
             new ElementRule(TreeModel.class, true),
             new ElementRule(Parameter.class)

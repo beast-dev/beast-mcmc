@@ -63,7 +63,7 @@ public class MomentDistributionModelParser extends AbstractXMLObjectParser {
             ),
                     new ElementRule(CUTOFF,
                             new XMLSyntaxRule[]{
-                                            new ElementRule(Parameter.class)
+                                            new ElementRule(Parameter.class, true)
                                     }
                     ),
                     new ElementRule(PREC,

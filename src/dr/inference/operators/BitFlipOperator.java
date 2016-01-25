@@ -137,7 +137,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             throw new RuntimeException("expected 1 or 0 or -1");
         }
 
-        if (!usesPriorOnSum && !allowNegative) {
+        if (!usesPriorOnSum) {
             logq = 0;
         }
 
@@ -188,7 +188,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             else{
                     parameter.setParameterValue(pos,-1);
             }
-            return -Math.log(2);
+            return 0;
         }
 
         public double flipZero(int pos, int dim, double sum){
@@ -199,7 +199,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             else{
                 parameter.setParameterValue(pos,-1);
             }
-            return -Math.log(2);
+            return 0;
         }
 
         public double flipNegOne(int pos, int dim, double sum){
@@ -210,7 +210,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             else{
                 parameter.setParameterValue(pos,0);
             }
-            return -Math.log(2);
+            return 0;
         }
     }
 

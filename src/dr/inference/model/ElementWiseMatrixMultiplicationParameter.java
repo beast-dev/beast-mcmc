@@ -4,7 +4,7 @@ package dr.inference.model;
  * Created by max on 11/30/15.
  */
 public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
-    private MatrixParameter[] matlist;
+    private MatrixParameter[] paramList;
 
     public ElementWiseMatrixMultiplicationParameter(String name) {
         super(name);
@@ -12,40 +12,58 @@ public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
 
     public ElementWiseMatrixMultiplicationParameter(String name, MatrixParameter[] matList) {
         super(name);
-        this.matlist=matList;
-        for (int i = 0; i <matList.length ; i++) {
-            addParameter(matList[i]);
+        this.paramList =matList;
+        for (MatrixParameter mat : matList) {
+            mat.addVariableListener(this);
         }
     }
 
     @Override
     public double getParameterValue(int dim) {
         double prod=1;
-        for (int i = 0; i <matlist.length ; i++) {
-            prod=prod*matlist[i].getParameterValue(dim);
+        for (int i = 0; i < paramList.length ; i++) {
+            prod=prod* paramList[i].getParameterValue(dim);
         }
         return prod;
     }
 
     public double getParameterValue(int row, int col){
         double prod=1;
-        for (int i = 0; i <matlist.length ; i++) {
-            prod=prod*matlist[i].getParameterValue(row,col);
+        for (int i = 0; i < paramList.length ; i++) {
+            prod=prod* paramList[i].getParameterValue(row,col);
         }
         return prod;
     }
 
+
+    protected void storeValues() {
+        for (Parameter p : paramList) {
+            p.storeParameterValues();
+        }
+    }
+
+    protected void restoreValues() {
+        for (Parameter p : paramList) {
+            p.restoreParameterValues();
+        }
+    }
+
+    @Override
+    public void variableChangedEvent(Variable variable, int index, ChangeType type) {
+        fireParameterChangedEvent(index, type);
+    }
+
     @Override
     public int getDimension() {
-        return matlist[0].getDimension();
+        return paramList[0].getDimension();
     }
 
     @Override
     public int getColumnDimension() {
-        return matlist[0].getColumnDimension();
+        return paramList[0].getColumnDimension();
     }
 
     public int getRowDimension(){
-        return matlist[0].getRowDimension();
+        return paramList[0].getRowDimension();
     }
 }

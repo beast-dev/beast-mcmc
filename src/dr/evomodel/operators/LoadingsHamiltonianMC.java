@@ -4,6 +4,8 @@ import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
@@ -90,7 +92,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
                 }
 
             }
-            loadings.fireParameterChangedEvent();
+            loadings.fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
 
 
             if(i!=nSteps){

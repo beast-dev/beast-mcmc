@@ -27,6 +27,8 @@ package dr.inference.operators;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
@@ -38,11 +40,11 @@ import dr.math.MathUtils;
  */
 public class BitFlipOperator extends SimpleMCMCOperator {
 
-    public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum, TreeModel treeModel, boolean allowNegative) {
+    public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum, TreeModel treeModel, boolean allowNegative, boolean priorOnColumn) {
 
         this.parameter = parameter;
         this.usesPriorOnSum = usesPriorOnSum;
-        this.allowNegative=allowNegative;
+        this.priorOnColumn=priorOnColumn;
         if (treeModel != null ) {
             indicators = new TreeParameterModel(treeModel, parameter, true);
             bitFlipHelper = new DriftBitFlipHelper();
@@ -59,7 +61,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     }
 
     public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum) {
-        this(parameter, weight, usesPriorOnSum, null, false);
+        this(parameter, weight, usesPriorOnSum, null, false, false);
     }
 
     /**
@@ -76,11 +78,14 @@ public class BitFlipOperator extends SimpleMCMCOperator {
      * equiprobable, unless usesPriorOnSum = false then all configurations are equiprobable
      */
     public final double doOperation() {
-        final int dim = parameter.getDimension();
+        int dim = parameter.getDimension();
         //  final int dim = bitFlipHelper.getDim(parameter.getDimension());
         double sum = 0.0;
         // double sumNeg = 0.0;
         // double temp;
+
+        // make it so pos never corresponds to external nodes when used for drift diffusion model
+        final int pos = MathUtils.nextInt(dim);
 
         if(usesPriorOnSum) {
             for (int i = 0; i < dim; i++) {
@@ -105,9 +110,16 @@ public class BitFlipOperator extends SimpleMCMCOperator {
                 }
             }
             */
+            if(priorOnColumn){
+                sum=0;
+                int col=pos/((MatrixParameterInterface) parameter).getRowDimension();
+                dim=((MatrixParameterInterface) parameter).getRowDimension();
+                for (int i = 0; i <((MatrixParameterInterface) parameter).getRowDimension() ; i++) {
+                    sum+=Math.abs(((MatrixParameterInterface) parameter).getParameterValue(i,col));
+                }
+            }
         }
-        // make it so pos never corresponds to external nodes when used for drift diffusion model
-        final int pos = MathUtils.nextInt(dim);
+
 
         final int value = (int) parameter.getParameterValue(pos);
         double logq = 0.0;
@@ -184,33 +196,39 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             double rand = MathUtils.nextDouble();
             if(rand<.5){
                 parameter.setParameterValue(pos,0);
+                return Math.log(2 * (dim + 1 - sum) / sum);
             }
-            else{
-                    parameter.setParameterValue(pos,-1);
+            else {
+                parameter.setParameterValue(pos, -1);
+                return 0;
             }
-            return 0;
         }
 
         public double flipZero(int pos, int dim, double sum){
             double rand = MathUtils.nextDouble();
-            if(rand<.5){
-                parameter.setParameterValue(pos,1);
-            }
-            else{
-                parameter.setParameterValue(pos,-1);
-            }
-            return 0;
-        }
 
-        public double flipNegOne(int pos, int dim, double sum){
+            if (rand < 0.5) {
+                parameter.setParameterValue(pos, 1.0);
+                return Math.log((sum + 1) / (2 * (dim - sum)));
+            } else {
+                parameter.setParameterValue(pos, -1.0);
+                return Math.log((sum + 1) / (2 * (dim - sum)));
+            }
+
+
+            }
+
+
+
+        public double flipNegOne(int pos, int dim, double sum) {
             double rand = MathUtils.nextDouble();
-            if(rand<.5){
-                parameter.setParameterValue(pos,1);
+            if (rand < .5) {
+                parameter.setParameterValue(pos, 0);
+                return Math.log(2 * (dim + 1 - sum) / sum);
+            } else {
+                parameter.setParameterValue(pos, 1);
+                return 0;
             }
-            else{
-                parameter.setParameterValue(pos,0);
-            }
-            return 0;
         }
     }
 
@@ -357,5 +375,5 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     private Parameter parameter = null;
 //    private int bits;
     private boolean usesPriorOnSum = true;
-    private boolean allowNegative=false;
+    private boolean priorOnColumn=false;
 }

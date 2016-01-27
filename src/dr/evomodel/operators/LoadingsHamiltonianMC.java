@@ -9,6 +9,7 @@ import dr.inference.model.Variable;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
+import jebl.math.Random;
 
 /**
  * Created by max on 1/11/16.
@@ -73,9 +74,10 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         double[][] derivative=getGradient();
         drawMomentum(lfm.getFactorDimension()*ntraits);
 
+
         double prop=0;
         for (int i = 0; i <momentum.length ; i++) {
-            prop+=momentum[i]*momentum[i]/(2*getMomentumSd()*getMomentumSd());
+            prop += momentum[i] * momentum[i] / (2 * getMomentumSd() * getMomentumSd());
         }
 
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
@@ -88,7 +90,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
                 for (int k = 0; k <ntraits ; k++) {
-                    loadings.setParameterValueQuietly(k,j, loadings.getParameterValue(k,j)+stepSize*momentum[j*ntraits+k]);
+                    loadings.setParameterValueQuietly(k , j , loadings.getParameterValue(k , j) + stepSize * momentum[j * ntraits + k]);
                 }
 
             }
@@ -129,7 +131,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         for (int i = 0; i <ntaxa; i++) {
             for (int j = 0; j <ntraits; j++) {
                 for (int k = 0; k <lfm.getFactorDimension() ; k++) {
-                    answer[j][k]+=residual[i*ntaxa+j]*factors.getParameterValue(k,i);
+                    answer[j][k]-=residual[i*ntaxa+j]*factors.getParameterValue(k,i);
                 }
             }
 
@@ -147,7 +149,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
         double[][] answer=getLFMDerivative();
         for (int i = 0; i <loadings.getRowDimension() ; i++) {
             for (int j = 0; j <loadings.getColumnDimension() ; j++) {
-                answer[i][j]-=2/loadings.getParameterValue(i,j)-(loadings.getParameterValue(i,j)-prior.getMean()[0])/prior.getScaleMatrix()[0][0];
+                answer[i][j]+=2/loadings.getParameterValue(i,j)-(loadings.getParameterValue(i,j)-prior.getMean()[0])/prior.getScaleMatrix()[0][0];
             }
 
         }

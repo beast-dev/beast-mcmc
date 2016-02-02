@@ -8,6 +8,7 @@ import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
+import jebl.math.Random;
 
 /**
  * Created by max on 12/2/15.
@@ -109,6 +110,8 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         double[] mean=tree.getConditionalMean(randel);
         double precfactor=0;
         double[][] prec=null;
+        double functionalStepSize = stepSize * Random.nextDouble();
+
         if(diffusionSN){
             precfactor=tree.getPrecisionFactor(randel);
         }
@@ -130,7 +133,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
-                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+stepSize*momentum[j]);
+                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+functionalStepSize * momentum[j]);
             }
 //            System.out.println("randel");
 //            System.out.println(randel);
@@ -140,21 +143,21 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             if(i!=nSteps){
                 derivative=getGradient(randel,mean,prec, precfactor);
 
-                for (int j = 0; j <lfm.getFactorDimension() ; j++) {
-                    momentum[j] = momentum[j] - stepSize * derivative[j];
+                for (int j = 0; j < lfm.getFactorDimension() ; j++) {
+                    momentum[j] = momentum[j] - functionalStepSize * derivative[j];
                 }
             }
         }
 
-        derivative=getGradient(randel,mean,prec, precfactor);
+        derivative=getGradient(randel , mean , prec , precfactor);
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
 
-            momentum[i] = momentum[i] - stepSize / 2 * derivative[i];
+            momentum[i] = momentum[i] - functionalStepSize / 2 * derivative[i];
         }
 
         double res=0;
         for (int i = 0; i <momentum.length ; i++) {
-            res+=momentum[i]*momentum[i]/(2*getMomentumSd()*getMomentumSd());
+            res += momentum[i]*momentum[i] / (2 * getMomentumSd() * getMomentumSd());
         }
         return prop-res;
     }

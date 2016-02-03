@@ -192,27 +192,48 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     }
 
     class TripleBitFlipHelper extends BitFlipHelper{
-        public double flipOne(int pos, int dim, double sum){
-            double rand = MathUtils.nextDouble();
-            if(rand<.5){
-                parameter.setParameterValue(pos,0);
-                return Math.log(2 * (dim + 1 - sum) / sum);
+        private int getAdjustmentSum(MatrixParameterInterface parameter){
+            int adjustmentSum = parameter.getColumnDimension();
+            for (int i = 0; i < parameter.getColumnDimension(); i++) {
+                for (int j = 0; j <  parameter.getRowDimension(); j++) {
+                    if( parameter.getParameterValue(j, i) !=0 ){
+                        adjustmentSum--;
+                        break;
+                    }
+                }
             }
-            else {
+            return adjustmentSum;
+        }
+
+        public double flipOne(int pos, int dim, double sum) {
+            double rand = MathUtils.nextDouble();
+            int adjustmentSum = 1;
+            if (rand < .5) {
+                parameter.setParameterValue(pos, 0);
+                if (sum == 1 && priorOnColumn) {
+                    adjustmentSum = getAdjustmentSum((MatrixParameterInterface) parameter);
+                }
+                return Math.log(2 * adjustmentSum * (dim + 1 - sum) / sum);
+            } else {
                 parameter.setParameterValue(pos, -1);
                 return 0;
             }
         }
 
+
         public double flipZero(int pos, int dim, double sum){
             double rand = MathUtils.nextDouble();
+            int adjustmentSum=1;
 
+            if(sum==0 && priorOnColumn) {
+                adjustmentSum = getAdjustmentSum((MatrixParameterInterface) parameter);
+            }
             if (rand < 0.5) {
                 parameter.setParameterValue(pos, 1.0);
-                return Math.log((sum + 1) / (2 * (dim - sum)));
+                return Math.log((sum + 1) / (2 * (dim - sum) * adjustmentSum));
             } else {
                 parameter.setParameterValue(pos, -1.0);
-                return Math.log((sum + 1) / (2 * (dim - sum)));
+                return Math.log((sum + 1) / (2 * (dim - sum) * adjustmentSum));
             }
 
 
@@ -222,9 +243,13 @@ public class BitFlipOperator extends SimpleMCMCOperator {
 
         public double flipNegOne(int pos, int dim, double sum) {
             double rand = MathUtils.nextDouble();
-            if (rand < .5) {
-                parameter.setParameterValue(pos, 0);
-                return Math.log(2 * (dim + 1 - sum) / sum);
+            int adjustmentSum=1;
+            if(rand<.5){
+                parameter.setParameterValue(pos,0);
+                if(sum == 1 && priorOnColumn){
+                    adjustmentSum = getAdjustmentSum((MatrixParameterInterface) parameter);
+                }
+                return Math.log(2 * adjustmentSum * (dim + 1 - sum) / sum);
             } else {
                 parameter.setParameterValue(pos, 1);
                 return 0;

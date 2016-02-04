@@ -128,7 +128,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
         }
 
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
-            momentum[i] = momentum[i] - stepSize / 2 * derivative[i];
+            momentum[i] = momentum[i] - functionalStepSize / 2 * derivative[i];
         }
 
         for (int i = 0; i <nSteps ; i++) {

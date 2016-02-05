@@ -198,7 +198,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         double high;
         NormalDistribution normal;
         for (int i = 0; i < temp.length; i++) {
-            highCutoff = Math.sqrt(prior.getCutoff().getParameterValue(i * LFM.getLoadings().getRowDimension() + row));
+            highCutoff = Math.sqrt(prior.getCutoff().getParameterValue(row * LFM.getLoadings().getColumnDimension() + i));
             lowCutoff = -highCutoff;
             for (int j = 0; j <= i; j++) {
 //                if(Cholesky[i][i] > 0) {
@@ -241,8 +241,10 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 //                System.out.println("temp: " + temp[i]);
 //                System.out.println("Cholesky " + i + ", " + j +": " +Cholesky[i][j]);
             }
-            if(Math.abs(draws[i])<Math.sqrt(.5))
-            System.out.println("draws: " + draws[i]);
+            if(Math.abs(draws[i])<Math.sqrt(prior.getCutoff().getParameterValue(row * LFM.getLoadings().getColumnDimension() + i))) {
+                System.out.println(Math.sqrt(prior.getCutoff().getParameterValue(row * LFM.getLoadings().getColumnDimension() + i)));
+                System.out.println("draws: " + draws[i]);
+            }
         }
 
 
@@ -316,7 +318,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
     @Override
     public String getOperatorName() {
-        return "loadingsGibbsOperator";  //To change body of implemented methods use File | Settings | File Templates.
+        return "loadingsGibbsTruncatedOperator";  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

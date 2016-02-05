@@ -2,10 +2,7 @@ package dr.inference.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.TransposedBlockUpperTriangularMatrixParameter;
+import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.NormalDistribution;
@@ -195,48 +192,57 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
     private double[] getDraws(int row, double[] mean, double[][] Cholesky){
         double[] temp = new double[mean.length];
         double[] draws = new double[mean.length];
-        double cutoffs;
+        double lowCutoff;
+        double highCutoff;
         double low;
         double high;
         NormalDistribution normal;
         for (int i = 0; i < temp.length; i++) {
-            cutoffs = prior.getCutoff().getParameterValue(i * LFM.getLoadings().getRowDimension() + row);
-            for (int j = 0; j < i; j++) {
-                if(Cholesky[i][i] > 0) {
-                    cutoffs = -cutoffs;
+            highCutoff = Math.sqrt(prior.getCutoff().getParameterValue(i * LFM.getLoadings().getRowDimension() + row));
+            lowCutoff = -highCutoff;
+            for (int j = 0; j <= i; j++) {
+//                if(Cholesky[i][i] > 0) {
                     if (i != j) {
-                        cutoffs = cutoffs - temp[i] * Cholesky[i][j];
+                        lowCutoff = lowCutoff - temp[j] * Cholesky[i][j];
+                        highCutoff = highCutoff - temp[j] * Cholesky[i][j];
                     } else {
-                        cutoffs = cutoffs / Cholesky[i][j];
+                        lowCutoff = lowCutoff / Cholesky[i][j];
+                        highCutoff = highCutoff / Cholesky[i][j];
                     }
-                    normal = new NormalDistribution(mean[i], 1);
-                    low = normal.cdf(cutoffs);
-                    high = normal.cdf(-cutoffs);
-                }
-                else{
-                    if (i != j) {
-                        cutoffs = cutoffs + temp[i] * Cholesky[i][j];
-                    } else {
-                        cutoffs = cutoffs / Cholesky[i][j];
-                    }
-                    normal = new NormalDistribution(mean[i], 1);
-                    low = normal.quantile(-cutoffs);
-                    high = normal.quantile(cutoffs);
-                }
-                double proportion = low/(low + 1 - high);
-                if(Random.nextDouble()<proportion){
-                    temp[i] = normal.quantile(Random.nextDouble() * low);
-                }
-                else{
-                    temp[i] = normal.quantile((1-high) * Random.nextDouble() + high);
-                }
+//                }
+//                else{
+//                    if (i != j) {
+//                        cutoffs = cutoffs + temp[j] * Cholesky[i][j];
+//                    } else {
+//                        cutoffs = cutoffs / Cholesky[i][j];
+//                    }
+//                }
+            }
+//            System.out.println(cutoffs);
+            normal = new NormalDistribution(mean[i], 1);
+            low = normal.cdf(lowCutoff);
+            high = normal.cdf(highCutoff);
+//            System.out.println("low: " + low);
+//            System.out.println("high: " + high);
+            double proportion = low/(low + 1 - high);
+            if(Random.nextDouble()<proportion){
+                double quantile=Random.nextDouble() * low;
+                temp[i] = normal.quantile(quantile);
+            }
+            else{
+                double quantile=(1-high) * Random.nextDouble() + high;
+                temp[i] = normal.quantile(quantile);
             }
 
         }
         for (int i = 0; i <mean.length ; i++) {
-            for (int j = 0; j < i; j++) {
-                draws[i] = Cholesky[i][j] * temp[j];
+            for (int j = 0; j <= i; j++) {
+                draws[i] += Cholesky[i][j] * temp[j];
+//                System.out.println("temp: " + temp[i]);
+//                System.out.println("Cholesky " + i + ", " + j +": " +Cholesky[i][j]);
             }
+            if(Math.abs(draws[i])<Math.sqrt(.5))
+            System.out.println("draws: " + draws[i]);
         }
 
 
@@ -324,7 +330,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
             for (int i = 0; i < size; i++) {
                 drawI(i, currentPrecision, currentMidMean, currentMean);
             }
-            LFM.getLoadings().fireParameterChangedEvent();
+            ((Parameter) loadings).fireParameterChangedEvent();
         } else {
             int i = MathUtils.nextInt(LFM.getLoadings().getRowDimension());
             ListIterator<double[][]> currentPrecision;

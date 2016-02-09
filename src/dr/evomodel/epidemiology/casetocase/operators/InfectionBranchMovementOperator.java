@@ -104,7 +104,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             out = moveUp(tree, node, map);
         }
         if(DEBUG){
-            c2cLikelihood.checkPartitions();
+            c2cLikelihood.getTreeModel().checkPartitions();
         }
         return out;
     }
@@ -138,7 +138,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map.get(grandparent.getNumber())==map.get(parent.getNumber())){
-                for(Integer ancestor: c2cLikelihood.samePartitionDownTree(parent, true)){
+                for(Integer ancestor: c2cLikelihood.getTreeModel().samePartitionDownTree(parent)){
                     newMap[ancestor] = map.get(node.getNumber());
                 }
                 newMap[grandparent.getNumber()]=map.get(node.getNumber());
@@ -149,7 +149,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         } else {
             if(map.get(sibling.getNumber())==map.get(parent.getNumber())){
-                for(Integer descendant: c2cLikelihood.samePartitionUpTree(sibling, true)){
+                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionUpTree(sibling)){
                     newMap[descendant]=map.get(node.getNumber());
                 }
                 newMap[sibling.getNumber()]=map.get(node.getNumber());
@@ -184,7 +184,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             NodeRef child = tree.getChild(node, i);
             if(!c2cLikelihood.isAncestral(child)){
                 assert map.get(child.getNumber()) == map.get(node.getNumber()) : "Partition problem";
-                for(Integer descendant: c2cLikelihood.samePartitionUpTree(child, true)){
+                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionUpTree(child)){
                     newMap[descendant]=map.get(parent.getNumber());
                 }
                 newMap[child.getNumber()]=map.get(parent.getNumber());

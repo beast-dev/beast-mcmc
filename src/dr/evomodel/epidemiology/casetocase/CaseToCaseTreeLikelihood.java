@@ -299,44 +299,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
 
-    //Counts the children of the current node which have the same painting as itself under the current map.
-    //This will always be 1 if extended==false.
 
-
-
-    public int countChildrenInSamePartition(NodeRef node, BranchMapModel map){
-        if(treeModel.isExternal(node)){
-            return -1;
-        } else {
-            int count = 0;
-            AbstractCase parentCase = map.get(node.getNumber());
-            for(int i=0; i< treeModel.getChildCount(node); i++){
-                if(map.get(treeModel.getChild(node,i).getNumber())==parentCase){
-                    count++;
-                }
-            }
-            return count;
-        }
-    }
-
-    public int countChildrenInSamePartition(NodeRef node){
-        return countChildrenInSamePartition(node, branchMap);
-    }
-
-
-    public static NodeRef sibling(TreeModel tree, NodeRef node){
-        if(tree.isRoot(node)){
-            return null;
-        } else {
-            NodeRef parent = tree.getParent(node);
-            for(int i=0; i<tree.getChildCount(parent); i++){
-                if(tree.getChild(parent,i)!=node){
-                    return tree.getChild(parent,i);
-                }
-            }
-        }
-        return null;
-    }
 
     // find all partitions of the descendant tips of the current node. If map is specified then it makes a map of node
     // number to possible partitions; map can be null.
@@ -376,145 +339,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public void flagForDescendantRecalculation(TreeModel tree, NodeRef node){
         flagForDescendantRecalculation(tree, node, updateNode);
-    }
-
-    //Return a set of nodes that are not descendants of (or equal to) the current node and are in the same partition as
-    // it. If flagForRecalc is true, then this also sets the flags for likelihood recalculation for all these nodes
-    // to true
-
-    public HashSet<Integer> samePartitionDownTree(NodeRef node, boolean flagForRecalc){
-        return samePartitionDownTree(node, branchMap, flagForRecalc);
-    }
-
-    public HashSet<Integer> samePartitionDownTree(NodeRef node, BranchMapModel map, boolean flagForRecalc){
-        if(flagForRecalc){
-            flagForDescendantRecalculation(treeModel, node);
-        }
-        HashSet<Integer> out = new HashSet<Integer>();
-        AbstractCase painting = map.get(node.getNumber());
-        NodeRef currentNode = node;
-        NodeRef parentNode = treeModel.getParent(node);
-        while(parentNode!=null && map.get(parentNode.getNumber())==painting){
-            out.add(parentNode.getNumber());
-            if(countChildrenInSamePartition(parentNode)==2){
-                NodeRef otherChild = sibling(treeModel, currentNode);
-                out.add(otherChild.getNumber());
-                out.addAll(samePartitionUpTree(otherChild, map, flagForRecalc));
-            }
-            currentNode = parentNode;
-            parentNode = treeModel.getParent(currentNode);
-        }
-        return out;
-    }
-
-    //Return a set of nodes that are descendants (and not equal to) the current node and are in the same partition as
-    // it.
-
-    public HashSet<Integer> samePartitionUpTree(NodeRef node, boolean flagForRecalc){
-        return samePartitionUpTree(node, branchMap, flagForRecalc);
-    }
-
-    public HashSet<Integer> samePartitionUpTree(NodeRef node, BranchMapModel map, boolean flagForRecalc){
-        HashSet<Integer> out = new HashSet<Integer>();
-        AbstractCase painting = map.get(node.getNumber());
-        boolean creepsFurther = false;
-        for(int i=0; i< treeModel.getChildCount(node); i++){
-            if(map.get(treeModel.getChild(node,i).getNumber())==painting){
-                creepsFurther = true;
-                out.add(treeModel.getChild(node,i).getNumber());
-                out.addAll(samePartitionUpTree(treeModel.getChild(node, i), map, flagForRecalc));
-            }
-        }
-        if(flagForRecalc && !creepsFurther){
-            flagForDescendantRecalculation(treeModel, node);
-        }
-        return out;
-    }
-
-    public Integer[] samePartitionElement(NodeRef node, boolean flagForRecalc){
-        return samePartitionElement(node, branchMap, flagForRecalc);
-    }
-
-    private Integer[] samePartitionElement(NodeRef node, BranchMapModel map, boolean flagForRecalc){
-        HashSet<Integer> out = new HashSet<Integer>();
-        out.add(node.getNumber());
-        out.addAll(samePartitionDownTree(node, map, flagForRecalc));
-        out.addAll(samePartitionUpTree(node, map, flagForRecalc));
-        return out.toArray(new Integer[out.size()]);
-    }
-
-    // returns all nodes that are the earliest nodes in the partitions corresponding to this outbreak' children in
-    // the _transmission_ tree.
-
-    private Integer[] getAllChildInfectionNodes(AbstractCase thisCase){
-        HashSet<Integer> out = new HashSet<Integer>();
-        NodeRef tip = treeModel.getNode(tipMap.get(thisCase));
-        Integer[] partition = samePartitionElement(tip, false);
-        for (Integer i : partition) {
-            NodeRef node = treeModel.getNode(i);
-            if (!treeModel.isExternal(node)) {
-                for (int j = 0; j < treeModel.getChildCount(node); j++) {
-                    NodeRef child = treeModel.getChild(node, j);
-                    if(branchMap.get(child.getNumber())!=thisCase){
-                        out.add(child.getNumber());
-                    }
-                }
-            }
-        }
-        return out.toArray(new Integer[out.size()]);
-    }
-
-    public NodeRef getTip(AbstractCase thisCase){
-        return treeModel.getNode(tipMap.get(thisCase));
-    }
-
-    public NodeRef getEarliestNodeInPartition(AbstractCase thisCase, BranchMapModel branchMap){
-        if(thisCase.wasEverInfected()) {
-            NodeRef child = treeModel.getNode(tipMap.get(thisCase));
-            NodeRef parent = treeModel.getParent(child);
-            boolean transmissionFound = false;
-            while (!transmissionFound) {
-                if (branchMap.get(child.getNumber()) != branchMap.get(parent.getNumber())) {
-                    transmissionFound = true;
-                } else {
-                    child = parent;
-                    parent = treeModel.getParent(child);
-                    if (parent == null) {
-                        transmissionFound = true;
-                    }
-                }
-            }
-            return child;
-        }
-        return null;
-    }
-
-    public NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
-        return getEarliestNodeInPartition(thisCase, branchMap);
-    }
-
-    public HashSet<AbstractCase> getDescendants(AbstractCase thisCase){
-        HashSet<AbstractCase> out = new HashSet<AbstractCase>(getInfectees(thisCase));
-
-        if(thisCase.wasEverInfected()) {
-            for (AbstractCase child : out) {
-                out.addAll(getDescendants(child));
-            }
-        }
-        return out;
-    }
-
-
-    public Integer[] getParentsArray(){
-        Integer[] out = new Integer[outbreak.size()];
-        for(AbstractCase thisCase : outbreak.getCases()){
-            if(thisCase.wasEverInfected()) {
-                out[outbreak.getCaseIndex(thisCase)] = outbreak.getCaseIndex(getInfector(thisCase));
-            } else {
-                out[outbreak.getCaseIndex(thisCase)] = null;
-            }
-        }
-        return out;
     }
 
 
@@ -719,63 +543,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
 
-    /* Return the case which infected this case */
-
-    public AbstractCase getInfector(AbstractCase thisCase){
-        return getInfector(thisCase, branchMap);
-    }
-
-    public AbstractCase getInfector(int i){
-        return getInfector(getOutbreak().getCase(i), branchMap);
-    }
-
-    /* Return the case which was the infector in the infection event represented by this node */
-
-    public AbstractCase getInfector(NodeRef node){
-        return getInfector(node, branchMap);
-    }
-
-    public AbstractCase getInfector(AbstractCase thisCase, BranchMapModel branchMap){
-        if(thisCase.wasEverInfected()) {
-            NodeRef tip = treeModel.getNode(tipMap.get(thisCase));
-            return getInfector(tip, branchMap);
-        }
-        return null;
-    }
-
-    public AbstractCase getRootCase(){
-        return branchMap.get(treeModel.getRoot().getNumber());
-    }
-
-    public HashSet<AbstractCase> getInfectees(AbstractCase thisCase){
-        return getInfectees(thisCase, branchMap);
-    }
-
-    public HashSet<AbstractCase> getInfectees(AbstractCase thisCase, BranchMapModel branchMap){
-        if(thisCase.wasEverInfected()) {
-            return getInfecteesInClade(getEarliestNodeInPartition(thisCase), branchMap);
-        }
-        return new HashSet<AbstractCase>();
-    }
-
-    public HashSet<AbstractCase> getInfecteesInClade(NodeRef node, BranchMapModel branchMap){
-        HashSet<AbstractCase> out = new HashSet<AbstractCase>();
-        if(treeModel.isExternal(node)){
-            return out;
-        } else {
-            AbstractCase thisCase = branchMap.get(node.getNumber());
-            for(int i=0; i<treeModel.getChildCount(node); i++){
-                NodeRef child = treeModel.getChild(node, i);
-                AbstractCase childCase = branchMap.get(child.getNumber());
-                if(childCase!=thisCase){
-                    out.add(childCase);
-                } else {
-                    out.addAll(getInfecteesInClade(child, branchMap));
-                }
-            }
-            return out;
-        }
-    }
 
     public double getInfectionTime(AbstractCase thisCase){
 
@@ -783,7 +550,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             return infectionTimes[outbreak.getCaseIndex(thisCase)];
         } else {
             if(thisCase.wasEverInfected()) {
-                NodeRef child = getEarliestNodeInPartition(thisCase);
+                NodeRef child = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(thisCase);
                 NodeRef parent = treeModel.getParent(child);
 
                 if (parent != null) {
@@ -830,7 +597,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public void setInfectionHeight(AbstractCase thisCase, double height){
         if(thisCase.wasEverInfected()) {
-            NodeRef child = getEarliestNodeInPartition(thisCase);
+            NodeRef child = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(thisCase);
             NodeRef parent = treeModel.getParent(child);
 
             double minHeight = treeModel.getNodeHeight(child);
@@ -1041,53 +808,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return getInfectionTime(rootCase);
     }
 
-    public AbstractCase getInfector(NodeRef node, BranchMapModel branchMap){
-        if(treeModel.isRoot(node) || node.getNumber() == treeModel.getRoot().getNumber()){
-            return null;
-        } else {
-            AbstractCase nodeCase = branchMap.get(node.getNumber());
-            if(branchMap.get(treeModel.getParent(node).getNumber())!=nodeCase){
-                return branchMap.get(treeModel.getParent(node).getNumber());
-            } else {
-                return getInfector(treeModel.getParent(node), branchMap);
-            }
-        }
-    }
 
-    public boolean checkPartitions(){
-        return checkPartitions(branchMap, true);
-    }
-
-    protected boolean checkPartitions(BranchMapModel map, boolean verbose){
-        boolean foundProblem = false;
-        for(int i=0; i<treeModel.getInternalNodeCount(); i++){
-            boolean foundTip = false;
-            for(Integer nodeNumber : samePartitionElement(treeModel.getInternalNode(i), map, false)){
-                if(treeModel.isExternal(treeModel.getNode(nodeNumber))){
-                    foundTip = true;
-                }
-            }
-            if(!foundProblem && !foundTip){
-                foundProblem = true;
-                if(verbose){
-                    System.out.println("Node "+(i+treeModel.getExternalNodeCount()) + " is not connected to a tip");
-                }
-            }
-
-        }
-        if(foundProblem){
-            debugOutputTree(map, "checkPartitionProblem", false);
-            throw new BadPartitionException("Tree is not partitioned properly");
-        }
-        return !foundProblem;
-    }
-
-
-    /* Return the partition of the parent of this node */
-
-    public AbstractCase getParentCase(NodeRef node){
-        return branchMap.get(treeModel.getParent(node).getNumber());
-    }
 
     /* Populates the branch map for external nodes */
 
@@ -1149,7 +870,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         }
         NodeRef root = treeModel.getRoot();
         specificallyPartitionUpwards(root, firstCase, map);
-        if(!checkPartitions()){
+        if(!((PartitionedTreeModel)treeModel).checkPartitions()){
             throw new RuntimeException("Given starting network is not compatible with the starting tree");
         }
 
@@ -1232,7 +953,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 String tipName = extNode.taxon.toString();
                 String infector;
                 try{
-                    infector = getInfector(extNode).getName();
+                    infector = ((PartitionedTreeModel)treeModel).getInfector(extNode).getName();
                 } catch(NullPointerException e){
                     infector = "Start";
                 }
@@ -1399,7 +1120,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         for(AbstractCase aCase : outbreak.getCases()){
             if(aCase.wasEverInfected()) {
-                NodeRef originalNode = getEarliestNodeInPartition(aCase);
+                NodeRef originalNode = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(aCase);
 
                 int infectionNodeNo = originalNode.getNumber();
                 if (!treeModel.isRoot(originalNode)) {
@@ -1454,7 +1175,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     e.printStackTrace();
                 }
                 try{
-                    checkPartitions();
+                    ((PartitionedTreeModel)treeModel).checkPartitions();
                 } catch(BadPartitionException e){
                     System.out.print("Rewiring messed up because of partition problem.");
                 }
@@ -1482,10 +1203,10 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             if(infected.wasEverInfected()) {
                 columns[count] = new LogColumn.Abstract(infected.toString() + "_infector") {
                     protected String getFormattedValue() {
-                        if (getInfector(infected) == null) {
+                        if (((PartitionedTreeModel)treeModel).getInfector(infected) == null) {
                             return "Start";
                         } else {
-                            return getInfector(infected).toString();
+                            return ((PartitionedTreeModel)treeModel).getInfector(infected).toString();
                         }
                     }
                 };
@@ -1689,6 +1410,22 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             }
             return branchMap.get(node.getNumber()).toString();
         }
+    }
+
+    public Integer[] getParentsArray(){
+        Integer[] out = new Integer[outbreak.size()];
+        for(AbstractCase thisCase : outbreak.getCases()){
+            if(thisCase.wasEverInfected()) {
+                out[outbreak.getCaseIndex(thisCase)] = outbreak.getCaseIndex(((PartitionedTreeModel)treeModel).getInfector(thisCase));
+            } else {
+                out[outbreak.getCaseIndex(thisCase)] = null;
+            }
+        }
+        return out;
+    }
+
+    public AbstractCase getInfector(int i){
+        return ((PartitionedTreeModel)treeModel).getInfector(getOutbreak().getCase(i));
     }
 
 }

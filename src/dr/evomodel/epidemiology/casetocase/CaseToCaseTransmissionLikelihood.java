@@ -488,7 +488,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
             double infectionTime = treeLikelihood.getInfectionTime(aCase);
-            out.add(new TreeEvent(infectionTime, aCase, treeLikelihood.getInfector(aCase)));
+            out.add(new TreeEvent(infectionTime, aCase, treeLikelihood.getInfector(outbreak.getCaseIndex(aCase))));
 
             if(aCase.wasEverInfected()) {
 

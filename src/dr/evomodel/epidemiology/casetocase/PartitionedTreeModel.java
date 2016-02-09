@@ -25,6 +25,7 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.app.beauti.util.TreeUtils;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
@@ -33,11 +34,7 @@ import dr.inference.model.*;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-
-import java.util.Set;
+import java.util.*;
 
 /**
  * TreeModel plus partition information
@@ -205,6 +202,262 @@ public class PartitionedTreeModel extends TreeModel {
         // todo in the end, want to check the tree partitions are sane here before flushing the queue
 
         flushQueue();
+    }
+
+    public boolean checkPartitions(){
+        return checkPartitions(branchMap, true);
+    }
+
+    protected boolean checkPartitions(BranchMapModel map, boolean verbose){
+        boolean foundProblem = false;
+        for(int i=0; i<getInternalNodeCount(); i++){
+            boolean foundTip = false;
+            for(Integer nodeNumber : samePartitionElement(getInternalNode(i))){
+                if(isExternal(getNode(nodeNumber))){
+                    foundTip = true;
+                }
+            }
+            if(!foundProblem && !foundTip){
+                foundProblem = true;
+                if(verbose){
+                    System.out.println("Node "+(i+getExternalNodeCount()) + " is not connected to a tip");
+                }
+            }
+
+        }
+        return !foundProblem;
+    }
+
+    //Return a set of nodes that are not descendants of (or equal to) the current node and are in the same partition as
+    // it. If flagForRecalc is true, then this also sets the flags for likelihood recalculation for all these nodes
+    // to true
+
+
+    public HashSet<Integer> samePartitionDownTree(NodeRef node){
+
+        HashSet<Integer> out = new HashSet<Integer>();
+        AbstractCase painting = branchMap.get(node.getNumber());
+        NodeRef currentNode = node;
+        NodeRef parentNode = getParent(node);
+        while(parentNode!=null && branchMap.get(parentNode.getNumber())==painting){
+            out.add(parentNode.getNumber());
+            if(countChildrenInSamePartition(parentNode)==2){
+                NodeRef otherChild = sibling(this, currentNode);
+                out.add(otherChild.getNumber());
+                out.addAll(samePartitionUpTree(otherChild));
+            }
+            currentNode = parentNode;
+            parentNode = getParent(currentNode);
+        }
+        return out;
+    }
+
+    //Return a set of nodes that are descendants (and not equal to) the current node and are in the same partition as
+    // it.
+
+
+
+    public HashSet<Integer> samePartitionUpTree(NodeRef node){
+        HashSet<Integer> out = new HashSet<Integer>();
+        AbstractCase painting = branchMap.get(node.getNumber());
+        for(int i=0; i< getChildCount(node); i++){
+            if(branchMap.get(getChild(node,i).getNumber())==painting){
+                out.add(getChild(node,i).getNumber());
+                out.addAll(samePartitionUpTree(getChild(node, i)));
+            }
+        }
+        return out;
+    }
+
+
+    public Integer[] samePartitionElement(NodeRef node){
+        HashSet<Integer> out = new HashSet<Integer>();
+        out.add(node.getNumber());
+        out.addAll(samePartitionDownTree(node));
+        out.addAll(samePartitionUpTree(node));
+        return out.toArray(new Integer[out.size()]);
+    }
+
+    private int[] allTipsForThisCase(AbstractCase thisCase){
+        ArrayList<Integer> listOfRefs = new ArrayList<Integer>();
+
+        for(int i=0; i<getExternalNodeCount(); i++){
+            if(branchMap.get(i)==thisCase){
+                listOfRefs.add(i);
+            }
+
+        }
+
+        int[] out = new int[listOfRefs.size()];
+
+        for(int i=0; i<out.length; i++){out[i] = listOfRefs.get(i);}
+
+        return out;
+
+    }
+
+
+    public NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
+        if(thisCase.wasEverInfected()) {
+
+            int[] tips = allTipsForThisCase(thisCase);
+
+            NodeRef tipMRCA = Tree.Utils.getCommonAncestor(this, tips);
+
+            if(branchMap.get(tipMRCA.getNumber())!=thisCase){
+                throw new BadPartitionException("Node partition disconnected");
+            }
+
+            NodeRef child = tipMRCA;
+            NodeRef parent = getParent(child);
+            boolean transmissionFound = false;
+            while (!transmissionFound) {
+                if (branchMap.get(child.getNumber()) != branchMap.get(parent.getNumber())) {
+                    transmissionFound = true;
+                } else {
+                    child = parent;
+                    parent = getParent(child);
+                    if (parent == null) {
+                        transmissionFound = true;
+                    }
+                }
+            }
+            return child;
+        }
+        return null;
+    }
+
+    public HashSet<AbstractCase> getDescendants(AbstractCase thisCase){
+        HashSet<AbstractCase> out = new HashSet<AbstractCase>(getInfectees(thisCase));
+
+        if(thisCase.wasEverInfected()) {
+            for (AbstractCase child : out) {
+                out.addAll(getDescendants(child));
+            }
+        }
+        return out;
+    }
+
+
+
+
+    /* Return the case that infected this case */
+
+    /* Return the case which was the infector in the infection event represented by this node */
+
+    public AbstractCase getInfector(AbstractCase thisCase){
+        if(thisCase.wasEverInfected()) {
+            int[] tips = allTipsForThisCase(thisCase);
+
+            NodeRef tipMRCA = Tree.Utils.getCommonAncestor(this, tips);
+
+            if(branchMap.get(tipMRCA.getNumber())!=thisCase){
+                throw new BadPartitionException("Node partition disconnected");
+            }
+
+            NodeRef currentNode = tipMRCA;
+
+            while(branchMap.get(currentNode.getNumber())==thisCase){
+                currentNode = getParent(currentNode);
+                if(currentNode==null){
+                    return null;
+                }
+            }
+            return branchMap.get(currentNode.getNumber());
+
+
+        }
+        return null;
+    }
+
+    public AbstractCase getRootCase(){
+        return branchMap.get(getRoot().getNumber());
+    }
+
+
+
+    public HashSet<AbstractCase> getInfectees(AbstractCase thisCase){
+        if(thisCase.wasEverInfected()) {
+            return getInfecteesInClade(getEarliestNodeInPartition(thisCase));
+        }
+        return new HashSet<AbstractCase>();
+    }
+
+    public HashSet<AbstractCase> getInfecteesInClade(NodeRef node){
+        HashSet<AbstractCase> out = new HashSet<AbstractCase>();
+        if(isExternal(node)){
+            return out;
+        } else {
+            AbstractCase thisCase = branchMap.get(node.getNumber());
+            for(int i=0; i<getChildCount(node); i++){
+                NodeRef child = getChild(node, i);
+                AbstractCase childCase = branchMap.get(child.getNumber());
+                if(childCase!=thisCase){
+                    out.add(childCase);
+                } else {
+                    out.addAll(getInfecteesInClade(child));
+                }
+            }
+            return out;
+        }
+    }
+
+    //infector of the case assigned to this node
+
+    public AbstractCase getInfector(NodeRef node){
+        if(isRoot(node) || node.getNumber() == getRoot().getNumber()){
+            return null;
+        } else {
+            AbstractCase nodeCase = branchMap.get(node.getNumber());
+            if(branchMap.get(getParent(node).getNumber())!=nodeCase){
+                return branchMap.get(getParent(node).getNumber());
+            } else {
+                return getInfector(getParent(node));
+            }
+        }
+    }
+
+
+    /* Return the partition of the parent of this node */
+
+    public AbstractCase getParentCase(NodeRef node){
+        return branchMap.get(getParent(node).getNumber());
+    }
+
+
+    //Counts the children of the current node which are in the same partition element as itself
+
+
+
+    public int countChildrenInSamePartition(NodeRef node){
+        if(isExternal(node)){
+            return -1;
+        } else {
+            int count = 0;
+            AbstractCase parentCase = branchMap.get(node.getNumber());
+            for(int i=0; i< getChildCount(node); i++){
+                if(branchMap.get(getChild(node,i).getNumber())==parentCase){
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+
+
+
+    public static NodeRef sibling(TreeModel tree, NodeRef node){
+        if(tree.isRoot(node)){
+            return null;
+        } else {
+            NodeRef parent = tree.getParent(node);
+            for(int i=0; i<tree.getChildCount(parent); i++){
+                if(tree.getChild(parent,i)!=node){
+                    return tree.getChild(parent,i);
+                }
+            }
+        }
+        return null;
     }
 
 }

@@ -17,12 +17,12 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 3rd January 2016
+Last updated: a.rambaut@ed.ac.uk - 13th February 2016
 All issues can be viewed at https://github.com/beast-dev/beast-mcmc/issues
 
 ================================================================================
 
-Version 1.8.3 released XXth January 2016
+Version 1.8.3 released 13th February 2016
 
     New Features:
         Generalized Stepping Stone sampling for Marginal Likelihood Estimation.
@@ -38,6 +38,7 @@ Version 1.8.3 released XXth January 2016
         Fast, general multidimensional scaling (MDS) implemented.
         Clock panel in BEAUti simplified.
         Parameter linking available in Priors panel in BEAUti.
+        Command line is logged into log file headers for reference.
 
 	Bug Fixes:
 	    Issue 779:  Ancestral sequence reconstruction broken with

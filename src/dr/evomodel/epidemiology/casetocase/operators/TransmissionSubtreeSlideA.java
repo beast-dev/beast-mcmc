@@ -347,7 +347,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
         if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
         if (DEBUG){
-            c2cLikelihood.checkPartitions();
+            c2cLikelihood.getTreeModel().checkPartitions();
             c2cLikelihood.debugOutputTree("afterTSSA.nex", false);
         }
 

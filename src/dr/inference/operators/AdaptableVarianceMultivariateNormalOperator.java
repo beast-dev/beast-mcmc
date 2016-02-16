@@ -66,6 +66,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private int iterations, updates, initial, burnin, every;
     private final Parameter parameter;
     private final Transform[] transformations;
+    private final int[] transformationSizes;
     private final int dim;
     // private final double constantFactor;
     private double[] oldMeans, newMeans;
@@ -78,13 +79,14 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
     private double[] epsilon;
     private double[][] proposal;
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor, double[][] inMatrix,
+    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor, double[][] inMatrix,
             double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVarianceMatrix) {
 
         super(mode);
         this.scaleFactor = scaleFactor;
         this.parameter = parameter;
         this.transformations = transformations;
+        this.transformationSizes = transformationSizes;
         this.beta = beta;
         this.iterations = 0;
         this.updates = 0;
@@ -127,9 +129,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         }
     }
 
-    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, double scaleFactor,
+    public AdaptableVarianceMultivariateNormalOperator(Parameter parameter, Transform[] transformations, int[] transformationSizes, double scaleFactor,
             MatrixParameter varMatrix, double weight, double beta, int initial, int burnin, int every, CoercionMode mode, boolean isVariance) {
-        this(parameter, transformations, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance);
+        this(parameter, transformations, transformationSizes, scaleFactor, varMatrix.getParameterAsMatrix(), weight, beta, initial, burnin, every, mode, isVariance);
     }
 
     private double[][] formXtXInverse(double[][] X) {
@@ -187,8 +189,26 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
 
         //transform to the appropriate scale
         double[] transformedX = new double[dim];
-        for (int i = 0; i < dim; i++) {
+        /*for (int i = 0; i < dim; i++) {
             transformedX[i] = transformations[i].transform(x[i]);
+        }*/
+        //iterate over transformation sizes rather than number of parameters
+        //as a transformation might impact multiple parameters
+        int currentIndex = 0;
+        for (int i = 0; i < transformationSizes.length; i++) {
+            if (DEBUG) {
+                System.err.println("currentIndex = " + currentIndex);
+                System.err.println("transformationSizes[i] = " + transformationSizes[i]);
+            }
+            if (transformationSizes[i] > 1) {
+                System.arraycopy(transformations[i].transform(x, currentIndex, currentIndex + transformationSizes[i] - 1),0,transformedX,currentIndex,transformationSizes[i]);
+            } else {
+                transformedX[currentIndex] = transformations[i].transform(x[currentIndex]);
+                if (DEBUG) {
+                    System.err.println("x[" + currentIndex + "] = " + x[currentIndex] + " -> " + transformedX[currentIndex]);
+                }
+            }
+            currentIndex += transformationSizes[i];
         }
 
         if (DEBUG) {
@@ -281,7 +301,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         } else if (iterations == 1) {
 
             if (DEBUG) {
-                System.err.println("  iterations == 1");
+                System.err.println("\niterations == 1");
             }
             //System.err.println("Iteration: " + iterations);
 
@@ -342,7 +362,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             System.err.println("  Drawing new values");
         }
 
-        for (int i = 0; i < dim; i++) {
+        /*for (int i = 0; i < dim; i++) {
             for (int j = i; j < dim; j++) {
                 transformedX[i] += cholesky[j][i] * epsilon[j];
                 // caution: decomposition returns lower triangular
@@ -350,19 +370,75 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             if (MULTI) {
                 parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
             } else {
-                parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                if (transformationSizes[i] > 1) {
+                    throw new RuntimeException("Transformations on more than 1 parameter value should be set quietly");
+                } else {
+                    parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
+                }
             }
-
             //this should be correct
             //logJacobian += transformations[i].getLogJacobian(parameter.getParameterValue(i)) - transformations[i].getLogJacobian(x[i]);
             logJacobian += transformations[i].getLogJacobian(x[i]) - transformations[i].getLogJacobian(parameter.getParameterValue(i));
+        }*/
 
+        for (int i = 0; i < dim; i++) {
+            for (int j = i; j < dim; j++) {
+                transformedX[i] += cholesky[j][i] * epsilon[j];
+                // caution: decomposition returns lower triangular
+            }
         }
 
         if (DEBUG) {
+            System.err.println("\nTransformed X values:");
+            for (int i = 0; i < dim; i++) {
+                System.err.println(transformedX[i]);
+            }
+            System.err.println();
+        }
+
+        //iterate over transformation sizes rather than number of parameters
+        //as a transformation might impact multiple parameters
+        currentIndex = 0;
+        for (int i = 0; i < transformationSizes.length; i++) {
+            if (DEBUG) {
+                System.err.println("currentIndex = " + currentIndex);
+                System.err.println("transformationSizes[i] = " + transformationSizes[i]);
+            }
+            if (MULTI) {
+                if (transformationSizes[i] > 1) {
+                    double[] temp = transformations[i].inverse(transformedX, currentIndex, currentIndex + transformationSizes[i] - 1);
+                    for (int k = 0; k < temp.length; k++) {
+                        parameter.setParameterValueQuietly(currentIndex + k, temp[k]);
+                    }
+                    logJacobian += transformations[i].getLogJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].getLogJacobian(temp, 0, transformationSizes[i] - 1);
+                } else {
+                    parameter.setParameterValueQuietly(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
+                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                }
+                if (DEBUG) {
+                    System.err.println("Current logJacobian = " + logJacobian);
+                }
+            } else {
+                if (transformationSizes[i] > 1) {
+                    //TODO: figure out if this is really a problem ...
+                    throw new RuntimeException("Transformations on more than 1 parameter value should be set quietly");
+                } else {
+                    parameter.setParameterValue(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
+                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                }
+                if (DEBUG) {
+                    System.err.println("Current logJacobian = " + logJacobian);
+                }
+            }
+            currentIndex += transformationSizes[i];
+        }
+
+        if (DEBUG) {
+            System.err.println("Proposed parameter values:");
             for (int i = 0; i < dim; i++) {
                 System.err.println(x[i] + " -> " + parameter.getValue(i));
             }
+            System.err.println("LogJacobian: " + logJacobian);
         }
 
         if (MULTI) {
@@ -525,7 +601,7 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             if (DEBUG) {
-                System.err.println("Parsing AdaptableVarianceMultivariateNormalOperator.");
+                System.err.println("\nParsing AdaptableVarianceMultivariateNormalOperator.");
             }
 
             CoercionMode mode = CoercionMode.parseMode(xo);
@@ -586,29 +662,73 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             	System.err.println();
             }*/
 
+            int[] transformationSizes = new int[dim];
+            int transformationSizeCounter = 0;
+
             Transform[] transformations = new Transform[dim];
             for (int i = 0; i < dim; i++) {
                 transformations[i] = Transform.NONE;
             }
 
+            if (DEBUG) {
+                System.err.println("Transformations & transformation sizes:");
+            }
+
+            //TODO: add LOG_CONSTRAINED_SUM transformation to transformations array!
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Object child = xo.getChild(i);
                 if (child instanceof Transform.ParsedTransform) {
                     Transform.ParsedTransform thisObject = (Transform.ParsedTransform) child;
 
                     if (DEBUG) {
-                        System.err.println("Transformations:");
+                        System.err.println(thisObject.transform.getTransformName());
                     }
-                    for (int j = thisObject.start; j < thisObject.end; ++j) {
-                        transformations[j] = thisObject.transform;
+                    if (thisObject.transform.equals(Transform.LOG_CONSTRAINED_SUM)) {
+                        transformations[transformationSizeCounter] = thisObject.transform;
+                        transformationSizes[transformationSizeCounter] = thisObject.end - thisObject.start;
                         if (DEBUG) {
-                            System.err.print(transformations[j].getTransformName() + " ");
+                            System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
+                        }
+                        transformationSizeCounter++;
+                    } else {
+                        for (int j = thisObject.start; j < thisObject.end; ++j) {
+                            transformations[transformationSizeCounter] = thisObject.transform;
+                            transformationSizes[transformationSizeCounter] = 1;
+                            if (DEBUG) {
+                                System.err.println("Transformation size = " + transformationSizes[transformationSizeCounter]);
+                            }
+                            transformationSizeCounter++;
                         }
                     }
-                    if (DEBUG) {
-                        System.err.println();
-                    }
                 }
+            }
+
+            //determine array length for transformationSizes = transformationSizeCounter - 1;
+            if (DEBUG) {
+                System.err.println("\nCleaning up transformation and size arrays");
+                System.err.println("transformationSizeCounter = " + transformationSizeCounter);
+            }
+            int temp[] = new int[transformationSizeCounter];
+            Transform tempTransform[] = new Transform[transformationSizeCounter];
+            for (int i = 0; i < temp.length; i++) {
+                temp[i] = transformationSizes[i];
+                tempTransform[i] = transformations[i];
+                if (transformationSizes[i] == 0 || temp[i] == 0) {
+                    throw new XMLParseException("Transformation size 0 encountered");
+                }
+            }
+            transformationSizes = temp;
+            transformations = tempTransform;
+            if (DEBUG) {
+                System.err.println("\nChecking transformation array contents");
+                for (int i = 0; i < transformations.length; i++) {
+                    System.err.println(transformations[i].getTransformName());
+                }
+                System.err.println("\nChecking size array contents");
+                for (int i = 0; i < transformationSizes.length; i++) {
+                    System.err.print(transformationSizes[i] + " ");
+                }
+                System.err.println();
             }
 
             // Make sure varMatrix is square and dim(varMatrix) = dim(parameter)
@@ -624,9 +744,9 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             /*java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the adaptable variance multivariate normal operator:" +
 					"\n beta = " + beta + "\n initial = " + initial + "\n burnin = " + burnin + "\n every = " + every +
 					"\n If you use this operator, please cite: " + 
-			"   Guy Baele, Philippe Lemey, Marc A. Suchard. 2014. In preparation.");*/
+			"   Guy Baele, Philippe Lemey, Marc A. Suchard. 2016. In preparation.");*/
 
-            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, scaleFactor, varMatrix, weight, beta, initial, burnin, every, mode, !formXtXInverse);
+            return new AdaptableVarianceMultivariateNormalOperator(parameter, transformations, transformationSizes, scaleFactor, varMatrix, weight, beta, initial, burnin, every, mode, !formXtXInverse);
         }
 
         //************************************************************************

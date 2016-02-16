@@ -359,6 +359,13 @@ public class BeastMain {
 
         int argumentCount = 0;
 
+        StringBuilder commandLine = new StringBuilder(args[0]);
+        for (int i = 1; i < args.length; i++) {
+            commandLine.append(" ");
+            commandLine.append(args[i]);
+        }
+        System.setProperty("command_line", commandLine.toString());
+
         try {
             argumentCount = arguments.parseArguments(args);
         } catch (Arguments.ArgumentException ae) {

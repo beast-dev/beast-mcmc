@@ -120,7 +120,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 // and then the little tree calculations
 
-                HashSet<AbstractCase> children = getInfectees(aCase);
+                HashSet<AbstractCase> children = ((PartitionedTreeModel)treeModel).getInfectees(aCase);
 
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
@@ -220,7 +220,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 recalculateCaseWCC(thisCase);
 
-                AbstractCase parent = getInfector(thisCase);
+                AbstractCase parent = ((PartitionedTreeModel)treeModel).getInfector(thisCase);
 
                 if(parent!=null){
                     recalculateCaseWCC(parent);
@@ -261,7 +261,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             AbstractCase aCase = outbreak.getCase(i);
             if(aCase.wasEverInfected() && partitionsAsTrees.get(aCase)==null){
 
-                NodeRef partitionRoot = getEarliestNodeInPartition(aCase);
+                NodeRef partitionRoot = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(aCase);
 
                 double extraHeight;
 
@@ -302,7 +302,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     private ArrayList<AbstractCase> traverseTransmissionTree(AbstractCase aCase){
         ArrayList<AbstractCase> out = new ArrayList<AbstractCase>();
-        HashSet<AbstractCase> children = getInfectees(aCase);
+        HashSet<AbstractCase> children = ((PartitionedTreeModel)treeModel).getInfectees(aCase);
         for(int i=0; i<getOutbreak().size(); i++){
             AbstractCase possibleChild = getOutbreak().getCase(i);
             // easiest way to maintain the set ordering of the outbreak?

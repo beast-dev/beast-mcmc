@@ -1,7 +1,7 @@
 /*
  * SVSGeneralSubstitutionModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,10 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.inference.model.*;
+import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.evolution.datatype.DataType;
+import dr.inference.model.*;
 
 import java.util.*;
 
@@ -45,7 +45,6 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
         if (indicatorsParameter == null) {
             this.indicatorsParameter = new Parameter.Default(ratesParameter.getDimension(), 1.0);
-            System.err.println("HERE AA");
         } else {
             this.indicatorsParameter  = indicatorsParameter;
             addVariable(indicatorsParameter);

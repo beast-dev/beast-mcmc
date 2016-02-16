@@ -44,6 +44,10 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
         this.map = new int[parameter.getDimension()];
         this.inverseMap = new int[parameter.getDimension()];
+
+        this.storedMap = new int[parameter.getDimension()];
+        this.storedInverseMap = new int[parameter.getDimension()];
+
         for (int i = 0; i < map.length; i++) {
             map[i] = i;
             inverseMap[i] = i;
@@ -78,7 +82,6 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
             }
         }
         length = index;
-        fireParameterChangedEvent();
     }
 
     public int getDimension() {
@@ -90,10 +93,23 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     protected void storeValues() {
         parameter.storeParameterValues();
+        maskParameter.storeParameterValues();
+
+        System.arraycopy(map, 0, storedMap, 0, map.length);
+        System.arraycopy(inverseMap, 0, storedInverseMap, 0, inverseMap.length);
     }
 
     protected void restoreValues() {
         parameter.restoreParameterValues();
+        maskParameter.restoreParameterValues();
+
+        int[] tmp = storedMap;
+        storedMap = map;
+        map = tmp;
+
+        tmp = storedInverseMap;
+        storedInverseMap = inverseMap;
+        inverseMap = tmp;
     }
 
 //    public void fireParameterChangedEvent() {
@@ -102,17 +118,18 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     protected void acceptValues() {
         parameter.acceptParameterValues();
+        maskParameter.acceptParameterValues();
     }
 
-    protected void adoptValues(Parameter source) {
-        parameter.adoptParameterValues(source);
-    }
+    protected void adoptValues(Parameter source) { throw new IllegalArgumentException("Not yet implemented"); }
 
     public double getParameterValue(int dim) {
+//        if (!isMapValid) updateMask();
         return parameter.getParameterValue(map[dim]);
     }
 
     public void setParameterValue(int dim, double value) {
+//        if (!isMapValid) updateMask();
         parameter.setParameterValue(map[dim], value);
     }
 
@@ -169,6 +186,7 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
     public void variableChangedEvent(Variable variable, int index, ChangeType type) {
         if (variable == maskParameter) {
             updateMask();
+            fireParameterChangedEvent();
         } else { // variable == parameter
             if (index == -1) {
                 fireParameterChangedEvent();
@@ -180,8 +198,12 @@ public class MaskedParameter extends Parameter.Abstract implements VariableListe
 
     private final Parameter parameter;
     private Parameter maskParameter;
-    private final int[] map;
-    private final int[] inverseMap;
+    private int[] map;
+    private int[] inverseMap;
+
+    private int[] storedMap;
+    private int[] storedInverseMap;
+
     private int length;
     private int equalValue;
 }

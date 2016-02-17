@@ -39,41 +39,71 @@ import java.util.List;
  */
 public class MaskMoveOperator extends SimpleMCMCOperator {
 
-    public MaskMoveOperator(List<Parameter> masks, Parameter cutPoint, Parameter before, Parameter after, double weight) {
+    public MaskMoveOperator(List<Parameter> masks, Parameter cutPoint, int[] selectBefore, int[] selectAfter, double weight) {
         this.masks = masks;
         this.cutPoint = cutPoint;
-
-        selection = new ArrayList<Parameter>(2);
-        selection.add(before);
-        selection.add(after);
+        this.selectBefore = selectBefore;
+        this.selectAfter = selectAfter;
 
         setWeight(weight);
 
-        if (!checkMaskValues(
-                masks, cutPoint, selection.get(0), selection.get(1)
-        )) {
+        if (!checkMaskValues(masks, cutPoint, selectBefore, selectAfter)) {
             throw new IllegalArgumentException("Bad initialization state");
         }
     }
 
-    public static boolean checkMaskValues(List<Parameter> masks, Parameter cutPoint, Parameter before, Parameter after) {
+    public static boolean checkMaskValues(List<Parameter> masks, Parameter cutPoint, int[] selectBefore, int[] selectAfter) {
+
+        int cut = (int) (cutPoint.getParameterValue(0) + 0.5);
         for (int i = 0; i < masks.size(); ++i) {
             Parameter mask = masks.get(i);
-            Parameter check = (i < (int) (cutPoint.getParameterValue(0) + 0.5)) ? before : after;
 
-            for (int j = 0; j < mask.getDimension(); ++j) {
-                if (mask.getParameterValue(j) != check.getParameterValue(j)) {
-                    return false;
-                }
+            boolean before = (i < cut);
+
+            final int[] ones;
+            final int[] zeros;
+
+            if (before) {
+                ones = selectBefore;
+                zeros = selectAfter;
+            } else {
+                ones = selectAfter;
+                zeros = selectBefore;
+            }
+
+            for (int idx : ones) {
+                if (mask.getParameterValue(idx) != 1) return false;
+            }
+
+            for (int idx: zeros) {
+                if (mask.getParameterValue(idx) != 0) return false;
             }
         }
         return true;
     }
 
+    private String printMask() {
+        StringBuilder sb = new StringBuilder();
+        int cut = (int) (cutPoint.getParameterValue(0) + 0.5);
+        sb.append("Cut: " + cut + "\n");
+        for (int i = 0; i < masks.size(); ++i) {
+            sb.append((i + 1) + " " + masks.get(i).getParameterValue(selectBefore[0]) + " " + masks.get(i).getParameterValue(selectAfter[0]) + "\n");
+        }
+        return sb.toString();
+    }
+
     public final double doOperation() {
         double logq = 0.0;
 
+        StringBuilder sb = null;
+
         int currentCutPoint = (int) (cutPoint.getParameterValue(0) + 0.5);
+
+        if (DEBUG) {
+            sb = new StringBuilder();
+            sb.append("Starting state\n");
+            sb.append(printMask());
+        }
 
         final boolean moveUp;
         if (currentCutPoint == 0) {
@@ -88,15 +118,44 @@ public class MaskMoveOperator extends SimpleMCMCOperator {
             moveUp = true;
         }
 
-        Parameter change = (moveUp) ? masks.get(currentCutPoint) : masks.get(currentCutPoint - 1);
-        Parameter newValues = (moveUp) ? selection.get(1) : selection.get(0);
-
-        for (int i = 0; i < change.getDimension(); ++i) {
-            change.setParameterValueQuietly(i, newValues.getParameterValue(i));
+        if (DEBUG) {
+            sb.append("moveUp = " + moveUp + "\n");
         }
+
+        Parameter change = (moveUp) ? masks.get(currentCutPoint) : masks.get(currentCutPoint - 1);
+
+        final int[] ones;
+        final int[] zeros;
+        if (moveUp) {
+            ones = selectBefore;
+                 zeros = selectAfter;
+
+        } else {
+
+
+            ones = selectAfter;
+                      zeros = selectBefore;
+        }
+
+        for (int i : zeros) {
+            change.setParameterValueQuietly(i, 0);
+        }
+
+        for (int i : ones) {
+            change.setParameterValueQuietly(i, 1);
+        }
+
         change.fireParameterChangedEvent();
 
         cutPoint.setParameterValue(0, currentCutPoint + ((moveUp) ? 1 : -1));
+
+        if (DEBUG) {
+            if (!checkMaskValues(masks, cutPoint, selectBefore, selectAfter)) {
+                sb.append(printMask());
+                System.err.println(sb.toString());
+                System.exit(-1);
+            }
+        }
 
         return logq;
     }
@@ -117,5 +176,8 @@ public class MaskMoveOperator extends SimpleMCMCOperator {
     // Private instance variables
     final private List<Parameter> masks;
     final private Parameter cutPoint;
-    final private List<Parameter> selection;
+    final private int[] selectBefore;
+    final private int[] selectAfter;
+
+    final static private boolean DEBUG = false;
 }

@@ -40,8 +40,11 @@ public class MaskMoveOperatorParser extends AbstractXMLObjectParser {
 
     public static final String MASK_FLIP_OPERATOR = "maskMoveOperator";
     public static final String CUT_POINT = "cutPoint";
-    public static final String BEFORE_VALUE = "before";
-    public static final String AFTER_VALUE = "after";
+    public static final String CUT_MASK = "cutMask";
+    public static final String SELECT_BEFORE = "selectBefore";
+    public static final String SELECT_AFTER = "selectAfter";
+//    public static final String BEFORE_VALUE = "before";
+//    public static final String AFTER_VALUE = "after";
 
     public String getParserName() {
         return MASK_FLIP_OPERATOR;
@@ -51,7 +54,7 @@ public class MaskMoveOperatorParser extends AbstractXMLObjectParser {
 
         double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+//        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
         List<Parameter> masks = new ArrayList<Parameter>();
         for (int i = 0; i < xo.getChildCount(); ++i) {
@@ -61,16 +64,33 @@ public class MaskMoveOperatorParser extends AbstractXMLObjectParser {
         }
 
         Parameter cutPoint = (Parameter) xo.getElementFirstChild(CUT_POINT);
-        Parameter before = (Parameter) xo.getElementFirstChild(BEFORE_VALUE);
-        Parameter after = (Parameter) xo.getElementFirstChild(AFTER_VALUE);
+//        Parameter before = (Parameter) xo.getElementFirstChild(BEFORE_VALUE);
+//        Parameter after = (Parameter) xo.getElementFirstChild(AFTER_VALUE);
 
-        if (!MaskMoveOperator.checkMaskValues(masks, cutPoint, before, after)) {
-            xo.getId();
+        double[] before = xo.getChild(CUT_MASK).getDoubleArrayAttribute(SELECT_BEFORE);
+        double[] after = xo.getChild(CUT_MASK).getDoubleArrayAttribute(SELECT_AFTER);
+
+        int[] beforeList = new int[before.length];
+        for (int i = 0; i < before.length; ++i) {
+            beforeList[i] = ((int) (before[i] -1.0 + 0.5)); // Switch to 0-index
+        }
+
+        int[] afterList = new int[after.length];
+        for (int i = 0; i < before.length; ++i) {
+            afterList[i] = ((int) (after[i] -1.0 + 0.5));
+        }
+
+        if (beforeList.length != afterList.length) {
+            throw new XMLParseException("selectBefore length != selectAfter length");
+        }
+
+
+        if (!MaskMoveOperator.checkMaskValues(masks, cutPoint, beforeList, afterList)) {
             String name = xo.hasId() ? xo.getId() : "null";
             throw new XMLParseException("Bad initialization parameter values in " + name);
         }
 
-        return new MaskMoveOperator(masks, cutPoint, before, after, weight);
+        return new MaskMoveOperator(masks, cutPoint, beforeList, afterList, weight);
     }
 
     //************************************************************************
@@ -95,11 +115,15 @@ public class MaskMoveOperatorParser extends AbstractXMLObjectParser {
             new ElementRule(CUT_POINT, new XMLSyntaxRule[] {
                    new ElementRule(Parameter.class),
             }),
-            new ElementRule(BEFORE_VALUE, new XMLSyntaxRule[] {
-                   new ElementRule(Parameter.class),
-            }),
-            new ElementRule(AFTER_VALUE, new XMLSyntaxRule[] {
-                   new ElementRule(Parameter.class),
-            }),
+            new ElementRule(CUT_MASK, new XMLSyntaxRule[] {
+                    AttributeRule.newDoubleArrayRule(SELECT_BEFORE),
+                    AttributeRule.newDoubleArrayRule(SELECT_AFTER),
+            })
+//            new ElementRule(BEFORE_VALUE, new XMLSyntaxRule[] {
+//                   new ElementRule(Parameter.class),
+//            }),
+//            new ElementRule(AFTER_VALUE, new XMLSyntaxRule[] {
+//                   new ElementRule(Parameter.class),
+//            }),
     };
 }

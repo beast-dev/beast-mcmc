@@ -571,6 +571,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         return PatternList.Utils.empiricalStateFrequencies(this);
     }
 
+    @Override
+    public boolean areUnique() {
+        return unique;
+    }
+
     // **************************************************************
     // TaxonList IMPLEMENTATION
     // **************************************************************

@@ -220,7 +220,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         }
 
         if(DEBUG){
-            c2cLikelihood.checkPartitions();
+            c2cLikelihood.getTreeModel().checkPartitions();
         }
 
     }

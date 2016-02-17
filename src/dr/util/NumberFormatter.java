@@ -63,7 +63,7 @@ public class NumberFormatter implements Serializable {
 
     public void setSignificantFigures(int sf) {
         this.sf = sf;
-        upperCutoff = Math.pow(10,sf-1);
+        upperCutoff = Math.pow(10, Math.max(sf-1, 0));
         cutoffTable = new double[sf];
         long num = 10;
         for (int i =0; i < cutoffTable.length; i++) {
@@ -71,8 +71,8 @@ public class NumberFormatter implements Serializable {
             num *= 10;
         }
         decimalFormat.setMinimumIntegerDigits(1);
-        decimalFormat.setMaximumFractionDigits(sf-1);
-        decimalFormat.setMinimumFractionDigits(sf-1);
+        decimalFormat.setMaximumFractionDigits(Math.max(sf-1, 0));
+        decimalFormat.setMinimumFractionDigits(Math.max(sf-1, 0));
         decimalFormat.setGroupingUsed(false);
         scientificFormat = new DecimalFormat(getScientificPattern(sf));
         fieldWidth = sf;
@@ -123,7 +123,7 @@ public class NumberFormatter implements Serializable {
 
         double absValue = Math.abs(value);
 
-        if ((absValue > upperCutoff) || (absValue < 0.1 && absValue != 0.0)) {
+        if ((absValue > upperCutoff) || (absValue < (1.0 / upperCutoff) && absValue != 0.0)) {
             buffer.append(scientificFormat.format(value));
         } else {
             int numFractionDigits = 0;

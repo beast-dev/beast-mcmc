@@ -323,7 +323,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
-                        new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 1E-6)"),
+                        new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
 
                         new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
@@ -358,6 +358,13 @@ public class BeastMain {
                 });
 
         int argumentCount = 0;
+
+        StringBuilder commandLine = new StringBuilder(args[0]);
+        for (int i = 1; i < args.length; i++) {
+            commandLine.append(" ");
+            commandLine.append(args[i]);
+        }
+        System.setProperty("command_line", commandLine.toString());
 
         try {
             argumentCount = arguments.parseArguments(args);
@@ -499,7 +506,7 @@ public class BeastMain {
         }
 
         if (arguments.hasOption("beagle_rescale")) {
-            System.setProperty("beagle.rescale", Integer.toString(arguments.getIntegerOption("beagle_rescale")));
+            System.setProperty("beagle.rescale", Long.toString(arguments.getLongOption("beagle_rescale")));
         }
 
         // ============= Other settings =============

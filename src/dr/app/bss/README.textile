@@ -32,7 +32,10 @@ h1. CITING
           }
    
 h1. TODO
-
+* export tree with branches in subst/site
+* lognormal clock real scale / log scale in GUI 
+* change save/load to JSON
+* error handling
 * PIBUSS bug with newick import (Importer line 199 read method). Does not happen if first char is newline
 * boolean switch for real/log scales for the parameters of lognormal clock model 
 * parser for output type should be case insensitive

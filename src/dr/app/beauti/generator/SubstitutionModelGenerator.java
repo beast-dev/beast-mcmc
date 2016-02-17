@@ -112,8 +112,6 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeCloseTag(HKYParser.KAPPA);
                     writer.writeCloseTag(NucModelType.HKY.getXMLName());
 
-                    throw new IllegalArgumentException("AR: Need to check that kappa = 1 for JC (I have feeling it should be 0.5)");
-
                 } else {
                     // Hasegawa Kishino and Yano 85 model
                     if (model.getNucSubstitutionModel() == NucModelType.HKY) {

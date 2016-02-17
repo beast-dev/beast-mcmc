@@ -107,10 +107,15 @@ public class HiddenLinkageModel extends TipStatesModel implements PatternList
 	double[] tipMatrix;
 	double[] internalMatrix;
 
+	@Override
+	public boolean areUnique() {
+		return false;
+	}
+
 	/*
-	 * Initializes a likelihoodCore to calculate likelihoods for 
-	 * the tips
-	 */
+         * Initializes a likelihoodCore to calculate likelihoods for
+         * the tips
+         */
 	private void initCore(){
 		if(data.getAlignment().getDataType() instanceof dr.evolution.datatype.Nucleotides)
 			core = new NativeNucleotideLikelihoodCore();

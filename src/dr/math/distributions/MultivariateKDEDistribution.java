@@ -31,7 +31,7 @@ package dr.math.distributions;
 public class MultivariateKDEDistribution implements MultivariateDistribution {
 	
 	public static final String TYPE = "multivariateKDE";
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 	
 	private Distribution[] multivariateKDE;
 	private int dimension;
@@ -78,9 +78,10 @@ public class MultivariateKDEDistribution implements MultivariateDistribution {
 		}
 
         if (DEBUG){
+            System.err.println("MultivariateKDEDistribution, dimension = " + dimension);
             for (int i = 0; i < dimension; i++) {
                 System.err.println(i + ", " + "x[i] = " + x[i] + ", logPdf = " + multivariateKDE[i].logPdf(x[i]));
-                System.err.println("    mean = " + multivariateKDE[i].mean() + ", variance = " + multivariateKDE[i].variance());
+                //System.err.println("    mean = " + multivariateKDE[i].mean() + ", variance = " + multivariateKDE[i].variance());
             }
         }
 		

@@ -1009,9 +1009,9 @@ public class TreePriorGenerator extends Generator {
         writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
     }
 
-    public void writePriorLikelihoodReferenceLog(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
+    public static void writePriorLikelihoodReferenceLog(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
         //tree model prefix
-        setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
+        String modelPrefix = model.getPrefix(); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
 
         switch (prior.getNodeHeightPrior()) {
 
@@ -1031,7 +1031,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
             case SKYGRID:
-//                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
+                writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skygrid");
                 // only 1 coalescent, so write it separately after this method
                 break;
             case LOGISTIC:

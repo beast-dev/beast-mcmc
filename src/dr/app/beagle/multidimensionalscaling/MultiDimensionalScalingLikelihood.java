@@ -74,7 +74,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     public MultiDimensionalScalingLikelihood(
             int mdsDimension,
             Parameter mdsPrecision,
-            MatrixParameter locationsParameter,
+            MatrixParameterInterface locationsParameter,
             DataTable<double[]> dataTable,
             boolean isLeftTruncated,
             boolean reorderData) {
@@ -132,7 +132,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
                 rowLabels, observations, observationTypes);
     }
 
-    private int[] getPermutation(String[] source, MatrixParameter destination) {
+    private int[] getPermutation(String[] source, MatrixParameterInterface destination) {
 
         if (source.length != destination.getColumnDimension()) {
             throw new IllegalArgumentException("Dimension mismatch");
@@ -191,7 +191,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
             final int mdsDimension,
             final Parameter mdsPrecision,
             final boolean isLeftTruncated,
-            final MatrixParameter locationsParameter,
+            final MatrixParameterInterface locationsParameter,
             final String[] locationLabels,
             final double[] observations,
             final ObservationType[] observationTypes) {
@@ -216,15 +216,16 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         mdsCore.setParameters(mdsPrecisionParameter.getParameterValues());
         mdsCore.setPairwiseData(observations);
-        for (int i = 0; i < locationCount; i++) {
-            mdsCore.updateLocation(i, locationsParameter.getColumnValues(i));
-        }
+//        for (int i = 0; i < locationCount; i++) {
+//            mdsCore.updateLocation(i, locationsParameter.getColumnValues(i));
+//        }
+        mdsCore.updateLocation(-1, locationsParameter.getParameterValues());
 
         // make sure everything is calculated on first evaluation
         makeDirty();
     }
 
-    protected void setupLocationsParameter(MatrixParameter locationsParameter) {
+    protected void setupLocationsParameter(MatrixParameterInterface locationsParameter) {
         final boolean exisitingParameter = locationsParameter.getColumnDimension() > 0;
 
         if (exisitingParameter){
@@ -235,8 +236,9 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
                 throw new RuntimeException("locationsParameter row dimension ("+locationsParameter.getRowDimension()+") is not equal to the mdsDimension ("+mdsDimension+")");
             }
         } else {
-            locationsParameter.setColumnDimension(mdsDimension);
-            locationsParameter.setRowDimension(locationCount);
+//            locationsParameter.setColumnDimension(mdsDimension);
+//            locationsParameter.setRowDimension(locationCount);
+            throw new IllegalArgumentException("Dimensions on matrix must be set");
         }
 
         for (int i = 0; i < locationLabels.length; i++) {
@@ -250,7 +252,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        for (int i = 0; i < locationsParameter.getParameterCount(); ++i) {
+        for (int i = 0; i < locationsParameter.getColumnDimension(); ++i) {
             Parameter param = locationsParameter.getParameter(i);
             try {
                 if (param.getBounds() != null) {
@@ -264,8 +266,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-    }
+    protected void handleModelChangedEvent(Model model, Object object, int index) { }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
@@ -361,7 +362,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
 
-            MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
+            MatrixParameterInterface locationsParameter = (MatrixParameterInterface) xo.getElementFirstChild(LOCATIONS);
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
@@ -373,7 +374,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             if (useOld) {
                 System.err.println("USE OLD");
-                return new MultidimensionalScalingLikelihood(mdsDimension, includeTrauncation, mdsPrecision, locationsParameter, distanceTable);
+                return new MultidimensionalScalingLikelihood(mdsDimension, includeTrauncation, mdsPrecision, (MatrixParameter)locationsParameter, distanceTable);
             } else {
                 return new MultiDimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter,
                         distanceTable, includeTrauncation, forceReorder);
@@ -396,7 +397,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
-                new ElementRule(LOCATIONS, MatrixParameter.class),
+                new ElementRule(LOCATIONS, MatrixParameterInterface.class),
                 AttributeRule.newBooleanRule(USE_OLD, true),
                 AttributeRule.newBooleanRule(INCLUDE_TRUNCATION, true),
                 AttributeRule.newBooleanRule(FORCE_REORDER, true),
@@ -417,7 +418,7 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     private String[] locationLabels;
 
     private Parameter mdsPrecisionParameter;
-    private MatrixParameter locationsParameter;
+    private MatrixParameterInterface locationsParameter;
 
     private boolean likelihoodKnown = false;
     private double logLikelihood;

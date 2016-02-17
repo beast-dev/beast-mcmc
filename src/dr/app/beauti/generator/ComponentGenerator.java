@@ -67,6 +67,14 @@ public interface ComponentGenerator {
     }
 
     /**
+     * Opportunity for a component to do some pre-generation checks of the options selected.
+     * Throwing a GeneratorException will result in a dialog box being shown to the user and
+     * generation being disallowed.
+     * @throws Generator.GeneratorException
+     */
+    void checkOptions() throws Generator.GeneratorException;
+
+    /**
      * Returns whether this component requires access to a particular insertion point
      * @param point the insertion point
      * @return whether it requires it

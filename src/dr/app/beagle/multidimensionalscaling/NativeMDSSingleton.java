@@ -43,6 +43,8 @@ public class NativeMDSSingleton {
     public static final String LIBRARY_NAME = "mds_jni";
     public static final String LIBRARY_PATH_LABEL = "mds.library.path";
     public static final String LIBRARY_PLATFORM_NAME = getPlatformSpecificLibraryName();
+    public static final String LIBRARY_PLATFORM_EXTENSION = getPlatformSpecificLibraryExtension();
+    public static final String LIBRARY_PLATFORM_PREFIX = getPlatformSpecificLibraryPrefix();
 
 
     private NativeMDSSingleton() {
@@ -52,10 +54,30 @@ public class NativeMDSSingleton {
         String osName = System.getProperty("os.name").toLowerCase();
         String osArch = System.getProperty("os.arch").toLowerCase();
         if (osName.startsWith("windows")) {
-            if (osArch.equals("i386")) return LIBRARY_NAME + "32";
+            if (osArch.equals("x86") || osArch.equals("i386")) return LIBRARY_NAME + "32";
             if (osArch.startsWith("amd64") || osArch.startsWith("x86_64")) return LIBRARY_NAME + "64";
         }
-        return "lib" + LIBRARY_NAME + ".dylib";
+        return LIBRARY_NAME;
+    }
+
+    private static String getPlatformSpecificLibraryExtension() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.startsWith("windows")) {
+            return ".dll";
+        } else if (osName.startsWith("mac")) {
+            return ".dylib";
+        } else {
+            return ".so";
+        }
+    }
+
+    private static String getPlatformSpecificLibraryPrefix() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.startsWith("windows")) {
+            return "";
+        } else {
+            return "lib";
+        }
     }
 
     public static NativeMDSSingleton loadLibrary() throws UnsatisfiedLinkError {
@@ -68,9 +90,11 @@ public class NativeMDSSingleton {
                 if (path.length() > 0 && !path.endsWith("/")) {
                     path += "/";
                 }
+                System.load(path + LIBRARY_PLATFORM_PREFIX + LIBRARY_NAME + LIBRARY_PLATFORM_EXTENSION);
+            } else {
+                System.loadLibrary(LIBRARY_PLATFORM_NAME);
             }
 
-            System.load(path + LIBRARY_PLATFORM_NAME);
             INSTANCE = new NativeMDSSingleton();
             System.err.println("MDS library loaded.");
         }
@@ -84,9 +108,7 @@ public class NativeMDSSingleton {
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 
-    public native double getSumOfSquaredResiduals(int instance);
-
-    public native double getSumOfLogTruncations(int instance);
+    public native double getSumOfIncrements(int instance);
 
     public native void storeState(int instance);
 

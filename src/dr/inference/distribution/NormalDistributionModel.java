@@ -25,13 +25,11 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.inferencexml.distribution.NormalDistributionModelParser;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
+import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.RandomGenerator;
 import org.w3c.dom.Document;
@@ -44,7 +42,7 @@ import org.w3c.dom.Element;
  * @version $Id: NormalDistributionModel.java,v 1.6 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel, RandomGenerator {
+public class NormalDistributionModel extends AbstractModel implements ParametricDistributionModel, GaussianProcessRandomGenerator {
     /**
      * Constructor.
      */
@@ -186,4 +184,12 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         double v = (Double) x;
         return logPdf(v);
     }
+
+    @Override
+    public Likelihood getLikelihood() {
+        return null;
+    }
+
+    @Override
+    public int getDimension() { return 1; }
 }

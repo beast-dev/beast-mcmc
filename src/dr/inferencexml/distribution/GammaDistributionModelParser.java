@@ -26,31 +26,90 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.GammaDistributionModel;
-import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
+import dr.xml.*;
 
-/**
- */
-public class GammaDistributionModelParser extends DistributionModelParser {
+public class GammaDistributionModelParser extends AbstractXMLObjectParser {
+
+    public static final String MEAN = "mean";
+    public static final String SHAPE = "shape";
+    public static final String SCALE = "scale";
+    public static final String RATE = "rate";
+    public static final String OFFSET = "offset";
 
     public String getParserName() {
         return GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL;
     }
 
-    ParametricDistributionModel parseDistributionModel(Parameter[] parameters, double offset) {
-        return new GammaDistributionModel(parameters[0], parameters[1]);
+    private Parameter getParameterOrValue(String name, XMLObject xo) throws XMLParseException {
+        Parameter parameter;
+        if (xo.hasChildNamed(name)) {
+            XMLObject cxo = xo.getChild(name);
+
+            parameter = (Parameter)cxo.getChild(Parameter.class);
+            if (parameter == null) {
+                if (cxo.getChildCount() < 1) {
+                    throw new XMLParseException("Distribution parameter, " + name + ", is missing a value or parameter element");
+                }
+                try {
+                    double value = cxo.getDoubleChild(0);
+                    parameter = new Parameter.Default(value);
+                } catch (XMLParseException xpe) {
+                    throw new XMLParseException("Distribution parameter, " + name + ", has bad value: " + xpe.getMessage());
+                }
+            }
+
+            return parameter;
+        } else {
+            return null;
+        }
+
     }
 
-    public String[] getParameterNames() {
-        return new String[]{SHAPE, SCALE};
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        double offset = xo.getAttribute(OFFSET, 0.0);
+
+        Parameter shapeParameter = getParameterOrValue(SHAPE, xo);
+
+        Parameter parameter2;
+        GammaDistributionModel.GammaParameterizationType parameterization;
+
+        if (xo.hasChildNamed(SCALE)) {
+            parameter2 = getParameterOrValue(SCALE, xo);
+            parameterization = GammaDistributionModel.GammaParameterizationType.ShapeScale;
+        } else if (xo.hasChildNamed(RATE)) {
+            parameter2 = getParameterOrValue(RATE, xo);
+            parameterization = GammaDistributionModel.GammaParameterizationType.ShapeRate;
+        } else if (xo.hasChildNamed(MEAN)) {
+            parameter2 = getParameterOrValue(MEAN, xo);
+            parameterization = GammaDistributionModel.GammaParameterizationType.ShapeMean;
+        } else {
+            parameter2 = null;
+            parameterization = GammaDistributionModel.GammaParameterizationType.OneParameter;
+        }
+
+        return new GammaDistributionModel(parameterization, shapeParameter, parameter2, offset);
     }
+
+    //************************************************************************
+    // AbstractXMLObjectParser implementation
+    //************************************************************************
+
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    private final XMLSyntaxRule[] rules = {
+            new ElementRule(SHAPE,  new XMLSyntaxRule[]{new ElementRule(Parameter.class, true)}, "Shape parameter"),
+            new ElementRule(SCALE,  new XMLSyntaxRule[]{new ElementRule(Parameter.class, true)}, "Scale parameter", true),
+            new ElementRule(RATE,  new XMLSyntaxRule[]{new ElementRule(Parameter.class, true)}, "Rate parameter", true),
+            new ElementRule(MEAN,  new XMLSyntaxRule[]{new ElementRule(Parameter.class, true)}, "Mean parameter", true),
+            AttributeRule.newDoubleRule(OFFSET, true)
+    };
 
     public String getParserDescription() {
-        return "A model of a gamma distribution.";
-    }
-
-    public boolean allowOffset() {
-        return false;
+        return "The gamma probability distribution.";
     }
 
     public Class getReturnType() {

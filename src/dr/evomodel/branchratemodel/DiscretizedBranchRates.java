@@ -48,7 +48,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     // a restore.
     // Currently turned off as it is not working with multiple partitions for
     // some reason.
-    private static final boolean CACHE_RATES = false;
+    private static final boolean DEFAULT_CACHE_RATES = false;
 
     private final ParametricDistributionModel distributionModel;
 
@@ -71,6 +71,8 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     private int currentRateArrayIndex = 0;
     private int storedRateArrayIndex;
 
+    private boolean cacheRates = DEFAULT_CACHE_RATES;
+
     //overSampling control the number of effective categories
 
     public DiscretizedBranchRates(
@@ -78,7 +80,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             Parameter rateCategoryParameter,
             ParametricDistributionModel model,
             int overSampling) {
-        this(tree, rateCategoryParameter, model, overSampling, false, Double.NaN, false, false);
+        this(tree, rateCategoryParameter, model, overSampling, false, Double.NaN, false, false, DEFAULT_CACHE_RATES);
 
     }
 
@@ -90,9 +92,12 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             boolean normalize,
             double normalizeBranchRateTo,
             boolean randomizeRates,
-            boolean keepRates) {
+            boolean keepRates,
+            boolean cacheRates) {
 
         super(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
+
+        this.cacheRates = cacheRates;
 
         this.rateCategories = new TreeParameterModel(tree, rateCategoryParameter, false);
 
@@ -143,7 +148,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             NodeRef node = treeModel.getNode(i);
             if (!treeModel.isRoot(node)) {
-                int rateCategory = (int) Math.round(rateCategories.getNodeValue(treeModel, node));
+                int rateCategory = (int) (rateCategories.getNodeValue(treeModel, node) + 0.5);
                 treeRate += rates[currentRateArrayIndex][rateCategory] * treeModel.getBranchLength(node);
                 treeTime += treeModel.getBranchLength(node);
 
@@ -170,14 +175,14 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
    }
 
     protected void storeState() {
-        if (CACHE_RATES) {
+        if (cacheRates) {
             storedRateArrayIndex = currentRateArrayIndex;
             storedScaleFactor = scaleFactor;
         }
     }
 
     protected void restoreState() {
-        if (CACHE_RATES) {
+        if (cacheRates) {
             currentRateArrayIndex = storedRateArrayIndex;
             scaleFactor = storedScaleFactor;
         } else {
@@ -196,7 +201,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
             setupRates();
         }
 
-        int rateCategory = (int) Math.round(rateCategories.getNodeValue(tree, node));
+        int rateCategory = (int) (rateCategories.getNodeValue(tree, node) + 0.5);
 
         //System.out.println(rates[rateCategory] + "\t"  + rateCategory);
         return rates[currentRateArrayIndex][rateCategory] * scaleFactor;
@@ -207,7 +212,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
      */
     private void setupRates() {
 
-        if (CACHE_RATES) {
+        if (cacheRates) {
             // flip the current array index
             currentRateArrayIndex = 1 - currentRateArrayIndex;
         }

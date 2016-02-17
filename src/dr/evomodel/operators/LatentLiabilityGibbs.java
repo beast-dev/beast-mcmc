@@ -172,8 +172,8 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     public double doOperation() throws OperatorFailedException {
 
 
-        doPostOrderTraversal(treeModel.getRoot());
-        doPreOrderTraversal(treeModel.getRoot());
+//        doPostOrderTraversal(treeModel.getRoot());
+//        doPreOrderTraversal(treeModel.getRoot());
 //printInformation(postP);
 //printInformation(preP);
 //printInformation(postMeans);
@@ -466,27 +466,28 @@ public class LatentLiabilityGibbs extends SimpleMCMCOperator {
     public double sampleNode2(NodeRef node) {
 
         final int thisNumber = node.getNumber();
-        double[] traitValue = getNodeTrait(node);
+//        double[] traitValue = getNodeTrait(node);
 
 
-        double[] mean = new double[dim];
-        for (int i = 0; i < dim; i++) {
-            mean[i] = preMeans[thisNumber][i];
-        }
+//        double[] mean = new double[dim];
+//        for (int i = 0; i < dim; i++) {
+//            mean[i] = preMeans[thisNumber][i];
+//        }
+//
+//        double p = preP[thisNumber];
+//
+//        double[][] thisP = new double[dim][dim];
+//
+//        for (int i = 0; i < dim; i++) {
+//            for (int j = 0; j < dim; j++) {
+//
+//                thisP[i][j] = p * precisionParam.getParameterValue(i, j);
+//
+//            }
+//        }
 
-        double p = preP[thisNumber];
-
-        double[][] thisP = new double[dim][dim];
-
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
-
-                thisP[i][j] = p * precisionParam.getParameterValue(i, j);
-
-            }
-        }
-
-
+        double[] mean=traitModel.getConditionalMean(thisNumber);
+        double[][] thisP=traitModel.getConditionalPrecision(thisNumber);
 
 
 

@@ -1,7 +1,7 @@
 /*
  * MultivariateDistributionLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -40,6 +40,7 @@ import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
+ * @author Guy Baele
  */
 public class MultivariateDistributionLikelihood extends AbstractDistributionLikelihood {
 
@@ -49,7 +50,8 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public static final String MVN_CV = "coefficientOfVariation";
     public static final String WISHART_PRIOR = "multivariateWishartPrior";
     public static final String INV_WISHART_PRIOR = "multivariateInverseWishartPrior";
-    public static final String DIRICHLET_PRIOR = "dirichletPrior";
+    public static final String DIRICHLET_PRIOR = "dirichletParameterPrior";
+    public static final String SUM_TO_NUMBER_OF_ELEMENTS = "sumToNumberOfElements";
     public static final String DF = "df";
     public static final String SCALE_MATRIX = "scaleMatrix";
     public static final String MVGAMMA_PRIOR = "multivariateGammaPrior";
@@ -179,11 +181,15 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+            boolean sumConstraint = false;
+            if (xo.hasAttribute(SUM_TO_NUMBER_OF_ELEMENTS)) {
+                sumConstraint = xo.getBooleanAttribute(SUM_TO_NUMBER_OF_ELEMENTS);
+            }
 
             XMLObject cxo = xo.getChild(COUNTS);
             Parameter counts = (Parameter) cxo.getChild(Parameter.class);
 
-            DirichletDistribution dirichlet = new DirichletDistribution(counts.getParameterValues());
+            DirichletDistribution dirichlet = new DirichletDistribution(counts.getParameterValues(), sumConstraint);
 
             MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
                     dirichlet);
@@ -205,6 +211,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         }
 
         private final XMLSyntaxRule[] rules = {
+                AttributeRule.newBooleanRule(SUM_TO_NUMBER_OF_ELEMENTS, true),
                 new ElementRule(COUNTS,
                         new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(DATA,

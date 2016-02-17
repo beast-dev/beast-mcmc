@@ -105,10 +105,6 @@ public abstract class PartitionOptions extends ModelOptions {
                 .isNonNegative(true).initial(value).partitionOptions(options).build(parameters);
     }
 
-    protected void createAllMusParameter(PartitionOptions options, String name, String description) {
-        new Parameter.Builder(name, description).partitionOptions(options).build(parameters);
-    }
-
     public Parameter getParameter(String name) {
 
         Parameter parameter = parameters.get(name);

@@ -35,7 +35,7 @@ public class TracerMenuBarFactory extends DefaultMenuBarFactory {
     public TracerMenuBarFactory() {
         if (OSType.isMac()) {
             registerMenuFactory(new TracerMacFileMenuFactory());
-            registerMenuFactory(new DefaultEditMenuFactory());
+            registerMenuFactory(new MacEditMenuFactory());
 	        registerMenuFactory(new AnalysisMenuFactory());
             registerMenuFactory(new MacWindowMenuFactory());
             registerMenuFactory(new MacHelpMenuFactory());

@@ -103,7 +103,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                 scaleDesign = new Parameter.Default(dependentParam.getDimension(), 0.0);
             else {
                 if (scaleDesign.getDimension() != dependentParam.getDimension())
-                    throw new XMLParseException("Scale and scaleDesign parameters must be the same dimension");
+                    throw new XMLParseException("Scale ("+dependentParam.getDimension()+") and scaleDesign parameters ("+scaleDesign.getDimension()+") must be the same dimension");
                 for (int i = 0; i < scaleDesign.getDimension(); i++) {
                     double value = scaleDesign.getParameterValue(i);
                     if (value < 1 || value > scaleParameter.getDimension())
@@ -127,8 +127,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
             }
         }
         System.err.println("PASSED B");
-        checkFullRankOfMatrix = xo.getBooleanAttribute(CHECK_FULL_RANK);
-        System.err.println(checkFullRankOfMatrix);
+        checkFullRankOfMatrix = xo.getAttribute(CHECK_FULL_RANK,true);
         System.err.println("PASSED C");
         return glm;
     }
@@ -150,6 +149,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     public void addIndependentParameters(XMLObject xo, GeneralizedLinearModel glm,
                                          Parameter dependentParam) throws XMLParseException {
         int totalCount = xo.getChildCount();
+//        System.err.println("number of independent parameters = "+totalCount);
 
         for (int i = 0; i < totalCount; i++) {
             if (xo.getChildName(i).compareTo(INDEPENDENT_VARIABLES) == 0) {
@@ -183,7 +183,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
     private void checkFullRank(DesignMatrix designMatrix) throws XMLParseException {
         int fullRank = designMatrix.getColumnDimension();
-
+//        System.err.println("designMatrix getColumnDimension = "+fullRank);
         SingularValueDecomposition svd = new SingularValueDecomposition(
                 new DenseDoubleMatrix2D(designMatrix.getParameterAsMatrix()));
         int realRank = svd.rank();
@@ -220,6 +220,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                         "dim(" + independentParam.getId() + ") is incompatible with dim (" + designMatrix.getId() + ")"
                 );
             }
+//            System.err.println(independentParam.getId()+" and "+designMatrix.getId());
         }
     }
 

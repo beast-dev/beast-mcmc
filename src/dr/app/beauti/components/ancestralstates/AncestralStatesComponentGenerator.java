@@ -157,7 +157,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeTag("parameter",
                 new Attribute[]{
-                        new Attribute.Default<String>("id", prefix + "count"),
+                        new Attribute.Default<String>("id", partition.getPrefix() + "count"),
                         new Attribute.Default<String>("value", matrix.toString())},
                 true);
 
@@ -173,7 +173,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         for (AbstractPartitionData partition : options.getDataPartitions()) {
 
             if (component.dNdSRobustCounting(partition)) {
-                writeCodonPartitionedRobustCounting(writer, partition);
+                writeCodonPartitionedRobustCounting(writer, partition, component.isCompleteHistoryLogging(partition));
             }
         }
     }
@@ -181,7 +181,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     // Called for each model that requires robust counting (can be more than
     // one)
     private void writeCodonPartitionedRobustCounting(XMLWriter writer,
-                                                     AbstractPartitionData partition) {
+                                                     AbstractPartitionData partition,
+                                                     boolean isCompleteHistoryLogging) {
 
 //        if (DEBUG) {
 //            System.err.println("DEBUG: Writing RC for " + partition.getName());
@@ -198,6 +199,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("id", prefix + "robustCounting1"),
                         new Attribute.Default<String>("labeling", "S"),
                         new Attribute.Default<String>("prefix", prefix),
+                        new Attribute.Default<String>("saveCompleteHistory",
+                                isCompleteHistoryLogging ? "true" : "false"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
                         new Attribute.Default<String>("unconditionedPerBranch",

@@ -62,7 +62,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private static final long serialVersionUID = -1645661616353099424L;
 
     private JComboBox nucSubstCombo = new JComboBox(EnumSet.range(
-            NucModelType.HKY, NucModelType.TN93).toArray());
+            NucModelType.JC, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
     private JComboBox binarySubstCombo = new JComboBox(
             new BinaryModelType[] { BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION });
@@ -149,6 +149,12 @@ public class PartitionModelPanel extends OptionsPanel {
             public void itemStateChanged(ItemEvent ev) {
                 model.setNucSubstitutionModel((NucModelType) nucSubstCombo
                         .getSelectedItem());
+                if (model.getNucSubstitutionModel() == NucModelType.JC) {
+                    frequencyCombo.getSelectedItem();
+
+                    frequencyCombo.setSelectedItem(FrequencyPolicyType.ALLEQUAL);
+                }
+                frequencyCombo.setEnabled(model.getNucSubstitutionModel() != NucModelType.JC);
             }
         });
         nucSubstCombo

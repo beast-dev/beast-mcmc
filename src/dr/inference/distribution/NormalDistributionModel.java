@@ -189,4 +189,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     public Likelihood getLikelihood() {
         return null;
     }
+
+    @Override
+    public int getDimension() { return 1; }
 }

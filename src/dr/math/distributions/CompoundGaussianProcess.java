@@ -31,6 +31,7 @@ import dr.inference.model.Likelihood;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author Marc A. Suchard
@@ -43,23 +44,142 @@ public class CompoundGaussianProcess implements GaussianProcessRandomGenerator {
     private final List<Likelihood> likelihoodList;
     private final CompoundLikelihood compoundLikelihood;
 
+    private final ExecutorService pool;
+    private final int threadCount;
+    private final List<Callable<DrawResult>> callers;
+
+    private static final boolean USE_POOL = false;
+
+    private int dimension = -1;
+
     public CompoundGaussianProcess(List<GaussianProcessRandomGenerator> gpList, List<Likelihood> likelihoodList,
                                    List<Integer> copyList) {
         this.gpList = gpList;
         this.copyList = copyList;
         this.likelihoodList = likelihoodList;
         compoundLikelihood = new CompoundLikelihood(likelihoodList);
+
+        if (USE_POOL) {
+            callers = createTasks();
+            threadCount = callers.size();
+            pool = Executors.newFixedThreadPool(threadCount);
+        } else {
+            callers = null;
+            threadCount = -1;
+            pool = null;
+        }
     }
 
     public boolean contains(Likelihood likelihood) {
         return likelihoodList.contains(likelihood);
     }
 
+    public int getDimension() {
+        if (dimension == -1) {
+            dimension = 0;
+            for (GaussianProcessRandomGenerator gp : gpList) {
+                dimension += gp.getDimension();
+            }
+        }
+        return dimension;
+    }
+
     @Override
     public Likelihood getLikelihood() { return compoundLikelihood; }
 
+    private class DrawResult {
+        final double[] result;
+        final int offset;
+
+        DrawResult(double[] result, int offset) {
+            this.result = result;
+            this.offset = offset;
+        }
+    }
+
+    private class DrawCaller implements Callable<DrawResult> {
+
+        public DrawCaller(GaussianProcessRandomGenerator gp, int copies, int offset, boolean isUnivariate) {
+            this.gp = gp;
+            this.copies = copies;
+            this.offset = offset;
+            this.isUnivariate = isUnivariate;
+        }
+
+        public DrawResult call() throws Exception {
+
+            final double[] vector;
+            if (isUnivariate) {
+                vector = new double[copies];
+                for (int i = 0; i < copies; ++i) {
+                    vector[i] = (Double) gp.nextRandom();
+                }
+            } else {
+                vector = (double[]) gp.nextRandom();
+            }
+
+            return new DrawResult(vector, offset);
+        }
+
+        private final GaussianProcessRandomGenerator gp;
+        private final int copies;
+        private final int offset;
+        private final boolean isUnivariate;
+    }
+
+    private List<Callable<DrawResult>> createTasks() {
+
+        List<Callable<DrawResult>> callers = new ArrayList<Callable<DrawResult>>();
+
+        int offset = 0;
+        int index = 0;
+        for (GaussianProcessRandomGenerator gp : gpList) {
+            final int copies = copyList.get(index);
+            if (likelihoodList.get(index) instanceof DistributionLikelihood) { // Univariate
+                callers.add(new DrawCaller(gp, copies, offset, true));
+                offset += copies;
+            } else {
+                for (int i = 0; i < copies; ++i) {
+                    callers.add(new DrawCaller(gp, 1, offset, false));
+                    offset += gp.getDimension();
+                }
+            }
+        }
+
+        return callers;
+    }
+
     @Override
     public Object nextRandom() {
+        if (USE_POOL) {
+            return nextRandomParallel();
+        } else {
+            return nextRandomSerial();
+        }
+    }
+
+    private Object nextRandomParallel() {
+
+        double[] vector = new double[getDimension()];
+
+        try {
+            List<Future<DrawResult>> results = pool.invokeAll(callers);
+
+            for (Future<DrawResult> result : results) {
+                DrawResult dr = result.get();
+                System.arraycopy(dr.result, 0, vector, dr.offset, dr.result.length);
+            }
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+        return vector;
+    }
+
+    private Object nextRandomSerial() {
 
         int size = 0;
         List<double[]> randomList = new ArrayList<double[]>();

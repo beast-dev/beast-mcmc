@@ -344,7 +344,11 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
         return logPdf(v);
     }
 
+    @Override
     public Likelihood getLikelihood() {
         return null;
     }
+
+    @Override
+    public int getDimension() { return mean.length; }
 }

@@ -46,8 +46,14 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
         this.traitModel = traitModel;
     }
 
+    @Override
     public Likelihood getLikelihood() {
         return traitModel;
+    }
+
+    @Override
+    public int getDimension() {
+        return traitModel.getTreeModel().getExternalNodeCount() * traitModel.getDimTrait();
     }
 
     public double getLogLikelihood() { return traitModel.getLogLikelihood(); }

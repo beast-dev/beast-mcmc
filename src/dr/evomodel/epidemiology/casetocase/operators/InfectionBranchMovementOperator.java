@@ -64,10 +64,6 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
     public double doOperation(){
 
-        if(DEBUG){
-            c2cLikelihood.debugOutputTree("before.nex", false);
-        }
-
         PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         int externalNodeCount = tree.getExternalNodeCount();
@@ -84,24 +80,22 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
         double hr = adjustTree(tree, node, branchMap);
 
-        if(DEBUG){
-            c2cLikelihood.debugOutputTree("after.nex", false);
-        }
-
         return hr;
     }
 
 
     private double adjustTree(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
-        // are we going up or down? If we're not extended then all moves are down. External nodes have to move down.
         double out;
 
 
 
+
+
+
         if(tree.isExternal(node) || MathUtils.nextBoolean()){
-            out = moveDown(tree, node, map);
-        } else {
             out = moveUp(tree, node, map);
+        } else {
+            out = moveDown(tree, node, map);
         }
         if(DEBUG){
             c2cLikelihood.getTreeModel().checkPartitions();
@@ -109,7 +103,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         return out;
     }
 
-    private double moveDown(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
+    private double moveUp(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
 
         AbstractCase infectedCase = map.get(node.getNumber());
 
@@ -167,7 +161,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         return hr;
     }
 
-    private double moveUp(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
+    private double moveDown(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
 
         AbstractCase infectedCase = map.get(node.getNumber());
 

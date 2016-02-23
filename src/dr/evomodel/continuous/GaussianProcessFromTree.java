@@ -28,10 +28,12 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.KroneckerOperation;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 /**
@@ -54,6 +56,27 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
     @Override
     public int getDimension() {
         return traitModel.getTreeModel().getExternalNodeCount() * traitModel.getDimTrait();
+    }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        final boolean includeRoot = false;
+
+        double[][] treeVariance = traitModel.computeTreeVariance(includeRoot);
+        double[][] traitPrecision = traitModel.getDiffusionModel().getPrecisionmatrix();
+        Matrix treePrecision = new Matrix(treeVariance).inverse();
+
+        double[][] jointPrecision = KroneckerOperation.product(treePrecision.toComponents(), traitPrecision); // TODO Double-check order
+
+        return jointPrecision;
+    }
+
+    private static void scale(double[][] matrix, double scale) {
+        for (int i = 0; i < matrix.length; ++i) {
+            for (int j = 0; j < matrix[i].length; ++j) {
+                matrix[i][j] *= scale;
+            }
+        }
     }
 
     public double getLogLikelihood() { return traitModel.getLogLikelihood(); }

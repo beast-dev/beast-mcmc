@@ -27,6 +27,11 @@ package dr.app.beagle.mm;
 
 import dr.app.beagle.multidimensionalscaling.MultiDimensionalScalingLikelihood;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.inference.model.MatrixParameterInterface;
+import dr.inference.model.Parameter;
+import dr.inference.operators.EllipticalSliceOperator;
+import dr.math.distributions.GaussianProcessRandomGenerator;
+import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
 /**
@@ -35,7 +40,7 @@ import dr.xml.*;
 public class MultiDimensionalScalingMM extends MMAlgorithm {
 
     private final MultiDimensionalScalingLikelihood likelihood;
-    private final FullyConjugateMultivariateTraitLikelihood tree;
+    private final GaussianProcessRandomGenerator gp;
 
     private final int P; // Embedding dimension
     private final int Q; // Data dimension
@@ -44,25 +49,75 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
     private double[] D = null;
     private double[] distance = null;
 
-    public MultiDimensionalScalingMM(MultiDimensionalScalingLikelihood likelihood, 
-                                     FullyConjugateMultivariateTraitLikelihood tree) {
+    public MultiDimensionalScalingMM(MultiDimensionalScalingLikelihood likelihood,
+                                     GaussianProcessRandomGenerator gp) {
         super();
+
         this.likelihood = likelihood;
-        this.tree = tree;
+        this.gp = gp;
 
         this.P = likelihood.getMdsDimension();
         this.Q = likelihood.getLocationCount();
 
+        double[][] precision = gp.getPrecisionMatrix();
+        setPrecision(precision);
+
+        double[] mode = null;
+
+        System.err.println("Start: " + printArray(likelihood.getMatrixParameter().getParameterValues()));
+
+        try {
+            mode = findMode(likelihood.getMatrixParameter().getParameterValues());
+        } catch (NotConvergedException e) {
+            e.printStackTrace();
+        }
+
+        System.err.println("Final: " + printArray(mode));
+
+        EllipticalSliceOperator.transformPoint(mode, true, true, P);
+
+        System.err.println("Final: " + printArray(mode));
+
+        setParameterValues(likelihood.getMatrixParameter(), mode);
+    }
+
+    private void setParameterValues(MatrixParameterInterface mat, double[] values) {
+
+        mat.setAllParameterValuesQuietly(values, 0);
+        mat.setParameterValueNotifyChangedAll(0, 0, values[0]); // Fire changed
     }
 
     private double[] getDistanceMatrix() {
-        double[] distance = new double[Q * Q];
-        for (int i = 0; i < Q; ++i) {
-            for (int j = 0; j < Q; ++j) {
-                distance[i * Q + j] = 0.0; // TODO
+        return likelihood.getObservations();
+    }
+
+    private void setPrecision(double[][] matrix) {
+
+        if (!ignoreGP) {
+
+            final int QP = matrix.length;
+            if (QP != this.Q * this.P) throw new IllegalArgumentException("Invalid dimensions");
+
+            precision = new double[QP * QP];
+            precisionSign = new int[QP * QP];
+
+            precisionStatistics = new double[QP];
+
+            for (int ik = 0; ik < QP; ++ik) {
+                double sum = 0.0;
+                for (int jl = 0; jl < QP; ++jl) {
+                    double value = weightTree * matrix[ik][jl];
+                    if (ik != jl) {
+                        sum += Math.abs(value);
+                    }
+                    precisionSign[ik * QP + jl] = (value > 0.0) ? 1 : -1;
+                    precision[ik * QP + jl] = Math.abs(value);
+                }
+                precisionStatistics[ik] = sum;
             }
+
         }
-        return distance;
+
     }
 
     protected void mmUpdate(final double[] current, double[] next) {
@@ -96,33 +151,59 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
         // Compute D
         for (int i = 0; i < Q; ++i) {
             for (int j = i + 1; j < Q; ++j) { // TODO XtX is not a necessary intermediate
-                D[j * Q + i] = D[i * Q + j] = Math.sqrt(XtX[i * Q + i] + XtX[j * Q + j] - 2 * XtX[i * Q + j]);
+                double norm2 = XtX[i * Q + i] + XtX[j * Q + j] - 2 * XtX[i * Q + j];
+                double norm = norm2 > 0.0 ? Math.sqrt(norm2) : 0.0;
+                D[j * Q + i] = D[i * Q + j] = Math.max(norm, 1E-3);
+
+                if (Double.isNaN(D[i * Q + j])) {
+                    System.err.println("D NaN");
+                    System.err.println(XtX[i * Q + i]);
+                    System.err.println(XtX[j * Q + j]);
+                    System.err.println(2 * XtX[i * Q + j]);
+                    System.err.println(norm2);
+                    System.err.println(norm);
+                    System.exit(-1);
+                }
             }
         }
 
         // Compute update
         for (int i = 0; i < Q; ++i) { // TODO Embarrassingly parallel
             for (int k = 0; k < P; ++k) { // TODO Embarrassingly parallel
-                double sum = 0.0;
+
+                final int ik = i * P + k;
+                final int QP = Q * P;
+
+                double numerator = 0.0;
                 for (int j = 0; j < Q; ++j) {
                     int add = (i != j)? 1 : 0;
-                    sum += add * (
-                            distance[i * Q + j] * (current[i * P + k] - current[j * P + k]) / D[i * Q + j]
-                            + (current[i * P + k] + current[j * P + k])
+                    double inc = distance[i * Q + j] * (current[i * P + k] - current[j * P + k]) / D[i * Q + j]
+                                                + (current[i * P + k] + current[j * P + k]);
+                    if (Double.isNaN(inc)) {
+                        System.err.println("Bomb at " + i + " " + k + " " + j);
+                        System.err.println("Distance = " + distance[i * Q + j]);
+                        System.err.println("Ci = " + current[i * P + k]);
+                        System.err.println("Cj = " + current[j * P + k]);
+                        System.err.println("D = " + D[i * Q + j]);
+                        System.exit(-1);
+                    }
 
-                    );
+                    if (precision != null) {
+                        for (int l = 0; l < P; ++l) {
+                            final int jl = j * P + l;
+                            inc += precision[ik * QP + jl] * (current[i * P + k] - precisionSign[ik * QP + jl] * current[j * P + k]);
+                        }
+                    }
+
+                    numerator += add * inc;
                 }
-                next[i * P + k] = sum / (2 * (Q - 1));
-            }
-        }
+                double denominator = 2 * (Q - 1);
 
-        // Force translation, rotation, reflection symmetry
-        for (int k = 0; k < P; ++k) {
-            current[0 * P + k] = 0.0; // translation
-            if (k < P - 1) {
-                current[1 * P + k] = 0.0; // rotation
-            } else {
-                current[1 * P + k] = Math.abs(current[1 * P + k]); // reflection
+                if (precision != null) {
+                    denominator += 2 * precision[ik * QP + ik] + precisionStatistics[ik];
+                }
+
+                next[i * P + k] = numerator / denominator;
             }
         }
     }
@@ -143,10 +224,11 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
             MultiDimensionalScalingLikelihood likelihood =
                     (MultiDimensionalScalingLikelihood) xo.getChild(MultiDimensionalScalingLikelihood.class);
-            FullyConjugateMultivariateTraitLikelihood tree =
-                    (FullyConjugateMultivariateTraitLikelihood) xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
 
-            return new MultiDimensionalScalingMM(likelihood, tree);
+            GaussianProcessRandomGenerator gp =
+                    (GaussianProcessRandomGenerator) xo.getChild(GaussianProcessRandomGenerator.class);
+
+            return new MultiDimensionalScalingMM(likelihood, gp);
         }
 
         //************************************************************************
@@ -163,11 +245,20 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(MultiDimensionalScalingLikelihood.class),
-                new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
+                new ElementRule(GaussianProcessRandomGenerator.class),
         };
 
         public Class getReturnType() {
             return MultiDimensionalScalingMM.class;
         }
     };
+
+    private double[] precision = null;
+
+    private double[] precisionStatistics = null;
+    private int[] precisionSign = null;
+
+    private boolean ignoreGP = false;
+
+    private double weightTree = 1.0;
 }

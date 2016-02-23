@@ -699,7 +699,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
 
-    private double[][] computeTreeVariance(boolean includeRoot) {
+    public double[][] computeTreeVariance(boolean includeRoot) {
         final int tipCount = treeModel.getExternalNodeCount();
         double[][] variance = new double[tipCount][tipCount];
 

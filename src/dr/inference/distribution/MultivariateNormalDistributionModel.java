@@ -168,4 +168,9 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     public int getDimension() {
         return mean.getDimension();
     }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        return precision.getParameterAsMatrix();
+    }
 }

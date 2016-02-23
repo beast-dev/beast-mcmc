@@ -40,9 +40,16 @@ import java.util.Map;
  * @author Marc Suchard
  * @version $Id$
  */
-public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
+public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood implements Reportable {
 
     public static final String REQUIRED_FLAGS_PROPERTY = "mds.required.flags";
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(getId() + ": " + getLogLikelihood());
+        return sb.toString();
+    }
 
     public enum ObservationType {
         POINT,
@@ -104,7 +111,8 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         String[] rowLabels = new String[locationCount];
 
         int observationCount = rowCount * rowCount;
-        double[] observations = new double[observationCount];
+//        double[] observations = new double[observationCount];
+        observations = new double[observationCount];
         ObservationType[] observationTypes = new ObservationType[observationCount];
 
         double[][] tmp = new double[rowCount][rowCount];
@@ -131,6 +139,22 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
         initialize(mdsDimension, mdsPrecision, isLeftTruncated, locationsParameter,
                 rowLabels, observations, observationTypes);
     }
+
+//    private class Data {
+//        int observationCount;
+//        double[] observations;
+//        ObservationType[] observationTypes;
+//
+//        Data(int observationCount, double[] observations, ObservationType[] observationTypes) {
+//            this.observationCount = observationCount;
+//            this.observations = observations;
+//            this.observationTypes = observationTypes;
+//        }
+//    }
+
+    public double[] getObservations() { return observations; }    // TODO Grab from core when needed to save space
+
+    public MatrixParameterInterface getMatrixParameter() { return locationsParameter; }
 
     private int[] getPermutation(String[] source, MatrixParameterInterface destination) {
 
@@ -425,4 +449,6 @@ public class MultiDimensionalScalingLikelihood extends AbstractModelLikelihood {
     private double storedLogLikelihood;
 
     private long flags = 0;
+
+    private double[] observations;
 }

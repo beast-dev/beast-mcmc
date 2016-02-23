@@ -115,13 +115,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         double totalWeights = 0;
 
         for(AbstractCase aCase : weightMap.keySet()){
-            totalWeights += weightMap.get(aCase);
+            if(aCase.wasEverInfected) {
+                totalWeights += weightMap.get(aCase);
+            }
         }
 
         indexCasePrior = new HashMap<AbstractCase, Double>();
 
         for(AbstractCase aCase : outbreak.getCases()){
-            indexCasePrior.put(aCase, weightMap.get(aCase)/totalWeights );
+            if(aCase.wasEverInfected) {
+                indexCasePrior.put(aCase, weightMap.get(aCase) / totalWeights);
+            }
         }
 
         sortEvents();

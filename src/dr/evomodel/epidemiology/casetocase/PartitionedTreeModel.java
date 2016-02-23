@@ -44,6 +44,7 @@ import java.util.*;
 public class PartitionedTreeModel extends TreeModel {
 
     private BranchMapModel branchMap;
+
     public final static String PARTITIONED_TREE_MODEL = "partitionedTreeModel";
     Set<NodeRef> partitionsQueue = new HashSet<NodeRef>();
 
@@ -225,6 +226,24 @@ public class PartitionedTreeModel extends TreeModel {
             }
 
         }
+
+        // @todo wasteful - something accessible should keep a list of cases
+
+        for(int i=0; i<getExternalNodeCount(); i++){
+            AbstractCase aCase = branchMap.get(i);
+
+            int[] tips = allTipsForThisCase(aCase);
+
+            NodeRef tipMRCA = Tree.Utils.getCommonAncestor(this, tips);
+
+            if(branchMap.get(tipMRCA.getNumber())!=aCase){
+                throw new BadPartitionException("Node partition disconnected");
+            }
+
+
+        }
+
+
         return !foundProblem;
     }
 

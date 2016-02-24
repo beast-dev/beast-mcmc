@@ -97,7 +97,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         storedPartitionsAsTrees = new HashMap<AbstractCase, Treelet>();
 
 
-        prepareTree(startingNetworkFileName);
+
 
     }
 

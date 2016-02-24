@@ -87,7 +87,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
     private double adjustTree(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
         double out;
 
-
+        // check down is possible
 
 
 
@@ -124,7 +124,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         AbstractCase infectorCase = map.get(parent.getNumber());
 
-        if(c2cLikelihood.isAncestral(parent)){
+        if(c2cLikelihood.getTreeModel().isAncestral(parent)){
 
             if(resampleInfectionTimes){
                 infectorCase.setInfectionBranchPosition(MathUtils.nextDouble());
@@ -176,7 +176,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         // partition as both the other child and 'node')
         for(int i=0; i<tree.getChildCount(node); i++){
             NodeRef child = tree.getChild(node, i);
-            if(!c2cLikelihood.isAncestral(child)){
+            if(!c2cLikelihood.getTreeModel().isAncestral(child)){
                 assert map.get(child.getNumber()) == map.get(node.getNumber()) : "Partition problem";
                 for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionUpTree(child)){
                     newMap[descendant]=map.get(parent.getNumber());

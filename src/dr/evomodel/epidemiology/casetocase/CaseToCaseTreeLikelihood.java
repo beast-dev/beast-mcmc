@@ -85,7 +85,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     /* Matches outbreak to external nodes */
 
-    protected HashMap<AbstractCase, Integer> tipMap;
     private double estimatedLastSampleTime;
     protected TreeTraitProvider.Helper treeTraits = new Helper();
 
@@ -159,23 +158,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         addModel(branchMap);
 
-        tipMap = new HashMap<AbstractCase, Integer>();
-
-        //map the outbreak to the external nodes
-        for(int i=0; i<virusTree.getExternalNodeCount(); i++){
-            TreeModel.Node currentExternalNode = (TreeModel.Node)virusTree.getExternalNode(i);
-            Taxon currentTaxon = currentExternalNode.taxon;
-            for(AbstractCase thisCase : outbreak.getCases()){
-                if(thisCase.wasEverInfected()) {
-                    for (Taxon caseTaxon : thisCase.getAssociatedTaxa()) {
-                        if (caseTaxon.equals(currentTaxon)) {
-                            tipMap.put(thisCase, currentExternalNode.getNumber());
-                        }
-                    }
-                }
-            }
-        }
-
         hasLatentPeriods = outbreak.hasLatentPeriods();
 
         infectionTimes = new double[outbreak.size()];
@@ -228,16 +210,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         likelihoodKnown = false;
     }
 
-    protected void prepareTree(String startingNetworkFileName){
-        if(startingNetworkFileName==null){
-            partitionAccordingToRandomTT(true);
-        } else {
-            partitionAccordingToSpecificTT(startingNetworkFileName);
-        }
 
-        prepareTimings();
-        likelihoodKnown = false;
-    }
 
     public AbstractOutbreak getOutbreak(){
         return outbreak;
@@ -279,24 +252,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     a descendant of it
      */
 
-    public boolean isAncestral(NodeRef node){
-        return isAncestral(node, branchMap);
-    }
 
-    private boolean isAncestral(NodeRef node, BranchMapModel map){
-        NodeRef tip = treeModel.getNode(tipMap.get(map.get(node.getNumber())));
-        if(tip==node){
-            return true;
-        }
-        NodeRef parent = tip;
-        while(parent!= treeModel.getRoot()){
-            parent = treeModel.getParent(parent);
-            if(parent==node){
-                return true;
-            }
-        }
-        return false;
-    }
 
 
 
@@ -808,280 +764,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return getInfectionTime(rootCase);
     }
 
-
-
-    /* Populates the branch map for external nodes */
-
-    private AbstractCase[] prepareExternalNodeMap(AbstractCase[] map){
-        for(int i=0; i< treeModel.getExternalNodeCount(); i++){
-            TreeModel.Node currentExternalNode = (TreeModel.Node) treeModel.getExternalNode(i);
-            Taxon currentTaxon = currentExternalNode.taxon;
-            for(AbstractCase thisCase : outbreak.getCases()){
-                if(thisCase.wasEverInfected()) {
-                    for (Taxon caseTaxon : thisCase.getAssociatedTaxa()) {
-                        if (caseTaxon.equals(currentTaxon)) {
-                            map[currentExternalNode.getNumber()] = thisCase;
-                        }
-                    }
-                }
-            }
-        }
-        return map;
-    }
-
-/*  The CSV file should have a header, and then lines matching each case to its infector*/
-
-    private void partitionAccordingToSpecificTT(String networkFileName){
-        System.out.println("Using specified starting transmission tree.");
-        try{
-            BufferedReader reader = new BufferedReader (new FileReader(networkFileName));
-            HashMap<AbstractCase, AbstractCase> specificParentMap = new HashMap<AbstractCase, AbstractCase>();
-            // skip header line
-            reader.readLine();
-            String currentLine = reader.readLine();
-            while(currentLine!=null){
-                currentLine = currentLine.replace("\"", "");
-                String[] splitLine = currentLine.split("\\,");
-                if(!splitLine[1].equals("Start")){
-                    specificParentMap.put(outbreak.getCase(splitLine[0]), outbreak.getCase(splitLine[1]));
-                } else {
-                    specificParentMap.put(outbreak.getCase(splitLine[0]), null);
-                }
-                currentLine = reader.readLine();
-            }
-            reader.close();
-            partitionAccordingToSpecificTT(specificParentMap);
-        } catch(IOException e){
-            throw new RuntimeException("Cannot read file: " + networkFileName );
-        }
-    }
-
-    private void partitionAccordingToSpecificTT(HashMap<AbstractCase, AbstractCase> map){
-        branchMap.setAll(prepareExternalNodeMap(new AbstractCase[treeModel.getNodeCount()]), true);
-
-        AbstractCase firstCase=null;
-        for(AbstractCase aCase : outbreak.getCases()){
-            if(aCase.wasEverInfected() && map.get(aCase)==null){
-                firstCase = aCase;
-            }
-        }
-        if(firstCase==null){
-            throw new RuntimeException("Given starting network is not compatible with the starting tree");
-        }
-        NodeRef root = treeModel.getRoot();
-        specificallyPartitionUpwards(root, firstCase, map);
-        if(!((PartitionedTreeModel)treeModel).checkPartitions()){
-            throw new RuntimeException("Given starting network is not compatible with the starting tree");
-        }
-
-    }
-
-    private void specificallyPartitionUpwards(NodeRef node, AbstractCase thisCase,
-                                              HashMap<AbstractCase, AbstractCase> map){
-        if(treeModel.isExternal(node)){
-            return;
-        }
-        branchMap.set(node.getNumber(), thisCase, true);
-        if(isAncestral(node)){
-            for(int i=0; i<treeModel.getChildCount(node); i++){
-                specificallyPartitionUpwards(treeModel.getChild(node, i), thisCase, map);
-            }
-        } else {
-            branchMap.set(node.getNumber(), null, true);
-            HashSet<AbstractCase> children = new HashSet<AbstractCase>();
-            for(AbstractCase aCase : outbreak.getCases()){
-                if(map.get(aCase)==thisCase){
-                    children.add(aCase);
-                }
-            }
-            HashSet<AbstractCase> relevantChildren = new HashSet<AbstractCase>(children);
-            for(AbstractCase child: children){
-                int tipNo = tipMap.get(child);
-                NodeRef currentNode = treeModel.getExternalNode(tipNo);
-                while(currentNode!=node && currentNode!=null){
-                    currentNode = treeModel.getParent(currentNode);
-                }
-                if(currentNode==null){
-                    relevantChildren.remove(child);
-                }
-            }
-            if(relevantChildren.size()==1){
-                //no creep
-                AbstractCase child = relevantChildren.iterator().next();
-                branchMap.set(node.getNumber(), child, true);
-            } else {
-                branchMap.set(node.getNumber(), thisCase, true);
-            }
-            for(int i=0; i<treeModel.getChildCount(node); i++){
-                specificallyPartitionUpwards(treeModel.getChild(node, i), branchMap.get(node.getNumber()), map);
-            }
-        }
-
-    }
-
-
-    /* Assigns a phylogenetic tree node and its children to a partition according to a specified map of child to parent
-    outbreak. This only works on the non-extended version right now, watch it. */
-
-    private AbstractCase specificallyAssignNode(TreeModel.Node node, AbstractCase[] map,
-                                                HashMap<AbstractCase, AbstractCase> parents){
-        if(node.isExternal()){
-            return map[node.getNumber()];
-        } else {
-            AbstractCase[] childPaintings = new AbstractCase[2];
-            for(int i=0; i<node.getChildCount(); i++){
-                childPaintings[i] = specificallyAssignNode(node.getChild(i), map, parents);
-            }
-            if(parents.get(childPaintings[1])==childPaintings[0]){
-                map[node.getNumber()]=childPaintings[0];
-            } else if(parents.get(childPaintings[0])==childPaintings[1]){
-                map[node.getNumber()]=childPaintings[1];
-            } else {
-                throw new RuntimeException("This network does not appear to be compatible with the tree");
-            }
-            return map[node.getNumber()];
-        }
-    }
-
-    public void writeNetworkToFile(String fileName){
-        try{
-            BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
-            writer.write("Case,Parent");
-            writer.newLine();
-            for(int i=0; i< treeModel.getExternalNodeCount(); i++){
-                TreeModel.Node extNode = (TreeModel.Node) treeModel.getExternalNode(i);
-                String tipName = extNode.taxon.toString();
-                String infector;
-                try{
-                    infector = ((PartitionedTreeModel)treeModel).getInfector(extNode).getName();
-                } catch(NullPointerException e){
-                    infector = "Start";
-                }
-                writer.write(tipName + "," + infector);
-                writer.newLine();
-            }
-            writer.close();
-        } catch(IOException e) {
-            System.out.println("Failed to write to file");
-        }
-
-    }
-
-    /*Given a new tree with no labels, associates each of the terminal branches with the relevant case and then
-    * generates a random partition of the rest of the tree to start off with. If checkNonZero is true in
-    * randomlyAssignNode then the network will be checked to prohibit links with zero (or rounded to zero)
-    * likelihood first. This always uses a non-extended partition. */
-
-    private void partitionAccordingToRandomTT(boolean checkNonZero){
-        boolean gotOne = false;
-        int tries = 1;
-        System.out.println("Generating a random starting partition of the tree (checking nonzero likelihood for all " +
-                "branches and repeating up to 100 times until a start with nonzero likelihood is found)");
-        System.out.print("Attempt: ");
-        while(!gotOne){
-
-            likelihoodKnown = false;
-            boolean failed = false;
-            System.out.print(tries + "...");
-            branchMap.setAll(prepareExternalNodeMap(new AbstractCase[treeModel.getNodeCount()]), true);
-            //Warning - if the BadPartitionException in randomlyAssignNode might be caused by a bug rather than both
-            //likelihoods rounding to zero, you want to stop catching this to investigate.
-
-            try{
-                partitionAccordingToRandomTT(branchMap, checkNonZero);
-            } catch(BadPartitionException e){
-                failed = true;
-            }
-
-            makeDirty();
-
-            infectionTimes = getInfectionTimes(true);
-            if(hasLatentPeriods){
-                infectiousTimes = getInfectiousTimes(true);
-            }
-
-            infectiousPeriods = getInfectiousPeriods(true);
-            if(hasLatentPeriods){
-                latentPeriods = getLatentPeriods(true);
-            }
-
-            if(!failed && calculateLogLikelihood()!=Double.NEGATIVE_INFINITY){
-                gotOne = true;
-                System.out.println("found.");
-            }
-            tries++;
-            if(tries==101){
-                System.out.println("giving " +
-                        "up.");
-                throw new RuntimeException("Failed to find a starting transmission tree with nonzero likelihood");
-            }
-        }
-    }
-
-
-
-    /* Partitions a phylogenetic tree randomly; if checkNonZero is true, make sure all branch likelihoods are nonzero
-    in the process (this sometimes still results in a zero likelihood for the whole tree, but is much less likely to).
-    */
-
-    private BranchMapModel partitionAccordingToRandomTT(BranchMapModel map, boolean checkNonZero){
-        makeDirty();
-        TreeModel.Node root = (TreeModel.Node) treeModel.getRoot();
-        randomlyAssignNode(root, map, checkNonZero);
-
-        return map;
-    }
-
-    private AbstractCase randomlyAssignNode(TreeModel.Node node, BranchMapModel map, boolean checkNonZero){
-        //this makes a non-extended partition. This is OK, but if it keeps giving zero likelihoods then you could do
-        //something else
-
-        if(node.isExternal()){
-            return map.get(node.getNumber());
-        } else {
-
-            AbstractCase[] choices = new AbstractCase[2];
-            for(int i=0; i<node.getChildCount(); i++){
-                if((map.get(node.getChild(i).getNumber())==null)){
-                    choices[i] = randomlyAssignNode(node.getChild(i), map, checkNonZero);
-                } else {
-                    choices[i] = map.get(node.getChild(i).getNumber());
-                }
-            }
-            int randomSelection = MathUtils.nextInt(2);
-            int decision;
-            if(checkNonZero){
-                Boolean[] branchLogLs = new Boolean[2];
-                for(int i=0; i<2; i++){
-                    double nodeTime = getNodeTime(node);
-                    double branchLength = getNodeTime(treeModel.getChild(node, 1-i)) - getNodeTime(node);
-                    AbstractCase infector = choices[i];
-                    AbstractCase infectee = choices[1-i];
-
-                    branchLogLs[i] = !infector.culledYet(nodeTime
-                            + infectee.getInfectionBranchPosition().getParameterValue(0)*branchLength);
-                }
-                if(!branchLogLs[0] && !branchLogLs[1]){
-                    throw new BadPartitionException("Both branch possibilities have zero likelihood: "
-                            +node.toString()+", outbreak " + choices[0].getName() + " and " + choices[1].getName() + ".");
-                } else if(!branchLogLs[0] || !branchLogLs[1]){
-                    if(!branchLogLs[0]){
-                        decision = 1;
-                    } else {
-                        decision = 0;
-                    }
-                } else {
-                    decision = randomSelection;
-                }
-            } else {
-                decision = randomSelection;
-            }
-            AbstractCase winner = choices[decision];
-            map.getArray()[node.getNumber()]=winner;
-            return winner;
-        }
-    }
-
     public void debugOutputTree(String fileName, boolean rewire){
         debugOutputTree(branchMap, fileName, rewire);
     }
@@ -1105,7 +787,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             testTreesOut.exportTree(treeCopy);
         } catch (IOException ignored) {System.out.println("IOException");}
     }
-
     public FlexibleTree rewireTree(Tree tree){
         prepareTimings();
 

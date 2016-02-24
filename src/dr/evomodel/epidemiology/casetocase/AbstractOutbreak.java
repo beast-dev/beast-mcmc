@@ -86,7 +86,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     public abstract double getLatentPeriod(AbstractCase aCase);
 
-
     public double getKernelValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){
         if(!hasGeography){
             return 1;
@@ -94,7 +93,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
             return kernel.value(getDistance(a,b));
         }
     }
-
 
     // all the kernel values going TO case a (this is symmetric, usually, but potentially might not be)
 

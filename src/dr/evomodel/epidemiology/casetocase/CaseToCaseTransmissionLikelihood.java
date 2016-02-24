@@ -212,10 +212,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public double getLogLikelihood() {
 
-        if(DEBUG){
-            treeLikelihood.debugOutputTree("blah.nex", true);
-        }
-
         if(!likelihoodKnown) {
             if (!treeProbKnown) {
                 treeLikelihood.prepareTimings();
@@ -442,23 +438,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         return logLikelihood;
-    }
-
-
-    // Gibbs operator needs this
-
-    public double calculateTempLogLikelihood(AbstractCase[] map){
-
-        // todo probably this should tell PartitionedTreeModel what needs recalculating
-
-        BranchMapModel branchMap = treeLikelihood.getBranchMap();
-
-        AbstractCase[] trueMap = branchMap.getArrayCopy();
-        branchMap.setAll(map, false);
-        double out = getLogLikelihood();
-        branchMap.setAll(trueMap, false);
-
-        return out;
     }
 
 

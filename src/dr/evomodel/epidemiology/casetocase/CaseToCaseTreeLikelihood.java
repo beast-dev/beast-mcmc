@@ -121,24 +121,24 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     // Basic constructor.
 
-    public CaseToCaseTreeLikelihood(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
+    public CaseToCaseTreeLikelihood(PartitionedTreeModel tree, AbstractOutbreak caseData,
                                     Parameter maxFirstInfToRoot)
             throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TREE_LIKELIHOOD, virusTree, caseData, maxFirstInfToRoot);
+        this(CASE_TO_CASE_TREE_LIKELIHOOD, tree, caseData, maxFirstInfToRoot);
     }
 
     // Constructor for an instance with a non-default name
 
-    public CaseToCaseTreeLikelihood(String name, PartitionedTreeModel virusTree, AbstractOutbreak caseData,
+    public CaseToCaseTreeLikelihood(String name, PartitionedTreeModel tree, AbstractOutbreak caseData,
                                     Parameter maxFirstInfToRoot) {
-        super(name, caseData, virusTree);
+        super(name, caseData, tree);
 
 
         if(stateCount!=treeModel.getExternalNodeCount()){
             throw new RuntimeException("There are duplicate tip outbreak.");
         }
 
-        noTips = virusTree.getExternalNodeCount();
+        noTips = tree.getExternalNodeCount();
 
 
         //subclasses should add outbreak as a model if it contains any information that ever changes
@@ -153,7 +153,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         //map outbreak to tips
 
-        addModel(virusTree.getBranchMap());
+        addModel(tree.getBranchMap());
 
         hasLatentPeriods = outbreak.hasLatentPeriods();
 

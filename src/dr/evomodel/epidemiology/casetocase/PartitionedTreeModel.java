@@ -258,7 +258,7 @@ public class PartitionedTreeModel extends TreeModel {
     // to true
 
 
-    public HashSet<Integer> samePartitionDownTree(NodeRef node){
+    public HashSet<Integer> samePartitionElementUpTree(NodeRef node){
 
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = branchMap.get(node.getNumber());
@@ -269,7 +269,7 @@ public class PartitionedTreeModel extends TreeModel {
             if(countChildrenInSamePartition(parentNode)==2){
                 NodeRef otherChild = sibling(this, currentNode);
                 out.add(otherChild.getNumber());
-                out.addAll(samePartitionUpTree(otherChild));
+                out.addAll(samePartitionElementDownTree(otherChild));
             }
             currentNode = parentNode;
             parentNode = getParent(currentNode);
@@ -282,13 +282,13 @@ public class PartitionedTreeModel extends TreeModel {
 
 
 
-    public HashSet<Integer> samePartitionUpTree(NodeRef node){
+    public HashSet<Integer> samePartitionElementDownTree(NodeRef node){
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = branchMap.get(node.getNumber());
         for(int i=0; i< getChildCount(node); i++){
             if(branchMap.get(getChild(node,i).getNumber())==painting){
                 out.add(getChild(node,i).getNumber());
-                out.addAll(samePartitionUpTree(getChild(node, i)));
+                out.addAll(samePartitionElementDownTree(getChild(node, i)));
             }
         }
         return out;
@@ -298,8 +298,8 @@ public class PartitionedTreeModel extends TreeModel {
     public Integer[] samePartitionElement(NodeRef node){
         HashSet<Integer> out = new HashSet<Integer>();
         out.add(node.getNumber());
-        out.addAll(samePartitionDownTree(node));
-        out.addAll(samePartitionUpTree(node));
+        out.addAll(samePartitionElementUpTree(node));
+        out.addAll(samePartitionElementDownTree(node));
         return out.toArray(new Integer[out.size()]);
     }
 

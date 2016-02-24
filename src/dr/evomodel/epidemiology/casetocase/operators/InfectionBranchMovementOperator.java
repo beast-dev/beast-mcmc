@@ -149,7 +149,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map.get(grandparent.getNumber())==map.get(parent.getNumber())){
-                for(Integer ancestor: c2cLikelihood.getTreeModel().samePartitionDownTree(parent)){
+                for(Integer ancestor: c2cLikelihood.getTreeModel().samePartitionElementUpTree(parent)){
                     newMap[ancestor] = map.get(node.getNumber());
                 }
                 newMap[grandparent.getNumber()]=map.get(node.getNumber());
@@ -159,7 +159,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         } else {
             if(map.get(sibling.getNumber())==map.get(parent.getNumber())){
-                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionUpTree(sibling)){
+                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionElementDownTree(sibling)){
                     newMap[descendant]=map.get(node.getNumber());
                 }
                 newMap[sibling.getNumber()]=map.get(node.getNumber());
@@ -210,7 +210,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
             NodeRef child = tree.getChild(node, i);
             if(!c2cLikelihood.getTreeModel().isAncestral(child)){
                 assert map.get(child.getNumber()) == map.get(node.getNumber()) : "Partition problem";
-                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionUpTree(child)){
+                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionElementDownTree(child)){
                     newMap[descendant]=map.get(parent.getNumber());
                 }
                 newMap[child.getNumber()]=map.get(parent.getNumber());

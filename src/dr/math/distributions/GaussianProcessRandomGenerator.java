@@ -37,4 +37,6 @@ public interface GaussianProcessRandomGenerator extends RandomGenerator {
     Likelihood getLikelihood();
 
     int getDimension();
+
+    double[][] getPrecisionMatrix();
 }

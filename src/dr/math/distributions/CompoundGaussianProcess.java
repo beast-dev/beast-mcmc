@@ -28,6 +28,7 @@ package dr.math.distributions;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.concurrent.*;
  * @author Marc A. Suchard
  */
 
-public class CompoundGaussianProcess implements GaussianProcessRandomGenerator {
+public class CompoundGaussianProcess implements GaussianProcessRandomGenerator, Reportable {
 
     private final List<GaussianProcessRandomGenerator> gpList;
     private final List<Integer> copyList;
@@ -85,7 +86,38 @@ public class CompoundGaussianProcess implements GaussianProcessRandomGenerator {
     }
 
     @Override
+    public double[][] getPrecisionMatrix() {
+        if (gpList.size() == 1) {
+            return gpList.get(0).getPrecisionMatrix();
+        } else {
+            final int dim = getDimension();
+            double[][] precision = new double[dim][dim];
+
+            int offset = 0;
+            for (GaussianProcessRandomGenerator gp : gpList) {
+                final int d = gp.getDimension();
+                double[][] p = gp.getPrecisionMatrix();
+
+                for (int i = 0; i < d; ++i) {
+                    System.arraycopy(p[i], 0, precision[offset + i], offset, d);
+                }
+
+                offset += d;
+            }
+
+            return precision;
+        }
+    }
+
+    @Override
     public Likelihood getLikelihood() { return compoundLikelihood; }
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("compoundGP: " + getLikelihood().getLogLikelihood());
+        return sb.toString();
+    }
 
     private class DrawResult {
         final double[] result;

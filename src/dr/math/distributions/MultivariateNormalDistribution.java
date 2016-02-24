@@ -351,4 +351,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution,
 
     @Override
     public int getDimension() { return mean.length; }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        return precision;
+    }
 }

@@ -488,7 +488,7 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
 
-    private NodeRef caseMRCA(AbstractCase aCase){
+    public NodeRef caseMRCA(AbstractCase aCase){
         int[] caseTips = allTipsForThisCase(aCase);
         NodeRef mrca =  Tree.Utils.getCommonAncestor(this, caseTips);
 
@@ -523,6 +523,21 @@ public class PartitionedTreeModel extends TreeModel {
         return false;
     }
 
+    public boolean isRootBlockedBy(AbstractCase aCase, AbstractCase potentialBlocker){
+        return directDescendant(caseMRCA(aCase), caseMRCA(potentialBlocker));
+    }
+
+    public boolean isRootBlocked(AbstractCase aCase){
+        for(AbstractCase anotherCase : outbreak.getCases()){
+            if(anotherCase.wasEverInfected && anotherCase!=aCase){
+                if(isRootBlockedBy(aCase, anotherCase)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private HashSet<NodeRef> getTipsInThisPartitionElement(AbstractCase aCase){
         HashSet<NodeRef> out = new HashSet<NodeRef>();
         // todo check that external nodes come first
@@ -550,7 +565,6 @@ public class PartitionedTreeModel extends TreeModel {
 
     private boolean directRelationship(NodeRef node1, NodeRef node2){
         return directDescendant(node1, node2) || directDescendant(node2, node1);
-
     }
 
        /* Populates the branch map for external nodes */

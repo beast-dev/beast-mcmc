@@ -192,7 +192,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     recalculateCaseWCC(aCase);
                 }
             }
-        } else if(model == branchMap){
+        } else if(model == getBranchMap()){
             if(object instanceof ArrayList){
 
                 for(int i=0; i<((ArrayList) object).size(); i++){
@@ -206,7 +206,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     NodeRef parent = treeModel.getParent(node);
 
                     if(parent!=null){
-                        recalculateCaseWCC(branchMap.get(parent.getNumber()));
+                        recalculateCaseWCC(getBranchMap().get(parent.getNumber()));
                     }
                 }
             } else {
@@ -297,7 +297,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     }
 
     public ArrayList<AbstractCase> postOrderTransmissionTreeTraversal(){
-        return traverseTransmissionTree(branchMap.get(treeModel.getRoot().getNumber()));
+        return traverseTransmissionTree(getBranchMap().get(treeModel.getRoot().getNumber()));
     }
 
     private ArrayList<AbstractCase> traverseTransmissionTree(AbstractCase aCase){
@@ -317,7 +317,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private void copyPartitionToTreelet(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,
                                         AbstractCase partition){
         if(partition.wasEverInfected()) {
-            if (branchMap.get(oldNode.getNumber()) == partition) {
+            if (getBranchMap().get(oldNode.getNumber()) == partition) {
                 if (treeModel.isExternal(oldNode)) {
                     NodeRef newTip = new FlexibleNode(new Taxon(treeModel.getNodeTaxon(oldNode).getId()));
                     littleTree.addChild(newParent, newTip);
@@ -333,9 +333,9 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             } else {
                 // we need a new tip
                 NodeRef transmissionTip = new FlexibleNode(
-                        new Taxon("Transmission_" + branchMap.get(oldNode.getNumber()).getName()));
+                        new Taxon("Transmission_" + getBranchMap().get(oldNode.getNumber()).getName()));
                 double parentTime = getNodeTime(treeModel.getParent(oldNode));
-                double childTime = getInfectionTime(branchMap.get(oldNode.getNumber()));
+                double childTime = getInfectionTime(getBranchMap().get(oldNode.getNumber()));
                 littleTree.addChild(newParent, transmissionTip);
                 littleTree.setBranchLength(transmissionTip, childTime - parentTime);
             }

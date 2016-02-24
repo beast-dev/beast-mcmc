@@ -81,7 +81,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     /* Mapping of outbreak to branches on the tree; old version is stored before operators are applied */
 
-    protected BranchMapModel branchMap;
 
     /* Matches outbreak to external nodes */
 
@@ -154,9 +153,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         //map outbreak to tips
 
-        branchMap = virusTree.getBranchMap();
-
-        addModel(branchMap);
+        addModel(virusTree.getBranchMap());
 
         hasLatentPeriods = outbreak.hasLatentPeriods();
 
@@ -243,17 +240,9 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
 
 
-
     // ************************************************************************************
     // EXTENDED VERSION METHODS
     // ************************************************************************************
-
-    /* check if the given node is tip-linked under the current painting (the tip corresponding to its painting is
-    a descendant of it
-     */
-
-
-
 
 
 
@@ -263,7 +252,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     public HashSet<AbstractCase> descendantTipPartitions(NodeRef node, HashMap<Integer, HashSet<AbstractCase>> map){
         HashSet<AbstractCase> out = new HashSet<AbstractCase>();
         if(treeModel.isExternal(node)){
-            out.add(branchMap.get(node.getNumber()));
+            out.add(getBranchMap().get(node.getNumber()));
             if(map!=null){
                 map.put(node.getNumber(), out);
             }
@@ -317,7 +306,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
                     }
                 }
-            } else if (model == branchMap){
+            } else if (model == getBranchMap()){
                 if(object instanceof ArrayList){
 
                     for(int i=0; i<((ArrayList) object).size(); i++){
@@ -331,7 +320,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                         NodeRef parent = treeModel.getParent(node);
 
                         if(parent!=null){
-                            recalculateCase(branchMap.get(parent.getNumber()));
+                            recalculateCase(getBranchMap().get(parent.getNumber()));
                         }
                     }
                 } else {
@@ -417,7 +406,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     // **************************************************************
 
     public final BranchMapModel getBranchMap(){
-        return branchMap;
+        return ((PartitionedTreeModel)treeModel).getBranchMap();
     }
 
     public final PartitionedTreeModel getTreeModel(){
@@ -465,8 +454,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     private boolean isAllowed(NodeRef node){
         if(!treeModel.isRoot(node)){
-            AbstractCase childCase = branchMap.get(node.getNumber());
-            AbstractCase parentCase = branchMap.get(treeModel.getParent(node).getNumber());
+            AbstractCase childCase = getBranchMap().get(node.getNumber());
+            AbstractCase parentCase = getBranchMap().get(treeModel.getParent(node).getNumber());
             if(childCase!=parentCase){
                 double infectionTime = infectionTimes[outbreak.getCaseIndex(childCase)];
                 if(infectionTime>parentCase.getCullTime()
@@ -520,7 +509,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
                     return getInfectionTime(min, max, thisCase);
                 } else {
-                    return getRootInfectionTime(branchMap);
+                    return getRootInfectionTime(getBranchMap());
                 }
             } else {
                 return Double.POSITIVE_INFINITY;
@@ -760,12 +749,12 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     }
 
     protected double getRootInfectionTime(){
-        AbstractCase rootCase = branchMap.get(treeModel.getRoot().getNumber());
+        AbstractCase rootCase = getBranchMap().get(treeModel.getRoot().getNumber());
         return getInfectionTime(rootCase);
     }
 
     public void debugOutputTree(String fileName, boolean rewire){
-        debugOutputTree(branchMap, fileName, rewire);
+        debugOutputTree(getBranchMap(), fileName, rewire);
     }
 
 
@@ -796,7 +785,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             FlexibleNode node = (FlexibleNode)outTree.getNode(j);
             node.setAttribute("Number", node.getNumber());
             node.setAttribute("Time", heightToTime(node.getHeight()));
-            node.setAttribute(PARTITIONS_KEY, branchMap.get(node.getNumber()));
+            node.setAttribute(PARTITIONS_KEY, getBranchMap().get(node.getNumber()));
         }
 
         for(AbstractCase aCase : outbreak.getCases()){
@@ -1073,7 +1062,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     throw new RuntimeException("Can only reconstruct states on treeModel given to constructor or a " +
                             "partitioned tree derived from it");
                 } else {
-                    return branchMap.get(oldNode.getNumber()).toString();
+                    return getBranchMap().get(oldNode.getNumber()).toString();
                 }
             } catch(NullPointerException e){
                 if(tree.isRoot(node)){
@@ -1081,7 +1070,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 } else {
                     NodeRef parent = tree.getParent(node);
                     int originalParentNumber = (Integer)tree.getNodeAttribute(parent,"Number");
-                    return branchMap.get(originalParentNumber).toString();
+                    return getBranchMap().get(originalParentNumber).toString();
                 }
             }
         } else {
@@ -1089,7 +1078,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 calculateLogLikelihood();
                 likelihoodKnown = true;
             }
-            return branchMap.get(node.getNumber()).toString();
+            return getBranchMap().get(node.getNumber()).toString();
         }
     }
 

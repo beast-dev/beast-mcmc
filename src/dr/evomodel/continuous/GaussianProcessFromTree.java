@@ -60,11 +60,37 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
 
     @Override
     public double[][] getPrecisionMatrix() {
-        final boolean includeRoot = false;
+        final boolean includeRoot = false; // TODO make an option
 
-        double[][] treeVariance = traitModel.computeTreeVariance(includeRoot);
+        double[][] treeVariance;
+//        long startTime1 = System.nanoTime();
+        treeVariance = traitModel.computeTreeVariance2(includeRoot);
+//        long estimatedTime1 = System.nanoTime() - startTime1;
+
+//        long startTime2 = System.nanoTime();
+//        treeVariance = traitModel.computeTreeVariance(includeRoot);
+//        long estimatedTime2 = System.nanoTime() - startTime2;
+
         double[][] traitPrecision = traitModel.getDiffusionModel().getPrecisionmatrix();
+
+
+//        for (int i = 0; i < treeVariance2.length; ++i) {
+//            for (int j = 0; j < treeVariance2[i].length; ++j) {
+//                if (treeVariance2[i][j] != treeVariance[i][j]) {
+//                    System.err.println(i + " " + j);
+//                    System.err.println(treeVariance2[i][j] + " " + treeVariance[i][j]);
+//                    System.exit(-1);
+//                }
+//            }
+//        }
+
+//        System.err.println("T1: " + estimatedTime1);
+//        System.err.println("T2: " + estimatedTime2);
+
+//        System.err.println("\t\tSTART prec");
         Matrix treePrecision = new Matrix(treeVariance).inverse();
+
+//        System.err.println("\t\tSTART kron");
 
         double[][] jointPrecision = KroneckerOperation.product(treePrecision.toComponents(), traitPrecision); // TODO Double-check order
 

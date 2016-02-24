@@ -59,8 +59,10 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
         this.P = likelihood.getMdsDimension();
         this.Q = likelihood.getLocationCount();
 
-        double[][] precision = gp.getPrecisionMatrix();
-        setPrecision(precision);
+        if (gp != null) {
+            double[][] precision = gp.getPrecisionMatrix();
+            setPrecision(precision);
+        }
 
         double[] mode = null;
 
@@ -98,20 +100,21 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
             final int QP = matrix.length;
             if (QP != this.Q * this.P) throw new IllegalArgumentException("Invalid dimensions");
 
-            precision = new double[QP * QP];
-            precisionSign = new int[QP * QP];
+            precision = matrix;
+//            precision = new double[QP * QP];
+//            precisionSign = new int[QP * QP];
 
             precisionStatistics = new double[QP];
 
             for (int ik = 0; ik < QP; ++ik) {
                 double sum = 0.0;
                 for (int jl = 0; jl < QP; ++jl) {
-                    double value = weightTree * matrix[ik][jl];
+//                    double value = weightTree * matrix[ik][jl];
                     if (ik != jl) {
-                        sum += Math.abs(value);
+                        sum += Math.abs(precision[ik][jl]);
                     }
-                    precisionSign[ik * QP + jl] = (value > 0.0) ? 1 : -1;
-                    precision[ik * QP + jl] = Math.abs(value);
+//                    precisionSign[ik * QP + jl] = (value > 0.0) ? 1 : -1;
+//                    precision[ik * QP + jl] = Math.abs(value);
                 }
                 precisionStatistics[ik] = sum;
             }
@@ -191,7 +194,9 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
                     if (precision != null) {
                         for (int l = 0; l < P; ++l) {
                             final int jl = j * P + l;
-                            inc += precision[ik * QP + jl] * (current[i * P + k] - precisionSign[ik * QP + jl] * current[j * P + k]);
+                            final double prec = precision[ik][jl];
+                            final int sign = (prec > 0.0) ? 1 : -1;
+                            inc += weightTree * prec * (current[i * P + k] - sign * current[j * P + k]);
                         }
                     }
 
@@ -200,7 +205,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
                 double denominator = 2 * (Q - 1);
 
                 if (precision != null) {
-                    denominator += 2 * precision[ik * QP + ik] + precisionStatistics[ik];
+                    denominator += weightTree * (2 * precision[ik][ik] + precisionStatistics[ik]);
                 }
 
                 next[i * P + k] = numerator / denominator;
@@ -245,7 +250,7 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(MultiDimensionalScalingLikelihood.class),
-                new ElementRule(GaussianProcessRandomGenerator.class),
+                new ElementRule(GaussianProcessRandomGenerator.class, true),
         };
 
         public Class getReturnType() {
@@ -253,12 +258,12 @@ public class MultiDimensionalScalingMM extends MMAlgorithm {
         }
     };
 
-    private double[] precision = null;
+    private double[][] precision = null;
 
     private double[] precisionStatistics = null;
-    private int[] precisionSign = null;
+//    private int[] precisionSign = null;
 
     private boolean ignoreGP = false;
 
-    private double weightTree = 1.0;
+    private double weightTree = 0.00001;  // TODO Formally compute
 }

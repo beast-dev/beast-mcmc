@@ -40,6 +40,7 @@ import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.xml.Reportable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -698,6 +699,101 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return sb.toString();
     }
 
+
+    class NodeToRootDistance {
+        NodeRef node;
+        double distance;
+
+        NodeToRootDistance(NodeRef node, double distance) {
+            this.node = node;
+            this.distance = distance;
+        }
+    }
+
+    class NodeToRootDistanceList extends ArrayList<NodeToRootDistance> {
+
+        NodeToRootDistanceList(NodeToRootDistanceList parentList) {
+            super(parentList);
+        }
+
+        NodeToRootDistanceList() {
+            super();
+        }
+    }
+
+    private void addNodeToList(final NodeRef thisNode, NodeToRootDistanceList parentList, NodeToRootDistanceList[] tipLists) {
+
+        if (!treeModel.isRoot(thisNode)) {
+            double increment = getRescaledBranchLengthForPrecision(thisNode);
+            if (parentList.size() > 0) {
+                increment += parentList.get(parentList.size() - 1).distance;
+            }
+            parentList.add(new NodeToRootDistance(thisNode, increment));
+        }
+
+        if (treeModel.isExternal(thisNode)) {
+            tipLists[thisNode.getNumber()] =  parentList;
+        } else { // recurse
+            NodeToRootDistanceList shallowCopy = new NodeToRootDistanceList(parentList);
+            addNodeToList(treeModel.getChild(thisNode, 0), shallowCopy, tipLists);
+            addNodeToList(treeModel.getChild(thisNode, 1), parentList, tipLists);
+        }
+    }
+
+    private double getTimeBetweenNodeToRootLists(List<NodeToRootDistance> x, List<NodeToRootDistance> y) {
+        if (x.get(0) != y.get(0)) {
+            return 0.0;
+        }
+
+        int index = 1;
+        while (x.get(index) == y.get(index)) {
+            ++index;
+        }
+        return x.get(index - 1).distance;
+    }
+
+    public double[][] computeTreeVariance2(boolean includeRoot) {
+
+        final int tipCount = treeModel.getExternalNodeCount();
+        double[][] variance = new double[tipCount][tipCount];
+
+        NodeToRootDistanceList[] tipToRootDistances = new NodeToRootDistanceList[tipCount];
+
+        // Recurse down tree to generate lists
+        addNodeToList(treeModel.getRoot(), new NodeToRootDistanceList(), tipToRootDistances);
+
+        for (int i = 0; i < tipCount; ++i) {
+            // Fill in diagonal
+            List<NodeToRootDistance> iList = tipToRootDistances[i];
+            double marginalTime = iList.get(iList.size() - 1).distance;
+            variance[i][i] = marginalTime;
+
+            for (int j = i + 1; j < tipCount; ++j) {
+                List<NodeToRootDistance> jList = tipToRootDistances[j];
+
+                double time = getTimeBetweenNodeToRootLists(iList, jList);
+                variance[j][i] = variance[i][j] = time;
+            }
+        }
+
+        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
+        }
+
+        if (includeRoot) {
+            for (int i = 0; i < variance.length; ++i) {
+                for (int j = 0; j < variance[i].length; ++j) {
+                    variance[i][j] += 1.0 / getPriorSampleSize();
+                }
+            }
+        }
+
+        return variance;
+
+    }
 
     public double[][] computeTreeVariance(boolean includeRoot) {
         final int tipCount = treeModel.getExternalNodeCount();

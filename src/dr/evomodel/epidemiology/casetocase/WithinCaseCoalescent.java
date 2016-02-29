@@ -122,10 +122,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
 
-                    if(number==28){
-                        debugTreelet(treelet, "debug_"+number+".nex");
-                    }
-
                     if (children.size() != 0) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
                                 treelet.getZeroHeight(), mode == Mode.TRUNCATE);
@@ -357,7 +353,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
                 final double normalisationArea = demographicFunction.getIntegral(startTime, 0);
 
-                if (intervalArea == 0 && duration != 0) {
+                if (intervalArea == 0 && duration > tolerance) {
                     return Double.NEGATIVE_INFINITY;
                 }
 

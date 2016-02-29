@@ -337,8 +337,9 @@ public class PartitionedTreeModel extends TreeModel {
 
             NodeRef child = tipMRCA;
             NodeRef parent = getParent(child);
-            boolean transmissionFound = false;
+            boolean transmissionFound = parent == null;
             while (!transmissionFound) {
+
                 if (branchMap.get(child.getNumber()) != branchMap.get(parent.getNumber())) {
                     transmissionFound = true;
                 } else {
@@ -348,6 +349,7 @@ public class PartitionedTreeModel extends TreeModel {
                         transmissionFound = true;
                     }
                 }
+
             }
             return child;
         }

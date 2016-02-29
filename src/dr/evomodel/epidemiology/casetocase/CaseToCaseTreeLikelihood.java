@@ -67,7 +67,9 @@ import org.apache.commons.math.stat.descriptive.rank.Median;
 public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable,
         TreeTraitProvider {
 
-    protected static final boolean DEBUG = true;
+    protected static final boolean DEBUG = false;
+
+    protected static double tolerance = 1E-10;
 
     /* The phylogenetic tree. */
 
@@ -248,9 +250,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 double extraHeight;
 
                 if(treeModel.isRoot(partitionRoot)){
-                    extraHeight = maxFirstInfToRoot.getParameterValue(0) * aCase.getInfectionBranchPosition().getParameterValue(0);
+                    extraHeight = maxFirstInfToRoot.getParameterValue(0)
+                            * aCase.getInfectionBranchPosition().getParameterValue(0);
                 } else {
-                    extraHeight = treeModel.getBranchLength(partitionRoot) * aCase.getInfectionBranchPosition().getParameterValue(0);
+                    extraHeight = treeModel.getBranchLength(partitionRoot)
+                            * aCase.getInfectionBranchPosition().getParameterValue(0);
                 }
 
                 FlexibleNode newRoot = new FlexibleNode();
@@ -277,27 +281,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             }
         }
     }
-
-    protected class Treelet extends FlexibleTree {
-
-        private double zeroHeight;
-
-        protected Treelet(FlexibleTree tree, double zeroHeight){
-            super(tree);
-            this.zeroHeight = zeroHeight;
-
-        }
-
-        protected double getZeroHeight(){
-            return zeroHeight;
-        }
-
-        protected void setZeroHeight(double rootBranchLength){
-            this.zeroHeight = zeroHeight;
-        }
-    }
-
-
 
     private void copyPartitionToTreelet(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,
                                         AbstractCase partition){
@@ -326,6 +309,27 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             }
         }
     }
+
+    protected class Treelet extends FlexibleTree {
+
+        private double zeroHeight;
+
+        protected Treelet(FlexibleTree tree, double zeroHeight){
+            super(tree);
+            this.zeroHeight = zeroHeight;
+
+        }
+
+        protected double getZeroHeight(){
+            return zeroHeight;
+        }
+
+        protected void setZeroHeight(double rootBranchLength){
+            this.zeroHeight = zeroHeight;
+        }
+    }
+
+
 
     // find all partitions of the descendant tips of the current node. If map is specified then it makes a map of node
     // number to possible partitions; map can be null.

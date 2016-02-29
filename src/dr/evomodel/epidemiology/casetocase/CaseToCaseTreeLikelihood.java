@@ -39,6 +39,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
@@ -66,7 +67,7 @@ import org.apache.commons.math.stat.descriptive.rank.Median;
 public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood implements Loggable, Citable,
         TreeTraitProvider {
 
-    protected static final boolean DEBUG = false;
+    protected static final boolean DEBUG = true;
 
     /* The phylogenetic tree. */
 
@@ -95,6 +96,9 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     protected double[] latentPeriods;
     private double[] storedLatentPeriods;
     protected boolean[] recalculateCaseFlags;
+
+    protected HashMap<AbstractCase,Treelet> partitionsAsTrees;
+    protected HashMap<AbstractCase,Treelet> storedPartitionsAsTrees;
 
     //because of the way the former works, we need a maximum value of the time from first infection to root node.
 
@@ -233,12 +237,95 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
 
 
+    protected void explodeTree(){
 
-    // ************************************************************************************
-    // EXTENDED VERSION METHODS
-    // ************************************************************************************
+        for(int i=0; i<outbreak.size(); i++){
+            AbstractCase aCase = outbreak.getCase(i);
+            if(aCase.wasEverInfected() && partitionsAsTrees.get(aCase)==null){
+
+                NodeRef partitionRoot = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(aCase);
+
+                double extraHeight;
+
+                if(treeModel.isRoot(partitionRoot)){
+                    extraHeight = maxFirstInfToRoot.getParameterValue(0) * aCase.getInfectionBranchPosition().getParameterValue(0);
+                } else {
+                    extraHeight = treeModel.getBranchLength(partitionRoot) * aCase.getInfectionBranchPosition().getParameterValue(0);
+                }
+
+                FlexibleNode newRoot = new FlexibleNode();
+
+                FlexibleTree littleTree = new FlexibleTree(newRoot);
+                littleTree.beginTreeEdit();
+
+                if (!treeModel.isExternal(partitionRoot)) {
+                    for (int j = 0; j < treeModel.getChildCount(partitionRoot); j++) {
+                        copyPartitionToTreelet(littleTree, treeModel.getChild(partitionRoot, j), newRoot, aCase);
+                    }
+                }
+
+                littleTree.endTreeEdit();
+
+                littleTree.resolveTree();
+
+                Treelet treelet = new Treelet(littleTree,
+                        littleTree.getRootHeight() + extraHeight);
+
+                partitionsAsTrees.put(aCase, treelet);
 
 
+            }
+        }
+    }
+
+    protected class Treelet extends FlexibleTree {
+
+        private double zeroHeight;
+
+        protected Treelet(FlexibleTree tree, double zeroHeight){
+            super(tree);
+            this.zeroHeight = zeroHeight;
+
+        }
+
+        protected double getZeroHeight(){
+            return zeroHeight;
+        }
+
+        protected void setZeroHeight(double rootBranchLength){
+            this.zeroHeight = zeroHeight;
+        }
+    }
+
+
+
+    private void copyPartitionToTreelet(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,
+                                        AbstractCase partition){
+        if(partition.wasEverInfected()) {
+            if (getBranchMap().get(oldNode.getNumber()) == partition) {
+                if (treeModel.isExternal(oldNode)) {
+                    NodeRef newTip = new FlexibleNode(new Taxon(treeModel.getNodeTaxon(oldNode).getId()));
+                    littleTree.addChild(newParent, newTip);
+                    littleTree.setBranchLength(newTip, treeModel.getBranchLength(oldNode));
+                } else {
+                    NodeRef newChild = new FlexibleNode();
+                    littleTree.addChild(newParent, newChild);
+                    littleTree.setBranchLength(newChild, treeModel.getBranchLength(oldNode));
+                    for (int i = 0; i < treeModel.getChildCount(oldNode); i++) {
+                        copyPartitionToTreelet(littleTree, treeModel.getChild(oldNode, i), newChild, partition);
+                    }
+                }
+            } else {
+                // we need a new tip
+                NodeRef transmissionTip = new FlexibleNode(
+                        new Taxon("Transmission_" + getBranchMap().get(oldNode.getNumber()).getName()));
+                double parentTime = getNodeTime(treeModel.getParent(oldNode));
+                double childTime = getInfectionTime(getBranchMap().get(oldNode.getNumber()));
+                littleTree.addChild(newParent, transmissionTip);
+                littleTree.setBranchLength(transmissionTip, childTime - parentTime);
+            }
+        }
+    }
 
     // find all partitions of the descendant tips of the current node. If map is specified then it makes a map of node
     // number to possible partitions; map can be null.
@@ -1069,10 +1156,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 }
             }
         } else {
-            if (!likelihoodKnown) {
-                calculateLogLikelihood();
-                likelihoodKnown = true;
-            }
             return getBranchMap().get(node.getNumber()).toString();
         }
     }

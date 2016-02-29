@@ -25,6 +25,7 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.app.tools.NexusExporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -35,6 +36,7 @@ import dr.math.MathUtils;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -485,15 +487,21 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
 
-    public NodeRef caseMRCA(AbstractCase aCase){
+    public NodeRef caseMRCA(AbstractCase aCase, boolean checkConnectedness){
         int[] caseTips = allTipsForThisCase(aCase);
         NodeRef mrca =  Tree.Utils.getCommonAncestor(this, caseTips);
 
-        if(branchMap.get(mrca.getNumber())!=aCase){
-            throw new BadPartitionException("A partition is disconnected");
+        if(checkConnectedness) {
+            if (branchMap.get(mrca.getNumber()) != aCase) {
+                throw new BadPartitionException("A partition is disconnected");
+            }
         }
 
         return mrca;
+    }
+
+    public NodeRef caseMRCA(AbstractCase aCase){
+        return caseMRCA(aCase, true);
     }
 
     private HashSet<NodeRef> getDescendantTips(NodeRef node){
@@ -734,6 +742,10 @@ public class PartitionedTreeModel extends TreeModel {
         //something else
 
         if(isExternal(node)){
+            if(getNodeTaxon(node).getId().startsWith("Location_2_4_0_")){
+                System.out.println("look at me");
+            }
+
             return branchMap.get(node.getNumber());
         } else {
 
@@ -744,10 +756,14 @@ public class PartitionedTreeModel extends TreeModel {
 
             for(AbstractCase aCase : outbreak.getCases()){
                 if(aCase.wasEverInfected) {
-                    NodeRef caseMRCA = caseMRCA(aCase);
-                    for (NodeRef caseTip : getTipsInThisPartitionElement(aCase)) {
+                    NodeRef caseMRCA = caseMRCA(aCase, false);
+                    HashSet<NodeRef> caseTips = getTipsInThisPartitionElement(aCase);
+
+                    for (NodeRef caseTip : caseTips) {
                         if (directDescendant(node, caseMRCA) && directDescendant(caseTip, node)) {
-                            forcedByTopology.add(aCase);
+                            if(!forcedByTopology.contains(aCase)) {
+                                forcedByTopology.add(aCase);
+                            }
                         }
                     }
                 }
@@ -756,8 +772,15 @@ public class PartitionedTreeModel extends TreeModel {
             if(forcedByTopology.size()>1){
                 throw new RuntimeException("Starting transmission tree is incompatible with starting phylogeny");
             } else if(forcedByTopology.size()==1){
-                branchMap.set(node.getNumber(), forcedByTopology.get(1), true);
-                return forcedByTopology.get(1);
+                branchMap.set(node.getNumber(), forcedByTopology.get(0), true);
+
+                for (int i = 0; i < getChildCount(node); i++) {
+                    if(!isExternal(getChild(node, i))){
+                        randomlyAssignNode(getChild(node, i), allowCreep);
+                    }
+                }
+
+                return forcedByTopology.get(0);
             } else {
                 //not mandated by the topology
                 //three choices - case of child 1, case of child 2, case of parent, unless this is the root

@@ -62,8 +62,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private double[] partitionTreeLogLikelihoods;
     private double[] storedPartitionTreeLogLikelihoods;
     private boolean[] recalculateCoalescentFlags;
-    private HashMap<AbstractCase,Treelet> partitionsAsTrees;
-    private HashMap<AbstractCase,Treelet> storedPartitionsAsTrees;
     private DemographicModel demoModel;
     private Mode mode;
 
@@ -84,6 +82,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         partitionTreeLogLikelihoods = new double[outbreak.getCases().size()];
         storedPartitionTreeLogLikelihoods = new double[outbreak.getCases().size()];
         recalculateCoalescentFlags = new boolean[outbreak.getCases().size()];
+        Arrays.fill(recalculateCoalescentFlags, true);
 
         partitionsAsTrees = new HashMap<AbstractCase, Treelet>();
         for(AbstractCase aCase: outbreak.getCases()){
@@ -123,15 +122,16 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
 
+                    if(number==28){
+                        debugTreelet(treelet, "debug_"+number+".nex");
+                    }
+
                     if (children.size() != 0) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
                                 treelet.getZeroHeight(), mode == Mode.TRUNCATE);
                         partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
                         coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
-                        if (DEBUG && partitionTreeLogLikelihoods[number] == Double.POSITIVE_INFINITY) {
-                            outputTreeToFile("infCoalescent.nex", false);
-                            debugTreelet(treelet, aCase + "_partition.nex");
-                        }
+
                     } else {
                         partitionTreeLogLikelihoods[number] = 0.0;
                     }
@@ -147,11 +147,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         logL += coalescencesLogLikelihood;
 
         likelihoodKnown = true;
-
-        if(DEBUG){
-            outputTreeToFile("outstandard.nex", false);
-            outputTreeToFile("outfancy.nex", true);
-        }
 
         return logL;
     }
@@ -251,49 +246,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     // Tears the tree into small pieces. Indexes correspond to indexes in the outbreak.
 
-    private void explodeTree(){
-        if(DEBUG){
-            outputTreeToFile("test.nex", false);
-        }
-        for(int i=0; i<outbreak.size(); i++){
-            AbstractCase aCase = outbreak.getCase(i);
-            if(aCase.wasEverInfected() && partitionsAsTrees.get(aCase)==null){
-
-                NodeRef partitionRoot = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(aCase);
-
-                double extraHeight;
-
-                if(treeModel.isRoot(partitionRoot)){
-                    extraHeight = maxFirstInfToRoot.getParameterValue(0) * aCase.getInfectionBranchPosition().getParameterValue(0);
-                } else {
-                    extraHeight = treeModel.getBranchLength(partitionRoot) * aCase.getInfectionBranchPosition().getParameterValue(0);
-                }
-
-                FlexibleNode newRoot = new FlexibleNode();
-
-                FlexibleTree littleTree = new FlexibleTree(newRoot);
-                littleTree.beginTreeEdit();
-
-                if (!treeModel.isExternal(partitionRoot)) {
-                    for (int j = 0; j < treeModel.getChildCount(partitionRoot); j++) {
-                        copyPartitionToTreelet(littleTree, treeModel.getChild(partitionRoot, j), newRoot, aCase);
-                    }
-                }
-
-                littleTree.endTreeEdit();
-
-                littleTree.resolveTree();
-
-                Treelet treelet = new Treelet(littleTree,
-                        littleTree.getRootHeight() + extraHeight);
-
-                partitionsAsTrees.put(aCase, treelet);
-
-
-            }
-        }
-    }
-
     public ArrayList<AbstractCase> postOrderTransmissionTreeTraversal(){
         return traverseTransmissionTree(getBranchMap().get(treeModel.getRoot().getNumber()));
     }
@@ -312,54 +264,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         return out;
     }
 
-    private void copyPartitionToTreelet(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,
-                                        AbstractCase partition){
-        if(partition.wasEverInfected()) {
-            if (getBranchMap().get(oldNode.getNumber()) == partition) {
-                if (treeModel.isExternal(oldNode)) {
-                    NodeRef newTip = new FlexibleNode(new Taxon(treeModel.getNodeTaxon(oldNode).getId()));
-                    littleTree.addChild(newParent, newTip);
-                    littleTree.setBranchLength(newTip, treeModel.getBranchLength(oldNode));
-                } else {
-                    NodeRef newChild = new FlexibleNode();
-                    littleTree.addChild(newParent, newChild);
-                    littleTree.setBranchLength(newChild, treeModel.getBranchLength(oldNode));
-                    for (int i = 0; i < treeModel.getChildCount(oldNode); i++) {
-                        copyPartitionToTreelet(littleTree, treeModel.getChild(oldNode, i), newChild, partition);
-                    }
-                }
-            } else {
-                // we need a new tip
-                NodeRef transmissionTip = new FlexibleNode(
-                        new Taxon("Transmission_" + getBranchMap().get(oldNode.getNumber()).getName()));
-                double parentTime = getNodeTime(treeModel.getParent(oldNode));
-                double childTime = getInfectionTime(getBranchMap().get(oldNode.getNumber()));
-                littleTree.addChild(newParent, transmissionTip);
-                littleTree.setBranchLength(transmissionTip, childTime - parentTime);
-            }
-        }
-    }
 
-    private class Treelet extends FlexibleTree {
-
-        private double zeroHeight;
-
-        private Treelet(FlexibleTree tree, double zeroHeight){
-            super(tree);
-            this.zeroHeight = zeroHeight;
-
-        }
-
-        private double getZeroHeight(){
-            return zeroHeight;
-        }
-
-
-
-        private void setZeroHeight(double rootBranchLength){
-            this.zeroHeight = zeroHeight;
-        }
-    }
 
     private Treelet transformTreelet(Treelet treelet){
 

@@ -77,6 +77,17 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     }
 
     @Override
+    public double[] getPairwiseData() {
+        double[] data = new double[locationCount * locationCount];
+        int k = 0;
+        for (int i = 0; i < locationCount; ++i) {
+            System.arraycopy(observations[i], 0, data, k, locationCount);
+            k += locationCount;
+        }
+        return data;
+    }
+
+    @Override
     public void setParameters(double[] parameters) {
         precision = parameters[0];
 

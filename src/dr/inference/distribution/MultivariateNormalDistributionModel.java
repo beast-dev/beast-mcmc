@@ -163,4 +163,14 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         checkDistribution();
         return distribution.logPdf(x);
     }
+
+    @Override
+    public int getDimension() {
+        return mean.getDimension();
+    }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        return precision.getParameterAsMatrix();
+    }
 }

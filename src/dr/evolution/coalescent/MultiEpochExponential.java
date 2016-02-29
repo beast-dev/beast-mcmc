@@ -25,6 +25,8 @@
 
 package dr.evolution.coalescent;
 
+import dr.math.matrixAlgebra.Vector;
+
 /**
  * This class models a multi-phase exponential growth
  *
@@ -71,11 +73,16 @@ public class MultiEpochExponential extends ConstantPopulation {
     }
 
     private double integrateConstant(double start, double finish, double logDemographic) {
-        return (finish - start) / Math.exp(logDemographic);
+        double integral =  (finish - start) / Math.exp(logDemographic);
+        return integral;
     }
 
     private double integrateExponential(double start, double finish, double logDemographic, double rate) {
-        return (Math.exp(finish * rate) - Math.exp(start * rate)) / Math.exp(logDemographic) / rate;
+        double integral = (Math.exp(finish * rate) - Math.exp(start * rate)) / Math.exp(logDemographic) / rate;
+//        System.err.println("\tint: " + integral + " " + start + " " + finish + " " + logDemographic + " " + rate);
+//        System.err.println("\t\t" + Math.exp(finish * rate) + " - " + Math.exp(start * rate));
+//        System.err.println("\t\t" + Math.exp(finish * rate - logDemographic - Math.log(rate)) + " - " + Math.exp(start * rate - logDemographic - Math.log(rate)));
+        return integral;
     }
 
     public double getAnalyticIntegral(double start, double finish) {
@@ -131,6 +138,11 @@ public class MultiEpochExponential extends ConstantPopulation {
         }
 //        System.err.println("final incr = " + incr + " for " + start + " -> " + finish + " or " +
 //                (start - lastTransitionTime) + " -> " + (finish - lastTransitionTime) + " @ " + rate[currentEpoch] + " & " + Math.exp(logDemographic));
+
+
+        if (Double.isNaN(integral) || Double.isInfinite(integral)) {
+            System.err.println(integral + " " + start + " " + finish + new Vector(rate) + "\n");
+        }
 
         return integral / getN0();
     }

@@ -486,6 +486,7 @@ public class NormalDistribution implements Distribution, RandomGenerator {
         testTail(8.25, 0.0, 1.0);
         System.out.println();
         testTail(10, 0.0, 1.0);
+        System.out.println(NormalDistribution.standardCDF(2.0 / 0.5, true));
     }
 
     // RandomGenerator interface

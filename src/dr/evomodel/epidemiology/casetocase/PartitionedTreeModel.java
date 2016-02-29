@@ -55,13 +55,15 @@ public class PartitionedTreeModel extends TreeModel {
         super(id, tree);
         this.outbreak = outbreak;
         elementCount = outbreak.infectedSize();
-        partitionAccordingToRandomTT();
+        branchMap = new BranchMapModel(this);
+        partitionAccordingToRandomTT(false);
     }
 
     public PartitionedTreeModel(String id, Tree tree, AbstractOutbreak outbreak, String startingTTFileName){
         super(id, tree);
         this.outbreak = outbreak;
         elementCount = outbreak.infectedSize();
+        branchMap = new BranchMapModel(this);
         partitionAccordingToSpecificTT(startingTTFileName);
     }
 
@@ -361,12 +363,7 @@ public class PartitionedTreeModel extends TreeModel {
         return out;
     }
 
-
-
-
     /* Return the case that infected this case */
-
-    /* Return the case which was the infector in the infection event represented by this node */
 
     public AbstractCase getInfector(AbstractCase thisCase){
         if(thisCase.wasEverInfected()) {
@@ -714,25 +711,25 @@ public class PartitionedTreeModel extends TreeModel {
     /*
      todo - The trouble with initialising this without the likelihood class is that lots of starting trees might
      todo - fail. Need to think about how best to deal with this.
+
+     Generally allowCreep is a bad idea, since it tends to place infections after tip times and tip times
+     are frequently noninfectiousness times. Might be useful for some pathogens, however.
     */
 
 
-    private void partitionAccordingToRandomTT(){
-        boolean gotOne = false;
-        int tries = 1;
-        System.out.println("Generating a random starting partition of the tree");
+    private void partitionAccordingToRandomTT(boolean allowCreep){
 
-        boolean failed = false;
+        System.out.println("Generating a random starting partition of the tree");
 
         branchMap.setAll(prepareExternalNodeMap(new AbstractCase[getNodeCount()]), true);
 
         NodeRef root = getRoot();
-        randomlyAssignNode(root);
+        randomlyAssignNode(root, allowCreep);
 
     }
 
 
-    private AbstractCase randomlyAssignNode(NodeRef node){
+    private AbstractCase randomlyAssignNode(NodeRef node, boolean allowCreep){
         //this makes a non-extended partition. This is OK, but if it keeps giving zero likelihoods then you could do
         //something else
 
@@ -746,10 +743,12 @@ public class PartitionedTreeModel extends TreeModel {
             ArrayList<AbstractCase> forcedByTopology = new ArrayList<AbstractCase>();
 
             for(AbstractCase aCase : outbreak.getCases()){
-                NodeRef caseMRCA = caseMRCA(aCase);
-                for(NodeRef caseTip : getTipsInThisPartitionElement(aCase)) {
-                    if (directDescendant(node, caseMRCA) && directDescendant(caseTip, node)){
-                        forcedByTopology.add(aCase);
+                if(aCase.wasEverInfected) {
+                    NodeRef caseMRCA = caseMRCA(aCase);
+                    for (NodeRef caseTip : getTipsInThisPartitionElement(aCase)) {
+                        if (directDescendant(node, caseMRCA) && directDescendant(caseTip, node)) {
+                            forcedByTopology.add(aCase);
+                        }
                     }
                 }
             }
@@ -769,7 +768,7 @@ public class PartitionedTreeModel extends TreeModel {
 
                 for (int i = 0; i < getChildCount(node); i++) {
                     if(!isExternal(getChild(node, i))){
-                        choices[i] = randomlyAssignNode(getChild(node, i));
+                        choices[i] = randomlyAssignNode(getChild(node, i), allowCreep);
                     } else {
                         choices[i] = branchMap.get(getChild(node,i).getNumber());
                     }
@@ -779,7 +778,7 @@ public class PartitionedTreeModel extends TreeModel {
                 while(isRoot(node) && choices[0]==null && choices[1]==null){
                     for (int i = 0; i < getChildCount(node); i++) {
                         if(!isExternal(getChild(node, i))){
-                            choices[i] = randomlyAssignNode(getChild(node, i));
+                            choices[i] = randomlyAssignNode(getChild(node, i), allowCreep);
                         } else {
                             choices[i] = branchMap.get(getChild(node,i).getNumber());
                         }
@@ -799,11 +798,22 @@ public class PartitionedTreeModel extends TreeModel {
                     return winner;
 
                 } else {
-                    randomSelection = MathUtils.nextInt(3);
+                    randomSelection = MathUtils.nextInt(allowCreep ? 3 : 2);
                 }
                 if (randomSelection != 2) {
                     AbstractCase winner = choices[randomSelection];
-                    if(winner==null) {
+                    AbstractCase loser = choices[1-randomSelection];
+
+                    // check that this isn't going to cause a timings problem
+
+                    if(getNodeHeight(getChild(node, randomSelection)) >
+                            loser.getInfectionBranchPosition().getParameterValue(0)
+                                    *getBranchLength(getChild(node, 1-randomSelection))
+                                    + getNodeHeight(getChild(node, 1-randomSelection))) {
+                        winner = loser;
+                    }
+
+                    if(winner!=null) {
                         fillDownTree(node, winner);
                     } else {
                         branchMap.set(node.getNumber(), null, true);

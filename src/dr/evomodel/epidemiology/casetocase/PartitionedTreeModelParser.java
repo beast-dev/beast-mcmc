@@ -118,7 +118,7 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
                                 new ElementRule(Parameter.class, "A compound parameter containing the leaf heights")
                         }, true),
                 new ElementRule(OUTBREAK, AbstractOutbreak.class, "The case data"),
-                AttributeRule.newStringRule(STARTING_TT_FILE)
+                AttributeRule.newStringRule(STARTING_TT_FILE, true)
         };
     }
 
@@ -133,16 +133,14 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
 
-        AbstractOutbreak outbreak = (AbstractOutbreak)xo.getChild(AbstractOutbreak.class);
-        TreeModel treeModel;
+        AbstractOutbreak outbreak = (AbstractOutbreak)xo.getElementFirstChild(OUTBREAK);
+        PartitionedTreeModel treeModel;
 
         if(xo.hasAttribute(STARTING_TT_FILE)){
             treeModel = new PartitionedTreeModel(xo.getId(), tree, outbreak, xo.getStringAttribute(STARTING_TT_FILE));
         } else {
             treeModel = new PartitionedTreeModel(xo.getId(), tree, outbreak);
         }
-
-
 
         Logger.getLogger("dr.evomodel").info("Creating the partitioned tree model, '" + xo.getId() + "'");
 
@@ -275,7 +273,9 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
                     ParameterParser.replaceParameter(cxo, parameter);
 
                 } else {
-                    throw new XMLParseException("illegal child element in " + getParserName() + ": " + cxo.getName());
+                    if(!cxo.getName().equals(OUTBREAK)) {
+                        throw new XMLParseException("illegal child element in " + getParserName() + ": " + cxo.getName());
+                    }
                 }
 
             } else if (xo.getChild(i) instanceof Tree) {

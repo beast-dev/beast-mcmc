@@ -33,9 +33,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
@@ -131,7 +129,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                         partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
                         coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
                         if (DEBUG && partitionTreeLogLikelihoods[number] == Double.POSITIVE_INFINITY) {
-                            debugOutputTree("infCoalescent.nex", false);
+                            outputTreeToFile("infCoalescent.nex", false);
                             debugTreelet(treelet, aCase + "_partition.nex");
                         }
                     } else {
@@ -151,8 +149,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         likelihoodKnown = true;
 
         if(DEBUG){
-            debugOutputTree("outstandard.nex", false);
-            debugOutputTree("outfancy.nex", true);
+            outputTreeToFile("outstandard.nex", false);
+            outputTreeToFile("outfancy.nex", true);
         }
 
         return logL;
@@ -255,7 +253,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     private void explodeTree(){
         if(DEBUG){
-            debugOutputTree("test.nex", false);
+            outputTreeToFile("test.nex", false);
         }
         for(int i=0; i<outbreak.size(); i++){
             AbstractCase aCase = outbreak.getCase(i);

@@ -24,10 +24,6 @@
  */
 
 package dr.evomodel.epidemiology.casetocase;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
@@ -43,7 +39,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
@@ -53,7 +48,6 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -753,15 +747,15 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
         return getInfectionTime(rootCase);
     }
 
-    public void debugOutputTree(String fileName, boolean rewire){
-        debugOutputTree(getBranchMap(), fileName, rewire);
+    public void outputTreeToFile(String fileName, boolean includeTransmissionNodes){
+        outputTreeToFile(getBranchMap(), fileName, includeTransmissionNodes);
     }
 
 
-    public void debugOutputTree(BranchMapModel map, String fileName, boolean rewire){
+    public void outputTreeToFile(BranchMapModel map, String fileName, boolean includeTransmissionNodes){
         try{
             FlexibleTree treeCopy;
-            if(!rewire){
+            if(!includeTransmissionNodes){
                 treeCopy = new FlexibleTree(treeModel);
                 for(int j=0; j<treeCopy.getNodeCount(); j++){
                     FlexibleNode node = (FlexibleNode)treeCopy.getNode(j);
@@ -770,13 +764,14 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     node.setAttribute(PARTITIONS_KEY, map.get(node.getNumber()));
                 }
             } else {
-                treeCopy = rewireTree(treeModel);
+                treeCopy = addTransmissionNodes(treeModel);
             }
             NexusExporter testTreesOut = new NexusExporter(new PrintStream(fileName));
             testTreesOut.exportTree(treeCopy);
         } catch (IOException ignored) {System.out.println("IOException");}
     }
-    public FlexibleTree rewireTree(Tree tree){
+
+    public FlexibleTree addTransmissionNodes(Tree tree){
         prepareTimings();
 
         FlexibleTree outTree = new FlexibleTree(tree, true);
@@ -822,7 +817,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     FlexibleNode infectionNode = new FlexibleNode();
                     infectionNode.setHeight(heightToInstallRoot);
                     infectionNode.setAttribute("Time", heightToTime(heightToInstallRoot));
-                    infectionNode.setAttribute(PARTITIONS_KEY, "The_Ether");
+                    infectionNode.setAttribute(PARTITIONS_KEY, "Origin");
                     outTree.addChild(infectionNode, newNode);
                     newNode.setLength(heightToInstallRoot - getHeight(originalNode));
                     outTree.setRoot(infectionNode);

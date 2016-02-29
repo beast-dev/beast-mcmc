@@ -355,6 +355,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
                     transProbKnown = true;
                 } catch (BadPartitionException e) {
+
+                    if(DEBUG){
+                        treeLikelihood.outputTreeToFile("debug.nex", true);
+                    }
                     transLogProb = Double.NEGATIVE_INFINITY;
                     transProbKnown = true;
                     logLikelihood = Double.NEGATIVE_INFINITY;

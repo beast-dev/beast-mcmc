@@ -69,6 +69,9 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
     public static final String TAXON = "taxon";
     public static final String NAME = "name";
 
+    public static final String OUTBREAK = "outbreak";
+    public static final String STARTING_TT_FILE = "startingTransmissionTreeFile";
+
     public PartitionedTreeModelParser() {
         rules = new XMLSyntaxRule[]{
                 new ElementRule(Tree.class),
@@ -113,7 +116,9 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
                         new XMLSyntaxRule[]{
                                 new ElementRule(TaxonList.class, "A set of taxa for which leaf heights are required"),
                                 new ElementRule(Parameter.class, "A compound parameter containing the leaf heights")
-                        }, true)
+                        }, true),
+                new ElementRule(OUTBREAK, AbstractOutbreak.class, "The case data"),
+                AttributeRule.newStringRule(STARTING_TT_FILE, true)
         };
     }
 
@@ -127,7 +132,15 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         Tree tree = (Tree) xo.getChild(Tree.class);
-        TreeModel treeModel = new PartitionedTreeModel(xo.getId(), tree);
+
+        AbstractOutbreak outbreak = (AbstractOutbreak)xo.getElementFirstChild(OUTBREAK);
+        PartitionedTreeModel treeModel;
+
+        if(xo.hasAttribute(STARTING_TT_FILE)){
+            treeModel = new PartitionedTreeModel(xo.getId(), tree, outbreak, xo.getStringAttribute(STARTING_TT_FILE));
+        } else {
+            treeModel = new PartitionedTreeModel(xo.getId(), tree, outbreak);
+        }
 
         Logger.getLogger("dr.evomodel").info("Creating the partitioned tree model, '" + xo.getId() + "'");
 
@@ -260,7 +273,9 @@ public class PartitionedTreeModelParser extends AbstractXMLObjectParser {
                     ParameterParser.replaceParameter(cxo, parameter);
 
                 } else {
-                    throw new XMLParseException("illegal child element in " + getParserName() + ": " + cxo.getName());
+                    if(!cxo.getName().equals(OUTBREAK)) {
+                        throw new XMLParseException("illegal child element in " + getParserName() + ": " + cxo.getName());
+                    }
                 }
 
             } else if (xo.getChild(i) instanceof Tree) {

@@ -31,7 +31,6 @@ import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.NormalDistribution;
-import dr.math.distributions.RandomGenerator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -188,5 +187,16 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     @Override
     public Likelihood getLikelihood() {
         return null;
+    }
+
+    @Override
+    public int getDimension() { return 1; }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        double p = hasPrecision ?
+                precision.getValue(0) :
+                stdev.getValue(0) * stdev.getValue(0);
+        return new double[][]{{p}};
     }
 }

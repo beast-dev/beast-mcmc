@@ -27,18 +27,14 @@ package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
-
-import java.util.HashMap;
 
 /**
  * Implements the Wilson-Balding branch swapping move if it moves an entire subtree of the transmission tree.
@@ -68,7 +64,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
     public double doOperation() throws OperatorFailedException {
 
         if(DEBUG){
-            c2cLikelihood.debugOutputTree("BeforeTWWB.nex", false);
+            c2cLikelihood.outputTreeToFile("BeforeTWWB.nex", false);
         }
 
         proposeTree();
@@ -80,7 +76,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         }
 
         if(DEBUG){
-            c2cLikelihood.debugOutputTree("AfterTWWB.nex", false);
+            c2cLikelihood.outputTreeToFile("AfterTWWB.nex", false);
         }
 
         return logq;

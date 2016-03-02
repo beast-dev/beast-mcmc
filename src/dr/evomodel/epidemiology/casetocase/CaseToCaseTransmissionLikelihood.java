@@ -115,13 +115,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         double totalWeights = 0;
 
         for(AbstractCase aCase : weightMap.keySet()){
-            totalWeights += weightMap.get(aCase);
+            if(aCase.wasEverInfected) {
+                totalWeights += weightMap.get(aCase);
+            }
         }
 
         indexCasePrior = new HashMap<AbstractCase, Double>();
 
         for(AbstractCase aCase : outbreak.getCases()){
-            indexCasePrior.put(aCase, weightMap.get(aCase)/totalWeights );
+            if(aCase.wasEverInfected) {
+                indexCasePrior.put(aCase, weightMap.get(aCase) / totalWeights);
+            }
         }
 
         sortEvents();
@@ -209,7 +213,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     public double getLogLikelihood() {
 
         if(DEBUG){
-            treeLikelihood.debugOutputTree("blah.nex", true);
+            treeLikelihood.outputTreeToFile("debug.nex", true);
         }
 
         if(!likelihoodKnown) {
@@ -355,6 +359,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
                     transProbKnown = true;
                 } catch (BadPartitionException e) {
+
                     transLogProb = Double.NEGATIVE_INFINITY;
                     transProbKnown = true;
                     logLikelihood = Double.NEGATIVE_INFINITY;
@@ -438,23 +443,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         return logLikelihood;
-    }
-
-
-    // Gibbs operator needs this
-
-    public double calculateTempLogLikelihood(AbstractCase[] map){
-
-        // todo probably this should tell PartitionedTreeModel what needs recalculating
-
-        BranchMapModel branchMap = treeLikelihood.getBranchMap();
-
-        AbstractCase[] trueMap = branchMap.getArrayCopy();
-        branchMap.setAll(map, false);
-        double out = getLogLikelihood();
-        branchMap.setAll(trueMap, false);
-
-        return out;
     }
 
 

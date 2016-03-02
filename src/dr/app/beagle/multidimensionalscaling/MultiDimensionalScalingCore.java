@@ -86,4 +86,9 @@ public interface MultiDimensionalScalingCore {
      * Accept the proposed state
      */
     void acceptState();
+
+    /**
+     * Get pair-wise data
+     */
+    double[] getPairwiseData();
 }

@@ -43,8 +43,6 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private NativeMDSSingleton singleton = null;
     private int instance = -1; // Get instance # via initialization
 
-//    private static final long LEFT_TRUNCATION = 1 << 5;
-
     public MassivelyParallelMDSImpl() {
         singleton = NativeMDSSingleton.loadLibrary();
     }
@@ -68,22 +66,24 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     }
 
     @Override
+    public double[] getPairwiseData() {
+        return singleton.getPairwiseData(instance);
+    }
+
+    @Override
     public void updateLocation(int locationIndex, double[] location) {
         singleton.updateLocations(instance, locationIndex, location);
     }
 
     @Override
     public double calculateLogLikelihood() {
-        double sumOfSquaredResiduals = singleton.getSumOfSquaredResiduals(instance);
+        double sumOfIncrements = singleton.getSumOfIncrements(instance);
 
-        // TODO Missing - n / 2 * log(2 * pi)
+        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount - sumOfIncrements;
 
-        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount -
-                        (0.5 * precision * sumOfSquaredResiduals);
-
-        if (isLeftTruncated) {
-            logLikelihood -= singleton.getSumOfLogTruncations(instance);
-        }
+//        if (isLeftTruncated) {
+//            logLikelihood -= singleton.getSumOfLogTruncations(instance);
+//        }
 
         return logLikelihood;
     }
@@ -114,5 +114,4 @@ public class MassivelyParallelMDSImpl implements MultiDimensionalScalingCore {
     private double precision;
     private double storedPrecision;
     private boolean isLeftTruncated;
-
 }

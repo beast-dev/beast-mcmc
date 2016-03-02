@@ -25,15 +25,18 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.app.beauti.util.TreeUtils;
+import dr.app.tools.NexusExporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.tree.TreeModelParser;
 import dr.inference.model.*;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
+import dr.math.MathUtils;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -43,26 +46,35 @@ import java.util.*;
  */
 public class PartitionedTreeModel extends TreeModel {
 
+    private final AbstractOutbreak outbreak;
     private BranchMapModel branchMap;
+    private final int elementCount;
+
     public final static String PARTITIONED_TREE_MODEL = "partitionedTreeModel";
     Set<NodeRef> partitionsQueue = new HashSet<NodeRef>();
 
-    public PartitionedTreeModel(String id, Tree tree, BranchMapModel branchMap){
+    public PartitionedTreeModel(String id, Tree tree, AbstractOutbreak outbreak){
         super(id, tree);
-        this.branchMap = branchMap;
-    }
-
-    public PartitionedTreeModel(String id, Tree tree){
-        super(id, tree);
+        this.outbreak = outbreak;
+        elementCount = outbreak.infectedSize();
         branchMap = new BranchMapModel(this);
+        partitionAccordingToRandomTT(false);
     }
 
-    public PartitionedTreeModel(TreeModel treeModel, BranchMapModel branchMap){
-        this(PARTITIONED_TREE_MODEL, treeModel, branchMap);
+    public PartitionedTreeModel(String id, Tree tree, AbstractOutbreak outbreak, String startingTTFileName){
+        super(id, tree);
+        this.outbreak = outbreak;
+        elementCount = outbreak.infectedSize();
+        branchMap = new BranchMapModel(this);
+        partitionAccordingToSpecificTT(startingTTFileName);
     }
 
-    public PartitionedTreeModel(TreeModel treeModel){
-        this(PARTITIONED_TREE_MODEL, treeModel);
+    public PartitionedTreeModel(TreeModel treeModel, AbstractOutbreak outbreak){
+        this(PARTITIONED_TREE_MODEL, treeModel, outbreak);
+    }
+
+    public PartitionedTreeModel(TreeModel treeModel, AbstractOutbreak outbreak, String startingTTFileName){
+        this(PARTITIONED_TREE_MODEL, treeModel, outbreak, startingTTFileName);
     }
 
     public void partitionsChangingAlert(HashSet<AbstractCase> casesToRecalculate){
@@ -225,6 +237,23 @@ public class PartitionedTreeModel extends TreeModel {
             }
 
         }
+
+        // @todo wasteful - something accessible should keep a list of cases
+
+        for(int i=0; i<getExternalNodeCount(); i++){
+            AbstractCase aCase = branchMap.get(i);
+
+
+            NodeRef tipMRCA = caseMRCA(aCase);
+
+            if(branchMap.get(tipMRCA.getNumber())!=aCase){
+                throw new BadPartitionException("Node partition disconnected");
+            }
+
+
+        }
+
+
         return !foundProblem;
     }
 
@@ -233,7 +262,7 @@ public class PartitionedTreeModel extends TreeModel {
     // to true
 
 
-    public HashSet<Integer> samePartitionDownTree(NodeRef node){
+    public HashSet<Integer> samePartitionElementUpTree(NodeRef node){
 
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = branchMap.get(node.getNumber());
@@ -244,7 +273,7 @@ public class PartitionedTreeModel extends TreeModel {
             if(countChildrenInSamePartition(parentNode)==2){
                 NodeRef otherChild = sibling(this, currentNode);
                 out.add(otherChild.getNumber());
-                out.addAll(samePartitionUpTree(otherChild));
+                out.addAll(samePartitionElementDownTree(otherChild));
             }
             currentNode = parentNode;
             parentNode = getParent(currentNode);
@@ -257,13 +286,13 @@ public class PartitionedTreeModel extends TreeModel {
 
 
 
-    public HashSet<Integer> samePartitionUpTree(NodeRef node){
+    public HashSet<Integer> samePartitionElementDownTree(NodeRef node){
         HashSet<Integer> out = new HashSet<Integer>();
         AbstractCase painting = branchMap.get(node.getNumber());
         for(int i=0; i< getChildCount(node); i++){
             if(branchMap.get(getChild(node,i).getNumber())==painting){
                 out.add(getChild(node,i).getNumber());
-                out.addAll(samePartitionUpTree(getChild(node, i)));
+                out.addAll(samePartitionElementDownTree(getChild(node, i)));
             }
         }
         return out;
@@ -273,12 +302,12 @@ public class PartitionedTreeModel extends TreeModel {
     public Integer[] samePartitionElement(NodeRef node){
         HashSet<Integer> out = new HashSet<Integer>();
         out.add(node.getNumber());
-        out.addAll(samePartitionDownTree(node));
-        out.addAll(samePartitionUpTree(node));
+        out.addAll(samePartitionElementUpTree(node));
+        out.addAll(samePartitionElementDownTree(node));
         return out.toArray(new Integer[out.size()]);
     }
 
-    private int[] allTipsForThisCase(AbstractCase thisCase){
+    public int[] allTipsForThisCase(AbstractCase thisCase){
         ArrayList<Integer> listOfRefs = new ArrayList<Integer>();
 
         for(int i=0; i<getExternalNodeCount(); i++){
@@ -300,9 +329,7 @@ public class PartitionedTreeModel extends TreeModel {
     public NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
         if(thisCase.wasEverInfected()) {
 
-            int[] tips = allTipsForThisCase(thisCase);
-
-            NodeRef tipMRCA = Tree.Utils.getCommonAncestor(this, tips);
+            NodeRef tipMRCA = caseMRCA(thisCase);
 
             if(branchMap.get(tipMRCA.getNumber())!=thisCase){
                 throw new BadPartitionException("Node partition disconnected");
@@ -310,8 +337,9 @@ public class PartitionedTreeModel extends TreeModel {
 
             NodeRef child = tipMRCA;
             NodeRef parent = getParent(child);
-            boolean transmissionFound = false;
+            boolean transmissionFound = parent == null;
             while (!transmissionFound) {
+
                 if (branchMap.get(child.getNumber()) != branchMap.get(parent.getNumber())) {
                     transmissionFound = true;
                 } else {
@@ -321,6 +349,7 @@ public class PartitionedTreeModel extends TreeModel {
                         transmissionFound = true;
                     }
                 }
+
             }
             return child;
         }
@@ -338,18 +367,12 @@ public class PartitionedTreeModel extends TreeModel {
         return out;
     }
 
-
-
-
     /* Return the case that infected this case */
-
-    /* Return the case which was the infector in the infection event represented by this node */
 
     public AbstractCase getInfector(AbstractCase thisCase){
         if(thisCase.wasEverInfected()) {
-            int[] tips = allTipsForThisCase(thisCase);
 
-            NodeRef tipMRCA = Tree.Utils.getCommonAncestor(this, tips);
+            NodeRef tipMRCA = caseMRCA(thisCase);
 
             if(branchMap.get(tipMRCA.getNumber())!=thisCase){
                 throw new BadPartitionException("Node partition disconnected");
@@ -425,6 +448,11 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
 
+    public int getElementCount(){
+        return elementCount;
+    }
+
+
     //Counts the children of the current node which are in the same partition element as itself
 
 
@@ -458,6 +486,381 @@ public class PartitionedTreeModel extends TreeModel {
             }
         }
         return null;
+    }
+
+
+    public NodeRef caseMRCA(AbstractCase aCase, boolean checkConnectedness){
+        int[] caseTips = allTipsForThisCase(aCase);
+        NodeRef mrca =  Tree.Utils.getCommonAncestor(this, caseTips);
+
+        if(checkConnectedness) {
+            if (branchMap.get(mrca.getNumber()) != aCase) {
+                throw new BadPartitionException("A partition is disconnected");
+            }
+        }
+
+        return mrca;
+    }
+
+    public NodeRef caseMRCA(AbstractCase aCase){
+        return caseMRCA(aCase, true);
+    }
+
+    private HashSet<NodeRef> getDescendantTips(NodeRef node){
+        HashSet<NodeRef> out = new HashSet<NodeRef>();
+        if(isExternal(node)){
+            out.add(node);
+            return out;
+        } else {
+            out.addAll(getDescendantTips(getChild(node, 0)));
+            out.addAll(getDescendantTips(getChild(node, 1)));
+        }
+        return out;
+    }
+
+    public boolean isAncestral(NodeRef node){
+        AbstractCase currentCase = branchMap.get(node.getNumber());
+
+        for(NodeRef tip : getDescendantTips(node)){
+            if(branchMap.get(tip.getNumber())==currentCase){
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean isRootBlockedBy(AbstractCase aCase, AbstractCase potentialBlocker){
+        return directDescendant(caseMRCA(aCase), caseMRCA(potentialBlocker));
+    }
+
+    public boolean isRootBlocked(AbstractCase aCase){
+        for(AbstractCase anotherCase : outbreak.getCases()){
+            if(anotherCase.wasEverInfected && anotherCase!=aCase){
+                if(isRootBlockedBy(aCase, anotherCase)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private HashSet<NodeRef> getTipsInThisPartitionElement(AbstractCase aCase){
+        HashSet<NodeRef> out = new HashSet<NodeRef>();
+        // todo check that external nodes come first
+
+        for(int i=0; i<getExternalNodeCount(); i++){
+            if(branchMap.get(i)==aCase){
+                out.add(getExternalNode(i));
+            }
+        }
+
+        return out;
+    }
+
+    private boolean directDescendant(NodeRef node, NodeRef possibleAncestor){
+        NodeRef currentNode = node;
+
+        while(currentNode!=null){
+            if(currentNode==possibleAncestor){
+                return true;
+            }
+            currentNode = getParent(currentNode);
+        }
+        return false;
+    }
+
+    private boolean directRelationship(NodeRef node1, NodeRef node2){
+        return directDescendant(node1, node2) || directDescendant(node2, node1);
+    }
+
+       /* Populates the branch map for external nodes */
+
+    private AbstractCase[] prepareExternalNodeMap(AbstractCase[] map){
+        for(int i=0; i< getExternalNodeCount(); i++){
+            TreeModel.Node currentExternalNode = (TreeModel.Node) getExternalNode(i);
+            Taxon currentTaxon = currentExternalNode.taxon;
+            for(AbstractCase thisCase : outbreak.getCases()){
+                if(thisCase.wasEverInfected()) {
+                    for (Taxon caseTaxon : thisCase.getAssociatedTaxa()) {
+                        if (caseTaxon.equals(currentTaxon)) {
+                            map[currentExternalNode.getNumber()] = thisCase;
+                        }
+                    }
+                }
+            }
+        }
+        return map;
+    }
+
+/*  The CSV file should have a header, and then lines matching each case to its infector*/
+
+    private void partitionAccordingToSpecificTT(String networkFileName){
+        System.out.println("Using specified starting transmission tree.");
+        try{
+            BufferedReader reader = new BufferedReader (new FileReader(networkFileName));
+            HashMap<AbstractCase, AbstractCase> specificParentMap = new HashMap<AbstractCase, AbstractCase>();
+            // skip header line
+            reader.readLine();
+            String currentLine = reader.readLine();
+            while(currentLine!=null){
+                currentLine = currentLine.replace("\"", "");
+                String[] splitLine = currentLine.split("\\,");
+                if(!splitLine[1].equals("Start")){
+                    specificParentMap.put(outbreak.getCase(splitLine[0]), outbreak.getCase(splitLine[1]));
+                } else {
+                    specificParentMap.put(outbreak.getCase(splitLine[0]), null);
+                }
+                currentLine = reader.readLine();
+            }
+            reader.close();
+            partitionAccordingToSpecificTT(specificParentMap);
+        } catch(IOException e){
+            throw new RuntimeException("Cannot read file: " + networkFileName );
+        }
+    }
+
+
+    private void partitionAccordingToSpecificTT(HashMap<AbstractCase, AbstractCase> map){
+        branchMap.setAll(prepareExternalNodeMap(new AbstractCase[getNodeCount()]), true);
+
+        //various sanity checks
+
+        for(AbstractCase aCase : map.keySet()){
+            if(!aCase.wasEverInfected){
+                throw new RuntimeException("This starting transmission tree involves never-infected cases");
+            }
+        }
+
+        AbstractCase firstCase=null;
+        int indexCaseCount = 0;
+
+        for(AbstractCase aCase : outbreak.getCases()){
+            if(map.get(aCase)==null){
+                firstCase = aCase;
+                indexCaseCount ++;
+            }
+        }
+        if(indexCaseCount==0){
+            throw new RuntimeException("Given starting transmission tree appears to have a cycle");
+        }
+        if(indexCaseCount>1){
+            throw new RuntimeException("Given starting transmission tree appears not to be connected");
+        }
+
+
+        NodeRef root = getRoot();
+        specificallyPartitionDownwards(root, firstCase, map);
+        if(!checkPartitions()){
+            throw new RuntimeException("Given starting transmission tree is not compatible with the starting tree");
+        }
+
+    }
+
+    private void specificallyPartitionDownwards(NodeRef node, AbstractCase thisCase,
+                                                HashMap<AbstractCase, AbstractCase> map){
+        if(isExternal(node)){
+            return;
+        }
+        branchMap.set(node.getNumber(), thisCase, true);
+        if(isAncestral(node)){
+            for(int i=0; i<getChildCount(node); i++){
+                specificallyPartitionDownwards(getChild(node, i), thisCase, map);
+            }
+        } else {
+            branchMap.set(node.getNumber(), null, true);
+            HashSet<AbstractCase> children = new HashSet<AbstractCase>();
+            for(AbstractCase aCase : outbreak.getCases()){
+                if(map.get(aCase)==thisCase){
+                    children.add(aCase);
+                }
+            }
+            HashSet<AbstractCase> relevantChildren = new HashSet<AbstractCase>(children);
+            for(AbstractCase child: children){
+
+                NodeRef caseMRCA = caseMRCA(child);
+
+                //either ALL the tips need to be a descendant of this node, or none. Otherwise not compatible.
+
+                if(directDescendant(node, caseMRCA)){
+                    throw new RuntimeException("Starting transmission tree is incompatible with starting phylogeny");
+                }
+
+                if(caseMRCA==node){
+                    //I'm afraid I must insist...
+                    relevantChildren = new HashSet<AbstractCase>();
+                    relevantChildren.add(child);
+                    break;
+                }
+
+                NodeRef currentNode = caseMRCA;
+                while(currentNode!=node && currentNode!=null){
+                    currentNode = getParent(currentNode);
+                }
+                if(currentNode==null){
+                    relevantChildren.remove(child);
+                }
+            }
+            if(relevantChildren.size()==1){
+                //this ends an infection branch
+                AbstractCase child = relevantChildren.iterator().next();
+                branchMap.set(node.getNumber(), child, true);
+            } else {
+
+                //this can't end an infection branch
+                branchMap.set(node.getNumber(), thisCase, true);
+            }
+            for(int i=0; i<getChildCount(node); i++){
+                specificallyPartitionDownwards(getChild(node, i), branchMap.get(node.getNumber()), map);
+            }
+        }
+
+    }
+
+
+    /*
+     todo - The trouble with initialising this without the likelihood class is that lots of starting trees might
+     todo - fail. Need to think about how best to deal with this.
+
+     Generally allowCreep is a bad idea, since it tends to place infections after tip times and tip times
+     are frequently noninfectiousness times. Might be useful for some pathogens, however.
+    */
+
+
+    private void partitionAccordingToRandomTT(boolean allowCreep){
+
+        System.out.println("Generating a random starting partition of the tree");
+
+        branchMap.setAll(prepareExternalNodeMap(new AbstractCase[getNodeCount()]), true);
+
+        NodeRef root = getRoot();
+        randomlyAssignNode(root, allowCreep);
+
+    }
+
+
+    private AbstractCase randomlyAssignNode(NodeRef node, boolean allowCreep){
+        //this makes a non-extended partition. This is OK, but if it keeps giving zero likelihoods then you could do
+        //something else
+
+        if(isExternal(node)){
+            if(getNodeTaxon(node).getId().startsWith("Location_2_4_0_")){
+                System.out.println("look at me");
+            }
+
+            return branchMap.get(node.getNumber());
+        } else {
+
+            //If this is a descendant of a case MRCA and an ancestor of one of that case's tips, it must be
+            //assigned that case. If it is that of two cases then this tree is incompatible
+
+            ArrayList<AbstractCase> forcedByTopology = new ArrayList<AbstractCase>();
+
+            for(AbstractCase aCase : outbreak.getCases()){
+                if(aCase.wasEverInfected) {
+                    NodeRef caseMRCA = caseMRCA(aCase, false);
+                    HashSet<NodeRef> caseTips = getTipsInThisPartitionElement(aCase);
+
+                    for (NodeRef caseTip : caseTips) {
+                        if (directDescendant(node, caseMRCA) && directDescendant(caseTip, node)) {
+                            if(!forcedByTopology.contains(aCase)) {
+                                forcedByTopology.add(aCase);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if(forcedByTopology.size()>1){
+                throw new RuntimeException("Starting transmission tree is incompatible with starting phylogeny");
+            } else if(forcedByTopology.size()==1){
+                branchMap.set(node.getNumber(), forcedByTopology.get(0), true);
+
+                for (int i = 0; i < getChildCount(node); i++) {
+                    if(!isExternal(getChild(node, i))){
+                        randomlyAssignNode(getChild(node, i), allowCreep);
+                    }
+                }
+
+                return forcedByTopology.get(0);
+            } else {
+                //not mandated by the topology
+                //three choices - case of child 1, case of child 2, case of parent, unless this is the root
+
+                AbstractCase[] choices = new AbstractCase[2];
+
+
+
+                for (int i = 0; i < getChildCount(node); i++) {
+                    if(!isExternal(getChild(node, i))){
+                        choices[i] = randomlyAssignNode(getChild(node, i), allowCreep);
+                    } else {
+                        choices[i] = branchMap.get(getChild(node,i).getNumber());
+                    }
+                }
+                //if both choices are null and we're at the root, try again
+
+                while(isRoot(node) && choices[0]==null && choices[1]==null){
+                    for (int i = 0; i < getChildCount(node); i++) {
+                        if(!isExternal(getChild(node, i))){
+                            choices[i] = randomlyAssignNode(getChild(node, i), allowCreep);
+                        } else {
+                            choices[i] = branchMap.get(getChild(node,i).getNumber());
+                        }
+                    }
+                }
+
+                int randomSelection;
+                if (isRoot(node)) {
+                    //must make a choice at this point
+                    randomSelection = MathUtils.nextInt(2);
+                    //they can't both be null
+                    if(choices[randomSelection]==null){
+                        randomSelection = 1-randomSelection;
+                    }
+                    AbstractCase winner = choices[randomSelection];
+                    fillDownTree(node, winner);
+                    return winner;
+
+                } else {
+                    randomSelection = MathUtils.nextInt(allowCreep ? 3 : 2);
+                }
+                if (randomSelection != 2) {
+                    AbstractCase winner = choices[randomSelection];
+                    AbstractCase loser = choices[1-randomSelection];
+
+                    // check that this isn't going to cause a timings problem
+
+                    if(getNodeHeight(getChild(node, randomSelection)) >
+                            loser.getInfectionBranchPosition().getParameterValue(0)
+                                    *getBranchLength(getChild(node, 1-randomSelection))
+                                    + getNodeHeight(getChild(node, 1-randomSelection))) {
+                        winner = loser;
+                    }
+
+                    if(winner!=null) {
+                        fillDownTree(node, winner);
+                    } else {
+                        branchMap.set(node.getNumber(), null, true);
+                    }
+
+                    return winner;
+
+                } else {
+                    //parent partition element will creep to here, but we don't know what that is yet
+                    return null;
+                }
+            }
+        }
+    }
+
+    private void fillDownTree(NodeRef node, AbstractCase aCase){
+        if(branchMap.get(node.getNumber())==null){
+            branchMap.set(node.getNumber(), aCase, true);
+            for(int i=0; i<2; i++){
+                fillDownTree(getChild(node, i), aCase);
+            }
+        }
     }
 
 }

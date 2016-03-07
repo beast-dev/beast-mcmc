@@ -704,7 +704,7 @@ public interface Parameter extends Statistic, Variable<Double> {
          */
         public void setParameterValueNotifyChangedAll(int i, double val) {
             values[i] = val;
-            fireParameterChangedEvent(i, Parameter.ChangeType.ALL_VALUES_CHANGED);
+            fireParameterChangedEvent(-1, Parameter.ChangeType.ALL_VALUES_CHANGED);
         }
 
         protected final void storeValues() {

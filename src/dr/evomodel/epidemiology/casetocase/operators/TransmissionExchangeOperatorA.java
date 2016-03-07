@@ -145,7 +145,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         if(parent==null){
             throw new RuntimeException("Can't exchange the root node");
         }
-        Integer[] possibleParentSwaps = c2cLikelihood.samePartitionElement(parent, false);
+        Integer[] possibleParentSwaps = c2cLikelihood.getTreeModel().samePartitionElement(parent);
         for(Integer index: possibleParentSwaps){
             NodeRef newParent = tree.getNode(index);
             if(!tree.isExternal(newParent) && newParent!=parent){

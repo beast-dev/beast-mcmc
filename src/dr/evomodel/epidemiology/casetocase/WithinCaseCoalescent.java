@@ -33,9 +33,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evolution.util.Units;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.Model;
@@ -64,8 +62,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private double[] partitionTreeLogLikelihoods;
     private double[] storedPartitionTreeLogLikelihoods;
     private boolean[] recalculateCoalescentFlags;
-    private HashMap<AbstractCase,Treelet> partitionsAsTrees;
-    private HashMap<AbstractCase,Treelet> storedPartitionsAsTrees;
     private DemographicModel demoModel;
     private Mode mode;
 
@@ -86,6 +82,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         partitionTreeLogLikelihoods = new double[outbreak.getCases().size()];
         storedPartitionTreeLogLikelihoods = new double[outbreak.getCases().size()];
         recalculateCoalescentFlags = new boolean[outbreak.getCases().size()];
+        Arrays.fill(recalculateCoalescentFlags, true);
 
         partitionsAsTrees = new HashMap<AbstractCase, Treelet>();
         for(AbstractCase aCase: outbreak.getCases()){
@@ -97,7 +94,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         storedPartitionsAsTrees = new HashMap<AbstractCase, Treelet>();
 
 
-        prepareTree(startingNetworkFileName);
+
 
     }
 
@@ -120,7 +117,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 // and then the little tree calculations
 
-                HashSet<AbstractCase> children = getInfectees(aCase);
+                HashSet<AbstractCase> children = ((PartitionedTreeModel)treeModel).getInfectees(aCase);
 
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
@@ -130,10 +127,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                                 treelet.getZeroHeight(), mode == Mode.TRUNCATE);
                         partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
                         coalescencesLogLikelihood += partitionTreeLogLikelihoods[number];
-                        if (DEBUG && partitionTreeLogLikelihoods[number] == Double.POSITIVE_INFINITY) {
-                            debugOutputTree("infCoalescent.nex", false);
-                            debugTreelet(treelet, aCase + "_partition.nex");
-                        }
+
                     } else {
                         partitionTreeLogLikelihoods[number] = 0.0;
                     }
@@ -149,11 +143,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         logL += coalescencesLogLikelihood;
 
         likelihoodKnown = true;
-
-        if(DEBUG){
-            debugOutputTree("outstandard.nex", false);
-            debugOutputTree("outfancy.nex", true);
-        }
 
         return logL;
     }
@@ -192,7 +181,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     recalculateCaseWCC(aCase);
                 }
             }
-        } else if(model == branchMap){
+        } else if(model == getBranchMap()){
             if(object instanceof ArrayList){
 
                 for(int i=0; i<((ArrayList) object).size(); i++){
@@ -206,7 +195,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                     NodeRef parent = treeModel.getParent(node);
 
                     if(parent!=null){
-                        recalculateCaseWCC(branchMap.get(parent.getNumber()));
+                        recalculateCaseWCC(getBranchMap().get(parent.getNumber()));
                     }
                 }
             } else {
@@ -220,7 +209,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 recalculateCaseWCC(thisCase);
 
-                AbstractCase parent = getInfector(thisCase);
+                AbstractCase parent = ((PartitionedTreeModel)treeModel).getInfector(thisCase);
 
                 if(parent!=null){
                     recalculateCaseWCC(parent);
@@ -253,56 +242,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     // Tears the tree into small pieces. Indexes correspond to indexes in the outbreak.
 
-    private void explodeTree(){
-        if(DEBUG){
-            debugOutputTree("test.nex", false);
-        }
-        for(int i=0; i<outbreak.size(); i++){
-            AbstractCase aCase = outbreak.getCase(i);
-            if(aCase.wasEverInfected() && partitionsAsTrees.get(aCase)==null){
-
-                NodeRef partitionRoot = getEarliestNodeInPartition(aCase);
-
-                double extraHeight;
-
-                if(treeModel.isRoot(partitionRoot)){
-                    extraHeight = maxFirstInfToRoot.getParameterValue(0) * aCase.getInfectionBranchPosition().getParameterValue(0);
-                } else {
-                    extraHeight = treeModel.getBranchLength(partitionRoot) * aCase.getInfectionBranchPosition().getParameterValue(0);
-                }
-
-                FlexibleNode newRoot = new FlexibleNode();
-
-                FlexibleTree littleTree = new FlexibleTree(newRoot);
-                littleTree.beginTreeEdit();
-
-                if (!treeModel.isExternal(partitionRoot)) {
-                    for (int j = 0; j < treeModel.getChildCount(partitionRoot); j++) {
-                        copyPartitionToTreelet(littleTree, treeModel.getChild(partitionRoot, j), newRoot, aCase);
-                    }
-                }
-
-                littleTree.endTreeEdit();
-
-                littleTree.resolveTree();
-
-                Treelet treelet = new Treelet(littleTree,
-                        littleTree.getRootHeight() + extraHeight);
-
-                partitionsAsTrees.put(aCase, treelet);
-
-
-            }
-        }
-    }
-
     public ArrayList<AbstractCase> postOrderTransmissionTreeTraversal(){
-        return traverseTransmissionTree(branchMap.get(treeModel.getRoot().getNumber()));
+        return traverseTransmissionTree(getBranchMap().get(treeModel.getRoot().getNumber()));
     }
 
     private ArrayList<AbstractCase> traverseTransmissionTree(AbstractCase aCase){
         ArrayList<AbstractCase> out = new ArrayList<AbstractCase>();
-        HashSet<AbstractCase> children = getInfectees(aCase);
+        HashSet<AbstractCase> children = ((PartitionedTreeModel)treeModel).getInfectees(aCase);
         for(int i=0; i<getOutbreak().size(); i++){
             AbstractCase possibleChild = getOutbreak().getCase(i);
             // easiest way to maintain the set ordering of the outbreak?
@@ -314,54 +260,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         return out;
     }
 
-    private void copyPartitionToTreelet(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,
-                                        AbstractCase partition){
-        if(partition.wasEverInfected()) {
-            if (branchMap.get(oldNode.getNumber()) == partition) {
-                if (treeModel.isExternal(oldNode)) {
-                    NodeRef newTip = new FlexibleNode(new Taxon(treeModel.getNodeTaxon(oldNode).getId()));
-                    littleTree.addChild(newParent, newTip);
-                    littleTree.setBranchLength(newTip, treeModel.getBranchLength(oldNode));
-                } else {
-                    NodeRef newChild = new FlexibleNode();
-                    littleTree.addChild(newParent, newChild);
-                    littleTree.setBranchLength(newChild, treeModel.getBranchLength(oldNode));
-                    for (int i = 0; i < treeModel.getChildCount(oldNode); i++) {
-                        copyPartitionToTreelet(littleTree, treeModel.getChild(oldNode, i), newChild, partition);
-                    }
-                }
-            } else {
-                // we need a new tip
-                NodeRef transmissionTip = new FlexibleNode(
-                        new Taxon("Transmission_" + branchMap.get(oldNode.getNumber()).getName()));
-                double parentTime = getNodeTime(treeModel.getParent(oldNode));
-                double childTime = getInfectionTime(branchMap.get(oldNode.getNumber()));
-                littleTree.addChild(newParent, transmissionTip);
-                littleTree.setBranchLength(transmissionTip, childTime - parentTime);
-            }
-        }
-    }
 
-    private class Treelet extends FlexibleTree {
-
-        private double zeroHeight;
-
-        private Treelet(FlexibleTree tree, double zeroHeight){
-            super(tree);
-            this.zeroHeight = zeroHeight;
-
-        }
-
-        private double getZeroHeight(){
-            return zeroHeight;
-        }
-
-
-
-        private void setZeroHeight(double rootBranchLength){
-            this.zeroHeight = zeroHeight;
-        }
-    }
 
     private Treelet transformTreelet(Treelet treelet){
 
@@ -454,7 +353,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 final double intervalArea = demographicFunction.getIntegral(startTime, finishTime);
                 final double normalisationArea = demographicFunction.getIntegral(startTime, 0);
 
-                if (intervalArea == 0 && duration != 0) {
+                if (intervalArea == 0 && duration > tolerance) {
                     return Double.NEGATIVE_INFINITY;
                 }
 

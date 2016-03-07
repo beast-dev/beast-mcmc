@@ -34,7 +34,7 @@ import dr.xml.*;
  * @author Max Tolkoff
  */
 public class IndianBuffetProcessPriorParser extends AbstractXMLObjectParser {
-    public static final String INDIAN_BUFFET_PROCESS="IndianBuffetProcess";
+    public static final String INDIAN_BUFFET_PROCESS="indianBuffetProcess";
     public static final String BETA="beta";
     public static final String ALPHA="alpha";
     public static final String DATA="data";

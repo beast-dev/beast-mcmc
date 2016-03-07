@@ -90,7 +90,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         int eligibleNodeCount = eligibleNodes.size();
 
         final NodeRef iP = tree.getParent(i);
-        Integer[] samePaintings = c2cLikelihood.samePartitionElement(iP, false);
+        Integer[] samePaintings = c2cLikelihood.getTreeModel().samePartitionElement(iP);
         HashSet<Integer> possibleDestinations = new HashSet<Integer>();
         // we can insert the node above OR BELOW any node in the same partition
         for (Integer samePainting : samePaintings) {
@@ -206,7 +206,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         tree.endTreeEdit();
 
         if(DEBUG){
-            c2cLikelihood.checkPartitions();
+            c2cLikelihood.getTreeModel().checkPartitions();
         }
         logq = Math.log(q);
 

@@ -27,10 +27,7 @@ package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.tree.*;
 import dr.evomodel.tree.TreeLogger;
-import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.inference.loggers.LogFormatter;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.XMLObjectParser;
 
 import java.text.NumberFormat;
 
@@ -67,7 +64,7 @@ public class PartitionedTreeLogger extends TreeLogger {
         if(!doIt)
             return;
 
-        setTree(c2cTL.rewireTree(originalTree));
+        setTree(c2cTL.addTransmissionNodes(originalTree));
 
         super.log(state);
 

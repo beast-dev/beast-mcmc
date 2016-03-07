@@ -28,18 +28,15 @@ package dr.evomodel.epidemiology.casetocase.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -98,7 +95,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
 
         if(DEBUG){
-            c2cLikelihood.debugOutputTree("beforeTSSB.nex", false);
+            c2cLikelihood.outputTreeToFile("beforeTSSB.nex", false);
         }
 
 
@@ -399,8 +396,8 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
         if (DEBUG) {
-            c2cLikelihood.checkPartitions();
-            c2cLikelihood.debugOutputTree("afterTSSB.nex", false);
+            c2cLikelihood.getTreeModel().checkPartitions();
+            c2cLikelihood.outputTreeToFile("afterTSSB.nex", false);
         }
 
 

@@ -27,8 +27,6 @@ package dr.inference.operators;
 
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.MatrixParameterInterface;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
@@ -40,20 +38,16 @@ import dr.math.MathUtils;
  */
 public class BitFlipOperator extends SimpleMCMCOperator {
 
-    public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum, TreeModel treeModel, boolean allowNegative, boolean priorOnColumn) {
+    public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum, TreeModel treeModel) {
 
         this.parameter = parameter;
         this.usesPriorOnSum = usesPriorOnSum;
-        this.priorOnColumn=priorOnColumn;
-        if (treeModel != null ) {
+
+        if (treeModel != null) {
             indicators = new TreeParameterModel(treeModel, parameter, true);
             bitFlipHelper = new DriftBitFlipHelper();
             tree = treeModel;
-        }
-        else if(allowNegative){
-            bitFlipHelper = new TripleBitFlipHelper();
-        }
-        else {
+        } else {
             bitFlipHelper = new BitFlipHelper();
         }
 
@@ -61,7 +55,7 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     }
 
     public BitFlipOperator(Parameter parameter, double weight, boolean usesPriorOnSum) {
-        this(parameter, weight, usesPriorOnSum, null, false, false);
+        this(parameter, weight, usesPriorOnSum, null);
     }
 
     /**
@@ -78,14 +72,11 @@ public class BitFlipOperator extends SimpleMCMCOperator {
      * equiprobable, unless usesPriorOnSum = false then all configurations are equiprobable
      */
     public final double doOperation() {
-        int dim = parameter.getDimension();
+        final int dim = parameter.getDimension();
         //  final int dim = bitFlipHelper.getDim(parameter.getDimension());
         double sum = 0.0;
         // double sumNeg = 0.0;
         // double temp;
-
-        // make it so pos never corresponds to external nodes when used for drift diffusion model
-        final int pos = MathUtils.nextInt(dim);
 
         if(usesPriorOnSum) {
             for (int i = 0; i < dim; i++) {
@@ -110,16 +101,9 @@ public class BitFlipOperator extends SimpleMCMCOperator {
                 }
             }
             */
-            if(priorOnColumn){
-                sum=0;
-                int col=pos/((MatrixParameterInterface) parameter).getRowDimension();
-                dim=((MatrixParameterInterface) parameter).getRowDimension();
-                for (int i = 0; i <((MatrixParameterInterface) parameter).getRowDimension() ; i++) {
-                    sum+=Math.abs(((MatrixParameterInterface) parameter).getParameterValue(i,col));
-                }
-            }
         }
-
+        // make it so pos never corresponds to external nodes when used for drift diffusion model
+        final int pos = MathUtils.nextInt(dim);
 
         final int value = (int) parameter.getParameterValue(pos);
         double logq = 0.0;
@@ -189,72 +173,6 @@ public class BitFlipOperator extends SimpleMCMCOperator {
             throw new RuntimeException("expected 1 or 0");
         }
 
-    }
-
-    class TripleBitFlipHelper extends BitFlipHelper{
-        private int getAdjustmentSum(MatrixParameterInterface parameter){
-            int adjustmentSum = parameter.getColumnDimension();
-            for (int i = 0; i < parameter.getColumnDimension(); i++) {
-                for (int j = 0; j <  parameter.getRowDimension(); j++) {
-                    if( parameter.getParameterValue(j, i) !=0 ){
-                        adjustmentSum--;
-                        break;
-                    }
-                }
-            }
-            return adjustmentSum;
-        }
-
-        public double flipOne(int pos, int dim, double sum) {
-            double rand = MathUtils.nextDouble();
-            int adjustmentSum = 1;
-            if (rand < .5) {
-                parameter.setParameterValue(pos, 0);
-                if (sum == 1 && priorOnColumn) {
-                    adjustmentSum = getAdjustmentSum((MatrixParameterInterface) parameter);
-                }
-                return Math.log(2 * adjustmentSum * (dim + 1 - sum) / sum);
-            } else {
-                parameter.setParameterValue(pos, -1);
-                return 0;
-            }
-        }
-
-
-        public double flipZero(int pos, int dim, double sum){
-            double rand = MathUtils.nextDouble();
-            int adjustmentSum=1;
-
-            if(sum==0 && priorOnColumn) {
-                adjustmentSum = getAdjustmentSum((MatrixParameterInterface) parameter);
-            }
-            if (rand < 0.5) {
-                parameter.setParameterValue(pos, 1.0);
-                return Math.log((sum + 1) / (2 * (dim - sum) * adjustmentSum));
-            } else {
-                parameter.setParameterValue(pos, -1.0);
-                return Math.log((sum + 1) / (2 * (dim - sum) * adjustmentSum));
-            }
-
-
-            }
-
-
-
-        public double flipNegOne(int pos, int dim, double sum) {
-            double rand = MathUtils.nextDouble();
-            int adjustmentSum=1;
-            if(rand<.5){
-                parameter.setParameterValue(pos,0);
-                if(sum == 1 && priorOnColumn){
-                    adjustmentSum = getAdjustmentSum((MatrixParameterInterface) parameter);
-                }
-                return Math.log(2 * adjustmentSum * (dim + 1 - sum) / sum);
-            } else {
-                parameter.setParameterValue(pos, 1);
-                return 0;
-            }
-        }
     }
 
     class DriftBitFlipHelper extends BitFlipHelper {
@@ -400,5 +318,4 @@ public class BitFlipOperator extends SimpleMCMCOperator {
     private Parameter parameter = null;
 //    private int bits;
     private boolean usesPriorOnSum = true;
-    private boolean priorOnColumn=false;
 }

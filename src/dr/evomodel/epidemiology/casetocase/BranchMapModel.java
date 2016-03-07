@@ -106,7 +106,7 @@ public class BranchMapModel extends AbstractModel {
         // nothing to do
     }
 
-    public int size(){
+    public int size() {
         return map.length;
     }
 

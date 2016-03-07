@@ -157,7 +157,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeTag("parameter",
                 new Attribute[]{
-                        new Attribute.Default<String>("id", prefix + "count"),
+                        new Attribute.Default<String>("id", partition.getPrefix() + "count"),
                         new Attribute.Default<String>("value", matrix.toString())},
                 true);
 

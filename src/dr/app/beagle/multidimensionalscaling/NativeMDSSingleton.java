@@ -108,9 +108,7 @@ public class NativeMDSSingleton {
 
     public native void updateLocations(int instance, int updateCount, double[] locations);
 
-    public native double getSumOfSquaredResiduals(int instance);
-
-    public native double getSumOfLogTruncations(int instance);
+    public native double getSumOfIncrements(int instance);
 
     public native void storeState(int instance);
 
@@ -123,5 +121,16 @@ public class NativeMDSSingleton {
     public native void setPairwiseData(int instance, double[] observations);
 
     public native void setParameters(int instance, double[] parameters);
+
+    public native double[] getPairwiseData(int instance);
+
+//jsize size = env->GetArrayLength( arr );
+//std::vector<double> input( size );
+//env->GetDoubleArrayRegion( arr, 0, size, &input[0] );
+//
+////  ...
+//
+//jdoubleArray output = env->NewDoubleArray( results.size() );
+//env->SetDoubleArrayRegion( output, 0, results.size(), &results[0] );
 
 }

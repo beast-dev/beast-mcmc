@@ -1,7 +1,7 @@
 /*
  * PriorParsers.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -707,7 +707,7 @@ public class PriorParsers {
 
             double[] counts = xo.getDoubleArrayAttribute(COUNTS);
 
-            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new DirichletDistribution(counts));
+            MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(new DirichletDistribution(counts, false));
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));

@@ -31,13 +31,12 @@ import java.util.List;
 /**
  * Created by max on 11/4/14.
  */
-public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTriangularMatrixParameter{
-    public TransposedBlockUpperTriangularMatrixParameter(String name, Parameter[] params) {
-        super(name, params, false);
+public class FastTransposedBUTMP extends FastBUTMP{
+    public FastTransposedBUTMP(String name, int rows, int cols) {
+        super(name, cols, rows);
 
 
-
-        int colDim=params[params.length-1].getSize();
+        int colDim=cols;
 //        int rowDim=params.length;
 
 //        for(int i=0; i<colDim; i++){
@@ -55,14 +54,14 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
     }
 
 
-    public static TransposedBlockUpperTriangularMatrixParameter recast(String name, CompoundParameter compoundParameter) {
-        final int count = compoundParameter.getParameterCount();
-        Parameter[] parameters = new Parameter[count];
-        for (int i = 0; i < count; ++i) {
-            parameters[i] = compoundParameter.getParameter(i);
-        }
-        return new TransposedBlockUpperTriangularMatrixParameter(name, parameters);
-    }
+//    public static TransposedBlockUpperTriangularMatrixParameter recast(String name, CompoundParameter compoundParameter) {
+//        final int count = compoundParameter.getParameterCount();
+//        Parameter[] parameters = new Parameter[count];
+//        for (int i = 0; i < count; ++i) {
+//            parameters[i] = compoundParameter.getParameter(i);
+//        }
+//        return new TransposedBlockUpperTriangularMatrixParameter(name, parameters);
+//    }
 
 //    public double getParameterValue(int row, int col){
 //        if(col>row){
@@ -86,12 +85,13 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
         return row>=col;
     }
 
-    public void setParameterValue(int row, int col, double value){
-        if(matrixCondition(row, col)){
-            getParameter(col).setParameterValueQuietly(row - col, value);
-            fireParameterChangedEvent(col*getRowDimension()+row, ChangeType.VALUE_CHANGED);
-        }
-    }
+//    public void setParameterValue(int row, int col, double value){
+//            super.setParameterValue(row,col, value);
+//        }
+//
+//    public void setParameterValueQuietly(int row, int col, double value){
+//            super.setParameterValueQuietly(col, row, value);
+//    }
 
     public Parameter getParameter(int index) {
         if (slices == null) {
@@ -112,13 +112,13 @@ public class TransposedBlockUpperTriangularMatrixParameter extends BlockUpperTri
         return row-col;
     }
 
-    public int getRowDimension(){
-        return getParameterCount();
-    }
-
-    public int getColumnDimension(){
-        return colDim;
-    }
+//    public int getRowDimension(){
+//        return getParameterCount();
+//    }
+//
+//    public int getColumnDimension(){
+//        return colDim;
+//    }
 
     int colDim;
     private List<Parameter> slices = null;

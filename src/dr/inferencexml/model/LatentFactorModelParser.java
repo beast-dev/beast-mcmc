@@ -55,7 +55,15 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        MatrixParameterInterface factors = (MatrixParameterInterface) xo.getChild(FACTORS).getChild(MatrixParameterInterface.class);
+        MatrixParameterInterface factors;
+        if (xo.getChild(FACTORS).getChild(CompoundParameter.class) != null)
+        {
+            CompoundParameter factorsTemp = (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class);
+            factors = MatrixParameter.recast(factorsTemp.getParameterName(), factorsTemp);
+        }
+        else {
+            factors = (MatrixParameterInterface) xo.getChild(FACTORS).getChild(MatrixParameterInterface.class);
+        }
         MatrixParameterInterface dataParameter = (MatrixParameterInterface) xo.getChild(DATA).getChild(MatrixParameterInterface.class);
         MatrixParameterInterface loadings = (MatrixParameterInterface) xo.getChild(LOADINGS).getChild(MatrixParameterInterface.class);
         DiagonalMatrix rowPrecision = (DiagonalMatrix) xo.getChild(ROW_PRECISION).getChild(MatrixParameter.class);
@@ -81,7 +89,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
 //        }
 
 
-        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous, newModel,computeResiduals,computeFactors, computeLoadings);
+        return new LatentFactorModel(dataParameter, factors, loadings, rowPrecision, colPrecision, scaleData, continuous, newModel, computeResiduals, computeFactors, computeLoadings);
     }
 
     private static final XMLSyntaxRule[] rules = {
@@ -95,7 +103,8 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
                     new ElementRule(MatrixParameterInterface.class),
             }),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
-                    new ElementRule(MatrixParameterInterface.class),
+                    new XORRule(new ElementRule(MatrixParameterInterface.class),
+                            new ElementRule(CompoundParameter.class))
             }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameterInterface.class)

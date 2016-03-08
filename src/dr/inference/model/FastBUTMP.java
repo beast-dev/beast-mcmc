@@ -31,49 +31,19 @@ package dr.inference.model;
 
 
 
-public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
+public class FastBUTMP extends FastMatrixParameter {
     private int rowDim;
     private Bounds bounds = null;
 
-    public TransposedBlockUpperTriangularMatrixParameter transposeBlock(){
-        return TransposedBlockUpperTriangularMatrixParameter.recast(getVariableName(), this);
-    }
+//    public TransposedBlockUpperTriangularMatrixParameter transposeBlock(){
+//        return TransposedBlockUpperTriangularMatrixParameter.recast(getVariableName(), this);
+//    }
 
-    public BlockUpperTriangularMatrixParameter(String name, Parameter[] params, boolean diagonalRestriction) {
-        super(name);
+    public FastBUTMP(String name, int rows, int cols) {
+        super(name, cols, rows);
 
-        int rowDim=params[params.length-1].getSize();
-        int colDim=params.length;
 
-        for(int i=0; i<colDim; i++){
-//            if(i<rowDim)
-//            {params[i].setDimension(i+1);
-//            this.addParameter(params[i]);}
-//            else
-//            {
-//                params[i].setDimension(rowDim);
-                this.addParameter(params[i]);
-//                System.err.print(colDim-rowDim+i+1);
-//                System.err.print("\n");
-//            }
-        }
-        this.rowDim=rowDim;
-//        System.err.print("Dimension Check\n");
-//        System.err.print(rowDim);
-//        System.err.print("\n");
-//        System.err.print(colDim);
-//        System.err.print("\n");
-
-//
-//        double[][] temp=getParameterAsMatrix();
-//        for(int i=0; i<getRowDimension(); i++){
-//            for(int j=0; j<getColumnDimension(); j++)
-//            {
-//                System.err.print(temp[i][j]);
-//                System.err.print(" ");
-//            }
-//            System.err.print("\n");
-//        }
+        boolean diagonalRestriction=false;
         if(diagonalRestriction) {
             for (int i = 0; i < getColumnDimension(); i++) {
                 if (i < getRowDimension()) {
@@ -93,14 +63,14 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
 
     }
 
-    @Override
-    public int getRowDimension() {
-        return rowDim;
-    }
+//    @Override
+//    public int getRowDimension() {
+//        return rowDim;
+//    }
 
-    public void setRowDimension(int rowDim){
-        this.rowDim=rowDim;
-    }
+//    public void setRowDimension(int rowDim){
+//        this.rowDim=rowDim;
+//    }
 
 //    public double[][] getParameterAsMatrix(){
 //        double[][] answer=new double[getRowDimension()][getColumnDimension()];
@@ -129,7 +99,7 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
         if (!matrixCondition(row, col)) {
             return 0.0;
         } else {
-            return getParameter(col).getParameterValue(getInnerDimension(row, col));
+            return super.getParameterValue(row,col);
         }
     }
 
@@ -142,14 +112,14 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     }
 
     public void setParameterValueQuietly(int row, int col, double value){
-         if(matrixCondition(row, col)){
-             getParameter(col).setParameterValueQuietly(getInnerDimension(row,col), value);
+        if(matrixCondition(row, col)){
+            super.setParameterValueQuietly(row, col, value);
         }
     }
 
     public void setParameterValue(int row, int col,double value){
-        setParameterValueQuietly(row, col, value);
-        fireParameterChangedEvent();
+        if(matrixCondition(row, col)){
+            super.setParameterValue(row, col, value);}
     }
 
     public void setParameterValue(int PID, double value){
@@ -166,9 +136,9 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
     }
 
 
- //test if violates matrix condition
+    //test if violates matrix condition
     boolean matrixCondition(int row, int col){
-            return row>=(col);
+        return row>=getColumnDimension()-row;
     }
 
     public double getParameterValue(int id){
@@ -211,40 +181,40 @@ public class BlockUpperTriangularMatrixParameter extends MatrixParameter {
 
 
     private class BUTMPBounds implements Bounds<Double>{
-   //TODO test!
+        //TODO test!
 
-            public Double getUpperLimit(int dim) {
-                int row=getRow(dim);
-                int col=getColumn(dim);
+        public Double getUpperLimit(int dim) {
+            int row=getRow(dim);
+            int col=getColumn(dim);
 
-                if(matrixCondition(row, col)){
+            if(matrixCondition(row, col)){
 
-                 return getParameter(col).getBounds().getUpperLimit(getInnerDimension(row, col)); }
-                else
-                    return 0.0;
-            }
+                return getParameter(col).getBounds().getUpperLimit(getInnerDimension(row, col)); }
+            else
+                return 0.0;
+        }
 
-            public Double getLowerLimit(int dim) {
-                int row=getRow(dim);
-                int col=getColumn(dim);
+        public Double getLowerLimit(int dim) {
+            int row=getRow(dim);
+            int col=getColumn(dim);
 
-                if(matrixCondition(row, col)){
-                    return getParameter(col).getBounds().getLowerLimit(getInnerDimension(row, col));
+            if(matrixCondition(row, col)){
+                return getParameter(col).getBounds().getLowerLimit(getInnerDimension(row, col));
 //                    System.out.println(getParameters().get(dim-row).getBounds().getLowerLimit(getPindex().get(dim-row)));
 //                return getParameters().get(dim-row).getBounds().getLowerLimit(getPindex().get(dim-row));
-                }
-                else
-                    return 0.0;
             }
+            else
+                return 0.0;
+        }
 
-            public int getBoundsDimension() {
+        public int getBoundsDimension() {
 //                int nBlanks = 0;
 //                for (int i = 0; i <getColumnDimension() ; i++) {
 //                    nBlanks+=1;
 //                }
 //
 //                return getDimension()-nBlanks;
-                return getDimension();
+            return getDimension();
         }
     }
 

@@ -343,7 +343,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public void selectParameters(List<Parameter> params) {
         setAvgRootAndRate();
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
-
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
@@ -535,10 +534,22 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 params.add(getParameter("pInv"));
             }
         }
+    }
 
-        if (includeRelativeRates) {
-            params.add(getParameter("allMus"));
-//                    params.add(getParameter("mu"));
+    public void selectRelativeRateParameters(List<Parameter> params) {
+        if (getCodonPartitionCount() > 1) {
+            if (codonHeteroPattern.equals("123")) {
+                params.add(getParameter("CP1.mu"));
+                params.add(getParameter("CP2.mu"));
+                params.add(getParameter("CP3.mu"));
+            } else if (codonHeteroPattern.equals("112")) {
+                params.add(getParameter("CP1+2.mu"));
+                params.add(getParameter("CP3.mu"));
+            } else {
+                throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
+            }
+        } else {
+            params.add(getParameter("mu"));
         }
     }
 

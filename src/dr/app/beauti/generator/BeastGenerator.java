@@ -28,7 +28,6 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -545,19 +544,6 @@ public class BeastGenerator extends Generator {
             for (PartitionClockModel model : options.getPartitionClockModels()) {
                 branchRatesModelGenerator.writeBranchRatesModel(model, writer);
                 writer.writeText("");
-            }
-
-            // write allClockRate for fix mean option in clock model panel
-            for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-                if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
-                    writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                            new Attribute[]{new Attribute.Default<String>(XMLParser.ID, clockModelGroup.getName())});
-                    for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                        branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
-                    }
-                    writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-                    writer.writeText("");
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();

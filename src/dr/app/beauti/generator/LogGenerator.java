@@ -279,32 +279,27 @@ public class LogGenerator extends Generator {
             }
         }
 
-        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-            if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
-                writer.writeIDref(ParameterParser.PARAMETER, clockModelGroup.getName());
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    if (model.getClockType() == ClockType.UNCORRELATED) {
-                        switch (model.getClockDistributionType()) {
-                            case LOGNORMAL:
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                                break;
-                            case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
+                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
+                if (model.getClockType() == ClockType.UNCORRELATED) {
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                            break;
+                        case GAMMA:
+                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
 //                            break;
-                            case CAUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
-                            case EXPONENTIAL:
-                                // nothing required
-                                break;
-                        }
+                        case EXPONENTIAL:
+                            // nothing required
+                            break;
                     }
                 }
-            } else {
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    branchRatesModelGenerator.writeLog(model, writer);
-                }
             }
+            branchRatesModelGenerator.writeLog(model, writer);
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -340,10 +335,10 @@ public class LogGenerator extends Generator {
     }
 
     public void writeDemographicLogToFile(XMLWriter writer,
-                               TreePriorGenerator treePriorGenerator,
-                               BranchRatesModelGenerator branchRatesModelGenerator,
-                               SubstitutionModelGenerator substitutionModelGenerator,
-                               TreeLikelihoodGenerator treeLikelihoodGenerator) {
+                                          TreePriorGenerator treePriorGenerator,
+                                          BranchRatesModelGenerator branchRatesModelGenerator,
+                                          SubstitutionModelGenerator substitutionModelGenerator,
+                                          TreeLikelihoodGenerator treeLikelihoodGenerator) {
         writer.writeComment("demographic log file");
 
         if (options.demographicLogFileName == null) {
@@ -399,32 +394,27 @@ public class LogGenerator extends Generator {
             }
         }
 
-        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-            if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
-                writer.writeIDref(ParameterParser.PARAMETER, clockModelGroup.getName());
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    if (model.getClockType() == ClockType.UNCORRELATED) {
-                        switch (model.getClockDistributionType()) {
-                            case LOGNORMAL:
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                                break;
-                            case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
+                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
+                if (model.getClockType() == ClockType.UNCORRELATED) {
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                            break;
+                        case GAMMA:
+                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
 //                            break;
-                            case CAUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
-                            case EXPONENTIAL:
-                                // nothing required
-                                break;
-                        }
+                        case EXPONENTIAL:
+                            // nothing required
+                            break;
                     }
                 }
-            } else {
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    branchRatesModelGenerator.writeLog(model, writer);
-                }
             }
+            branchRatesModelGenerator.writeLog(model, writer);
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {

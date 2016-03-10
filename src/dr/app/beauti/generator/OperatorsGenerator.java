@@ -369,23 +369,23 @@ public class OperatorsGenerator extends Generator {
                 );
             }
 
-        } else if (operator.getBaseName().startsWith(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
-
-            int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights(operator.getClockModelGroup());
-
-            if (parameterWeights != null && parameterWeights.length > 1) {
-                String pw = "" + parameterWeights[0];
-                for (int i = 1; i < parameterWeights.length; i++) {
-                    pw += " " + parameterWeights[i];
-                }
-                writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
-                        new Attribute[]{
-                                new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.tuning),
-                                new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
-                                getWeightAttribute(operator.weight)
-                        }
-                );
-            }
+//        } else if (operator.getBaseName().startsWith(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
+//
+//            int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights(operator.getClockModelGroup());
+//
+//            if (parameterWeights != null && parameterWeights.length > 1) {
+//                String pw = "" + parameterWeights[0];
+//                for (int i = 1; i < parameterWeights.length; i++) {
+//                    pw += " " + parameterWeights[i];
+//                }
+//                writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
+//                        new Attribute[]{
+//                                new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.tuning),
+//                                new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
+//                                getWeightAttribute(operator.weight)
+//                        }
+//                );
+//            }
 
         } else {
             writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
@@ -609,7 +609,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeOpenTag(UpDownOperatorParser.UP);
         // for isEstimatedRate() = false, write nothing on up part of upDownOp
-        if (!operator.parameter1.isFixed && operator.getClockModelGroup().getRateTypeOption() != FixRateType.FIX_MEAN) {
+        if (!operator.parameter1.isFixed /* && operator.getClockModelGroup().getRateTypeOption() != FixRateType.FIXED_MEAN */) {
             writeParameter1Ref(writer, operator);
         }
         writer.writeCloseTag(UpDownOperatorParser.UP);

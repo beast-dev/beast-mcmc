@@ -47,9 +47,10 @@ public class PartitionClockModel extends PartitionOptions {
 
     private double rate; // move to initModelParametersAndOpererators() to initial
 
-    private ClockModelGroup clockModelGroup = null;
-
     private final int dataLength;
+
+    private boolean isFixedMean = false;
+    private FixRateType rateTypeOption = FixRateType.RELATIVE_TO;
 
     public PartitionClockModel(final BeautiOptions options, AbstractPartitionData partition) {
         super(options);
@@ -77,8 +78,6 @@ public class PartitionClockModel extends PartitionOptions {
         rate = source.rate;
 
         dataLength = source.dataLength;
-
-        clockModelGroup = source.clockModelGroup;
 
         initModelParametersAndOpererators();
     }
@@ -288,7 +287,7 @@ public class PartitionClockModel extends PartitionOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
-            if (clockModelGroup.getRateTypeOption() != FixRateType.FIX_MEAN
+            if (getRateTypeOption() != FixRateType.FIXED_MEAN
                     && isEstimatedRate()) {
                 switch (clockType) {
                     case STRICT_CLOCK:
@@ -451,15 +450,6 @@ public class PartitionClockModel extends PartitionOptions {
         if (isUpdatedByUser) rateParam.setPriorEdited(true);
     }
 
-    public ClockModelGroup getClockModelGroup() {
-        return clockModelGroup;
-    }
-
-    public void setClockModelGroup(ClockModelGroup clockModelGroup) {
-        options.clearDataPartitionCaches();
-        this.clockModelGroup = clockModelGroup;
-    }
-
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionClockModels().size() > 1) { //|| options.isSpeciesAnalysis()
@@ -468,5 +458,23 @@ public class PartitionClockModel extends PartitionOptions {
         }
         return prefix;
     }
+
+    public boolean isFixedMean() {
+        return isFixedMean;
+    }
+
+    public void setFixedMean(boolean isFixedMean) {
+        this.isFixedMean = isFixedMean;
+    }
+
+    public FixRateType getRateTypeOption() {
+        return rateTypeOption;
+    }
+
+    public void setRateTypeOption(FixRateType rateTypeOption) {
+        this.rateTypeOption = rateTypeOption;
+        setFixedMean(rateTypeOption == FixRateType.FIXED_MEAN);
+    }
+
 
 }

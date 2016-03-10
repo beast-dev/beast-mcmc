@@ -354,7 +354,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     private void subtract(MatrixParameterInterface Left, double[] Right, double[] answer) {
         int row = Left.getRowDimension();
         int col = Left.getColumnDimension();
-        if((!RecomputeResiduals && !dataKnown) || (!RecomputeFactors && !factorsKnown) ||(!RecomputeLoadings && !loadingsKnown)) {
+        if(((!RecomputeResiduals && !dataKnown) || (!RecomputeFactors && !factorsKnown) ||(!RecomputeLoadings && !loadingsKnown)) && !totalRecompute) {
             while(!changedValues.isEmpty()){
                 int id = changedValues.remove(0);
                 int tcol=id / row;

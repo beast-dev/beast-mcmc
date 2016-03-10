@@ -426,9 +426,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             }
 
             // Use dynamic programming to compute conditional likelihoods at each internal node
-            if(!likelihoodKnown)     {
             postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, computeWishartStatistics);
-            }
 
             doPreOrderTraversal(treeModel.getRoot());}
         PostPreKnown=true;

@@ -138,7 +138,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             }
 //            System.out.println("randel");
 //            System.out.println(randel);
-            factors.fireParameterChangedEvent(factors.getRowDimension()*randel, null);
+            ((Parameter.Default) factors.getParameter(randel)).fireParameterChangedEvent(0, null);
 
 
             if(i!=nSteps){

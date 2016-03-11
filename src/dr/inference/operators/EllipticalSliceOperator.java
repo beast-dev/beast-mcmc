@@ -190,9 +190,8 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         return r;
     }
 
-    private void transformPoint(double[] x) {
+    public static void transformPoint(double[] x, boolean translationInvariant, boolean rotationInvariant, int dim) {
         if (translationInvariant) {
-            int dim = 2; // TODO How to determine?
 
             double[] mean = new double[dim];
             int k = 0;
@@ -217,7 +216,6 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         }
 
         if (rotationInvariant) {
-            int dim = 2;
 
             final double theta = -Math.atan2(x[1], x[0]); // TODO Compute norm and avoid transcendentals
             final double sin = Math.sin(theta);
@@ -238,6 +236,10 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 //            System.err.println("");
 //            System.exit(-1);
         }
+    }
+
+    private void transformPoint(double[] x) {
+        transformPoint(x, translationInvariant, rotationInvariant, 2);
     }
 
     private void setAllParameterValues(double[] x) {

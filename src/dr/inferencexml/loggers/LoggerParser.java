@@ -28,6 +28,7 @@ package dr.inferencexml.loggers;
 import dr.app.beast.BeastVersion;
 import dr.inference.loggers.*;
 import dr.math.MathUtils;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.util.FileHelpers;
 import dr.util.Identifiable;
 import dr.util.Property;
@@ -104,7 +105,8 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
             title = "BEAST " + version.getVersionString() + "\n" +
                     (header != null ? header + "\n" : "") +
-                    "Generated " + (new Date()).toString() + " [seed=" + MathUtils.getSeed() + "]";
+                    "Generated " + (new Date()).toString() + " [seed=" + MathUtils.getSeed() + "]\n" +
+                    System.getProperty("command_line", "");
         } else {
             if (header != null) {
                 title += "\n" + header;

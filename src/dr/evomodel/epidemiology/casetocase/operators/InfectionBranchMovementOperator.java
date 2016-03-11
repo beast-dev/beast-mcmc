@@ -28,6 +28,7 @@ package dr.evomodel.epidemiology.casetocase.operators;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.*;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
@@ -62,11 +63,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
     /*  Switch the partition of a randomly selected internal node from the painting of one of its children to the
     * painting of the other, and adjust the rest of the tree to ensure the result still obeys partition rules.*/
 
-    public double doOperation(){
-
-        if(DEBUG){
-            c2cLikelihood.debugOutputTree("before.nex", false);
-        }
+    public double doOperation() throws OperatorFailedException{
 
         PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
@@ -82,34 +79,45 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         while(branchMap.get(node.getNumber())==branchMap.get(tree.getParent(node).getNumber())){
             node = tree.getParent(node);
         }
-        double hr = adjustTree(tree, node, branchMap);
-
-        if(DEBUG){
-            c2cLikelihood.debugOutputTree("after.nex", false);
-        }
+        double hr = adjustTree(tree, node);
 
         return hr;
     }
 
 
-    private double adjustTree(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
-        // are we going up or down? If we're not extended then all moves are down. External nodes have to move down.
+    private double adjustTree(PartitionedTreeModel tree, NodeRef node)
+            throws OperatorFailedException{
         double out;
 
+        BranchMapModel map = tree.getBranchMap();
 
+        AbstractCase infectedCase = map.get(node.getNumber());
+        AbstractCase infectorCase = map.get(tree.getParent(node).getNumber());
 
-        if(tree.isExternal(node) || MathUtils.nextBoolean()){
-            out = moveDown(tree, node, map);
+        NodeRef infectedMRCA = tree.caseMRCA(infectedCase);
+
+        boolean downIsPossible = node != infectedMRCA;
+        boolean upIsPossible = !(tree.isRootBlockedBy(infectedCase, infectorCase)
+                && tree.isAncestral(tree.getParent(node)));
+
+        if(upIsPossible && downIsPossible){
+            out = MathUtils.nextBoolean() ? moveUp(tree, node) : moveDown(tree, node);
+        } else if(upIsPossible){
+            out = moveUp(tree, node);
+        } else if(downIsPossible){
+            out = moveDown(tree, node);
         } else {
-            out = moveUp(tree, node, map);
+            throw new OperatorFailedException("Chosen infection event cannot be adjusted in this tree");
         }
+
         if(DEBUG){
             c2cLikelihood.getTreeModel().checkPartitions();
         }
         return out;
     }
 
-    private double moveDown(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
+    private double moveUp(PartitionedTreeModel tree, NodeRef node){
+        BranchMapModel map = tree.getBranchMap();
 
         AbstractCase infectedCase = map.get(node.getNumber());
 
@@ -130,7 +138,10 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         AbstractCase infectorCase = map.get(parent.getNumber());
 
-        if(c2cLikelihood.isAncestral(parent)){
+        NodeRef infectedMRCA = tree.caseMRCA(infectedCase);
+        NodeRef infectorMRCA = tree.caseMRCA(infectorCase);
+
+        if(c2cLikelihood.getTreeModel().isAncestral(parent)){
 
             if(resampleInfectionTimes){
                 infectorCase.setInfectionBranchPosition(MathUtils.nextDouble());
@@ -138,27 +149,38 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
             NodeRef grandparent = tree.getParent(parent);
             if(grandparent!=null && map.get(grandparent.getNumber())==map.get(parent.getNumber())){
-                for(Integer ancestor: c2cLikelihood.getTreeModel().samePartitionDownTree(parent)){
+                for(Integer ancestor: c2cLikelihood.getTreeModel().samePartitionElementUpTree(parent)){
                     newMap[ancestor] = map.get(node.getNumber());
                 }
                 newMap[grandparent.getNumber()]=map.get(node.getNumber());
             }
 
-            hr += tree.isExternal(sibling) ? Math.log(2) : 0;
-            hr += tree.isExternal(node) ? Math.log(0.5) : 0;
+            hr += node == infectedMRCA ? Math.log(0.5) : 0;
 
         } else {
             if(map.get(sibling.getNumber())==map.get(parent.getNumber())){
-                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionUpTree(sibling)){
+                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionElementDownTree(sibling)){
                     newMap[descendant]=map.get(node.getNumber());
                 }
                 newMap[sibling.getNumber()]=map.get(node.getNumber());
             }
 
-            hr += tree.isExternal(node) ? Math.log(0.5) : 0;
+            hr += node == infectedMRCA ? Math.log(0.5) : 0;
         }
         newMap[parent.getNumber()]=map.get(node.getNumber());
         map.setAll(newMap, false);
+
+        //HR adjustments for reverse moves
+        if(c2cLikelihood.getTreeModel().isAncestral(parent)){
+            hr += sibling == infectorMRCA ? Math.log(2) : 0;
+        } else {
+            NodeRef grandparent = tree.getParent(parent);
+
+            hr += tree.isRootBlockedBy(infectedCase, infectorCase)
+                    && tree.isAncestral(grandparent) ? Math.log(2) : 0;
+
+        }
+
 
         if(resampleInfectionTimes){
             infectedCase.setInfectionBranchPosition(MathUtils.nextDouble());
@@ -167,9 +189,11 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         return hr;
     }
 
-    private double moveUp(PartitionedTreeModel tree, NodeRef node, BranchMapModel map){
+    private double moveDown(PartitionedTreeModel tree, NodeRef node){
+        BranchMapModel map = tree.getBranchMap();
 
         AbstractCase infectedCase = map.get(node.getNumber());
+        AbstractCase infectorCase = map.get(tree.getParent(node).getNumber());
 
         AbstractCase[] newMap = map.getArrayCopy();
 
@@ -177,22 +201,28 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         NodeRef parent = tree.getParent(node);
 
+        NodeRef infectedMRCA = tree.caseMRCA(infectedCase);
+
         assert map.get(parent.getNumber()) == map.get(node.getNumber()) : "Partition problem";
         // check if either child is not ancestral (at most one is not, and if so it must have been in the same
         // partition as both the other child and 'node')
         for(int i=0; i<tree.getChildCount(node); i++){
             NodeRef child = tree.getChild(node, i);
-            if(!c2cLikelihood.isAncestral(child)){
+            if(!c2cLikelihood.getTreeModel().isAncestral(child)){
                 assert map.get(child.getNumber()) == map.get(node.getNumber()) : "Partition problem";
-                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionUpTree(child)){
+                for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionElementDownTree(child)){
                     newMap[descendant]=map.get(parent.getNumber());
                 }
                 newMap[child.getNumber()]=map.get(parent.getNumber());
-            } else if(tree.isExternal(child) && map.get(child.getNumber())==map.get(node.getNumber())){
-                // we're moving a transmission event onto a terminal branch and need to adjust the HR accordingly
+            } else if(child == infectedMRCA && map.get(child.getNumber())==map.get(node.getNumber())){
+                // we're moving a transmission event as far down as it can go and need to adjust the HR accordingly
                 out += Math.log(2);
             }
         }
+
+        //if you couldn't move it any further up
+        out += tree.isRootBlockedBy(infectedCase, infectorCase)
+                && tree.isAncestral(parent) ? Math.log(0.5) : 0;
 
         if(resampleInfectionTimes){
             infectedCase.setInfectionBranchPosition(MathUtils.nextDouble());

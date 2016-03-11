@@ -203,7 +203,10 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
             if (transformationSizes[i] > 1) {
                 System.arraycopy(transformations[i].transform(x, currentIndex, currentIndex + transformationSizes[i] - 1),0,transformedX,currentIndex,transformationSizes[i]);
             } else {
-                transformedX[i] = transformations[i].transform(x[i]);
+                transformedX[currentIndex] = transformations[i].transform(x[currentIndex]);
+                if (DEBUG) {
+                    System.err.println("x[" + currentIndex + "] = " + x[currentIndex] + " -> " + transformedX[currentIndex]);
+                }
             }
             currentIndex += transformationSizes[i];
         }
@@ -409,16 +412,22 @@ public class AdaptableVarianceMultivariateNormalOperator extends AbstractCoercab
                     }
                     logJacobian += transformations[i].getLogJacobian(x, currentIndex, currentIndex + transformationSizes[i] - 1) - transformations[i].getLogJacobian(temp, 0, transformationSizes[i] - 1);
                 } else {
-                    parameter.setParameterValueQuietly(i, transformations[i].inverse(transformedX[i]));
-                    logJacobian += transformations[i].getLogJacobian(x[i]) - transformations[i].getLogJacobian(parameter.getParameterValue(i));
+                    parameter.setParameterValueQuietly(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
+                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                }
+                if (DEBUG) {
+                    System.err.println("Current logJacobian = " + logJacobian);
                 }
             } else {
                 if (transformationSizes[i] > 1) {
                     //TODO: figure out if this is really a problem ...
                     throw new RuntimeException("Transformations on more than 1 parameter value should be set quietly");
                 } else {
-                    parameter.setParameterValue(i, transformations[i].inverse(transformedX[i]));
-                    logJacobian += transformations[i].getLogJacobian(x[i]) - transformations[i].getLogJacobian(parameter.getParameterValue(i));
+                    parameter.setParameterValue(currentIndex, transformations[i].inverse(transformedX[currentIndex]));
+                    logJacobian += transformations[i].getLogJacobian(x[currentIndex]) - transformations[i].getLogJacobian(parameter.getParameterValue(currentIndex));
+                }
+                if (DEBUG) {
+                    System.err.println("Current logJacobian = " + logJacobian);
                 }
             }
             currentIndex += transformationSizes[i];

@@ -28,10 +28,12 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.NodeRef;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+import dr.math.KroneckerOperation;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 
 /**
@@ -46,8 +48,61 @@ public class GaussianProcessFromTree implements GaussianProcessRandomGenerator {
         this.traitModel = traitModel;
     }
 
+    @Override
     public Likelihood getLikelihood() {
         return traitModel;
+    }
+
+    @Override
+    public int getDimension() {
+        return traitModel.getTreeModel().getExternalNodeCount() * traitModel.getDimTrait();
+    }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        final boolean includeRoot = false; // TODO make an option
+
+        double[][] treeVariance;
+//        long startTime1 = System.nanoTime();
+        treeVariance = traitModel.computeTreeVariance2(includeRoot);
+//        long estimatedTime1 = System.nanoTime() - startTime1;
+
+//        long startTime2 = System.nanoTime();
+//        treeVariance = traitModel.computeTreeVariance(includeRoot);
+//        long estimatedTime2 = System.nanoTime() - startTime2;
+
+        double[][] traitPrecision = traitModel.getDiffusionModel().getPrecisionmatrix();
+
+
+//        for (int i = 0; i < treeVariance2.length; ++i) {
+//            for (int j = 0; j < treeVariance2[i].length; ++j) {
+//                if (treeVariance2[i][j] != treeVariance[i][j]) {
+//                    System.err.println(i + " " + j);
+//                    System.err.println(treeVariance2[i][j] + " " + treeVariance[i][j]);
+//                    System.exit(-1);
+//                }
+//            }
+//        }
+
+//        System.err.println("T1: " + estimatedTime1);
+//        System.err.println("T2: " + estimatedTime2);
+
+//        System.err.println("\t\tSTART prec");
+        Matrix treePrecision = new Matrix(treeVariance).inverse();
+
+//        System.err.println("\t\tSTART kron");
+
+        double[][] jointPrecision = KroneckerOperation.product(treePrecision.toComponents(), traitPrecision); // TODO Double-check order
+
+        return jointPrecision;
+    }
+
+    private static void scale(double[][] matrix, double scale) {
+        for (int i = 0; i < matrix.length; ++i) {
+            for (int j = 0; j < matrix[i].length; ++j) {
+                matrix[i][j] *= scale;
+            }
+        }
     }
 
     public double getLogLikelihood() { return traitModel.getLogLikelihood(); }

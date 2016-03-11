@@ -1,5 +1,5 @@
 /*
- * MaskFlipOperator.java
+ * MaskMoveOperator.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -28,7 +28,6 @@ package dr.inference.operators;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -108,10 +107,10 @@ public class MaskMoveOperator extends SimpleMCMCOperator {
         final boolean moveUp;
         if (currentCutPoint == 0) {
             moveUp = true;
-            logq -= Math.log(2); // TODO Check
+            logq -= Math.log(2);
         } else if (currentCutPoint == masks.size()) {
             moveUp = false;
-            logq -= Math.log(2); // TODO Check
+            logq -= Math.log(2);
         } else if (MathUtils.nextDouble() < 0.5) {
             moveUp = false;
         } else {

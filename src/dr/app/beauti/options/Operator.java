@@ -56,8 +56,6 @@ public class Operator implements Serializable {
     public boolean inUse;
     public String idref;
 
-    private ClockModelGroup clockModelGroup = null;
-
     public static class Builder {
         // Required para
         private final String baseName;
@@ -186,14 +184,6 @@ public class Operator implements Serializable {
 
     public String getBaseName() {
         return baseName;
-    }
-
-    public ClockModelGroup getClockModelGroup() {
-        return clockModelGroup;
-    }
-
-    public void setClockModelGroup(ClockModelGroup clockModelGroup) {
-        this.clockModelGroup = clockModelGroup;
     }
 
 }

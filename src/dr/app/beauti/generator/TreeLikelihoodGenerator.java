@@ -32,7 +32,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -40,9 +39,6 @@ import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.LocalClockModelParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
@@ -177,7 +173,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
 
-        BranchRatesModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, prefix, writer);
 

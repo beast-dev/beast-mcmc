@@ -600,7 +600,7 @@ public class BEAUTiImporter {
         }
 
         options.updatePartitionAllLinks();
-        options.clockModelOptions.initClockModelGroup();
+        //options.clockModelOptions.initClockModelGroup();
     }
 
     private void setClockAndTree(AbstractPartitionData partition) {

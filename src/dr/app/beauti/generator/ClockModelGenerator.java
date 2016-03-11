@@ -30,6 +30,7 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.ContinuousBranchRates;
@@ -57,9 +58,9 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class BranchRatesModelGenerator extends Generator {
+public class ClockModelGenerator extends Generator {
 
-    public BranchRatesModelGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public ClockModelGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 
@@ -587,6 +588,31 @@ public class BranchRatesModelGenerator extends Generator {
         writer.writeIDref(tag, id);
     }
 
+    /**
+     * Write the allMus for each partition model.
+     *
+     * @param model  PartitionClockModel
+     * @param writer XMLWriter
+     */
+    public void writeAllMus(PartitionClockModel model, XMLWriter writer) {
+        Parameter allMus = model.getParameter("allMus");
+        if (allMus.getSubParameters().size() > 1) {
+            writer.writeComment("Collecting together relative rates for partitions");
+
+            // allMus is global for each gene
+            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "allMus")});
+
+            for (Parameter parameter : allMus.getSubParameters()) {
+                writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+            }
+
+            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+            writer.writeText("");
+        }
+    }
+
+
     public void writeAllClockRateRefs(PartitionClockModel model, XMLWriter writer) {
         writer.writeIDref(ParameterParser.PARAMETER, getClockRateString(model));
     }
@@ -627,6 +653,11 @@ public class BranchRatesModelGenerator extends Generator {
 
     public void writeLog(PartitionClockModel model, XMLWriter writer) {
         setModelPrefix(model.getPrefix());
+
+        Parameter allMus = model.getParameter("allMus");
+        if (allMus.getSubParameters().size() > 1) {
+            writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
+        }
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:

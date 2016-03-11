@@ -170,7 +170,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
             if (model.getDataType().getType() == DataType.MICRO_SAT) {
                 if (model.getClockType() == ClockType.STRICT_CLOCK) {
                     op = getOperator("microsatUpDownRateHeights");
-                    op.setClockModelGroup(model.getClockModelGroup());
                     ops.add(op);
                 } else {
                     throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
@@ -181,7 +180,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
                         op = getOperator("upDownRateHeights");
-                        op.setClockModelGroup(model.getClockModelGroup());
                         ops.add(op);
                         break;
 
@@ -190,13 +188,11 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
                             case LOGNORMAL:
                                 op = getOperator("upDownUCLDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
                                 break;
                             case GAMMA:
 //                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
                                 op = getOperator("upDownUCGDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
                             break;
                             case CAUCHY:
@@ -204,7 +200,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //                            break;
                             case EXPONENTIAL:
                                 op = getOperator("upDownUCEDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
                                 break;
                         }
@@ -237,7 +232,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                     case RANDOM_LOCAL_CLOCK:
                     case FIXED_LOCAL_CLOCK:
                         op = getOperator("upDownRateHeights");
-                        op.setClockModelGroup(model.getClockModelGroup());
                         ops.add(op);
 
                         break;

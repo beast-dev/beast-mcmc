@@ -32,10 +32,11 @@ import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;
 import dr.app.beauti.components.linkedparameters.LinkedParameter;
 import dr.app.beauti.components.linkedparameters.LinkedParameterComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
@@ -650,15 +651,16 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             if (parameter.getBaseName().endsWith("treeModel.rootHeight") || parameter.taxaId != null) { // param.taxa != null is TMRCA
 
                 if (options.treeModelOptions.isNodeCalibrated(parameter)) {
-                    List<ClockModelGroup> groupList;
+                    List<PartitionClockModel> clockModels;
                     if (options.useStarBEAST) {
-                        groupList = options.clockModelOptions.getClockModelGroups();
+                        clockModels = options.getPartitionClockModels();
                     } else {
-                        groupList = options.clockModelOptions.getClockModelGroups(options.getDataPartitions(parameter.getOptions()));
+                        clockModels = options.getPartitionClockModels(options.getDataPartitions(parameter.getOptions()));
                     }
 
-                    for (ClockModelGroup clockModelGroup : groupList) {
-                        options.clockModelOptions.nodeCalibration(clockModelGroup);
+                    for (PartitionClockModel clockModel : clockModels) {
+                        clockModel.setRateTypeOption(FixRateType.NODE_CALIBRATED);
+                        clockModel.setEstimatedRate(true);
                     }
                     frame.setAllOptions();
 //        	} else {

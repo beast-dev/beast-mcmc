@@ -35,7 +35,6 @@ package dr.app.beauti;
 
 import dr.app.beauti.ancestralStatesPanel.AncestralStatesPanel;
 import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
-import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentFactory;
@@ -48,7 +47,6 @@ import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;

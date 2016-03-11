@@ -156,7 +156,7 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
                         same = true;
                         if (!isExplored[j]) {
                             for (int k = 0; k < data.getRowDimension(); k++) {
-                                if (data.getParameterValue(k, i) != data.getParameterValue(k, j))
+                                if (Math.abs(data.getParameterValue(k, i)) != Math.abs(data.getParameterValue(k, j)))
                                     same = false;
                                 if (data.getParameterValue(k, j) != 0) {
                                     containsNonZeroElements[j] = true;
@@ -185,7 +185,7 @@ public class IndianBuffetProcessPrior extends AbstractModelLikelihood {
           if(containsNonZeroElements[i]) {
               KPlus++;
               for (int j = 0; j < data.getRowDimension(); j++) {
-                  rowCount[i] += data.getParameterValue(j, i);
+                  rowCount[i] += Math.abs(data.getParameterValue(j, i));
               }
               sum2+=Beta.logBeta(rowCount[i], data.getRowDimension() + beta.getParameterValue(0) - rowCount[i]);
           }

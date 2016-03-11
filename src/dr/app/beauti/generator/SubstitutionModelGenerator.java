@@ -445,42 +445,6 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
     }
 
-    /**
-     * Write the allMus for each partition model.
-     *
-     * @param model  PartitionSubstitutionModel
-     * @param writer XMLWriter
-     */
-    public void writeAllMus(PartitionSubstitutionModel model, XMLWriter writer) {
-        if (model.hasCodon()) { // write allMus for codon model
-            // allMus is global for each gene
-            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "allMus")});
-
-            writeMuParameterRefs(model, writer);
-
-            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-        }
-    }
-
-    /**
-     * Write the all the mu parameters for this partition model.
-     *
-     * @param writer the writer
-     * @param model  the partition model to write in BEAST XML
-     */
-    public void writeMuParameterRefs(PartitionSubstitutionModel model, XMLWriter writer) {
-
-        if (model.getDataType().getType() == DataType.NUCLEOTIDES && model.getCodonHeteroPattern() != null) {
-            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
-            }
-        } else {
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "mu");
-        }
-
-    }
-
     public void writeLog(PartitionSubstitutionModel model, XMLWriter writer) {
 
         int codonPartitionCount = model.getCodonPartitionCount();
@@ -686,8 +650,10 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (model.hasCodon()) {
+        if (model.hasCodonPartitions()) {
             writeParameter(num, GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        } else {
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 
         if (model.isGammaHetero()) {
@@ -726,6 +692,7 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+        writer.writeText("");
     }
 
     /**
@@ -761,9 +728,7 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (model.hasCodon()) {
-            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
-        }
+        writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
 
         if (model.isGammaHetero()) {
             writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
@@ -798,9 +763,7 @@ public class SubstitutionModelGenerator extends Generator {
         writer.writeIDref(EmpiricalAminoAcidModelParser.EMPIRICAL_AMINO_ACID_MODEL, prefix + "aa");
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-        if (model.hasCodon()) {
-            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
-        }
+        writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
 
 
         if (model.isGammaHetero()) {

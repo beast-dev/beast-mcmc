@@ -258,9 +258,19 @@ public class BeautiOptions extends ModelOptions {
                     substitutionModels.add(partition.getPartitionSubstitutionModel());
                 }
             }
+
+            // collect all the relative rate paremeters (partition rates and codon position rates)
+            ArrayList<Parameter> relativeRateParameters = new ArrayList<Parameter>();
             for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
-                substitutionModel.selectRelativeRateParameters(parameters);
-//                substitutionModel.selectRelativeRateParameters(parameters, substitutionModels.size() > 1);
+                relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
+            }
+            if (relativeRateParameters.size() > 1) {
+                Parameter allMus = model.getParameter("allMus");
+                allMus.clearSubParameters();
+                for (Parameter mu : relativeRateParameters) {
+                    allMus.addSubParameter(mu);
+                }
+                parameters.add(allMus);
             }
 
             model.selectParameters(parameters);

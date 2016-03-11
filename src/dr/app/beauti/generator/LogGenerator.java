@@ -73,9 +73,9 @@ public class LogGenerator extends Generator {
      * write log to screen
      *
      * @param writer                    XMLWriter
-     * @param branchRatesModelGenerator BranchRatesModelGenerator
+     * @param clockModelGenerator ClockModelGenerator
      */
-    public void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
+    public void writeLogToScreen(XMLWriter writer, ClockModelGenerator clockModelGenerator,
                                  SubstitutionModelGenerator substitutionModelGenerator) {
         writer.writeComment("write log to screen");
 
@@ -148,13 +148,13 @@ public class LogGenerator extends Generator {
         for (PartitionClockModel model : options.getPartitionClockModels()) {
             writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
-                            new Attribute.Default<String>(ColumnsParser.LABEL, branchRatesModelGenerator.getClockRateString(model)),
+                            new Attribute.Default<String>(ColumnsParser.LABEL, clockModelGenerator.getClockRateString(model)),
                             new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
                             new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
 
-            branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+            clockModelGenerator.writeAllClockRateRefs(model, writer);
 //        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
 //            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
 //            for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -163,7 +163,7 @@ public class LogGenerator extends Generator {
 //            }
 //        } else {
 //            for (PartitionClockModel model : options.getPartitionClockModels()) {
-//                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+//                clockModelGenerator.writeAllClockRateRefs(model, writer);
 //            }
 //        }
             writer.writeCloseTag(ColumnsParser.COLUMN);
@@ -186,13 +186,13 @@ public class LogGenerator extends Generator {
      *
      * @param writer                     XMLWriter
      * @param treePriorGenerator         TreePriorGenerator
-     * @param branchRatesModelGenerator  BranchRatesModelGenerator
+     * @param clockModelGenerator  ClockModelGenerator
      * @param substitutionModelGenerator SubstitutionModelGenerator
      * @param treeLikelihoodGenerator    TreeLikelihoodGenerator
      */
     public void writeLogToFile(XMLWriter writer,
                                TreePriorGenerator treePriorGenerator,
-                               BranchRatesModelGenerator branchRatesModelGenerator,
+                               ClockModelGenerator clockModelGenerator,
                                SubstitutionModelGenerator substitutionModelGenerator,
                                TreeLikelihoodGenerator treeLikelihoodGenerator) {
         writer.writeComment("write log to file");
@@ -274,9 +274,6 @@ public class LogGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(model, writer);
-            if (model.hasCodon()) {
-                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
-            }
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -299,17 +296,17 @@ public class LogGenerator extends Generator {
                     }
                 }
             }
-            branchRatesModelGenerator.writeLog(model, writer);
+            clockModelGenerator.writeLog(model, writer);
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            branchRatesModelGenerator.writeLogStatistic(model, writer);
+            clockModelGenerator.writeLogStatistic(model, writer);
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-        branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
+        clockModelGenerator.writeClockLikelihoodReferences(writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
@@ -336,7 +333,7 @@ public class LogGenerator extends Generator {
 
     public void writeDemographicLogToFile(XMLWriter writer,
                                           TreePriorGenerator treePriorGenerator,
-                                          BranchRatesModelGenerator branchRatesModelGenerator,
+                                          ClockModelGenerator clockModelGenerator,
                                           SubstitutionModelGenerator substitutionModelGenerator,
                                           TreeLikelihoodGenerator treeLikelihoodGenerator) {
         writer.writeComment("demographic log file");
@@ -389,9 +386,6 @@ public class LogGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(model, writer);
-            if (model.hasCodon()) {
-                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
-            }
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -414,17 +408,17 @@ public class LogGenerator extends Generator {
                     }
                 }
             }
-            branchRatesModelGenerator.writeLog(model, writer);
+            clockModelGenerator.writeLog(model, writer);
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            branchRatesModelGenerator.writeLogStatistic(model, writer);
+            clockModelGenerator.writeLogStatistic(model, writer);
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-        branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
+        clockModelGenerator.writeClockLikelihoodReferences(writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 

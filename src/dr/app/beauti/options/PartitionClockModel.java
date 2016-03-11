@@ -40,6 +40,7 @@ public class PartitionClockModel extends PartitionOptions {
     private static final long serialVersionUID = -6904595851602060488L;
 
     private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = true;
+    private static final boolean USE_DIRICHLET_PRIOR_FOR_MUS = false;
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
@@ -147,6 +148,21 @@ public class PartitionClockModel extends PartitionOptions {
         createScaleOperator(ClockType.LOCAL_CLOCK + ".relativeRates", demoTuning, treeWeights);
         createOperator(ClockType.LOCAL_CLOCK + ".changes", OperatorType.BITFLIP, 1, treeWeights);
         createDiscreteStatistic("rateChanges", "number of random local clocks"); // POISSON_PRIOR
+
+        // A vector of relative rates across all partitions...
+
+        if (USE_DIRICHLET_PRIOR_FOR_MUS) {
+            createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+            createOperator("scaleMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+                    "Scale codon position rates relative to each other", "allMus",
+                    OperatorType.SCALE_INDEPENDENTLY, 0.75, 3.0);
+        } else {
+            createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+            createOperator("deltaMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+                    "Scale codon position rates relative to each other maintaining mean", "allMus",
+                    OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
+        }
+
     }
 
     /**
@@ -376,6 +392,18 @@ public class PartitionClockModel extends PartitionOptions {
                         throw new IllegalArgumentException("Unknown clock model");
                 }
             }
+        }
+
+        Parameter allMus = getParameter("allMus");
+        if (allMus.getSubParameters().size() > 1) {
+            Operator muOperator;
+
+            if (USE_DIRICHLET_PRIOR_FOR_MUS) {
+                muOperator = getOperator("scaleMus");
+            } else {
+                muOperator = getOperator("deltaMus");
+            }
+            ops.add(muOperator);
         }
     }
 

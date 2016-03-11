@@ -222,7 +222,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-        if (model.hasCodon()) {
+        if (model.hasCodonPartitions()) {
             writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
         }
 

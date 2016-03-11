@@ -35,6 +35,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,8 +47,6 @@ import java.util.Set;
  */
 public class PartitionSubstitutionModel extends PartitionOptions {
     private static final long serialVersionUID = -2570346396317131108L;
-
-    private final static boolean USE_DIRICHLET_PRIOR_FOR_MUS = false;
 
     // Instance variables
 
@@ -253,20 +252,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
         createNonNegativeParameterInfinitePrior("CP3.mu", "relative rate parameter for codon position 3",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
-
-        // A vector of relative rates across all partitions...
-
-        if (USE_DIRICHLET_PRIOR_FOR_MUS) {
-            createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
-            createOperator("scaleMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-                    "Scale codon position rates relative to each other", "allMus",
-                    OperatorType.SCALE_INDEPENDENTLY, 0.75, 3.0);
-        } else {
-            createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
-            createOperator("deltaMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-                    "Scale codon position rates relative to each other maintaining mean", "allMus",
-                    OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
-        }
 
         createScaleOperator("kappa", demoTuning, substWeights);
         createScaleOperator("CP1.kappa", demoTuning, substWeights);
@@ -536,21 +521,39 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
     }
 
-    public void selectRelativeRateParameters(List<Parameter> params) {
+    public List<Parameter> getRelativeRateParameters() {
+        List<Parameter> allMus = new ArrayList<Parameter>();
+        int[] weights = getPartitionCodonWeights();
         if (getCodonPartitionCount() > 1) {
             if (codonHeteroPattern.equals("123")) {
-                params.add(getParameter("CP1.mu"));
-                params.add(getParameter("CP2.mu"));
-                params.add(getParameter("CP3.mu"));
+                Parameter parameter = getParameter("CP1.mu");
+                parameter.setDimensionWeight(weights[0]);
+                allMus.add(parameter);
+
+                parameter = getParameter("CP2.mu");
+                parameter.setDimensionWeight(weights[1]);
+                allMus.add(parameter);
+
+                parameter = getParameter("CP3.mu");
+                parameter.setDimensionWeight(weights[2]);
+                allMus.add(parameter);
             } else if (codonHeteroPattern.equals("112")) {
-                params.add(getParameter("CP1+2.mu"));
-                params.add(getParameter("CP3.mu"));
+                Parameter parameter = getParameter("CP1+2.mu");
+                parameter.setDimensionWeight(weights[0]);
+                allMus.add(parameter);
+
+                parameter = getParameter("CP3.mu");
+                parameter.setDimensionWeight(weights[1]);
+                allMus.add(parameter);
             } else {
                 throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
             }
         } else {
-            params.add(getParameter("mu"));
+            Parameter mu = getParameter("mu");
+            mu.setDimensionWeight(weights[0]);
+            allMus.add(mu);
         }
+        return allMus;
     }
 
     private void addFrequencyParams(List<Parameter> params, boolean includeRelativeRates) {
@@ -574,12 +577,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public void selectOperators(List<Operator> ops) {
-        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
 
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
 
-                if (includeRelativeRates && unlinkedSubstitutionModel) {
+                if (hasCodonPartitions() && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
                         switch (nucSubstitutionModel) {
                             case JC:
@@ -669,7 +671,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
 
                 // only AMINO_ACIDS not addFrequency
-                addFrequencyOps(ops, includeRelativeRates);
+                addFrequencyOps(ops);
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -693,7 +695,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
 
                 // only AMINO_ACIDS not addFrequency
-                addFrequencyOps(ops, includeRelativeRates);
+                addFrequencyOps(ops);
                 break;
 
             case DataType.GENERAL:
@@ -734,7 +736,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         // if gamma do shape move
         if (gammaHetero) {
-            if (includeRelativeRates && unlinkedHeterogeneityModel) {
+            if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     ops.add(getOperator("CP1.alpha"));
                     ops.add(getOperator("CP2.alpha"));
@@ -751,7 +753,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         }
         // if pinv do pinv move
         if (invarHetero) {
-            if (includeRelativeRates && unlinkedHeterogeneityModel) {
+            if (hasCodonPartitions() && unlinkedHeterogeneityModel) {
                 if (codonHeteroPattern.equals("123")) {
                     ops.add(getOperator("CP1.pInv"));
                     ops.add(getOperator("CP2.pInv"));
@@ -767,21 +769,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             }
         }
 
-        if (includeRelativeRates) {
-            Operator muOperator;
-
-            if (USE_DIRICHLET_PRIOR_FOR_MUS) {
-                muOperator = getOperator("scaleMus");
-            } else {
-                muOperator = getOperator("deltaMus");
-            }
-            ops.add(muOperator);
-        }
     }
 
-    private void addFrequencyOps(List<Operator> ops, boolean includeRelativeRates) {
+    private void addFrequencyOps(List<Operator> ops) {
         if (frequencyPolicy == FrequencyPolicyType.ESTIMATED) {
-            if (includeRelativeRates && unlinkedSubstitutionModel && unlinkedFrequencyModel) {
+            if (hasCodonPartitions() && unlinkedSubstitutionModel && unlinkedFrequencyModel) {
                 if (codonHeteroPattern.equals("123")) {
                     ops.add(getOperator("CP1.frequencies"));
                     ops.add(getOperator("CP2.frequencies"));
@@ -802,7 +794,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
      * @return true either if the options have more than one partition or any partition is
      *         broken into codon positions.
      */
-    public boolean hasCodon() {
+    public boolean hasCodonPartitions() {
         return getCodonPartitionCount() > 1;
     }
 

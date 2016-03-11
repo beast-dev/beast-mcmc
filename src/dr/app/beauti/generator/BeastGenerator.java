@@ -48,7 +48,6 @@ import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
 import dr.util.Version;
@@ -86,7 +85,7 @@ public class BeastGenerator extends Generator {
     private final SubstitutionModelGenerator substitutionModelGenerator;
     private final InitialTreeGenerator initialTreeGenerator;
     private final TreeModelGenerator treeModelGenerator;
-    private final BranchRatesModelGenerator branchRatesModelGenerator;
+    private final ClockModelGenerator clockModelGenerator;
     private final OperatorsGenerator operatorsGenerator;
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
@@ -106,7 +105,7 @@ public class BeastGenerator extends Generator {
 
         initialTreeGenerator = new InitialTreeGenerator(options, components);
         treeModelGenerator = new TreeModelGenerator(options, components);
-        branchRatesModelGenerator = new BranchRatesModelGenerator(options, components);
+        clockModelGenerator = new ClockModelGenerator(options, components);
 
         operatorsGenerator = new OperatorsGenerator(options, components);
         parameterPriorGenerator = new ParameterPriorGenerator(options, components);
@@ -542,7 +541,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Branch Rates Model ++++++++++++++++++
         try {
             for (PartitionClockModel model : options.getPartitionClockModels()) {
-                branchRatesModelGenerator.writeBranchRatesModel(model, writer);
+                clockModelGenerator.writeBranchRatesModel(model, writer);
                 writer.writeText("");
             }
         } catch (Exception e) {
@@ -554,7 +553,6 @@ public class BeastGenerator extends Generator {
         try {
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
                 substitutionModelGenerator.writeSubstitutionSiteModel(model, writer);
-                substitutionModelGenerator.writeAllMus(model, writer); // allMus
                 writer.writeText("");
             }
 
@@ -562,6 +560,16 @@ public class BeastGenerator extends Generator {
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Substitution model or site model generation has failed:\n" + e.getMessage());
+        }
+
+        //++++++++++++++++ AllMus parameter ++++++++++++++++++
+        try {
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                clockModelGenerator.writeAllMus(model, writer);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeneratorException("Clock model generation has failed:\n" + e.getMessage());
         }
 
         //++++++++++++++++ Site Model ++++++++++++++++++
@@ -911,7 +919,7 @@ public class BeastGenerator extends Generator {
             writer.writeOpenTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-            branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
+            clockModelGenerator.writeClockLikelihoodReferences(writer);
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
 
@@ -923,10 +931,10 @@ public class BeastGenerator extends Generator {
         writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");
 
         // write log to screen
-        logGenerator.writeLogToScreen(writer, branchRatesModelGenerator, substitutionModelGenerator);
+        logGenerator.writeLogToScreen(writer, clockModelGenerator, substitutionModelGenerator);
 
         // write log to file
-        logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
+        logGenerator.writeLogToFile(writer, treePriorGenerator, clockModelGenerator,
                 substitutionModelGenerator, treeLikelihoodGenerator);
 
         // write tree log to file

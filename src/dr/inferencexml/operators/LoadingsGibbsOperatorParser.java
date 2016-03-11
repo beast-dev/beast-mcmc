@@ -26,8 +26,11 @@
 package dr.inferencexml.operators;
 
 import dr.inference.distribution.DistributionLikelihood;
+import dr.inference.distribution.MomentDistributionModel;
 import dr.inference.model.LatentFactorModel;
+import dr.inference.model.MatrixParameterInterface;
 import dr.inference.operators.LoadingsGibbsOperator;
+import dr.inference.operators.LoadingsGibbsTruncatedOperator;
 import dr.xml.*;
 
 /**
@@ -49,9 +52,17 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         double weight = Double.parseDouble(weightTemp);
         LatentFactorModel LFM = (LatentFactorModel) xo.getChild(LatentFactorModel.class);
         DistributionLikelihood prior = (DistributionLikelihood) xo.getChild(DistributionLikelihood.class);
+        MomentDistributionModel prior2 = (MomentDistributionModel) xo.getChild(MomentDistributionModel.class);
         boolean randomScan = xo.getAttribute(RANDOM_SCAN, true);
+        MatrixParameterInterface loadings=null;
+        if(xo.getChild(MatrixParameterInterface.class)!=null){
+            loadings=(MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
+        }
 
+        if(prior!=null)
         return new LoadingsGibbsOperator(LFM, prior, weight, randomScan);  //To change body of implemented methods use File | Settings | File Templates.
+        else
+            return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings);
     }
 
     @Override
@@ -61,7 +72,11 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(LatentFactorModel.class),
+
+            new XORRule(
             new ElementRule(DistributionLikelihood.class),
+            new ElementRule(MomentDistributionModel.class)
+            ),
 //            new ElementRule(CompoundParameter.class),
             AttributeRule.newDoubleRule(WEIGHT),
     };

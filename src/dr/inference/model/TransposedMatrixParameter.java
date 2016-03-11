@@ -105,6 +105,11 @@ public class TransposedMatrixParameter extends MatrixParameter {
         return slices.get(index);
     }
 
+//    @Override
+//    public void setParameterValueQuietly(int row, int column, double a) {
+//        super.setParameterValueQuietly(column,row, a);
+//    }
+
     MatrixParameter transposeBack(){
         return MatrixParameter.recast(null, this);
     }

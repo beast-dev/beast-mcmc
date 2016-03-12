@@ -143,13 +143,10 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                         likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
                     }
                 }
-                
-//            } else {
-            	
-            	//TODO: hack in branch likes here
-//            	likelihoods.add(likelihood);
-            	
-            }// END: contains check
+
+            } else {
+                throw new IllegalArgumentException("Attempted to add the same likelihood multiple times to CompoundLikelihood.");
+            } // END: contains check
             
         }//END: if unroll check
         

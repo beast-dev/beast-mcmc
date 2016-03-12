@@ -749,8 +749,7 @@ public class ClockModelGenerator extends Generator {
     }
 
     public void writeClockLikelihoodReferences(XMLWriter writer) {
-        for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-            PartitionClockModel clockModel = partition.getPartitionClockModel();
+        for (PartitionClockModel clockModel : options.getPartitionClockModels()) { // Each PD has one TreeLikelihood
             writeBranchRatesModelRef(clockModel, writer);
         }
     }

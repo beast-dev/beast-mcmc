@@ -114,14 +114,15 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 "Scales UCGD mean inversely to node heights of the tree", model.getParameter(ClockType.UCGD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
 
+        // These should not have priors on as there will be priors on the clock model parameters already..
 
         // These are statistics which could have priors on...
         // #meanRate = #Relaxed Clock Model * #Tree Model
-        createNonNegativeStatistic("meanRate", "The mean rate of evolution over the whole tree");
+//        createNonNegativeStatistic("meanRate", "The mean rate of evolution over the whole tree");
         // #covariance = #Relaxed Clock Model * #Tree Model
-        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages");
+//        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages");
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
-        createNonNegativeStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree");
+//        createNonNegativeStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree");
 
         createUpDownOperator("microsatUpDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
@@ -264,11 +265,11 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //        }
 
         // Statistics
-        if (model.getClockType() != ClockType.STRICT_CLOCK) {
-            params.add(getParameter("meanRate"));
-            params.add(getParameter("covariance"));
-            params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
-        }
+//        if (model.getClockType() != ClockType.STRICT_CLOCK) {
+//            params.add(getParameter("meanRate"));
+//            params.add(getParameter("covariance"));
+//            params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
+//        }
 
     }
 

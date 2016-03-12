@@ -39,6 +39,7 @@ public enum PriorType {
     NONE_TREE_PRIOR("None (Tree Prior Only)", false, false, false),
     NONE_STATISTIC("None (Statistic)", false, false, false),
     NONE_IMPROPER("Infinite Uniform (Improper)", true, false, false),
+    NONE_FIXED("Fixed value", true, false, false),
     UNIFORM_PRIOR("Uniform", true, false, false),
     EXPONENTIAL_PRIOR("Exponential", true, true, true),
     LAPLACE_PRIOR("Laplace", true, true, true),
@@ -105,6 +106,8 @@ public enum PriorType {
                 break;
             case NONE_STATISTIC:
                 break;
+            case NONE_FIXED:
+                break;
             case ONE_OVER_X_PRIOR:
                 break;
             case CTMC_RATE_REFERENCE_PRIOR:
@@ -149,6 +152,9 @@ public enum PriorType {
                 break;
             case NONE_STATISTIC:
                 buffer.append("Indirectly Specified Through Other Parameter");
+                break;
+            case NONE_FIXED:
+                buffer.append("Fixed value");
                 break;
             case UNDEFINED:
                 buffer.append("Not yet specified");
@@ -253,7 +259,9 @@ public enum PriorType {
         }
 
 
-        if (parameter.priorType.isInitializable && parameter.initial != Double.NaN) {
+        if (parameter.priorType == NONE_FIXED) {
+            buffer.append(", value=").append(NumberUtil.formatDecimal(parameter.initial, 10, 6));
+        } else if (parameter.priorType.isInitializable && parameter.initial != Double.NaN) {
             buffer.append(", initial=").append(NumberUtil.formatDecimal(parameter.initial, 10, 6));
         }
 
@@ -332,6 +340,7 @@ public enum PriorType {
         }
         if (parameter.isCMTCRate) {
             return new PriorType[]{
+                    NONE_FIXED,
                     NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -349,6 +358,7 @@ public enum PriorType {
         }
         if (parameter.isZeroOne) {
             return new PriorType[]{
+                    NONE_FIXED,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     NORMAL_PRIOR,
@@ -359,6 +369,7 @@ public enum PriorType {
         }
         if (parameter.isNonNegative) {
             return new PriorType[]{
+                    NONE_FIXED,
                     NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -372,6 +383,7 @@ public enum PriorType {
 
         // just a continuous parameter
         return new PriorType[]{
+                NONE_FIXED,
                 NONE_IMPROPER,
                 UNIFORM_PRIOR,
                 EXPONENTIAL_PRIOR,

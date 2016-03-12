@@ -92,7 +92,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     private List<JComponent> argumentFields = new ArrayList<JComponent>();
     private List<String> argumentNames = new ArrayList<String>();
 
-    private boolean isCalibratedYule = true;
+    private boolean isCalibratedYule = false;
     private boolean isInitializable = true;
     private final boolean isTruncatable;
 
@@ -345,7 +345,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void setArguments(Parameter parameter, PriorType priorType) {
         this.isCalibratedYule = parameter.isCalibratedYule;
-        this.isInitializable = priorType.isInitializable;
+        this.isInitializable = priorType.isInitializable && !parameter.isStatistic;
         if (!parameter.isStatistic) {
             setFieldRange(initialField, parameter.isNonNegative, parameter.isZeroOne);
             initialField.setValue(parameter.initial);
@@ -364,7 +364,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     }
 
     void getArguments(Parameter parameter, PriorType priorType) {
-        if (priorType.isInitializable) {
+        if (priorType.isInitializable && !parameter.isStatistic) {
             parameter.initial = initialField.getValue();
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();

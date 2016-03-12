@@ -154,12 +154,12 @@ public class PartitionClockModel extends PartitionOptions {
         if (USE_DIRICHLET_PRIOR_FOR_MUS) {
             createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
             createOperator("scaleMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-                    "Scale codon position rates relative to each other", "allMus",
+                    "Scale partition rates relative to each other", "allMus",
                     OperatorType.SCALE_INDEPENDENTLY, 0.75, 3.0);
         } else {
             createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
             createOperator("deltaMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
-                    "Scale codon position rates relative to each other maintaining mean", "allMus",
+                    "Scale partition rates relative to each other maintaining mean", "allMus",
                     OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
         }
 
@@ -229,25 +229,9 @@ public class PartitionClockModel extends PartitionOptions {
 
             Parameter rateParam = getClockRateParam();
 
-//            if (this.getDataPartitions().get(0) instanceof TraitData) {
-//                rateParam.priorType = PriorType.ONE_OVER_X_PRIOR; // 1/location.clock.rate
-//            }
-            // if not fixed then do mutation rate move and up/down move
-
-//            rateParam.isFixed = !isEstimatedRate;
             if (rate != rateParam.initial) {
                 rate = rateParam.initial;
-//                rateParam.setPriorEdited(true);
             }
-//            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-//                     || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
-//
-//                rateParam.priorEdited = true; // important
-//            }
-//
-//            if (!rateParam.priorEdited) {
-//                rateParam.initial = selectedRate;
-//            }
 
             if (!rateParam.isFixed) params.add(rateParam);
         }

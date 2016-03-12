@@ -132,7 +132,7 @@ public class PriorSettingsPanel extends JPanel {
 
     /**
      * Set the parameter to be controlled
-     *
+     *                                                                                                       q
      * @param parameter
      */
     public void setParameter(final Parameter parameter) {
@@ -221,11 +221,6 @@ public class PriorSettingsPanel extends JPanel {
         } else {
             optionsPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
         }
-
-//        if (parameter.getOptions() instanceof PartitionClockModel) {
-//            PartitionClockModel pcm = (PartitionClockModel) parameter.getOptions();
-//            initialField.setEnabled(!pcm.getClockModelGroup().isFixMean());
-//        }
 
         PriorOptionsPanel panel3 = optionsPanels.get(priorType);
 

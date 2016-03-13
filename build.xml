@@ -293,7 +293,7 @@
     <!--
     <property name="version" value="1.8.4"/>
     -->
-    <property name="version" value="1.8.4pre20160311"/>
+    <property name="version" value="1.8.4pre20160313"/>
 
     <property name="version_number" value="1.8.4"/>
     <property name="release_dir" value="release"/>

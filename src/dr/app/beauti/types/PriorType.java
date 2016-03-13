@@ -341,13 +341,13 @@ public enum PriorType {
         if (parameter.isCMTCRate) {
             return new PriorType[]{
                     NONE_FIXED,
+                    CTMC_RATE_REFERENCE_PRIOR,
                     NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     NORMAL_PRIOR,
                     LOGNORMAL_PRIOR,
                     GAMMA_PRIOR,
-                    CTMC_RATE_REFERENCE_PRIOR,
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
         }

@@ -250,7 +250,7 @@ public class ParameterPriorGenerator extends Generator {
 
                 PartitionTreeModel treeModel = null;
                 for (PartitionClockModel pcm : options.getPartitionClockModels()) {
-                    if (pcm.getClockRateParam() == parameter) {
+                    if (pcm.getClockRateParameter() == parameter) {
                         for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
                             treeModel = pd.getPartitionTreeModel();
                             break;

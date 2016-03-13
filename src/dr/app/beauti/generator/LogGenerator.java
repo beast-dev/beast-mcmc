@@ -27,8 +27,6 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
@@ -48,7 +46,6 @@ import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -146,27 +143,19 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            writer.writeOpenTag(ColumnsParser.COLUMN,
-                    new Attribute[]{
-                            new Attribute.Default<String>(ColumnsParser.LABEL, clockModelGenerator.getClockRateString(model)),
-                            new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
-                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
-                    }
-            );
+            if (!model.getClockRateParameter().isFixed()) {
+                writer.writeOpenTag(ColumnsParser.COLUMN,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ColumnsParser.LABEL, clockModelGenerator.getClockRateString(model)),
+                                new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
+                                new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
+                        }
+                );
 
-            clockModelGenerator.writeAllClockRateRefs(model, writer);
-//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-//            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
-//            for (PartitionClockModel model : options.getPartitionClockModels()) {
-//                if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL)
-//                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-//            }
-//        } else {
-//            for (PartitionClockModel model : options.getPartitionClockModels()) {
-//                clockModelGenerator.writeAllClockRateRefs(model, writer);
-//            }
-//        }
-            writer.writeCloseTag(ColumnsParser.COLUMN);
+                clockModelGenerator.writeAllClockRateRefs(model, writer);
+
+                writer.writeCloseTag(ColumnsParser.COLUMN);
+            }
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
@@ -262,40 +251,15 @@ public class LogGenerator extends Generator {
             }
         }
 
-//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-//	        treePriorGenerator.setModelPrefix("");
-//        	treePriorGenerator.writeParameterLog(options.activedSameTreePrior, writer);
-//        } else { // no species
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-//	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // priorName.treeModel
             treePriorGenerator.writeParameterLog(prior, writer);
         }
-//	    }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(model, writer);
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
-//                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
-//                if (model.getClockType() == ClockType.UNCORRELATED) {
-//                    switch (model.getClockDistributionType()) {
-//                        case LOGNORMAL:
-//                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-//                            break;
-//                        case GAMMA:
-//                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-////                            break;
-//                        case CAUCHY:
-//                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
-////                            break;
-//                        case EXPONENTIAL:
-//                            // nothing required
-//                            break;
-//                    }
-//                }
-//            }
             clockModelGenerator.writeLog(model, writer);
         }
 

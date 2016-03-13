@@ -426,7 +426,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             Parameter parameter = parameters.get(rows[i]);
             if (parameter.isStatistic) {
                 JOptionPane.showMessageDialog(frame,
-                        "Statistics are not currently allowed.",
+                        "Statistics cannot be used in a hierarchical model.",
                         "HPM parameter linking error",
                         JOptionPane.WARNING_MESSAGE);
                 return;

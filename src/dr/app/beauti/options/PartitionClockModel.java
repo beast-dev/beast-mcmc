@@ -222,16 +222,16 @@ public class PartitionClockModel extends PartitionOptions {
                     throw new IllegalArgumentException("Unknown clock model");
             }
 
-            Parameter rateParam = getClockRateParam();
+            Parameter rateParam = getClockRateParameter();
             params.add(rateParam);
         }
     }
 
-    public Parameter getClockRateParam() {
-        return getClockRateParam(clockType, clockDistributionType);
+    public Parameter getClockRateParameter() {
+        return getClockRateParameter(clockType, clockDistributionType);
     }
 
-    private Parameter getClockRateParam(ClockType clockType, ClockDistributionType clockDistributionType) {
+    private Parameter getClockRateParameter(ClockType clockType, ClockDistributionType clockDistributionType) {
         Parameter rateParam = null;
         switch (clockType) {
             case STRICT_CLOCK:

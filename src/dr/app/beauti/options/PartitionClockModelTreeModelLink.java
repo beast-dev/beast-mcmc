@@ -135,28 +135,28 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-        setAvgRootAndRate();
-        getParameter("branchRates.categories");
-        getParameter("treeModel.rootRate");
-        getParameter("treeModel.nodeRates");
-        getParameter("treeModel.allRates");
-
-        if (options.hasData()) {
-            // if not fixed then do mutation rate move and up/down move
-            boolean fixed = !model.isEstimatedRate();
-
-            Parameter rateParam;
-
-            switch (model.getClockType()) {
-                case AUTOCORRELATED:
-                    rateParam = getParameter("treeModel.rootRate");
-                    rateParam.isFixed = fixed;
-                    if (!fixed) params.add(rateParam);
-
-                    params.add(getParameter("branchRates.var"));
-                    break;
-            }
-        }
+//        setAvgRootAndRate();
+//        getParameter("branchRates.categories");
+//        getParameter("treeModel.rootRate");
+//        getParameter("treeModel.nodeRates");
+//        getParameter("treeModel.allRates");
+//
+//        if (options.hasData()) {
+//            // if not fixed then do mutation rate move and up/down move
+//            boolean fixed = !model.isEstimatedRate();
+//
+//            Parameter rateParam;
+//
+//            switch (model.getClockType()) {
+//                case AUTOCORRELATED:
+//                    rateParam = getParameter("treeModel.rootRate");
+//                    rateParam.isFixed = fixed;
+//                    if (!fixed) params.add(rateParam);
+//
+//                    params.add(getParameter("branchRates.var"));
+//                    break;
+//            }
+//        }
     }
 
     /**
@@ -250,27 +250,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectStatistics(List<Parameter> params) {
-
-//        if (options.taxonSets != null) {
-//            for (Taxa taxonSet : options.taxonSets) {
-//                Parameter statistic = statistics.get(taxonSet);
-//                if (statistic == null) {
-//                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-//                    statistics.put(taxonSet, statistic);
-//                }
-//                params.add(statistic);
-//            }
-//        } else {
-//            System.err.println("TaxonSets are null");
-//        }
-
-        // Statistics
-//        if (model.getClockType() != ClockType.STRICT_CLOCK) {
-//            params.add(getParameter("meanRate"));
-//            params.add(getParameter("covariance"));
-//            params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
-//        }
-
     }
 
     /////////////////////////////////////////////////////////////

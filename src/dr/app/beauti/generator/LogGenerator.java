@@ -277,25 +277,25 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
-                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
-                if (model.getClockType() == ClockType.UNCORRELATED) {
-                    switch (model.getClockDistributionType()) {
-                        case LOGNORMAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+//            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
+//                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
+//                if (model.getClockType() == ClockType.UNCORRELATED) {
+//                    switch (model.getClockDistributionType()) {
+//                        case LOGNORMAL:
+//                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
 //                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+//                        case GAMMA:
+//                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+////                            break;
+//                        case CAUCHY:
+//                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+////                            break;
+//                        case EXPONENTIAL:
+//                            // nothing required
 //                            break;
-                        case EXPONENTIAL:
-                            // nothing required
-                            break;
-                    }
-                }
-            }
+//                    }
+//                }
+//            }
             clockModelGenerator.writeLog(model, writer);
         }
 
@@ -389,25 +389,25 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
-                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
-                if (model.getClockType() == ClockType.UNCORRELATED) {
-                    switch (model.getClockDistributionType()) {
-                        case LOGNORMAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+//            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
+//                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
+//                if (model.getClockType() == ClockType.UNCORRELATED) {
+//                    switch (model.getClockDistributionType()) {
+//                        case LOGNORMAL:
+//                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
 //                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+//                        case GAMMA:
+//                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+////                            break;
+//                        case CAUCHY:
+//                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+////                            break;
+//                        case EXPONENTIAL:
+//                            // nothing required
 //                            break;
-                        case EXPONENTIAL:
-                            // nothing required
-                            break;
-                    }
-                }
-            }
+//                    }
+//                }
+//            }
             clockModelGenerator.writeLog(model, writer);
         }
 

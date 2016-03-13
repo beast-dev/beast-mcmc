@@ -326,7 +326,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     ////////////////////////////////////////////////////////////////
 
     public void selectParameters(List<Parameter> params) {
-        setAvgRootAndRate();
+//        setAvgRootAndRate();
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
         switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:

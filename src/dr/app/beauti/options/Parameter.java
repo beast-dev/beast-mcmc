@@ -79,7 +79,7 @@ public class Parameter implements Serializable {
     public PriorType priorType;
 
     // Editable fields
-    public boolean isFixed;
+    private boolean isFixed;
     public double initial;
     public boolean isTruncated;
     public double truncationUpper;
@@ -478,7 +478,9 @@ public class Parameter implements Serializable {
         double upper = Double.POSITIVE_INFINITY;
 
         if (isZeroOne) {
-            if (upper > 1) upper = 1.0;
+            if (upper > 1) {
+                upper = 1.0;
+            }
         }
 
         if (priorType == PriorType.UNIFORM_PRIOR) {
@@ -490,6 +492,16 @@ public class Parameter implements Serializable {
         }
 
         return upper;
+    }
+
+    public boolean isFixed() {
+        return priorType == PriorType.NONE_FIXED;
+    }
+
+    public void setFixed(boolean isFixed) {
+        if (isFixed) {
+            priorType = PriorType.NONE_FIXED;
+        }
     }
 
     public boolean isMeanInRealSpace() {

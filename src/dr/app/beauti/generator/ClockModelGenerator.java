@@ -276,11 +276,11 @@ public class ClockModelGenerator extends Generator {
                     writer.writeOpenTag(ACLikelihoodParser.AC_LIKELIHOOD, attributes);
                     writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
 
-                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
-                        Parameter para = tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
-                        para.isFixed = true;
-                        para.initial = model.getRate();
-                    }
+//                    if (!model.isEstimatedRate()) { //TODO move to options or panel select method
+//                        Parameter parameter = tree.getParameter(TreeModel.TREE_MODEL + "." + RateEvolutionLikelihood.ROOTRATE);//"treeModel.rootRate"
+//                        parameter.isFixed = true;
+//                        parameter.initial = model.getRate();
+//                    }
 
                     writer.writeOpenTag(RateEvolutionLikelihood.RATES,
                             new Attribute[]{
@@ -309,7 +309,7 @@ public class ClockModelGenerator extends Generator {
 
                     writer.writeCloseTag(ACLikelihoodParser.AC_LIKELIHOOD);
 
-                    if (model.isEstimatedRate()) {//TODO
+//                    if (model.isEstimatedRate()) {//TODO
                         writer.writeText("");
                         writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
                                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL
@@ -319,7 +319,7 @@ public class ClockModelGenerator extends Generator {
                         writer.writeIDref(ParameterParser.PARAMETER, options.noDuplicatedPrefix(modelPrefix, treePrefix) + TreeModel.TREE_MODEL + "."
                                 + RateEvolutionLikelihood.ROOTRATE);
                         writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-                    }
+//                    }
 
                     writer.writeText("");
                     writer.writeOpenTag(

@@ -34,7 +34,6 @@ import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
@@ -156,8 +155,6 @@ public class BeautiOptions extends ModelOptions {
         starBEASTOptions = new STARBEASTOptions(this);
 
         microsatelliteOptions = new MicrosatelliteOptions(this);
-
-        beautiTemplate = new BeautiTemplate(this);
 
         parameters.clear();
         operators.clear();
@@ -371,8 +368,8 @@ public class BeautiOptions extends ModelOptions {
         // no remove operators for parameters that are part of a joint prior...
         List<Operator> toRemove = new ArrayList<Operator>();
         for (Operator operator : ops) {
-            if ((operator.parameter1 != null && operator.parameter1.isLinked) ||
-                    (operator.parameter2 != null && operator.parameter2.isLinked)) {
+            if ((operator.getParameter1() != null && operator.getParameter1().isLinked) ||
+                    (operator.getParameter2() != null && operator.getParameter2().isLinked)) {
                 toRemove.add(operator);
             }
         }
@@ -384,7 +381,7 @@ public class BeautiOptions extends ModelOptions {
 
     public Operator getOperator(Parameter parameter) {
         for (Operator operator : selectOperators()) {
-            if (operator.parameter1 == parameter || operator.parameter2 == parameter) {
+            if (operator.getParameter1() == parameter || operator.getParameter2() == parameter) {
                 return operator;
             }
         }
@@ -1420,8 +1417,6 @@ public class BeautiOptions extends ModelOptions {
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
-
-    public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 
     public boolean shareMicroSat = true;
 

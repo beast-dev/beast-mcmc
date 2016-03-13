@@ -200,7 +200,7 @@ public abstract class Generator {
         if (parameter == null) {
             throw new IllegalArgumentException("parameter (== null) is unknown");
         }
-        if (parameter.isFixed) { // with prefix
+        if (parameter.isFixed()) { // with prefix
             writeParameter(parameter.getName(), dimension, parameter.initial, Double.NaN, Double.NaN, writer);
         } else {
             double lower = Double.NaN;
@@ -242,7 +242,7 @@ public abstract class Generator {
     }
 
     public void writeParameter(String id, Parameter parameter, XMLWriter writer) {
-        if (parameter.isFixed) {
+        if (parameter.isFixed()) {
             writeParameter(id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
         } else {
             double lower = Double.NaN;

@@ -43,18 +43,19 @@ public class Operator implements Serializable {
     // final
     private String baseName;
     private final String description;
-    public final OperatorType operatorType;
-    public final Parameter parameter1;
-    public final Parameter parameter2;
+    private final OperatorType operatorType;
+    private final Parameter parameter1;
+    private final Parameter parameter2;
     private final PartitionOptions options;
-    public final String tag;
+    private final String tag;
 
     // editable
-    public double tuning;
-    public double weight;
-    public boolean tuningEdited;
-    public boolean inUse;
-    public String idref;
+    private double tuning;
+    private double weight;
+    private boolean tuningEdited = false;
+    private boolean isUsed = true;
+
+    private String idref;
 
     public static class Builder {
         // Required para
@@ -72,9 +73,6 @@ public class Operator implements Serializable {
         private String tag = null;
         private String idref = null;
 
-        private boolean inUse = true;
-        private boolean tuningEdited = false;
-
         public Builder(String name, String description, Parameter parameter, OperatorType type, double tuning, double weight) {
             this.baseName = name;
             this.description = description;
@@ -86,16 +84,6 @@ public class Operator implements Serializable {
 
         public Builder parameter2(Parameter parameter2) {
             this.parameter2 = parameter2;
-            return this;
-        }
-
-        public Builder isInUse(boolean inUse) {
-            this.inUse = inUse;
-            return this;
-        }
-
-        public Builder tuningEdited(boolean tuningEdited) {
-            this.tuningEdited = tuningEdited;
             return this;
         }
 
@@ -135,8 +123,8 @@ public class Operator implements Serializable {
         options = builder.options;
         tag = builder.tag;
         idref = builder.idref;
-        inUse = builder.inUse;
-        tuningEdited = builder.tuningEdited;
+        isUsed = true;
+        tuningEdited = false;
     }
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -156,6 +144,59 @@ public class Operator implements Serializable {
 
     public boolean isTunable() {
         return tuning > 0;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public String getIdref() {
+        return idref;
+    }
+
+    public double getWeight() {
+        return weight;
+    }
+
+    public void setWeight(double weight) {
+        this.weight = weight;
+    }
+
+    public double getTuning() {
+        return tuning;
+    }
+
+    public void setTuning(double tuning) {
+        this.tuning = tuning;
+        tuningEdited = true;
+    }
+
+    public boolean isTuningEdited() {
+        return tuningEdited;
+    }
+
+    public OperatorType getOperatorType() {
+        return operatorType;
+    }
+
+    public boolean isUsed() {
+        return isParameterFixed() ? false : isUsed;
+    }
+
+    public void setUsed(boolean used) {
+        this.isUsed = used;
+    }
+
+    public boolean isParameterFixed() {
+        return parameter1.isFixed();
+    }
+
+    public Parameter getParameter1() {
+        return parameter1;
+    }
+
+    public Parameter getParameter2() {
+        return parameter2;
     }
 
     public void setPrefix(String prefix) {

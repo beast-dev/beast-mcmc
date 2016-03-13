@@ -375,9 +375,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         calculateHeights();
 
         if (options.clockModelOptions.isTipCalibrated()) { // todo correct?
-            for (PartitionClockModel clockModel : options.getPartitionClockModels()) {
-                clockModel.setRateTypeOption(FixRateType.TIP_CALIBRATED);
-                clockModel.setEstimatedRate(true);
+            for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+                treeModel.setTipCalibrations(true);
             }
         }
 

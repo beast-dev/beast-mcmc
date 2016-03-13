@@ -73,18 +73,6 @@ public class TreeModelOptions extends ModelOptions {
 
     }
 
-    /////////////////////////////////////////////////////////////
-//    public double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
-//    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
-//
-//    	if (rootHeight.priorType != PriorType.NONE_TREE_PRIOR) {
-//    		return rootHeight.initial;
-//    	} else {
-//    		return calculateMeanDistance(model.getDataPartitions());
-//    	}
-//
-//    }
-
     public double getExpectedAvgBranchLength(double rootHeight) {
         double sum = 0;
         int taxonCount = options.taxonList.getTaxonCount();
@@ -111,14 +99,13 @@ public class TreeModelOptions extends ModelOptions {
         }
     }
 
-    public boolean isNodeCalibrated(Parameter para) {
-        return (para.taxaId != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
-                || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para));
+    public boolean isNodeCalibrated(Parameter parameter) {
+        return (parameter.taxaId != null && hasProperPriorOn(parameter)) // param.taxa != null is TMRCA
+                || (parameter.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(parameter));
     }
 
     private boolean hasProperPriorOn(Parameter para) {
         return para.priorType == PriorType.EXPONENTIAL_PRIOR
-//                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
                 || (para.priorType == PriorType.UNIFORM_PRIOR && para.uniformLower > 0 && para.uniformUpper < Double.POSITIVE_INFINITY)
                 || para.priorType == PriorType.LAPLACE_PRIOR
                 || para.priorType == PriorType.NORMAL_PRIOR

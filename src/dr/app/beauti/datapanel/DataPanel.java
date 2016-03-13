@@ -212,31 +212,30 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
-        // Hiding the StarBEAST button.
-//        JPanel panel1 = new JPanel(new BorderLayout());
-//        panel1.setOpaque(false);
-//        panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
-//        panel1.add(toolBar1, BorderLayout.SOUTH);
+        JPanel panel1 = new JPanel(new BorderLayout());
+        panel1.setOpaque(false);
+        panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
+        panel1.add(toolBar1, BorderLayout.SOUTH);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
-//        add(panel1, BorderLayout.NORTH);
-        add(toolBar1, BorderLayout.NORTH);
+        add(panel1, BorderLayout.NORTH);
+//        add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
-//        useStarBEASTCheck.setEnabled(false);
-//        useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
-//        useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
-//            public void actionPerformed(ActionEvent e) {// wrong listener Issue 397: *BEAST in BEAUti is broken
-//                if (frame.setupStarBEAST(useStarBEASTCheck.isSelected()) == false) {
-//                    useStarBEASTCheck.setSelected(false); // go back to unchecked
-//                }
-//
-//                dataTableModel.fireTableDataChanged();
-//            }
-//        });
+        useStarBEASTCheck.setEnabled(false);
+        useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
+        useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (!frame.setupStarBEAST(useStarBEASTCheck.isSelected())) {
+                    useStarBEASTCheck.setSelected(false); // go back to unchecked
+                }
+
+                dataTableModel.fireTableDataChanged();
+            }
+        });
 
     }
 

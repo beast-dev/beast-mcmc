@@ -46,12 +46,7 @@ public class PartitionClockModel extends PartitionOptions {
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean continuousQuantile = false;
 
-    private double rate; // move to initModelParametersAndOpererators() to initial
-
     private final int dataLength;
-
-    private boolean isFixedMean = false;
-    private FixRateType rateTypeOption = FixRateType.RELATIVE_TO;
 
     public PartitionClockModel(final BeautiOptions options, AbstractPartitionData partition) {
         super(options);
@@ -76,7 +71,6 @@ public class PartitionClockModel extends PartitionOptions {
 
         this.clockType = source.clockType;
         clockDistributionType = source.clockDistributionType;
-        rate = source.rate;
 
         dataLength = source.dataLength;
 
@@ -89,7 +83,7 @@ public class PartitionClockModel extends PartitionOptions {
 //    }
 
     protected void initModelParametersAndOpererators() {
-        rate = 1.0;
+        double rate = 1.0;
 
         if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR || dataLength <= 10) { // TODO Discuss threshold
             new Parameter.Builder("clock.rate", "substitution rate")
@@ -171,7 +165,8 @@ public class PartitionClockModel extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-        setAvgRootAndRate();
+//        setAvgRootAndRate();
+        double rate = 1.0;
 
         if (options.hasData()) {
             switch (clockType) {
@@ -228,12 +223,7 @@ public class PartitionClockModel extends PartitionOptions {
             }
 
             Parameter rateParam = getClockRateParam();
-
-            if (rate != rateParam.initial) {
-                rate = rateParam.initial;
-            }
-
-            if (!rateParam.isFixed) params.add(rateParam);
+            params.add(rateParam);
         }
     }
 
@@ -287,94 +277,50 @@ public class PartitionClockModel extends PartitionOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
-            if (getRateTypeOption() != FixRateType.FIXED_MEAN
-                    && isEstimatedRate()) {
-                switch (clockType) {
-                    case STRICT_CLOCK:
-                        ops.add(getOperator("clock.rate"));
-                        break;
+            switch (clockType) {
+                case STRICT_CLOCK:
+                    ops.add(getOperator("clock.rate"));
+                    break;
 
-                    case RANDOM_LOCAL_CLOCK:
-                        ops.add(getOperator("clock.rate"));
-                        addRandomLocalClockOperators(ops);
-                        break;
+                case RANDOM_LOCAL_CLOCK:
+                    ops.add(getOperator("clock.rate"));
+                    addRandomLocalClockOperators(ops);
+                    break;
 
-                    case FIXED_LOCAL_CLOCK:
-                        ops.add(getOperator("clock.rate"));
-                        for (Taxa taxonSet : options.taxonSets) {
-                            if (options.taxonSetsMono.get(taxonSet)) {
-                                ops.add(getOperator(taxonSet.getId() + ".rate"));
-                            }
+                case FIXED_LOCAL_CLOCK:
+                    ops.add(getOperator("clock.rate"));
+                    for (Taxa taxonSet : options.taxonSets) {
+                        if (options.taxonSetsMono.get(taxonSet)) {
+                            ops.add(getOperator(taxonSet.getId() + ".rate"));
                         }
-                        break;
+                    }
+                    break;
 
-                    case UNCORRELATED:
-                        switch (clockDistributionType) {
-                            case LOGNORMAL:
-                                ops.add(getOperator(ClockType.UCLD_MEAN));
-                                ops.add(getOperator(ClockType.UCLD_STDEV));
-                                break;
-                            case GAMMA:
-                                ops.add(getOperator(ClockType.UCGD_MEAN));
-                                ops.add(getOperator(ClockType.UCGD_SHAPE));
-                                break;
-                            case CAUCHY:
+                case UNCORRELATED:
+                    switch (clockDistributionType) {
+                        case LOGNORMAL:
+                            ops.add(getOperator(ClockType.UCLD_MEAN));
+                            ops.add(getOperator(ClockType.UCLD_STDEV));
+                            break;
+                        case GAMMA:
+                            ops.add(getOperator(ClockType.UCGD_MEAN));
+                            ops.add(getOperator(ClockType.UCGD_SHAPE));
+                            break;
+                        case CAUCHY:
 //                                throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
-                                break;
-                            case EXPONENTIAL:
-                                ops.add(getOperator(ClockType.UCED_MEAN));
-                                break;
-                        }
-                        break;
+                            break;
+                        case EXPONENTIAL:
+                            ops.add(getOperator(ClockType.UCED_MEAN));
+                            break;
+                    }
+                    break;
 
-                    case AUTOCORRELATED:
-                        throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
+                case AUTOCORRELATED:
+                    throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
 //                        break;
 
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
-            } else {
-                switch (clockType) {
-                    case STRICT_CLOCK:
-                        // no parameter to operator on
-                        break;
-
-                    case UNCORRELATED:
-                        switch (clockDistributionType) {
-                            case LOGNORMAL:
-                                ops.add(getOperator(ClockType.UCLD_STDEV));
-                                break;
-                            case GAMMA:
-                                ops.add(getOperator(ClockType.UCGD_SHAPE));
-                                break;
-                            case CAUCHY:
-//                                throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
-                                break;
-                            case EXPONENTIAL:
-                                break;
-                        }
-                        break;
-
-                    case AUTOCORRELATED:
-                        // no parameter to operator on
-                        break;
-
-                    case RANDOM_LOCAL_CLOCK:
-                        addRandomLocalClockOperators(ops);
-                        break;
-
-                    case FIXED_LOCAL_CLOCK:
-                        for (Taxa taxonSet : options.taxonSets) {
-                            if (options.taxonSetsMono.get(taxonSet)) {
-                                ops.add(getOperator(taxonSet.getId() + ".rate"));
-                            }
-                        }
-                        break;
-
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
+                default:
+                    throw new IllegalArgumentException("Unknown clock model");
             }
         }
 
@@ -422,46 +368,6 @@ public class PartitionClockModel extends PartitionOptions {
         this.continuousQuantile = continuousQuantile;
     }
 
-    // important to set all clock rate rateParam.isFixed same, which keeps isEstimatedRate() correct when change clock type
-    public void setEstimatedRate(boolean isEstimatedRate) {
-//        for (ClockType clockType : new ClockType[]{ClockType.STRICT_CLOCK, ClockType.UNCORRELATED, ClockType.RANDOM_LOCAL_CLOCK}) {
-//            Parameter rateParam = getClockRateParam(clockType, );
-//            rateParam.isFixed = !isEstimatedRate;
-//        }
-        //TODO a trouble to deal with clockDistributionType, when try to set all rate parameters
-        Parameter rateParam = getParameter("clock.rate");
-        rateParam.isFixed = !isEstimatedRate;
-        rateParam = getParameter(ClockType.UCLD_MEAN);
-        rateParam.isFixed = !isEstimatedRate;
-        rateParam = getParameter(ClockType.UCED_MEAN);
-        rateParam.isFixed = !isEstimatedRate;
-    }
-
-    public boolean isEstimatedRate() {
-        Parameter rateParam = getClockRateParam();
-        return !rateParam.isFixed;
-    }
-
-    public void setUseReferencePrior(boolean useReferencePrior) {
-        Parameter rateParam = getClockRateParam();
-        if (useReferencePrior) {
-            rateParam.priorType = PriorType.CTMC_RATE_REFERENCE_PRIOR;
-        } else {
-            rateParam.priorType = PriorType.UNDEFINED;
-        }
-    }
-
-    public double getRate() {
-        return rate;
-    }
-
-    public void setRate(double rate, boolean isUpdatedByUser) {
-        this.rate = rate;
-        Parameter rateParam = getClockRateParam();
-        rateParam.initial = rate;
-        if (isUpdatedByUser) rateParam.setPriorEdited(true);
-    }
-
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionClockModels().size() > 1) { //|| options.isSpeciesAnalysis()
@@ -470,23 +376,5 @@ public class PartitionClockModel extends PartitionOptions {
         }
         return prefix;
     }
-
-    public boolean isFixedMean() {
-        return isFixedMean;
-    }
-
-    public void setFixedMean(boolean isFixedMean) {
-        this.isFixedMean = isFixedMean;
-    }
-
-    public FixRateType getRateTypeOption() {
-        return rateTypeOption;
-    }
-
-    public void setRateTypeOption(FixRateType rateTypeOption) {
-        this.rateTypeOption = rateTypeOption;
-        setFixedMean(rateTypeOption == FixRateType.FIXED_MEAN);
-    }
-
 
 }

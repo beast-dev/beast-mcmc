@@ -124,7 +124,7 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        if (parameter.isTruncated) {
+        if (parameter.priorType != PriorType.NONE_FIXED && parameter.isTruncated) {
             // if there is a truncation then put it at the top so it short-circuits any other prior
             // calculations
 
@@ -140,6 +140,8 @@ public class ParameterPriorGenerator extends Generator {
         }
 
         switch (parameter.priorType) {
+            case NONE_FIXED:
+                break;
             case NONE_IMPROPER:
                 writer.writeComment("Improper uniform prior: " + parameter.getName());
                 break;

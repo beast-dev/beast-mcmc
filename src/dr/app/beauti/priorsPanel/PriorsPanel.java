@@ -31,10 +31,7 @@ import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;
 import dr.app.beauti.components.linkedparameters.LinkedParameter;
 import dr.app.beauti.components.linkedparameters.LinkedParameterComponentOptions;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Operator;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.PriorType;
@@ -361,7 +358,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
             if (parameter.truncationLower != firstParameter.truncationLower ||
                     parameter.truncationUpper != firstParameter.truncationUpper ||
-                    options.getOperator(parameter).operatorType != options.getOperator(firstParameter).operatorType) {
+                    options.getOperator(parameter).getOperatorType() != options.getOperator(firstParameter).getOperatorType()) {
                 JOptionPane.showMessageDialog(frame,
                         "Only parameters that share the same bounds\n" +
                                 "and have the same operator types can be linked.",
@@ -578,7 +575,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 isCompatible = false;
             }
             Operator operator = options.getOperator(parameter);
-            if (operator == null || operator.operatorType != sourceOperator.operatorType) {
+            if (operator == null || operator.getOperatorType() != sourceOperator.getOperatorType()) {
                 isCompatible = false;
             }
             if (isCompatible) {
@@ -651,20 +648,17 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             if (parameter.getBaseName().endsWith("treeModel.rootHeight") || parameter.taxaId != null) { // param.taxa != null is TMRCA
 
                 if (options.treeModelOptions.isNodeCalibrated(parameter)) {
-                    List<PartitionClockModel> clockModels;
+                    List<PartitionTreeModel> treeModels;
                     if (options.useStarBEAST) {
-                        clockModels = options.getPartitionClockModels();
+                        treeModels = options.getPartitionTreeModels();
                     } else {
-                        clockModels = options.getPartitionClockModels(options.getDataPartitions(parameter.getOptions()));
+                        treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
                     }
 
-                    for (PartitionClockModel clockModel : clockModels) {
-                        clockModel.setRateTypeOption(FixRateType.NODE_CALIBRATED);
-                        clockModel.setEstimatedRate(true);
+                    for (PartitionTreeModel treeModel : treeModels) {
+                        treeModel.setNodeCalibrations(true);
                     }
                     frame.setAllOptions();
-//        	} else {
-//        		options.clockModelOptions.fixRateOfFirstClockPartition();
                 }
             }
 

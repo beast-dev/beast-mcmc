@@ -43,7 +43,7 @@ public abstract class PartitionOptions extends ModelOptions {
     protected String partitionName;
     protected final BeautiOptions options;
 
-    protected double[] avgRootAndRate = new double[]{1.0, 1.0};
+//    protected double[] avgRootAndRate = new double[]{1.0, 1.0};
 
     public PartitionOptions(BeautiOptions options) {
         this.options = options;
@@ -119,17 +119,19 @@ public abstract class PartitionOptions extends ModelOptions {
         return options.getDataPartitions(this).get(0).getDataType();
     }
 
-    public double[] getAvgRootAndRate() {
-        return avgRootAndRate;
-    }
-
-    public void setAvgRootAndRate() {
-        this.avgRootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getDataPartitions(this));
-    }
+//    public double[] getAvgRootAndRate() {
+//        return avgRootAndRate;
+//    }
+//
+//    public void setAvgRootAndRate() {
+//        this.avgRootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getDataPartitions(this));
+//    }
 
     protected void autoScale(Parameter param) {
-        double avgInitialRootHeight = avgRootAndRate[0];
-        double avgInitialRate = avgRootAndRate[1];
+//        double avgInitialRootHeight = avgRootAndRate[0];
+//        double avgInitialRate = avgRootAndRate[1];
+        double avgInitialRootHeight = 1.0;
+        double avgInitialRate = 0.1;
 
 //        double growthRateMaximum = 1E6;
         double birthRateMaximum = 1E6;

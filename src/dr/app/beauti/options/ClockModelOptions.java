@@ -87,118 +87,118 @@ public class ClockModelOptions extends ModelOptions {
     }
 
 
-    public String statusMessageClockModel(PartitionClockModel clockModel) {
-        String t;
-        if (clockModel.getRateTypeOption() == FixRateType.RELATIVE_TO) {
-            if (clockModel.isEstimatedRate()) {
-                t = "Estimate clock rate";
-            } else {
-                t = "Fix clock rate to " + clockModel.getRate();
-            }
+//    public String statusMessageClockModel(PartitionClockModel clockModel) {
+//        String t;
+//        if (clockModel.getRateTypeOption() == FixRateType.RELATIVE_TO) {
+//            if (clockModel.isEstimatedRate()) {
+//                t = "Estimate clock rate";
+//            } else {
+//                t = "Fix clock rate to " + clockModel.getRate();
+//            }
+//
+//        } else {
+//            t = clockModel.getRateTypeOption().toString();
+//        }
+//
+//        return t;
+//    }
 
-        } else {
-            t = clockModel.getRateTypeOption().toString();
-        }
+//    public double[] calculateInitialRootHeightAndRate(List<AbstractPartitionData> partitions) {
+//        double avgInitialRootHeight = 1;
+//        double avgInitialRate = 1;
+//        double avgMeanDistance = 1;
+//
+//        if (partitions.size() > 0) {
+//            avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
+//        }
+//
+//        if (options.getPartitionClockModels(partitions).size() > 0) {
+//            avgInitialRate = options.clockModelOptions.getSelectedRate(partitions); // all clock models
+//            PartitionClockModel clockModel = options.getPartitionClockModels(partitions).get(0);
+//
+//            switch (clockModel.getRateTypeOption()) {
+//                case FIXED_MEAN:
+//                case RELATIVE_TO:
+//                    if (partitions.size() > 0) {
+//                        avgInitialRootHeight = avgMeanDistance / avgInitialRate;
+//                    }
+//                    break;
+//
+//                case TIP_CALIBRATED:
+//                    avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
+//                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
+//                    break;
+//
+//                case NODE_CALIBRATED:
+//                    avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+//                    if (avgInitialRootHeight < 0) avgInitialRootHeight = 1; // no leaf nodes
+//                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
+//                    break;
+//
+//                case RATE_CALIBRATED:
+//
+//                    break;
+//
+//                default:
+//                    throw new IllegalArgumentException("Unknown fix rate type");
+//            }
+//        }
+//        avgInitialRootHeight = MathUtils.round(avgInitialRootHeight, 2);
+//        avgInitialRate = MathUtils.round(avgInitialRate, 2);
+//
+//        return new double[]{avgInitialRootHeight, avgInitialRate};
+//    }
 
-        return t;
-    }
-
-    public double[] calculateInitialRootHeightAndRate(List<AbstractPartitionData> partitions) {
-        double avgInitialRootHeight = 1;
-        double avgInitialRate = 1;
-        double avgMeanDistance = 1;
-
-        if (partitions.size() > 0) {
-            avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
-        }
-
-        if (options.getPartitionClockModels(partitions).size() > 0) {
-            avgInitialRate = options.clockModelOptions.getSelectedRate(partitions); // all clock models
-            PartitionClockModel clockModel = options.getPartitionClockModels(partitions).get(0);
-
-            switch (clockModel.getRateTypeOption()) {
-                case FIXED_MEAN:
-                case RELATIVE_TO:
-                    if (partitions.size() > 0) {
-                        avgInitialRootHeight = avgMeanDistance / avgInitialRate;
-                    }
-                    break;
-
-                case TIP_CALIBRATED:
-                    avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
-                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case NODE_CALIBRATED:
-                    avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
-                    if (avgInitialRootHeight < 0) avgInitialRootHeight = 1; // no leaf nodes
-                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case RATE_CALIBRATED:
-
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown fix rate type");
-            }
-        }
-        avgInitialRootHeight = MathUtils.round(avgInitialRootHeight, 2);
-        avgInitialRate = MathUtils.round(avgInitialRate, 2);
-
-        return new double[]{avgInitialRootHeight, avgInitialRate};
-    }
-
-    public double getSelectedRate(List<AbstractPartitionData> partitions) {
-        double selectedRate = 1;
-        double avgInitialRootHeight;
-        double avgMeanDistance = 1;
-
-        if (partitions.size() > 0 && options.getPartitionClockModels(partitions).size() > 0) {
-            //todo multi-group?
-            PartitionClockModel clockModel = options.getPartitionClockModels(partitions).get(0);
-            switch (clockModel.getRateTypeOption()) {
-                case FIXED_MEAN:
-                    selectedRate = clockModel.getRate();
-                    break;
-
-                case RELATIVE_TO:
-                    List<PartitionClockModel> models = options.getPartitionClockModels(partitions);
-                    // fix ?th partition
-                    if (models.size() == 1) {
-                        selectedRate = models.get(0).getRate();
-                    } else {
-                        selectedRate = getAverageRate(models);
-                    }
-                    break;
-
-                case TIP_CALIBRATED:
-                    if (partitions.size() > 0) {
-                        avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
-                    }
-                    avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
-                    selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case NODE_CALIBRATED:
-                    if (partitions.size() > 0) {
-                        avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
-                    }
-                    avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
-                    if (avgInitialRootHeight < 0) avgInitialRootHeight = 1; // no leaf nodes
-                    selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case RATE_CALIBRATED:
-                    //TODO
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown fix rate type");
-            }
-        }
-        return selectedRate;
-    }
+//    public double getSelectedRate(List<AbstractPartitionData> partitions) {
+//        double selectedRate = 1;
+//        double avgInitialRootHeight;
+//        double avgMeanDistance = 1;
+//
+//        if (partitions.size() > 0 && options.getPartitionClockModels(partitions).size() > 0) {
+//            //todo multi-group?
+//            PartitionClockModel clockModel = options.getPartitionClockModels(partitions).get(0);
+//            switch (clockModel.getRateTypeOption()) {
+//                case FIXED_MEAN:
+//                    selectedRate = clockModel.getRate();
+//                    break;
+//
+//                case RELATIVE_TO:
+//                    List<PartitionClockModel> models = options.getPartitionClockModels(partitions);
+//                    // fix ?th partition
+//                    if (models.size() == 1) {
+//                        selectedRate = models.get(0).getRate();
+//                    } else {
+//                        selectedRate = getAverageRate(models);
+//                    }
+//                    break;
+//
+//                case TIP_CALIBRATED:
+//                    if (partitions.size() > 0) {
+//                        avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
+//                    }
+//                    avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
+//                    selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
+//                    break;
+//
+//                case NODE_CALIBRATED:
+//                    if (partitions.size() > 0) {
+//                        avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
+//                    }
+//                    avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+//                    if (avgInitialRootHeight < 0) avgInitialRootHeight = 1; // no leaf nodes
+//                    selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
+//                    break;
+//
+//                case RATE_CALIBRATED:
+//                    //TODO
+//                    break;
+//
+//                default:
+//                    throw new IllegalArgumentException("Unknown fix rate type");
+//            }
+//        }
+//        return selectedRate;
+//    }
 
     private double getCalibrationEstimateOfRootTime(List<AbstractPartitionData> partitions) {
 
@@ -280,25 +280,25 @@ public class ClockModelOptions extends ModelOptions {
 
     }
 
-    public double getAverageRate(List<PartitionClockModel> models) { //TODO average per tree, but how to control the estimate clock => tree?
-        double averageRate = 0;
-        double count = 0;
-
-        for (PartitionClockModel model : models) {
-            if (!model.isEstimatedRate()) {
-                averageRate = averageRate + model.getRate();
-                count = count + 1;
-            }
-        }
-
-        if (count > 0) {
-            averageRate = averageRate / count;
-        } else {
-            averageRate = 1; //TODO how to calculate rate when estimate all
-        }
-
-        return averageRate;
-    }
+//    public double getAverageRate(List<PartitionClockModel> models) { //TODO average per tree, but how to control the estimate clock => tree?
+//        double averageRate = 0;
+//        double count = 0;
+//
+//        for (PartitionClockModel model : models) {
+//            if (!model.isEstimatedRate()) {
+//                averageRate = averageRate + model.getRate();
+//                count = count + 1;
+//            }
+//        }
+//
+//        if (count > 0) {
+//            averageRate = averageRate / count;
+//        } else {
+//            averageRate = 1; //TODO how to calculate rate when estimate all
+//        }
+//
+//        return averageRate;
+//    }
 
     public boolean isTipCalibrated() {
         return options.maximumTipHeight > 0;

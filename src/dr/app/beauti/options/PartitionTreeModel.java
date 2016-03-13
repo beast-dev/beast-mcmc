@@ -103,7 +103,7 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.WILSON_BALDING, -1, demoWeights);
 
         createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
-                OperatorType.SUBTREE_LEAP, 1.0, options.taxonList.getTaxonCount());
+                OperatorType.SUBTREE_LEAP, 1.0, options.taxonList.getTaxonCount() < treeWeights ? treeWeights : options.taxonList.getTaxonCount());
 
     }
 

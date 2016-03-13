@@ -147,12 +147,12 @@ public class PartitionClockModel extends PartitionOptions {
 
         if (USE_DIRICHLET_PRIOR_FOR_MUS) {
             createNonNegativeParameterDirichletPrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
-            createOperator("scaleMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+            createOperator("scaleMus", "allMus",
                     "Scale partition rates relative to each other", "allMus",
                     OperatorType.SCALE_INDEPENDENTLY, 0.75, 3.0);
         } else {
             createNonNegativeParameterInfinitePrior("allMus", "relative rates amongst partitions parameter", this, PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
-            createOperator("deltaMus", RelativeRatesType.MU_RELATIVE_RATES.toString(),
+            createOperator("deltaMus", "allMus",
                     "Scale partition rates relative to each other maintaining mean", "allMus",
                     OperatorType.DELTA_EXCHANGE, 0.75, 3.0);
         }

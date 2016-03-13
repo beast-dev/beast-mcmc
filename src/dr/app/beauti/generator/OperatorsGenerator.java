@@ -28,8 +28,6 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.RelativeRatesType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
@@ -351,51 +349,28 @@ public class OperatorsGenerator extends Generator {
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
 
-        if (operator.getBaseName().startsWith(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
+        int[] parameterWeights = operator.getParameter1().getParameterDimensionWeights();
+        Attribute[] attributes;
 
-            int[] parameterWeights = operator.getParameter1().getParameterDimensionWeights();
-
-            if (parameterWeights != null && parameterWeights.length > 1) {
-                String pw = "" + parameterWeights[0];
-                for (int i = 1; i < parameterWeights.length; i++) {
-                    pw += " " + parameterWeights[i];
-                }
-                writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
-                        new Attribute[]{
-                                new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.getTuning()),
-                                new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
-                                getWeightAttribute(operator.getWeight())
-                        }
-                );
+        if (parameterWeights != null && parameterWeights.length > 1) {
+            String pw = "" + parameterWeights[0];
+            for (int i = 1; i < parameterWeights.length; i++) {
+                pw += " " + parameterWeights[i];
             }
-
-//        } else if (operator.getBaseName().startsWith(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
-//
-//            int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights(operator.getClockModelGroup());
-//
-//            if (parameterWeights != null && parameterWeights.length > 1) {
-//                String pw = "" + parameterWeights[0];
-//                for (int i = 1; i < parameterWeights.length; i++) {
-//                    pw += " " + parameterWeights[i];
-//                }
-//                writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
-//                        new Attribute[]{
-//                                new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.getTuning()),
-//                                new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
-//                                getWeightAttribute(operator.getWeight())
-//                        }
-//                );
-//            }
+            attributes = new Attribute[]{
+                    new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.getTuning()),
+                    new Attribute.Default<String>(DeltaExchangeOperatorParser.PARAMETER_WEIGHTS, pw),
+                    getWeightAttribute(operator.getWeight())
+            };
 
         } else {
-            writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE,
-                    new Attribute[]{
-                            new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.getTuning()),
-                            getWeightAttribute(operator.getWeight())
-                    }
-            );
+            attributes = new Attribute[]{
+                    new Attribute.Default<Double>(DeltaExchangeOperatorParser.DELTA, operator.getTuning()),
+                    getWeightAttribute(operator.getWeight())
+            };
         }
 
+        writer.writeOpenTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE, attributes);
         writeParameter1Ref(writer, operator);
         writer.writeCloseTag(DeltaExchangeOperatorParser.DELTA_EXCHANGE);
     }
@@ -639,36 +614,36 @@ public class OperatorsGenerator extends Generator {
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
 //            if (model.isEstimatedRate()) {
-                switch (model.getClockType()) {
-                    case STRICT_CLOCK:
-                    case RANDOM_LOCAL_CLOCK:
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
-                        break;
+            switch (model.getClockType()) {
+                case STRICT_CLOCK:
+                case RANDOM_LOCAL_CLOCK:
+                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
+                    break;
 
-                    case UNCORRELATED:
-                        switch (model.getClockDistributionType()) {
-                            case LOGNORMAL:
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                                break;
-                            case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
+                case UNCORRELATED:
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                            break;
+                        case GAMMA:
+                            throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
 //                            break;
-                            case CAUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
 //                            break;
-                            case EXPONENTIAL:
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                                break;
-                        }
-                        break;
+                        case EXPONENTIAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+                            break;
+                    }
+                    break;
 
-                    case AUTOCORRELATED:
-                        throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
+                case AUTOCORRELATED:
+                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
 //	                break;
 
-                    default:
-                        throw new IllegalArgumentException("Unknown clock model");
-                }
+                default:
+                    throw new IllegalArgumentException("Unknown clock model");
+            }
         }
         if (options.useStarBEAST) {
             if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {

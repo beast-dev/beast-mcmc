@@ -114,14 +114,15 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 "Scales UCGD mean inversely to node heights of the tree", model.getParameter(ClockType.UCGD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
 
+        // These should not have priors on as there will be priors on the clock model parameters already..
 
         // These are statistics which could have priors on...
         // #meanRate = #Relaxed Clock Model * #Tree Model
-        createNonNegativeStatistic("meanRate", "The mean rate of evolution over the whole tree");
+//        createNonNegativeStatistic("meanRate", "The mean rate of evolution over the whole tree");
         // #covariance = #Relaxed Clock Model * #Tree Model
-        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages");
+//        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages");
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
-        createNonNegativeStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree");
+//        createNonNegativeStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree");
 
         createUpDownOperator("microsatUpDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
@@ -134,28 +135,28 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-        setAvgRootAndRate();
-        getParameter("branchRates.categories");
-        getParameter("treeModel.rootRate");
-        getParameter("treeModel.nodeRates");
-        getParameter("treeModel.allRates");
-
-        if (options.hasData()) {
-            // if not fixed then do mutation rate move and up/down move
-            boolean fixed = !model.isEstimatedRate();
-
-            Parameter rateParam;
-
-            switch (model.getClockType()) {
-                case AUTOCORRELATED:
-                    rateParam = getParameter("treeModel.rootRate");
-                    rateParam.isFixed = fixed;
-                    if (!fixed) params.add(rateParam);
-
-                    params.add(getParameter("branchRates.var"));
-                    break;
-            }
-        }
+//        setAvgRootAndRate();
+//        getParameter("branchRates.categories");
+//        getParameter("treeModel.rootRate");
+//        getParameter("treeModel.nodeRates");
+//        getParameter("treeModel.allRates");
+//
+//        if (options.hasData()) {
+//            // if not fixed then do mutation rate move and up/down move
+//            boolean fixed = !model.isEstimatedRate();
+//
+//            Parameter rateParam;
+//
+//            switch (model.getClockType()) {
+//                case AUTOCORRELATED:
+//                    rateParam = getParameter("treeModel.rootRate");
+//                    rateParam.isFixed = fixed;
+//                    if (!fixed) params.add(rateParam);
+//
+//                    params.add(getParameter("branchRates.var"));
+//                    break;
+//            }
+//        }
     }
 
     /**
@@ -170,7 +171,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
             if (model.getDataType().getType() == DataType.MICRO_SAT) {
                 if (model.getClockType() == ClockType.STRICT_CLOCK) {
                     op = getOperator("microsatUpDownRateHeights");
-                    op.setClockModelGroup(model.getClockModelGroup());
                     ops.add(op);
                 } else {
                     throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
@@ -181,7 +181,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
                         op = getOperator("upDownRateHeights");
-                        op.setClockModelGroup(model.getClockModelGroup());
                         ops.add(op);
                         break;
 
@@ -190,13 +189,11 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
                             case LOGNORMAL:
                                 op = getOperator("upDownUCLDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
                                 break;
                             case GAMMA:
 //                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
                                 op = getOperator("upDownUCGDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
                             break;
                             case CAUCHY:
@@ -204,7 +201,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //                            break;
                             case EXPONENTIAL:
                                 op = getOperator("upDownUCEDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
                                 break;
                         }
@@ -237,7 +233,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                     case RANDOM_LOCAL_CLOCK:
                     case FIXED_LOCAL_CLOCK:
                         op = getOperator("upDownRateHeights");
-                        op.setClockModelGroup(model.getClockModelGroup());
                         ops.add(op);
 
                         break;
@@ -255,27 +250,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectStatistics(List<Parameter> params) {
-
-//        if (options.taxonSets != null) {
-//            for (Taxa taxonSet : options.taxonSets) {
-//                Parameter statistic = statistics.get(taxonSet);
-//                if (statistic == null) {
-//                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-//                    statistics.put(taxonSet, statistic);
-//                }
-//                params.add(statistic);
-//            }
-//        } else {
-//            System.err.println("TaxonSets are null");
-//        }
-
-        // Statistics
-        if (model.getClockType() != ClockType.STRICT_CLOCK) {
-            params.add(getParameter("meanRate"));
-            params.add(getParameter("covariance"));
-            params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
-        }
-
     }
 
     /////////////////////////////////////////////////////////////

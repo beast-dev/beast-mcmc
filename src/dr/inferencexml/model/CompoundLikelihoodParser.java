@@ -74,7 +74,10 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         for (int i = 0; i < xo.getChildCount(); i++) {
             final Object child = xo.getChild(i);
             if (child instanceof Likelihood) {
-            	
+
+                if (likelihoods.contains(child)) {
+                    throw new XMLParseException("The likelihood element, '" + ((Likelihood) child).getId() + "', is already present in the likelihood or prior density.");
+                }
                 likelihoods.add((Likelihood) child);
                 
 //            } else if (child instanceof BeagleBranchLikelihoods){
@@ -107,6 +110,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         } else {
             compoundLikelihood = new CompoundLikelihood(likelihoods);
         }
+
 
 //		TODO
 //        System.err.println("CompundLikelihood consists of " + compoundLikelihood.getLikelihoodCount() + " likelihood element(s)");

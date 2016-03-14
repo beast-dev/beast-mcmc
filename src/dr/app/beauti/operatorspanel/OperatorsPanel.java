@@ -203,19 +203,19 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             Operator op = operators.get(row);
             switch (col) {
                 case 0:
-                    return op.inUse;
+                    return op.isUsed();
                 case 1:
                     return op.getName();
                 case 2:
-                    return op.operatorType;
+                    return op.getOperatorType();
                 case 3:
                     if (op.isTunable()) {
-                        return op.tuning;
+                        return op.getTuning();
                     } else {
                         return "n/a";
                     }
                 case 4:
-                    return op.weight;
+                    return op.getWeight();
                 case 5:
                     return op.getDescription();
             }
@@ -226,14 +226,13 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             Operator op = operators.get(row);
             switch (col) {
                 case 0:
-                    op.inUse = (Boolean) aValue;
+                    op.setUsed((Boolean) aValue);
                     break;
                 case 3:
-                    op.tuning = (Double) aValue;
-                    op.tuningEdited = true;
+                    op.setTuning((Double) aValue);
                     break;
                 case 4:
-                    op.weight = (Double) aValue;
+                    op.setWeight((Double) aValue);
                     break;
             }
             operatorsChanged();
@@ -254,13 +253,14 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
             switch (col) {
                 case 0:// Check box
-                    editable = true;
+                    // if the paramter is fixed then 'in use' can't be turned on
+                    editable = !op.isParameterFixed();
                     break;
                 case 3:
-                    editable = op.inUse && op.isTunable();
+                    editable = op.isUsed() && op.isTunable();
                     break;
                 case 4:
-                    editable = op.inUse;
+                    editable = op.isUsed();
                     break;
                 default:
                     editable = false;
@@ -313,10 +313,17 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
                     aRow, aColumn);
 
             Operator op = operators.get(aRow);
-            if (!op.inUse && aColumn > 0)
+            if (!op.isUsed() && aColumn > 0) {
                 renderer.setForeground(Color.gray);
-            else
+            } else {
                 renderer.setForeground(Color.black);
+            }
+            if (op.isParameterFixed()) {
+               setToolTipText(
+                       "This parameter is set to a fixed value. To turn \r" +
+                       "this move on, select a prior in the Priors tab");
+            }
+
             return this;
         }
 

@@ -66,7 +66,10 @@ public class PartitionData extends AbstractPartitionData {
         if (alignment != null) {
             patterns = new Patterns(alignment);
         }
-        calculateMeanDistance(patterns);
+
+        // This is too slow to be done at data loading.
+        // calculateMeanDistance(patterns);
+        calculateMeanDistance(null);
     }
 
     public PartitionData(BeautiOptions options, String name, String fileName, List<TraitData> traits) {

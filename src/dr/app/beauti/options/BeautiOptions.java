@@ -34,7 +34,6 @@ import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.OperatorSetType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
@@ -157,8 +156,6 @@ public class BeautiOptions extends ModelOptions {
 
         microsatelliteOptions = new MicrosatelliteOptions(this);
 
-        beautiTemplate = new BeautiTemplate(this);
-
         parameters.clear();
         operators.clear();
         statistics.clear();
@@ -250,9 +247,29 @@ public class BeautiOptions extends ModelOptions {
 //          parameters.addAll(model.getParameters(multiplePartitions));
             model.selectParameters(parameters);
         }
-//        substitutionModelOptions.selectParameters(parameters);
 
         for (PartitionClockModel model : getPartitionClockModels()) {
+            Set<PartitionSubstitutionModel> substitutionModels = new LinkedHashSet<PartitionSubstitutionModel>();
+            for (AbstractPartitionData partition : getDataPartitions()) {
+                if (partition.getPartitionClockModel() == model) {
+                    substitutionModels.add(partition.getPartitionSubstitutionModel());
+                }
+            }
+
+            // collect all the relative rate paremeters (partition rates and codon position rates)
+            ArrayList<Parameter> relativeRateParameters = new ArrayList<Parameter>();
+            for (PartitionSubstitutionModel substitutionModel : substitutionModels) {
+                relativeRateParameters.addAll(substitutionModel.getRelativeRateParameters());
+            }
+            if (relativeRateParameters.size() > 1) {
+                Parameter allMus = model.getParameter("allMus");
+                allMus.clearSubParameters();
+                for (Parameter mu : relativeRateParameters) {
+                    allMus.addSubParameter(mu);
+                }
+                parameters.add(allMus);
+            }
+
             model.selectParameters(parameters);
         }
         clockModelOptions.selectParameters();
@@ -351,8 +368,8 @@ public class BeautiOptions extends ModelOptions {
         // no remove operators for parameters that are part of a joint prior...
         List<Operator> toRemove = new ArrayList<Operator>();
         for (Operator operator : ops) {
-            if ((operator.parameter1 != null && operator.parameter1.isLinked) ||
-                    (operator.parameter2 != null && operator.parameter2.isLinked)) {
+            if ((operator.getParameter1() != null && operator.getParameter1().isLinked) ||
+                    (operator.getParameter2() != null && operator.getParameter2().isLinked)) {
                 toRemove.add(operator);
             }
         }
@@ -364,7 +381,7 @@ public class BeautiOptions extends ModelOptions {
 
     public Operator getOperator(Parameter parameter) {
         for (Operator operator : selectOperators()) {
-            if (operator.parameter1 == parameter || operator.parameter2 == parameter) {
+            if (operator.getParameter1() == parameter || operator.getParameter2() == parameter) {
                 return operator;
             }
         }
@@ -516,24 +533,6 @@ public class BeautiOptions extends ModelOptions {
     }
 
     private final Map<PartitionClockModel, List<AbstractPartitionData>> pcmCache = new HashMap<PartitionClockModel, List<AbstractPartitionData>>();
-
-    public List<AbstractPartitionData> getDataPartitions(PartitionClockModel model) {
-        List<AbstractPartitionData> pdList = pcmCache.get(model);
-
-        if (pdList == null) {
-            pdList = new ArrayList<AbstractPartitionData>();
-
-            for (AbstractPartitionData pd : dataPartitions) {
-                if (pd.getPartitionClockModel() == model) {
-                    pdList.add(pd);
-                }
-            }
-
-            pcmCache.put(model, pdList);
-        }
-        return pdList;
-    }
-
     private final Map<PartitionTreeModel, List<AbstractPartitionData>> ptmCache = new HashMap<PartitionTreeModel, List<AbstractPartitionData>>();
 
     public List<AbstractPartitionData> getDataPartitions(PartitionTreeModel model) {
@@ -610,21 +609,19 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    private final Map<ClockModelGroup, List<AbstractPartitionData>> cmgCache = new HashMap<ClockModelGroup, List<AbstractPartitionData>>();
-
-    public List<AbstractPartitionData> getDataPartitions(ClockModelGroup clockModelGroup) {
-        List<AbstractPartitionData> pdList = pcmsmlCache.get(clockModelGroup);
+    public List<AbstractPartitionData> getDataPartitions(PartitionClockModel clockModel) {
+        List<AbstractPartitionData> pdList = pcmCache.get(clockModel);
 
         if (pdList == null) {
             pdList = new ArrayList<AbstractPartitionData>();
 
             for (AbstractPartitionData pd : dataPartitions) {
-                if (pd.getPartitionClockModel() != null && pd.getPartitionClockModel().getClockModelGroup() == clockModelGroup) {
+                if (pd.getPartitionClockModel() != null && pd.getPartitionClockModel() == clockModel) {
                     pdList.add(pd);
                 }
             }
 
-            cmgCache.put(clockModelGroup, pdList);
+            pcmCache.put(clockModel, pdList);
         }
         return pdList;
     }
@@ -636,7 +633,6 @@ public class BeautiOptions extends ModelOptions {
         ptpCache.clear();
         pcmtmlCache.clear();
         pcmsmlCache.clear();
-        cmgCache.clear();
         psmlCache.clear();
         ptmlCache.clear();
         pcmlCache.clear();
@@ -738,24 +734,6 @@ public class BeautiOptions extends ModelOptions {
         }
         return models;
     }
-
-    public List<PartitionClockModel> getPartitionClockModels(ClockModelGroup group) {
-        List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
-        for (PartitionClockModel model : getPartitionClockModels()) {
-            if (model.getClockModelGroup() == group) {
-                models.add(model);
-            }
-        }
-        return models;
-    }
-
-//    public List<PartitionClockModel> getPartitionNonTraitsClockModels() {
-//        return getPartitionClockModels(getNonTraitsDataList());
-//    }
-//
-//    public List<PartitionClockModel> getPartitionTraitsClockModels() {
-//        return getPartitionClockModels(getTraitsList());
-//    }
 
     public List<PartitionClockModel> getPartitionClockModels() {
         return getPartitionClockModels(dataPartitions);
@@ -1158,8 +1136,6 @@ public class BeautiOptions extends ModelOptions {
             // PartitionClockModel based on PartitionData
             PartitionClockModel pcm = new PartitionClockModel(this, partition);
             partition.setPartitionClockModel(pcm);
-
-            clockModelOptions.addClockModelGroup(pcm);
         }
 
         if (partition.getPartitionTreeModel() == null) {
@@ -1313,7 +1289,7 @@ public class BeautiOptions extends ModelOptions {
 //                message += ";    Phylogeographic Analysis";
 //            }
 
-            message += "; " + clockModelOptions.statusMessageClockModel();
+//            message += "; " + clockModelOptions.statusMessageClockModel();
 
         } else if (userTrees.size() > 0) { // TODO
             message += "Trees only : " + userTrees.size() +
@@ -1441,8 +1417,6 @@ public class BeautiOptions extends ModelOptions {
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public MicrosatelliteOptions microsatelliteOptions = new MicrosatelliteOptions(this);
-
-    public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 
     public boolean shareMicroSat = true;
 

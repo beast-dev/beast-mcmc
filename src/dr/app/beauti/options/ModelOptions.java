@@ -232,7 +232,7 @@ public class ModelOptions implements Serializable {
     }//TODO a switch like createUpDownOperator?
 
     public Operator createDuplicate(String name, String description, Parameter parameter, Operator source) {
-        return new Operator.Builder(name, description, parameter, source.operatorType, source.tuning, source.weight).build(operators);
+        return new Operator.Builder(name, description, parameter, source.getOperatorType(), source.getTuning(), source.getWeight()).build(operators);
     }
 
 

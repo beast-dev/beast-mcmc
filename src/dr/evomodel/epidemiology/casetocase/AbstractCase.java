@@ -25,11 +25,12 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.app.beagle.tools.Partition;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;
+
+import java.util.ArrayList;
 
 /**
  * Abstract class for outbreak; best implemented as an inner class in implementations of AbstractOutbreak
@@ -47,7 +48,6 @@ public abstract class AbstractCase extends AbstractModel {
 
     protected String caseID;
     protected Taxa associatedTaxa;
-    protected double examTime;
     protected double endOfInfectiousTime;
     protected boolean wasEverInfected;
     protected Parameter infectionBranchPosition;
@@ -60,15 +60,11 @@ public abstract class AbstractCase extends AbstractModel {
         return associatedTaxa;
     }
 
-    public double getExamTime() {
-        return examTime;
-    }
-
-    public double getCullTime(){
+    public double getEndTime(){
         return endOfInfectiousTime;
     }
 
-    public abstract boolean culledYet(double time);
+    public abstract boolean noninfectiousYet(double time);
 
     public String toString(){
         return caseID;
@@ -84,6 +80,7 @@ public abstract class AbstractCase extends AbstractModel {
         return infectionBranchPosition;
     }
 
+    public abstract ArrayList<Date> getExaminationTimes();
 
     public void setInfectionBranchPosition(double value){
         infectionBranchPosition.setParameterValue(0, value);

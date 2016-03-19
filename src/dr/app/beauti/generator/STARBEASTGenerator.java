@@ -145,7 +145,7 @@ public class STARBEASTGenerator extends Generator {
                 });
         writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
 
-        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
+        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").getInitial(); // "initial" is "value"
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, "sp.popSize"),
@@ -246,7 +246,7 @@ public class STARBEASTGenerator extends Generator {
 
         // take sppSplitPopulations value from partionModel(?).constant.popSize
         // *BEAST always share same tree prior
-        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
+        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").getInitial(); // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModelParser.SPP_SPLIT_POPULATIONS, new Attribute[]{
                 new Attribute.Default<Double>(ParameterParser.VALUE, popSizeValue)});
 

@@ -83,7 +83,7 @@ public class PartitionTreeModel extends PartitionOptions {
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
-        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true, 1.0);
+        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true);
 
         //TODO treeBitMove should move to PartitionClockModelTreeModelLink, after Alexei finish
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
@@ -121,7 +121,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
         Parameter rootHeightParameter = getParameter("treeModel.rootHeight");
         if (rootHeightParameter.priorType == PriorType.NONE_TREE_PRIOR || !rootHeightParameter.isPriorEdited()) {
-            rootHeightParameter.initial = getInitialRootHeight();
+            rootHeightParameter.setInitial(getInitialRootHeight());
             rootHeightParameter.truncationLower = options.maximumTipHeight;
             rootHeightParameter.uniformLower = options.maximumTipHeight;
             rootHeightParameter.isTruncated = true;
@@ -243,7 +243,7 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public double getInitialRootHeight() {
-        return 1.0;
+        return Double.NaN;
 //        return getAvgRootAndRate()[0];
     }
 

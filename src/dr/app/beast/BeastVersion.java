@@ -52,7 +52,7 @@ public class BeastVersion implements Version {
 
     // this is now being manually updated since the move to GitHub. Using date in yyyymmdd format (suffix
     // with b,c,d etc if multiple revisions in a day.
-    private static final String REVISION = "GitHub 20160313";
+    private static final String REVISION = "GitHub 20160319";
 
     public String getVersion() {
         return VERSION;

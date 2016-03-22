@@ -351,7 +351,7 @@ public class TreePriorGenerator extends Generator {
 
                 // initial value for pop mean is the same as what used to be the value for the population size
                 Parameter para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-                prior.getParameter("constant.popSize").initial = para.initial;
+                prior.getParameter("constant.popSize").setInitial(para.getInitial());
 
                 writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
                 writeParameter("constant.popSize", prior, writer);
@@ -733,13 +733,13 @@ public class TreePriorGenerator extends Generator {
 
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS);
             Parameter numGridPoint = prior.getParameter("skygrid.numGridPoints");
-            numGridPoint.initial = skyGridIntervalCount - 1;
+            numGridPoint.setInitial(skyGridIntervalCount - 1);
             writeParameter(numGridPoint, 1, writer);
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.NUM_GRID_POINTS);
 
             writer.writeOpenTag(GMRFSkyrideLikelihoodParser.CUT_OFF);
             Parameter cutOff = prior.getParameter("skygrid.cutOff");
-            cutOff.initial = skyGridInterval;
+            cutOff.setInitial(skyGridInterval);
             writeParameter(cutOff, 1, writer);
             writer.writeCloseTag(GMRFSkyrideLikelihoodParser.CUT_OFF);
 
@@ -772,14 +772,14 @@ public class TreePriorGenerator extends Generator {
 
             Parameter popSize = prior.getParameter(VariableDemographicModelParser.demoElementName + ".popSize");
             Parameter populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
-            popSize.initial = populationMean.initial;
+            popSize.setInitial(populationMean.getInitial());
 
             writer.writeOpenTag(VariableDemographicModelParser.POPULATION_SIZES);
             writer.writeComment("popSize value = populationMean value");
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".popSize"),
-                            new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSize.initial))}, true);
+                            new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSize.getInitial()))}, true);
 //	        writeParameter(popSize, -1, writer);
             writer.writeCloseTag(VariableDemographicModelParser.POPULATION_SIZES);
 
@@ -842,7 +842,7 @@ public class TreePriorGenerator extends Generator {
             writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationMean"),
-                            new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(populationMean.initial))}, true);
+                            new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(populationMean.getInitial()))}, true);
 
             writer.writeCloseTag(DistributionModelParser.MEAN);
             writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);

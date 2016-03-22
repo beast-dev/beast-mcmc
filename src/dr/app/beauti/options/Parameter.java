@@ -78,9 +78,17 @@ public class Parameter implements Serializable {
     public final boolean isPriorFixed;
     public PriorType priorType;
 
+    public double getInitial() {
+        return initial;
+    }
+
+    public void setInitial(double initial) {
+        this.initial = initial;
+    }
+
     // Editable fields
     private boolean isFixed;
-    public double initial;
+    private double initial;
     public boolean isTruncated;
     public double truncationUpper;
     public double truncationLower;

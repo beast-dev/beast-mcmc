@@ -305,24 +305,24 @@ public class BeastGenerator extends Generator {
 
             //++++++++++++++++ Prior Bounds ++++++++++++++++++
             for (Parameter param : options.selectParameters()) {
-                if (param.initial != Double.NaN) {
-                    if (param.isTruncated && (param.initial < param.truncationLower || param.initial > param.truncationUpper)) {
+                if (param.getInitial() != Double.NaN) {
+                    if (param.isTruncated && (param.getInitial() < param.truncationLower || param.getInitial() > param.truncationUpper)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
+                                "\ninitial value " + param.getInitial() + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
                                 "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
-                    } else if (param.priorType == PriorType.UNIFORM_PRIOR && (param.initial < param.uniformLower || param.initial > param.uniformUpper)) {
+                    } else if (param.priorType == PriorType.UNIFORM_PRIOR && (param.getInitial() < param.uniformLower || param.getInitial() > param.uniformUpper)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " is NOT in the range [" + param.uniformLower + ", " + param.uniformUpper + "]," +
+                                "\ninitial value " + param.getInitial() + " is NOT in the range [" + param.uniformLower + ", " + param.uniformUpper + "]," +
                                 "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
                     }
-                    if (param.isNonNegative && param.initial < 0.0) {
+                    if (param.isNonNegative && param.getInitial() < 0.0) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " should be non-negative. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\ninitial value " + param.getInitial() + " should be non-negative. Please check the Prior panel.", BeautiFrame.PRIORS);
                     }
 
-                    if (param.isZeroOne && (param.initial < 0.0 || param.initial > 1.0)) {
+                    if (param.isZeroOne && (param.getInitial() < 0.0 || param.getInitial() > 1.0)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " should lie in the interval [0, 1]. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\ninitial value " + param.getInitial() + " should lie in the interval [0, 1]. Please check the Prior panel.", BeautiFrame.PRIORS);
                     }
                 }
             }

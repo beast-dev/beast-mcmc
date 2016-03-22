@@ -248,10 +248,10 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
         writer.writeOpenTag(getModelTagName(hpm), getModelAttributes(hpm));
         
         writeParameter(NormalDistributionModelParser.MEAN,
-                hpm.getConditionalParameterList().get(0).getName(), 1, hpm.getConditionalParameterList().get(0).initial,
+                hpm.getConditionalParameterList().get(0).getName(), 1, hpm.getConditionalParameterList().get(0).getInitial(),
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, writer);
         writeParameter(NormalDistributionModelParser.PREC,
-                hpm.getConditionalParameterList().get(1).getName(), 1, hpm.getConditionalParameterList().get(1).initial, 
+                hpm.getConditionalParameterList().get(1).getName(), 1, hpm.getConditionalParameterList().get(1).getInitial(),
                 0.0, Double.POSITIVE_INFINITY, writer);
         writer.writeCloseTag(getModelTagName(hpm));
 

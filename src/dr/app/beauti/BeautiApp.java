@@ -26,7 +26,6 @@
 package dr.app.beauti;
 
 import dr.app.beast.BeastVersion;
-import dr.app.beauti.util.CommandLineBeauti;
 import dr.app.util.Arguments;
 import dr.app.util.OSType;
 import dr.util.Version;
@@ -145,21 +144,21 @@ public class BeautiApp extends MultiDocApplication {
             return;
         }
 
-        if (args2.length > 1) {
-
-            if (args.length != 3) {
-                printTitle();
-                printUsage(arguments);
-                System.exit(1);
-            }
-
-            String inputFileName = args[0];
-            String templateFileName = args[1];
-            String outputFileName = args[2];
-
-            new CommandLineBeauti(inputFileName, templateFileName, outputFileName);
-
-        } else {
+//        if (args2.length > 1) {
+//
+//            if (args.length != 3) {
+//                printTitle();
+//                printUsage(arguments);
+//                System.exit(1);
+//            }
+//
+//            String inputFileName = args[0];
+//            String templateFileName = args[1];
+//            String outputFileName = args[2];
+//
+//            new CommandLineBeauti(inputFileName, templateFileName, outputFileName);
+//
+//        } else {
             String inputFileName = null;
             if (args2.length == 1) {
                 inputFileName = args2[0];
@@ -275,7 +274,7 @@ public class BeautiApp extends MultiDocApplication {
                         JOptionPane.ERROR_MESSAGE);
                 e.printStackTrace();
             }
-        }
+//        }
     }
 
     public static boolean advanced = false;

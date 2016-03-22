@@ -46,12 +46,14 @@ public class PartitionTreeModel extends PartitionOptions {
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
-    private boolean fixedTree = false;
-//    private double initialRootHeight = 1.0;
 
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
     // BeastGenerator.checkOptions()
     private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR;
+
+    private boolean hasTipCalibrations = false;
+    private boolean hasNodeCalibrations = false;
+
 
     public PartitionTreeModel(BeautiOptions options, AbstractPartitionData partition) {
         super(options, partition.getName());
@@ -81,7 +83,7 @@ public class PartitionTreeModel extends PartitionOptions {
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
-        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true, 1.0);
+        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true);
 
         //TODO treeBitMove should move to PartitionClockModelTreeModelLink, after Alexei finish
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
@@ -101,7 +103,7 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.WILSON_BALDING, -1, demoWeights);
 
         createOperator("subtreeLeap", "Tree", "Performs the subtree-leap rearrangement of the tree", "tree",
-                OperatorType.SUBTREE_LEAP, 1.0, options.taxonList.getTaxonCount());
+                OperatorType.SUBTREE_LEAP, 1.0, options.taxonList.getTaxonCount() < treeWeights ? treeWeights : options.taxonList.getTaxonCount());
 
     }
 
@@ -111,7 +113,7 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param parameters the parameter list
      */
     public void selectParameters(List<Parameter> parameters) {
-        setAvgRootAndRate();
+//        setAvgRootAndRate();
 
         getParameter("tree");
         getParameter("treeModel.internalNodeHeights");
@@ -119,7 +121,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
         Parameter rootHeightParameter = getParameter("treeModel.rootHeight");
         if (rootHeightParameter.priorType == PriorType.NONE_TREE_PRIOR || !rootHeightParameter.isPriorEdited()) {
-            rootHeightParameter.initial = getInitialRootHeight();
+            rootHeightParameter.setInitial(getInitialRootHeight());
             rootHeightParameter.truncationLower = options.maximumTipHeight;
             rootHeightParameter.uniformLower = options.maximumTipHeight;
             rootHeightParameter.isTruncated = true;
@@ -139,11 +141,11 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param operators the operator list
      */
     public void selectOperators(List<Operator> operators) {
-        setAvgRootAndRate();
+//        setAvgRootAndRate();
 
         Operator subtreeSlideOp = getOperator("subtreeSlide");
-        if (!subtreeSlideOp.tuningEdited) {
-            subtreeSlideOp.tuning = getInitialRootHeight() / 10.0;
+        if (!subtreeSlideOp.isTuningEdited()) {
+            subtreeSlideOp.setTuning(getInitialRootHeight() / 10.0);
         }
 
         operators.add(subtreeSlideOp);
@@ -177,15 +179,15 @@ public class PartitionTreeModel extends PartitionOptions {
             throw new IllegalArgumentException("Unknown operator set type");
         }
 
-        getOperator("subtreeSlide").inUse = defaultInUse;
-        getOperator("narrowExchange").inUse = defaultInUse;
-        getOperator("wideExchange").inUse = defaultInUse;
-        getOperator("wilsonBalding").inUse = defaultInUse;
+        getOperator("subtreeSlide").setUsed(defaultInUse);
+        getOperator("narrowExchange").setUsed(defaultInUse);
+        getOperator("wideExchange").setUsed(defaultInUse);
+        getOperator("wilsonBalding").setUsed(defaultInUse);
 
-        getOperator("treeModel.rootHeight").inUse = branchesInUse;
-        getOperator("uniformHeights").inUse = branchesInUse;
+        getOperator("treeModel.rootHeight").setUsed(branchesInUse);
+        getOperator("uniformHeights").setUsed(branchesInUse);
 
-        getOperator("subtreeLeap").inUse = newMixInUse;
+        getOperator("subtreeLeap").setUsed(newMixInUse);
     }
 
     /////////////////////////////////////////////////////////////
@@ -219,9 +221,18 @@ public class PartitionTreeModel extends PartitionOptions {
         return isNewick;
     }
 
-    public void setNewick(boolean newick) {
-        isNewick = newick;
+    public void setNewick(boolean isNewick) {
+        this.isNewick = isNewick;
     }
+
+    public void setTipCalibrations(boolean hasTipCalibrations) {
+        this.hasTipCalibrations = hasTipCalibrations;
+    }
+
+    public void setNodeCalibrations(boolean hasNodeCalibrations) {
+        this.hasNodeCalibrations = hasNodeCalibrations;
+    }
+
 
     public void setPloidyType(PloidyType ploidyType) {
         this.ploidyType = ploidyType;
@@ -232,7 +243,8 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public double getInitialRootHeight() {
-        return getAvgRootAndRate()[0];
+        return Double.NaN;
+//        return getAvgRootAndRate()[0];
     }
 
 //    public void setInitialRootHeight(double initialRootHeight) {

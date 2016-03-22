@@ -76,7 +76,7 @@ public class InitialTreeGenerator extends Generator {
                 Attribute[] attributes = (rootHeight.priorType != PriorType.NONE_TREE_PRIOR ?
                         new Attribute[] {
                                 new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-                                new Attribute.Default<String>(RescaledTreeParser.HEIGHT, "" + rootHeight.initial)
+                                new Attribute.Default<String>(RescaledTreeParser.HEIGHT, "" + rootHeight.getInitial())
                         } :
                         new Attribute[] {
                                 new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)

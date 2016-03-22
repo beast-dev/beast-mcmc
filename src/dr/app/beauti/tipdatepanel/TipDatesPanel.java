@@ -29,6 +29,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentOptions;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.PanelUtils;
@@ -374,8 +375,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         calculateHeights();
 
         if (options.clockModelOptions.isTipCalibrated()) { // todo correct?
-            for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-                options.clockModelOptions.tipTimeCalibration(clockModelGroup);
+            for (PartitionTreeModel treeModel : options.getPartitionTreeModels()) {
+                treeModel.setTipCalibrations(true);
             }
         }
 

@@ -27,8 +27,6 @@ package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.generator.ComponentGenerator;
-import dr.app.beauti.generator.Generator;
 import dr.app.beauti.generator.TreePriorGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
@@ -638,7 +636,7 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                     case UNCORRELATED:
                         switch (model.getClockDistributionType()) {
                             case LOGNORMAL:
-                                if (model.getClockRateParam().isMeanInRealSpace()) {
+                                if (model.getClockRateParameter().isMeanInRealSpace()) {
                                     writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
                                             new Attribute[]{
                                                     new Attribute.Default<String>("fileName", beautiOptions.logFileName),

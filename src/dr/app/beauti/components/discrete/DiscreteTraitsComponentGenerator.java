@@ -28,20 +28,14 @@ package dr.app.beauti.components.discrete;
 import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.generator.BranchRatesModelGenerator;
+import dr.app.beauti.generator.ClockModelGenerator;
 import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.GeneralDataType;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
-import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.evomodelxml.substmodel.FrequencyModelParser;
@@ -329,14 +323,14 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
                     new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
         }
-        options.getParameter(prefix + "rates").isFixed = true;
+        options.getParameter(prefix + "rates").setFixed(true);
         writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
 
         writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
-            options.getParameter(prefix + "indicators").isFixed = true;
+            options.getParameter(prefix + "indicators").setFixed(true);
             writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
         }
@@ -404,7 +398,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
         writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getName() + "." + AbstractSubstitutionModel.MODEL);
 
-        BranchRatesModelGenerator.writeBranchRatesModelRef(clockModel, writer);
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
         if (substModel.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             int stateCount = options.getStatesForDiscreteModel(substModel).size();

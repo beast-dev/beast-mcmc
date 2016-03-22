@@ -66,7 +66,7 @@ public abstract class AbstractPartitionData implements Serializable {
             meanDistance = distances.getMeanDistance();
         } else {
             distances = null;
-            meanDistance = 0.0;
+            meanDistance = 1.0;
         }
     }
 

@@ -52,7 +52,6 @@ public class TempestFrame extends DocumentFrame {
 
     private static final long serialVersionUID = 2114148696789612509L;
 
-    private JTabbedPane tabbedPane = new JTabbedPane();
     private JLabel statusLabel = new JLabel("No data loaded");
 
     private TempestPanel tempestPanel;
@@ -254,10 +253,8 @@ public class TempestFrame extends DocumentFrame {
 //        }
     }
 
-//    protected void doExportGraphic() {
-//        ExportDialog export = new ExportDialog();
-//        export.showExportDialog( this, "Export view as ...", treeViewer.getContentPane(), "export" );
-//    }
+    protected void doExportGraphic() {
+    }
 
     protected void doExportData() {
         FileDialog dialog = new FileDialog(this,
@@ -302,7 +299,7 @@ public class TempestFrame extends DocumentFrame {
     public JComponent getExportableComponent() {
 
         JComponent exportable = null;
-        Component comp = tabbedPane.getSelectedComponent();
+        Component comp = tempestPanel.getExportableComponent();
 
         if (comp instanceof Exportable) {
             exportable = ((Exportable) comp).getExportableComponent();
@@ -345,11 +342,11 @@ public class TempestFrame extends DocumentFrame {
         }
     };
 
-//    protected AbstractAction exportGraphicAction = new AbstractAction("Export Graphic...") {
-//        public void actionPerformed(ActionEvent ae) {
-//            doExportGraphic();
-//        }
-//    };
+    protected AbstractAction exportGraphicAction = new AbstractAction("Export Graphic...") {
+        public void actionPerformed(ActionEvent ae) {
+            doExportGraphic();
+        }
+    };
 
     protected AbstractAction exportDataAction = new AbstractAction("Export Data...") {
         public void actionPerformed(ActionEvent ae) {

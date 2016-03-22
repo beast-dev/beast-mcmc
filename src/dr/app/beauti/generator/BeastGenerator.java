@@ -28,7 +28,6 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.marginalLikelihoodEstimation.MarginalLikelihoodEstimationOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
@@ -49,7 +48,6 @@ import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.inferencexml.model.CompoundParameterParser;
 import dr.inferencexml.operators.SimpleOperatorScheduleParser;
 import dr.util.Attribute;
 import dr.util.Version;
@@ -87,7 +85,7 @@ public class BeastGenerator extends Generator {
     private final SubstitutionModelGenerator substitutionModelGenerator;
     private final InitialTreeGenerator initialTreeGenerator;
     private final TreeModelGenerator treeModelGenerator;
-    private final BranchRatesModelGenerator branchRatesModelGenerator;
+    private final ClockModelGenerator clockModelGenerator;
     private final OperatorsGenerator operatorsGenerator;
     private final ParameterPriorGenerator parameterPriorGenerator;
     private final LogGenerator logGenerator;
@@ -107,7 +105,7 @@ public class BeastGenerator extends Generator {
 
         initialTreeGenerator = new InitialTreeGenerator(options, components);
         treeModelGenerator = new TreeModelGenerator(options, components);
-        branchRatesModelGenerator = new BranchRatesModelGenerator(options, components);
+        clockModelGenerator = new ClockModelGenerator(options, components);
 
         operatorsGenerator = new OperatorsGenerator(options, components);
         parameterPriorGenerator = new ParameterPriorGenerator(options, components);
@@ -307,24 +305,24 @@ public class BeastGenerator extends Generator {
 
             //++++++++++++++++ Prior Bounds ++++++++++++++++++
             for (Parameter param : options.selectParameters()) {
-                if (param.initial != Double.NaN) {
-                    if (param.isTruncated && (param.initial < param.truncationLower || param.initial > param.truncationUpper)) {
+                if (param.getInitial() != Double.NaN) {
+                    if (param.isTruncated && (param.getInitial() < param.truncationLower || param.getInitial() > param.truncationUpper)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
+                                "\ninitial value " + param.getInitial() + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
                                 "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
-                    } else if (param.priorType == PriorType.UNIFORM_PRIOR && (param.initial < param.uniformLower || param.initial > param.uniformUpper)) {
+                    } else if (param.priorType == PriorType.UNIFORM_PRIOR && (param.getInitial() < param.uniformLower || param.getInitial() > param.uniformUpper)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " is NOT in the range [" + param.uniformLower + ", " + param.uniformUpper + "]," +
+                                "\ninitial value " + param.getInitial() + " is NOT in the range [" + param.uniformLower + ", " + param.uniformUpper + "]," +
                                 "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
                     }
-                    if (param.isNonNegative && param.initial < 0.0) {
+                    if (param.isNonNegative && param.getInitial() < 0.0) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " should be non-negative. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\ninitial value " + param.getInitial() + " should be non-negative. Please check the Prior panel.", BeautiFrame.PRIORS);
                     }
 
-                    if (param.isZeroOne && (param.initial < 0.0 || param.initial > 1.0)) {
+                    if (param.isZeroOne && (param.getInitial() < 0.0 || param.getInitial() > 1.0)) {
                         throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
-                                "\ninitial value " + param.initial + " should lie in the interval [0, 1]. Please check the Prior panel.", BeautiFrame.PRIORS);
+                                "\ninitial value " + param.getInitial() + " should lie in the interval [0, 1]. Please check the Prior panel.", BeautiFrame.PRIORS);
                     }
                 }
             }
@@ -543,21 +541,8 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Branch Rates Model ++++++++++++++++++
         try {
             for (PartitionClockModel model : options.getPartitionClockModels()) {
-                branchRatesModelGenerator.writeBranchRatesModel(model, writer);
+                clockModelGenerator.writeBranchRatesModel(model, writer);
                 writer.writeText("");
-            }
-
-            // write allClockRate for fix mean option in clock model panel
-            for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-                if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
-                    writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
-                            new Attribute[]{new Attribute.Default<String>(XMLParser.ID, clockModelGroup.getName())});
-                    for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                        branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
-                    }
-                    writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-                    writer.writeText("");
-                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -568,7 +553,6 @@ public class BeastGenerator extends Generator {
         try {
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
                 substitutionModelGenerator.writeSubstitutionSiteModel(model, writer);
-                substitutionModelGenerator.writeAllMus(model, writer); // allMus
                 writer.writeText("");
             }
 
@@ -576,6 +560,16 @@ public class BeastGenerator extends Generator {
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Substitution model or site model generation has failed:\n" + e.getMessage());
+        }
+
+        //++++++++++++++++ AllMus parameter ++++++++++++++++++
+        try {
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                clockModelGenerator.writeAllMus(model, writer);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeneratorException("Clock model generation has failed:\n" + e.getMessage());
         }
 
         //++++++++++++++++ Site Model ++++++++++++++++++
@@ -925,7 +919,7 @@ public class BeastGenerator extends Generator {
             writer.writeOpenTag(CompoundLikelihoodParser.LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, "likelihood"));
 
             treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-            branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
+            clockModelGenerator.writeClockLikelihoodReferences(writer);
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_LIKELIHOOD, writer);
 
@@ -937,10 +931,10 @@ public class BeastGenerator extends Generator {
         writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");
 
         // write log to screen
-        logGenerator.writeLogToScreen(writer, branchRatesModelGenerator, substitutionModelGenerator);
+        logGenerator.writeLogToScreen(writer, clockModelGenerator, substitutionModelGenerator);
 
         // write log to file
-        logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
+        logGenerator.writeLogToFile(writer, treePriorGenerator, clockModelGenerator,
                 substitutionModelGenerator, treeLikelihoodGenerator);
 
         // write tree log to file

@@ -221,10 +221,12 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     private double getLatestTaxonTime(){
         double latestTime = Double.NEGATIVE_INFINITY;
-        for(AbstractCase thisCase : outbreak.getCases()){
-            if (thisCase.wasEverInfected() && thisCase.getExamTime() > latestTime) {
-                latestTime = thisCase.getExamTime();
+        for(int i=0; i<treeModel.getExternalNodeCount(); i++){
+            Taxon taxon = treeModel.getNodeTaxon(treeModel.getExternalNode(i));
+            if(taxon.getDate().getTimeValue() > latestTime){
+                latestTime = taxon.getDate().getTimeValue();
             }
+
         }
         return latestTime;
     }
@@ -543,7 +545,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             AbstractCase parentCase = getBranchMap().get(treeModel.getParent(node).getNumber());
             if(childCase!=parentCase){
                 double infectionTime = infectionTimes[outbreak.getCaseIndex(childCase)];
-                if(infectionTime>parentCase.getCullTime()
+                if(infectionTime>parentCase.getEndTime()
                         || (hasLatentPeriods && infectionTime<infectiousTimes[outbreak.getCaseIndex(parentCase)])){
                     return false;
                 }
@@ -684,11 +686,11 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
                 if (!hasLatentPeriods) {
                     double infectionTime = getInfectionTime(thisCase);
-                    double cullTime = thisCase.getCullTime();
+                    double cullTime = thisCase.getEndTime();
                     infectiousPeriods[outbreak.getCaseIndex(thisCase)] = cullTime - infectionTime;
                 } else {
                     double infectiousTime = getInfectiousTime(thisCase);
-                    double cullTime = thisCase.getCullTime();
+                    double cullTime = thisCase.getEndTime();
                     infectiousPeriods[outbreak.getCaseIndex(thisCase)] = cullTime - infectiousTime;
                 }
             } else {
@@ -796,7 +798,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public double getInfectedPeriod(AbstractCase thisCase){
         if(thisCase.wasEverInfected) {
-            return thisCase.getCullTime() - getInfectionTime(thisCase);
+            return thisCase.getEndTime() - getInfectionTime(thisCase);
         }
         return 0;
     }

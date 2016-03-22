@@ -253,7 +253,7 @@ public class PartitionTreePrior extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-        setAvgRootAndRate();
+//        setAvgRootAndRate();
 
         if (nodeHeightPrior == TreePriorType.CONSTANT) {
             params.add(getParameter("constant.popSize"));
@@ -306,7 +306,9 @@ public class PartitionTreePrior extends PartitionOptions {
                     + BirthDeathSerialSamplingModelParser.RELATIVE_MU));
             Parameter psi = getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                     + BirthDeathSerialSamplingModelParser.PSI);
-            if (options.maximumTipHeight > 0) psi.initial = MathUtils.round(1 / options.maximumTipHeight, 4);
+            if (options.maximumTipHeight > 0) {
+                psi.setInitial(MathUtils.round(1 / options.maximumTipHeight, 4));
+            }
             params.add(psi);
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                     + BirthDeathSerialSamplingModelParser.ORIGIN));

@@ -212,12 +212,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
-//        controlPanel1.add(new JLabel(" or "));
-//
-//        button = new JButton(importTraitsAction);
-//        PanelUtils.setupComponent(button);
-//        controlPanel1.add(button);
-
         JPanel panel1 = new JPanel(new BorderLayout());
         panel1.setOpaque(false);
         panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
@@ -227,14 +221,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
         add(panel1, BorderLayout.NORTH);
+//        add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
         useStarBEASTCheck.setEnabled(false);
         useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
         useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {// wrong listener Issue 397: *BEAST in BEAUti is broken
-                if (frame.setupStarBEAST(useStarBEASTCheck.isSelected()) == false) {
+            public void actionPerformed(ActionEvent e) {
+                if (!frame.setupStarBEAST(useStarBEASTCheck.isSelected())) {
                     useStarBEASTCheck.setSelected(false); // go back to unchecked
                 }
 
@@ -534,7 +529,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (!model.getName().equals(partition.getName())) {
                 PartitionClockModel newModel = new PartitionClockModel(options, partition.getName(), model);
                 partition.setPartitionClockModel(newModel);
-                newModel.setClockModelGroup(model.getClockModelGroup()); // set clock model group
             }
         }
 

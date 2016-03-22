@@ -137,11 +137,11 @@ public class HierarchicalPriorDialog {
 
         hpm.getConditionalParameterList().get(0).mean = hpmMeanMean;
         hpm.getConditionalParameterList().get(0).stdev = hpmMeanStDev;
-        hpm.getConditionalParameterList().get(0).initial = hpmMeanInitial;
+        hpm.getConditionalParameterList().get(0).setInitial(hpmMeanInitial);
 
         hpm.getConditionalParameterList().get(1).shape = hpmPrecShape;
         hpm.getConditionalParameterList().get(1).scale = hpmPrecScale;
-        hpm.getConditionalParameterList().get(1).initial = hpmPrecInitial;
+        hpm.getConditionalParameterList().get(1).setInitial(hpmPrecInitial);
 
     }
 
@@ -208,7 +208,7 @@ public class HierarchicalPriorDialog {
         }
 
         initialField.setRange(lower, upper);
-        initialField.setValue(parameter.initial);
+        initialField.setValue(parameter.getInitial());
 
         panel = new JPanel(new GridBagLayout());
 

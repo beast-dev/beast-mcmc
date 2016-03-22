@@ -145,7 +145,11 @@ public class PartitionTreeModel extends PartitionOptions {
 
         Operator subtreeSlideOp = getOperator("subtreeSlide");
         if (!subtreeSlideOp.isTuningEdited()) {
-            subtreeSlideOp.setTuning(getInitialRootHeight() / 10.0);
+            double tuning = 1.0;
+            if (Double.isFinite(getInitialRootHeight())) {
+                tuning = getInitialRootHeight() / 10.0;
+            }
+            subtreeSlideOp.setTuning(tuning);
         }
 
         operators.add(subtreeSlideOp);

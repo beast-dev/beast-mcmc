@@ -323,14 +323,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
                     new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
         }
-        options.getParameter(prefix + "rates").setFixed(true);
         writeParameter(options.getParameter(prefix + "rates"), dimension, writer);
 
         writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
-            options.getParameter(prefix + "indicators").setFixed(true);
             writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
         }

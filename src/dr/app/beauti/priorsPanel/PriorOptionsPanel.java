@@ -345,10 +345,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void setArguments(Parameter parameter, PriorType priorType) {
         this.isCalibratedYule = parameter.isCalibratedYule;
-        this.isInitializable = priorType.isInitializable && !parameter.isStatistic;
-        if (!parameter.isStatistic) {
+        this.isInitializable = priorType.isInitializable && !parameter.isStatistic && !parameter.isNodeHeight;
+        if (!parameter.isStatistic && !parameter.isNodeHeight) {
             setFieldRange(initialField, parameter.isNonNegative, parameter.isZeroOne);
-            initialField.setValue(parameter.initial);
+            initialField.setValue(parameter.getInitial());
         }
         isTruncatedCheck.setSelected(parameter.isTruncated);
         setFieldRange(lowerField, parameter.isNonNegative, parameter.isZeroOne, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
@@ -364,8 +364,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     }
 
     void getArguments(Parameter parameter, PriorType priorType) {
-        if (priorType.isInitializable && !parameter.isStatistic) {
-            parameter.initial = initialField.getValue();
+        if (priorType.isInitializable && !parameter.isStatistic && !parameter.isNodeHeight) {
+            parameter.setInitial(initialField.getValue());
         }
         parameter.isTruncated = isTruncatedCheck.isSelected();
         if (parameter.isTruncated) {

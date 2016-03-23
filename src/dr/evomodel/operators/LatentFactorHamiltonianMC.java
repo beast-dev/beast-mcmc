@@ -8,7 +8,7 @@ import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
-import jebl.math.Random;
+import java.util.Random;
 
 /**
  * Created by max on 12/2/15.
@@ -25,21 +25,23 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private double stepSize;
     private int nSteps;
     private boolean diffusionSN=true;
+    private Random random;
 
 
     public LatentFactorHamiltonianMC(LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd){
         super(mode, momentumSd);
         setWeight(weight);
-        this.lfm=lfm;
-        this.tree=tree;
-        this.factors=lfm.getFactors();
-        this.loadings=lfm.getLoadings();
-        this.Precision=lfm.getColumnPrecision();
-        nfac=lfm.getFactorDimension();
-        ntaxa=lfm.getFactors().getColumnDimension();
-        ntraits=Precision.getRowDimension();
-        this.stepSize=stepSize;
-        this.nSteps=nSteps;
+        this.lfm = lfm;
+        this.tree = tree;
+        this.factors = lfm.getFactors();
+        this.loadings = lfm.getLoadings();
+        this.Precision = lfm.getColumnPrecision();
+        nfac = lfm.getFactorDimension();
+        ntaxa = lfm.getFactors().getColumnDimension();
+        ntraits = Precision.getRowDimension();
+        this.stepSize = stepSize;
+        this.nSteps = nSteps;
+        random = new Random(555);
     }
 
 
@@ -70,32 +72,32 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     }
 
     private double[] getMatrix(int element, double[] residual){
-        double answer[]=new double[this.nfac];
-        for (int i = 0; i <this.nfac ; i++) {
+        double answer[] = new double[this.nfac];
+        for (int i = 0; i < this.nfac ; i++) {
             for (int j = 0; j < ntraits; j++) {
-                answer[i] +=loadings.getParameterValue(j,i)*Precision.getParameterValue(j,j)*
-                        residual[j*ntaxa+element];
+                answer[i] += loadings.getParameterValue(j, i) * Precision.getParameterValue(j, j) *
+                        residual[j * ntaxa + element];
             }
         }
         return answer;
     }
 
     private double[] getGradient(int randel, double[] mean, double[][] prec, double precfactor){
-        double[] residual=lfm.getResidual();
-        double[] derivative=getMatrix(randel, residual);
+        double[] residual = lfm.getResidual();
+        double[] derivative = getMatrix(randel, residual);
 
         if(diffusionSN){
             for (int i = 0; i <mean.length ; i++) {
-                derivative[i]-=(factors.getParameterValue(i, randel)-mean[i])*precfactor;
+                derivative[i] -= (factors.getParameterValue(i, randel) - mean[i])*precfactor;
             }
         }
         else{
             for (int i = 0; i <mean.length ; i++) {
-                double sumi=0;
+                double sumi = 0;
                 for (int j = 0; j <mean.length ; j++) {
-                    sumi+=prec[i][j]*(factors.getParameterValue(j, randel)-mean[j]);
+                    sumi += prec[i][j]*(factors.getParameterValue(j, randel) - mean[j]);
                 }
-                derivative[i]-=sumi;
+                derivative[i] -= sumi;
             }
         }
         return derivative;
@@ -104,27 +106,30 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     @Override
     public double doOperation() throws OperatorFailedException {
         int randel = MathUtils.nextInt(ntaxa);
+//        System.out.println(randel);
 
 
 
-        double[] mean=tree.getConditionalMean(randel);
-        double precfactor=0;
-        double[][] prec=null;
-        double functionalStepSize = stepSize * Random.nextDouble();
+        double[] mean = tree.getConditionalMean(randel);
+        double precfactor = 0;
+        double[][] prec = null;
+        double rand = random.nextDouble();
+//        System.out.println(rand);
+        double functionalStepSize = stepSize * rand;
 
         if(diffusionSN){
-            precfactor=tree.getPrecisionFactor(randel);
+            precfactor = tree.getPrecisionFactor(randel);
         }
         else {
             prec = tree.getConditionalPrecision(randel);
         }
 
-        double[] derivative=getGradient(randel, mean, prec, precfactor);
+        double[] derivative = getGradient(randel, mean, prec, precfactor);
         drawMomentum(lfm.getFactorDimension());
 
         double prop=0;
-        for (int i = 0; i <momentum.length ; i++) {
-            prop+=momentum[i]*momentum[i]/(2*getMomentumSd()*getMomentumSd());
+        for (int i = 0; i < momentum.length ; i++) {
+            prop += momentum[i]*momentum[i] / (2 * getMomentumSd()*getMomentumSd());
         }
 
         for (int i = 0; i <lfm.getFactorDimension() ; i++) {
@@ -133,7 +138,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         for (int i = 0; i <nSteps ; i++) {
             for (int j = 0; j <lfm.getFactorDimension() ; j++) {
-                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j,randel)+functionalStepSize * momentum[j]);
+                factors.setParameterValueQuietly(j, randel, factors.getParameterValue(j, randel) + functionalStepSize * momentum[j] / (getMomentumSd() * getMomentumSd()));
             }
 //            System.out.println("randel");
 //            System.out.println(randel);
@@ -141,7 +146,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
 
             if(i!=nSteps){
-                derivative=getGradient(randel,mean,prec, precfactor);
+                derivative=getGradient(randel, mean, prec, precfactor);
 
                 for (int j = 0; j < lfm.getFactorDimension() ; j++) {
                     momentum[j] = momentum[j] - functionalStepSize * derivative[j];
@@ -157,7 +162,7 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
 
         double res=0;
         for (int i = 0; i <momentum.length ; i++) {
-            res += momentum[i]*momentum[i] / (2 * getMomentumSd() * getMomentumSd());
+            res += momentum[i] * momentum[i] / (2 * getMomentumSd() * getMomentumSd());
         }
         return prop-res;
     }

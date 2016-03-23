@@ -95,7 +95,9 @@ public class ParameterPriorGenerator extends Generator {
         } else {
 
             for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
+                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
+                        parameter.priorType == PriorType.NONE_FIXED ||
+                        parameter.priorType == PriorType.NONE_STATISTIC)) {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
                     //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {

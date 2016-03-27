@@ -588,7 +588,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 new ElementRule(CaseToCaseTreeLikelihood.class, "The tree likelihood"),
                 new ElementRule(SpatialKernel.class, "The spatial kernel", 0, 1),
                 new ElementRule(TRANSMISSION_RATE, Parameter.class, "The transmission rate"),
-                new ElementRule(INITIAL_INFECTION_TIME_PRIOR, ParametricDistributionModel.class, "The prior probability distibution of the first infection", true)
+                new ElementRule(INITIAL_INFECTION_TIME_PRIOR, ParametricDistributionModel.class, "The prior " +
+                        "probability distibution of the first infection", true)
         };
 
     };

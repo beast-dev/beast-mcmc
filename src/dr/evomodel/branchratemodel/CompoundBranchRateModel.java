@@ -57,7 +57,11 @@ public class CompoundBranchRateModel extends AbstractBranchRateModel {
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
-        fireModelChanged();
+        if (index != -1) {
+            fireModelChanged(null, index);
+        } else {
+            fireModelChanged();
+        }
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

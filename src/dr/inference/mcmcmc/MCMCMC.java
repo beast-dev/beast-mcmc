@@ -485,21 +485,6 @@ public class MCMCMC implements Runnable {
         }
     }
 
-    //PRIVATE METHODS *****************************************
-    private boolean isPreBurninNeeded() {
-
-        if (mcmcOptions.useCoercion()) return true;
-
-        for (int i = 0; i < schedules[coldChain].getOperatorCount(); i++) {
-            MCMCOperator op = schedules[coldChain].getOperator(i);
-
-            if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return true;
-            }
-        }
-        return false;
-    }
-
     public void setShowOperatorAnalysis(boolean soa) {
         showOperatorAnalysis = soa;
     }

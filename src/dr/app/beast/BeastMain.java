@@ -237,7 +237,7 @@ public class BeastMain {
                 infoLogger.severe("Error running file: " + fileName);
                 infoLogger.severe(
                         "The initial model is invalid because state has a zero probability.\n\n" +
-                                "If the log likelihood of the tree is -Inf, his may be because the\n" +
+                                "If the log likelihood of the tree is -Inf, this may be because the\n" +
                                 "initial, random tree is so large that it has an extremely bad\n" +
                                 "likelihood which is being rounded to zero.\n\n" +
                                 "Alternatively, it may be that the product of starting mutation rate\n" +

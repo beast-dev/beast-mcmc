@@ -56,7 +56,8 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         MatrixParameterInterface factors;
-        if (xo.getChild(FACTORS).getChild(CompoundParameter.class) != null)
+        System.out.println(xo.getChild(FACTORS).getChild(0).getClass());
+        if (xo.getChild(FACTORS).getChild(FastMatrixParameter.class) == null)
         {
             CompoundParameter factorsTemp = (CompoundParameter) xo.getChild(FACTORS).getChild(CompoundParameter.class);
             factors = MatrixParameter.recast(factorsTemp.getParameterName(), factorsTemp);
@@ -103,8 +104,7 @@ public class LatentFactorModelParser extends AbstractXMLObjectParser {
                     new ElementRule(MatrixParameterInterface.class),
             }),
             new ElementRule(FACTORS, new XMLSyntaxRule[]{
-                    new XORRule(new ElementRule(MatrixParameterInterface.class),
-                            new ElementRule(CompoundParameter.class))
+                    new ElementRule(CompoundParameter.class)
             }),
             new ElementRule(LOADINGS, new XMLSyntaxRule[]{
                     new ElementRule(MatrixParameterInterface.class)

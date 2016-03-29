@@ -121,11 +121,13 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         this.data = data;
         this.factors = factors;
         // Put default bounds on factors
-//        for (int i = 0; i < factors.getColumnDimension(); ++i) {
-//            Parameter p = factors.getParameter(i);
-//            System.err.println(p.getId() + " " + p.getDimension());
-//            p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, p.getDimension()));
-//        }
+        if(factors instanceof MatrixParameter){
+        for (int i = 0; i < factors.getColumnDimension(); ++i) {
+                Parameter p = factors.getParameter(i);
+                System.err.println(p.getId() + " " + p.getDimension());
+                p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, p.getDimension()));
+            }
+        }
         this.continuous=continuous;
 
         this.loadings = loadings;

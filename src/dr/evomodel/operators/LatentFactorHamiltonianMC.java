@@ -1,10 +1,7 @@
 package dr.evomodel.operators;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.MatrixParameterInterface;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
@@ -143,8 +140,20 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             }
 //            System.out.println("randel");
 //            System.out.println(randel);
-            ((Parameter.Default) factors.getParameter(randel)).fireParameterChangedEvent(0, null);
+//            if(factors instanceof FastMatrixParameter) {
+//                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
+//                    factors.fireParameterChangedEvent(randel * factors.getRowDimension() + i, null);
+//                }
+////                factors.fireParameterChangedEvent();
+//            }
+//            else{
+//                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
+//                    factors.getParameter(randel).fireParameterChangedEvent(j, null);
+//                }
+//                factors.getParameter(randel).fireParameterChangedEvent();
+//            }
 
+            factors.fireParameterChangedEvent();
 
             if(i!=nSteps){
                 derivative=getGradient(randel, mean, prec, precfactor);

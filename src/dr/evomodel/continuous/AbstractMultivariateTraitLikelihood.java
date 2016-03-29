@@ -143,8 +143,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             addModel(samplingDensity);
         }
 
-        if (traitParameter != null)
-            addVariable(traitParameter);
 
         this.reportAsMultivariate = reportAsMultivariate;
 
@@ -154,6 +152,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             storedCachedLogLikelihood = new double[treeModel.getNodeCount()];
             validLogLikelihoods = new boolean[treeModel.getNodeCount()];
             storedValidLogLikelihoods = new boolean[treeModel.getNodeCount()];
+        }
+
+        if (traitParameter != null){
+            addVariable(traitParameter);
+            traitParameter.addVariableListener(this);
+//            traitParameter.fireParameterChangedEvent();
         }
 
         this.scaleByTime = scaleByTime;
@@ -226,8 +230,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             addModel(samplingDensity);
         }
 
-        if (traitParameter != null)
-            addVariable(traitParameter);
 
         this.reportAsMultivariate = reportAsMultivariate;
 
@@ -238,6 +240,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             validLogLikelihoods = new boolean[treeModel.getNodeCount()];
             storedValidLogLikelihoods = new boolean[treeModel.getNodeCount()];
         }
+
+        if (traitParameter != null){
+            addVariable(traitParameter);
+            traitParameter.addParameterListener(this);
+//            traitParameter.fireParameterChangedEvent();
+        }
+
 
         this.scaleByTime = scaleByTime;
         this.useTreeLength = useTreeLength;

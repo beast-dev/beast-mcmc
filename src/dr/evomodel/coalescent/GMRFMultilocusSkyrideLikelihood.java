@@ -25,6 +25,7 @@
 
 package dr.evomodel.coalescent;
 
+import com.sun.xml.internal.messaging.saaj.packaging.mime.internet.ParameterList;
 import dr.evolution.coalescent.IntervalType;
 import dr.evolution.coalescent.TreeIntervals;
 import dr.evolution.tree.Tree;
@@ -50,7 +51,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     private double cutOff;
     private int numGridPoints;
-    private int lastObservedIndex;
     protected int oldFieldLength;
     // number of coalescent events which occur in an interval with constant population size
     protected double[] numCoalEvents;
@@ -72,8 +72,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     private SkygridHelper skygridHelper;
     protected List<Parameter> missingCov;
     protected List<MatrixParameter> covariates;
+    protected List<Parameter> beta;
     protected List<Parameter> covPrecParameters;
-    protected SymmTridiagMatrix weightMatrixForMissingCov;
+    protected List<SymmTridiagMatrix> weightMatricesForMissingCov;
+    protected int[] lastObservedIndex;
 
     public GMRFMultilocusSkyrideLikelihood(List<Tree> treeList,
                                            Parameter popParameter,
@@ -177,30 +179,40 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                                            Parameter groupParameter,
                                            Parameter precParameter,
                                            Parameter lambda,
-                                           Parameter beta,
+                                          // List<Parameter> beta,
                                            MatrixParameter dMatrix,
                                            boolean timeAwareSmoothing,
                                            Parameter specGridPoints,
                                            List<MatrixParameter> covariates,
                                            Parameter ploidyFactorsParameter,
-                                           Parameter lastObservedIndexParameter,
-                                           List<Parameter> covPrecParameters) {
+                                           List<Parameter> lastObservedIndexParameter,
+                                           List<Parameter> covPrecParameters,
+                                           List<Parameter> beta) {
 
         super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
         this.gridPoints = specGridPoints.getParameterValues();
         this.numGridPoints = gridPoints.length;
         this.cutOff = gridPoints[numGridPoints - 1];
+
         if(lastObservedIndexParameter != null){
-            this.lastObservedIndex = (int) lastObservedIndexParameter.getParameterValue(0);
-        }else{
-            this.lastObservedIndex = popParameter.getDimension();
+            lastObservedIndex = new int[lastObservedIndexParameter.size()];
+            for(int i=0; i < lastObservedIndexParameter.size(); i++) {
+                this.lastObservedIndex[i] = (int) lastObservedIndexParameter.get(i).getParameterValue(0);
+            }
         }
+
+        /*else{
+            for(int i=0; i < beta.getDimension(); i++) {
+                this.lastObservedIndex[i] = popParameter.getDimension();
+            }
+        }*/
+
         this.popSizeParameter = popParameter;
         this.groupSizeParameter = groupParameter;
         this.precisionParameter = precParameter;
         this.lambdaParameter = lambda;
-        this.betaParameter = beta;
+        this.beta = beta;
         this.dMatrix = dMatrix;
         this.timeAwareSmoothing = timeAwareSmoothing;
         this.ploidyFactors = ploidyFactorsParameter;
@@ -245,8 +257,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
         // Field length must be set by this point
 
-        if (betaParameter != null) {
-            addVariable(betaParameter);
+        if (beta != null) {
+            for (Parameter betaParam : beta) {
+                addVariable(betaParam);
+            }
             if(lastObservedIndexParameter != null){
                 setupGMRFWeightsForMissingCov();
                 skygridHelper = new SkygridMissingCovariateHelper();
@@ -663,39 +677,42 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     protected void setupGMRFWeightsForMissingCov() {
         //System.err.println("fieldLength: " + fieldLength);
-       // System.err.println("lastObservedIndex: " + lastObservedIndex);
+        // System.err.println("lastObservedIndex: " + lastObservedIndex);
         //Set up the weight Matrix
-        double[] offdiag = new double[fieldLength - lastObservedIndex - 1];
-        double[] diag = new double[fieldLength - lastObservedIndex];
+        weightMatricesForMissingCov = new ArrayList<SymmTridiagMatrix>();
 
-        //First set up the offdiagonal entries;
+        for (int i = 0; i < covPrecParameters.size(); i++){
+            double[] offdiag = new double[fieldLength - lastObservedIndex[i] - 1];
+            double[] diag = new double[fieldLength - lastObservedIndex[i]];
 
-        for (int i = 0; i < fieldLength - lastObservedIndex - 1; i++) {
-            offdiag[i] = -1;
+            //First set up the offdiagonal entries;
+
+            for (int k = 0; k < fieldLength - lastObservedIndex[i] - 1; k++) {
+                offdiag[k] = -1;
+            }
+
+            //Then set up the diagonal entries;
+            for (int k = 0; k < fieldLength - lastObservedIndex[i] - 1; k++) {
+                //	diag[i] = -(offdiag[i] + offdiag[i - 1]);
+                diag[k] = 2.0;
+            }
+            //Take care of the endpoint
+            diag[fieldLength - lastObservedIndex[i] - 1] = 1.0;
+
+            weightMatricesForMissingCov.add(i, new SymmTridiagMatrix(diag, offdiag));
         }
-
-        //Then set up the diagonal entries;
-        for (int i = 0; i < fieldLength - lastObservedIndex - 1; i++) {
-            //	diag[i] = -(offdiag[i] + offdiag[i - 1]);
-            diag[i] = 2.0;
-        }
-        //Take care of the endpoint
-        diag[fieldLength - lastObservedIndex - 1] = 1.0;
-
-
-        weightMatrixForMissingCov = new SymmTridiagMatrix(diag, offdiag);
 
     }
 
 
-    public SymmTridiagMatrix getScaledWeightMatrixForMissingCov(double precision) {
-        SymmTridiagMatrix a = weightMatrixForMissingCov.copy();
+    public SymmTridiagMatrix getScaledWeightMatrixForMissingCov(double precision, int covIndex, int lastObs) {
+        SymmTridiagMatrix a = weightMatricesForMissingCov.get(covIndex).copy();
         for (int i = 0; i < a.numRows() - 1; i++) {
             a.set(i, i, a.get(i, i) * precision);
             a.set(i + 1, i, a.get(i + 1, i) * precision);
         }
-        a.set(fieldLength -lastObservedIndex - 1, fieldLength - lastObservedIndex - 1,
-                a.get(fieldLength - lastObservedIndex - 1, fieldLength - lastObservedIndex - 1) * precision);
+        a.set(fieldLength -lastObs - 1, fieldLength - lastObs - 1,
+                a.get(fieldLength - lastObs - 1, fieldLength - lastObs - 1) * precision);
         return a;
     }
 
@@ -718,6 +735,14 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     public double getPopulationFactor(int nt) {
         return ploidyFactors.getParameterValue(nt);
+    }
+
+    public List<Parameter> getBetaListParameter() {
+        return beta;
+    }
+
+    public List<MatrixParameter> getCovariates() {
+        return covariates;
     }
 
     public void storeTheState() {
@@ -820,7 +845,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             DenseVector tempVect = new DenseVector(popSizeParameter.getParameterValues());
             DenseVector diagonal1 = new DenseVector(fieldLength);
             DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
-            DenseVector currentBeta = new DenseVector(betaParameter.getParameterValues());
+            DenseVector currentBeta = new DenseVector(beta.size());
+            for(int i =0; i < beta.size(); i++){
+                currentBeta.set(i, beta.get(i).getParameterValue(0));
+            }
             //int numMissing = fieldLength - lastObservedIndex;
             //DenseVector tempVectCov = new DenseVector(numMissing);
 
@@ -880,11 +908,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             DenseVector tempVect = new DenseVector(popSizeParameter.getParameterValues());
             DenseVector diagonal1 = new DenseVector(fieldLength);
             DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
-            DenseVector currentBeta = new DenseVector(betaParameter.getParameterValues());
-            int numMissing = fieldLength - lastObservedIndex;
-            DenseVector tempVectMissingCov = new DenseVector(numMissing);
+           // DenseVector currentBeta = new DenseVector(betaParameter.getParameterValues());
+            DenseVector currentBeta = new DenseVector(beta.size());
+            for(int i =0; i < beta.size(); i++){
+                currentBeta.set(i, beta.get(i).getParameterValue(0));
+            }
+            int numMissing;
+            DenseVector tempVectMissingCov;
             SymmTridiagMatrix missingCovQ;
-            DenseVector tempVectMissingCov2 = new DenseVector(numMissing);
+            DenseVector tempVectMissingCov2;
 
             //System.err.println("covariates.size(): " + covariates.size());
             //System.err.println("covariates.get(0).getColumnDimension: " + covariates.get(0).getColumnDimension());
@@ -901,15 +933,20 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
             for(int i = 0; i < covPrecParameters.size(); i++){
 
-                missingCovQ = getScaledWeightMatrixForMissingCov(covPrecParameters.get(i).getParameterValue(0));
+                numMissing = fieldLength - lastObservedIndex[i];
+                tempVectMissingCov = new DenseVector(numMissing);
+                tempVectMissingCov2 = new DenseVector(numMissing);
+
+                missingCovQ = getScaledWeightMatrixForMissingCov(covPrecParameters.get(i).getParameterValue(0), i,
+                        lastObservedIndex[i]);
 
                 for(int j = 0; j < numMissing; j++) {
                    // System.err.println("covariate.get(i).getSize(): " + covariates.get(i).getSize());
                    // System.err.println("lastObservedIndex: " + lastObservedIndex);
                    // System.err.println("j: " + j);
                    // System.err.println("getParameterValue(0, lastObservedIndex-1): " + covariates.get(i).getParameterValue(0,lastObservedIndex-1));
-                    tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, lastObservedIndex + j) -
-                        covariates.get(i).getParameterValue(0, lastObservedIndex-1));
+                    tempVectMissingCov.set(j, covariates.get(i).getParameterValue(0, lastObservedIndex[i] + j) -
+                        covariates.get(i).getParameterValue(0, lastObservedIndex[i]-1));
                 }
 
                 missingCovQ.mult(tempVectMissingCov, tempVectMissingCov2);

@@ -68,17 +68,20 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         int externalNodeCount = tree.getExternalNodeCount();
+
         // find a case whose infection event we are going to move about
-        int nodeToSwitch = MathUtils.nextInt(externalNodeCount);
+        int caseIndexToAdjust = MathUtils.nextInt(c2cLikelihood.getOutbreak().size());
+
+        AbstractCase aCase = c2cLikelihood.getOutbreak().getCase(caseIndexToAdjust);
+
         // if the infection event is the seed of the epidemic, we need to try again
-        while(branchMap.get(tree.getRoot().getNumber())==branchMap.get(tree.getExternalNode(nodeToSwitch).getNumber())){
-            nodeToSwitch = MathUtils.nextInt(externalNodeCount);
+        while(branchMap.get(tree.getRoot().getNumber()) == aCase){
+            caseIndexToAdjust = MathUtils.nextInt(externalNodeCount);
         }
+
         // find the child node of the transmission branch
-        NodeRef node = tree.getExternalNode(nodeToSwitch);
-        while(branchMap.get(node.getNumber())==branchMap.get(tree.getParent(node).getNumber())){
-            node = tree.getParent(node);
-        }
+        NodeRef node = tree.getEarliestNodeInPartition(aCase);
+
         double hr = adjustTree(tree, node);
 
         return hr;

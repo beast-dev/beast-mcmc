@@ -74,7 +74,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         AbstractCase aCase = c2cLikelihood.getOutbreak().getCase(caseIndexToAdjust);
 
         // if the infection event is the seed of the epidemic, we need to try again
-        while(branchMap.get(tree.getRoot().getNumber()) == aCase){
+        while(branchMap.get(tree.getRoot().getNumber()) == aCase || !aCase.wasEverInfected()){
             caseIndexToAdjust = MathUtils.nextInt(c2cLikelihood.getOutbreak().size());
             aCase = c2cLikelihood.getOutbreak().getCase(caseIndexToAdjust);
         }

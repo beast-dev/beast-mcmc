@@ -209,7 +209,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
                 // appropriately
 
-                if(branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
+                if(PiPCase != CiPCase){
                     logq += Math.log(0.5);
                 }
 
@@ -331,7 +331,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
                 // appropriately
 
-                if(PiP!=null && branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
+                if(PiP!=null && PiPCase != CiPCase){
                     logq += Math.log(0.5);
                 }
 

@@ -149,7 +149,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         oldRange = tree.getNodeHeight(PiP) - oldMinAge;
         q = newRange / Math.abs(oldRange);
 
-        // need to account for the random repainting of iP
+        // need to account for the random reassignment of iP
 
         if(branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
             q *= 0.5;

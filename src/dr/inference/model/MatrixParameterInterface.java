@@ -28,7 +28,7 @@ package dr.inference.model;
 /**
  * Created by msuchard on 12/30/15.
  */
-public interface MatrixParameterInterface extends Variable<Double> {
+public interface MatrixParameterInterface extends Parameter {
 
     double getParameterValue(int row, int col);
 

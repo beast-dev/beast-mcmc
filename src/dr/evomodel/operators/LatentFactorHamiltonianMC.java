@@ -1,9 +1,7 @@
 package dr.evomodel.operators;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
@@ -16,9 +14,9 @@ import java.util.Random;
 public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
     private LatentFactorModel lfm;
     private FullyConjugateMultivariateTraitLikelihood tree;
-    private MatrixParameter factors;
-    private MatrixParameter loadings;
-    private MatrixParameter Precision;
+    private MatrixParameterInterface factors;
+    private MatrixParameterInterface loadings;
+    private MatrixParameterInterface Precision;
     private int nfac;
     private int ntaxa;
     private int ntraits;
@@ -142,8 +140,20 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             }
 //            System.out.println("randel");
 //            System.out.println(randel);
-            ((Parameter.Default) factors.getParameter(randel)).fireParameterChangedEvent(0, null);
+            if(factors instanceof FastMatrixParameter) {
+                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
+                    factors.fireParameterChangedEvent(randel * factors.getRowDimension() + j, null);
+                }
+//                factors.fireParameterChangedEvent();
+            }
+            else{
+                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
+                    factors.getParameter(randel).fireParameterChangedEvent(j, null);
+                }
+//                factors.getParameter(randel).fireParameterChangedEvent();
+            }
 
+//            factors.fireParameterChangedEvent();
 
             if(i!=nSteps){
                 derivative=getGradient(randel, mean, prec, precfactor);

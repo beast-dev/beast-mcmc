@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
+import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.MCMCOperator;
@@ -76,7 +77,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
     }
 
     public void proposeTree() throws OperatorFailedException {
-        TreeModel tree = c2cLikelihood.getTreeModel();
+        PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
@@ -90,14 +91,16 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         int eligibleNodeCount = eligibleNodes.size();
 
         final NodeRef iP = tree.getParent(i);
-        Integer[] samePaintings = c2cLikelihood.getTreeModel().samePartitionElement(iP);
+
+        Integer[] sameElements = tree.samePartitionElement(iP);
+
         HashSet<Integer> possibleDestinations = new HashSet<Integer>();
         // we can insert the node above OR BELOW any node in the same partition
-        for (Integer samePainting : samePaintings) {
-            possibleDestinations.add(samePainting);
-            if (!tree.isExternal(tree.getNode(samePainting))) {
-                possibleDestinations.add(tree.getChild(tree.getNode(samePainting), 0).getNumber());
-                possibleDestinations.add(tree.getChild(tree.getNode(samePainting), 1).getNumber());
+        for (Integer sameElement : sameElements) {
+            possibleDestinations.add(sameElement);
+            if (!tree.isExternal(tree.getNode(sameElement))) {
+                possibleDestinations.add(tree.getChild(tree.getNode(sameElement), 0).getNumber());
+                possibleDestinations.add(tree.getChild(tree.getNode(sameElement), 1).getNumber());
             }
         }
         Integer[] pd = possibleDestinations.toArray(new Integer[possibleDestinations.size()]);

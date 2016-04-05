@@ -29,6 +29,7 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.DiagonalMatrix;
 import dr.inference.model.LatentFactorModel;
 import dr.inference.model.MatrixParameter;
+import dr.inference.model.MatrixParameterInterface;
 import dr.math.MathUtils;
 import dr.math.distributions.GammaDistribution;
 
@@ -60,10 +61,10 @@ public class LatentFactorModelPrecisionGibbsOperator extends SimpleMCMCOperator 
     }
 
     private void setPrecision(int i) {
-        MatrixParameter factors = LFM.getFactors();
-        MatrixParameter loadings = LFM.getLoadings();
+        MatrixParameterInterface factors = LFM.getFactors();
+        MatrixParameterInterface loadings = LFM.getLoadings();
         DiagonalMatrix precision = (DiagonalMatrix) LFM.getColumnPrecision();
-        MatrixParameter data = LFM.getScaledData();
+        MatrixParameterInterface data = LFM.getScaledData();
         double di = 0;
         for (int j = 0; j < factors.getColumnDimension(); j++) {
             double sum = 0;

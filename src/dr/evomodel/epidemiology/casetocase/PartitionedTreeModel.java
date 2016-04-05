@@ -258,17 +258,15 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
     //Return a set of nodes that are not descendants of (or equal to) the current node and are in the same partition as
-    // it. If flagForRecalc is true, then this also sets the flags for likelihood recalculation for all these nodes
-    // to true
+    // it.
 
 
     public HashSet<Integer> samePartitionElementUpTree(NodeRef node){
-
         HashSet<Integer> out = new HashSet<Integer>();
-        AbstractCase painting = branchMap.get(node.getNumber());
+        AbstractCase elementCase = branchMap.get(node.getNumber());
         NodeRef currentNode = node;
         NodeRef parentNode = getParent(node);
-        while(parentNode!=null && branchMap.get(parentNode.getNumber())==painting){
+        while(parentNode!=null && branchMap.get(parentNode.getNumber())==elementCase){
             out.add(parentNode.getNumber());
             if(countChildrenInSamePartition(parentNode)==2){
                 NodeRef otherChild = sibling(this, currentNode);
@@ -284,13 +282,11 @@ public class PartitionedTreeModel extends TreeModel {
     //Return a set of nodes that are descendants (and not equal to) the current node and are in the same partition as
     // it.
 
-
-
     public HashSet<Integer> samePartitionElementDownTree(NodeRef node){
         HashSet<Integer> out = new HashSet<Integer>();
-        AbstractCase painting = branchMap.get(node.getNumber());
+        AbstractCase elementCase = branchMap.get(node.getNumber());
         for(int i=0; i< getChildCount(node); i++){
-            if(branchMap.get(getChild(node,i).getNumber())==painting){
+            if(branchMap.get(getChild(node,i).getNumber())==elementCase){
                 out.add(getChild(node,i).getNumber());
                 out.addAll(samePartitionElementDownTree(getChild(node, i)));
             }

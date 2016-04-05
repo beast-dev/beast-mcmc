@@ -65,6 +65,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         ParameterProxy(FastMatrixParameter matrix, int column) {
             this.matrix = matrix;
+//            this.addParameterListener(this.matrix);
             this.column = column;
         }
 
@@ -122,6 +123,12 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         public Bounds<Double> getBounds() {
             return matrix.getUniqueParameter(0).getBounds();
         }
+
+        @Override
+        public void fireParameterChangedEvent(int index, ChangeType type){
+            matrix.fireParameterChangedEvent(index, type);
+        }
+
 
         @Override
         public void addDimension(int index, double value) {

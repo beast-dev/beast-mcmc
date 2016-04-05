@@ -65,7 +65,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         ParameterProxy(FastMatrixParameter matrix, int column) {
             this.matrix = matrix;
-            this.addParameterListener(this.matrix);
+//            this.addParameterListener(this.matrix);
             this.column = column;
         }
 

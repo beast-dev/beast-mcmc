@@ -156,7 +156,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         if (traitParameter != null){
             addVariable(traitParameter);
-            traitParameter.addVariableListener(this);
+//            traitParameter.addVariableListener(this);
 //            traitParameter.fireParameterChangedEvent();
         }
 
@@ -243,7 +243,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
         if (traitParameter != null){
             addVariable(traitParameter);
-            traitParameter.addParameterListener(this);
+//            traitParameter.addParameterListener(this);
 //            traitParameter.fireParameterChangedEvent();
         }
 

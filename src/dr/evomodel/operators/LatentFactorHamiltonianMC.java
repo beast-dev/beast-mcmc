@@ -140,20 +140,20 @@ public class LatentFactorHamiltonianMC extends AbstractHamiltonianMCOperator{
             }
 //            System.out.println("randel");
 //            System.out.println(randel);
-//            if(factors instanceof FastMatrixParameter) {
-//                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
-//                    factors.fireParameterChangedEvent(randel * factors.getRowDimension() + i, null);
-//                }
-////                factors.fireParameterChangedEvent();
-//            }
-//            else{
-//                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
-//                    factors.getParameter(randel).fireParameterChangedEvent(j, null);
-//                }
+            if(factors instanceof FastMatrixParameter) {
+                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
+                    factors.fireParameterChangedEvent(randel * factors.getRowDimension() + j, null);
+                }
+//                factors.fireParameterChangedEvent();
+            }
+            else{
+                for (int j = 0; j <factors.getParameter(randel).getDimension() ; j++) {
+                    factors.getParameter(randel).fireParameterChangedEvent(j, null);
+                }
 //                factors.getParameter(randel).fireParameterChangedEvent();
-//            }
+            }
 
-            factors.fireParameterChangedEvent();
+//            factors.fireParameterChangedEvent();
 
             if(i!=nSteps){
                 derivative=getGradient(randel, mean, prec, precfactor);

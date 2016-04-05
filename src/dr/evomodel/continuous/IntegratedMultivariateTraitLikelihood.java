@@ -184,7 +184,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         missingTraits = new MissingTraits.CompletelyMissing(treeModel, missingIndices, dim);
         setTipDataValuesForAllNodes();
-        this.traitParameter.fireParameterChangedEvent();
 
     }
 

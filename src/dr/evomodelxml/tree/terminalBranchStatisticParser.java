@@ -35,10 +35,10 @@ import dr.xml.*;
  */
 public class terminalBranchStatisticParser extends AbstractXMLObjectParser {
 
-    public static final String TREE_LENGTH_STATISTIC = "terminalBranchStatistic";
+    public static final String EXTERNAL_BRANCHES_STATISTIC = "terminalBranchStatistic";
 
         public String getParserName() {
-            return TREE_LENGTH_STATISTIC;
+            return EXTERNAL_BRANCHES_STATISTIC;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -54,7 +54,7 @@ public class terminalBranchStatisticParser extends AbstractXMLObjectParser {
         //************************************************************************
 
         public String getParserDescription() {
-            return "A statistic that returns the average of the branch rates";
+            return "A statistic that returns the length of external (terminal) branches";
         }
 
         public Class getReturnType() {

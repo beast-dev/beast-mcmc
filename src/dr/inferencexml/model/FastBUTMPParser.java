@@ -98,7 +98,7 @@ public class FastBUTMPParser extends AbstractXMLObjectParser {
 
     @Override
     public Class getReturnType() {
-        return BlockUpperTriangularMatrixParameter.class;  //To change body of implemented methods use File | Settings | File Templates.
+        return FastBUTMP.class;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

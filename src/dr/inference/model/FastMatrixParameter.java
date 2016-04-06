@@ -148,6 +148,12 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     private final int index(int row, int col) {
         // column-major
+        if(col > getColumnDimension()){
+            throw new RuntimeException("Column out of bounds");
+        }
+        if(row > getRowDimension()){
+            throw new RuntimeException("Row out of bounds");
+        }
         return col * rowDimension + row;
     }
 
@@ -192,8 +198,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     @Override
     public double[] getColumnValues(int col) {
-        double[] rtn = new double[rowDimension];
-        for (int i = 0; i < rowDimension; ++i) {
+        double[] rtn = new double[getRowDimension()];
+        for (int i = 0; i < getRowDimension(); ++i) {
             rtn[i] = getParameterValue(i, col);
         }
         return rtn;
@@ -201,9 +207,9 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     @Override
     public double[][] getParameterAsMatrix() {
-        double[][] rtn = new double[rowDimension][colDimension];
-        for (int j = 0; j < colDimension; ++j) {
-            for (int i = 0; i < rowDimension; ++i) {
+        double[][] rtn = new double[getRowDimension()][getColumnDimension()];
+        for (int j = 0; j < getColumnDimension(); ++j) {
+            for (int i = 0; i < getRowDimension(); ++i) {
                 rtn[i][j] = getParameterValue(i, j);
             }
         }

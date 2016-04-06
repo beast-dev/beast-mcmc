@@ -2,10 +2,7 @@ package dr.evomodel.operators;
 
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.inference.distribution.MomentDistributionModel;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.inference.operators.AbstractHamiltonianMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.OperatorFailedException;
@@ -17,9 +14,9 @@ import jebl.math.Random;
 public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     private LatentFactorModel lfm;
     private MomentDistributionModel prior;
-    private MatrixParameter factors;
-    private MatrixParameter loadings;
-    private MatrixParameter Precision;
+    private MatrixParameterInterface factors;
+    private MatrixParameterInterface loadings;
+    private MatrixParameterInterface Precision;
     private int nfac;
     private int ntaxa;
     private int ntraits;
@@ -27,7 +24,7 @@ public class LoadingsHamiltonianMC extends AbstractHamiltonianMCOperator {
     private int nSteps;
 
 
-    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd, MatrixParameter loadings){
+    public LoadingsHamiltonianMC(LatentFactorModel lfm, MomentDistributionModel prior, double weight, CoercionMode mode, double stepSize, int nSteps, double momentumSd, MatrixParameterInterface loadings){
         super(mode , momentumSd);
         setWeight(weight);
         this.lfm = lfm;

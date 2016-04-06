@@ -91,7 +91,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         priorMeanPrecision = this.prior.getMean()[0] * priorPrecision;
     }
 
-    private void getPrecisionOfTruncated(MatrixParameter full, int newRowDimension, int row, double[][] answer) {
+    private void getPrecisionOfTruncated(MatrixParameterInterface full, int newRowDimension, int row, double[][] answer) {
 
 //        MatrixParameter answer=new MatrixParameter(null);
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
@@ -122,8 +122,8 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 //        answer.setDimensions(this.getRowDimension(), Right.getRowDimension());
 //        System.out.println(answer.getRowDimension());
 //        System.out.println(answer.getColumnDimension());
-        MatrixParameter data = LFM.getScaledData();
-        MatrixParameter Left = LFM.getFactors();
+        MatrixParameterInterface data = LFM.getScaledData();
+        MatrixParameterInterface Left = LFM.getFactors();
         int p = data.getColumnDimension();
         for (int i = 0; i < newRowDimension; i++) {
             double sum = 0;

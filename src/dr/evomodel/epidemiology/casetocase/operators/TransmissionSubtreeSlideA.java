@@ -389,18 +389,14 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
     private int intersectingEdges(Tree tree, NodeRef node, double height, BranchMapModel branchMap,
                                   AbstractCase partition, List<NodeRef> directChildren) {
-
         final NodeRef parent = tree.getParent(node);
-
         if (tree.getNodeHeight(parent) < height || branchMap.get(parent.getNumber())!=partition) return 0;
-
         if (tree.getNodeHeight(node) < height) {
             if (directChildren != null){
                 directChildren.add(node);
             }
             return 1;
         }
-
         int count = 0;
         for (int i = 0; i < tree.getChildCount(node); i++) {
             count += intersectingEdges(tree, tree.getChild(node, i), height, branchMap, partition, directChildren);

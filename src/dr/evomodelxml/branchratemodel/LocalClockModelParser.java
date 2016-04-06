@@ -76,14 +76,12 @@ public class LocalClockModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("A local clock for a clade must be defined by at least two taxa");
                     }
 
-                    boolean includeStem = false;
                     boolean excludeClade = false;
                     double stemProportion = 0.0;
 
                     if (xoc.hasAttribute(INCLUDE_STEM)) {
-                        includeStem = xoc.getBooleanAttribute(INCLUDE_STEM);
                         // if includeStem=true then assume it is the whole stem
-                        stemProportion = 1.0;
+                        stemProportion = xoc.getBooleanAttribute(INCLUDE_STEM) ? 1.0 : 0.0;
                     }
 
                     if (xoc.hasAttribute(STEM_PROPORTION)) {

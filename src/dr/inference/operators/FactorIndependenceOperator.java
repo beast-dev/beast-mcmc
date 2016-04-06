@@ -25,10 +25,7 @@
 
 package dr.inference.operators;
 
-import dr.inference.model.DiagonalMatrix;
-import dr.inference.model.LatentFactorModel;
-import dr.inference.model.MatrixParameter;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.matrixAlgebra.SymmetricMatrix;
@@ -72,7 +69,7 @@ public class FactorIndependenceOperator extends AbstractCoercableOperator {
     }
 
     private void getPrecision(double[][] precision) {
-        MatrixParameter Loadings = LFM.getLoadings();
+        MatrixParameterInterface Loadings = LFM.getLoadings();
         MatrixParameter Precision = LFM.getColumnPrecision();
         int outerDim = Loadings.getRowDimension();
         int innerDim = Loadings.getColumnDimension();
@@ -94,9 +91,9 @@ public class FactorIndependenceOperator extends AbstractCoercableOperator {
     }
 
     private void getMean(int column, double[][] variance, double[] midMean, double[] mean) {
-        MatrixParameter scaledData = LFM.getScaledData();
-        MatrixParameter Precision = LFM.getColumnPrecision();
-        MatrixParameter Loadings = LFM.getLoadings();
+        MatrixParameterInterface scaledData = LFM.getScaledData();
+        MatrixParameterInterface Precision = LFM.getColumnPrecision();
+        MatrixParameterInterface Loadings = LFM.getLoadings();
         for (int i = 0; i < Loadings.getRowDimension(); i++) {
             double sum = 0;
             for (int j = i; j < Loadings.getColumnDimension(); j++) {

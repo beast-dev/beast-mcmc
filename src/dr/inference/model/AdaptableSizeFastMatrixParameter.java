@@ -27,6 +27,31 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         return columnDimension;
     }
 
+    public int getDimension(){
+        return rowDimension*columnDimension;
+    }
+
+    public void setParameterValue(int index, double value){
+        int row = index / rowDimension;
+        int col = index % rowDimension;
+
+        super.setParameterValue(row, col, value);
+    }
+
+    public void setParameterValueQuietly(int index, double value){
+        int row = index / rowDimension;
+        int col = index % rowDimension;
+
+        super.setParameterValueQuietly(row, col, value);
+    }
+
+    public double getParameterValue(int index){
+        int row = index / rowDimension;
+        int col = index % rowDimension;
+
+        return super.getParameterValue(row, col);
+    }
+
     int rowDimension;
     int columnDimension;
     int maxRow;

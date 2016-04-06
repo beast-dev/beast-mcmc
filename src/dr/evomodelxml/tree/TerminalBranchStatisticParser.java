@@ -26,16 +26,16 @@
 package dr.evomodelxml.tree;
 
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.terminalBranchStatistic;
+import dr.evomodel.tree.TerminalBranchStatistic;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
  */
-public class terminalBranchStatisticParser extends AbstractXMLObjectParser {
+public class TerminalBranchStatisticParser extends AbstractXMLObjectParser {
 
-    public static final String EXTERNAL_BRANCHES_STATISTIC = "terminalBranchStatistic";
+    public static final String EXTERNAL_BRANCHES_STATISTIC = "TerminalBranchStatistic";
 
         public String getParserName() {
             return EXTERNAL_BRANCHES_STATISTIC;
@@ -46,7 +46,7 @@ public class terminalBranchStatisticParser extends AbstractXMLObjectParser {
             String name = xo.getAttribute(Statistic.NAME, xo.getId());
             Tree tree = (Tree) xo.getChild(Tree.class);
 
-            return new terminalBranchStatistic(name, tree);
+            return new TerminalBranchStatistic(name, tree);
         }
 
         //************************************************************************
@@ -58,7 +58,7 @@ public class terminalBranchStatisticParser extends AbstractXMLObjectParser {
         }
 
         public Class getReturnType() {
-            return terminalBranchStatistic.class;
+            return TerminalBranchStatistic.class;
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

@@ -4,7 +4,7 @@ package dr.inference.model;
  * Created by max on 4/6/16.
  */
 public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
-    public AdaptableSizeFastMatrixParameter(String id, int rowDimension, int colDimension, int maxCol, int maxRow) {
+    public AdaptableSizeFastMatrixParameter(String id, int rowDimension, int colDimension, int maxRow, int maxCol) {
         super(id, maxRow, maxCol);
         this.rowDimension = rowDimension;
         this.columnDimension = colDimension;

@@ -1,6 +1,7 @@
 package dr.inferencexml.model;
 
 
+import dr.inference.model.AdaptableSizeFastMatrixParameter;
 import dr.xml.*;
 
 /**
@@ -17,7 +18,13 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
     private static final String TRANSPOSE="transpose";
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-      return 0;
+        int MaxRowSize = xo.getAttribute(MAX_ROW_SIZE, 1);
+        int MaxColumnSize = xo.getAttribute(MAX_COL_SIZE, 1);
+        int rowDimension = xo.getAttribute(ROWS, 1);
+        int columnDimension = xo.getAttribute(COLUMNS, 1);
+        String name = xo.getName();
+
+      return new AdaptableSizeFastMatrixParameter(name, rowDimension, columnDimension, MaxRowSize, MaxColumnSize);
     }
 
     @Override
@@ -27,11 +34,13 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
 
     private final XMLSyntaxRule[] rules = {
 //            new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
-            AttributeRule.newBooleanRule(TRANSPOSE, true),
             AttributeRule.newIntegerRule(COLUMNS, true),
             AttributeRule.newIntegerRule(ROWS, true),
+            AttributeRule.newIntegerRule(MAX_ROW_SIZE, true),
+            AttributeRule.newIntegerRule(MAX_COL_SIZE, true),
 
     };
+
 
 
     @Override
@@ -41,7 +50,7 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
 
     @Override
     public Class getReturnType() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return AdaptableSizeFastMatrixParameter.class;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override

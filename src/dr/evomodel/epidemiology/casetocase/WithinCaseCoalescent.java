@@ -122,7 +122,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 if (recalculateCoalescentFlags[number]) {
                     Treelet treelet = partitionsAsTrees.get(aCase);
 
-                    if (children.size() != 0) {
+                    if (children.size() > 0 || treelet.getExternalNodeCount() > 1) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
                                 treelet.getZeroHeight(), mode == Mode.TRUNCATE);
                         partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();

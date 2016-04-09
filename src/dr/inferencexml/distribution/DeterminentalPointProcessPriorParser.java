@@ -1,7 +1,7 @@
-package dr.inferencexml.model;
+package dr.inferencexml.distribution;
 
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
-import dr.inference.model.DeterminentalPointProcessPrior;
+import dr.inference.distribution.DeterminentalPointProcessPrior;
 import dr.xml.*;
 
 /**
@@ -9,12 +9,17 @@ import dr.xml.*;
  */
 public class DeterminentalPointProcessPriorParser extends AbstractXMLObjectParser {
     public static final String DETERMINENTAL_POINT_PROCESS_PRIOR="determinentalPointProcessPrior";
+    public static final String THETA = "theta";
 
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        return new DeterminentalPointProcessPrior();
+        String name = xo.getName();
+        double theta = xo.getDoubleAttribute(THETA);
+        AdaptableSizeFastMatrixParameter data = (AdaptableSizeFastMatrixParameter) xo.getChild(AdaptableSizeFastMatrixParameter.class);
+
+        return new DeterminentalPointProcessPrior(name, theta, data);
     }
 
     @Override
@@ -25,6 +30,7 @@ public class DeterminentalPointProcessPriorParser extends AbstractXMLObjectParse
     private final XMLSyntaxRule[] rules = {
 //            new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
         new ElementRule(AdaptableSizeFastMatrixParameter.class),
+            AttributeRule.newDoubleRule(THETA),
 
     };
 

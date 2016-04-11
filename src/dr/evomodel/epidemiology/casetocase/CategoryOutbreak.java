@@ -510,10 +510,10 @@ public class CategoryOutbreak extends AbstractOutbreak {
                 new ElementRule(ProductStatistic.class, 0,2),
                 new ElementRule(CategoryCase.CATEGORY_CASE, caseRules, 1, Integer.MAX_VALUE),
                 new ElementRule(Taxa.class),
-                new ElementRule(INFECTIOUS_PERIOD_PRIOR, AbstractPeriodPriorDistribution.class, "blah", 1,
-                        Integer.MAX_VALUE),
-                new ElementRule(LATENT_PERIODS, Parameter.class, "blah", 0,
-                        Integer.MAX_VALUE),
+                new ElementRule(INFECTIOUS_PERIOD_PRIOR, AbstractPeriodPriorDistribution.class, "A prior " +
+                        "distribution for the length of infectious periods", 1, Integer.MAX_VALUE),
+                new ElementRule(LATENT_PERIODS, Parameter.class, "A prior distribution for the length of latent" +
+                        " periods", 0, Integer.MAX_VALUE),
                 AttributeRule.newBooleanRule(HAS_GEOGRAPHY, true),
                 new ElementRule(DISTANCE_MATRIX, Parameter.class, "A matrix of distances between the cases in this " +
                         "outbreak", true)

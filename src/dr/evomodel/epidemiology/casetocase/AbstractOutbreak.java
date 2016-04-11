@@ -50,7 +50,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     protected TaxonList taxa;
     private boolean hasLatentPeriods;
     protected final boolean hasGeography;
-    private final String CASE_NAME = "caseID";
+    private final String CASE_NAME = "hostID";
     protected ArrayList<AbstractCase> cases;
     protected int infectedSize = 0;
 

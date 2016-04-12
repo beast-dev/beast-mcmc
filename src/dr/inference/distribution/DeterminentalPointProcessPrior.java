@@ -5,6 +5,7 @@ import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 
 import java.util.List;
+import java.util.Vector;
 
 /**
  * Created by max on 4/6/16.
@@ -21,7 +22,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     double[][] storedRelationshipList;
     int size;
     int storedSize;
-    List<Integer> changedList;
+    Vector<Integer> changedList;
 
     public DeterminentalPointProcessPrior(String name, double theta, AdaptableSizeFastMatrixParameter data) {
         super(name);
@@ -29,7 +30,15 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         this.data = data;
         addVariable(data);
         relationshipList = new double[data.getColumnDimension()][data.getColumnDimension()];
+        storedRelationshipList = new double[data.getColumnDimension()][data.getColumnDimension()];
         size = data.getColumnDimension();
+        for (int i = 0; i < data.getRowDimension(); i++) {
+            for (int j = 0; j < data.getColumnDimension(); j++) {
+                if(i % (j+1) == 0) {
+                    data.setParameterValueQuietly(i, j, 0);
+                }
+            }
+        }
 
         for (int i = 0; i < data.getColumnDimension(); i++) {
             for (int j = 0; j < data.getColumnDimension(); j++) {
@@ -38,8 +47,10 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
                     count += Math.abs(data.getParameterValue(k, i) - data.getParameterValue(k, j));
                 }
                 relationshipList[i][j] = Math.exp(- count / (theta * theta));
+                relationshipList[j][i] = relationshipList[i][j];
             }
         }
+        changedList = new Vector<Integer>();
     }
 
     @Override
@@ -152,5 +163,14 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+        for (int i = 0; i < data.getColumnDimension(); i++) {
+            for (int j = 0; j < data.getColumnDimension(); j++) {
+                int count = 0;
+                for (int k = 0; k < data.getRowDimension(); k++) {
+                    count += Math.abs(data.getParameterValue(k, i) - data.getParameterValue(k, j));
+                }
+                relationshipList[i][j] = Math.exp(- count / (theta * theta));
+            }
+        }
     }
 }

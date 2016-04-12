@@ -491,7 +491,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         }
 
         public Default(int dimension) {
-            this(dimension, 1.0);
+            this(dimension, 0.0);
         }
 
         public Default(double initialValue) {

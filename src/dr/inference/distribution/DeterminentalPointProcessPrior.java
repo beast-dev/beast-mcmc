@@ -23,6 +23,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     int size;
     int storedSize;
     Vector<Integer> changedList;
+    Vector<Integer> storedChangedList;
 
     public DeterminentalPointProcessPrior(String name, double theta, AdaptableSizeFastMatrixParameter data) {
         super(name);
@@ -63,9 +64,25 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
         storedSize = size;
+//        System.out.println("first");
+//        for (int i = 0; i < relationshipList.length; i++) {
+//            for (int j = 0; j < relationshipList.length ; j++) {
+//                System.out.println(i + " + " + j + ": " + relationshipList[i][j]);
+//            }
+//        }
         if(relationshipList.length != storedRelationshipList.length)
             storedRelationshipList = new double[size][size];
-        System.arraycopy(relationshipList, 0, storedRelationshipList, 0, relationshipList.length);
+        for(int i = 0; i < relationshipList.length; i++)
+            storedRelationshipList[i] = relationshipList[i].clone();
+
+//        System.out.println("stored");
+//        for (int i = 0; i < relationshipList.length; i++) {
+//            for (int j = 0; j < relationshipList.length ; j++) {
+//                System.out.println(i + " + " + j + ": " + storedRelationshipList[i][j]);
+//            }
+//        }
+//        System.arraycopy(relationshipList, 0, storedRelationshipList, 0, relationshipList.length);
+        storedChangedList = (Vector<Integer>) changedList.clone();
 
     }
 
@@ -77,6 +94,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         relationshipList = storedRelationshipList;
         storedRelationshipList = relationshipListTemp;
         size = storedSize;
+        changedList = storedChangedList;
     }
 
     @Override
@@ -114,7 +132,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
                 if(col != i){
                     if(data.getParameterValue(row, col) == data.getParameterValue(row, i)){
                         relationshipList[col][i] *= Math.exp(1 / (theta * theta));
-                        relationshipList[i][col]=relationshipList[i][col];
+                        relationshipList[i][col]=relationshipList[col][i];
                     }
                     else{
                         relationshipList[col][i] *= Math.exp(- 1 / (theta * theta));
@@ -156,7 +174,10 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         for (int i = 0; i <newSize ; i++) {
             product *= chol.getL()[i][i];
         }
-        logLikelihood = Math.log(product);
+        if(product == 0){
+            return Double.NEGATIVE_INFINITY;
+        }
+        logLikelihood = Math.log(product) * 2;
         return logLikelihood;
     }
 

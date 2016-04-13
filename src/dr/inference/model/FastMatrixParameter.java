@@ -149,10 +149,10 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
     private final int index(int row, int col) {
         // column-major
         if(col > getColumnDimension()){
-            throw new RuntimeException("Column out of bounds");
+            throw new RuntimeException("Column " + col + " out of bounds: Compared to " + getColumnDimension() + "maximum size.");
         }
         if(row > getRowDimension()){
-            throw new RuntimeException("Row out of bounds");
+            throw new RuntimeException("Row " + row + " out of bounds: Compared to " + getRowDimension() + "maximum size.");
         }
         return col * rowDimension + row;
     }

@@ -212,10 +212,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public double getLogLikelihood() {
 
-        if(DEBUG){
-            treeLikelihood.outputTreeToFile("debug.nex", true);
-        }
-
         if(!likelihoodKnown) {
             if (!treeProbKnown) {
                 treeLikelihood.prepareTimings();

@@ -1,5 +1,8 @@
 package dr.inference.model;
 
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
+
 /**
  * Created by max on 4/6/16.
  */
@@ -57,5 +60,42 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
     int columnDimension;
     int maxRow;
     int maxCol;
+
+    public LogColumn[] getColumns(){
+        LogColumn[] bigMatrixColumn = new ASFMPColumn[1];
+        bigMatrixColumn[0] = new ASFMPColumn(getParameterName());
+        return bigMatrixColumn;
+    }
+
+    private class ASFMPColumn extends NumberColumn {
+
+        public ASFMPColumn(String label) {
+            super(label);
+        }
+
+        protected String getFormattedValue(){
+            String fullMatrix = "{";
+            for (int i = 0; i <getRowDimension() ; i++) {
+                fullMatrix += " { ";
+                for (int j = 0; j < getColumnDimension(); j++) {
+                    fullMatrix += formatValue(getParameterValue(i,j));
+                    if(j != getColumnDimension() - 1){
+                        fullMatrix += ", ";
+                    }
+                }
+                if(i == getRowDimension()-1)
+                    fullMatrix += " } ";
+                else
+                    fullMatrix += " },";
+            }
+            fullMatrix += "}";
+            return fullMatrix;
+        }
+
+        @Override
+        public double getDoubleValue() {
+            return 0;
+        }
+    }
 }
 

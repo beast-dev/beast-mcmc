@@ -225,12 +225,12 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 //            System.out.println("low: " + low);
 //            System.out.println("high: " + high);
             double proportion = low/(low + 1 - high);
-            if(Random.nextDouble()<proportion){
-                double quantile=Random.nextDouble() * low;
+            if(MathUtils.nextDouble()<proportion){
+                double quantile=MathUtils.nextDouble() * low;
                 temp[i] = normal.quantile(quantile);
             }
             else{
-                double quantile=(1-high) * Random.nextDouble() + high;
+                double quantile=(1-high) * MathUtils.nextDouble() + high;
                 temp[i] = normal.quantile(quantile);
             }
 

@@ -142,7 +142,7 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
         @Override
         public int getDimension() {
-            return rowDimension;
+            return matrix.getRowDimension();
         }
     }
 

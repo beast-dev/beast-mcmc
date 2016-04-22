@@ -204,8 +204,8 @@ public class LoadingsGibbsOperator extends SimpleMCMCOperator implements GibbsOp
 //                illegalDimension.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 //            }
         }
-        for (int j = 0; j <mean.length ; j++) {//TODO implement for generic prior
-            mean[j]*=pathParameter;
+        for (int j = 0; j < mean.length ; j++) {//TODO implement for generic prior
+            mean[j] *= pathParameter;
         }
 
     }

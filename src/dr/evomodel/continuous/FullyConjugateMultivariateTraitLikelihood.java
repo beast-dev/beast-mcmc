@@ -239,7 +239,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
         if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
-            dimKnown=false;
+            dimKnown = false;
+            numData = traitParameter.getParameter(0).getDimension() / getDimTrait();
         }
         PostPreKnown=false;
         super.handleVariableChangedEvent(variable,index,type);
@@ -292,8 +293,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             storedPreP=new double[treeModel.getNodeCount()];
         }
         if(!dimKnown){
-            preMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
-            storedPreMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+            preMeans=new double[treeModel.getNodeCount()][getDimTrait() * getNumData()];
+            storedPreMeans=new double[treeModel.getNodeCount()][getDimTrait() * getNumData()];
             dimKnown=true;
         }
 
@@ -303,7 +304,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         if (treeModel.isRoot(node)) {
             preP[thisNumber] = rootPriorSampleSize;
             for (int j = 0; j < dim; j++) {
-                preMeans[thisNumber][j] = rootPriorMean[j];
+                preMeans[thisNumber][j]
+                        = rootPriorMean[j % dimTrait];
             }
 
 

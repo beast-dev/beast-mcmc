@@ -53,6 +53,20 @@ public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
         fireParameterChangedEvent(index, type);
     }
 
+//    @Override
+//    public void fireParameterChangedEvent(){
+//        for (int i = 0; i < paramList.length ; i++) {
+//            paramList[i].fireParameterChangedEvent();
+//        }
+//    }
+//
+//    @Override
+//    public void fireParameterChangedEvent(int index, ChangeType type){
+//        for (int i = 0; i < paramList.length; i++) {
+//            paramList[i].fireParameterChangedEvent(index, type);
+//        }
+//    }
+
     @Override
     public int getDimension() {
         return paramList[0].getDimension();

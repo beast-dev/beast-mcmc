@@ -348,7 +348,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
                 currentMean = meanArray.listIterator();
             }
             drawI(i, currentPrecision, currentMidMean, currentMean);
-            LFM.getLoadings().fireParameterChangedEvent(i, null);
+            loadings.fireParameterChangedEvent(i, null);
 //            LFM.getLoadings().fireParameterChangedEvent();
         }
         return 0;

@@ -394,7 +394,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == traitParameter) { // A tip value got updated
-            if (index > dimTrait * treeModel.getExternalNodeCount()) {
+            if (index > dimTrait * numData * treeModel.getExternalNodeCount()) {
                 throw new RuntimeException("Attempting to update an invalid index");
             }
 
@@ -1195,7 +1195,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         public double[] getShift(NodeRef node) {
 
-            double[] shift = new double[dimTrait];
+            double[] shift = new double[dimTrait * numData];
             for (int i = 0; i < dim; ++i) {
                 shift[i] = 0;
             }

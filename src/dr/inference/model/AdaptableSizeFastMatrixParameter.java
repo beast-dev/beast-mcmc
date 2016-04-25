@@ -56,6 +56,14 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         return super.getParameterValue(row, col);
     }
 
+    public double[] getParameterValues(){
+        double[] answer = new double[getDimension()];
+        for (int i = 0; i < getDimension(); i++) {
+            answer[i]= getParameterValue(i);
+        }
+        return answer;
+    }
+
     int rowDimension;
     int columnDimension;
     int maxRow;

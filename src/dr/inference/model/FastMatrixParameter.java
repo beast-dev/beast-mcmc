@@ -241,6 +241,15 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
         return super.getParameter(0);
     }
 
+    public void addBounds(Bounds<Double> boundary){
+        singleParameter.addBounds(boundary);
+    }
+
+    public Bounds<Double> getBounds(){
+        return singleParameter.getBounds();
+    }
+
+
     private final int rowDimension;
     private final int colDimension;
     private final Parameter singleParameter;

@@ -194,11 +194,12 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         double[] draws = new double[mean.length];
         double lowCutoff;
         double highCutoff;
+        MatrixParameterInterface cutoff = (MatrixParameterInterface) prior.getCutoff();
         double low;
         double high;
         NormalDistribution normal;
         for (int i = 0; i < temp.length; i++) {
-            highCutoff = Math.sqrt(prior.getCutoff().getParameterValue(row * LFM.getLoadings().getColumnDimension() + i));
+            highCutoff = Math.sqrt(cutoff.getParameterValue(row, i));
             lowCutoff = -highCutoff;
             for (int j = 0; j <= i; j++) {
 //                if(Cholesky[i][i] > 0) {
@@ -241,9 +242,9 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 //                System.out.println("temp: " + temp[i]);
 //                System.out.println("Cholesky " + i + ", " + j +": " +Cholesky[i][j]);
             }
-            if(Math.abs(draws[i])<Math.sqrt(prior.getCutoff().getParameterValue(row * LFM.getLoadings().getColumnDimension() + i))) {
-                System.out.println(Math.sqrt(prior.getCutoff().getParameterValue(row * LFM.getLoadings().getColumnDimension() + i)));
-                System.out.println("draws: " + draws[i]);
+            if(Math.abs(draws[i])<Math.sqrt(cutoff.getParameterValue(row, i))) {
+                System.err.println(Math.sqrt(cutoff.getParameterValue(row, i)));
+                System.err.println("draws: " + draws[i]);
             }
         }
 

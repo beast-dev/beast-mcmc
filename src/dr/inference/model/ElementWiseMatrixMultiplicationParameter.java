@@ -4,16 +4,16 @@ package dr.inference.model;
  * Created by max on 11/30/15.
  */
 public class ElementWiseMatrixMultiplicationParameter extends MatrixParameter {
-    private MatrixParameter[] paramList;
+    private MatrixParameterInterface[] paramList;
 
     public ElementWiseMatrixMultiplicationParameter(String name) {
         super(name);
     }
 
-    public ElementWiseMatrixMultiplicationParameter(String name, MatrixParameter[] matList) {
+    public ElementWiseMatrixMultiplicationParameter(String name, MatrixParameterInterface[] matList) {
         super(name);
         this.paramList =matList;
-        for (MatrixParameter mat : matList) {
+        for (MatrixParameterInterface mat : matList) {
             mat.addVariableListener(this);
         }
     }

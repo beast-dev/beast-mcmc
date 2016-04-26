@@ -1,6 +1,7 @@
 package dr.inference.distribution;
 
 import dr.inference.model.*;
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
 
@@ -41,16 +42,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
             }
         }
 
-        for (int i = 0; i < data.getColumnDimension(); i++) {
-            for (int j = 0; j < data.getColumnDimension(); j++) {
-                int count = 0;
-                for (int k = 0; k < data.getRowDimension(); k++) {
-                    count += Math.abs(data.getParameterValue(k, i) - data.getParameterValue(k, j));
-                }
-                relationshipList[i][j] = Math.exp(- count / (theta * theta));
-                relationshipList[j][i] = relationshipList[i][j];
-            }
-        }
+        reset();
         changedList = new Vector<Integer>();
     }
 
@@ -139,9 +131,10 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
                         relationshipList[i][col] = relationshipList[col][i];
                     }
                 }
-                
             }
         }
+
+//        reset();
 
         if (newSize != size){
             double[][] relationshipListTemp = new double[size][size];
@@ -156,7 +149,7 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
                     for (int j = 0; j < data.getRowDimension(); j++) {
                         count += Math.abs(data.getParameterValue(i, j) - data.getParameterValue(newSize - 1, j));
                     }
-                    relationshipListTemp[i][newSize - 1] = Math.exp(count / theta);
+                    relationshipListTemp[i][newSize - 1] = Math.exp(count / (theta * theta) );
                     relationshipListTemp[newSize-1][i] = relationshipListTemp[i][newSize - 1];
                 }
             }
@@ -170,28 +163,33 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
         } catch (IllegalDimension illegalDimension) {
             illegalDimension.printStackTrace();
         }
-        double product = 1;
+        double product = 0;
         for (int i = 0; i <newSize ; i++) {
-            product *= chol.getL()[i][i];
+            product += Math.log(chol.getL()[i][i]);
         }
-        if(product == 0){
-            return Double.NEGATIVE_INFINITY;
-        }
-        logLikelihood = Math.log(product) * 2;
-        return logLikelihood;
+        product *= 2;
+        return product;
     }
 
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+        reset();
+    }
+
+    public void reset(){
         for (int i = 0; i < data.getColumnDimension(); i++) {
-            for (int j = 0; j < data.getColumnDimension(); j++) {
+            for (int j = 0; j < i; j++) {
                 int count = 0;
                 for (int k = 0; k < data.getRowDimension(); k++) {
                     count += Math.abs(data.getParameterValue(k, i) - data.getParameterValue(k, j));
                 }
                 relationshipList[i][j] = Math.exp(- count / (theta * theta));
+                relationshipList[j][i] = relationshipList[i][j];
             }
+        }
+        for (int i = 0; i <data.getColumnDimension() ; i++) {
+                relationshipList[i][i] = 1;
         }
     }
 }

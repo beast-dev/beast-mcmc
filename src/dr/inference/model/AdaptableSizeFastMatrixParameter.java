@@ -9,6 +9,12 @@ import dr.inference.loggers.NumberColumn;
 public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
     public AdaptableSizeFastMatrixParameter(String id, int rowDimension, int colDimension, int maxRow, int maxCol) {
         super(id, maxRow, maxCol);
+        if(maxRow < rowDimension){
+            throw new RuntimeException("Row Dimension: " + rowDimension + ", is greater than Max Row Dimension: " + maxRow + " in " + getParameterName());
+        }
+        if(maxCol < colDimension){
+            throw new RuntimeException("Column Dimension: " + colDimension + ", is greater than Max Column Dimension: " + columnDimension + " in " + getParameterName());
+        }
         this.rowDimension = rowDimension;
         this.columnDimension = colDimension;
 

@@ -67,6 +67,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private double coalescencesLogLikelihood;
     private double storedCoalescencesLogLikelihood;
 
+    private boolean pleaseReExplode = true;
+
 
     public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
                                 String startingNetworkFileName, Parameter maxFirstInfToRoot, DemographicModel demoModel,
@@ -90,10 +92,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             }
         }
 
+
         storedElementsAsTrees = new HashMap<AbstractCase, Treelet>();
-
-
-
 
     }
 
@@ -101,12 +101,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         //checkPartitions();
 
+        if(pleaseReExplode){
+            explodeTree();
+        }
+
         double logL = 0;
 
-        explodeTree();
-
         coalescencesLogLikelihood = 0;
-
 
         for(AbstractCase aCase : outbreak.getCases()){
 
@@ -118,9 +119,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 if (recalculateCoalescentFlags[number]) {
 
-                    HashSet<AbstractCase> children = ((PartitionedTreeModel)treeModel).getInfectees(aCase);
-
                     Treelet treelet = elementsAsTrees.get(aCase);
+
+                    try{
+                        int test = treelet.getExternalNodeCount();
+                    } catch (NullPointerException e){
+                        System.out.println();
+                    }
 
                     if (treelet.getExternalNodeCount() > 1) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
@@ -220,6 +225,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     protected void recalculateCaseWCC(int index){
         elementsAsTrees.put(outbreak.getCase(index), null);
+        pleaseReExplode = true;
         recalculateCoalescentFlags[index] = true;
     }
 
@@ -238,6 +244,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 elementsAsTrees.put(aCase, null);
             }
         }
+        pleaseReExplode = true;
     }
 
     // Tears the tree into small pieces. Indexes correspond to indexes in the outbreak.

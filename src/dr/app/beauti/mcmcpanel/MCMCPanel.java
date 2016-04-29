@@ -284,10 +284,12 @@ public class MCMCPanel extends BeautiPanel {
             public void actionPerformed(ActionEvent e) {
                 if (performMLECombo.getSelectedIndex() == 1) {
                     mleOptions.performMLE = true;
+                    mleOptions.performMLEGSS = false;
                     options.logCoalescentEventsStatistic = false;
                     buttonMLE.setEnabled(true);
                     updateMLEFileNameStem();
                 } else if (performMLECombo.getSelectedIndex() == 2) {
+                    mleOptions.performMLE = false;
                     mleOptions.performMLEGSS = true;
                     //set to true because product of exponentials is the default option
                     options.logCoalescentEventsStatistic = true;

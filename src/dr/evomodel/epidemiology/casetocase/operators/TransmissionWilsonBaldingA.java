@@ -88,7 +88,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
 
         i = eligibleNodes.get(MathUtils.nextInt(eligibleNodes.size()));
 
-        int eligibleNodeCount = eligibleNodes.size();
+        double eligibleNodeCount = eligibleNodes.size();
 
         final NodeRef iP = tree.getParent(i);
 
@@ -213,7 +213,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         }
         logq = Math.log(q);
 
-        int reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
+        double reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
 
         logq += Math.log(eligibleNodeCount/reverseEligibleNodeCount);
 

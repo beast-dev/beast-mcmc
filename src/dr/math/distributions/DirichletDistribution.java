@@ -36,6 +36,10 @@ public class DirichletDistribution implements MultivariateDistribution {
     public static final String TYPE = "dirichletDistribution";
     public static final boolean DEBUG = false;
 
+    //4.0 != 3.9999999999999996
+    //Other BEAST classes uses 1E-8 or 1E-6
+    public static final double ACCURACY_THRESHOLD = 1E-12;
+
     private double[] counts;
     private double countSum = 0.0;
     private double countParameterSum;
@@ -82,22 +86,23 @@ public class DirichletDistribution implements MultivariateDistribution {
             parameterSum += x[i];
             if ((!sumToNumberOfElements && x[i] >= 1.0) || x[i] <= 0.0) {
                 if (DEBUG) {
-                    System.err.println("Invalid parameter value");
+                    System.out.println("Invalid parameter value");
                 }
                 logPDF = Double.NEGATIVE_INFINITY;
                 break;
             }
         }
-        if (parameterSum != countParameterSum) {
+        if (Math.abs(parameterSum - countParameterSum) > ACCURACY_THRESHOLD) {
             if (DEBUG) {
-                System.err.println("Parameters do not sum to " + countParameterSum);
+                System.out.println("Parameters do not sum to " + countParameterSum);
                 for (int i = 0; i < dim; i++) {
-                    System.err.println("x[" + i + "] = " + x[i]);
+                    System.out.println("x[" + i + "] = " + x[i]);
                 }
-                System.err.println("Current sum = " + parameterSum);
+                System.out.println("Current sum = " + parameterSum);
             }
             logPDF = Double.NEGATIVE_INFINITY;
         }
+
         return logPDF;
     }
 
@@ -144,6 +149,24 @@ public class DirichletDistribution implements MultivariateDistribution {
         parameterValues[0] = 1.0;
         parameterValues[1] = 1.0;
         parameterValues[2] = 1.0;
+        System.out.println(dd.logPdf(parameterValues));
+
+        counts = new double[4];
+        counts[0] = 1.0;
+        counts[1] = 1.0;
+        counts[2] = 1.0;
+        counts[3] = 1.0;
+        dd = new DirichletDistribution(counts, true);
+        parameterValues = new double[4];
+        parameterValues[0] = 0.5;
+        parameterValues[1] = 1.2;
+        parameterValues[2] = 1.3;
+        parameterValues[3] = 1.0;
+        System.out.println(dd.logPdf(parameterValues));
+        parameterValues[0] = 1.0;
+        parameterValues[1] = 1.0;
+        parameterValues[2] = 1.0;
+        parameterValues[3] = 1.0;
         System.out.println(dd.logPdf(parameterValues));
 
     }

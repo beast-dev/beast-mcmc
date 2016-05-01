@@ -40,9 +40,7 @@ import dr.evolution.alignment.SitePatterns;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
-import dr.inference.model.TestThreadedCompoundLikelihood;
+import dr.inference.model.*;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -60,7 +58,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
     public static final String CALIBRATE = "calibrate";
     public static final String RETRY = "retry";
 
-    public static final boolean DEBUG = true;
+    public static final boolean DEBUG = false;
 
     public String getParserName() {
         return OPTIMIZED_BEAGLE_TREE_LIKELIHOOD;
@@ -104,8 +102,12 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         int childCount = xo.getChildCount();
         List<Likelihood> likelihoods = new ArrayList<Likelihood>();
 
+        //TEST
+        List<Likelihood> originalLikelihoods = new ArrayList<Likelihood>();
+
         for (int i = 0; i < childCount; i++) {
             likelihoods.add((Likelihood)xo.getChild(i));
+            originalLikelihoods.add((Likelihood)xo.getChild(i));
         }
 
         if (DEBUG) {
@@ -133,21 +135,21 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         PartialsRescalingScheme[] rescalingSchemes = new PartialsRescalingScheme[childCount];
         List<Map<Set<String>, Parameter>> partialsRestrictions = new ArrayList<Map<Set<String>, Parameter>>();
         for (int i = 0; i < likelihoods.size(); i++) {
-            patterns[i] = (SitePatterns)((BeagleTreeLikelihood)likelihoods.get(i)).getPatternsList();
+            patterns[i] = (SitePatterns) ((BeagleTreeLikelihood) likelihoods.get(i)).getPatternsList();
             siteCounts[i] = patterns[i].getPatternCount();
-            treeModels[i] = ((BeagleTreeLikelihood)likelihoods.get(i)).getTreeModel();
-            branchModels[i] = ((BeagleTreeLikelihood)likelihoods.get(i)).getBranchModel();
-            siteRateModels[i] = (GammaSiteRateModel) ((BeagleTreeLikelihood)likelihoods.get(i)).getSiteRateModel();
-            branchRateModels[i] = ((BeagleTreeLikelihood)likelihoods.get(i)).getBranchRateModel();
-            ambiguities[i] = ((BeagleTreeLikelihood)likelihoods.get(i)).useAmbiguities();
-            rescalingSchemes[i] = ((BeagleTreeLikelihood)likelihoods.get(i)).getRescalingScheme();
-            partialsRestrictions.add(i, ((BeagleTreeLikelihood)likelihoods.get(i)).getPartialsRestrictions());
+            treeModels[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).getTreeModel();
+            branchModels[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).getBranchModel();
+            siteRateModels[i] = (GammaSiteRateModel) ((BeagleTreeLikelihood) likelihoods.get(i)).getSiteRateModel();
+            branchRateModels[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).getBranchRateModel();
+            ambiguities[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).useAmbiguities();
+            rescalingSchemes[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).getRescalingScheme();
+            partialsRestrictions.add(i, ((BeagleTreeLikelihood) likelihoods.get(i)).getPartialsRestrictions());
         }
 
         if (DEBUG) {
             System.err.println("Pattern counts: ");
             for (int i = 0;i < siteCounts.length; i++) {
-                System.err.print(siteCounts[i] + " ");
+                System.err.println(siteCounts[i] + "   vs.    " + patterns[i].getPatternCount());
             }
             System.err.println();
             System.err.println("Instance counts: ");
@@ -164,6 +166,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
         TestThreadedCompoundLikelihood compound = new TestThreadedCompoundLikelihood(likelihoods);
         //CompoundLikelihood compound = new CompoundLikelihood(likelihoods);
+        //ThreadedCompoundLikelihood compound = new ThreadedCompoundLikelihood(likelihoods);
 
         if (DEBUG) {
             System.err.println("Timing estimates for each of the " + calibrate + " likelihood calculations:");
@@ -356,6 +359,9 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         }
         for (int i = 0; i < likelihoods.size(); i++) {
             siteCounts[i] = patterns[i].getPatternCount();
+            if (DEBUG) {
+                System.err.println("Site count " + i + " = " + siteCounts[i]);
+            }
         }
 
         if (DEBUG) {
@@ -385,7 +391,8 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
                         ambiguities[longestIndex], rescalingSchemes[longestIndex], partialsRestrictions.get(longestIndex),
                         xo);
 
-                treeLikelihood.setId(xo.getId() + "_" + instanceCount);
+                treeLikelihood.setId(xo.getId() + "_" + longestIndex + "_" + i);
+                System.err.println(treeLikelihood.getId() + " created.");
                 newList.add(treeLikelihood);
             }
             for (int i = 0; i < newList.size()-1; i++) {
@@ -401,6 +408,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
             }
             compound = new TestThreadedCompoundLikelihood(likelihoods);
             //compound = new CompoundLikelihood(likelihoods);
+            //compound = new ThreadedCompoundLikelihood(likelihoods);
             siteCounts[longestIndex] = (instanceCount-1)*siteCounts[longestIndex]/instanceCount;
             longestSize = (instanceCount-1)*longestSize/instanceCount;
 
@@ -545,13 +553,17 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
                                 ambiguities[longestIndex], rescalingSchemes[longestIndex], partialsRestrictions.get(longestIndex),
                                 xo);
 
-                        treeLikelihood.setId(xo.getId() + "_" + instanceCount);
+                        treeLikelihood.setId(xo.getId() + "_" + longestIndex + "_" + i);
+                        System.err.println(treeLikelihood.getId() + " created.");
                         newList.add(treeLikelihood);
                     }
                     /*for (int i = 0; i < newList.size()+1; i++) {
                         likelihoods.remove(currentLocation[longestIndex]);
                     }*/
                     for (int i = 0; i < newList.size()+timesRetried+1; i++) {
+                        //TEST CODE START
+                        unregisterAllModels((BeagleTreeLikelihood)likelihoods.get(currentLocation[longestIndex]));
+                        //TEST CODE END
                         likelihoods.remove(currentLocation[longestIndex]);
                     }
                     for (int i = 0; i < newList.size(); i++) {
@@ -565,6 +577,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
                     compound = new TestThreadedCompoundLikelihood(likelihoods);
                     //compound = new CompoundLikelihood(likelihoods);
+                    //compound = new ThreadedCompoundLikelihood(likelihoods);
                     siteCounts[longestIndex] = (instanceCount+timesRetried+1)*siteCounts[longestIndex]/instanceCount;
                     longestSize = (instanceCount+timesRetried+1)*longestSize/instanceCount;
 
@@ -795,8 +808,32 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
             }*/
 
+        /*for (int i = 0; i < originalLikelihoods.size(); i++) {
+            ((BeagleTreeLikelihood)originalLikelihoods.get(i)).removeModel(((BeagleTreeLikelihood)originalLikelihoods.get(i)).getBranchModel());
+            ((BeagleTreeLikelihood)originalLikelihoods.get(i)).removeModel(((BeagleTreeLikelihood)originalLikelihoods.get(i)).getBranchRateModel());
+            ((BeagleTreeLikelihood)originalLikelihoods.get(i)).removeModel(((BeagleTreeLikelihood)originalLikelihoods.get(i)).getSiteRateModel());
+            ((BeagleTreeLikelihood)originalLikelihoods.get(i)).removeModel(((BeagleTreeLikelihood)originalLikelihoods.get(i)).getTreeModel());
+            if (((BeagleTreeLikelihood)originalLikelihoods.get(i)).getTipStatesModel() != null) {
+                ((BeagleTreeLikelihood) originalLikelihoods.get(i)).removeModel(((BeagleTreeLikelihood) originalLikelihoods.get(i)).getTipStatesModel());
+            }
+        }*/
+
+        for (int i = 0; i < originalLikelihoods.size(); i++) {
+            unregisterAllModels((BeagleTreeLikelihood)originalLikelihoods.get(i));
+        }
+
         return compound;
 
+    }
+
+    private void unregisterAllModels(BeagleTreeLikelihood btl) {
+        btl.removeModel(btl.getTreeModel());
+        btl.removeModel(btl.getBranchRateModel());
+        btl.removeModel(btl.getBranchModel());
+        btl.removeModel(btl.getSiteRateModel());
+        if (btl.getTipStatesModel() != null) {
+            btl.removeModel(btl.getTipStatesModel());
+        }
     }
 
     //************************************************************************

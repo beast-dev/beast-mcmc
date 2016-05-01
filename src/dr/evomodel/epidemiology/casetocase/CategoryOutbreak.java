@@ -328,7 +328,7 @@ public class CategoryOutbreak extends AbstractOutbreak {
 
         //for the cases
 
-        public static final String CASE_ID = "caseID";
+        public static final String CASE_ID = "hostID";
         public static final String END_TIME = "endTime";
         public static final String COORDINATES = "spatialCoordinates";
         public static final String INFECTION_TIME_BRANCH_POSITION = "infectionTimeBranchPosition";

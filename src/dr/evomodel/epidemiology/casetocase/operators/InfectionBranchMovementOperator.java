@@ -80,7 +80,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
 
         // find the child node of the transmission branch
-        NodeRef node = tree.getEarliestNodeInPartition(aCase);
+        NodeRef node = tree.getEarliestNodeInElement(aCase);
 
         double hr = adjustTree(tree, node);
 

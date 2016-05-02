@@ -21,10 +21,18 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
     }
 
     void setRowDimension(int rowDimension){
+        if(rowDimension > this.rowDimension)
+            fireParameterChangedEvent(-1, ChangeType.ADDED);
+        else
+            fireParameterChangedEvent(-1, ChangeType.REMOVED);
         this.rowDimension = rowDimension;
     }
 
     void setColumnDimension(int columnDimension){
+        if(columnDimension > this.columnDimension)
+            fireParameterChangedEvent(-1, ChangeType.ADDED);
+        else
+            fireParameterChangedEvent(-1, ChangeType.REMOVED);
         this.columnDimension = columnDimension;
     }
 

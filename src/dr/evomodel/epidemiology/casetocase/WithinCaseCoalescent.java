@@ -121,12 +121,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                     Treelet treelet = elementsAsTrees.get(aCase);
 
-                    try{
-                        int test = treelet.getExternalNodeCount();
-                    } catch (NullPointerException e){
-                        System.out.println();
-                    }
-
                     if (treelet.getExternalNodeCount() > 1) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
                                 treelet.getZeroHeight(), mode == Mode.TRUNCATE);

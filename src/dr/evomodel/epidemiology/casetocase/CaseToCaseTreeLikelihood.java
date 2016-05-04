@@ -278,8 +278,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                         littleTree.getRootHeight() + extraHeight);
 
                 elementsAsTrees.put(aCase, treelet);
-
-
             }
         }
     }

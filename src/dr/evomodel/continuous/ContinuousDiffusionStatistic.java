@@ -33,11 +33,17 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeStatistic;
+import dr.geo.KMLCoordinates;
+import dr.geo.Polygon2D;
+import dr.geo.contouring.ContourMaker;
+import dr.geo.contouring.ContourPath;
+import dr.geo.contouring.ContourWithSynder;
 import dr.geo.math.SphericalPolarCoordinates;
 import dr.inference.model.Statistic;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.stats.DiscreteStatistics;
 import dr.xml.*;
+import org.jdom.Element;
 
 import javax.swing.event.TreeModelListener;
 import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
@@ -62,11 +68,13 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public static final String COEFFICIENT_OF_VARIATION = "coefficientOfVariation"; // weighted average (=total distance/total time)
     public static final String STATISTIC = "statistic";
     public static final String TRAIT = "trait";
+    public static final String TRAIT2DAREA = "trait2Darea";
     public static final String DIMENSION = "dimension";
     public static final String DIFFUSION_TIME = "diffusionTime";
     public static final String DIFFUSION_DISTANCE = "diffusionDistance";
     public static final String DIFFUSION_RATE = "diffusionRate"; // weighted average (=total distance/total time)
     public static final String WAVEFRONT_DISTANCE = "wavefrontDistance"; // weighted average (=total distance/total time)
+    public static final String WAVEFRONT_DISTANCE_PHYLO = "wavefrontDistancePhylo"; // weighted average (=total brnach distance/total time)
     public static final String WAVEFRONT_RATE = "wavefrontRate"; // weighted average (=total distance/total time)
     public static final String DIFFUSION_COEFFICIENT = "diffusionCoefficient";
     public static final String HEIGHT_UPPER = "heightUpper";
@@ -127,14 +135,14 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         double treeLength = 0;
         double treeDistance = 0;
         double totalMaxDistanceFromRoot = 0;
-        double maxDistanceFromRoot = 0; // can only be used when cumulative and not associated with discrete state (not based on the distances on the branches from the root up that point)
+        double maxDistanceFromRootCumulative = 0; // can only be used when cumulative and not associated with discrete state (not based on the distances on the branches from the root up that point)
         double maxBranchDistanceFromRoot = 0;
         double maxDistanceOverTimeFromRootWA = 0;  // can only be used when cumulative and not associated with discrete state (not based on the distances on the branches from the root up that point)
         double maxBranchDistanceOverTimeFromRootWA = 0;
 
-        //double[] rates =  null;
         List<Double> rates = new ArrayList<Double>();
         List<Double> traits = new ArrayList<Double>();
+        List<double[]> traits2D = new ArrayList<double[]>();
         //double[] diffusionCoefficients =  null;
         List<Double> diffusionCoefficients = new ArrayList<Double>();
         double waDiffusionCoefficient =  0;
@@ -228,6 +236,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                 traits.add(traitLow[(dimension - 1)]);
                             }
 
+                            if (traitLow.length == 2){
+                                traits2D.add(traitLow);
+                            }
+
                             double time;
                             if (stateString != null) {
                                 time = history.getStateTime(stateString);
@@ -262,29 +274,31 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                 }
 
                                 SphericalPolarCoordinates rootCoord = new SphericalPolarCoordinates(rootTrait[0], rootTrait[1]);
-                                double tempDistanceFromRoot = rootCoord.distance(new SphericalPolarCoordinates(traitUp[0], traitUp[1]));
-                                if (tempDistanceFromRoot > totalMaxDistanceFromRoot) {
-                                    totalMaxDistanceFromRoot = tempDistanceFromRoot;
+                                double tempDistanceFromRootLow = rootCoord.distance(new SphericalPolarCoordinates(traitUp[0], traitUp[1]));
+
+
+                                if (tempDistanceFromRootLow > totalMaxDistanceFromRoot) {
+                                    totalMaxDistanceFromRoot = tempDistanceFromRootLow;
                                     if (stateString != null) {
                                         double[] stateTimeDistance = getStateTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, precision, branchRates, true);
                                         if (stateTimeDistance[0] > 0) {
-                                            maxDistanceFromRoot = tempDistanceFromRoot * (stateTimeDistance[0] / timeFromRoot);
-                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRoot / stateTimeDistance[0];
+                                            maxDistanceFromRootCumulative = tempDistanceFromRootLow * (stateTimeDistance[0] / timeFromRoot);
+                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
                                             maxBranchDistanceFromRoot = stateTimeDistance[1];
                                             maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
                                         }
                                     } else {
-                                        maxDistanceFromRoot = tempDistanceFromRoot;
-                                        maxDistanceOverTimeFromRootWA = tempDistanceFromRoot / timeFromRoot;
+                                        maxDistanceFromRootCumulative = tempDistanceFromRootLow;
+                                        maxDistanceOverTimeFromRootWA = tempDistanceFromRootLow / timeFromRoot;
                                         double[] timeDistance = getTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, true);
                                         maxBranchDistanceFromRoot = timeDistance[1];
                                         maxBranchDistanceOverTimeFromRootWA = timeDistance[1] / timeDistance[0];
 
                                     }
-                                    //distance between traitLow and traitUp for maxDistanceFromRoot
+                                    //distance between traitLow and traitUp for maxDistanceFromRootCumulative
                                     if (timeUp == upperHeight) {
                                         if (time > 0) {
-                                            maxDistanceFromRoot = distance;
+                                            maxDistanceFromRootCumulative = distance;
                                             maxDistanceOverTimeFromRootWA = distance / time;
                                             maxBranchDistanceFromRoot = distance;
                                             maxBranchDistanceOverTimeFromRootWA = distance / time;
@@ -314,22 +328,22 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
                                     if (stateString != null) {
                                         double[] stateTimeDistance = getStateTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, precision, branchRates, false);
                                         if (stateTimeDistance[0] > 0) {
-                                            maxDistanceFromRoot = tempDistanceFromRoot * (stateTimeDistance[0] / timeFromRoot);
-                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRoot / stateTimeDistance[0];
+                                            maxDistanceFromRootCumulative = tempDistanceFromRoot * (stateTimeDistance[0] / timeFromRoot);
+                                            maxDistanceOverTimeFromRootWA = maxDistanceFromRootCumulative / stateTimeDistance[0];
                                             maxBranchDistanceFromRoot = stateTimeDistance[1];
                                             maxBranchDistanceOverTimeFromRootWA = stateTimeDistance[1] / stateTimeDistance[0];
                                         }
                                     } else {
-                                        maxDistanceFromRoot = tempDistanceFromRoot;
+                                        maxDistanceFromRootCumulative = tempDistanceFromRoot;
                                         maxDistanceOverTimeFromRootWA = tempDistanceFromRoot / timeFromRoot;
                                         double[] timeDistance = getTimeAndDistanceFromRoot(tree, node, timeLow, traitLikelihood, traitName, traitLow, false);
                                         maxBranchDistanceFromRoot = timeDistance[1];
                                         maxBranchDistanceOverTimeFromRootWA = timeDistance[1] / timeDistance[0];
                                     }
-                                    //distance between traitLow and traitUp for maxDistanceFromRoot
+                                    //distance between traitLow and traitUp for maxDistanceFromRootCumulative
                                     if (timeUp == upperHeight) {
                                         if (time > 0) {
-                                            maxDistanceFromRoot = distance;
+                                            maxDistanceFromRootCumulative = distance;
                                             maxDistanceOverTimeFromRootWA = distance / time;
                                             maxBranchDistanceFromRoot = distance;
                                             maxBranchDistanceOverTimeFromRootWA = distance / time;
@@ -366,6 +380,9 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             } else {
                 return DiscreteStatistics.mean(toArray(traits));
             }
+        } else if (summaryStat == summaryStatistic.TRAIT2DAREA) {
+            double area = getAreaFrom2Dtraits(traits2D, 0.99);
+            return  area;
         }  else if (summaryStat == summaryStatistic.DIFFUSION_COEFFICIENT) {
             if (summaryMode == Mode.AVERAGE) {
                 return DiscreteStatistics.mean(toArray(diffusionCoefficients));
@@ -381,8 +398,10 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             //wavefront distance
             //TODO: restrict to non state-specific wavefrontDistance/rate
         }  else if (summaryStat == summaryStatistic.WAVEFRONT_DISTANCE) {
-            return maxDistanceFromRoot;
+            return maxDistanceFromRootCumulative;
 //            return maxBranchDistanceFromRoot;
+        } else if (summaryStat == summaryStatistic.WAVEFRONT_DISTANCE_PHYLO) {
+            return maxBranchDistanceFromRoot;
             //wavefront rate, only weighted average TODO: extend for average, median, COEFFICIENT_OF_VARIATION?
         }  else if (summaryStat == summaryStatistic.WAVEFRONT_RATE)  {
             return maxDistanceOverTimeFromRootWA;
@@ -644,7 +663,6 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
     public double[] getTimeAndDistanceFromRoot(MultivariateTraitTree tree, NodeRef node, double timeLow, AbstractMultivariateTraitLikelihood traitLikelihood, String traitName, double[] traitLow, boolean useGreatCircleDistance){
 
         NodeRef nodeOfInterest = node;
-
         double[] timeDistance = new double[]{0,0};
 
         double[] rootTrait = traitLikelihood.getTraitForNode(tree, tree.getRoot(), traitName);
@@ -663,7 +681,7 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             timeDistance[0] += tree.getNodeHeight(parentNode) - nodeHeight;
 
             if (useGreatCircleDistance){
-                timeDistance[1] += getGreatCircleDistance(nodeTrait,rootTrait) - getGreatCircleDistance(parentTrait,rootTrait);
+                timeDistance[1] += getGreatCircleDistance(nodeTrait, rootTrait) - getGreatCircleDistance(parentTrait, rootTrait);
             }  else {
                 timeDistance[1] += getNativeDistance(nodeTrait,rootTrait) - getNativeDistance(parentTrait,rootTrait);
             }
@@ -760,6 +778,36 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
         }
     }
 
+    private static double getAreaFrom2Dtraits(List<double[]> traits2D,  double hpdValue){
+
+        boolean bandwidthlimit = true;
+
+        double totalArea = 0;
+        double[][] y = new double[2][traits2D.size()];
+        for (int a=0; a<traits2D.size(); a++){
+            double[] trait = traits2D.get(a);
+            y[0][a]= trait[0];
+            y[1][a]= trait[1];
+//            System.err.println(trait[0]+"\t"+trait[1]);
+        }
+
+        ContourMaker contourMaker;
+        contourMaker = new ContourWithSynder(y[0], y[1], bandwidthlimit);
+
+        ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
+        int pathCounter = 1;
+        for (ContourPath path : paths) {
+            KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
+            Element testElement = new Element("test");
+            testElement.addContent(coords.toXML());
+            Polygon2D testPolygon = new Polygon2D(testElement);
+            totalArea += testPolygon.calculateArea();
+//            System.err.println("area: "+testPolygon.calculateArea());
+        }
+
+        return totalArea;
+    }
+
 //    private int getStateInt(String state){
 //        int returnInt = -1;
 //        int counter = 0;
@@ -790,11 +838,13 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
 
     enum summaryStatistic {
         TRAIT,
+        TRAIT2DAREA,
         DIFFUSION_TIME,
         DIFFUSION_DISTANCE,
         DIFFUSION_RATE,
         DIFFUSION_COEFFICIENT,
         WAVEFRONT_DISTANCE,
+        WAVEFRONT_DISTANCE_PHYLO,
         WAVEFRONT_RATE,
     }
 
@@ -873,29 +923,40 @@ public class ContinuousDiffusionStatistic extends Statistic.Abstract {
             } else if (statistic.equals(WAVEFRONT_DISTANCE)) {
                 summaryStat = summaryStatistic.WAVEFRONT_DISTANCE;
                 if (!mode.equals(WEIGHTED_AVERAGE)) {
-                    System.err.println(name+": mode = "+mode+" ignored for "+WAVEFRONT_DISTANCE);
+                    System.err.println(name + ": mode = " + mode + " ignored for " + WAVEFRONT_DISTANCE);
+                }
+            } else if (statistic.equals(WAVEFRONT_DISTANCE_PHYLO)) {
+                summaryStat = summaryStatistic.WAVEFRONT_DISTANCE_PHYLO;
+                if (!mode.equals(WEIGHTED_AVERAGE)) {
+                    System.err.println(name + ": mode = " + mode + " ignored for " + WAVEFRONT_DISTANCE);
                 }
             } else if (statistic.equals(TRAIT)) {
                 summaryStat = summaryStatistic.TRAIT;
                 if (mode.equals(WEIGHTED_AVERAGE)) {
-                    System.err.println(name+": mode = "+mode+" ignored for "+TRAIT+", resorting to "+AVERAGE);
+                    System.err.println(name + ": mode = " + mode + " ignored for " + TRAIT + ", resorting to " + AVERAGE);
                     averageMode = Mode.AVERAGE;
                 }
                 if (upperHeight < Double.MAX_VALUE) {
-                    System.err.println(name+": only "+HEIGHT_LOWER+" or " + HEIGHT_LOWER_SERIE + " are relevant for "+TRAIT);
+                    System.err.println(name + ": only " + HEIGHT_LOWER + " or " + HEIGHT_LOWER_SERIE + " are relevant for " + TRAIT);
                 }
-                dimension = xo.getAttribute(DIMENSION,1);
+                dimension = xo.getAttribute(DIMENSION, 1);
                 if (dimension == 0) {
-                    System.err.println(name+": trait dimensions start from 1. Setting dimension to 1");
+                    System.err.println(name + ": trait dimensions start from 1. Setting dimension to 1");
                     dimension = 1;
                 }
-                if (cumulative){
-                    System.err.println(name+": "+CUMULATIVE+" is ignored for " +TRAIT);
+                if (cumulative) {
+                    System.err.println(name + ": " + CUMULATIVE + " is ignored for " + TRAIT);
                 }
-                if (greatCircleDistances){
-                    System.err.println(name+": "+USE_GREATCIRCLEDISTANCES+" is ignored for " +TRAIT);
+                if (greatCircleDistances) {
+                    System.err.println(name + ": " + USE_GREATCIRCLEDISTANCES + " is ignored for " + TRAIT);
                 }
-            } else if (statistic.equals(WAVEFRONT_RATE)) {
+            } else if (statistic.equals(TRAIT2DAREA)) {
+                summaryStat = summaryStatistic.TRAIT2DAREA;
+                dimension = xo.getAttribute(DIMENSION, 2);
+                if (dimension != 2){
+                    System.err.println(name + ": trait dimension ("+dimension+") is not 2. Cannot calculate 2D area for the traits, 0's will be returned");
+                }
+          } else if (statistic.equals(WAVEFRONT_RATE)) {
                 summaryStat = summaryStatistic.WAVEFRONT_RATE;
             } else if (statistic.equals(DIFFUSION_COEFFICIENT)) {
                 summaryStat = summaryStatistic.DIFFUSION_COEFFICIENT;

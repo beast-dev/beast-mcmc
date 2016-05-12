@@ -74,7 +74,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private double treeLogProb;
     private double storedTreeLogProb;
 
-    private ParametricDistributionModel intialInfectionTimePrior;
+    private ParametricDistributionModel initialInfectionTimePrior;
     private HashMap<AbstractCase, Double> indexCasePrior;
 
     private final boolean hasGeography;
@@ -107,7 +107,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         hasGeography = spatialKernal!=null;
         this.hasLatentPeriods = treeLikelihood.hasLatentPeriods();
 
-        this.intialInfectionTimePrior = intialInfectionTimePrior;
+        this.initialInfectionTimePrior = intialInfectionTimePrior;
 
 
         HashMap<AbstractCase, Double> weightMap = outbreak.getWeightMap();
@@ -212,10 +212,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public double getLogLikelihood() {
 
-        if(DEBUG){
-            treeLikelihood.outputTreeToFile("debug.nex", true);
-        }
-
         if(!likelihoodKnown) {
             if (!treeProbKnown) {
                 treeLikelihood.prepareTimings();
@@ -249,8 +245,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                                 if (indexCasePrior != null) {
                                     transLogProb += Math.log(indexCasePrior.get(thisCase));
                                 }
-                                if (intialInfectionTimePrior != null) {
-                                    transLogProb += intialInfectionTimePrior.logPdf(currentEventTime);
+                                if (initialInfectionTimePrior != null) {
+                                    transLogProb += initialInfectionTimePrior.logPdf(currentEventTime);
                                 }
 
                                 if (!hasLatentPeriods) {
@@ -497,10 +493,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
 
         indexCase = out.get(0).getCase();
-
-        if(indexCase == null){
-            System.out.println();
-        }
 
         sortedTreeEvents = out;
 

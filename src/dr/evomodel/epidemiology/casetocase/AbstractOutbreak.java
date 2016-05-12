@@ -37,8 +37,8 @@ import dr.inference.model.Parameter;
 import java.util.*;
 
 /**
- * Abstract class for outbreaks. Implements PatternList for ease of compatibility with AbstractTreeLikelihood, but there
- * is one and only one pattern.
+ * Abstract class for outbreaks. Implements PatternList for ease of compatibility with AbstractTreeLikelihood,
+ * but there is one and only one pattern.
  *
  * User: Matthew Hall
  * Date: 14/04/13
@@ -154,8 +154,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         return taxa.getTaxonCount();
     }
 
-    // with an exact correspondence between taxa and states, the following five methods are ill-fitting, but here if
-    // needed.
     // @todo if these are never going to be used, get them to throw exceptions
 
     public int[] getPattern(int patternIndex){

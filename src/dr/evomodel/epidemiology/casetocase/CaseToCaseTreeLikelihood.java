@@ -99,8 +99,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
     private double[] storedLatentPeriods;
     protected boolean[] recalculateCaseFlags;
 
-    protected HashMap<AbstractCase,Treelet> partitionsAsTrees;
-    protected HashMap<AbstractCase,Treelet> storedPartitionsAsTrees;
+    protected HashMap<AbstractCase,Treelet> elementsAsTrees;
+    protected HashMap<AbstractCase,Treelet> storedElementsAsTrees;
 
     //because of the way the former works, we need a maximum value of the time from first infection to root node.
 
@@ -245,9 +245,9 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         for(int i=0; i<outbreak.size(); i++){
             AbstractCase aCase = outbreak.getCase(i);
-            if(aCase.wasEverInfected() && partitionsAsTrees.get(aCase)==null){
+            if(aCase.wasEverInfected() && elementsAsTrees.get(aCase)==null){
 
-                NodeRef partitionRoot = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(aCase);
+                NodeRef partitionRoot = ((PartitionedTreeModel)treeModel).getEarliestNodeInElement(aCase);
 
                 double extraHeight;
 
@@ -266,7 +266,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
                 if (!treeModel.isExternal(partitionRoot)) {
                     for (int j = 0; j < treeModel.getChildCount(partitionRoot); j++) {
-                        copyPartitionToTreelet(littleTree, treeModel.getChild(partitionRoot, j), newRoot, aCase);
+                        copyElementToTreelet(littleTree, treeModel.getChild(partitionRoot, j), newRoot, aCase);
                     }
                 }
 
@@ -277,17 +277,15 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                 Treelet treelet = new Treelet(littleTree,
                         littleTree.getRootHeight() + extraHeight);
 
-                partitionsAsTrees.put(aCase, treelet);
-
-
+                elementsAsTrees.put(aCase, treelet);
             }
         }
     }
 
-    private void copyPartitionToTreelet(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,
-                                        AbstractCase partition){
-        if(partition.wasEverInfected()) {
-            if (getBranchMap().get(oldNode.getNumber()) == partition) {
+    private void copyElementToTreelet(FlexibleTree littleTree, NodeRef oldNode, NodeRef newParent,
+                                      AbstractCase element){
+        if(element.wasEverInfected()) {
+            if (getBranchMap().get(oldNode.getNumber()) == element) {
                 if (treeModel.isExternal(oldNode)) {
                     NodeRef newTip = new FlexibleNode(new Taxon(treeModel.getNodeTaxon(oldNode).getId()));
                     littleTree.addChild(newParent, newTip);
@@ -297,7 +295,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                     littleTree.addChild(newParent, newChild);
                     littleTree.setBranchLength(newChild, treeModel.getBranchLength(oldNode));
                     for (int i = 0; i < treeModel.getChildCount(oldNode); i++) {
-                        copyPartitionToTreelet(littleTree, treeModel.getChild(oldNode, i), newChild, partition);
+                        copyElementToTreelet(littleTree, treeModel.getChild(oldNode, i), newChild, element);
                     }
                 }
             } else {
@@ -582,7 +580,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
             return infectionTimes[outbreak.getCaseIndex(thisCase)];
         } else {
             if(thisCase.wasEverInfected()) {
-                NodeRef child = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(thisCase);
+                NodeRef child = ((PartitionedTreeModel)treeModel).getEarliestNodeInElement(thisCase);
                 NodeRef parent = treeModel.getParent(child);
 
                 if (parent != null) {
@@ -629,7 +627,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public void setInfectionHeight(AbstractCase thisCase, double height){
         if(thisCase.wasEverInfected()) {
-            NodeRef child = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(thisCase);
+            NodeRef child = ((PartitionedTreeModel)treeModel).getEarliestNodeInElement(thisCase);
             NodeRef parent = treeModel.getParent(child);
 
             double minHeight = treeModel.getNodeHeight(child);
@@ -878,7 +876,7 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
         for(AbstractCase aCase : outbreak.getCases()){
             if(aCase.wasEverInfected()) {
-                NodeRef originalNode = ((PartitionedTreeModel)treeModel).getEarliestNodeInPartition(aCase);
+                NodeRef originalNode = ((PartitionedTreeModel)treeModel).getEarliestNodeInElement(aCase);
 
                 int infectionNodeNo = originalNode.getNumber();
                 if (!treeModel.isRoot(originalNode)) {

@@ -31,7 +31,6 @@ import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
@@ -68,6 +67,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private double coalescencesLogLikelihood;
     private double storedCoalescencesLogLikelihood;
 
+    private boolean pleaseReExplode = true;
+
 
     public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
                                 String startingNetworkFileName, Parameter maxFirstInfToRoot, DemographicModel demoModel,
@@ -84,17 +85,15 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         recalculateCoalescentFlags = new boolean[outbreak.getCases().size()];
         Arrays.fill(recalculateCoalescentFlags, true);
 
-        partitionsAsTrees = new HashMap<AbstractCase, Treelet>();
+        elementsAsTrees = new HashMap<AbstractCase, Treelet>();
         for(AbstractCase aCase: outbreak.getCases()){
             if(aCase.wasEverInfected()){
-                partitionsAsTrees.put(aCase, null);
+                elementsAsTrees.put(aCase, null);
             }
         }
 
-        storedPartitionsAsTrees = new HashMap<AbstractCase, Treelet>();
 
-
-
+        storedElementsAsTrees = new HashMap<AbstractCase, Treelet>();
 
     }
 
@@ -102,12 +101,13 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
         //checkPartitions();
 
+        if(pleaseReExplode){
+            explodeTree();
+        }
+
         double logL = 0;
 
-        explodeTree();
-
         coalescencesLogLikelihood = 0;
-
 
         for(AbstractCase aCase : outbreak.getCases()){
 
@@ -117,12 +117,11 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
                 // and then the little tree calculations
 
-                HashSet<AbstractCase> children = ((PartitionedTreeModel)treeModel).getInfectees(aCase);
-
                 if (recalculateCoalescentFlags[number]) {
-                    Treelet treelet = partitionsAsTrees.get(aCase);
 
-                    if (children.size() != 0) {
+                    Treelet treelet = elementsAsTrees.get(aCase);
+
+                    if (treelet.getExternalNodeCount() > 1) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
                                 treelet.getZeroHeight(), mode == Mode.TRUNCATE);
                         partitionTreeLogLikelihoods[number] = coalescent.calculateLogLikelihood();
@@ -149,7 +148,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public void storeState(){
         super.storeState();
-        storedPartitionsAsTrees = new HashMap<AbstractCase, Treelet>(partitionsAsTrees);
+        storedElementsAsTrees = new HashMap<AbstractCase, Treelet>(elementsAsTrees);
         storedPartitionTreeLogLikelihoods = Arrays.copyOf(partitionTreeLogLikelihoods,
                 partitionTreeLogLikelihoods.length);
 
@@ -160,7 +159,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
     public void restoreState(){
         super.restoreState();
-        partitionsAsTrees = storedPartitionsAsTrees;
+        elementsAsTrees = storedElementsAsTrees;
         partitionTreeLogLikelihoods = storedPartitionTreeLogLikelihoods;
 
 
@@ -219,7 +218,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     }
 
     protected void recalculateCaseWCC(int index){
-        partitionsAsTrees.put(outbreak.getCase(index), null);
+        elementsAsTrees.put(outbreak.getCase(index), null);
+        pleaseReExplode = true;
         recalculateCoalescentFlags[index] = true;
     }
 
@@ -235,9 +235,10 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
         Arrays.fill(recalculateCoalescentFlags, true);
         for(AbstractCase aCase : outbreak.getCases()){
             if(aCase.wasEverInfected()) {
-                partitionsAsTrees.put(aCase, null);
+                elementsAsTrees.put(aCase, null);
             }
         }
+        pleaseReExplode = true;
     }
 
     // Tears the tree into small pieces. Indexes correspond to indexes in the outbreak.

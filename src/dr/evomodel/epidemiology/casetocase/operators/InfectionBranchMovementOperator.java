@@ -80,7 +80,7 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         }
 
         // find the child node of the transmission branch
-        NodeRef node = tree.getEarliestNodeInPartition(aCase);
+        NodeRef node = tree.getEarliestNodeInElement(aCase);
 
         double hr = adjustTree(tree, node);
 
@@ -129,8 +129,6 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
         NodeRef parent = tree.getParent(node);
 
         double hr = 0;
-
-        assert map.get(parent.getNumber()) == map.get(node.getNumber()) : "Partition problem";
 
         NodeRef sibling = node;
         for(int i=0; i<tree.getChildCount(parent); i++){
@@ -206,13 +204,11 @@ public class InfectionBranchMovementOperator extends SimpleMCMCOperator{
 
         NodeRef infectedMRCA = tree.caseMRCA(infectedCase);
 
-        assert map.get(parent.getNumber()) == map.get(node.getNumber()) : "Partition problem";
         // check if either child is not ancestral (at most one is not, and if so it must have been in the same
         // partition as both the other child and 'node')
         for(int i=0; i<tree.getChildCount(node); i++){
             NodeRef child = tree.getChild(node, i);
             if(!c2cLikelihood.getTreeModel().isAncestral(child)){
-                assert map.get(child.getNumber()) == map.get(node.getNumber()) : "Partition problem";
                 for(Integer descendant: c2cLikelihood.getTreeModel().samePartitionElementDownTree(child)){
                     newMap[descendant]=map.get(parent.getNumber());
                 }

@@ -25,7 +25,6 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.app.tools.NexusExporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -36,7 +35,6 @@ import dr.math.MathUtils;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -139,11 +137,11 @@ public class PartitionedTreeModel extends TreeModel {
 
             final NodeRef node = getNodeOfParameter((Parameter) variable);
 
-            partitionsChangingAlert(adjacentPartitions(node));
+            partitionsChangingAlert(adjacentElements(node));
         }
     }
 
-    public HashSet<AbstractCase> adjacentPartitions(NodeRef node){
+    public HashSet<AbstractCase> adjacentElements(NodeRef node){
         HashSet<AbstractCase> changedCases = new HashSet<AbstractCase>();
         ArrayList<NodeRef> affectedNodes = new ArrayList<NodeRef>();
 
@@ -168,8 +166,8 @@ public class PartitionedTreeModel extends TreeModel {
         }
 
         for(NodeRef node : partitionsQueue){
-            AbstractCase nodePartition = branchMap.get(node.getNumber());
-            partitionChangingAlert(nodePartition);
+            AbstractCase nodeElement = branchMap.get(node.getNumber());
+            partitionChangingAlert(nodeElement);
             NodeRef parent = getParent(node);
             if(parent!=null && branchMap.get(node.getNumber())!=branchMap.get(parent.getNumber())){
                 partitionChangingAlert(branchMap.get(parent.getNumber()));
@@ -199,7 +197,7 @@ public class PartitionedTreeModel extends TreeModel {
 
     public void setNodeHeight(NodeRef n, double height) {
 
-        partitionsChangingAlert(adjacentPartitions(n));
+        partitionsChangingAlert(adjacentElements(n));
 
         super.setNodeHeight(n, height);
     }
@@ -268,7 +266,7 @@ public class PartitionedTreeModel extends TreeModel {
         NodeRef parentNode = getParent(node);
         while(parentNode!=null && branchMap.get(parentNode.getNumber())==elementCase){
             out.add(parentNode.getNumber());
-            if(countChildrenInSamePartition(parentNode)==2){
+            if(countChildrenInSameElement(parentNode)==2){
                 NodeRef otherChild = sibling(this, currentNode);
                 out.add(otherChild.getNumber());
                 out.addAll(samePartitionElementDownTree(otherChild));
@@ -322,13 +320,13 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
 
-    public NodeRef getEarliestNodeInPartition(AbstractCase thisCase){
+    public NodeRef getEarliestNodeInElement(AbstractCase thisCase){
         if(thisCase.wasEverInfected()) {
 
             NodeRef tipMRCA = caseMRCA(thisCase);
 
             if(branchMap.get(tipMRCA.getNumber())!=thisCase){
-                throw new BadPartitionException("Node partition disconnected");
+                throw new BadPartitionException("Node partition element disconnected");
             }
 
             NodeRef child = tipMRCA;
@@ -371,7 +369,7 @@ public class PartitionedTreeModel extends TreeModel {
             NodeRef tipMRCA = caseMRCA(thisCase);
 
             if(branchMap.get(tipMRCA.getNumber())!=thisCase){
-                throw new BadPartitionException("Node partition disconnected");
+                throw new BadPartitionException("Node partition element disconnected");
             }
 
             NodeRef currentNode = tipMRCA;
@@ -397,7 +395,7 @@ public class PartitionedTreeModel extends TreeModel {
 
     public HashSet<AbstractCase> getInfectees(AbstractCase thisCase){
         if(thisCase.wasEverInfected()) {
-            return getInfecteesInClade(getEarliestNodeInPartition(thisCase));
+            return getInfecteesInClade(getEarliestNodeInElement(thisCase));
         }
         return new HashSet<AbstractCase>();
     }
@@ -437,7 +435,7 @@ public class PartitionedTreeModel extends TreeModel {
     }
 
 
-    /* Return the partition of the parent of this node */
+    /* Return the partition element of the parent of this node */
 
     public AbstractCase getParentCase(NodeRef node){
         return branchMap.get(getParent(node).getNumber());
@@ -453,7 +451,7 @@ public class PartitionedTreeModel extends TreeModel {
 
 
 
-    public int countChildrenInSamePartition(NodeRef node){
+    public int countChildrenInSameElement(NodeRef node){
         if(isExternal(node)){
             return -1;
         } else {
@@ -491,7 +489,7 @@ public class PartitionedTreeModel extends TreeModel {
 
         if(checkConnectedness) {
             if (branchMap.get(mrca.getNumber()) != aCase) {
-                throw new BadPartitionException("A partition is disconnected");
+                throw new BadPartitionException("A partition element is disconnected");
             }
         }
 
@@ -736,14 +734,8 @@ public class PartitionedTreeModel extends TreeModel {
 
 
     private AbstractCase randomlyAssignNode(NodeRef node, boolean allowCreep){
-        //this makes a non-extended partition. This is OK, but if it keeps giving zero likelihoods then you could do
-        //something else
 
         if(isExternal(node)){
-            if(getNodeTaxon(node).getId().startsWith("Location_2_4_0_")){
-                System.out.println("look at me");
-            }
-
             return branchMap.get(node.getNumber());
         } else {
 
@@ -768,7 +760,7 @@ public class PartitionedTreeModel extends TreeModel {
             }
 
             if(forcedByTopology.size()>1){
-                throw new RuntimeException("Starting transmission tree is incompatible with starting phylogeny");
+                throw new RuntimeException("Starting phylogeny is incompatible with this tip partition");
             } else if(forcedByTopology.size()==1){
                 branchMap.set(node.getNumber(), forcedByTopology.get(0), true);
 

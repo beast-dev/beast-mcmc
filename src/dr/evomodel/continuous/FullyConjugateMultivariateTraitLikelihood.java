@@ -137,6 +137,18 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     }
 
 
+    //TODO temporary function so everything will compile. Need to actually write this.
+    public FullyConjugateMultivariateTraitLikelihood semiClone(CompoundParameter traitParameter){
+        return this;
+    }
+
+//    public FullyConjugateMultivariateTraitLikelihood semiClone(CompoundParameter traitParameter){
+//        return new FullyConjugateMultivariateTraitLikelihood(this.traitName, this.treeModel, this.diffusionModel, traitParameter,
+//                this.deltaParameter, this.missingIndices, this.cacheBranches, this.scaleByTime, this.useTreeLength, this.getBranchRateModel(),
+//                this.optimalValues, this.strengthOfSelection, this.samplingDensity, this.reportAsMultivariate, this.rootPriorMean,
+//                this.rootPriorSampleSize, this.reciprocalRates);
+//    }
+
     public double getRescaledLengthToRoot(NodeRef nodeRef) {
 
         double length = 0;

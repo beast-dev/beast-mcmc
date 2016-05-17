@@ -17,10 +17,14 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         }
         this.rowDimension = rowDimension;
         this.columnDimension = colDimension;
+        this.maxRow = maxRow;
+        this.maxCol = maxCol;
+        this.storedColumnDimension = rowDimension;
+        this.storedColumnDimension = columnDimension;
 
     }
 
-    void setRowDimension(int rowDimension){
+    public void setRowDimension(int rowDimension){
         if(rowDimension > this.rowDimension)
             fireParameterChangedEvent(-1, ChangeType.ADDED);
         else
@@ -28,12 +32,24 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         this.rowDimension = rowDimension;
     }
 
-    void setColumnDimension(int columnDimension){
+    public void setColumnDimension(int columnDimension){
         if(columnDimension > this.columnDimension)
             fireParameterChangedEvent(-1, ChangeType.ADDED);
         else
             fireParameterChangedEvent(-1, ChangeType.REMOVED);
         this.columnDimension = columnDimension;
+    }
+
+    @Override
+    protected void storeValues(){
+        super.storeValues();
+        storedRowDimension = rowDimension;
+        storedColumnDimension = columnDimension;
+    }
+
+    protected void restoreValues(){
+        rowDimension = storedRowDimension;
+        columnDimension = storedColumnDimension;
     }
 
     public int getRowDimension(){
@@ -47,6 +63,10 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
     public int getDimension(){
         return rowDimension * columnDimension;
     }
+
+    public int getMaxRowDimension(){return maxRow;}
+
+    public int getMaxColumnDimension(){return maxCol;}
 
     public void setParameterValue(int index, double value){
         int row = index % rowDimension;
@@ -80,6 +100,8 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
 
     int rowDimension;
     int columnDimension;
+    int storedRowDimension;
+    int storedColumnDimension;
     int maxRow;
     int maxCol;
 

@@ -17,7 +17,8 @@ public class FactorTreeGibbsOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-        double weight = (Double) xo.getAttribute(WEIGHT);
+        String weightTemp = (String) xo.getAttribute(WEIGHT);
+        double weight = Double.parseDouble(weightTemp);
         LatentFactorModel lfm= (LatentFactorModel) xo.getChild(LatentFactorModel.class);
         FullyConjugateMultivariateTraitLikelihood tree = (FullyConjugateMultivariateTraitLikelihood) xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
 
@@ -26,7 +27,7 @@ public class FactorTreeGibbsOperatorParser extends AbstractXMLObjectParser {
 
     @Override
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[0];
+        return rules;
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{

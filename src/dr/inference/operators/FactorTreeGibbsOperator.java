@@ -47,9 +47,8 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         MultivariateNormalDistribution mvn = getMVN(column);
         double[] draw = (double[]) mvn.nextRandom();
         for (int i = 0; i < factors.getRowDimension(); i++) {
-            factors.setParameterValueQuietly(i, column, draw[i]);
+            factors.setParameterValue(i, column, draw[i]);
         }
-        factors.fireParameterChangedEvent(column * factors.getRowDimension() , null);
 
         return 0;
     }
@@ -76,7 +75,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
 
     double[] getMean(int column, double[][] precision){
         Matrix variance = (new SymmetricMatrix(precision)).inverse();
-        double[] midMean = new double[lfm.getLoadings().getRowDimension()];
+        double[] midMean = new double[lfm.getLoadings().getColumnDimension()];
         double[] condMean = tree.getConditionalMean(column);
         double[][] condPrec = tree.getConditionalPrecision(column);
         for (int i = 0; i < midMean.length; i++) {
@@ -86,7 +85,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         }
         for (int i = 0; i < lfm.getLoadings().getRowDimension(); i++) {
             for (int j = 0; j < lfm.getLoadings().getColumnDimension(); j++) {
-                midMean[j] += lfm.getScaledData().getParameterValue(j, column) * errorPrec.getParameterValue(i,i) * lfm.getLoadings().getParameterValue(i, j);
+                midMean[j] += lfm.getScaledData().getParameterValue(i, column) * errorPrec.getParameterValue(i,i) * lfm.getLoadings().getParameterValue(i, j);
             }
         }
         double[] mean = new double[midMean.length];

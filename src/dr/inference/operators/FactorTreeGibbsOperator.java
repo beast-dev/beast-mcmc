@@ -85,7 +85,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
         }
         for (int i = 0; i < lfm.getLoadings().getRowDimension(); i++) {
             for (int j = 0; j < lfm.getLoadings().getColumnDimension(); j++) {
-                midMean[j] += lfm.getScaledData().getParameterValue(i, column) * errorPrec.getParameterValue(i,i) * lfm.getLoadings().getParameterValue(i, j);
+                midMean[j] += lfm.getScaledData().getParameterValue(i, column) * errorPrec.getParameterValue(i,i) * lfm.getLoadings().getParameterValue(i, j) * pathParameter;
             }
         }
         double[] mean = new double[midMean.length];

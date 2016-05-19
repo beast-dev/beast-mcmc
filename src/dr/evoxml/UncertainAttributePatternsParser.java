@@ -32,6 +32,8 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evoxml.util.DataTypeUtils;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -107,17 +109,11 @@ public class UncertainAttributePatternsParser extends AbstractXMLObjectParser {
 
         patterns.addPattern(uncertainPattern);
 
-        if (xo.hasAttribute(XMLParser.ID)) {
-            Logger.getLogger("dr.evoxml").info("Read attribute patterns, '" + xo.getId() + "' for attribute, " + attributeName);
-        } else {
-            Logger.getLogger("dr.evoxml").info("Read attribute patterns for attribute, " + attributeName);
-        }
-
-
-        Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating an uncertain attribute model for attribute " + attributeName);
+        Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating an uncertain attribute model for attribute \""
+                + attributeName + "\"");
         Logger.getLogger("dr.evolution").info("\tIf you publish results using this model, please reference:");
-        Logger.getLogger("dr.evolution").info("\t\t 1. Ferreira and Suchard (2008) for the conditional reference prior on CTMC scale parameter prior;");
-
+        Logger.getLogger("dr.evolution").info("\t" + Citable.Utils.getCitationString(patterns));
+        Logger.getLogger("dr.evolution").info("\n");
 
         return patterns;
     }

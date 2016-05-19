@@ -70,6 +70,11 @@ public class UncertainSiteList extends SimpleSiteList implements Citable {
         return map;
     }
 
+    public void fillPartials(final int sequenceIndex, final int site, double[] partials, final int offset) {
+        double[][] sitePatterns = uncertainSitePatterns.get(site);
+        System.arraycopy(sitePatterns[sequenceIndex], 0, partials, offset, getDataType().getStateCount());
+    }
+
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();
         citations.add(

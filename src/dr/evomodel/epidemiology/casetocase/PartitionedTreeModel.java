@@ -630,9 +630,11 @@ public class PartitionedTreeModel extends TreeModel {
         int indexCaseCount = 0;
 
         for(AbstractCase aCase : outbreak.getCases()){
-            if(map.get(aCase)==null){
-                firstCase = aCase;
-                indexCaseCount ++;
+            if(aCase.wasEverInfected()) {
+                if (map.get(aCase) == null) {
+                    firstCase = aCase;
+                    indexCaseCount++;
+                }
             }
         }
         if(indexCaseCount==0){

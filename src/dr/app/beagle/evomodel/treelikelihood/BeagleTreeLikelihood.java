@@ -40,6 +40,7 @@ import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
@@ -310,6 +311,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
+
+            if (patternList instanceof UncertainSiteList) {
+                useAmbiguities = true;
+            }
+
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
@@ -498,16 +504,23 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
 
-            int state = patternList.getPatternState(sequenceIndex, i);
-            stateSet = dataType.getStateSet(state);
+            if (patternList instanceof UncertainSiteList) {
+                ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
+                v += stateCount;
+                // TODO Add this functionality to SimpleSiteList to avoid if statement here
+            } else {
 
-            for (int j = 0; j < stateCount; j++) {
-                if (stateSet[j]) {
-                    partials[v] = 1.0;
-                } else {
-                    partials[v] = 0.0;
+                int state = patternList.getPatternState(sequenceIndex, i);
+                stateSet = dataType.getStateSet(state);
+
+                for (int j = 0; j < stateCount; j++) {
+                    if (stateSet[j]) {
+                        partials[v] = 1.0;
+                    } else {
+                        partials[v] = 0.0;
+                    }
+                    v++;
                 }
-                v++;
             }
         }
 

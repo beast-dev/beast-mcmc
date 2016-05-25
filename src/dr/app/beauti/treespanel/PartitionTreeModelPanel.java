@@ -1,7 +1,7 @@
 /*
- * PriorsPanel.java
+ * PartitionTreeModelPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,9 +27,7 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
@@ -224,15 +222,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     public void setupPanel() {
 
         removeAll();
-
-        ClockModelGroup group = null;
-        if (options.getDataPartitions(partitionTreeModel).size() > 0)
-            group = options.getDataPartitions(partitionTreeModel).get(0).getPartitionClockModel().getClockModelGroup();
-
-        if (group != null && (group.getRateTypeOption() == FixRateType.FIX_MEAN
-                || group.getRateTypeOption() == FixRateType.RELATIVE_TO)) {
-            addComponentWithLabel("The estimated initial root height:", initRootHeightField);
-        }
 
         if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
             addComponentWithLabel("Ploidy type:", ploidyTypeCombo);

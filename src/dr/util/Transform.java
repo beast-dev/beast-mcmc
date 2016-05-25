@@ -1,7 +1,7 @@
 /*
  * Transform.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -47,10 +47,28 @@ public interface Transform {
     double transform(double value);
 
     /**
+     * overloaded transformation that takes and returns an array of doubles
+     * @param values evaluation points
+     * @param from start transformation at this index
+     * @param to end transformation at this index
+     * @return the transformed values
+     */
+    double[] transform(double[] values, int from, int to);
+
+    /**
      * @param value evaluation point
      * @return the inverse transformed value
      */
     double inverse(double value);
+
+    /**
+     * overloaded transformation that takes and returns an array of doubles
+     * @param values evaluation points
+     * @param from start transformation at this index
+     * @param to end transformation at this index
+     * @return the transformed values
+     */
+    double[] inverse(double[] values, int from, int to);
 
     /**
      * @return the transform's name
@@ -61,8 +79,15 @@ public interface Transform {
      * @param value evaluation point
      * @return the log of the transform's jacobian
      */
-
     public double getLogJacobian(double value);
+
+    /**
+     * @param values evaluation points
+     * @param from start calculation at this index
+     * @param to end calculation at this index
+     * @return the log of the transform's jacobian
+     */
+    public double getLogJacobian(double[] values, int from, int to);
 
 
     public static class LogTransform implements Transform, Citable {
@@ -74,8 +99,16 @@ public interface Transform {
             return Math.log(value);
         }
 
+        public double[] transform(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
         public double inverse(double value) {
             return Math.exp(value);
+        }
+
+        public double[] inverse(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public String getTransformName() {
@@ -84,6 +117,10 @@ public interface Transform {
 
         public double getLogJacobian(double value) {
             return -Math.log(value);
+        }
+
+        public double getLogJacobian(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public List<Citation> getCitations() {
@@ -100,6 +137,118 @@ public interface Transform {
         }
     }
 
+    public static class LogConstrainedSumTransform implements Transform, Citable {
+
+        public LogConstrainedSumTransform() {
+        }
+
+        public double transform(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double[] transform(double[] values, int from, int to) {
+            double[] transformedValues = new double[to - from + 1];
+            int counter = 0;
+            for (int i = from; i <= to; i++) {
+                transformedValues[counter] = Math.log(values[i]);
+                counter++;
+            }
+            return transformedValues;
+        }
+
+        public double inverse(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        //inverse transformation assumes a sum of elements equal to the number of elements
+        public double[] inverse(double[] values, int from, int to) {
+            double sum = (double)(to - from + 1);
+            double[] transformedValues = new double[to - from + 1];
+            int counter = 0;
+            double newSum = 0.0;
+            for (int i = from; i <= to; i++) {
+                transformedValues[counter] = Math.exp(values[i]);
+                newSum += transformedValues[counter];
+                counter++;
+            }
+            for (int i = 0; i < sum; i++) {
+                transformedValues[i] = (transformedValues[i] / newSum) * sum;
+            }
+            return transformedValues;
+        }
+
+        public String getTransformName() {
+            return "logConstrainedSum";
+        }
+
+        public double getLogJacobian(double value) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
+        public double getLogJacobian(double[] values, int from, int to) {
+            double sum = 0.0;
+            for (int i = from; i <= to; i++) {
+                sum -= Math.log(values[i]);
+            }
+            return sum;
+        }
+
+        public List<Citation> getCitations() {
+            List<Citation> citations = new ArrayList<Citation>();
+            citations.add(new Citation(
+                    new Author[]{
+                            new Author("MA", "Suchard"),
+                            new Author("G", "Baele"),
+                            new Author("P", "Lemey"),
+                    },
+                    Citation.Status.IN_PREPARATION
+            ));
+            return citations;
+        }
+
+        public static void main(String[] args) {
+
+            //specify starting values
+            double[] startValues = {1.5, 0.6, 0.9};
+            System.err.print("Starting values: ");
+            double startSum = 0.0;
+            for (int i = 0; i < startValues.length; i++) {
+                System.err.print(startValues[i] + " ");
+                startSum += startValues[i];
+            }
+            System.err.println("\nSum = " + startSum);
+
+            //perform transformation
+            double[] transformedValues = LOG_CONSTRAINED_SUM.transform(startValues, 0, startValues.length-1);
+            System.err.print("Transformed values: ");
+            for (int i = 0; i < transformedValues.length; i++) {
+                System.err.print(transformedValues[i] + " ");
+            }
+            System.err.println();
+
+            //add draw for normal distribution to transformed elements
+            for (int i = 0; i < transformedValues.length; i++) {
+                transformedValues[i] += 0.20 * Math.random();
+            }
+
+            //perform inverse transformation
+            transformedValues = LOG_CONSTRAINED_SUM.inverse(transformedValues, 0, transformedValues.length-1);
+            System.err.print("New values: ");
+            double endSum = 0.0;
+            for (int i = 0; i < transformedValues.length; i++) {
+                System.err.print(transformedValues[i] + " ");
+                endSum += transformedValues[i];
+            }
+            System.err.println("\nSum = " + endSum);
+
+            if (startSum != endSum) {
+                System.err.println("Starting and ending constraints differ!");
+            }
+
+        }
+
+    }
+
     public static class LogitTransform implements Transform {
 
         public LogitTransform() {
@@ -109,8 +258,16 @@ public interface Transform {
             return Math.log(value / (1.0 - value));
         }
 
+        public double[] transform(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
         public double inverse(double value) {
             return 1.0 / (1.0 + Math.exp(-value));
+        }
+
+        public double[] inverse(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public String getTransformName() {
@@ -120,6 +277,11 @@ public interface Transform {
         public double getLogJacobian(double value) {
             return -Math.log(1.0 - value) - Math.log(value);
         }
+
+        public double getLogJacobian(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
     }
 
     public static class FisherZTransform implements Transform {
@@ -131,8 +293,16 @@ public interface Transform {
             return 0.5 * (Math.log(1.0 + value) - Math.log(1.0 - value));
         }
 
+        public double[] transform(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
         public double inverse(double value) {
             return (Math.exp(2 * value) - 1) / (Math.exp(2 * value) + 1);
+        }
+
+        public double[] inverse(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public String getTransformName() {
@@ -142,6 +312,11 @@ public interface Transform {
         public double getLogJacobian(double value) {
             return -Math.log(1 - value) - Math.log(1 + value);
         }
+
+        public double getLogJacobian(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
     }
 
     public static class NoTransform implements Transform {
@@ -153,8 +328,16 @@ public interface Transform {
             return value;
         }
 
+        public double[] transform(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
         public double inverse(double value) {
             return value;
+        }
+
+        public double[] inverse(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
 
         public String getTransformName() {
@@ -164,6 +347,11 @@ public interface Transform {
         public double getLogJacobian(double value) {
             return 0.0;
         }
+
+        public double getLogJacobian(double[] values, int from, int to) {
+            throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
+        }
+
     }
 
     public class ParsedTransform {
@@ -179,8 +367,10 @@ public interface Transform {
 
             Transform thisTransform = Transform.NONE;
             String name = (String) xo.getAttribute(TYPE);
+            System.err.println("name: " + name);
             for (Transform type : Transform.transformList) {
                 if (name.equals(type.getTransformName())) {
+                    System.err.println(name + " --- " + type.getTransformName());
                     thisTransform = type;
                     break;
                 }
@@ -232,12 +422,14 @@ public interface Transform {
     public static final LogitTransform LOGIT = new LogitTransform();
     public static final NoTransform NONE = new NoTransform();
     public static final FisherZTransform FISHER_Z = new FisherZTransform();
+    public static final LogConstrainedSumTransform LOG_CONSTRAINED_SUM = new LogConstrainedSumTransform();
 
-    public static final Transform[] transformList = {LOG, LOGIT, NONE, FISHER_Z};
+    public static final Transform[] transformList = {LOG, LOG_CONSTRAINED_SUM, LOGIT, NONE, FISHER_Z};
 
     public static final String TRANSFORM = "transform";
     public static final String TYPE = "type";
     public static final String START = "start";
     public static final String END = "end";
     public static final String EVERY = "every";
+
 }

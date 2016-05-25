@@ -1,7 +1,7 @@
 /*
- * NewCoalescentLikelihood.java
+ * CoalescentLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -77,7 +77,7 @@ public final class CoalescentLikelihood extends AbstractCoalescentLikelihood imp
         double lnL =  Coalescent.calculateLogLikelihood(getIntervals(), demoFunction, demoFunction.getThreshold());
 
 		if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-			Logger.getLogger("warning").severe("CoalescentLikelihood is " + Double.toString(lnL));
+			Logger.getLogger("warning").severe("CoalescentLikelihood for " + demoModel.getId() + " is " + Double.toString(lnL));
 		}
 
 		return lnL;

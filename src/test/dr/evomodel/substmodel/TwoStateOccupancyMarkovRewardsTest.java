@@ -30,6 +30,8 @@ import dr.inference.markovjumps.MarkovReward;
 import dr.inference.markovjumps.SericolaSeriesMarkovReward;
 import dr.inference.markovjumps.TwoStateOccupancyMarkovReward;
 import dr.inference.model.Parameter;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.Vector;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.MaxIterationsExceededException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
@@ -44,48 +46,125 @@ public class TwoStateOccupancyMarkovRewardsTest extends MathTestCase {
 
     private static final double tolerance = 10E-3;
 
+    private double sum(double[] v) {
+        double sum = 0.0;
+        for (double x : v) {
+            sum += x;
+        }
+        return sum;
+    }
+
+    public void testNew() {
+
+        // Equal rates
+        double rate = 2.1;
+        double prop = 0.5;
+        double eps = 0.3;
+        double branchLength = 2.4;
+
+        MarkovReward markovReward1 = createMarkovReward(rate, prop);
+        MarkovReward markovReward2 = createSericolaMarkovReward(rate, prop);
+
+        double r1 = markovReward1.computePdf(eps * branchLength, branchLength, 0, 0);
+        double r2 = markovReward2.computePdf(eps * branchLength, branchLength, 0, 0);
+
+        assertEquals(r1, r2, tolerance);
+
+        // Unequal rates
+        prop = 0.501;
+        MarkovReward markovReward3 = createMarkovReward(rate, prop);
+        MarkovReward markovReward4 = createSericolaMarkovReward(rate, prop);
+
+        double r3 = markovReward3.computePdf(eps * branchLength, branchLength, 0, 0);
+        double r4 = markovReward4.computePdf(eps * branchLength, branchLength, 0, 0);
+
+        assertEquals(r3, r4, tolerance);
+
+
+
+        System.exit(-1);
+    }
+
     public void testTwoStateSericolaRewards1() {
-        final double rate = 0.0015;
+//        final double rate = 0.0015;
 //        final double prop = 0.5;
-        final double prop = 0.66666;
+//        final double eps = 0.01;
+//        final double branchLength = 2000.0;
 
-        final double branchLength = 2000.0;
-        final boolean print = false;
-
-//        MarkovReward markovReward = createMarkovReward(rate, prop);
-        MarkovReward markovReward = createSericolaMarkovReward(rate, prop);
-
-        run(markovReward, rate, prop, branchLength, print, 1000);
-    }
-
-    public void testTwoStateSericolaRewards2() {
-        final double rate = 0.0015;
+        final double rate = 1;
         final double prop = 0.5;
-//        final double prop = 0.66666;
-        final double branchLength = 1000.0;
+        final double eps = 0.1;
+        final double branchLength = 1.2;
+
         final boolean print = false;
 
-        MarkovReward markovReward = createMarkovReward(rate, prop);
+//
+//        TwoStateOccupancyMarkovReward two = (TwoStateOccupancyMarkovReward) markovReward;
+//
+////        run(markovReward, rate, prop, branchLength, print, 1000);
+//
+//        System.err.println(markovReward.computePdf(0.5 * branchLength, branchLength, 0, 0));
+//
+//        System.err.println(new Vector(two.getJumpProbabilities()));
+//
+//        MarkovReward markovReward2 = createMarkovReward(rate, prop + eps);
+//        TwoStateOccupancyMarkovReward two2 = (TwoStateOccupancyMarkovReward) markovReward2;
+//
+//        System.err.println(markovReward2.computePdf(0.5 * branchLength, branchLength, 0, 0));
+//        System.err.println(new Vector(two2.getJumpProbabilities()));
+//        System.err.println("");
+
+//        double[][] C = two2.getC();
+//        double[][] D = two2.getD();
+//
+//        System.err.println("C:\n" + new Matrix(C));
+//
+//        System.err.println("D:\n" + new Matrix(D));
+
+    }
+
+//    public void testTwoStateSericolaRewards1() {
+//        final double rate = 0.0015;
+////        final double prop = 0.5;
+//        final double prop = 0.66666;
+//
+//        final double branchLength = 2000.0;
+//        final boolean print = false;
+//
+////        MarkovReward markovReward = createMarkovReward(rate, prop);
 //        MarkovReward markovReward = createSericolaMarkovReward(rate, prop);
+//
+//        run(markovReward, rate, prop, branchLength, print, 1000);
+//    }
 
-        run(markovReward, rate, prop, branchLength, print, 1000);
-    }
+//    public void testTwoStateSericolaRewards2() {
+//        final double rate = 0.0015;
+//        final double prop = 0.5;
+////        final double prop = 0.66666;
+//        final double branchLength = 1000.0;
+//        final boolean print = false;
+//
+//        MarkovReward markovReward = createMarkovReward(rate, prop);
+////        MarkovReward markovReward = createSericolaMarkovReward(rate, prop);
+//
+//        run(markovReward, rate, prop, branchLength, print, 1000);
+//    }
 
-    public void testLatentStateBranchRateModel() throws FunctionEvaluationException, MaxIterationsExceededException {
-
-        LatentStateBranchRateModel model = new LatentStateBranchRateModel(
-                new Parameter.Default(0.001), new Parameter.Default(0.5));
-
-        TrapezoidIntegrator integator = new TrapezoidIntegrator();
-
-        final double branchLength = 2000;
-        double integral = integator.integrate(new LatentStateDensityFunction(model, branchLength), 0.0, 1.0);
-
-        System.out.println("testLatentStateBeanchRateModel");
-        System.out.println("Integral = " + integral);
-
-        assertEquals(integral, 1.0, tolerance);
-    }
+//    public void testLatentStateBranchRateModel() throws FunctionEvaluationException, MaxIterationsExceededException {
+//
+//        LatentStateBranchRateModel model = new LatentStateBranchRateModel(
+//                new Parameter.Default(0.001), new Parameter.Default(0.5));
+//
+//        TrapezoidIntegrator integator = new TrapezoidIntegrator();
+//
+//        final double branchLength = 2000;
+//        double integral = integator.integrate(new LatentStateDensityFunction(model, branchLength), 0.0, 1.0);
+//
+//        System.out.println("testLatentStateBeanchRateModel");
+//        System.out.println("Integral = " + integral);
+//
+//        assertEquals(integral, 1.0, tolerance);
+//    }
 
     private void run(MarkovReward markovReward, double rate, double prop, double branchLength,
                      boolean print, int length) {

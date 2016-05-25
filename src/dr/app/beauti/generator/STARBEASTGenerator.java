@@ -1,7 +1,7 @@
 /*
- * MultiSpeciesCoalescentGenerator.java
+ * STARBEASTGenerator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -145,7 +145,7 @@ public class STARBEASTGenerator extends Generator {
                 });
         writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
 
-        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
+        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").getInitial(); // "initial" is "value"
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, "sp.popSize"),
@@ -246,7 +246,7 @@ public class STARBEASTGenerator extends Generator {
 
         // take sppSplitPopulations value from partionModel(?).constant.popSize
         // *BEAST always share same tree prior
-        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
+        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").getInitial(); // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModelParser.SPP_SPLIT_POPULATIONS, new Attribute[]{
                 new Attribute.Default<Double>(ParameterParser.VALUE, popSizeValue)});
 

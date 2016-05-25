@@ -1,7 +1,7 @@
 /*
  * GMRFSkyrideLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -358,12 +358,20 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
         return coalescentIntervals[i];
     }
 
-    public int getCoalescentIntervalLineageCount(int i) {
+    /*public int getCoalescentIntervalLineageCount(int i) {
         throw new RuntimeException("Not yet implemented");
     }
 
     public IntervalType getCoalescentIntervalType(int i) {
-        throw new RuntimeException("Not yet implemented");
+        throw new RuntimeException("getCoalescentIntervalType(int i) in GMRFSkyrideLikelihood not yet implemented");
+    }*/
+
+    public int getNumberOfCoalescentEvents() {
+        return tree.getExternalNodeCount() - 1;
+    }
+
+    public double getCoalescentEventsStatisticValue(int i) {
+        return sufficientStatistics[i];
     }
 
     public double[] getCoalescentIntervalHeights() {

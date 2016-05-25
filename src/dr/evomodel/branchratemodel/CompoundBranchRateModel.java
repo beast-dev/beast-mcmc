@@ -1,7 +1,7 @@
 /*
  * CompoundBranchRateModel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -57,7 +57,11 @@ public class CompoundBranchRateModel extends AbstractBranchRateModel {
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
-        fireModelChanged();
+        if (index != -1) {
+            fireModelChanged(null, index);
+        } else {
+            fireModelChanged();
+        }
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

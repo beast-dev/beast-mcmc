@@ -1,7 +1,7 @@
 /*
- * MG94CodonModel.java
+ * MG94HKYCodonModel.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -77,8 +77,9 @@ public class MG94HKYCodonModel extends MG94CodonModel {
 
     protected void setupRelativeRates(double[] rates) {
 
-        double alpha = getAlpha();
-        double beta = getBeta();
+        double alpha = getAlpha() / numSynTransitions;
+        double beta = getBeta() / numNonsynTransitions;
+
         double kappa = getKappa();
         for (int i = 0; i < rateCount; i++) {
             switch (rateMap[i]) {

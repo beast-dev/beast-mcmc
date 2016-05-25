@@ -1,7 +1,7 @@
 /*
- * TreeModelGenerator.java
+ * ParameterPriorGenerator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -95,7 +95,9 @@ public class ParameterPriorGenerator extends Generator {
         } else {
 
             for (Parameter parameter : parameters) {
-                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
+                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR ||
+                        parameter.priorType == PriorType.NONE_FIXED ||
+                        parameter.priorType == PriorType.NONE_STATISTIC)) {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
                     //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
@@ -124,7 +126,7 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        if (parameter.isTruncated) {
+        if (parameter.priorType != PriorType.NONE_FIXED && parameter.isTruncated) {
             // if there is a truncation then put it at the top so it short-circuits any other prior
             // calculations
 
@@ -140,6 +142,8 @@ public class ParameterPriorGenerator extends Generator {
         }
 
         switch (parameter.priorType) {
+            case NONE_FIXED:
+                break;
             case NONE_IMPROPER:
                 writer.writeComment("Improper uniform prior: " + parameter.getName());
                 break;
@@ -248,7 +252,7 @@ public class ParameterPriorGenerator extends Generator {
 
                 PartitionTreeModel treeModel = null;
                 for (PartitionClockModel pcm : options.getPartitionClockModels()) {
-                    if (pcm.getClockRateParam() == parameter) {
+                    if (pcm.getClockRateParameter() == parameter) {
                         for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
                             treeModel = pd.getPartitionTreeModel();
                             break;
@@ -264,6 +268,19 @@ public class ParameterPriorGenerator extends Generator {
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:
                 // Do nothing, densities are already in a distributionLikelihood
+                break;
+            case DIRICHLET_PRIOR:
+                int dimensions = parameter.getParameterDimensionWeights().length;
+                String counts = "1.0";
+                for (int i = 1; i < dimensions; i++) {
+                   counts += " 1.0";
+                }
+                writer.writeOpenTag(PriorParsers.DIRICHLET_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.COUNTS, counts),
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.DIRICHLET_PRIOR);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");

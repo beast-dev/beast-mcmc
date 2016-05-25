@@ -1,7 +1,7 @@
 /*
- * GMRFMultilocusSkyrideLikelihood.java
+ * GaussianProcessMultilocusSkytrackLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,7 +31,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 //import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 //import no.uib.cipr.matrix.DenseVector;

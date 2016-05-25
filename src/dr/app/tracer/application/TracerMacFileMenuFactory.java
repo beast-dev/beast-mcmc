@@ -1,7 +1,7 @@
 /*
- * BeautiMacFileMenuFactory.java
+ * TracerMacFileMenuFactory.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -109,19 +109,40 @@ public class TracerMacFileMenuFactory implements MenuFactory {
 
         menu.addSeparator();
 
-        item = new JMenuItem(frame.getCloseWindowAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+        if (frame != null) {
+            item = new JMenuItem(frame.getCloseWindowAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
+            menu.add(item);
 
-        menu.addSeparator();
+            menu.addSeparator();
 
-        item = new JMenuItem(frame.getPrintAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK));
-        menu.add(item);
+            item = new JMenuItem(frame.getPrintAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK));
+            menu.add(item);
 
-        item = new JMenuItem(application.getPageSetupAction());
-        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
-        menu.add(item);
+            item = new JMenuItem(application.getPageSetupAction());
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
+            menu.add(item);
+
+        } else {
+            // No frame available so create a disabled menu for the default menu bar
+            item = new JMenuItem("Close");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            menu.addSeparator();
+
+            item = new JMenuItem("Print...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+
+            item = new JMenuItem("Page Setup...");
+            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
+            item.setEnabled(false);
+            menu.add(item);
+        }
 
     }
 

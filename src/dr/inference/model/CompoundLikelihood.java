@@ -1,7 +1,7 @@
 /*
  * CompoundLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,9 +29,7 @@ import dr.app.beagle.evomodel.branchmodel.lineagespecific.BeagleBranchLikelihood
 import dr.util.NumberFormatter;
 import dr.xml.Reportable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -59,9 +57,10 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
         if (threads < 0 && this.likelihoods.size() > 1) {
             // asking for an automatic threadpool size and there is more than one likelihood to compute
-            threadCount = this.likelihoods.size();
+            threadCount = this.likelihoods.size();  // create a threadpool the size of the number of likelihoods
+//            threadCount = -1; // use cached thread pool
         } else if (threads > 0) {
-            threadCount = threads;
+            threadCount = threads; // use a thread pool of a specified size
         } else {
             // no thread pool requested or only one likelihood
             threadCount = 0;
@@ -69,10 +68,11 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
         if (threadCount > 0) {
             pool = Executors.newFixedThreadPool(threadCount);
-//        } else if (threads < 0) {
-//            // create a cached thread pool which should create one thread per likelihood...
-//            pool = Executors.newCachedThreadPool();
+        } else if (threadCount < 0) {
+            // create a cached thread pool which should create one thread per likelihood...
+            pool = Executors.newCachedThreadPool();
         } else {
+            // don't use a threadpool (i.e., compute serially)
             pool = null;
         }
 
@@ -145,17 +145,23 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                         likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
                     }
                 }
-                
-//            } else {
-            	
-            	//TODO: hack in branch likes here
-//            	likelihoods.add(likelihood);
-            	
-            }// END: contains check
+
+            } else {
+                throw new IllegalArgumentException("Attempted to add the same likelihood multiple times to CompoundLikelihood.");
+            } // END: contains check
             
         }//END: if unroll check
         
     }//END: addLikelihood
+
+    public Set<Likelihood> getLikelihoodSet() {
+        Set<Likelihood> set = new HashSet<Likelihood>();
+        for (Likelihood l : likelihoods) {
+            set.add(l);
+            set.addAll(l.getLikelihoodSet());
+        }
+        return set;
+    }
 
     public int getLikelihoodCount() {
         return likelihoods.size();

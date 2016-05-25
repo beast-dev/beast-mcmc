@@ -9,7 +9,7 @@ We also include a program that can convert NEXUS files into this format.
 
 ## Download BEAST
 
-[Download BEAST v1.8.1 binaries for Mac, Windows and UNIX/Linux](http://tree.bio.ed.ac.uk/software/beast/)
+[Download BEAST v1.8.3 binaries for Mac, Windows and UNIX/Linux](http://tree.bio.ed.ac.uk/software/beast/)
 
 [Older BEAST Downloads](https://code.google.com/p/beast-mcmc/downloads)
 
@@ -22,6 +22,10 @@ We also include a program that can convert NEXUS files into this format.
 # Documentation
 
 [BEAST Documentation Website](http://beast.bio.ed.ac.uk)
+
+
+# Acknowledgements
+- This project is supported in part through the National Science Foundation grant DMS 1264153.
 
 ---
 

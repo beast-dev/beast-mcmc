@@ -1,7 +1,7 @@
 /*
  * MarkovJumpsTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -92,6 +92,10 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
         boolean reportUnconditionedColumns = xo.getAttribute(REPORT_UNCONDITIONED_COLUMNS, false);
         int nSimulants = xo.getAttribute(NUMBER_OF_SIMULANTS, 1);
+
+        if (patternList.areUnique()) {
+            throw new XMLParseException("Markov Jumps reconstruction cannot be used with compressed (unique) patterns.");
+        }
 
         MarkovJumpsBeagleTreeLikelihood treeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patternList,

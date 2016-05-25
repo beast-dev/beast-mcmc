@@ -1,7 +1,7 @@
 /*
  * MCMCMC.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -483,21 +483,6 @@ public class MCMCMC implements Runnable {
         for (MarkovChain chain : chains) {
             chain.pleaseStop();
         }
-    }
-
-    //PRIVATE METHODS *****************************************
-    private boolean isPreBurninNeeded() {
-
-        if (mcmcOptions.useCoercion()) return true;
-
-        for (int i = 0; i < schedules[coldChain].getOperatorCount(); i++) {
-            MCMCOperator op = schedules[coldChain].getOperator(i);
-
-            if (op instanceof CoercableMCMCOperator) {
-                if (((CoercableMCMCOperator) op).getMode() == CoercionMode.COERCION_ON) return true;
-            }
-        }
-        return false;
     }
 
     public void setShowOperatorAnalysis(boolean soa) {

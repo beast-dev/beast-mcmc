@@ -8,7 +8,7 @@
     <property name="build" location="build"/>
     <property name="lib" location="lib"/>
     <property name="dist" location="dist"/>
-
+                                                                                2
     <property environment="env"/>
 
     <target name="init">
@@ -72,6 +72,8 @@
             </manifest>
             <fileset dir="${build}">
                 <include name="dr/app/coalgen/**/*.class"/>
+                <include name="dr/app/beauti/**/*.class"/>
+                <include name="dr/app/gui/**/*.class"/>
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/evolution/alignment/**/*.class"/>
                 <include name="dr/evolution/coalescent/**/*.class"/>
@@ -100,7 +102,7 @@
             </fileset>
             <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
             <zipgroupfileset dir="${lib}" includes="**/jam.jar"/>
-            <zipgroupfileset dir="${lib}" includes="**/commons-math-2.0.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-math-2.2.jar"/>
         </jar>
     </target>
 </project>

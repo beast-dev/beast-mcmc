@@ -1,3 +1,28 @@
+/*
+ * VectorSliceParameter.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.model;
 
 import dr.xml.*;
@@ -60,6 +85,11 @@ public class VectorSliceParameter extends CompoundParameter {
         parameter.setParameterValueNotifyChangedAll(sliceDimension, value);
     }
 
+    public String getDimensionName(int dim) {
+
+        return getParameter(dim).getVariableName() + Integer.toString(sliceDimension + 1);
+    }
+
     private class sliceBounds implements Bounds<Double>{
 
 
@@ -93,13 +123,25 @@ public class VectorSliceParameter extends CompoundParameter {
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Parameter parameter = (Parameter) xo.getChild(i);
-                vectorSlice.addParameter(parameter);
-                if (sliceDimension < 1 || sliceDimension > parameter.getDimension()) {
-                    throw new XMLParseException("Slice dimension " + sliceDimension + " is invalid for a parameter" +
-                    " with dimension = " + parameter.getDimension());
+                if (parameter instanceof MatrixParameter) {
+                    MatrixParameter mp = (MatrixParameter) parameter;
+                    for (int j = 0; j < mp.getParameterCount(); ++j) {
+                        checkAndAdd(vectorSlice, mp.getParameter(j), sliceDimension);
+                    }
+                } else {
+                    checkAndAdd(vectorSlice, parameter, sliceDimension);
                 }
             }
             return vectorSlice;
+        }
+
+        private void checkAndAdd(final VectorSliceParameter vectorSlice, final Parameter parameter,
+                                 final int sliceDimension) throws XMLParseException {
+            vectorSlice.addParameter(parameter);
+            if (sliceDimension < 1 || sliceDimension > parameter.getDimension()) {
+                throw new XMLParseException("Slice dimension " + sliceDimension + " is invalid for a parameter" +
+                        " with dimension = " + parameter.getDimension());
+            }
         }
 
         //************************************************************************

@@ -1,22 +1,7 @@
-package dr.app.tools;
-
-import dr.app.beast.BeastVersion;
-import dr.app.util.Arguments;
-import dr.app.util.Utils;
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.TreeExporter;
-import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.FlexibleTree;
-import dr.inference.trace.TraceException;
-import dr.util.Version;
-import java.util.*;
-import java.io.*;
-
 /*
  * GetAncestralSequenceFromSplitTrait.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc A. Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -36,15 +21,22 @@ import java.io.*;
  * License along with BEAST; if not, write to the
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- *
- * Takes the states information provided by a TreeAnnotator output from an ancestral sequence estimation when
- * using SplitBySiteTraitLogger.java
- * See input xml muscle-E20110604-030101-0299-49327217-oy.fasta_ancestral_sequence_RelA.xml, NF-kB analysis
- *
- *
- * @author Wai Lok Sibon Li
  */
+
+package dr.app.tools;
+
+import dr.app.beast.BeastVersion;
+import dr.app.util.Arguments;
+import dr.app.util.Utils;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeExporter;
+import dr.evolution.io.TreeImporter;
+import dr.evolution.tree.FlexibleTree;
+import dr.inference.trace.TraceException;
+import dr.util.Version;
+import java.util.*;
+import java.io.*;
 
 public class GetAncestralSequenceFromSplitTrait {
 

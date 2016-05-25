@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -237,7 +237,7 @@ public class BeastMain {
                 infoLogger.severe("Error running file: " + fileName);
                 infoLogger.severe(
                         "The initial model is invalid because state has a zero probability.\n\n" +
-                                "If the log likelihood of the tree is -Inf, his may be because the\n" +
+                                "If the log likelihood of the tree is -Inf, this may be because the\n" +
                                 "initial, random tree is so large that it has an extremely bad\n" +
                                 "likelihood which is being rounded to zero.\n\n" +
                                 "Alternatively, it may be that the product of starting mutation rate\n" +
@@ -323,7 +323,7 @@ public class BeastMain {
                         new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
                         new Arguments.Option("java", "Use Java only, no native implementations"),
-                        new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 1E-6)"),
+                        new Arguments.RealOption("threshold", 0.0, Double.MAX_VALUE, "Full evaluation test threshold (default 0.1)"),
 
                         new Arguments.Option("beagle_off", "Don't use the BEAGLE library"),
                         new Arguments.Option("beagle", "Use BEAGLE library if available (default on)"),
@@ -341,22 +341,32 @@ public class BeastMain {
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
-                        new Arguments.IntegerOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
+                        new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
 
                         new Arguments.IntegerOption("mc3_chains", 1, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("mc3_delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
                         new Arguments.RealArrayOption("mc3_temperatures", -1, "a comma-separated list of the hot chain temperatures"),
-                        new Arguments.IntegerOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
+                        new Arguments.LongOption("mc3_swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
 
-                        new Arguments.StringOption("debug_state_file", "FILENAME", "Specify a filename to load a debug state from"),
-                        new Arguments.IntegerOption("debug_write_state", "Specify a state at which to write a debug state file"),
+                        new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
+                        new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
+                        new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 
         int argumentCount = 0;
+
+        StringBuilder commandLine = new StringBuilder();
+        for (int i = 0; i < args.length; i++) {
+            if (i > 0) {
+                commandLine.append(" ");
+            }
+            commandLine.append(args[i]);
+        }
+        System.setProperty("command_line", commandLine.toString());
 
         try {
             argumentCount = arguments.parseArguments(args);
@@ -473,11 +483,13 @@ public class BeastMain {
         if (!arguments.hasOption("beagle_SSE_off")) {
             beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
         }
-        if (arguments.hasOption("beagle_double")) {
-            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-        }
+//        if (arguments.hasOption("beagle_double")) {
+//            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+//        }
         if (arguments.hasOption("beagle_single")) {
             beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+        } else {
+            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
         }
         if (arguments.hasOption("beagle_async")) {
             beagleFlags |= BeagleFlag.COMPUTATION_ASYNCH.getMask();
@@ -496,7 +508,7 @@ public class BeastMain {
         }
 
         if (arguments.hasOption("beagle_rescale")) {
-            System.setProperty("beagle.rescale", Integer.toString(arguments.getIntegerOption("beagle_rescale")));
+            System.setProperty("beagle.rescale", Long.toString(arguments.getLongOption("beagle_rescale")));
         }
 
         // ============= Other settings =============
@@ -519,14 +531,19 @@ public class BeastMain {
             }
         }
 
-        if (arguments.hasOption("debug_state_file")) {
-            String debugStateFile = arguments.getStringOption("debug_state_file");
-            System.setProperty(MCMC.DEBUG_STATE_FILE, debugStateFile);
+        if (arguments.hasOption("load_dump")) {
+            String debugStateFile = arguments.getStringOption("load_dump");
+            System.setProperty(MCMC.LOAD_DUMP_FILE, debugStateFile);
         }
 
-        if (arguments.hasOption("debug_write_state")) {
-            int debugWriteState = arguments.getIntegerOption("debug_write_state");
-            System.setProperty(MCMC.DEBUG_WRITE_STATE, Integer.toString(debugWriteState));
+        if (arguments.hasOption("dump_state")) {
+            long debugWriteState = arguments.getLongOption("dump_state");
+            System.setProperty(MCMC.DUMP_STATE, Long.toString(debugWriteState));
+        }
+
+        if (arguments.hasOption("dump_every")) {
+            long debugWriteEvery = arguments.getLongOption("dump_every");
+            System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
         }
 
         if (useMPI) {
@@ -634,6 +651,8 @@ public class BeastMain {
                 }
                 if (dialog.preferBeagleSSE()) {
                     beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+                } else {
+                    beagleFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
                 }
                 if (dialog.preferBeagleGPU()) {
                     beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();

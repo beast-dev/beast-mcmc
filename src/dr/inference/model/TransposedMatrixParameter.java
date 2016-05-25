@@ -1,7 +1,7 @@
 /*
  * TransposedMatrixParameter.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -104,6 +104,11 @@ public class TransposedMatrixParameter extends MatrixParameter {
         }
         return slices.get(index);
     }
+
+//    @Override
+//    public void setParameterValueQuietly(int row, int column, double a) {
+//        super.setParameterValueQuietly(column,row, a);
+//    }
 
     MatrixParameter transposeBack(){
         return MatrixParameter.recast(null, this);

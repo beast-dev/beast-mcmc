@@ -1,7 +1,7 @@
 /*
- * MultiDimensionalScalingCoreImpl.java
+ * MultiDimensionalScalingCoreImpl2.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -44,24 +44,18 @@ import dr.math.distributions.NormalDistribution;
 public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScalingCore {
 
     @Override
-    public void initialize(int embeddingDimension, int locationCount, boolean isLeftTruncated) {
+    public void initialize(int embeddingDimension, int locationCount, long flags) {
         this.embeddingDimension = embeddingDimension;
         this.locationCount = locationCount;
         this.observationCount = (locationCount * (locationCount - 1)) / 2;
-        this.isLeftTruncated = isLeftTruncated;
 
         observations = new double[locationCount][locationCount];
-        squaredResiduals = new double[locationCount][locationCount];
-        storedSquaredResiduals = null;
-        residualsKnown = false;
-        sumOfSquaredResidualsKnown = false;
+        increments = new double[locationCount][locationCount];
+        storedIncrements = null;
+        incrementsKnown = false;
+        sumOfIncrementsKnown = false;
 
-        if (isLeftTruncated) {
-            truncations = new double[locationCount][locationCount];
-            storedTruncations = null;
-            truncationsKnown = false;
-            sumOfTruncationsKnown = false;
-        }
+        isLeftTruncated = (flags & MultiDimensionalScalingCore.LEFT_TRUNCATION) != 0;
 
         updatedLocation = -1;
 
@@ -83,77 +77,88 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     }
 
     @Override
+    public double[] getPairwiseData() {
+        double[] data = new double[locationCount * locationCount];
+        int k = 0;
+        for (int i = 0; i < locationCount; ++i) {
+            System.arraycopy(observations[i], 0, data, k, locationCount);
+            k += locationCount;
+        }
+        return data;
+    }
+
+    @Override
     public void setParameters(double[] parameters) {
         precision = parameters[0];
 
         // Handle truncations
-        truncationsKnown = false;
-        sumOfTruncationsKnown = false;
+        if (isLeftTruncated) {
+            incrementsKnown = false;
+            sumOfIncrementsKnown = false;
+        }
     }
 
     @Override
     public void updateLocation(int locationIndex, double[] location) {
-        if (updatedLocation != -1) {
+        if (updatedLocation != -1 || locationIndex == -1) {
             // more than one location updated - do a full recomputation
-            residualsKnown = false;
-            storedSquaredResiduals = null;
+            incrementsKnown = false;
+            storedIncrements = null;
+         }
 
-            // Handle truncations
-            truncationsKnown = false;
-            storedTruncations = null;
+        if (locationIndex != -1) {
+            updatedLocation = locationIndex;
+
+            if (location.length != embeddingDimension) {
+                throw new RuntimeException("Location is not the correct dimension");
+            }
+
+            System.arraycopy(location, 0, locations[locationIndex], 0, embeddingDimension);
+
+        } else {
+            if (location.length != embeddingDimension * locationCount) {
+                throw new RuntimeException("Location is the not correct dimension");
+            }
+
+            int offset = 0;
+            for (int i = 0; i < locationCount; ++i) {
+                System.arraycopy(location, offset, locations[i], 0, embeddingDimension);
+                offset += embeddingDimension;
+            }
         }
 
-        updatedLocation = locationIndex;
-
-        if (location.length != embeddingDimension) {
-            throw new RuntimeException("Location is not the correct dimension");
-        }
-
-        System.arraycopy(location, 0, locations[locationIndex], 0, embeddingDimension);
-
-        sumOfSquaredResidualsKnown = false;
-
-        // Handle truncation
-        sumOfTruncationsKnown = false;
+        sumOfIncrementsKnown = false;
     }
 
     @Override
     public double calculateLogLikelihood() {
-        if (!sumOfSquaredResidualsKnown) {
+        if (!sumOfIncrementsKnown) {
 
-            if (!residualsKnown) {
+            if (!incrementsKnown) {
                 computeSumOfSquaredResiduals();
             } else {
                 updateSumOfSquaredResiduals();
                 if (REPORT_ROUNDOFF) {
                     // Report round-off error
-                    double storedSumOfSquaredResults = sumOfSquaredResiduals;
+                    double storedSumOfSquaredResults = sumOfIncrements;
                     computeSumOfSquaredResiduals();
-                    if (Math.abs(storedSumOfSquaredResults - sumOfSquaredResiduals) > 1E-6) {
+                    if (Math.abs(storedSumOfSquaredResults - sumOfIncrements) > 1E-6) {
                         System.err.println(storedSumOfSquaredResults);
-                        System.err.println(sumOfSquaredResiduals);
-                        System.err.println(storedSumOfSquaredResults - sumOfSquaredResiduals);
+                        System.err.println(sumOfIncrements);
+                        System.err.println(storedSumOfSquaredResults - sumOfIncrements);
                         System.err.println("");
                     }
                 }
             }
-            sumOfSquaredResidualsKnown = true;
+            sumOfIncrementsKnown = true;
         }
 
-        double logLikelihood = (0.5 * Math.log(precision) * observationCount) -
-                (0.5 * precision * sumOfSquaredResiduals);
+        double logLikelihood = 0.5 * (Math.log(precision) - Math.log(2 * Math.PI)) * observationCount;
 
         if (isLeftTruncated) {
-            if (!sumOfTruncationsKnown) {
-
-                if (!truncationsKnown) {
-                    computeSumOfTruncations();
-                } else {
-                    updateSumOfTruncations();
-                }
-                sumOfTruncationsKnown = true;
-            }
-            logLikelihood -= truncationSum;
+            logLikelihood -= sumOfIncrements; // If truncated, then values on difference scale
+        } else {
+            logLikelihood -= 0.5 * precision * sumOfIncrements;
         }
 
         return logLikelihood;
@@ -162,8 +167,8 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     @Override
     public void storeState() {
         // Handle residuals
-        storedSumOfSquaredResiduals = sumOfSquaredResiduals;
-        storedSquaredResiduals = null;
+        storedSumOfIncrements = sumOfIncrements;
+        storedIncrements = null;
 
         // Handle locations
         for (int i = 0; i < locationCount; i++) {
@@ -173,28 +178,22 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
 
         // Handle precision
         storedPrecision = precision;
-
-        // Handle truncations
-        if (isLeftTruncated) {
-            storedTruncationSum = truncationSum;
-            storedTruncations = null;
-        }
     }
 
     @Override
     public void restoreState() {
         // Handle residuals
-        sumOfSquaredResiduals = storedSumOfSquaredResiduals;
-        sumOfSquaredResidualsKnown = true;
+        sumOfIncrements = storedSumOfIncrements;
+        sumOfIncrementsKnown = true;
 
-        if (storedSquaredResiduals != null) {
-            System.arraycopy(storedSquaredResiduals, 0 , squaredResiduals[updatedLocation], 0, locationCount);
-            for (int j = 0; j < locationCount; j++) {
-                squaredResiduals[j][updatedLocation] = storedSquaredResiduals[j];
-            }
-            residualsKnown = true;
+        if (storedIncrements != null) {
+            System.arraycopy(storedIncrements, 0 , increments[updatedLocation], 0, locationCount);
+//            for (int j = 0; j < locationCount; j++) { // Do not write transposed values
+//                increments[j][updatedLocation] = storedIncrements[j];
+//            }
+            incrementsKnown = true;
         } else {
-            residualsKnown = false;
+            incrementsKnown = false;
         }
 
         // Handle locations
@@ -204,134 +203,86 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
 
         // Handle precision
         precision = storedPrecision;
+    }
 
-        // Handle truncations
-        if (isLeftTruncated) {
-            truncationSum = storedTruncationSum;
-            sumOfTruncationsKnown = true;
-
-            if (storedTruncations != null) {
-                System.arraycopy(storedTruncations, 0, truncations[updatedLocation], 0, locationCount);
-                for (int j = 0; j < locationCount; ++j) {
-                    truncations[j][updatedLocation] = storedTruncations[j];
-                }
-                truncationsKnown = true;
-            } else {
-                truncationsKnown = false;
+    @Override
+    public void acceptState() {
+        if (storedIncrements != null) {
+            for (int j = 0; j < locationCount; ++j) {
+                increments[j][updatedLocation] = increments[updatedLocation][j];
             }
         }
     }
 
     @Override
     public void makeDirty() {
-        sumOfSquaredResidualsKnown = false;
-        residualsKnown = false;
-
-        sumOfTruncationsKnown = false;
-        truncationsKnown = false;
+        sumOfIncrementsKnown = false;
+        incrementsKnown = false;
     }
 
     protected void computeSumOfSquaredResiduals() {
 
+        final double oneOverSd = Math.sqrt(precision);
+        final double scale = 0.5 * precision;
+
         // OLD
-        sumOfSquaredResiduals = 0.0;
+        sumOfIncrements = 0.0;
         for (int i = 0; i < locationCount; i++) {
 
             for (int j = 0; j < locationCount; j++) {
                 double distance = calculateDistance(locations[i], locations[j]);
                 double residual = distance - observations[i][j];
-                double squaredResidual = residual * residual;
-                squaredResiduals[i][j] = squaredResidual;
-//                squaredResiduals[j][i] = squaredResidual;
-                sumOfSquaredResiduals += squaredResidual;
+                double increment = residual * residual;
+                if (isLeftTruncated) {
+                    increment = scale * increment;
+                    if (i != j) {
+                        increment += computeTruncation(distance, precision, oneOverSd);
+//                        increment += computeTruncation(Math.sqrt(residual * residual), precision, oneOverSd); // OLD .. believed incorrect
+                    }
+                }
+                increments[i][j] = increment;
+//                increments[j][i] = increment; // Do not write transposed values
+                sumOfIncrements += increment;
             }
         }
 
-        sumOfSquaredResiduals /= 2;
+        sumOfIncrements /= 2;
 
-        // New   TODO
-//        sumOfSquaredResiduals = 0.0;
-//         for (int i = 0; i < locationCount; i++) {
-//
-//             for (int j = i + 1; j < locationCount; j++) {
-//                 double distance = calculateDistance(locations[i], locations[j]);
-//                 double residual = distance - observations[i][j];
-//                 double squaredResidual = residual * residual;
-//                 squaredResiduals[i][j] = squaredResidual;
-//                 squaredResiduals[j][i] = squaredResidual;
-//                 sumOfSquaredResiduals += squaredResidual;
-//             }
-//         }
-
-        residualsKnown = true;
-        sumOfSquaredResidualsKnown = true;
-    }
-
-    protected void computeSumOfTruncations() {
-
-        final double oneOverSd = Math.sqrt(precision);
-
-        truncationSum = 0.0;
-        for (int i = 0; i < locationCount; i++) {
-
-            for (int j = 0; j < locationCount; j++) {
-                double squaredResidual = squaredResiduals[i][j]; // Note just written above, save transaction
-                double truncation = (i == j) ? 0.0 : computeTruncation(squaredResidual, precision, oneOverSd);
-                truncations[i][j] =  truncation;
-                truncations[j][i] = truncation;
-                truncationSum += truncation;
-            }
-        }
-
-        truncationSum /= 2;
-
-        truncationsKnown = true;
-        sumOfTruncationsKnown = true;
+        incrementsKnown = true;
+        sumOfIncrementsKnown = true;
     }
 
     protected void updateSumOfSquaredResiduals() {
+
+        final double oneOverSd = Math.sqrt(precision);
+        final double scale = 0.5 * precision;
+
         double delta = 0.0;
 
-        int i = updatedLocation;
+        final int i = updatedLocation;
 
-        storedSquaredResiduals = new double[locationCount];
-        System.arraycopy(squaredResiduals[i], 0, storedSquaredResiduals, 0, locationCount);
+        storedIncrements = new double[locationCount];
+        System.arraycopy(increments[i], 0, storedIncrements, 0, locationCount);
 
         for (int j = 0; j < locationCount; j++) {
             double distance = calculateDistance(locations[i], locations[j]);
             double residual = distance - observations[i][j];
-            double squaredResidual = residual * residual;
+            double increment = residual * residual;
 
-            delta += squaredResidual - squaredResiduals[i][j];
+            if (isLeftTruncated) {
+                increment = scale * increment;
+                if (i != j) {
+                    increment += computeTruncation(distance, precision, oneOverSd);
+//                    increment += computeTruncation(Math.sqrt(residual * residual), precision, oneOverSd); // OLD .. believed incorrect
+                }
+            }
 
-            squaredResiduals[i][j] = squaredResidual;
-            squaredResiduals[j][i] = squaredResidual;
+            delta += increment - increments[i][j];
+            increments[i][j] = increment;
+//            increments[j][i] = increment; // Do not write transposed values
         }
 
-        sumOfSquaredResiduals += delta;
-    }
-
-    protected void updateSumOfTruncations() {
-        final double oneOverSd = Math.sqrt(precision);
-        double delta = 0.0;
-
-        int i = updatedLocation;
-
-        storedTruncations = new double[locationCount];
-        System.arraycopy(truncations[i], 0, storedTruncations, 0, locationCount);
-
-        for (int j = 0; j < locationCount; j++) {
-
-            double squaredResidual = squaredResiduals[i][j];
-            double truncation = (i == j) ? 0.0 : computeTruncation(squaredResidual, precision, oneOverSd);
-
-            delta += truncation - truncations[i][j];
-
-            truncations[i][j] = truncation;
-            truncations[j][i] = truncation;
-        }
-
-        truncationSum += delta;
+        sumOfIncrements += delta;
     }
 
     protected double calculateDistance(double[] X, double[] Y) {
@@ -343,32 +294,9 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
         return Math.sqrt(sum);
     }
 
-    protected double computeTruncation(double squaredResidual, double precision, double oneOverSd) {
-        return NormalDistribution.standardCDF(Math.sqrt(squaredResidual) * oneOverSd, true);
+    protected double computeTruncation(double mean, double precision, double oneOverSd) {
+        return NormalDistribution.standardCDF(mean * oneOverSd, true); // Should be standardCDF(mean / sd, true);
     }
-
-//    protected void calculateTruncations(double precision) {
-//        double sd = 1.0 / Math.sqrt(precision);
-//        for (int i = 0; i < distanceCount; i++) {
-//            if (distanceUpdated[i]) {
-//                truncations[i] = NormalDistribution.cdf(distances[i], 0.0, sd, true);
-//            }
-//        }
-//        truncationsKnown = true;
-//    }
-//
-//    protected double calculateTruncationSum() {
-//        double sum = 0.0;
-//        for (int i = 0; i < observationCount; i++) {
-//            int dist = getDistanceIndexForObservation(i);
-//            if (dist != -1) {
-//                sum += truncations[dist];
-//            } else {
-//                sum += Math.log(0.5);
-//            }
-//        }
-//        return sum;
-//    }
 
     private int embeddingDimension;
     private boolean isLeftTruncated = false;
@@ -383,23 +311,15 @@ public class MultiDimensionalScalingCoreImpl2 implements MultiDimensionalScaling
     private double[][] locations;
     private double[][] storedLocations;
 
-    private boolean residualsKnown = false;
+    private boolean incrementsKnown = false;
 
-    private boolean sumOfSquaredResidualsKnown = false;
-    private double[][] squaredResiduals;
+    private boolean sumOfIncrementsKnown = false;
+    private double[][] increments;
 
-    private double[] storedSquaredResiduals;
+    private double[] storedIncrements;
 
-    private double sumOfSquaredResiduals;
-    private double storedSumOfSquaredResiduals;
-
-    private boolean truncationsKnown = false;
-    private boolean sumOfTruncationsKnown = false;
-
-    private double truncationSum;
-    private double storedTruncationSum;
-    private double[][] truncations;
-    private double[] storedTruncations;
+    private double sumOfIncrements;
+    private double storedSumOfIncrements;
 
     private static boolean REPORT_ROUNDOFF = false;
 

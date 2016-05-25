@@ -1,7 +1,7 @@
 /*
  * BinomialLikelihoodParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -39,6 +39,7 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
     public static final String COUNTS = "counts";
     public static final String PROPORTION = "proportion";
     public static final String VALUES = "values";
+    public static final String ON_LOGIT_SCALE = "onLogitScale";
 
     public String getParserName() {
         return BinomialLikelihood.BINOMIAL_LIKELIHOOD;
@@ -46,31 +47,38 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        XMLObject cxo = xo.getChild(TRIALS);
-        Parameter trialsParam = (Parameter) cxo.getChild(Parameter.class);
+        final boolean onLogitScale = xo.getAttribute(ON_LOGIT_SCALE, false);
+
+        XMLObject cxo = xo.getChild(COUNTS);
+        Parameter countsParam = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(PROPORTION);
         Parameter proportionParam = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(COUNTS);
-        Parameter counts = null;
+        if (proportionParam.getDimension() != 1 && proportionParam.getDimension() != countsParam.getDimension()) {
+            throw new XMLParseException("Proportion dimension (" + proportionParam.getDimension() + ") " +
+            "must equal 1 or counts dimension (" + countsParam.getDimension() + ")");
+        }
+
+        cxo = xo.getChild(TRIALS);
+        Parameter trialsParam;
         if (cxo.hasAttribute(VALUES)) {
             int[] tmp = cxo.getIntegerArrayAttribute(VALUES);
             double[] v = new double[tmp.length];
             for (int i = 0; i < tmp.length; ++i) {
                 v[i] = tmp[i];
             }
-            counts = new Parameter.Default(v);
+            trialsParam = new Parameter.Default(v);
         } else {
-            counts = (Parameter) cxo.getChild(Parameter.class);
+            trialsParam = (Parameter) cxo.getChild(Parameter.class);
         }
 
-        if (trialsParam.getDimension() != counts.getDimension()) {
+        if (trialsParam.getDimension() != countsParam.getDimension()) {
             throw new XMLParseException("Trials dimension (" + trialsParam.getDimension()
-                    + ") must equal counts dimension (" + counts.getDimension() + ")");
+                    + ") must equal counts dimension (" + countsParam.getDimension() + ")");
         }
 
-        return new BinomialLikelihood(trialsParam, proportionParam, counts);
+        return new BinomialLikelihood(trialsParam, proportionParam, countsParam, onLogitScale);
 
     }
 
@@ -83,15 +91,16 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(TRIALS,
+            AttributeRule.newBooleanRule(ON_LOGIT_SCALE, true),
+            new ElementRule(COUNTS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(PROPORTION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new XORRule(
-                    new ElementRule(COUNTS,
+                    new ElementRule(TRIALS,
                             new XMLSyntaxRule[]{AttributeRule.newIntegerArrayRule(VALUES, false),})
                     ,
-                    new ElementRule(COUNTS,
+                    new ElementRule(TRIALS,
                             new XMLSyntaxRule[]{new ElementRule(Parameter.class)}
                     )),
     };

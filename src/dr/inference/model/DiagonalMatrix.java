@@ -1,7 +1,7 @@
 /*
  * DiagonalMatrix.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,6 +46,8 @@ public class DiagonalMatrix extends MatrixParameter {
 //	public DiagonalMatrix(String name, Parameter parameter) {
 //		Parameter.Default(name, parameters);
 //	}
+
+    public Parameter getDiagonalParameter() { return diagonalParameter; }
 
     public double getParameterValue(int row, int col) {
         if (row != col)

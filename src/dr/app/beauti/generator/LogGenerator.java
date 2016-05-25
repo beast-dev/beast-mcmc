@@ -1,7 +1,7 @@
 /*
  * LogGenerator.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,18 +27,13 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.LocalClockModelParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.branchratemodel.*;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
@@ -51,7 +46,6 @@ import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.inferencexml.model.CompoundParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -76,9 +70,9 @@ public class LogGenerator extends Generator {
      * write log to screen
      *
      * @param writer                    XMLWriter
-     * @param branchRatesModelGenerator BranchRatesModelGenerator
+     * @param clockModelGenerator ClockModelGenerator
      */
-    public void writeLogToScreen(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
+    public void writeLogToScreen(XMLWriter writer, ClockModelGenerator clockModelGenerator,
                                  SubstitutionModelGenerator substitutionModelGenerator) {
         writer.writeComment("write log to screen");
 
@@ -149,27 +143,19 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            writer.writeOpenTag(ColumnsParser.COLUMN,
-                    new Attribute[]{
-                            new Attribute.Default<String>(ColumnsParser.LABEL, branchRatesModelGenerator.getClockRateString(model)),
-                            new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
-                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
-                    }
-            );
+            if (!model.getClockRateParameter().isFixed()) {
+                writer.writeOpenTag(ColumnsParser.COLUMN,
+                        new Attribute[]{
+                                new Attribute.Default<String>(ColumnsParser.LABEL, clockModelGenerator.getClockRateString(model)),
+                                new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
+                                new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
+                        }
+                );
 
-            branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
-//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-//            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
-//            for (PartitionClockModel model : options.getPartitionClockModels()) {
-//                if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL)
-//                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-//            }
-//        } else {
-//            for (PartitionClockModel model : options.getPartitionClockModels()) {
-//                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
-//            }
-//        }
-            writer.writeCloseTag(ColumnsParser.COLUMN);
+                clockModelGenerator.writeAllClockRateRefs(model, writer);
+
+                writer.writeCloseTag(ColumnsParser.COLUMN);
+            }
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
@@ -189,13 +175,13 @@ public class LogGenerator extends Generator {
      *
      * @param writer                     XMLWriter
      * @param treePriorGenerator         TreePriorGenerator
-     * @param branchRatesModelGenerator  BranchRatesModelGenerator
+     * @param clockModelGenerator  ClockModelGenerator
      * @param substitutionModelGenerator SubstitutionModelGenerator
      * @param treeLikelihoodGenerator    TreeLikelihoodGenerator
      */
     public void writeLogToFile(XMLWriter writer,
                                TreePriorGenerator treePriorGenerator,
-                               BranchRatesModelGenerator branchRatesModelGenerator,
+                               ClockModelGenerator clockModelGenerator,
                                SubstitutionModelGenerator substitutionModelGenerator,
                                TreeLikelihoodGenerator treeLikelihoodGenerator) {
         writer.writeComment("write log to file");
@@ -265,78 +251,26 @@ public class LogGenerator extends Generator {
             }
         }
 
-//        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
-//	        treePriorGenerator.setModelPrefix("");
-//        	treePriorGenerator.writeParameterLog(options.activedSameTreePrior, writer);
-//        } else { // no species
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-//	        	treePriorGenerator.setModelPrefix(prior.getPrefix()); // priorName.treeModel
             treePriorGenerator.writeParameterLog(prior, writer);
         }
-//	    }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(model, writer);
-            if (model.hasCodon()) {
-                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
-            }
-        }
-
-        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-            if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
-                writer.writeIDref(ParameterParser.PARAMETER, clockModelGroup.getName());
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    if (model.getClockType() == ClockType.UNCORRELATED) {
-                        switch (model.getClockDistributionType()) {
-                            case LOGNORMAL:
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                                break;
-                            case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-//                            break;
-                            case CAUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
-//                            break;
-                            case EXPONENTIAL:
-                                // nothing required
-                                break;
-                        }
-                    }
-                }
-            } else {
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    branchRatesModelGenerator.writeLog(model, writer);
-                }
-            }
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            branchRatesModelGenerator.writeLogStatistic(model, writer);
+            clockModelGenerator.writeLog(model, writer);
         }
 
-        if (options.logCoalescentEventsStatistic) {
-            writer.writeOpenTag("coalescentEventsStatistic");
-            // coalescentLikelihood
-            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                PartitionTreePrior prior = model.getPartitionTreePrior();
-                treePriorGenerator.writePriorLikelihoodReferenceLog(prior, model, writer);
-                writer.writeText("");
-            }
-
-            /*for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-                if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-                    writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
-                } else if (prior.getNodeHeightPrior() == TreePriorType.SKYGRID) {
-                    writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYGRID_LIKELIHOOD, prior.getPrefix() + "skygrid");
-                }
-            }*/
-            writer.writeCloseTag("coalescentEventsStatistic");
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            clockModelGenerator.writeLogStatistic(model, writer);
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-        branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
+        clockModelGenerator.writeClockLikelihoodReferences(writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
@@ -362,10 +296,10 @@ public class LogGenerator extends Generator {
     }
 
     public void writeDemographicLogToFile(XMLWriter writer,
-                               TreePriorGenerator treePriorGenerator,
-                               BranchRatesModelGenerator branchRatesModelGenerator,
-                               SubstitutionModelGenerator substitutionModelGenerator,
-                               TreeLikelihoodGenerator treeLikelihoodGenerator) {
+                                          TreePriorGenerator treePriorGenerator,
+                                          ClockModelGenerator clockModelGenerator,
+                                          SubstitutionModelGenerator substitutionModelGenerator,
+                                          TreeLikelihoodGenerator treeLikelihoodGenerator) {
         writer.writeComment("demographic log file");
 
         if (options.demographicLogFileName == null) {
@@ -416,47 +350,39 @@ public class LogGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeLog(model, writer);
-            if (model.hasCodon()) {
-                writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
-            }
-        }
-
-        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-            if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
-                writer.writeIDref(ParameterParser.PARAMETER, clockModelGroup.getName());
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    if (model.getClockType() == ClockType.UNCORRELATED) {
-                        switch (model.getClockDistributionType()) {
-                            case LOGNORMAL:
-                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                                break;
-                            case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-//                            break;
-                            case CAUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
-//                            break;
-                            case EXPONENTIAL:
-                                // nothing required
-                                break;
-                        }
-                    }
-                }
-            } else {
-                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
-                    branchRatesModelGenerator.writeLog(model, writer);
-                }
-            }
         }
 
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            branchRatesModelGenerator.writeLogStatistic(model, writer);
+//            if (model.getRateTypeOption() == FixRateType.FIXED_MEAN) {
+//                writer.writeIDref(ParameterParser.PARAMETER, model.getName());
+//                if (model.getClockType() == ClockType.UNCORRELATED) {
+//                    switch (model.getClockDistributionType()) {
+//                        case LOGNORMAL:
+//                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+//                            break;
+//                        case GAMMA:
+//                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+////                            break;
+//                        case CAUCHY:
+//                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+////                            break;
+//                        case EXPONENTIAL:
+//                            // nothing required
+//                            break;
+//                    }
+//                }
+//            }
+            clockModelGenerator.writeLog(model, writer);
+        }
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            clockModelGenerator.writeLogStatistic(model, writer);
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-        branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
+        clockModelGenerator.writeClockLikelihoodReferences(writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
@@ -581,7 +507,6 @@ public class LogGenerator extends Generator {
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-                // assume the first clock model is the one... (not sure if this makes sense)
                 PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
                 String tag = "";
                 String id = "";
@@ -593,7 +518,9 @@ public class LogGenerator extends Generator {
                         break;
 
                     case UNCORRELATED:
-                        tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                        tag = model.isContinuousQuantile() ?
+                                ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                                DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
                         id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
                         break;
 
@@ -635,7 +562,9 @@ public class LogGenerator extends Generator {
                     break;
 
                 case UNCORRELATED:
-                    writeTreeTrait(writer, DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
+                    writeTreeTrait(writer, model.isContinuousQuantile() ?
+                                    ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES :
+                                    DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                             options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES,
                             BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
                     break;

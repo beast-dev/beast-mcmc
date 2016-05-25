@@ -1,7 +1,7 @@
 /*
  * GMRFMultilocusSkyrideLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -46,8 +46,9 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 
-public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood implements MultiLociTreeSet {
+public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood implements MultiLociTreeSet, CoalescentIntervalProvider {
 
+    public static final boolean DEBUG = false;
 
     private double cutOff;
     private int numGridPoints;
@@ -62,7 +63,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     // sortedPoints[i][1] is 0 if the i-th point is a grid point, 1 if it's a sampling point, and 2 if it's a coalescent point
     // sortedPoints[i][2] is the number of lineages present in the interval starting at time sortedPoints[i][0]
 
-
     protected Parameter phiParameter;
     protected Parameter ploidyFactors;
     protected double[] ploidySums;
@@ -76,6 +76,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     protected List<Parameter> covPrecParameters;
     protected List<SymmTridiagMatrix> weightMatricesForMissingCov;
     protected int[] lastObservedIndex;
+
+    private double[] coalescentEventStatisticValues;
 
     public GMRFMultilocusSkyrideLikelihood(List<Tree> treeList,
                                            Parameter popParameter,
@@ -174,6 +176,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             for (int i = 0; i < groupSizeParameter.getDimension(); i++)
                 groupSizeParameter.setParameterValue(i, 1.0);
         }
+
+        this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
 
     }
 
@@ -419,11 +423,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                 nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex + 1);
             }
 
-
             numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex + 1);
             minGridIndex = 0;
-            while (minGridIndex < numGridPoints && gridPoints[minGridIndex] <= currentTime) {
-            //while (gridPoints[minGridIndex] <= currentTime) {
+            while (minGridIndex < numGridPoints - 1 && gridPoints[minGridIndex] <= currentTime) { // MAS: Unclear about need for -1
                 minGridIndex++;
             }
             currentGridIndex = minGridIndex;
@@ -438,7 +440,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             }
 
             if (maxGridIndex >= 0 && minGridIndex < numGridPoints) {
+<<<<<<< HEAD
             //if (maxGridIndex >= 0) {
+=======
+>>>>>>> master
 
                 //from likelihood of interval between first sampling time and gridPoints[minGridIndex]
 
@@ -559,7 +564,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                     currentTimeIndex++;
 
                 }
+<<<<<<< HEAD
                 // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
+=======
+            // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
+>>>>>>> master
             } else {
                 while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
                     //check to see if interval is coalescent interval or sampling interval
@@ -593,6 +602,46 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     public double[] getNumCoalEvents() {
         return numCoalEvents;
+    }
+
+    public int getNumberOfCoalescentEvents() {
+        return getCorrectOldFieldLength();
+    }
+
+    public double getCoalescentEventsStatisticValue(int i) {
+        if (i == 0) {
+
+            if (DEBUG) {
+                System.err.println("numTrees: " + numTrees);
+                System.err.println("getCoalescentIntervalDimension(): " + super.getCoalescentIntervalDimension());
+                System.err.println("getNumberOfCoalescentEvents(): " + getNumberOfCoalescentEvents());
+                System.err.println("getIntervalCount(): " + getIntervalCount());
+                System.err.println("intervalsList.size(): " + intervalsList.size());
+                System.err.println("intervalsList.get(0).getIntervalCount(): " + intervalsList.get(0).getIntervalCount());
+            }
+
+            if (numTrees > 1) {
+                throw new RuntimeException("Generalized stepping-stone sampling for the Skygrid not implemented for #trees > 1");
+            }
+            for (int j = 0; j < coalescentEventStatisticValues.length; j++) {
+                coalescentEventStatisticValues[j] = 0.0;
+            }
+            int counter = 0;
+
+            for (int j = 0; j < intervalsList.get(0).getIntervalCount(); j++) {
+                if (intervalsList.get(0).getIntervalType(j) == IntervalType.COALESCENT) {
+                    //this.coalescentEventStatisticValues[counter] += getCoalescentInterval(j) * (getLineageCount(j) * (getLineageCount(j) - 1.0)) / 2.0;
+                    this.coalescentEventStatisticValues[counter] += intervalsList.get(0).getInterval(j) * (intervalsList.get(0).getLineageCount(j) * (intervalsList.get(0).getLineageCount(j) - 1.0)) / 2.0;
+                    counter++;
+                } else {
+                    //this.coalescentEventStatisticValues[counter] += getCoalescentInterval(j) * (getLineageCount(j) * (getLineageCount(j) - 1.0)) / 2.0;
+                    this.coalescentEventStatisticValues[counter] += intervalsList.get(0).getInterval(j) * (intervalsList.get(0).getLineageCount(j) * (intervalsList.get(0).getLineageCount(j) - 1.0)) / 2.0;
+                }
+            }
+        }
+        return coalescentEventStatisticValues[i];
+        //throw new RuntimeException("getCoalescentEventsStatisticValue(int i) not implemented for Bayesian Skygrid");
+        //return sufficientStatistics[i];
     }
 
     protected double calculateLogCoalescentLikelihood() {
@@ -766,11 +815,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         storedPloidySums = tmp2;
     }
 
-    public int getCoalescentIntervalLineageCount(int i) {
-        return 0;  //To change body of implemented methods use File | Settings | File Templates.
+    /*public int getCoalescentIntervalLineageCount(int i) {
+        return 0;
     }
 
     public IntervalType getCoalescentIntervalType(int i) {
+<<<<<<< HEAD
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
@@ -942,5 +992,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         }
 
     }
+=======
+        return null;
+    }*/
+>>>>>>> master
 }
 

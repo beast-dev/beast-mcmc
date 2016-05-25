@@ -1,7 +1,7 @@
 /*
- * CoalescentIntervalStatisticParser.java
+ * CoalescentEventsStatisticParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -35,6 +35,7 @@ import dr.xml.*;
 public class CoalescentEventsStatisticParser extends AbstractXMLObjectParser {
 
     public static final String COALESCENT_EVENTS_STATISTIC = "coalescentEventsStatistic";
+    public static final boolean DEBUG = false;
 
     public String getParserDescription() {
         return "";
@@ -52,6 +53,9 @@ public class CoalescentEventsStatisticParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        if (DEBUG) {
+            System.err.println("Parsing coalescentEventsStatistic");
+        }
         CoalescentIntervalProvider coalescent = (CoalescentIntervalProvider) xo.getChild(CoalescentIntervalProvider.class);
         //TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         //return new CoalescentEventsStatistic(coalescent, treeModel);

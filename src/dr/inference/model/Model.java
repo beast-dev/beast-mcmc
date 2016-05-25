@@ -1,7 +1,7 @@
 /*
  * Model.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -170,7 +170,8 @@ public interface Model extends Identifiable, Serializable {
 
 
     // set to store all created models
-    final static Set<Model> FULL_MODEL_SET = new HashSet<Model>(); 
+    final static Set<Model> FULL_MODEL_SET = new HashSet<Model>();
+	final static Set<Model> CONNECTED_MODEL_SET = new HashSet<Model>();
 
 }
 

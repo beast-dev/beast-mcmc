@@ -1,3 +1,28 @@
+/*
+ * AbstractOutbreak.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.alignment.PatternList;
@@ -25,7 +50,7 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
     protected TaxonList taxa;
     private boolean hasLatentPeriods;
     protected final boolean hasGeography;
-    private final String CASE_NAME = "caseID";
+    private final String CASE_NAME = "hostID";
     protected ArrayList<AbstractCase> cases;
     protected int infectedSize = 0;
 
@@ -61,7 +86,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
 
     public abstract double getLatentPeriod(AbstractCase aCase);
 
-
     public double getKernelValue(AbstractCase a, AbstractCase b, SpatialKernel kernel){
         if(!hasGeography){
             return 1;
@@ -69,7 +93,6 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
             return kernel.value(getDistance(a,b));
         }
     }
-
 
     // all the kernel values going TO case a (this is symmetric, usually, but potentially might not be)
 
@@ -159,6 +182,11 @@ public abstract class AbstractOutbreak extends AbstractModel implements PatternL
         double[] out = new double[cases.size()];
         Arrays.fill(out, 1/cases.size());
         return out;
+    }
+
+    @Override
+    public boolean areUnique() {
+        return false;
     }
 
     public DataType getDataType(){

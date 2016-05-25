@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * PartitionClockModelTreeModelLink.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -10,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -63,6 +65,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createParameterGammaPrior("branchRates.var", "autocorrelated lognormal relaxed clock rate variance",
                 PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, false);
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
+        createZeroOneParameter("branchRates.quantiles", "relaxed clock branch rate quantiles", 0.5);
 
 //        {
 //            final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", PriorScaleType.ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -95,6 +98,9 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
+        createOperator("uniformBranchRateQuantiles", "branchRates.quantiles", "Performs an uniform draw of branch rate quantiles",
+                "branchRates.quantiles", OperatorType.UNIFORM, 0, branchWeights);
+
         createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
@@ -104,15 +110,19 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createUpDownOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
                 tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
+        createUpDownOperator("upDownUCGDMeanHeights", "UCGD mean and heights",
+                "Scales UCGD mean inversely to node heights of the tree", model.getParameter(ClockType.UCGD_MEAN),
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
 
+        // These should not have priors on as there will be priors on the clock model parameters already..
 
         // These are statistics which could have priors on...
         // #meanRate = #Relaxed Clock Model * #Tree Model
-        createNonNegativeStatistic("meanRate", "The mean rate of evolution over the whole tree");
+//        createNonNegativeStatistic("meanRate", "The mean rate of evolution over the whole tree");
         // #covariance = #Relaxed Clock Model * #Tree Model
-        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages");
+//        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages");
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
-        createNonNegativeStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree");
+//        createNonNegativeStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree");
 
         createUpDownOperator("microsatUpDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
@@ -125,28 +135,28 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-        setAvgRootAndRate();
-        getParameter("branchRates.categories");
-        getParameter("treeModel.rootRate");
-        getParameter("treeModel.nodeRates");
-        getParameter("treeModel.allRates");
-
-        if (options.hasData()) {
-            // if not fixed then do mutation rate move and up/down move
-            boolean fixed = !model.isEstimatedRate();
-
-            Parameter rateParam;
-
-            switch (model.getClockType()) {
-                case AUTOCORRELATED:
-                    rateParam = getParameter("treeModel.rootRate");
-                    rateParam.isFixed = fixed;
-                    if (!fixed) params.add(rateParam);
-
-                    params.add(getParameter("branchRates.var"));
-                    break;
-            }
-        }
+//        setAvgRootAndRate();
+//        getParameter("branchRates.categories");
+//        getParameter("treeModel.rootRate");
+//        getParameter("treeModel.nodeRates");
+//        getParameter("treeModel.allRates");
+//
+//        if (options.hasData()) {
+//            // if not fixed then do mutation rate move and up/down move
+//            boolean fixed = !model.isEstimatedRate();
+//
+//            Parameter rateParam;
+//
+//            switch (model.getClockType()) {
+//                case AUTOCORRELATED:
+//                    rateParam = getParameter("treeModel.rootRate");
+//                    rateParam.isFixed = fixed;
+//                    if (!fixed) params.add(rateParam);
+//
+//                    params.add(getParameter("branchRates.var"));
+//                    break;
+//            }
+//        }
     }
 
     /**
@@ -161,7 +171,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
             if (model.getDataType().getType() == DataType.MICRO_SAT) {
                 if (model.getClockType() == ClockType.STRICT_CLOCK) {
                     op = getOperator("microsatUpDownRateHeights");
-                    op.setClockModelGroup(model.getClockModelGroup());
                     ops.add(op);
                 } else {
                     throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
@@ -172,7 +181,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
                         op = getOperator("upDownRateHeights");
-                        op.setClockModelGroup(model.getClockModelGroup());
                         ops.add(op);
                         break;
 
@@ -181,24 +189,26 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
                             case LOGNORMAL:
                                 op = getOperator("upDownUCLDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
-
-                                addBranchRateCategories(ops);
                                 break;
                             case GAMMA:
-                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-//                            break;
+//                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+                                op = getOperator("upDownUCGDMeanHeights");
+                                ops.add(op);
+                            break;
                             case CAUCHY:
                                 throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
                             case EXPONENTIAL:
                                 op = getOperator("upDownUCEDMeanHeights");
-                                op.setClockModelGroup(model.getClockModelGroup());
                                 ops.add(op);
-
-                                addBranchRateCategories(ops);
                                 break;
+                        }
+                        if (model.isContinuousQuantile()) {
+                            ops.add(getOperator("uniformBranchRateQuantiles"));
+                        } else {
+                            ops.add(getOperator("swapBranchRateCategories"));
+                            ops.add(getOperator("uniformBranchRateCategories"));
                         }
                         break;
 
@@ -223,7 +233,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                     case RANDOM_LOCAL_CLOCK:
                     case FIXED_LOCAL_CLOCK:
                         op = getOperator("upDownRateHeights");
-                        op.setClockModelGroup(model.getClockModelGroup());
                         ops.add(op);
 
                         break;
@@ -235,40 +244,12 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         }
     }
 
-    private void addBranchRateCategories(List<Operator> ops) {
-        ops.add(getOperator("swapBranchRateCategories"));
-//        ops.add(getOperator("randomWalkBranchRateCategories"));
-        ops.add(getOperator("uniformBranchRateCategories"));
-    }
-//TODO    ops.add(tree.getOperator("treeBitMove"));
-
     /**
      * return a list of parameters that are required
      *
      * @param params the parameter list
      */
     public void selectStatistics(List<Parameter> params) {
-
-//        if (options.taxonSets != null) {
-//            for (Taxa taxonSet : options.taxonSets) {
-//                Parameter statistic = statistics.get(taxonSet);
-//                if (statistic == null) {
-//                    statistic = new Parameter(taxonSet, "tMRCA for taxon set ");
-//                    statistics.put(taxonSet, statistic);
-//                }
-//                params.add(statistic);
-//            }
-//        } else {
-//            System.err.println("TaxonSets are null");
-//        }
-
-        // Statistics
-        if (model.getClockType() != ClockType.STRICT_CLOCK) {
-            params.add(getParameter("meanRate"));
-            params.add(getParameter("covariance"));
-            params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
-        }
-
     }
 
     /////////////////////////////////////////////////////////////

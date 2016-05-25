@@ -1,3 +1,28 @@
+/*
+ * Microsatellite.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evolution.datatype;
 import java.util.ArrayList;
 
@@ -99,7 +124,7 @@ public class Microsatellite extends DataType {
             }else{
                 return getState(Integer.parseInt(srtRawLength));
             }
-        }catch(java.lang.NumberFormatException exp){
+        } catch(java.lang.NumberFormatException exp) {
             throw new java.lang.NumberFormatException(srtRawLength+" can not be converted. State needs to be an integer or unknown (?).");
         }
 
@@ -111,7 +136,10 @@ public class Microsatellite extends DataType {
      * @return int      the state of microsatellite allele corresponding to the length
      */
     public int getState(int rawLength){
-        if(rawLength > UNKNOWN_STATE_LENGTH){
+        if(rawLength != UNKNOWN_STATE_LENGTH){
+            if (rawLength < min) {
+                throw new java.lang.IllegalArgumentException("Microsatellite length value is less, (" + rawLength + ") than the specified minimum (" + min + ").");
+            }
             return (int)Math.ceil(((double)rawLength - min)/unitLength);
         }else{
             return stateCount;

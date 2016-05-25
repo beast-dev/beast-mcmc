@@ -1,7 +1,7 @@
 /*
  * EllipticalSliceOperator.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -33,6 +33,7 @@ import dr.inference.model.*;
 import dr.inference.prior.Prior;
 import dr.inferencexml.operators.EllipticalSliceOperatorParser;
 import dr.math.MathUtils;
+import dr.math.distributions.CompoundGaussianProcess;
 import dr.math.distributions.GaussianProcessRandomGenerator;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.Attribute;
@@ -44,51 +45,232 @@ import java.util.List;
 /**
  * Implements a generic multivariate slice sampler for a Gaussian prior
  * <p/>
- * See: Murray, Ryan, et al.
+ * See: Murray, Adams, et al.
  *
  * @author Marc A. Suchard
+ * @author Max Tolkoff
  */
 
 public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator implements GibbsOperator {
 
     private final GaussianProcessRandomGenerator gaussianProcess;
 
-    public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess, boolean drawByRow) {
+    public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess,
+                                   boolean drawByRow, boolean signal) {
+        this(variable, gaussianProcess, drawByRow, signal, 0.0, false, false);
+
+    }
+
+    public EllipticalSliceOperator(Parameter variable, GaussianProcessRandomGenerator gaussianProcess,
+                                   boolean drawByRow, boolean signal, double bracketAngle,
+                                   boolean translationInvariant, boolean rotationInvariant) {
         this.variable = variable;
         this.gaussianProcess = gaussianProcess;
         this.drawByRow = drawByRow; // TODO Fix!
+        this.signalConstituentParameters = signal;
+        this.bracketAngle = bracketAngle;
+
+        this.translationInvariant = translationInvariant; // TODO Delegrate into transformed variable
+        this.rotationInvariant = rotationInvariant;
+
+        if (bracketAngle < 0.0 || bracketAngle >= 2.0 * Math.PI) {
+            throw new IllegalArgumentException("Invalid bracket angle");
+        }
+
+        // Check dimensions of variable and gaussianProcess
+        int dimVariable = variable.getDimension();
+        double[] draw = (double[]) gaussianProcess.nextRandom();
+        int dimDraw = draw.length;
+
+        if (dimVariable != dimDraw) {
+            throw new IllegalArgumentException("Dimension of variable (" + dimVariable +
+                    ") does not match dimension of Gaussian process draw (" + dimDraw + ")" );
+        }
+
+        // TODO Must set priorMean if gaussianProcess does not have a 0-mean.
     }
 
     public Variable<Double> getVariable() {
         return variable;
     }
 
-    public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
+    private double getLogGaussianPrior() {
+        return (gaussianProcess.getLikelihood() == null) ?
+                gaussianProcess.logPdf(variable.getParameterValues()) :
+                gaussianProcess.getLikelihood().getLogLikelihood();
+    }
+
+    private void unwindCompoundLikelihood(Likelihood likelihood, List<Likelihood> list) {
+        if (likelihood instanceof CompoundLikelihood) {
+            for (Likelihood like : ((CompoundLikelihood) likelihood).getLikelihoods()) {
+                unwindCompoundLikelihood(like, list);
+            }
+        } else {
+            list.add(likelihood);
+        }
+    }
+
+    private List<Likelihood> unwindCompoundLikelihood(Likelihood likelihood) {
+        List<Likelihood> list = new ArrayList<Likelihood>();
+        unwindCompoundLikelihood(likelihood, list);
+        return list;
+    }
+
+    private boolean containsGaussianProcess(Likelihood likelihood) {
+        if (gaussianProcess instanceof CompoundGaussianProcess) {
+            return ((CompoundGaussianProcess) gaussianProcess).contains(likelihood);
+        } else {
+            return gaussianProcess == likelihood;
+        }
+    }
+
+    private double evaluateDensity(Prior prior, Likelihood likelihood, double pathParameter) {
         double logPosterior = evaluate(likelihood, prior, pathParameter);
-        double cutoffDensity = logPosterior + MathUtils.randomLogDouble(); // TODO Gaussian contribution should stay constant, check!
-        drawFromSlice(prior, likelihood, cutoffDensity);
+        double logGaussianPrior = getLogGaussianPrior() * pathParameter;
+
+        return logPosterior - logGaussianPrior;
+    }
+
+    public double doOperation(Prior prior, Likelihood likelihood) throws OperatorFailedException {
+
+//        System.err.println("Likelihood type:" + likelihood.getClass().getName());
+
+        if (MINIMAL_EVALUATION) {
+
+            List<Likelihood> fullList = unwindCompoundLikelihood(likelihood);
+
+//            List<Likelihood> removeList = new ArrayList<Likelihood>();
+
+            List<Likelihood> subList = new ArrayList<Likelihood>();
+            for (Likelihood like : fullList) {
+                if (!containsGaussianProcess(like)) {
+                    subList.add(like);
+                } //else {
+//                    removeList.add(like);
+//                }
+            }
+            CompoundLikelihood cl = new CompoundLikelihood(subList);
+//            CompoundLikelihood removeCl = new CompoundLikelihood(removeList);
+//            CompoundLikelihood fullCl = new CompoundLikelihood(fullList);
+
+            double logDensity = cl.getLogLikelihood();
+            double cutoffDensity = logDensity + MathUtils.randomLogDouble();
+            drawFromSlice(cl, cutoffDensity);
+
+        } else {
+
+            double logPosterior = evaluate(likelihood, prior, pathParameter);
+            double logGaussianPrior = getLogGaussianPrior() * pathParameter;
+
+            // Cut-off depends only on non-GP contribution to posterior
+            double cutoffDensity = logPosterior - logGaussianPrior + MathUtils.randomLogDouble();
+            drawFromSlice(prior, likelihood, cutoffDensity);
+        }
+
         // No need to set variable, as SliceInterval has already done this (and recomputed posterior)
         return 0;
     }
 
-    private double[] pointOnEllipse(double[] x, double[] y, double phi) {
+    private double[] pointOnEllipse(double[] x, double[] y, double phi, double[] priorMean) {
         final int dim = x.length;
         final double cos = Math.cos(phi);
         final double sin = Math.sin(phi);
 
         double[] r = new double[dim];
-        for (int i = 0; i < dim; ++i) {
-            r[i] = x[i] * cos + y[i] * sin;
+
+        if (priorMean == null) {
+            for (int i = 0; i < dim; ++i) {
+                r[i] = x[i] * cos + y[i] * sin;
+            }
+        } else {  // Non-0 prior mean
+            for (int i = 0; i < dim; ++i) {
+                r[i] = (x[i] - priorMean[i]) * cos + (y[i] - priorMean[i]) * sin + priorMean[i];
+            }
         }
         return r;
     }
 
-    private void setVariable(double[] x) {
-//        variable.setParameterValueNotifyChangedAll(0, x[0]);
-        for (int i = 0; i < x.length; ++i) {
-            variable.setParameterValueQuietly(i, x[i]);
+    public static void transformPoint(double[] x, boolean translationInvariant, boolean rotationInvariant, int dim) {
+        if (translationInvariant) {
+
+            double[] mean = new double[dim];
+            int k = 0;
+            for (int i = 0; i < x.length / dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    mean[j] += x[k];
+                    ++k;
+                }
+            }
+
+            for (int j = 0; j < dim; ++j) {
+                mean[j] /= (x.length / dim);
+            }
+
+            k = 0;
+            for (int i = 0; i < x.length / dim; ++i) {
+                for (int j = 0; j < dim; ++j) {
+                    x[k] -= mean[j];
+                    ++k;
+                }
+            }
         }
-        variable.fireParameterChangedEvent();
+
+        if (rotationInvariant) {
+
+            final double theta = -Math.atan2(x[1], x[0]); // TODO Compute norm and avoid transcendentals
+            final double sin = Math.sin(theta);
+            final double cos = Math.cos(theta);
+
+//            System.err.println(theta + " " + sin + " " + cos);
+
+            int k = 0;
+            for (int i = 0; i < x.length / dim; ++i) {
+//                System.err.print(x[k + 0] + ":" + x[k + 1] + " -> ");
+                double newX = x[k + 0] * cos - x[k + 1] * sin;
+                double newY = x[k + 1] * cos + x[k + 0] * sin;
+                x[k + 0] = newX;
+                x[k + 1] = newY;
+//                System.err.println(x[k + 0] + ":" + x[k + 1]);
+                k += 2;
+            }
+//            System.err.println("");
+//            System.exit(-1);
+        }
+    }
+
+    private void transformPoint(double[] x) {
+        transformPoint(x, translationInvariant, rotationInvariant, 2);
+    }
+
+    private void setAllParameterValues(double[] x) {
+        if (variable instanceof MatrixParameterInterface) {
+            ((MatrixParameterInterface) variable).setAllParameterValuesQuietly(x, 0);
+        } else {
+            for (int i = 0; i < x.length; ++i) {
+                variable.setParameterValueQuietly(i, x[i]);
+            }
+        }
+    }
+
+    private void setVariable(double[] x) {
+
+        transformPoint(x);
+
+        setAllParameterValues(x);
+
+////        boolean switchSign = x[0] > 0.0;
+//        for (int i = 0; i < x.length; ++i) {
+////            if (switchSign) {
+////                x[i] *= -1;
+////            }
+//            variable.setParameterValueQuietly(i, x[i]);
+//        }
+
+        if (signalConstituentParameters) {
+            variable.fireParameterChangedEvent();
+        } else {
+            ((CompoundParameter)variable).fireParameterChangedEvent(-1, Variable.ChangeType.ALL_VALUES_CHANGED);
+        }
     }
 //
 //        if(!(variable instanceof CompoundParameter))
@@ -140,15 +322,62 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
 //        else
 //            nu = treePrior.nextRandomFast(0);
 
-        double phi = MathUtils.nextDouble() * 2.0 * Math.PI;
-        Interval phiInterval = new Interval(phi - 2.0 * Math.PI, phi);
+        double phi;
+        Interval phiInterval;
+
+        if (bracketAngle == 0.0) {
+            phi = MathUtils.nextDouble() * 2.0 * Math.PI;
+            phiInterval = new Interval(phi - 2.0 * Math.PI, phi);
+        } else {
+            double phi_min = -bracketAngle * MathUtils.nextDouble();
+            double phi_max = phi_min + bracketAngle;
+            phiInterval = new Interval(phi_min, phi_max);
+            phi = phiInterval.draw();
+        }
+
 
         boolean done = false;
         while (!done) {
-            double[] xx = pointOnEllipse(x, nu, phi);
+            double[] xx = pointOnEllipse(x, nu, phi, priorMean);
             setVariable(xx);
             double density = evaluate(likelihood, prior, pathParameter);
+            density -= getLogGaussianPrior(); // Depends only on non-GP contribution to posterior
+
             if (density > cutoffDensity) {
+                done = true;
+            } else {
+                phiInterval.adjust(phi);
+                phi = phiInterval.draw();
+            }
+        }
+    }
+
+    private void drawFromSlice(CompoundLikelihood likelihood, double cutoffDensity) {
+        // Do nothing
+        double[] x = variable.getParameterValues();
+        double[] nu = (double[]) gaussianProcess.nextRandom();
+
+        double phi;
+        Interval phiInterval;
+
+        if (bracketAngle == 0.0) {
+            phi = MathUtils.nextDouble() * 2.0 * Math.PI;
+            phiInterval = new Interval(phi - 2.0 * Math.PI, phi);
+        } else {
+            double phi_min = -bracketAngle * MathUtils.nextDouble();
+            double phi_max = phi_min + bracketAngle;
+            phiInterval = new Interval(phi_min, phi_max);
+            phi = phiInterval.draw();
+        }
+
+
+        boolean done = false;
+        while (!done) {
+            double[] xx = pointOnEllipse(x, nu, phi, priorMean);
+            setVariable(xx);
+            double logDensity = likelihood.getLogLikelihood();
+
+            if (logDensity > cutoffDensity) {
                 done = true;
             } else {
                 phiInterval.adjust(phi);
@@ -234,7 +463,8 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         list.add(likelihood);
         list.add(prior);
         CompoundLikelihood posterior = new CompoundLikelihood(0, list);
-        EllipticalSliceOperator sliceSampler = new EllipticalSliceOperator(thetaParameter, priorDistribution, drawByRow);
+        EllipticalSliceOperator sliceSampler = new EllipticalSliceOperator(thetaParameter, priorDistribution,
+                false, true);
 
 
         final int dim = thetaParameter.getDimension();
@@ -268,11 +498,20 @@ public class EllipticalSliceOperator extends SimpleMetropolizedGibbsOperator imp
         }
     }
 
+    private static final boolean MINIMAL_EVALUATION = true;
 
-    private double pathParameter=1.0;
+    private double pathParameter = 1.0;
     private final Parameter variable;
     private int current;
-    private static boolean drawByRow;
+    private boolean drawByRow;
+    private boolean signalConstituentParameters;
+    private double[] priorMean = null;
+
+    private boolean center = true;
+    private double bracketAngle;
+
+    private boolean translationInvariant;
+    private boolean rotationInvariant;
 
 /*
 function [xx, cur_log_like] = elliptical_slice(xx, prior, log_like_fn, cur_log_like, angle_range, varargin)

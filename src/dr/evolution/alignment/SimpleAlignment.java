@@ -1,7 +1,7 @@
 /*
  * SimpleAlignment.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -453,6 +453,11 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
      */
     public double[] getStateFrequencies() {
         return PatternList.Utils.empiricalStateFrequencies(this);
+    }
+
+    @Override
+    public boolean areUnique() {
+        return false;
     }
 
     public void setReportCountStatistics(boolean report) {

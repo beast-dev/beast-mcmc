@@ -1,7 +1,7 @@
 /*
  * BeagleSequenceSimulatorConsoleApp.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -89,6 +89,11 @@ public class BeagleSequenceSimulatorConsoleApp {
     private static final String STRICT_CLOCK_PARAMETER_VALUES = "strictClockParameterValues";
     private static final String LOGNORMAL_RELAXED_CLOCK = "lognormalRelaxedClock";
     private static final String LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES = "lognormalRelaxedClockParameterValues";
+    
+    private static final String LRC_PARAMETERS_IN_REAL_SPACE = "lrcParametersInRealSpace";
+    private static final String TRUE = "true";
+    private static final String FALSE = "false";
+    
     private static final String EXPONENTIAL_RELAXED_CLOCK = "exponentialRelaxedClock";
     private static final String EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES = "exponentialRelaxedClockParameterValues";
     private static final String INVERSE_GAUSSIAN_RELAXED_CLOCK = "inverseGaussianRelaxedClock";
@@ -174,6 +179,15 @@ public class BeagleSequenceSimulatorConsoleApp {
 
                         new Arguments.RealArrayOption(STRICT_CLOCK_PARAMETER_VALUES, 1, "specify Strict Clock parameter values"),
                         new Arguments.RealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Lognormal Relaxed Clock parameter values"),
+                        
+//                        new Arguments.StringOption(LRC_PARAMETERS_IN_REAL_SPACE),
+                        
+                        new Arguments.StringOption(LRC_PARAMETERS_IN_REAL_SPACE,
+                                new String[]{TRUE, //
+                                        FALSE //
+                               },
+                                false, "Are the Lognormal Relaxed Clock parameter values in the real or log space"),
+                        
                         new Arguments.RealArrayOption(EXPONENTIAL_RELAXED_CLOCK_PARAMETER_VALUES, 2, "specify Exponential Relaxed Clock parameter values"),
                         new Arguments.RealArrayOption(INVERSE_GAUSSIAN_RELAXED_CLOCK_PARAMETER_VALUES, 3, "specify Inverse Gaussian Relaxed Clock parameter values"),
 
@@ -436,13 +450,26 @@ public class BeagleSequenceSimulatorConsoleApp {
 
                         int index = 1;
                         data.clockModelIndex = index;
-                        if (arguments
-                                .hasOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
+                        
+                        if (arguments.hasOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES)) {
                             values = arguments
                                     .getRealArrayOption(LOGNORMAL_RELAXED_CLOCK_PARAMETER_VALUES);
                             parseClockValues(index, values, data);
+                        
                         }
 
+                        // set to true/false
+						if (arguments.hasOption(LRC_PARAMETERS_IN_REAL_SPACE)) {
+
+							boolean lrcParametersInRealSpace = (arguments
+									.getStringOption(
+											LRC_PARAMETERS_IN_REAL_SPACE)
+									.equalsIgnoreCase(TRUE) ? true : false);
+							data.lrcParametersInRealSpace = lrcParametersInRealSpace;
+
+						}
+                        
+                        
                     } else if (option
                             .equalsIgnoreCase(EXPONENTIAL_RELAXED_CLOCK)) {
 

@@ -1,3 +1,28 @@
+/*
+ * MicrosatellitePatternParser.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evoxml;
 
 import dr.xml.*;
@@ -33,11 +58,18 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
 
         Microsatellite microsatellite = (Microsatellite)xo.getChild(Microsatellite.class);
 
-        String[] strLengths = ((String)xo.getElementFirstChild(MICROSAT_SEQ)).split(",");
+        String[] strLengths = ((String) xo.getElementFirstChild(MICROSAT_SEQ)).split(",");
         int[] pattern = new int[strLengths.length];
-        for(int i = 0; i < strLengths.length; i++){
-            pattern[i] = microsatellite.getState(strLengths[i]);
+        try {
+            for (int i = 0; i < strLengths.length; i++) {
+                pattern[i] = microsatellite.getState(strLengths[i]);
+            }
+        } catch (NumberFormatException nfe) {
+            throw new XMLParseException("Unable to parse microsatellite data: " + nfe.getMessage());
+        } catch (IllegalArgumentException iae) {
+            throw new XMLParseException("Unable to parse microsatellite data: " + iae.getMessage());
         }
+
         Patterns microsatPat = new Patterns(microsatellite, taxonList);
         microsatPat.addPattern(pattern);
         microsatPat.setId((String)xo.getAttribute(ID));
@@ -56,21 +88,21 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
 
     public static void printDetails(Patterns microsatPat){
         Logger.getLogger("dr.evoxml").info(
-            "    Locus name: "+microsatPat.getId()+
-            "\n    Number of Taxa: "+microsatPat.getPattern(0).length+
-            "\n    min: "+((Microsatellite)microsatPat.getDataType()).getMin()+" "+
-            "max: "+((Microsatellite)microsatPat.getDataType()).getMax()+
-            "\n    state count: "+microsatPat.getDataType().getStateCount()+"\n");
+                "    Locus name: "+microsatPat.getId()+
+                        "\n    Number of Taxa: "+microsatPat.getPattern(0).length+
+                        "\n    min: "+((Microsatellite)microsatPat.getDataType()).getMin()+" "+
+                        "max: "+((Microsatellite)microsatPat.getDataType()).getMax()+
+                        "\n    state count: "+microsatPat.getDataType().getStateCount()+"\n");
     }
 
     public static void printMicrosatContent(Patterns microsatPat){
         Logger.getLogger("dr.evoxml").info(
-            "    Locus name: "+ microsatPat.getId());
-            int[] pat = microsatPat.getPattern(0);
-            for(int i = 0; i < pat.length; i++){
-                Logger.getLogger("dr.evoxml").info("    Taxon: "+microsatPat.getTaxon(i)+" "+"state: "+pat[i]);
-            }
-            Logger.getLogger("dr.evoxml").info("\n");
+                "    Locus name: "+ microsatPat.getId());
+        int[] pat = microsatPat.getPattern(0);
+        for(int i = 0; i < pat.length; i++){
+            Logger.getLogger("dr.evoxml").info("    Taxon: "+microsatPat.getTaxon(i)+" "+"state: "+pat[i]);
+        }
+        Logger.getLogger("dr.evoxml").info("\n");
     }
 
 
@@ -92,7 +124,7 @@ public class MicrosatellitePatternParser extends AbstractXMLObjectParser {
     };
 
     public String getParserDescription() {
-       return "This element represents a microsatellite pattern.";
+        return "This element represents a microsatellite pattern.";
     }
 
     public Class getReturnType() {

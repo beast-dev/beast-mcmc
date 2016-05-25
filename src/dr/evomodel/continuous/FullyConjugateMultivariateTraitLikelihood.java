@@ -48,32 +48,59 @@ import java.util.List;
  */
 public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider {
 
-    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-                                                     MultivariateTraitTree treeModel,
-                                                     MultivariateDiffusionModel diffusionModel,
-                                                     CompoundParameter traitParameter,
-                                                     Parameter deltaParameter,
-                                                     List<Integer> missingIndices,
-                                                     boolean cacheBranches,
-                                                     boolean scaleByTime,
-                                                     boolean useTreeLength,
-                                                     BranchRateModel rateModel,
-                                                     Model samplingDensity,
-                                                     boolean reportAsMultivariate,
-                                                     double[] rootPriorMean,
-                                                     double rootPriorSampleSize,
-                                                     boolean reciprocalRates) {
-
-        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
-
-        // fully-conjugate multivariate normal with own mean and prior sample size
-        this.rootPriorMean = rootPriorMean;
-        this.rootPriorSampleSize = rootPriorSampleSize;
-
-        priorInformationKnown = false;
-    }
-
+//    public FullyConjugateMultivariateTraitLikelihood(String traitName,
+//                                                     MultivariateTraitTree treeModel,
+//                                                     MultivariateDiffusionModel diffusionModel,
+//                                                     CompoundParameter traitParameter,
+//                                                     Parameter deltaParameter,
+//                                                     List<Integer> missingIndices,
+//                                                     boolean cacheBranches,
+//                                                     boolean scaleByTime,
+//                                                     boolean useTreeLength,
+//                                                     BranchRateModel rateModel,
+//                                                     Model samplingDensity,
+//                                                     boolean reportAsMultivariate,
+//                                                     double[] rootPriorMean,
+//                                                     double rootPriorSampleSize,
+//                                                     boolean reciprocalRates) {
+//
+//        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
+//                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
+//
+//        // fully-conjugate multivariate normal with own mean and prior sample size
+//        this.rootPriorMean = rootPriorMean;
+//        this.rootPriorSampleSize = rootPriorSampleSize;
+//
+//        priorInformationKnown = false;
+//    }
+//
+//
+//    public FullyConjugateMultivariateTraitLikelihood(String traitName,
+//                                                     MultivariateTraitTree treeModel,
+//                                                     MultivariateDiffusionModel diffusionModel,
+//                                                     CompoundParameter traitParameter,
+//                                                     Parameter deltaParameter,
+//                                                     List<Integer> missingIndices,
+//                                                     boolean cacheBranches,
+//                                                     boolean scaleByTime,
+//                                                     boolean useTreeLength,
+//                                                     BranchRateModel rateModel,
+//                                                     List<BranchRateModel> driftModels,
+//                                                     Model samplingDensity,
+//                                                     boolean reportAsMultivariate,
+//                                                     double[] rootPriorMean,
+//                                                     double rootPriorSampleSize,
+//                                                     boolean reciprocalRates) {
+//
+//        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
+//                useTreeLength, rateModel, driftModels, samplingDensity, reportAsMultivariate, reciprocalRates);
+//
+//        // fully-conjugate multivariate normal with own mean and prior sample size
+//        this.rootPriorMean = rootPriorMean;
+//        this.rootPriorSampleSize = rootPriorSampleSize;
+//
+//        priorInformationKnown = false;
+//    }
 
     public FullyConjugateMultivariateTraitLikelihood(String traitName,
                                                      MultivariateTraitTree treeModel,
@@ -86,32 +113,6 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
                                                      boolean useTreeLength,
                                                      BranchRateModel rateModel,
                                                      List<BranchRateModel> driftModels,
-                                                     Model samplingDensity,
-                                                     boolean reportAsMultivariate,
-                                                     double[] rootPriorMean,
-                                                     double rootPriorSampleSize,
-                                                     boolean reciprocalRates) {
-
-        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, driftModels, samplingDensity, reportAsMultivariate, reciprocalRates);
-
-        // fully-conjugate multivariate normal with own mean and prior sample size
-        this.rootPriorMean = rootPriorMean;
-        this.rootPriorSampleSize = rootPriorSampleSize;
-
-        priorInformationKnown = false;
-    }
-
-    public FullyConjugateMultivariateTraitLikelihood(String traitName,
-                                                     MultivariateTraitTree treeModel,
-                                                     MultivariateDiffusionModel diffusionModel,
-                                                     CompoundParameter traitParameter,
-                                                     Parameter deltaParameter,
-                                                     List<Integer> missingIndices,
-                                                     boolean cacheBranches,
-                                                     boolean scaleByTime,
-                                                     boolean useTreeLength,
-                                                     BranchRateModel rateModel,
                                                      List<BranchRateModel> optimalValues,
                                                      BranchRateModel strengthOfSelection,
                                                      Model samplingDensity,
@@ -121,7 +122,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
                                                      boolean reciprocalRates) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, optimalValues, strengthOfSelection, samplingDensity, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, driftModels, optimalValues, strengthOfSelection, samplingDensity, reportAsMultivariate, reciprocalRates);
 
         // fully-conjugate multivariate normal with own mean and prior sample size
         this.rootPriorMean = rootPriorMean;

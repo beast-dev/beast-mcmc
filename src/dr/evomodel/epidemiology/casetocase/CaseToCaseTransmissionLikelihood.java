@@ -25,6 +25,7 @@
 
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.app.tools.NexusExporter;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.inference.distribution.ParametricDistributionModel;
@@ -33,6 +34,7 @@ import dr.inference.loggers.Loggable;
 import dr.inference.model.*;
 import dr.xml.*;
 
+import java.io.PrintStream;
 import java.util.*;
 
 /**
@@ -395,7 +397,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 for (String category : outbreak.getInfectiousCategories()) {
 
                     Double[] infPeriodsInThisCategory = infectiousPeriodsByCategory.get(category)
-                            .toArray(new Double[infectiousPeriodsByCategory.size()]);
+                            .toArray(new Double[infectiousPeriodsByCategory.get(category).size()]);
 
                     AbstractPeriodPriorDistribution hyperprior = outbreak.getInfectiousCategoryPrior(category);
 

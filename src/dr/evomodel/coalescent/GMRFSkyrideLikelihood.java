@@ -464,27 +464,27 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     }
 
 
-    public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
-        //Set up the eigenvalue solver
-        SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
-        //Solve for the eigenvalues
-        try {
-            eigen.factor(X);
-        } catch (NotConvergedException e) {
-            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
-        }
-
-        //Get the eigenvalues
-        double[] x = eigen.getEigenvalues();
-
-        double a = 0;
-        for (double d : x) {
-            if (d > 0.00001)
-                a += Math.log(d);
-        }
-
-        return a;
-    }
+//    public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
+//        //Set up the eigenvalue solver
+//        SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
+//        //Solve for the eigenvalues
+//        try {
+//            eigen.factor(X);
+//        } catch (NotConvergedException e) {
+//            throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
+//        }
+//
+//        //Get the eigenvalues
+//        double[] x = eigen.getEigenvalues();
+//
+//        double a = 0;
+//        for (double d : x) {
+//            if (d > 0.00001)
+//                a += Math.log(d);
+//        }
+//
+//        return a;
+//    }
 
 
     public Parameter getPrecisionParameter() {

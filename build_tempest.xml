@@ -208,7 +208,7 @@
                         arguments=""
                         vmoptions="-Xmx1024M"
                         version="${version}"
-                        copyright="${name} v${version}, Copyright 2006-2015, Andrew Rambaut"
+                        copyright="${name} v${version}, Copyright 2006-2016, Andrew Rambaut"
                         bundleid="pathogen" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">

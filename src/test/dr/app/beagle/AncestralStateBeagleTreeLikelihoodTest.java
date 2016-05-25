@@ -102,6 +102,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
                 null,
                 false,
                 PartialsRescalingScheme.DEFAULT,
+                true,
                 null,
                 hky.getDataType(),
                 "stateTag",

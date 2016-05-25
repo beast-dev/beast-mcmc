@@ -62,9 +62,10 @@ public class ALSBeagleTreeLikelihood extends BeagleTreeLikelihood implements Lik
                                    TipStatesModel tipStatesModel,
                                    boolean useAmbiguities,
                                    PartialsRescalingScheme scalingScheme,
+                                   boolean delayScaling,
                                    Map<Set<String>, Parameter> partialsRestrictions) {
 
-        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme,
+        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme, delayScaling,
                 partialsRestrictions);
 //    }
 //

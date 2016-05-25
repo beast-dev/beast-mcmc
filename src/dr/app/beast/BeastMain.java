@@ -341,6 +341,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
+                        new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
 
@@ -505,6 +506,10 @@ public class BeastMain {
 
         if (arguments.hasOption("beagle_scaling")) {
             System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
+        }
+
+        if (arguments.hasOption("beagle_delay_scaling_off")) {
+            System.setProperty("beagle.delay.scaling", Boolean.FALSE.toString());
         }
 
         if (arguments.hasOption("beagle_rescale")) {

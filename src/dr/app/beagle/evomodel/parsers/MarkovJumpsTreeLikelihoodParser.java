@@ -76,6 +76,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                        boolean delayScaling,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
 
@@ -106,6 +107,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
+                delayScaling,
                 partialsRestrictions,
                 dataType,
                 stateTag,

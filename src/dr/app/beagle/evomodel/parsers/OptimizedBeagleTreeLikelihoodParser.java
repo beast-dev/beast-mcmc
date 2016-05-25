@@ -65,13 +65,14 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-            BranchModel branchModel,
-            GammaSiteRateModel siteRateModel,
-            BranchRateModel branchRateModel,
-            TipStatesModel tipStatesModel,
-            boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
-            Map<Set<String>, Parameter> partialsRestrictions,
-            XMLObject xo) throws XMLParseException {
+                                                        BranchModel branchModel,
+                                                        GammaSiteRateModel siteRateModel,
+                                                        BranchRateModel branchRateModel,
+                                                        TipStatesModel tipStatesModel,
+                                                        boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                        boolean delayRescalingUntilUnderflow,
+                                                        Map<Set<String>, Parameter> partialsRestrictions,
+                                                        XMLObject xo) throws XMLParseException {
         return new BeagleTreeLikelihood(
                 patternList,
                 treeModel,
@@ -81,8 +82,9 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
                 tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
+                delayRescalingUntilUnderflow,
                 partialsRestrictions
-                );
+        );
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -133,6 +135,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
         BranchRateModel[] branchRateModels = new BranchRateModel[childCount];
         boolean[] ambiguities = new boolean[childCount];
         PartialsRescalingScheme[] rescalingSchemes = new PartialsRescalingScheme[childCount];
+        boolean[] isDelayRescalingUntilUnderflow = new boolean[childCount];
         List<Map<Set<String>, Parameter>> partialsRestrictions = new ArrayList<Map<Set<String>, Parameter>>();
         for (int i = 0; i < likelihoods.size(); i++) {
             patterns[i] = (SitePatterns) ((BeagleTreeLikelihood) likelihoods.get(i)).getPatternsList();
@@ -143,6 +146,7 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
             branchRateModels[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).getBranchRateModel();
             ambiguities[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).useAmbiguities();
             rescalingSchemes[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).getRescalingScheme();
+            isDelayRescalingUntilUnderflow[i] = ((BeagleTreeLikelihood) likelihoods.get(i)).isDelayRescalingUntilUnderflow();
             partialsRestrictions.add(i, ((BeagleTreeLikelihood) likelihoods.get(i)).getPartialsRestrictions());
         }
 
@@ -387,8 +391,9 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
                 BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
                         subPatterns, treeModels[longestIndex], branchModels[longestIndex], siteRateModels[longestIndex], branchRateModels[longestIndex],
-                        null, 
-                        ambiguities[longestIndex], rescalingSchemes[longestIndex], partialsRestrictions.get(longestIndex),
+                        null,
+                        ambiguities[longestIndex], rescalingSchemes[longestIndex], isDelayRescalingUntilUnderflow[longestIndex],
+                        partialsRestrictions.get(longestIndex),
                         xo);
 
                 treeLikelihood.setId(xo.getId() + "_" + longestIndex + "_" + i);
@@ -549,8 +554,9 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
 
                         BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
                                 subPatterns, treeModels[longestIndex], branchModels[longestIndex], siteRateModels[longestIndex], branchRateModels[longestIndex],
-                                null, 
-                                ambiguities[longestIndex], rescalingSchemes[longestIndex], partialsRestrictions.get(longestIndex),
+                                null,
+                                ambiguities[longestIndex], rescalingSchemes[longestIndex], isDelayRescalingUntilUnderflow[longestIndex],
+                                partialsRestrictions.get(longestIndex),
                                 xo);
 
                         treeLikelihood.setId(xo.getId() + "_" + longestIndex + "_" + i);
@@ -849,9 +855,9 @@ public class OptimizedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser
     }
 
     public static final XMLSyntaxRule[] rules = {
-        new ElementRule(BeagleTreeLikelihood.class, 1, Integer.MAX_VALUE),
-        AttributeRule.newIntegerRule(CALIBRATE, true),
-        AttributeRule.newIntegerRule(RETRY, true)
+            new ElementRule(BeagleTreeLikelihood.class, 1, Integer.MAX_VALUE),
+            AttributeRule.newIntegerRule(CALIBRATE, true),
+            AttributeRule.newIntegerRule(RETRY, true)
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

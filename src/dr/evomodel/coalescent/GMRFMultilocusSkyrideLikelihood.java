@@ -440,10 +440,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             }
 
             if (maxGridIndex >= 0 && minGridIndex < numGridPoints) {
-<<<<<<< HEAD
-            //if (maxGridIndex >= 0) {
-=======
->>>>>>> master
+
 
                 //from likelihood of interval between first sampling time and gridPoints[minGridIndex]
 
@@ -564,11 +561,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                     currentTimeIndex++;
 
                 }
-<<<<<<< HEAD
-                // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
-=======
+
             // if tree does not overlap with any gridpoints/change-points, in which case logpopsize is constant
->>>>>>> master
+
             } else {
                 while ((currentTimeIndex + 1) < intervalsList.get(i).getIntervalCount()) {
                     //check to see if interval is coalescent interval or sampling interval
@@ -820,9 +815,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     }
 
     public IntervalType getCoalescentIntervalType(int i) {
-<<<<<<< HEAD
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
-    }
+        return null;
+    }*/    
 
     class SkygridHelper{
 
@@ -992,9 +986,5 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         }
 
     }
-=======
-        return null;
-    }*/
->>>>>>> master
 }
 

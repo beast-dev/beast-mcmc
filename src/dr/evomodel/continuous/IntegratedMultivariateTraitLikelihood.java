@@ -56,33 +56,33 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     public static final double LOG_SQRT_2_PI = 0.5 * Math.log(2 * Math.PI);
 
-    public IntegratedMultivariateTraitLikelihood(String traitName,
-                                                 MultivariateTraitTree treeModel,
-                                                 MultivariateDiffusionModel diffusionModel,
-                                                 CompoundParameter traitParameter,
-                                                 List<Integer> missingIndices,
-                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
-                                                 BranchRateModel rateModel, Model samplingDensity,
-                                                 boolean reportAsMultivariate,
-                                                 boolean reciprocalRates) {
-
-        this(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
-    }
-
-    public IntegratedMultivariateTraitLikelihood(String traitName,
-                                                 MultivariateTraitTree treeModel,
-                                                 MultivariateDiffusionModel diffusionModel,
-                                                 CompoundParameter traitParameter,
-                                                 Parameter deltaParameter,
-                                                 List<Integer> missingIndices,
-                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
-                                                 BranchRateModel rateModel, Model samplingDensity,
-                                                 boolean reportAsMultivariate,
-                                                 boolean reciprocalRates) {
-        this(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches,
-                scaleByTime, useTreeLength, rateModel, null, samplingDensity, reportAsMultivariate, reciprocalRates);
-    }
+//    public IntegratedMultivariateTraitLikelihood(String traitName,
+//                                                 MultivariateTraitTree treeModel,
+//                                                 MultivariateDiffusionModel diffusionModel,
+//                                                 CompoundParameter traitParameter,
+//                                                 List<Integer> missingIndices,
+//                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
+//                                                 BranchRateModel rateModel, Model samplingDensity,
+//                                                 boolean reportAsMultivariate,
+//                                                 boolean reciprocalRates) {
+//
+//        this(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches, scaleByTime,
+//                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
+//    }
+//
+//    public IntegratedMultivariateTraitLikelihood(String traitName,
+//                                                 MultivariateTraitTree treeModel,
+//                                                 MultivariateDiffusionModel diffusionModel,
+//                                                 CompoundParameter traitParameter,
+//                                                 Parameter deltaParameter,
+//                                                 List<Integer> missingIndices,
+//                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
+//                                                 BranchRateModel rateModel, Model samplingDensity,
+//                                                 boolean reportAsMultivariate,
+//                                                 boolean reciprocalRates) {
+//        this(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches,
+//                scaleByTime, useTreeLength, rateModel, null, samplingDensity, reportAsMultivariate, reciprocalRates);
+//    }
 
 
     protected final CacheHelper cacheHelper;
@@ -96,54 +96,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
                                                  BranchRateModel rateModel,
                                                  List<BranchRateModel> driftModels,
-                                                 Model samplingDensity,
-                                                 boolean reportAsMultivariate,
-                                                 boolean reciprocalRates) {
-
-        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, driftModels, samplingDensity, reportAsMultivariate, reciprocalRates);
-
-
-        // Delegate caches to helper
-        meanCache = new double[dim * treeModel.getNodeCount()];
-        if (driftModels != null) {
-            cacheHelper = new DriftCacheHelper(dim * treeModel.getNodeCount(), cacheBranches); // new DriftCacheHelper ....
-        } else {
-            cacheHelper = new CacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
-        }
-
-        drawnStates = new double[dim * treeModel.getNodeCount()];
-        upperPrecisionCache = new double[treeModel.getNodeCount()];
-        lowerPrecisionCache = new double[treeModel.getNodeCount()];
-        logRemainderDensityCache = new double[treeModel.getNodeCount()];
-
-        if (cacheBranches) {
-            storedMeanCache = new double[dim * treeModel.getNodeCount()];
-            storedUpperPrecisionCache = new double[treeModel.getNodeCount()];
-            storedLowerPrecisionCache = new double[treeModel.getNodeCount()];
-            storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
-        }
-
-        // Set up reusable temporary storage
-        Ay = new double[dimTrait];
-        tmpM = new double[dimTrait][dimTrait];
-        tmp2 = new double[dimTrait];
-
-        zeroDimVector = new double[dim];
-
-        missingTraits = new MissingTraits.CompletelyMissing(treeModel, missingIndices, dim);
-        setTipDataValuesForAllNodes();
-
-    }
-
-    public IntegratedMultivariateTraitLikelihood(String traitName,
-                                                 MultivariateTraitTree treeModel,
-                                                 MultivariateDiffusionModel diffusionModel,
-                                                 CompoundParameter traitParameter,
-                                                 Parameter deltaParameter,
-                                                 List<Integer> missingIndices,
-                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
-                                                 BranchRateModel rateModel,
                                                  List<BranchRateModel> optimalValues,
                                                  BranchRateModel strengthOfSelection,
                                                  Model samplingDensity,
@@ -151,17 +103,20 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  boolean reciprocalRates) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, optimalValues, strengthOfSelection, samplingDensity, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, driftModels,
+                optimalValues, strengthOfSelection,
+                samplingDensity, reportAsMultivariate, reciprocalRates);
+
 
         // Delegate caches to helper
         meanCache = new double[dim * treeModel.getNodeCount()];
-
-        if (optimalValues != null) {
+        if (driftModels != null) {
+            cacheHelper = new DriftCacheHelper(dim * treeModel.getNodeCount(), cacheBranches); // new DriftCacheHelper ....
+        } else if (optimalValues != null) {
             cacheHelper = new OUCacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
         } else {
             cacheHelper = new CacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
         }
-
 
         drawnStates = new double[dim * treeModel.getNodeCount()];
         upperPrecisionCache = new double[treeModel.getNodeCount()];
@@ -186,6 +141,57 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         setTipDataValuesForAllNodes();
 
     }
+
+//    public IntegratedMultivariateTraitLikelihood(String traitName,
+//                                                 MultivariateTraitTree treeModel,
+//                                                 MultivariateDiffusionModel diffusionModel,
+//                                                 CompoundParameter traitParameter,
+//                                                 Parameter deltaParameter,
+//                                                 List<Integer> missingIndices,
+//                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
+//                                                 BranchRateModel rateModel,
+//                                                 List<BranchRateModel> optimalValues,
+//                                                 BranchRateModel strengthOfSelection,
+//                                                 Model samplingDensity,
+//                                                 boolean reportAsMultivariate,
+//                                                 boolean reciprocalRates) {
+//
+//        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
+//                useTreeLength, rateModel, optimalValues, strengthOfSelection, samplingDensity, reportAsMultivariate, reciprocalRates);
+//
+//        // Delegate caches to helper
+//        meanCache = new double[dim * treeModel.getNodeCount()];
+//
+//        if (optimalValues != null) {
+//            cacheHelper = new OUCacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
+//        } else {
+//            cacheHelper = new CacheHelper(dim * treeModel.getNodeCount(), cacheBranches);
+//        }
+//
+//
+//        drawnStates = new double[dim * treeModel.getNodeCount()];
+//        upperPrecisionCache = new double[treeModel.getNodeCount()];
+//        lowerPrecisionCache = new double[treeModel.getNodeCount()];
+//        logRemainderDensityCache = new double[treeModel.getNodeCount()];
+//
+//        if (cacheBranches) {
+//            storedMeanCache = new double[dim * treeModel.getNodeCount()];
+//            storedUpperPrecisionCache = new double[treeModel.getNodeCount()];
+//            storedLowerPrecisionCache = new double[treeModel.getNodeCount()];
+//            storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
+//        }
+//
+//        // Set up reusable temporary storage
+//        Ay = new double[dimTrait];
+//        tmpM = new double[dimTrait][dimTrait];
+//        tmp2 = new double[dimTrait];
+//
+//        zeroDimVector = new double[dim];
+//
+//        missingTraits = new MissingTraits.CompletelyMissing(treeModel, missingIndices, dim);
+//        setTipDataValuesForAllNodes();
+//
+//    }
 
 
     private void setTipDataValuesForAllNodes() {

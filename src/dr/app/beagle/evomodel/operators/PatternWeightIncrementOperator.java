@@ -25,12 +25,10 @@
 
 package dr.app.beagle.evomodel.operators;
 
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.inference.operators.GibbsOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
-import dr.math.MathUtils;
 import jebl.math.Random;
 
 /**

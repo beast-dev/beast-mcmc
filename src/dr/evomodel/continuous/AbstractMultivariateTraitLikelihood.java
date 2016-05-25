@@ -444,6 +444,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 if (event.isTreeChanged()) {
                     recalculateTreeLength();
                     updateAllNodes();
+                    updateClamps();
                 } else if (event.isHeightChanged()) {
                     recalculateTreeLength();
                     if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
@@ -460,6 +461,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     else {
                         updateNodeAndChildren(event.getNode());
                     }
+                    updateClamps();
                 } else {
                     throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occurring in AbstractMultivariateTraitLikelihood");
                 }
@@ -480,6 +482,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         } else {
             throw new RuntimeException("Unknown componentChangedEvent");
         }
+    }
+
+    protected void updateClamps() {
+        // Do nothing
     }
 
     protected void updateAllNodes() {

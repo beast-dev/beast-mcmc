@@ -128,7 +128,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
                                                      boolean reciprocalRates) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, driftModels, optimalValues, strengthOfSelection, samplingDensity, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, driftModels, optimalValues, strengthOfSelection, samplingDensity, null, reportAsMultivariate, reciprocalRates);
 
         // fully-conjugate multivariate normal with own mean and prior sample size
         this.rootPriorMean = rootPriorMean;

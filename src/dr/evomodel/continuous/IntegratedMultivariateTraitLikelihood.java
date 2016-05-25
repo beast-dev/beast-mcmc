@@ -43,8 +43,7 @@ import dr.math.matrixAlgebra.Vector;
 import dr.util.Author;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * A multivariate trait likelihood that analytically integrates out the unobserved trait values at all internal
@@ -99,6 +98,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  List<BranchRateModel> optimalValues,
                                                  BranchRateModel strengthOfSelection,
                                                  Model samplingDensity,
+                                                 List<NodeClamp> clamps,
                                                  boolean reportAsMultivariate,
                                                  boolean reciprocalRates) {
 
@@ -274,9 +274,49 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return getLogLikelihood();
     }
 
+    private void setupClamps() {
+        if (clampMap == null) {
+            clampMap = new HashMap<NodeRef, NodeClamp>();
+        }
+
+        recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet());
+
+
+    }
+
+    private void recursiveSetupClamp(Tree tree, NodeRef node, BitSet tips) {
+
+        if (tree.isExternal(node)) {
+            tips.set(node.getNumber());
+//            clock = localTipClocks.get(node.getNumber());
+        } else {
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                NodeRef child = tree.getChild(node, i);
+                BitSet childTips = new BitSet();
+                recursiveSetupClamp(tree, child, childTips);
+
+                tips.or(childTips);
+            }
+//            clock = localCladeClocks.get(tips);
+        }
+
+//        if (clock != null) {
+//            setNodeClock(tree, node, clock, clock.getStemProportion(), clock.excludeClade());
+//        }
+        
+
+    }
+
     public abstract boolean getComputeWishartSufficientStatistics();
 
     public double calculateLogLikelihood() {
+
+        if (!clampsKnown) {
+            if (clampList != null) {
+                setupClamps();
+            }
+            clampsKnown = true;
+        }
 
         double logLikelihood = 0;
         double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
@@ -1158,6 +1198,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
+    @Override
+    protected void updateClamps() {
+
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (driftModels != null && driftModels.contains(model)) {
@@ -1472,5 +1517,28 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] tmp2;
 
     protected final MissingTraits missingTraits;
+
+    class NodeClamp {
+        private double trait[];
+        private double precision;
+
+        List<Integer> tipList;
+
+        NodeClamp(List<Integer> tipList, double trait[], double precision) {
+            this.trait = trait;
+            this.precision = precision;
+        }
+
+        double[] getTrait() { return trait; }
+
+        double getTrait(int i) { return trait[i]; }
+
+        double getPrecision() { return precision; }
+
+    }
+
+    protected boolean clampsKnown = false;
+    private List<NodeClamp> clampList = null;
+    private Map<NodeRef, NodeClamp> clampMap = null;
 
 }

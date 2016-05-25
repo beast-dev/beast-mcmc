@@ -59,7 +59,7 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
                                                     boolean reciprocalRates) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, null, null, null, samplingDensity, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, null, null, null, samplingDensity, null, reportAsMultivariate, reciprocalRates);
 
         setRootPrior(rootPrior); // Semi-conjugate multivariate normal with own mean and precision
     }

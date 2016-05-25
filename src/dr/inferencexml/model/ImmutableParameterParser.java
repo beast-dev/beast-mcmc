@@ -31,6 +31,11 @@ public class ImmutableParameterParser extends AbstractXMLObjectParser {
             public void acceptValues() {
                 //do nothing
             }
+
+            public int getDimension() {
+                return statistic.getDimension();
+            }
+
             public void setParameterValue(int dim, double value) {
                 throw new RuntimeException("Forbidden call to ImmutableParameter.");
             }

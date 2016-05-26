@@ -28,6 +28,7 @@ package dr.evomodel.continuous;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.CompoundParameter;
@@ -275,47 +276,42 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     private void setupClamps() {
-        if (clampMap == null) {
-            clampMap = new HashMap<NodeRef, NodeClamp>();
+        if (nodeToClampMap == null) {
+            nodeToClampMap = new HashMap<NodeRef, NodeClamp>();
         }
+        nodeToClampMap.clear();
 
         recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet());
-
-
     }
 
     private void recursiveSetupClamp(Tree tree, NodeRef node, BitSet tips) {
 
         if (tree.isExternal(node)) {
             tips.set(node.getNumber());
-//            clock = localTipClocks.get(node.getNumber());
         } else {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 NodeRef child = tree.getChild(node, i);
+
                 BitSet childTips = new BitSet();
                 recursiveSetupClamp(tree, child, childTips);
-
                 tips.or(childTips);
             }
-//            clock = localCladeClocks.get(tips);
+
+            if (clampList.containsKey(tips)) {
+                nodeToClampMap.put(node, clampList.get(tips));
+            }
         }
-
-//        if (clock != null) {
-//            setNodeClock(tree, node, clock, clock.getStemProportion(), clock.excludeClade());
-//        }
-        
-
     }
 
     public abstract boolean getComputeWishartSufficientStatistics();
 
     public double calculateLogLikelihood() {
 
-        if (!clampsKnown) {
+        if (updateRestrictedNodePartials) {
             if (clampList != null) {
                 setupClamps();
             }
-            clampsKnown = true;
+            updateRestrictedNodePartials = false;
         }
 
         double logLikelihood = 0;
@@ -1198,11 +1194,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         }
     }
 
-    @Override
-    protected void updateClamps() {
-
-    }
-
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
         if (driftModels != null && driftModels.contains(model)) {
@@ -1398,7 +1389,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             */
         }
 
-
         public void computeMeanCaches(int meanThisOffset, int meanOffset0, int meanOffset1,
                                       double totalPrecision, double precision0, double precision1, MissingTraits missingTraits,
                                       NodeRef thisNode, NodeRef node0, NodeRef node1) {
@@ -1524,7 +1514,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         List<Integer> tipList;
 
-        NodeClamp(List<Integer> tipList, double trait[], double precision) {
+//        BitSet tipSet;
+
+        NodeClamp(double trait[], double precision) {
+//            tipSet = Tree.Utils.getTipsBitSetForTaxa(tree, taxa);
+//            this.tipSet = tipSet;
             this.trait = trait;
             this.precision = precision;
         }
@@ -1535,10 +1529,20 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         double getPrecision() { return precision; }
 
+//        BitSet getTipSet() { return tipSet; }
+
+    }
+
+    protected void addClamp(final NodeClamp nodeClamp, final TaxonList taxonList, Tree tree) throws Tree.MissingTaxonException {
+        if (clampList == null) {
+            clampList = new HashMap<BitSet, NodeClamp>();
+        }
+        clampList.put(Tree.Utils.getTipsBitSetForTaxa(tree, taxonList), nodeClamp);
     }
 
     protected boolean clampsKnown = false;
-    private List<NodeClamp> clampList = null;
-    private Map<NodeRef, NodeClamp> clampMap = null;
+//    private List<NodeClamp> clampList = null;
+    private Map<BitSet, NodeClamp> clampList = null;
+    private Map<NodeRef, NodeClamp> nodeToClampMap = null;
 
 }

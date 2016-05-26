@@ -1,7 +1,7 @@
 /*
  * GMRFSkyrideLikelihoodParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -52,6 +52,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String POPULATION_TREE = "populationTree";
     public static final String LAMBDA_PARAMETER = "lambdaParameter";
     public static final String BETA_PARAMETER = "betaParameter";
+    public static final String SINGLE_BETA = "singleBeta";
     public static final String COVARIATE_MATRIX = "covariateMatrix";
     public static final String RANDOMIZE_TREE = "randomizeTree";
     public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
@@ -64,6 +65,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PHI_PARAMETER = "phiParameter";
     public static final String PLOIDY = "ploidy";
     public static final String COVARIATES = "covariates";
+    public static final String COLUMN_MAJOR = "columnMajor";
     public static final String LAST_OBSERVED_INDEX = "lastObservedIndex";
     public static final String COV_PREC_PARAM = "covariatePrecision";
 
@@ -159,19 +161,18 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
-        Parameter beta = null;
+        Parameter betaParameter = null;
+        if (xo.hasChildNamed(SINGLE_BETA)) {
+            betaParameter = (Parameter) xo.getElementFirstChild(SINGLE_BETA);
+        }
+
         List<Parameter> betaList = null;
         if (xo.getChild(BETA_PARAMETER) != null) {
             betaList = new ArrayList<Parameter>();
             cxo = xo.getChild(BETA_PARAMETER);
             final int numBeta = cxo.getChildCount();
-            if(numBeta == 1) {
-                beta = (Parameter) cxo.getChild(Parameter.class);
-                betaList.add((Parameter) cxo.getChild(0));
-            }else{
-                for(int i=0; i< numBeta; ++i) {
-                    betaList.add((Parameter) cxo.getChild(i));
-                }
+            for (int i = 0; i < numBeta; ++i) {
+                betaList.add((Parameter) cxo.getChild(i));
             }
         }
 
@@ -186,13 +187,13 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
         }
 
-        // if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
-        //     throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
+       // if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
+       //     throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
 
         if (dMatrix != null) {
             if (dMatrix.getRowDimension() != popParameter.getDimension())
                 throw new XMLParseException("Design matrix row dimension must equal the population parameter length.");
-            if (dMatrix.getColumnDimension() != beta.getDimension())
+            if (dMatrix.getColumnDimension() != betaParameter.getDimension())
                 throw new XMLParseException("Design matrix column dimension must equal the regression coefficient length.");
         }
 
@@ -218,9 +219,9 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
-        if ((covariates != null && (beta == null && betaList == null)) ||
-                (covariates == null && (beta != null || betaList != null)))
-            throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
+        if ((covariates != null && betaList == null) ||
+                (covariates == null &&  betaList != null))
+             throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
 
 
         if (xo.getAttribute(RANDOMIZE_TREE, false)) {
@@ -241,17 +242,18 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         if (xo.getAttribute(OLD_SKYRIDE, true) && xo.getName().compareTo(SKYGRID_LIKELIHOOD) != 0) {
 
             return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                    lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
+                    lambda, betaParameter, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
 
         } else {
-
             if(xo.getChild(GRID_POINTS) != null){
+                System.err.println("A");
+
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                        lambda, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
+                        lambda, betaParameter, dMatrix, timeAwareSmoothing, gridPoints, covariates, ploidyFactors,
                         lastObservedIndex, covPrecParam, betaList);
             }else {
                 return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                        lambda, beta, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
+                        lambda, betaParameter, dMatrix, timeAwareSmoothing, cutOff.getParameterValue(0), (int) numGridPoints.getParameterValue(0), phi, ploidyFactors);
             }
         }
     }
@@ -287,6 +289,9 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             }),
             new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
+            }, true),
+            new ElementRule(SINGLE_BETA, new XMLSyntaxRule[] {
+                    new ElementRule(Parameter.class),
             }, true),
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_ISSUE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),

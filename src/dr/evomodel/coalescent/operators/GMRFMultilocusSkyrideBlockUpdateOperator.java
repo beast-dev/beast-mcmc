@@ -1,3 +1,28 @@
+/*
+ * GMRFMultilocusSkyrideBlockUpdateOperator.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.coalescent.operators;
 
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
@@ -38,8 +63,8 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
     private double[] zeros;
 
     public GMRFMultilocusSkyrideBlockUpdateOperator(GMRFMultilocusSkyrideLikelihood gmrfLikelihood,
-                                                    double weight, CoercionMode mode, double scaleFactor,
-                                                    int maxIterations, double stopValue) {
+                                          double weight, CoercionMode mode, double scaleFactor,
+                                          int maxIterations, double stopValue) {
         super(mode);
         gmrfField = gmrfLikelihood;
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();
@@ -159,8 +184,11 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
     public DenseVector getZBeta(List<MatrixParameter> covariates, List<Parameter> beta){
 
         DenseVector temporaryVect = new DenseVector(fieldLength);
+        
+        // TODO: Update for covariateMatrix block as well !!!
+        
         if(covariates != null) {
-            // DenseVector currentBeta = new DenseVector(beta.getParameterValues());
+           // DenseVector currentBeta = new DenseVector(beta.getParameterValues());
             DenseVector currentBeta = new DenseVector(beta.size());
             for(int i =0; i < beta.size(); i++){
                 currentBeta.set(i, beta.get(i).getParameterValue(0));
@@ -192,15 +220,15 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
 
 
         while (gradient(data1, data2, iterateGamma, proposedQ, ZBeta).norm(Vector.Norm.Two) > stopValue) {
-            try {
+           try {
                 jacobian(data2, iterateGamma, proposedQ).solve(gradient(data1, data2, iterateGamma, proposedQ, ZBeta), tempValue);
-            } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
+           } catch (no.uib.cipr.matrix.MatrixNotSPDException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                 throw new OperatorFailedException("");
             } catch (no.uib.cipr.matrix.MatrixSingularException e) {
                 Logger.getLogger("dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
                 throw new OperatorFailedException("");
-            }
+            }     
 
             iterateGamma.add(tempValue);
             numberIterations++;
@@ -276,7 +304,7 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         backwardQW.mult(ZBetaVector, QZBetaCurrent);
 
         DenseVector modeForward = newtonRaphson(numCoalEv, wNative, currentGamma, proposedQ.copy(), ZBetaVector);
-
+       
         for (int i = 0; i < fieldLength; i++) {
             diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
             diagonal2.set(i, modeForward.get(i) + 1);
@@ -344,7 +372,7 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
         hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
         hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
 
-        return hRatio;
+       return hRatio;
     }
 
     //MCMCOperator INTERFACE
@@ -408,3 +436,4 @@ public class GMRFMultilocusSkyrideBlockUpdateOperator extends AbstractCoercableO
 
 
 }
+

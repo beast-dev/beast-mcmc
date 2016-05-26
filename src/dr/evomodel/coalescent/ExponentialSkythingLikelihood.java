@@ -1,7 +1,7 @@
 /*
- * BayesianSkylineLikelihood.java
+ * ExponentialSkythingLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,14 +25,12 @@
 
 package dr.evomodel.coalescent;
 
-import dr.evolution.coalescent.ConstantPopulation;
 import dr.evolution.coalescent.ExponentialBSPGrowth;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.BayesianSkylineLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
-import dr.inference.model.Variable;
 import dr.math.MathUtils;
 
 import java.util.Date;

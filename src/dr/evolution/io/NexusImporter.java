@@ -1,7 +1,7 @@
 /*
  * NexusImporter.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -175,7 +175,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * Parses a 'TREES' block.
      */
     public Tree[] parseTreesBlock(TaxonList taxonList) throws ImportException, IOException {
-        return readTreesBlock(taxonList);
+        return readTreesBlock(taxonList, false);
     }
 
     /**
@@ -266,6 +266,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * import a single tree.
      */
     public Tree importTree(TaxonList taxonList) throws IOException, ImportException {
+        return importTree(taxonList, false);
+    }
+
+    public Tree importTree(TaxonList taxonList, boolean useTaxonListNumbering) throws IOException, ImportException {
         isReadingTreesBlock = false;
         TaxonList[] aTaxonList = new TaxonList[1];
         aTaxonList[0] = taxonList;
@@ -273,20 +277,24 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
             throw new MissingBlockException("TREES block is missing");
         }
         translationList = readTranslationList(aTaxonList[0], lastToken);
-        return readNextTree(translationList, lastToken);
+        return readNextTree(translationList, lastToken, useTaxonListNumbering ? taxonList : null);
     }
 
     /**
      * import an array of all trees.
      */
     public Tree[] importTrees(TaxonList taxonList) throws IOException, ImportException {
+        return importTrees(taxonList, false);
+    }
+
+    public Tree[] importTrees(TaxonList taxonList, boolean useTaxonListNumbering) throws IOException, ImportException {
         isReadingTreesBlock = false;
         TaxonList[] aTaxonList = new TaxonList[1];
         aTaxonList[0] = taxonList;
         if (!startReadingTrees(aTaxonList)) {
             throw new MissingBlockException("TREES block is missing");
         }
-        return readTreesBlock(aTaxonList[0]);
+        return readTreesBlock(aTaxonList[0], useTaxonListNumbering);
     }
 
     /**
@@ -303,7 +311,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         if (nextTree == null) {
-            nextTree = readNextTree(translationList, lastToken);
+            nextTree = readNextTree(translationList, lastToken, null);
         }
 
         return (nextTree != null);
@@ -755,7 +763,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     /**
      * Reads a 'TREES' block.
      */
-    private Tree[] readTreesBlock(TaxonList taxonList) throws ImportException, IOException {
+    private Tree[] readTreesBlock(TaxonList taxonList, boolean useTaxonListNumbering) throws ImportException, IOException {
         ArrayList<Tree> trees = new ArrayList<Tree>();
 
         String[] lastToken = new String[1];
@@ -764,7 +772,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         boolean done = false;
         do {
 
-            Tree tree = readNextTree(translationList, lastToken);
+            Tree tree = readNextTree(translationList, lastToken, useTaxonListNumbering ? taxonList : null);
 
             if (tree != null) {
                 trees.add(tree);
@@ -818,6 +826,10 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                 } else {
                     taxon = new Taxon(token3);
                 }
+
+                if (translationList.containsKey(token2)) {
+                    throw new BadFormatException("Translation list uses the key, " + token2 + ", more than once.");
+                }
                 translationList.put(token2, taxon);
 
             } while (getLastDelimiter() != ';');
@@ -835,7 +847,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         return translationList;
     }
 
-    private Tree readNextTree(HashMap<String, Taxon> translationList, String[] lastToken) throws ImportException, IOException {
+    private Tree readNextTree(HashMap<String, Taxon> translationList, String[] lastToken, TaxonList taxonList) throws ImportException, IOException {
         try {
             Tree tree = null;
             String token = lastToken[0];
@@ -877,10 +889,14 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                             Taxon taxon = translationList.get(label);
                             int number;
 
-                            try {
-                                number = Integer.parseInt(label) - 1;
-                            } catch (NumberFormatException nfe) {
-                                number = count;
+                            if (taxonList != null) { // Map back to original numbering from TaxonList
+                                number =  taxonList.getTaxonIndex(taxon);
+                            } else { // Old functionality
+                                try {
+                                    number = Integer.parseInt(label) - 1;
+                                } catch (NumberFormatException nfe) {
+                                    number = count;
+                                }
                             }
 
                             taxonNumberMap.put(taxon, number);

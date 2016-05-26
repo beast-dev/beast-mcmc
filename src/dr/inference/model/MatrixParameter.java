@@ -1,7 +1,7 @@
 /*
  * MatrixParameter.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -33,7 +33,7 @@ import java.util.StringTokenizer;
  * @author Marc Suchard
  * @author Max Tolkoff
  */
-public class MatrixParameter extends CompoundParameter {
+public class MatrixParameter extends CompoundParameter implements MatrixParameterInterface {
 
     public final static String MATRIX_PARAMETER = "matrixParameter";
 
@@ -58,6 +58,17 @@ public class MatrixParameter extends CompoundParameter {
         setDimensions(row, column, a);
     }
 
+    public void setParameterValue(int row, int column, double a) {
+        getParameter(column).setParameterValue(row, a);
+    }
+
+    public void setParameterValueQuietly(int row, int column, double a){
+        getParameter(column).setParameterValueQuietly(row, a);
+    }
+
+    public void setParameterValueNotifyChangedAll(int row, int column, double val){
+        getParameter(column).setParameterValueNotifyChangedAll(row, val);
+    }
 
     public static MatrixParameter recast(String name, CompoundParameter compoundParameter) {
         final int count = compoundParameter.getParameterCount();
@@ -81,7 +92,7 @@ public class MatrixParameter extends CompoundParameter {
         return rowValues;
     }
 
-    public double[] getColumnValues(int col){
+    public double[] getColumnValues(int col) {
         return this.getParameter(col).getParameterValues();
     }
 
@@ -146,6 +157,31 @@ public class MatrixParameter extends CompoundParameter {
 
     public int getRowDimension() {
         return getParameter(0).getDimension();
+    }
+
+    @Override
+    public int getUniqueParameterCount() {
+        return getParameterCount();
+    }
+
+    @Override
+    public Parameter getUniqueParameter(int index) {
+        return super.getParameter(index);
+    }
+
+    @Override
+    public void copyParameterValues(double[] destination, int offset) {
+        final int length = getDimension();
+        for (int i = 0; i < length; ++i) {
+            destination[offset + i] = getParameterValue(i);
+        }
+    }
+
+    @Override
+    public void setAllParameterValuesQuietly(double[] values, int offset) {
+        for (int i = 0; i < getDimension(); ++i) {
+            setParameterValueQuietly(i, values[offset + i]);
+        }
     }
 
     public String toSymmetricString() {
@@ -463,11 +499,11 @@ public class MatrixParameter extends CompoundParameter {
 //        throw new RuntimeException("Not implemented yet!");
 //    }
 
-    private static final String ROW_DIMENSION = "rows";
-    private static final String COLUMN_DIMENSION = "columns";
-    private static final String TRANSPOSE = "transpose";
-    private static final String AS_COMPOUND = "asCompoundParameter";
-    private static final String BEHAVIOR = "test";
+    public static final String ROW_DIMENSION = "rows";
+    public static final String COLUMN_DIMENSION = "columns";
+    public static final String TRANSPOSE = "transpose";
+    public static final String AS_COMPOUND = "asCompoundParameter";
+    public static final String BEHAVIOR = "test";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 

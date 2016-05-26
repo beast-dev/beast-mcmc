@@ -1,7 +1,7 @@
 /*
  * MultivariateNormalDistributionModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -43,11 +43,23 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         super(MultivariateNormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
         this.mean = meanParameter;
         addVariable(meanParameter);
-        meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
-                meanParameter.getDimension()));
 
+        if (!(meanParameter instanceof DuplicatedParameter)) {
+            meanParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                    meanParameter.getDimension()));
+        }
         this.precision = precParameter;
         addVariable(precParameter);
+
+        Parameter single = null;
+        if (precParameter instanceof DiagonalMatrix) {
+            DiagonalMatrix dm = (DiagonalMatrix) precParameter;
+            if (dm.getDiagonalParameter() instanceof DuplicatedParameter) {
+                single = dm.getDiagonalParameter();
+            }
+        }
+        hasSinglePrecision = (single != null);
+        singlePrecision = single;
 
         distribution = createNewDistribution();
         distributionKnown = true;
@@ -98,6 +110,10 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         // no intermediates need to be recalculated...
     }
 
+    public Likelihood getLikelihood() {
+        return null;
+    }
+
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         distributionKnown = false;
     }
@@ -120,11 +136,17 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     // **************************************************************
 
     private MultivariateNormalDistribution createNewDistribution() {
-        return new MultivariateNormalDistribution(getMean(), getScaleMatrix());
+        if (hasSinglePrecision) {
+            return new MultivariateNormalDistribution(getMean(), singlePrecision.getParameterValue(0));
+        } else {
+            return new MultivariateNormalDistribution(getMean(), getScaleMatrix());
+        }
     }
 
     private final Parameter mean;
     private final MatrixParameter precision;
+    private final boolean hasSinglePrecision;
+    private final Parameter singlePrecision;
     private MultivariateNormalDistribution distribution;
     private MultivariateNormalDistribution storedDistribution;
 
@@ -140,5 +162,15 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     public double logPdf(Object x) {
         checkDistribution();
         return distribution.logPdf(x);
+    }
+
+    @Override
+    public int getDimension() {
+        return mean.getDimension();
+    }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        return precision.getParameterAsMatrix();
     }
 }

@@ -1,20 +1,42 @@
+/*
+ * TransmissionSubtreeSlideB.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -73,16 +95,13 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
 
 
         if(DEBUG){
-            c2cLikelihood.debugOutputTree("beforeTSSB.nex", false);
+            c2cLikelihood.outputTreeToFile("beforeTSSB.nex", false);
         }
 
 
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
         double logq;
-
-        final NodeRef root = tree.getRoot();
-        final double oldTreeHeight = tree.getNodeHeight(root);
 
         NodeRef i;
 
@@ -190,7 +209,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
                 // appropriately
 
-                if(branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
+                if(PiPCase != CiPCase){
                     logq += Math.log(0.5);
                 }
 
@@ -312,7 +331,7 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                 // Randomly assign iP the partition of either its parent or the child that is not i, and adjust q
                 // appropriately
 
-                if(PiP!=null && branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
+                if(PiP!=null && PiPCase != CiPCase){
                     logq += Math.log(0.5);
                 }
 
@@ -327,13 +346,11 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
                         newiPCase = newChildCase;
                     }
 
-
                     if(resampleInfectionTimes) {
                         //whichever we picked for iP, it's the new child's case whose infection branch is modified
                         // (even if this infection branch is iP's branch)
 
                         newChildCase.setInfectionBranchPosition(MathUtils.nextDouble());
-
                     }
 
                     logq += Math.log(2);
@@ -379,8 +396,8 @@ public class TransmissionSubtreeSlideB extends AbstractTreeOperator implements C
         if (logq == Double.NEGATIVE_INFINITY) throw new OperatorFailedException("invalid slide");
 
         if (DEBUG) {
-            c2cLikelihood.checkPartitions();
-            c2cLikelihood.debugOutputTree("afterTSSB.nex", false);
+            c2cLikelihood.getTreeModel().checkPartitions();
+            c2cLikelihood.outputTreeToFile("afterTSSB.nex", false);
         }
 
 

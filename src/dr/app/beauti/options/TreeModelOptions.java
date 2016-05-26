@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * TreeModelOptions.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -10,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -71,18 +73,6 @@ public class TreeModelOptions extends ModelOptions {
 
     }
 
-    /////////////////////////////////////////////////////////////
-//    public double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
-//    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
-//
-//    	if (rootHeight.priorType != PriorType.NONE_TREE_PRIOR) {
-//    		return rootHeight.initial;
-//    	} else {
-//    		return calculateMeanDistance(model.getDataPartitions());
-//    	}
-//
-//    }
-
     public double getExpectedAvgBranchLength(double rootHeight) {
         double sum = 0;
         int taxonCount = options.taxonList.getTaxonCount();
@@ -109,14 +99,13 @@ public class TreeModelOptions extends ModelOptions {
         }
     }
 
-    public boolean isNodeCalibrated(Parameter para) {
-        return (para.taxaId != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
-                || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para));
+    public boolean isNodeCalibrated(Parameter parameter) {
+        return (parameter.taxaId != null && hasProperPriorOn(parameter)) // param.taxa != null is TMRCA
+                || (parameter.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(parameter));
     }
 
     private boolean hasProperPriorOn(Parameter para) {
         return para.priorType == PriorType.EXPONENTIAL_PRIOR
-//                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
                 || (para.priorType == PriorType.UNIFORM_PRIOR && para.uniformLower > 0 && para.uniformUpper < Double.POSITIVE_INFINITY)
                 || para.priorType == PriorType.LAPLACE_PRIOR
                 || para.priorType == PriorType.NORMAL_PRIOR

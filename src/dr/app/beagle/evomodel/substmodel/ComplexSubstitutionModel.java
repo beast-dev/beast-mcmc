@@ -1,7 +1,7 @@
 /*
  * ComplexSubstitutionModel.java
  *
- * Copyright (c) 2002-2014 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -34,7 +34,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
 
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * @author Marc Suchard
@@ -44,6 +44,28 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
     public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
         super(name, dataType, freqModel, parameter, -1);
         probability = new double[stateCount * stateCount];
+    }
+
+    @Override
+    protected void setupDimensionNames(int relativeTo) {
+        List<String> rateNames = new ArrayList<String>();
+
+        String ratePrefix = ratesParameter.getParameterName();
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                rateNames.add(getDimensionString(i, j, ratePrefix));
+            }
+        }
+
+        for (int j = 0; j < dataType.getStateCount(); ++j) {
+            for (int i = j + 1; i < dataType.getStateCount(); ++i) {
+                rateNames.add(getDimensionString(i, j, ratePrefix));
+            }
+        }
+
+        String[] tmp = new String[0];
+        ratesParameter.setDimensionNames(rateNames.toArray(tmp));
     }
 
     protected EigenSystem getDefaultEigenSystem(int stateCount) {
@@ -211,6 +233,10 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
         System.err.println(new Vector(probability));
     }
 
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
+    }
 
     @Override
     public boolean isUsed() {

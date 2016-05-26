@@ -1,9 +1,7 @@
-package dr.app.phylogeography.tools;
-
 /*
  * RateIndicatorBF.java
  *
- * Copyright (C) 2002-2010 BEAST Development Team
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -24,6 +22,8 @@ package dr.app.phylogeography.tools;
  * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
  */
+
+package dr.app.phylogeography.tools;
 
 import dr.app.tools.TimeSlicer;
 import dr.app.util.Arguments;
@@ -217,34 +217,34 @@ public class RateIndicatorBF {
     //Diagonal entries in the Q matrices are omitted for obvious reasons. Note that if the frequencies are not equal
     //then the Q matrix is not symmetric even if the rates are.
 
-    private double[][] getQMatrices(){
+    private double[][] getQMatrices() {
 
         int firstRateIndicator = getFirstEntryOf(inputFileName, rateIndicatorString);
-        double[][] rateIndicators = new double[((generationCount - 1)-burnin)][rateCount];
+        double[][] rateIndicators = new double[((generationCount - 1) - burnin)][rateCount];
         fill2DArray(inputFileName, rateIndicators, burnin, firstRateIndicator, rateCount);
 
         boolean containsClockRate = hasEntryOf(inputFileName, clockRateString);
-        double[] clockRates = new double[(generationCount-1)-burnin];
+        double[] clockRates = new double[(generationCount - 1) - burnin];
         int clockColumn = getFirstEntryOf(inputFileName, clockRateString);
 
-        if(!containsClockRate){
+        if (!containsClockRate) {
             progressStream.println("WARNING: No overall clock rate entry found. Rates will be given assuming one " +
                     "transition (of any sort) per unit time; variation in clock rates will not be accounted for!");
-            Arrays.fill(clockRates,1);
+            Arrays.fill(clockRates, 1);
         } else {
             fill1DArray(inputFileName, clockRates, burnin, clockColumn);
         }
 
         //boolean to see it the rateLog contains productStatistics, if not, we make 'em ourselves
         boolean containsActualRates = hasEntryOf(inputFileName, actualRateString);
-        double[][] actualRates = new double[((generationCount - 1)-burnin)][rateCount];
-        if (!containsActualRates){
+        double[][] actualRates = new double[((generationCount - 1) - burnin)][rateCount];
+        if (!containsActualRates) {
             // if there are no actualRate entries, we will look for the relative rates instead
             int firstRelativeRate = getFirstEntryOf(inputFileName, relativeRateString);
             fill2DArray(inputFileName, actualRates, burnin, firstRelativeRate, rateCount);
-            for (int i=0;i<actualRates.length;i++){
-                for (int j=0;j<actualRates[i].length;j++){
-                    actualRates[i][j] = actualRates[i][j]*rateIndicators[i][j];
+            for (int i = 0; i < actualRates.length; i++) {
+                for (int j = 0; j < actualRates[i].length; j++) {
+                    actualRates[i][j] = actualRates[i][j] * rateIndicators[i][j];
                 }
             }
         } else {
@@ -254,10 +254,10 @@ public class RateIndicatorBF {
 
         //Double up the actual rate matrix for a nonreversible model - separate entries are needed for both directions
 
-        if(!nonreversible) {
-            double[][] tempActualRates = new double[((generationCount - 1)-burnin)][actualRates[0].length*2];
-            for(int gen=0; gen<(generationCount - 1) - burnin; gen++){
-                for(int col = 0; col<actualRates[0].length; col++){
+        if (!nonreversible) {
+            double[][] tempActualRates = new double[((generationCount - 1) - burnin)][actualRates[0].length * 2];
+            for (int gen = 0; gen < (generationCount - 1) - burnin; gen++) {
+                for (int col = 0; col < actualRates[0].length; col++) {
                     tempActualRates[gen][col] = actualRates[gen][col];
                     tempActualRates[gen][actualRates[0].length + col] = actualRates[gen][col];
                 }
@@ -266,39 +266,42 @@ public class RateIndicatorBF {
         }
 
         boolean containsFrequencies = hasEntryOf(inputFileName, frequencyString);
-        double[][] frequencies = new double[((generationCount - 1)-burnin)][stateCount];
-        if (!containsFrequencies){
+        double[][] frequencies = new double[((generationCount - 1) - burnin)][stateCount];
+        if (!containsFrequencies) {
             progressStream.println("No state frequencies recorded; assuming all equal.");
-            for (int i=0; i<((generationCount - 1)-burnin); i++){
-                Arrays.fill(frequencies[i],(1/(double)stateCount));
+            for (int i = 0; i < ((generationCount - 1) - burnin); i++) {
+                Arrays.fill(frequencies[i], (1 / (double) stateCount));
             }
         } else {
             int firstFrequency = getFirstEntryOf(inputFileName, frequencyString);
             fill2DArray(inputFileName, frequencies, burnin, firstFrequency, stateCount);
         }
 
-        double[][] QMatrixEntries = new double[((generationCount - 1)-burnin)][nonreversible ? rateCount : rateCount*2];
+        double[][] QMatrixEntries = new double[((generationCount - 1) - burnin)][nonreversible ? rateCount : rateCount * 2];
 
-        for(int generation = 0; generation<(generationCount - 1) - burnin; generation++){
+        for (int generation = 0; generation < (generationCount - 1) - burnin; generation++) {
             double normalisationConstant = 0;
-            for(int row = 0; row<stateCount; row++){
-                for(int column = 0; column<stateCount; column++){
+            for (int row = 0; row < stateCount; row++) {
+                double rowSum = 0;
+                for (int column = 0; column < stateCount; column++) {
                     int dataColumn = columnNumberLookup[row][column];
-                    if(dataColumn!=-1){
+                    if (dataColumn != -1) {
                         double unnormalisedMatrixEntry = actualRates[generation][dataColumn]
-                                *frequencies[generation][column];
-                        QMatrixEntries[generation][dataColumn]=unnormalisedMatrixEntry;
-                        normalisationConstant += unnormalisedMatrixEntry;
+                                * frequencies[generation][column];
+                        QMatrixEntries[generation][dataColumn] = unnormalisedMatrixEntry;
+                        rowSum += unnormalisedMatrixEntry;
                     }
                 }
+                normalisationConstant += rowSum * frequencies[generation][row];
+
             }
             //normalise to one transition per unit time and multiply by the clock rate
-            for(int row = 0; row<stateCount; row++){
-                for(int column =0; column<stateCount; column++){
+            for (int row = 0; row < stateCount; row++) {
+                for (int column = 0; column < stateCount; column++) {
                     int dataColumn = columnNumberLookup[row][column];
-                    if(dataColumn!=-1){
+                    if (dataColumn != -1) {
                         QMatrixEntries[generation][dataColumn] = QMatrixEntries[generation][dataColumn]
-                                *clockRates[generation]/normalisationConstant;
+                                * clockRates[generation] / normalisationConstant;
                     }
                 }
             }

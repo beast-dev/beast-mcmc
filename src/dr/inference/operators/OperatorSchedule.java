@@ -1,7 +1,7 @@
 /*
  * OperatorSchedule.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -71,11 +71,21 @@ public interface OperatorSchedule extends Serializable {
      */
     int getMinimumAcceptAndRejectCount();
 
-    final int DEFAULT_SCHEDULE = 0;
-    final int LOG_SCHEDULE = 1;
-    final int SQRT_SCHEDULE = 2;
+    public enum OptimizationTransform {
+        DEFAULT("default"),
+        LOG("log"),
+        SQRT("sqrt"),
+        LINEAR("linear");
 
-    final String DEFAULT_STRING = "default";
-    final String LOG_STRING = "log";
-    final String SQRT_STRING = "sqrt";
+        OptimizationTransform(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
+    };
 }

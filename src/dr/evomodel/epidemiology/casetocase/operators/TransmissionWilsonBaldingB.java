@@ -1,19 +1,40 @@
+/*
+ * TransmissionSubtreeSlideB.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
-
-import java.util.HashMap;
 
 /**
  * Implements the Wilson-Balding branch swapping move if it moves an entire subtree of the transmission tree.
@@ -43,7 +64,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
     public double doOperation() throws OperatorFailedException {
 
         if(DEBUG){
-            c2cLikelihood.debugOutputTree("BeforeTWWB.nex", false);
+            c2cLikelihood.outputTreeToFile("BeforeTWWB.nex", false);
         }
 
         proposeTree();
@@ -55,7 +76,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         }
 
         if(DEBUG){
-            c2cLikelihood.debugOutputTree("AfterTWWB.nex", false);
+            c2cLikelihood.outputTreeToFile("AfterTWWB.nex", false);
         }
 
         return logq;
@@ -128,7 +149,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         oldRange = tree.getNodeHeight(PiP) - oldMinAge;
         q = newRange / Math.abs(oldRange);
 
-        // need to account for the random repainting of iP
+        // need to account for the random reassignment of iP
 
         if(branchMap.get(PiP.getNumber())!=branchMap.get(CiP.getNumber())){
             q *= 0.5;
@@ -195,7 +216,7 @@ public class TransmissionWilsonBaldingB extends AbstractTreeOperator {
         }
 
         if(DEBUG){
-            c2cLikelihood.checkPartitions();
+            c2cLikelihood.getTreeModel().checkPartitions();
         }
 
     }

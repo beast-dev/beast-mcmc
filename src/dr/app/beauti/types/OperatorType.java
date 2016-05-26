@@ -1,7 +1,7 @@
 /*
  * OperatorType.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -59,6 +59,8 @@ public enum OperatorType {
     UNIFORM("uniform"),
     INTEGER_UNIFORM("integerUniform"),
     SUBTREE_SLIDE("subtreeSlide"),
+    SUBTREE_JUMP("subtreeJump"),
+    SUBTREE_LEAP("subtreeLeap"),
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),

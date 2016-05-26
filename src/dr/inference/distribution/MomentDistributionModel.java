@@ -1,9 +1,35 @@
+/*
+ * MomentDistributionModel.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.distribution;
 
 
 import dr.inference.model.*;
 import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.MomentDistributionModelParser;
+import dr.math.MathUtils;
 import dr.math.distributions.RandomGenerator;
 
 //@author Max Tolkoff
@@ -23,9 +49,9 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         addVariable(precision);
 //        precision.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        this.cutoff=cutoff;
+        this.cutoff=cutoff;  if(cutoff!=null){
         addVariable(cutoff);
-        cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, cutoff.getDimension()));
+        cutoff.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, cutoff.getDimension()));}
         addVariable(data);
         this.data=data;
         untruncated=new NormalDistributionModel(mean, precision, true);
@@ -59,16 +85,26 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
         {
             sum=0;
         }
-        if(data.getDimension()!=cutoff.getDimension()){
-            throw new RuntimeException("Incorrect number of cutoffs");
-        }
+
+        if(cutoff!=null){
+            if(data.getDimension()!=cutoff.getDimension()){
+                throw new RuntimeException("Incorrect number of cutoffs");
+            }
         for (int i = 0; i <data.getDimension() ; i++) {
-            if (Math.sqrt(precision.getParameterValue(0) * cutoff.getParameterValue(i)) > Math.abs(data.getParameterValue(i)) && data.getParameterValue(i)!=0)
-                return Double.NEGATIVE_INFINITY;
+            if (Math.sqrt(cutoff.getParameterValue(i)) - .0001 > Math.abs(data.getParameterValue(i)) && data.getParameterValue(i)!=0){
+//                System.out.println(i);
+//                System.out.println(cutoff.getParameterValue(i));
+//                System.out.println(data.getParameterValue(i));
+                return Double.NEGATIVE_INFINITY;                                                                          }
             else if(data.getParameterValue(i)==0)
                 sum+=-1000-Math.log(precision.getParameterValue(0));
             else
                 sum+=untruncated.logPdf(data.getParameterValue(i));//(2*untruncated.logPdf(cutoff.getParameterValue(i)));
+        }         }
+        else{
+            for (int i = 0; i <data.getDimension() ; i++) {
+                sum+= untruncated.logPdf(data.getParameterValue(i))+2* StrictMath.log(data.getParameterValue(i))+StrictMath.log(precision.getParameterValue(0));
+            }
         }
         sumKnown=true;
         return sum;
@@ -80,6 +116,8 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
     public double logPdf(double[] x) {
         return 0;
     }
+
+    public Parameter getCutoff(){return cutoff;}
 
     @Override
     public double[][] getScaleMatrix() {

@@ -1,3 +1,28 @@
+/*
+ * PriorType.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.types;
 
 import dr.app.beauti.options.Parameter;
@@ -14,6 +39,7 @@ public enum PriorType {
     NONE_TREE_PRIOR("None (Tree Prior Only)", false, false, false),
     NONE_STATISTIC("None (Statistic)", false, false, false),
     NONE_IMPROPER("Infinite Uniform (Improper)", true, false, false),
+    NONE_FIXED("Fixed value", true, false, false),
     UNIFORM_PRIOR("Uniform", true, false, false),
     EXPONENTIAL_PRIOR("Exponential", true, true, true),
     LAPLACE_PRIOR("Laplace", true, true, true),
@@ -23,6 +49,7 @@ public enum PriorType {
     INVERSE_GAMMA_PRIOR("Inverse Gamma", true, true, true),
     BETA_PRIOR("Beta", true, true, true),
     ONE_OVER_X_PRIOR("1/x", true, true, false),
+    DIRICHLET_PRIOR("Dirichlet", false, false, false),
     CTMC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", true, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", true, false, false),
     NORMAL_HPM_PRIOR("Normal HPM", true, false, false),
@@ -79,6 +106,8 @@ public enum PriorType {
                 break;
             case NONE_STATISTIC:
                 break;
+            case NONE_FIXED:
+                break;
             case ONE_OVER_X_PRIOR:
                 break;
             case CTMC_RATE_REFERENCE_PRIOR:
@@ -123,6 +152,9 @@ public enum PriorType {
                 break;
             case NONE_STATISTIC:
                 buffer.append("Indirectly Specified Through Other Parameter");
+                break;
+            case NONE_FIXED:
+                buffer.append("Fixed value");
                 break;
             case UNDEFINED:
                 buffer.append("Not yet specified");
@@ -179,8 +211,11 @@ public enum PriorType {
                 buffer.append(NumberUtil.formatDecimal(parameter.scale, 10, 6));
                 buffer.append("]");
                 break;
+            case DIRICHLET_PRIOR:
+                buffer.append("Dirichlet [1,1]");
+                break;
             case ONE_OVER_X_PRIOR:
-                buffer.append("1/x"); // rename Jeffreys prior to 1/x prior everywhere in Beauti
+                buffer.append("1/x");
                 break;
             case POISSON_PRIOR:
                 buffer.append("Poisson [");
@@ -224,8 +259,10 @@ public enum PriorType {
         }
 
 
-        if (parameter.priorType.isInitializable && parameter.initial != Double.NaN) {
-            buffer.append(", initial=").append(NumberUtil.formatDecimal(parameter.initial, 10, 6));
+        if (parameter.priorType == NONE_FIXED) {
+            buffer.append(", value=").append(NumberUtil.formatDecimal(parameter.getInitial(), 10, 6));
+        } else if (parameter.priorType.isInitializable && parameter.getInitial() != Double.NaN) {
+            buffer.append(", initial=").append(NumberUtil.formatDecimal(parameter.getInitial(), 10, 6));
         }
 
         return buffer.toString();
@@ -303,13 +340,14 @@ public enum PriorType {
         }
         if (parameter.isCMTCRate) {
             return new PriorType[]{
+                    NONE_FIXED,
+                    CTMC_RATE_REFERENCE_PRIOR,
                     NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     NORMAL_PRIOR,
                     LOGNORMAL_PRIOR,
                     GAMMA_PRIOR,
-                    CTMC_RATE_REFERENCE_PRIOR,
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
         }
@@ -320,6 +358,7 @@ public enum PriorType {
         }
         if (parameter.isZeroOne) {
             return new PriorType[]{
+                    NONE_FIXED,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     NORMAL_PRIOR,
@@ -330,6 +369,7 @@ public enum PriorType {
         }
         if (parameter.isNonNegative) {
             return new PriorType[]{
+                    NONE_FIXED,
                     NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -343,6 +383,7 @@ public enum PriorType {
 
         // just a continuous parameter
         return new PriorType[]{
+                NONE_FIXED,
                 NONE_IMPROPER,
                 UNIFORM_PRIOR,
                 EXPONENTIAL_PRIOR,

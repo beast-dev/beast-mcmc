@@ -1,20 +1,42 @@
+/*
+ * TransmissionExchangeOperatorA.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 /**
  * Implements branch exchange operations that leave the transmission tree unchanged. As this already severely
@@ -89,8 +111,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         if(resampleInfectionTimes){
             BranchMapModel branchMap = c2cLikelihood.getBranchMap();
 
-
-
             AbstractCase iCase = branchMap.get(i.getNumber());
             AbstractCase jCase = branchMap.get(j.getNumber());
             AbstractCase parentCase = branchMap.get(iP.getNumber());
@@ -104,13 +124,6 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
             }
 
         }
-
-/*
-        I tend to think that this may fail quite a lot of the time due to lack of candidates... a version that does
-        actually adjust heights might be necessary in the long run. Narrow exchange might be much more likely to
-        actually succeed in changing the tree if the paintings allow the tree to be changed in that way; might
-        have to investigate which problem is more serious.
-*/
 
         exchangeNodes(tree, i, j, iP, jP);
 
@@ -132,7 +145,7 @@ public class TransmissionExchangeOperatorA extends AbstractTreeOperator {
         if(parent==null){
             throw new RuntimeException("Can't exchange the root node");
         }
-        Integer[] possibleParentSwaps = c2cLikelihood.samePartition(parent, false);
+        Integer[] possibleParentSwaps = c2cLikelihood.getTreeModel().samePartitionElement(parent);
         for(Integer index: possibleParentSwaps){
             NodeRef newParent = tree.getNode(index);
             if(!tree.isExternal(newParent) && newParent!=parent){

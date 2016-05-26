@@ -1,7 +1,7 @@
 /*
- * ModelPanel.java
+ * TreesPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -210,11 +210,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             if (options.useStarBEAST) {
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
-
-                List<ClockModelGroup> groupList = options.clockModelOptions.getClockModelGroups();// all data partitions
-                for (ClockModelGroup clockModelGroup : groupList) { // todo correct?
-                    options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup); // fix 1st partition
-                }
 
             } else {
 //                if (options.hasData() && options.contains(Microsatellite.INSTANCE)) {

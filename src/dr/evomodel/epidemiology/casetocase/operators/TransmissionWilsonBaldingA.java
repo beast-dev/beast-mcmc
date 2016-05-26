@@ -1,20 +1,43 @@
+/*
+ * TransmissionWilsonBaldingA.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.epidemiology.casetocase.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.epidemiology.casetocase.AbstractCase;
-import dr.evomodel.epidemiology.casetocase.AbstractOutbreak;
 import dr.evomodel.epidemiology.casetocase.BranchMapModel;
 import dr.evomodel.epidemiology.casetocase.CaseToCaseTreeLikelihood;
+import dr.evomodel.epidemiology.casetocase.PartitionedTreeModel;
 import dr.evomodel.operators.AbstractTreeOperator;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Parameter;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.math.MathUtils;
 import dr.xml.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 /**
@@ -54,7 +77,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
     }
 
     public void proposeTree() throws OperatorFailedException {
-        TreeModel tree = c2cLikelihood.getTreeModel();
+        PartitionedTreeModel tree = c2cLikelihood.getTreeModel();
         BranchMapModel branchMap = c2cLikelihood.getBranchMap();
         NodeRef i;
         double oldMinAge, newMinAge, newRange, oldRange, newAge, q;
@@ -68,14 +91,16 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         int eligibleNodeCount = eligibleNodes.size();
 
         final NodeRef iP = tree.getParent(i);
-        Integer[] samePaintings = c2cLikelihood.samePartition(iP, false);
+
+        Integer[] sameElements = tree.samePartitionElement(iP);
+
         HashSet<Integer> possibleDestinations = new HashSet<Integer>();
         // we can insert the node above OR BELOW any node in the same partition
-        for (Integer samePainting : samePaintings) {
-            possibleDestinations.add(samePainting);
-            if (!tree.isExternal(tree.getNode(samePainting))) {
-                possibleDestinations.add(tree.getChild(tree.getNode(samePainting), 0).getNumber());
-                possibleDestinations.add(tree.getChild(tree.getNode(samePainting), 1).getNumber());
+        for (Integer sameElement : sameElements) {
+            possibleDestinations.add(sameElement);
+            if (!tree.isExternal(tree.getNode(sameElement))) {
+                possibleDestinations.add(tree.getChild(tree.getNode(sameElement), 0).getNumber());
+                possibleDestinations.add(tree.getChild(tree.getNode(sameElement), 1).getNumber());
             }
         }
         Integer[] pd = possibleDestinations.toArray(new Integer[possibleDestinations.size()]);
@@ -106,7 +131,6 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
             if(PiP!=null){
                 PiPCase = branchMap.get(PiP.getNumber());
             }
-
 
             // what happens on i's branch
 
@@ -185,7 +209,7 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
         tree.endTreeEdit();
 
         if(DEBUG){
-            c2cLikelihood.checkPartitions();
+            c2cLikelihood.getTreeModel().checkPartitions();
         }
         logq = Math.log(q);
 
@@ -202,8 +226,8 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
     private boolean eligibleForMove(NodeRef node, TreeModel tree, BranchMapModel branchMap){
         // to be eligible for this move, the node's parent and grandparent, or parent and other child, must be in the
         // same partition (so removing the parent has no effect on the transmission tree)
-
-        return  (!tree.isRoot(node) && ((tree.getParent(tree.getParent(node))!=null
+        return  (!tree.isRoot(node)
+                && ((tree.getParent(tree.getParent(node))!=null
                 && branchMap.get(tree.getParent(node).getNumber())
                 ==branchMap.get(tree.getParent(tree.getParent(node)).getNumber()))
                 || branchMap.get(tree.getParent(node).getNumber())==branchMap.get(getOtherChild(tree,
@@ -271,7 +295,4 @@ public class TransmissionWilsonBaldingA extends AbstractTreeOperator {
             };
         }
     };
-
-
-
 }

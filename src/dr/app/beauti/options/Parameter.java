@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Parameter.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -10,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -23,11 +25,14 @@
 
 package dr.app.beauti.options;
 
+import cern.colt.bitvector.QuickBitVector;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.math.distributions.Distribution;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -47,6 +52,10 @@ public class Parameter implements Serializable {
     // Required para
     private String baseName;
     private final String description;
+
+    private int dimensionWeight = 1;
+
+    private final List<Parameter> subParameters = new ArrayList<Parameter>();
 
     // final Builder para
     public String taxaId; // needs to change TMRCA stat name. Issue 520
@@ -69,9 +78,17 @@ public class Parameter implements Serializable {
     public final boolean isPriorFixed;
     public PriorType priorType;
 
+    public double getInitial() {
+        return initial;
+    }
+
+    public void setInitial(double initial) {
+        this.initial = initial;
+    }
+
     // Editable fields
-    public boolean isFixed;
-    public double initial;
+    private boolean isFixed;
+    private double initial;
     public boolean isTruncated;
     public double truncationUpper;
     public double truncationLower;
@@ -469,7 +486,9 @@ public class Parameter implements Serializable {
         double upper = Double.POSITIVE_INFINITY;
 
         if (isZeroOne) {
-            if (upper > 1) upper = 1.0;
+            if (upper > 1) {
+                upper = 1.0;
+            }
         }
 
         if (priorType == PriorType.UNIFORM_PRIOR) {
@@ -483,12 +502,56 @@ public class Parameter implements Serializable {
         return upper;
     }
 
+    public boolean isFixed() {
+        return priorType == PriorType.NONE_FIXED;
+    }
+
+    public void setFixed(boolean isFixed) {
+        if (isFixed) {
+            priorType = PriorType.NONE_FIXED;
+        }
+    }
+
     public boolean isMeanInRealSpace() {
         return meanInRealSpace;
     }
 
     public void setMeanInRealSpace(boolean meanInRealSpace) {
         this.meanInRealSpace = meanInRealSpace;
+    }
+
+    public int[] getParameterDimensionWeights() {
+//        if (getOptions() != null && getOptions() instanceof PartitionSubstitutionModel) {
+//            return ((PartitionSubstitutionModel)getOptions()).getPartitionCodonWeights();
+//        }
+        if (getSubParameters().size() > 0) {
+            int[] weights = new int[getSubParameters().size()];
+            for (int i = 0; i < weights.length; i++) {
+                weights[i] = getSubParameters().get(i).getDimensionWeight();
+            }
+            return weights;
+        }
+        return new int[] { dimensionWeight };
+    }
+
+    public int getDimensionWeight() {
+        return dimensionWeight;
+    }
+
+    public void setDimensionWeight(int dimensionWeight) {
+        this.dimensionWeight = dimensionWeight;
+    }
+
+    public void addSubParameter(Parameter parameter) {
+        subParameters.add(parameter);
+    }
+
+    public void clearSubParameters() {
+        subParameters.clear();
+    }
+
+    public List<Parameter> getSubParameters() {
+        return subParameters;
     }
 
     @Override

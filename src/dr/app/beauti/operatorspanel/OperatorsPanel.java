@@ -1,7 +1,7 @@
 /*
  * OperatorsPanel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -29,6 +29,8 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Operator;
+import dr.app.beauti.types.OperatorSetType;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.RealNumberCellEditor;
 import jam.framework.Exportable;
 import jam.table.HeaderRenderer;
@@ -58,6 +60,12 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
     OperatorTableModel operatorTableModel = null;
 
     JCheckBox autoOptimizeCheck = null;
+
+    JComboBox operatorSetCombo = new JComboBox(new OperatorSetType[] {
+            OperatorSetType.DEFAULT,
+            OperatorSetType.NEW_TREE_MIX,
+            OperatorSetType.FIXED_TREE_TOPOLOGY
+    });
 
     public List<Operator> operators = new ArrayList<Operator>();
 
@@ -126,12 +134,29 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         toolBar1.setOpaque(false);
         toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
         toolBar1.add(autoOptimizeCheck);
+        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
+        final JLabel label = new JLabel("Operator mix: ");
+        toolBar1.add(label);
+        PanelUtils.setupComponent(operatorSetCombo);
+        toolBar1.add(operatorSetCombo);
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
         add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
+
+
+        operatorSetCombo.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        options.operatorSetType = (OperatorSetType)operatorSetCombo.getSelectedItem();
+                        operators = options.selectOperators();
+                        operatorTableModel.fireTableDataChanged();
+                        operatorsChanged();
+                    }
+                }
+        );
     }
 
     public final void operatorsChanged() {
@@ -140,6 +165,8 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
+
+        operatorSetCombo.setSelectedItem(options.operatorSetType);
 
         autoOptimizeCheck.setSelected(options.autoOptimize);
         operators = options.selectOperators();
@@ -176,19 +203,19 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             Operator op = operators.get(row);
             switch (col) {
                 case 0:
-                    return op.inUse;
+                    return op.isUsed();
                 case 1:
                     return op.getName();
                 case 2:
-                    return op.operatorType;
+                    return op.getOperatorType();
                 case 3:
                     if (op.isTunable()) {
-                        return op.tuning;
+                        return op.getTuning();
                     } else {
                         return "n/a";
                     }
                 case 4:
-                    return op.weight;
+                    return op.getWeight();
                 case 5:
                     return op.getDescription();
             }
@@ -199,14 +226,13 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
             Operator op = operators.get(row);
             switch (col) {
                 case 0:
-                    op.inUse = (Boolean) aValue;
+                    op.setUsed((Boolean) aValue);
                     break;
                 case 3:
-                    op.tuning = (Double) aValue;
-                    op.tuningEdited = true;
+                    op.setTuning((Double) aValue);
                     break;
                 case 4:
-                    op.weight = (Double) aValue;
+                    op.setWeight((Double) aValue);
                     break;
             }
             operatorsChanged();
@@ -227,13 +253,14 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
             switch (col) {
                 case 0:// Check box
-                    editable = true;
+                    // if the paramter is fixed then 'in use' can't be turned on
+                    editable = !op.isParameterFixed();
                     break;
                 case 3:
-                    editable = op.inUse && op.isTunable();
+                    editable = op.isUsed() && op.isTunable();
                     break;
                 case 4:
-                    editable = op.inUse;
+                    editable = op.isUsed();
                     break;
                 default:
                     editable = false;
@@ -286,10 +313,17 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
                     aRow, aColumn);
 
             Operator op = operators.get(aRow);
-            if (!op.inUse && aColumn > 0)
+            if (!op.isUsed() && aColumn > 0) {
                 renderer.setForeground(Color.gray);
-            else
+            } else {
                 renderer.setForeground(Color.black);
+            }
+            if (op.isParameterFixed()) {
+               setToolTipText(
+                       "This parameter is set to a fixed value. To turn \r" +
+                       "this move on, select a prior in the Priors tab");
+            }
+
             return this;
         }
 

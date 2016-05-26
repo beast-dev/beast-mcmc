@@ -1,7 +1,7 @@
 /*
  * SVSComplexSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,9 +25,11 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.evomodel.substmodel.*;
 import dr.inference.model.*;
 import dr.evolution.datatype.DataType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc Suchard
@@ -45,6 +47,8 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
             this.indicatorsParameter  = indicatorsParameter;
             addVariable(indicatorsParameter);
         }
+
+        setupIndicatorDimensionNames(-1);
     }
 
     @Override
@@ -52,6 +56,27 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         for (int i = 0; i < rates.length; i++) {
             rates[i] = ratesParameter.getParameterValue(i) * indicatorsParameter.getParameterValue(i);
         }
+    }
+
+    protected void setupIndicatorDimensionNames(int relativeTo) {
+        List<String> indicatorNames = new ArrayList<String>();
+
+        String indicatorPrefix = indicatorsParameter.getParameterName();
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                indicatorNames.add(getDimensionString(i, j, indicatorPrefix));
+            }
+        }
+
+        for (int j = 0; j < dataType.getStateCount(); ++j) {
+            for (int i = j + 1; i < dataType.getStateCount(); ++i) {
+                indicatorNames.add(getDimensionString(i, j, indicatorPrefix));
+            }
+        }
+
+        String[] tmp = new String[0];
+        indicatorsParameter.setDimensionNames(indicatorNames.toArray(tmp));
     }
 
     public Parameter getIndicators() {

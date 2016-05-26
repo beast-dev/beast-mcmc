@@ -1,7 +1,7 @@
 /*
- * BranchSpecific.java
+ * LineageSpecificBranchModel.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -88,7 +88,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
 	public LineageSpecificBranchModel(TreeModel treeModel, //
 			FrequencyModel rootFrequencyModel, //
 			final List<SubstitutionModel> substitutionModels, //
-			CountableBranchCategoryProvider categoriesProvider, //
+//			CountableBranchCategoryProvider categoriesProvider, //
 			Parameter categoriesParameter //
 	) {
 
@@ -96,10 +96,12 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
 
 		this.treeModel = treeModel;
 		this.substitutionModels = substitutionModels;
-		this.categoriesProvider = categoriesProvider;
+//		this.categoriesProvider = categoriesProvider;
 		this.categoriesParameter = categoriesParameter;
 		this.rootFrequencyModel = rootFrequencyModel;
 
+		this.categoriesProvider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(treeModel, categoriesParameter);
+		
 		this.nodeMap = new HashMap<NodeRef, Mapping>();
 
 		for (SubstitutionModel model : this.substitutionModels) {
@@ -275,9 +277,10 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
 			}
             
 			Parameter uCategories = new Parameter.Default(2, 0);
-            CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
+//            CountableBranchCategoryProvider provider = new CountableBranchCategoryProvider.IndependentBranchCategoryModel(tree, uCategories);
 			
-            LineageSpecificBranchModel branchSpecific = new LineageSpecificBranchModel(tree, freqModel, substModels, provider, uCategories);
+            LineageSpecificBranchModel branchSpecific = new LineageSpecificBranchModel(tree, freqModel, substModels, //provider, 
+            		uCategories);
 
             BeagleTreeLikelihood like = new BeagleTreeLikelihood(convert, //
                     tree, //

@@ -1,7 +1,7 @@
 /*
- * ModelsPanel.java
+ * ClockModelsPanel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -45,35 +45,32 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
- * @author Alexei Drummond
- * @author Walter Xie
  * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
- * @deprecated
  */
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
-    public final static boolean DEBUG = false;
+        public final static boolean DEBUG = false;
 
     private static final long serialVersionUID = 2778103564318492601L;
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
 
-    private final String[] columnToolTips = {null, "Molecular clock model",
-            "Decide whether to estimate molecular clock model",
-            "Provide the rate if it is fixed"};
-
-    JTable clockTable = null;
-    ClockTableModel clockTableModel = null;
-    BeautiOptions options = null;
+    private JTable modelTable = null;
+    private ModelTableModel modelTableModel = null;
+    private BeautiOptions options = null;
 
     JPanel modelPanelParent;
     PartitionClockModel currentModel = null;
@@ -87,6 +84,9 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
+    private CloneModelDialog cloneModelDialog = null;
+
+    CloneModelsAction cloneModelsAction = new CloneModelsAction();
 
     public ClockModelsPanel(BeautiFrame parent) {
 
@@ -94,30 +94,28 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         this.frame = parent;
 
-        clockTableModel = new ClockTableModel();
-        clockTable = new JTable(clockTableModel); // {
-            //Implement table header tool tips.
-//            protected JTableHeader createDefaultTableHeader() {
-//                return new JTableHeader(columnModel) {
-//                    public String getToolTipText(MouseEvent e) {
-//                        Point p = e.getPoint();
-//                        int index = columnModel.getColumnIndexAtX(p.x);
-//                        int realIndex = columnModel.getColumn(index).getModelIndex();
-//                        return columnToolTips[realIndex];
-//                    }
-//                };
-//            }
-//        };
+        modelTableModel = new ModelTableModel();
+        modelTable = new JTable(modelTableModel);
 
-        initTable(clockTable);
+        modelTable.getTableHeader().setReorderingAllowed(false);
+        modelTable.getTableHeader().setResizingAllowed(false);
+//        modelTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        clockTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        final TableColumnModel model = modelTable.getColumnModel();
+        final TableColumn tableColumn0 = model.getColumn(0);
+        tableColumn0.setCellRenderer(new ModelsTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(modelTable);
+
+        modelTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        modelTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
                 selectionChanged();
             }
         });
 
-        JScrollPane scrollPane = new JScrollPane(clockTable,
+        JScrollPane scrollPane = new JScrollPane(modelTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
@@ -135,6 +133,16 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 //        panel.add(controlPanel1, BorderLayout.SOUTH);
         panel.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
 
+        JToolBar toolBar = new JToolBar();
+        toolBar.setFloatable(false);
+        toolBar.setOpaque(false);
+
+        toolBar.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        JButton button = new JButton(cloneModelsAction);
+        PanelUtils.setupComponent(button);
+        toolBar.add(button);
+        panel.add(toolBar, BorderLayout.SOUTH);
+
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         modelPanelParent.setOpaque(false);
         modelBorder = new TitledBorder("Substitution Model");
@@ -148,82 +156,15 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         scrollPane2.getViewport().setOpaque(false);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, scrollPane2);
-        splitPane.setDividerLocation(0.5);
+        splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
-
-        PanelUtils.setupComponent(fixedMeanRateCheck);
-        fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
-        fixedMeanRateCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
-//                if (fixedMeanRateCheck.isSelected()) {
-//                    options.clockModelOptions.fixMeanRate();
-//                } else {
-//                    options.clockModelOptions.fixRateOfFirstClockPartition();
-//                }
-
-                clockTableModel.fireTableDataChanged();
-                fireModelsChanged();
-            }
-        });
-        fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the mean substitution rate,<br>"
-                + "rather than try to infer it. If this option is turned off, then<br>"
-                + "either the sequences should have dates or the tree should have<br>"
-                + "sufficient calibration informations specified as priors.<br>"
-                + "In addition, it is only available for multi-clock partitions." + "</html>");// TODO Alexei
-
-        PanelUtils.setupComponent(meanRateField);
-        meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
-        meanRateField.setValue(1.0);
-        meanRateField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent ev) {
-                frame.setDirty();
-            }
-        });
-        meanRateField.setToolTipText("<html>Enter the fixed mean rate here.</html>");
-        meanRateField.setColumns(10);
-
-        OptionsPanel panel2 = new OptionsPanel(12, 12);
-        panel2.addComponents(fixedMeanRateCheck, meanRateField);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
-        add(panel2, BorderLayout.SOUTH);
-    }
-
-    private void initTable(JTable clockTable){
-//        clockTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        clockTable.getTableHeader().setReorderingAllowed(false);
-//        clockTable.getTableHeader().setDefaultRenderer(new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-
-        TableColumn col = clockTable.getColumnModel().getColumn(0);
-        col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-//        col.setMinWidth(80);
-
-        col = clockTable.getColumnModel().getColumn(1);
-        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-//        col.setMinWidth(260);
-
-        col = clockTable.getColumnModel().getColumn(2);
-        col.setMinWidth(60);
-        col.setMaxWidth(60);
-
-        col = clockTable.getColumnModel().getColumn(3);
-        col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        col.setCellEditor(new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
-//        col.setMinWidth(80);
-
-        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(clockTable);
-    }
-
-    private void modelsChanged() {
-        TableColumn col = clockTable.getColumnModel().getColumn(1);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.RANDOM_LOCAL_CLOCK).toArray())));
     }
 
     private void resetPanel() {
@@ -239,34 +180,33 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     public void setOptions(BeautiOptions options) {
 
+        if (DEBUG) {
+            Logger.getLogger("dr.app.beauti").info("ModelsPanel.setOptions");
+        }
+
         this.options = options;
 
         resetPanel();
 
         settingOptions = true;
 
-//        fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
-//        fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
-//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
-//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
-//        meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());
-
-        int selRow = clockTable.getSelectedRow();
-        clockTableModel.fireTableDataChanged();
+        int selRow = modelTable.getSelectedRow();
+        modelTableModel.fireTableDataChanged();
         if (options.getPartitionSubstitutionModels().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
-            clockTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+            modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
 
         if (currentModel == null && options.getPartitionClockModels().size() > 0) {
-            clockTable.getSelectionModel().setSelectionInterval(0, 0);
+            modelTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
-        modelsChanged();
-
         settingOptions = false;
+
+        validate();
+        repaint();
     }
 
     public void getOptions(BeautiOptions options) {
@@ -282,17 +222,34 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void selectionChanged() {
-        int selRow = clockTable.getSelectedRow();
+        if (modelTable.getSelectedRowCount() == 1) {
+            int selRow = modelTable.getSelectedRow();
 
         if (selRow >= options.getPartitionClockModels().size()) {
             selRow = 0;
-            clockTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+                modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
 
         if (selRow >= 0) {
             setCurrentModel(options.getPartitionClockModels().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
+            }
+        } else {
+            setCurrentModels(getSelectedModels());
         }
+    }
+
+    private java.util.List<PartitionClockModel> getSelectedModels() {
+        java.util.List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
+
+        for (int row : modelTable.getSelectedRows()) {
+            models.add(options.getPartitionClockModels().get(row));
+        }
+        if (models.size() == 0) {
+            models.addAll(options.getPartitionClockModels());
+        }
+
+        return models;
     }
 
     /**
@@ -301,25 +258,46 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
      * @param model the new model to display
      */
     private void setCurrentModel(PartitionClockModel model) {
+        modelPanelParent.removeAll();
 
-        if (model != null) {
-            if (currentModel != null) modelPanelParent.removeAll();
+        currentModel = model;
 
-            PartitionClockModelPanel panel = modelPanels.get(model);
+        if (currentModel != null) {
+            PartitionClockModelPanel panel = modelPanels.get(currentModel);
             if (panel == null) {
                 panel = new PartitionClockModelPanel(model);
                 modelPanels.put(model, panel);
             }
 
-            currentModel = model;
+            panel.setOptions();
             modelPanelParent.add(panel);
+
+        } else {
+
+        }
+
+        cloneModelsAction.setEnabled(true);
 
             updateBorder();
         }
+
+    private void setCurrentModels(java.util.List<PartitionClockModel> models) {
+        modelPanelParent.removeAll();
+
+        currentModel = null;
+
+        updateBorder();
+        cloneModelsAction.setEnabled(true);
+
+        repaint();
     }
 
     private void updateBorder() {
-        modelBorder.setTitle("Clock Model - " + currentModel.getName());
+        if (currentModel != null) {
+            modelBorder.setTitle("Clock Model - " + currentModel.getName());
+        } else {
+            modelBorder.setTitle("Multiple clock models selected");
+        }
         repaint();
     }
 
@@ -333,15 +311,43 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         return false;
     }
 
+
+    private void cloneModelSettings() {
+        if (cloneModelDialog == null) {
+            cloneModelDialog = new CloneModelDialog(frame);
+        }
+
+
+            java.util.List<PartitionClockModel> sourceModels = new ArrayList<PartitionClockModel>();
+
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                    sourceModels.add(model);
+            }
+
+            int result = cloneModelDialog.showDialog(sourceModels);
+
+            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+        PartitionClockModel sourceModel = cloneModelDialog.getSourceModel();
+            for (PartitionClockModel model : getSelectedModels()) {
+                if (!model.equals(sourceModel)) {
+                    throw new UnsupportedOperationException("Not implemented yet");
+//                    model.copyFrom(sourceModel);
+                }
+            }
+
+            repaint();
+
+    }
+
     public JComponent getExportableComponent() {
         return this;
     }
 
     class ModelTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = -6707994233020715574L;
         String[] columnNames = {"Clock Model"};
 
@@ -415,6 +421,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         }
     }
 
+
     class ModelsTableCellRenderer extends TableRenderer {
 
         public ModelsTableCellRenderer(int alignment, Insets insets) {
@@ -444,165 +451,16 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     }
 
-
-    class ClockTableModel extends AbstractTableModel {
-        private static final long serialVersionUID = -2852144669936634910L;
-
-//        String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};
-        String[] columnNames = {"Name", "Model", "Estimate", "Rate"};
-
-        public ClockTableModel() {
+    public class CloneModelsAction extends AbstractAction {
+        public CloneModelsAction() {
+            super("Clone Settings...");
+            setToolTipText("Use this tool to copy settings to selected models");
         }
 
-        public int getColumnCount() {
-//        	if (estimateRelatieRateCheck.isSelected()) {
-//        		return columnNames2.length;
-//        	} else {
-            return columnNames.length;
-//        	}
-        }
-
-        public int getRowCount() {
-            if (options == null) return 0;
-            if (options.getPartitionClockModels().size() < 2) {
-                fixedMeanRateCheck.setEnabled(false);
-            } else {
-                fixedMeanRateCheck.setEnabled(true);
-            }
-            return options.getPartitionClockModels().size();
-        }
-
-        public Object getValueAt(int row, int col) {
-            PartitionClockModel model = options.getPartitionClockModels().get(row);
-            switch (col) {
-                case 0:
-                    return model.getName();
-                case 1:
-                    return model.getClockType();
-                case 2:
-                    return model.isEstimatedRate();
-                case 3:
-                    return model.getRate();
-            }
-            return null;
-        }
-
-        public void setValueAt(Object aValue, int row, int col) {
-            PartitionClockModel model = options.getPartitionClockModels().get(row);
-            switch (col) {
-                case 0:
-                    String name = ((String) aValue).trim();
-                    if (name.length() > 0) {
-                        model.setName(name);
-                    }
-                    break;
-                case 1:
-                    model.setClockType((ClockType) aValue);
-                    break;
-                case 2:
-                    model.setEstimatedRate((Boolean) aValue);
-//                    if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {
-//                        if (!options.clockModelOptions.validateRelativeTo()) {
-//                            JOptionPane.showMessageDialog(frame, "It must have at least one clock rate to be fixed !",
-//                                    "Validation Of Relative To ?th Rate", JOptionPane.WARNING_MESSAGE);
-//                            model.setEstimatedRate(false);
-//                        }
-//                    }
-                    break;
-                case 3:
-                    model.setRate((Double) aValue, true);
-                    options.selectParameters();
-                    break;
-                default:
-                    throw new IllegalArgumentException("unknown column, " + col);
-            }
-            fireModelsChanged();
-        }
-
-        public boolean isCellEditable(int row, int col) {
-            switch (col) {
-                case 2:// Check box
-                    return !fixedMeanRateCheck.isSelected();
-                case 3:
-                    return !fixedMeanRateCheck.isSelected() && !((Boolean) getValueAt(row, 2));
-                default:
-                    return true;
-            }
-        }
-
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
-
-        public Class getColumnClass(int c) {
-            if (getRowCount() == 0) {
-                return Object.class;
-            }
-            return getValueAt(0, c).getClass();
-        }
-
-        public String toString() {
-            StringBuffer buffer = new StringBuffer();
-
-            buffer.append(getColumnName(0));
-            for (int j = 1; j < getColumnCount(); j++) {
-                buffer.append("\t");
-                buffer.append(getColumnName(j));
-            }
-            buffer.append("\n");
-
-            for (int i = 0; i < getRowCount(); i++) {
-                buffer.append(getValueAt(i, 0));
-                for (int j = 1; j < getColumnCount(); j++) {
-                    buffer.append("\t");
-                    buffer.append(getValueAt(i, j));
-                }
-                buffer.append("\n");
-            }
-
-            return buffer.toString();
+        public void actionPerformed(ActionEvent ae) {
+            cloneModelSettings();
         }
     }
 
 
-    class ClockTableCellRenderer extends TableRenderer {
-
-        public ClockTableCellRenderer(int alignment, Insets insets) {
-            super(alignment, insets);
-        }
-
-        public Component getTableCellRendererComponent(JTable aTable,
-                                                       Object value,
-                                                       boolean aIsSelected,
-                                                       boolean aHasFocus,
-                                                       int aRow, int aColumn) {
-
-            if (value == null) return this;
-
-            Component renderer = super.getTableCellRendererComponent(aTable,
-                    value,
-                    aIsSelected,
-                    aHasFocus,
-                    aRow, aColumn);
-
-            if (fixedMeanRateCheck.isSelected() && aColumn > 1) {
-                renderer.setForeground(Color.gray);
-            } else if (!fixedMeanRateCheck.isSelected() && aColumn == 3 && (Boolean) aTable.getValueAt(aRow, 2)) {
-                renderer.setForeground(Color.gray);
-            } else {
-                renderer.setForeground(Color.black);
-            }
-
-            return this;
-        }
-
-    }
-
-
-
-//    Action addModelAction = new AbstractAction("+") {
-//        public void actionPerformed(ActionEvent ae) {
-//            createModel();
-//        }
-//    };
 }

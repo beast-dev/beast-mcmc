@@ -1,7 +1,7 @@
 /*
  * PatternList.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -91,6 +91,12 @@ public interface PatternList extends TaxonList, Identifiable {
      * @return the frequency of each state
      */
     double[] getStateFrequencies();
+
+    /**
+     * Are the patterns only the unique ones (i.e., compressed)?
+     * @return are unique?
+     */
+    boolean areUnique();
 
     /**
      * Helper routines for pattern lists.

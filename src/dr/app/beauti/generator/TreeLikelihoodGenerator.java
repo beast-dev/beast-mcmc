@@ -1,7 +1,7 @@
 /*
  * TreeLikelihoodGenerator.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,7 +32,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -40,9 +39,6 @@ import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.LocalClockModelParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
@@ -132,12 +128,16 @@ public class TreeLikelihoodGenerator extends Generator {
 
         Attribute[] attributes;
         if (tag.equals(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD)) {
+            AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                    .getComponentOptions(AncestralStatesComponentOptions.class);
+            boolean saveCompleteHistory = ancestralStatesOptions.isCompleteHistoryLogging(partition);
             attributes = new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, idString),
                     new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
                     new Attribute.Default<Boolean>(MarkovJumpsTreeLikelihoodParser.USE_UNIFORMIZATION, true),
                     new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1),
                     new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                    new Attribute.Default<String>(MarkovJumpsTreeLikelihoodParser.SAVE_HISTORY, saveCompleteHistory ? "true" : "false"),
             };
         } else if (tag.equals(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD)) {
             attributes = new Attribute[]{
@@ -173,34 +173,7 @@ public class TreeLikelihoodGenerator extends Generator {
             writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
 
-        switch (clockModel.getClockType()) {
-            case STRICT_CLOCK:
-                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-            case UNCORRELATED:
-                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-            case RANDOM_LOCAL_CLOCK:
-                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, clockModel.getPrefix()
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-            case FIXED_LOCAL_CLOCK:
-                writer.writeIDref(LocalClockModelParser.LOCAL_CLOCK_MODEL, clockModel.getPrefix()
-                        + BranchRateModel.BRANCH_RATES);
-                break;
-
-
-            case AUTOCORRELATED:
-                throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
-//            	writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
-//                        + BranchRateModel.BRANCH_RATES);
-//                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown clock model");
-        }
+        ClockModelGenerator.writeBranchRatesModelRef(clockModel, writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, prefix, writer);
 

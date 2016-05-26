@@ -1,7 +1,7 @@
 /*
  * SubstitutionModelDelegate.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -44,7 +44,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id$
  */
-public final class SubstitutionModelDelegate implements Serializable {
+public final class SubstitutionModelDelegate implements EvolutionaryProcessDelegate, Serializable {
 
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;

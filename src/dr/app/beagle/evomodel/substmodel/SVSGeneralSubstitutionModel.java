@@ -1,7 +1,7 @@
 /*
  * SVSGeneralSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,12 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.inference.model.*;
+import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.evolution.datatype.DataType;
+import dr.inference.model.*;
+
+import java.util.*;
 
 /**
  * @author Marc Suchard
@@ -48,6 +50,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
             addVariable(indicatorsParameter);
         }
 
+        setupIndicatorDimensionNames(-1);
     }
 
     @Override
@@ -55,6 +58,21 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         for (int i = 0; i < rates.length; i++) {
             rates[i] = ratesParameter.getParameterValue(i) * indicatorsParameter.getParameterValue(i);
         }
+    }
+
+    protected void setupIndicatorDimensionNames(int relativeTo) {
+        List<String> indicatorNames = new ArrayList<String>();
+
+        String indicatorPrefix = indicatorsParameter.getParameterName();
+
+        for (int i = 0; i < dataType.getStateCount(); ++i) {
+            for (int j = i + 1; j < dataType.getStateCount(); ++j) {
+                indicatorNames.add(getDimensionString(i, j, indicatorPrefix));
+            }
+        }
+
+        String[] tmp = new String[0];
+        indicatorsParameter.setDimensionNames(indicatorNames.toArray(tmp));
     }
 
     public Parameter getIndicators() {
@@ -114,6 +132,11 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
      */
     public String prettyName() {
         return "SVSGeneralSubstitutionModel-connectedness";
+    }
+
+    @Override
+    public Set<Likelihood> getLikelihoodSet() {
+        return new HashSet<Likelihood>(Arrays.asList(this));
     }
 
     @Override

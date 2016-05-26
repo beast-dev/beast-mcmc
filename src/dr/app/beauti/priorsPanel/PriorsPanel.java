@@ -1,7 +1,7 @@
 /*
  * PriorsPanel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,11 +31,9 @@ import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;
 import dr.app.beauti.components.linkedparameters.LinkedParameter;
 import dr.app.beauti.components.linkedparameters.LinkedParameterComponentOptions;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
-import dr.app.beauti.options.Operator;
-import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
@@ -360,7 +358,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
             if (parameter.truncationLower != firstParameter.truncationLower ||
                     parameter.truncationUpper != firstParameter.truncationUpper ||
-                    options.getOperator(parameter).operatorType != options.getOperator(firstParameter).operatorType) {
+                    options.getOperator(parameter).getOperatorType() != options.getOperator(firstParameter).getOperatorType()) {
                 JOptionPane.showMessageDialog(frame,
                         "Only parameters that share the same bounds\n" +
                                 "and have the same operator types can be linked.",
@@ -428,7 +426,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             Parameter parameter = parameters.get(rows[i]);
             if (parameter.isStatistic) {
                 JOptionPane.showMessageDialog(frame,
-                        "Statistics are not currently allowed.",
+                        "Statistics cannot be used in a hierarchical model.",
                         "HPM parameter linking error",
                         JOptionPane.WARNING_MESSAGE);
                 return;
@@ -577,7 +575,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 isCompatible = false;
             }
             Operator operator = options.getOperator(parameter);
-            if (operator == null || operator.operatorType != sourceOperator.operatorType) {
+            if (operator == null || operator.getOperatorType() != sourceOperator.getOperatorType()) {
                 isCompatible = false;
             }
             if (isCompatible) {
@@ -650,19 +648,17 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             if (parameter.getBaseName().endsWith("treeModel.rootHeight") || parameter.taxaId != null) { // param.taxa != null is TMRCA
 
                 if (options.treeModelOptions.isNodeCalibrated(parameter)) {
-                    List<ClockModelGroup> groupList;
+                    List<PartitionTreeModel> treeModels;
                     if (options.useStarBEAST) {
-                        groupList = options.clockModelOptions.getClockModelGroups();
+                        treeModels = options.getPartitionTreeModels();
                     } else {
-                        groupList = options.clockModelOptions.getClockModelGroups(options.getDataPartitions(parameter.getOptions()));
+                        treeModels = options.getPartitionTreeModels(options.getDataPartitions(parameter.getOptions()));
                     }
 
-                    for (ClockModelGroup clockModelGroup : groupList) {
-                        options.clockModelOptions.nodeCalibration(clockModelGroup);
+                    for (PartitionTreeModel treeModel : treeModels) {
+                        treeModel.setNodeCalibrations(true);
                     }
                     frame.setAllOptions();
-//        	} else {
-//        		options.clockModelOptions.fixRateOfFirstClockPartition();
                 }
             }
 

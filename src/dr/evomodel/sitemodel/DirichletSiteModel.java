@@ -1,8 +1,7 @@
 /*
  * DirichletSiteModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
- * Copyright (C) 2009      Benjamin Redelings
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional

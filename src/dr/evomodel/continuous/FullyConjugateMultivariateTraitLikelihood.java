@@ -1,7 +1,7 @@
 /*
  * FullyConjugateMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,17 +27,23 @@ package dr.evomodel.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
+import dr.math.KroneckerOperation;
 import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
+import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
+import dr.xml.Reportable;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Integrated multivariate trait likelihood that assumes a fully-conjugate prior on the root.
@@ -46,7 +52,7 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  */
-public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider {
+public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider, Reportable {
 
 //    public FullyConjugateMultivariateTraitLikelihood(String traitName,
 //                                                     MultivariateTraitTree treeModel,
@@ -231,9 +237,35 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         super.handleModelChangedEvent(model, object, index);
     }
 
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
+        if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
+            dimKnown=false;
+        }
+        PostPreKnown=false;
+        super.handleVariableChangedEvent(variable,index,type);
+    }
+
+    @Override
+    public void storeState() {
+        super.storeState();
+        storedPostPreKnown=PostPreKnown;
+        storedDimKnown=dimKnown;
+        if(preP!=null)
+         System.arraycopy(preP, 0, storedPreP, 0,preP.length);
+        if(preMeans!=null)
+         System.arraycopy(preMeans, 0, storedPreMeans, 0, preMeans.length);
+
+    }
+
+    @Override
     public void restoreState() {
         super.restoreState();
+        PostPreKnown=storedPostPreKnown;
         priorInformationKnown = false;
+        preP=storedPreP;
+        preMeans=storedPreMeans;
+        dimKnown=storedDimKnown;
     }
 
     public void makeDirty() {
@@ -253,6 +285,155 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     public boolean getComputeWishartSufficientStatistics() {
         return computeWishartStatistics;
     }
+
+    public void doPreOrderTraversal(NodeRef node) {
+
+        if(preP==null){
+            preP=new double[treeModel.getNodeCount()];
+            storedPreP=new double[treeModel.getNodeCount()];
+        }
+        if(!dimKnown){
+            preMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+            storedPreMeans=new double[treeModel.getNodeCount()][getRootNodeTrait().length];
+            dimKnown=true;
+        }
+
+        final int thisNumber = node.getNumber();
+
+
+        if (treeModel.isRoot(node)) {
+            preP[thisNumber] = rootPriorSampleSize;
+            for (int j = 0; j < dim; j++) {
+                preMeans[thisNumber][j] = rootPriorMean[j];
+            }
+
+
+        } else {
+
+            final NodeRef parentNode = treeModel.getParent(node);
+            final NodeRef sibNode = getSisterNode(node);
+
+            final int parentNumber = parentNode.getNumber();
+            final int sibNumber = sibNode.getNumber();
+
+
+
+	/*
+
+			  if (treeModel.isRoot(parentNode)){
+				  //partial precisions
+				    final double precisionParent = rootPriorSampleSize;
+			        final double precisionSib = postP[sibNumber];
+			        final double thisPrecision=1/treeModel.getBranchLength(node);
+			        double tp= precisionParent + precisionSib;
+			        preP[thisNumber]= tp*thisPrecision/(tp+thisPrecision);
+
+			        //partial means
+
+			        for (int j =0; j<dim;j++){
+			        	preMeans[thisNumber][j] = (precisionParent*preMeans[parentNumber][j] + precisionSib*rootPriorMean[j])/(precisionParent+precisionSib);
+			        }
+
+			  }else{
+	*/
+            //partial precisions
+            final double precisionParent = preP[parentNumber];
+            final double precisionSib = upperPrecisionCache[sibNumber];
+            final double thisPrecision = 1 / getRescaledBranchLengthForPrecision(node);
+            double tp = precisionParent + precisionSib;
+            preP[thisNumber] = tp * thisPrecision / (tp + thisPrecision);
+
+            //partial means
+
+            for (int j = 0; j < dim; j++) {
+                preMeans[thisNumber][j] = (precisionParent * preMeans[parentNumber][j] + precisionSib * cacheHelper.getMeanCache()[sibNumber*dim+j]) / (precisionParent + precisionSib);
+            }
+        }
+
+        if (treeModel.isExternal(node)) {
+            return;
+        } else {
+            doPreOrderTraversal(treeModel.getChild(node, 0));
+            doPreOrderTraversal(treeModel.getChild(node, 1));
+
+        }
+
+    }
+
+    public NodeRef getSisterNode(NodeRef node) {
+        NodeRef sib0 = treeModel.getChild(treeModel.getParent(node), 0);
+        NodeRef sib1 = treeModel.getChild(treeModel.getParent(node), 1);
+
+
+        if (sib0 == node) {
+            return sib1;
+        } else return sib0;
+
+    }
+
+    public double[] getConditionalMean(int taxa){
+        setup();
+
+
+//            double[] answer=new double[getRootNodeTrait().length];
+
+        double[] mean = new double[dim];
+        for (int i = 0; i < dim; i++) {
+            mean[i] = preMeans[taxa][i];
+        }
+
+        return mean;
+    }
+
+    public double getPrecisionFactor(int taxa){
+        setup();
+        return preP[taxa];
+    }
+
+    public double[][] getConditionalPrecision(int taxa){
+         setup();
+
+
+
+
+        double[][] precisionParam =diffusionModel.getPrecisionmatrix();
+//        double[][] answer=new double[getRootNodeTrait().length][ getRootNodeTrait().length];
+        double p = getPrecisionFactor(taxa);
+
+        double[][] thisP = new double[dim][dim];
+
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < dim; j++) {
+//                System.out.println("P: "+p);
+//                System.out.println("I: "+i+", J: "+j+" value:"+precisionParam[i][j]);
+                thisP[i][j] = p * precisionParam[i][ j];
+
+            }
+        }
+
+        return thisP;
+
+    }
+
+    private void setup(){
+        if(!PostPreKnown){
+            double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
+            double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
+
+            final boolean computeWishartStatistics = getComputeWishartSufficientStatistics();
+
+            if (computeWishartStatistics) {
+                wishartStatistics = new WishartSufficientStatistics(dimTrait);
+            }
+
+            // Use dynamic programming to compute conditional likelihoods at each internal node
+            postOrderTraverse(treeModel, treeModel.getRoot(), traitPrecision, logDetTraitPrecision, computeWishartStatistics);
+
+            doPreOrderTraversal(treeModel.getRoot());}
+        PostPreKnown=true;
+
+    }
+
 
     protected void checkLogLikelihood(double loglikelihood, double logRemainders,
                                       double[] conditionalRootMean, double conditionalRootPrecision,
@@ -278,9 +459,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(rootPriorMean, newPrec);
         double logPdf = mvn.logPdf(conditionalRootMean);
 
-        System.err.println("Got here subclass: " + loglikelihood);
-        System.err.println("logValue         : " + (logRemainders + logPdf));
-        System.err.println("");
+        if (Math.abs(loglikelihood - logRemainders - logPdf) > 1E-3) {
+
+            System.err.println("Got here subclass: " + loglikelihood);
+            System.err.println("logValue         : " + (logRemainders + logPdf));
+            System.err.println("logRemainder = " + logRemainders);
+            System.err.println("");
+        }
 //        System.err.println("logRemainders    : " + logRemainders);
 //        System.err.println("logPDF           : " + logPdf);
 //        System.exit(-1);
@@ -377,10 +562,334 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     protected double[] rootPriorMean;
     protected double rootPriorSampleSize;
 
+    double[] preP;
+    double[][] preMeans;
+
+    double[] storedPreP;
+    double[][] storedPreMeans;
+
+    Boolean PostPreKnown=false;
+    Boolean storedPostPreKnown=false;
+
     private boolean priorInformationKnown = false;
     private double zBz; // Prior sum-of-squares contribution
+
+    private boolean dimKnown=false;
+    private boolean storedDimKnown=false;
 
     protected boolean computeWishartStatistics = false;
     private double[] ascertainedData = null;
     private static final boolean DEBUG_ASCERTAINMENT = false;
+
+    private double vectorMin(double[] vec) {
+        double min = Double.MAX_VALUE;
+        for (int i = 0; i < vec.length; ++i) {
+            min = Math.min(min, vec[i]);
+        }
+        return min;
+    }
+
+    private double matrixMin(double[][] mat) {
+        double min = Double.MAX_VALUE;
+        for (int i = 0; i < mat.length; ++i) {
+            min = Math.min(min, vectorMin(mat[i]));
+        }
+        return min;
+    }
+
+    private double vectorMax(double[] vec) {
+        double max = - Double.MAX_VALUE;
+        for (int i = 0; i < vec.length; ++i) {
+            max = Math.max(max, vec[i]);
+        }
+        return max;
+    }
+
+    private double matrixMax(double[][] mat) {
+        double max = -Double.MAX_VALUE;
+        for (int i = 0; i < mat.length; ++i) {
+            max = Math.max(max, vectorMax(mat[i]));
+        }
+        return max;
+    }
+
+    private double vectorSum(double[] vec) {
+        double sum = 0.0;
+        for (int i = 0; i < vec.length; ++i) {
+            sum += vec[i];
+        }
+        return sum;
+    }
+
+    private double matrixSum(double[][] mat) {
+        double sum = 0.0;
+        for (int i = 0; i < mat.length; ++i) {
+            sum += vectorSum(mat[i]);
+        }
+        return sum;
+    }
+
+    @Override
+    public String getReport() {
+        StringBuilder sb = new StringBuilder();
+//        sb.append(this.g)
+//        System.err.println("Hello");
+        sb.append("Tree:\n");
+        sb.append(treeModel.toString());
+        sb.append("\n\n");
+
+        double[][] treeVariance = computeTreeVariance(true);
+        double[][] traitPrecision = getDiffusionModel().getPrecisionmatrix();
+        Matrix traitVariance = new Matrix(traitPrecision).inverse();
+
+        double[][] jointVariance = KroneckerOperation.product(treeVariance, traitVariance.toComponents());
+
+        sb.append("Tree variance:\n");
+        sb.append(new Matrix(treeVariance));
+        sb.append(matrixMin(treeVariance)).append("\t").append(matrixMax(treeVariance)).append("\t").append(matrixSum(treeVariance));
+        sb.append("\n\n");
+        sb.append("Trait variance:\n");
+        sb.append(traitVariance);
+        sb.append("\n\n");
+//        sb.append("Joint variance:\n");
+//        sb.append(new Matrix(jointVariance));
+//        sb.append("\n\n");
+
+        double[] data = new double[jointVariance.length];
+        System.arraycopy(meanCache, 0, data, 0, jointVariance.length);
+
+        sb.append("Data:\n");
+        sb.append(new Vector(data)).append("\n");
+        sb.append(data.length).append("\t").append(vectorMin(data)).append("\t").append(vectorMax(data)).append("\t").append(vectorSum(data));
+        sb.append(treeModel.getNodeTaxon(treeModel.getExternalNode(0)).getId());
+        sb.append("\n\n");
+
+        MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(new double[data.length], new Matrix(jointVariance).inverse().toComponents());
+        double logDensity = mvn.logPdf(data);
+        sb.append("logLikelihood: " + getLogLikelihood() + " == " + logDensity + "\n\n");
+
+        final WishartSufficientStatistics sufficientStatistics = getWishartStatistics();
+        final double[][] outerProducts = sufficientStatistics.getScaleMatrix();
+
+        sb.append("Outer-products (DP):\n");
+        sb.append(new Matrix(outerProducts));
+        sb.append(sufficientStatistics.getDf() + "\n");
+
+        Matrix treePrecision = new Matrix(treeVariance).inverse();
+        final int n = data.length / traitPrecision.length;
+        final int p = traitPrecision.length;
+        double[][] tmp = new double[n][p];
+
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < p; ++j) {
+                tmp[i][j] = data[i * p + j];
+            }
+        }
+        Matrix y = new Matrix(tmp);
+
+        Matrix S = null;
+        try {
+            S = y.transpose().product(treePrecision).product(y); // Using Matrix-Normal form
+        } catch (IllegalDimension illegalDimension) {
+            illegalDimension.printStackTrace();
+        }
+        sb.append("Outer-products (from tree variance:\n");
+        sb.append(S);
+        sb.append("\n\n");
+
+        return sb.toString();
+    }
+
+
+    class NodeToRootDistance {
+        NodeRef node;
+        double distance;
+
+        NodeToRootDistance(NodeRef node, double distance) {
+            this.node = node;
+            this.distance = distance;
+        }
+    }
+
+    class NodeToRootDistanceList extends ArrayList<NodeToRootDistance> {
+
+        NodeToRootDistanceList(NodeToRootDistanceList parentList) {
+            super(parentList);
+        }
+
+        NodeToRootDistanceList() {
+            super();
+        }
+    }
+
+    private void addNodeToList(final NodeRef thisNode, NodeToRootDistanceList parentList, NodeToRootDistanceList[] tipLists) {
+
+        if (!treeModel.isRoot(thisNode)) {
+            double increment = getRescaledBranchLengthForPrecision(thisNode);
+            if (parentList.size() > 0) {
+                increment += parentList.get(parentList.size() - 1).distance;
+            }
+            parentList.add(new NodeToRootDistance(thisNode, increment));
+        }
+
+        if (treeModel.isExternal(thisNode)) {
+            tipLists[thisNode.getNumber()] =  parentList;
+        } else { // recurse
+            NodeToRootDistanceList shallowCopy = new NodeToRootDistanceList(parentList);
+            addNodeToList(treeModel.getChild(thisNode, 0), shallowCopy, tipLists);
+            addNodeToList(treeModel.getChild(thisNode, 1), parentList, tipLists);
+        }
+    }
+
+    private double getTimeBetweenNodeToRootLists(List<NodeToRootDistance> x, List<NodeToRootDistance> y) {
+        if (x.get(0) != y.get(0)) {
+            return 0.0;
+        }
+
+        int index = 1;
+        while (x.get(index) == y.get(index)) {
+            ++index;
+        }
+        return x.get(index - 1).distance;
+    }
+
+    public double[][] computeTreeVariance2(boolean includeRoot) {
+
+        final int tipCount = treeModel.getExternalNodeCount();
+        double[][] variance = new double[tipCount][tipCount];
+
+        NodeToRootDistanceList[] tipToRootDistances = new NodeToRootDistanceList[tipCount];
+
+        // Recurse down tree to generate lists
+        addNodeToList(treeModel.getRoot(), new NodeToRootDistanceList(), tipToRootDistances);
+
+        for (int i = 0; i < tipCount; ++i) {
+            // Fill in diagonal
+            List<NodeToRootDistance> iList = tipToRootDistances[i];
+            double marginalTime = iList.get(iList.size() - 1).distance;
+            variance[i][i] = marginalTime;
+
+            for (int j = i + 1; j < tipCount; ++j) {
+                List<NodeToRootDistance> jList = tipToRootDistances[j];
+
+                double time = getTimeBetweenNodeToRootLists(iList, jList);
+                variance[j][i] = variance[i][j] = time;
+            }
+        }
+
+        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
+        }
+
+        if (includeRoot) {
+            for (int i = 0; i < variance.length; ++i) {
+                for (int j = 0; j < variance[i].length; ++j) {
+                    variance[i][j] += 1.0 / getPriorSampleSize();
+                }
+            }
+        }
+
+        return variance;
+
+    }
+
+    public double[][] computeTreeVariance(boolean includeRoot) {
+        final int tipCount = treeModel.getExternalNodeCount();
+        double[][] variance = new double[tipCount][tipCount];
+
+        for (int i = 0; i < tipCount; i++) {
+
+            // Fill in diagonal
+            double marginalTime = getRescaledLengthToRoot(treeModel.getExternalNode(i));
+            variance[i][i] = marginalTime;
+
+            // Fill in upper right triangle,
+
+            for (int j = i + 1; j < tipCount; j++) {
+                NodeRef mrca = findMRCA(i, j);
+                variance[i][j] = getRescaledLengthToRoot(mrca);
+            }
+        }
+
+        // Make symmetric
+        for (int i = 0; i < tipCount; i++) {
+            for (int j = i + 1; j < tipCount; j++) {
+                variance[j][i] = variance[i][j];
+            }
+        }
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree conditional variance:\n" + new Matrix(variance));
+        }
+
+        variance = removeMissingTipsInTreeVariance(variance); // Automatically prune missing tips
+
+        if (DEBUG) {
+            System.err.println("");
+            System.err.println("New tree (trimmed) conditional variance:\n" + new Matrix(variance));
+        }
+
+        if (includeRoot) {
+            for (int i = 0; i < variance.length; ++i) {
+                for (int j = 0; j < variance[i].length; ++j) {
+                    variance[i][j] += 1.0 / getPriorSampleSize();
+                }
+            }
+        }
+
+        return variance;
+    }
+
+    private NodeRef findMRCA(int iTip, int jTip) {
+        Set<String> leafNames = new HashSet<String>();
+        leafNames.add(treeModel.getTaxonId(iTip));
+        leafNames.add(treeModel.getTaxonId(jTip));
+        return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
+    }
+
+    private double[][] removeMissingTipsInTreeVariance(double[][] variance) {
+
+         final int tipCount = treeModel.getExternalNodeCount();
+         final int nonMissing = countNonMissingTips();
+
+         if (nonMissing == tipCount) { // Do nothing
+             return variance;
+         }
+
+         double[][] outVariance = new double[nonMissing][nonMissing];
+
+         int iReal = 0;
+         for (int i = 0; i < tipCount; i++) {
+             if (!missingTraits.isCompletelyMissing(i)) {
+
+                 int jReal = 0;
+                 for (int j = 0; j < tipCount; j++) {
+                     if (!missingTraits.isCompletelyMissing(i)) {
+
+                         outVariance[iReal][jReal] = variance[i][j];
+
+                         jReal++;
+                     }
+                 }
+                 iReal++;
+             }
+         }
+         return outVariance;
+     }
+
+    private int countNonMissingTips() {
+        int tipCount = treeModel.getExternalNodeCount();
+        for (int i = 0; i < tipCount; i++) {
+            if (missingTraits.isCompletelyMissing(i)) {
+                tipCount--;
+            }
+        }
+        return tipCount;
+    }
+
+
 }

@@ -1,7 +1,7 @@
 /*
  * CataclysmicDemographic.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -52,13 +52,13 @@ public class CataclysmicDemographic extends ExponentialGrowth {
 	/**
 	 * returns the positive-valued decline rate
 	 */
-	public final double getDeclineRate() { return d; }
+	public final double getDeclineRate() { return -d; }
 	
 	/**
 	 * sets the decline rate.
 	 */
 	public void setDeclineRate(double d) { 
-		if (d <= 0) throw new IllegalArgumentException();
+//		if (d <= 0) throw new IllegalArgumentException();
 		this.d = d; 
 	}
 	

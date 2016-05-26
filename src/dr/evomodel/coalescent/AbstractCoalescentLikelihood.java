@@ -1,7 +1,7 @@
 /*
  * AbstractCoalescentLikelihood.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -83,6 +83,8 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         intervals = new Intervals(tree.getNodeCount());
         storedIntervals = new Intervals(tree.getNodeCount());
         eventsKnown = false;
+
+        this.coalescentEventStatisticValues = new double[getNumberOfCoalescentEvents()];
 
         addStatistic(new DeltaStatistic());
 
@@ -267,6 +269,10 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
         return intervals.getIntervalCount();
     }
 
+    public int getNumberOfCoalescentEvents() {
+        return tree.getExternalNodeCount()-1;
+    }
+
     public int getCoalescentIntervalLineageCount(int i) {
         if (!eventsKnown) {
             setupIntervals();
@@ -279,6 +285,24 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
             setupIntervals();
         }
         return intervals.getIntervalType(i);
+    }
+
+    public double getCoalescentEventsStatisticValue(int i) {
+        if (i == 0) {
+            for (int j = 0; j < coalescentEventStatisticValues.length; j++) {
+                coalescentEventStatisticValues[j] = 0.0;
+            }
+            int counter = 0;
+            for (int j = 0; j < getCoalescentIntervalDimension(); j++) {
+                if (getCoalescentIntervalType(j) == IntervalType.COALESCENT) {
+                    this.coalescentEventStatisticValues[counter] += getCoalescentInterval(j) * (getCoalescentIntervalLineageCount(j) * (getCoalescentIntervalLineageCount(j) - 1.0)) / 2.0;
+                    counter++;
+                } else {
+                    this.coalescentEventStatisticValues[counter] += getCoalescentInterval(j) * (getCoalescentIntervalLineageCount(j) * (getCoalescentIntervalLineageCount(j) - 1.0)) / 2.0;
+                }
+            }
+        }
+        return coalescentEventStatisticValues[i];
     }
 
     public String toString() {
@@ -335,4 +359,6 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
     private double storedLogLikelihood;
     protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
+
+    private double[] coalescentEventStatisticValues;
 }

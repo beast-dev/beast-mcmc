@@ -1,3 +1,28 @@
+/*
+ * Generator.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
@@ -49,6 +74,12 @@ public abstract class Generator {
             for (ComponentFactory component : components) {
                 this.components.add(component.createGenerator(options));
             }
+        }
+    }
+
+    public final void checkComponentOptions() throws GeneratorException {
+        for (ComponentGenerator component : components) {
+                component.checkOptions();
         }
     }
 
@@ -169,8 +200,8 @@ public abstract class Generator {
         if (parameter == null) {
             throw new IllegalArgumentException("parameter (== null) is unknown");
         }
-        if (parameter.isFixed) { // with prefix
-            writeParameter(parameter.getName(), dimension, parameter.initial, Double.NaN, Double.NaN, writer);
+        if (parameter.isFixed()) { // with prefix
+            writeParameter(parameter.getName(), dimension, parameter.getInitial(), Double.NaN, Double.NaN, writer);
         } else {
             double lower = Double.NaN;
             double upper = Double.NaN;
@@ -181,7 +212,7 @@ public abstract class Generator {
                 lower = 0.0;
                 upper = 1.0;
             }
-            writeParameter(parameter.getName(), dimension, parameter.initial, lower, upper, writer);
+            writeParameter(parameter.getName(), dimension, parameter.getInitial(), lower, upper, writer);
         }
     }
 
@@ -211,8 +242,8 @@ public abstract class Generator {
     }
 
     public void writeParameter(String id, Parameter parameter, XMLWriter writer) {
-        if (parameter.isFixed) {
-            writeParameter(id, 1, parameter.initial, Double.NaN, Double.NaN, writer);
+        if (parameter.isFixed()) {
+            writeParameter(id, 1, parameter.getInitial(), Double.NaN, Double.NaN, writer);
         } else {
             double lower = Double.NaN;
             double upper = Double.NaN;
@@ -223,7 +254,7 @@ public abstract class Generator {
                 lower = 0.0;
                 upper = 1.0;
             }
-            writeParameter(id, 1, parameter.initial, lower, upper, writer);
+            writeParameter(id, 1, parameter.getInitial(), lower, upper, writer);
         }
     }
 

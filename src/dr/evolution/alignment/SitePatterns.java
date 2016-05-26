@@ -1,7 +1,7 @@
 /*
  * SitePatterns.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -569,6 +569,11 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
      */
     public double[] getStateFrequencies() {
         return PatternList.Utils.empiricalStateFrequencies(this);
+    }
+
+    @Override
+    public boolean areUnique() {
+        return unique;
     }
 
     // **************************************************************

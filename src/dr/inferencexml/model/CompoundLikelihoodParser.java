@@ -1,7 +1,7 @@
 /*
  * CompoundLikelihoodParser.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -43,14 +43,15 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     public static final String PRIOR = "prior";
     public static final String LIKELIHOOD = "likelihood";
     public static final String PSEUDO_PRIOR = "pseudoPrior";
-    public static final String WORKING_PRIOR = "referencePrior";
+    public static final String REFERENCE_PRIOR = "referencePrior";
+    public static final String WORKING_PRIOR = "workingPrior";
 
     public String getParserName() {
         return COMPOUND_LIKELIHOOD;
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, WORKING_PRIOR};
+        return new String[]{getParserName(), POSTERIOR, PRIOR, LIKELIHOOD, PSEUDO_PRIOR, REFERENCE_PRIOR, WORKING_PRIOR};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -73,7 +74,10 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         for (int i = 0; i < xo.getChildCount(); i++) {
             final Object child = xo.getChild(i);
             if (child instanceof Likelihood) {
-            	
+
+                if (likelihoods.contains(child)) {
+                    throw new XMLParseException("The likelihood element, '" + ((Likelihood) child).getId() + "', is already present in the likelihood or prior density.");
+                }
                 likelihoods.add((Likelihood) child);
                 
 //            } else if (child instanceof BeagleBranchLikelihoods){
@@ -106,6 +110,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         } else {
             compoundLikelihood = new CompoundLikelihood(likelihoods);
         }
+
 
 //		TODO
 //        System.err.println("CompundLikelihood consists of " + compoundLikelihood.getLikelihoodCount() + " likelihood element(s)");

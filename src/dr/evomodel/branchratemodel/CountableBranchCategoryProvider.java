@@ -1,7 +1,7 @@
 /*
  * CountableBranchCategoryProvider.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,7 +28,6 @@ package dr.evomodel.branchratemodel;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsTraitProvider;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.tree.TreeDoubleTraitProvider;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
@@ -203,12 +202,7 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
             super(tree, parameter);
         }
 
-//        public CladeBranchCategoryModel(TreeModel treeModel,
-//				Parameter categories, boolean resetCategories) {
-//        	super(treeModel, categories, resetCategories);
-//		}
-
-		public void handleModelChangedEvent(Model model, Object object, int index) {
+        public void handleModelChangedEvent(Model model, Object object, int index) {
             if (model == treeModel) {
                 cladesChanged = true;
                 fireModelChanged();
@@ -217,17 +211,39 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
             }
         }
 
+        private void recurseDownClade(final NodeRef node, final TreeModel treeModel, final CladeContainer clade, boolean include) {
+
+            if (include) {
+                setNodeValue(treeModel, node, clade.getRateCategory());
+            }
+
+            if (!treeModel.isExternal(node)) {
+                for (int i = 0; i < tree.getChildCount(node); i++) {
+                    NodeRef child = tree.getChild(node, i);
+                    recurseDownClade(child, treeModel, clade, true);
+                }
+            }
+        }
+
         private void updateCladeRateCategories() {
             if (leafSetList != null) {
+                // Set all to zero
                 for (NodeRef node : treeModel.getNodes()) {
                     if (node != treeModel.getRoot()) {
                         setNodeValue(treeModel, node, 0.0);
                     }
                 }
+                // Handle clades
                 for (CladeContainer clade : leafSetList) {
                     NodeRef node = Tree.Utils.getCommonAncestorNode(treeModel, clade.getLeafSet());
                     if (node != treeModel.getRoot()) {
-                        setNodeValue(treeModel, node, clade.getRateCategory());
+                        if (clade.getIncludeStem()) {
+                            setNodeValue(treeModel, node, clade.getRateCategory());
+                        }
+                    }
+                    // Include the clade below
+                    if (!clade.getExcludeClade()) {
+                        recurseDownClade(node, treeModel, clade, clade.getIncludeStem());
                     }
                 }
             }
@@ -281,26 +297,19 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
         }
 
         public void setClade(TaxonList taxonList, int rateCategory, boolean includeStem, boolean excludeClade, boolean trunk) throws Tree.MissingTaxonException {
-            if (!excludeClade) {
-                throw new IllegalArgumentException("Including clades not yet implemented in countable branch rate mixture models.");
-            }
-
-            if (!includeStem) {
-                throw new IllegalArgumentException("Excluding stems not yet implemented in countable branch rate mixture models.");
-            }
 
             Set<String> leafSet = Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
             if (!trunk) {
                 if (leafSetList == null) {
                     leafSetList = new ArrayList<CladeContainer>();
                 }
-                leafSetList.add(new CladeContainer(leafSet, rateCategory));
+                leafSetList.add(new CladeContainer(leafSet, rateCategory, includeStem, excludeClade));
                 cladesChanged = true;
             } else {
                 if (trunkSetList == null) {
                     trunkSetList = new ArrayList<CladeContainer>();
                 }
-                trunkSetList.add(new CladeContainer(leafSet, rateCategory));
+                trunkSetList.add(new CladeContainer(leafSet, rateCategory, includeStem, excludeClade));
                 cladesChanged = true;
             }
             if (rateCategory >= categoryCount) {
@@ -323,10 +332,14 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
         private class CladeContainer {
             private Set<String> leafSet;
             private int rateCategory;
+            boolean includeStem;
+            boolean excludeClade;
 
-            public CladeContainer(Set<String> leafSet, int rateCategory) {
+            public CladeContainer(Set<String> leafSet, int rateCategory, boolean includeStem, boolean excludeClade) {
                 this.leafSet = leafSet;
                 this.rateCategory = rateCategory;
+                this.includeStem = includeStem;
+                this.excludeClade = excludeClade;
             }
 
             public Set<String> getLeafSet() {
@@ -335,6 +348,14 @@ public interface CountableBranchCategoryProvider extends TreeTrait<Double> {
 
             public int getRateCategory() {
                 return rateCategory;
+            }
+
+            public boolean getIncludeStem() {
+                return includeStem;
+            }
+
+            public boolean getExcludeClade() {
+                return excludeClade;
             }
         }
 

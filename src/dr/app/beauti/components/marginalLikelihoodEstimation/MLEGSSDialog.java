@@ -1,3 +1,28 @@
+/*
+ * MLEGSSDialog.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.components.marginalLikelihoodEstimation;
 
 import dr.app.beauti.options.BeautiOptions;
@@ -9,6 +34,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 
 /**
@@ -29,9 +55,11 @@ public class MLEGSSDialog {
 
     private JTextArea logFileNameField = new JTextArea("MLE.log");
 
+    JCheckBox operatorAnalysis = new JCheckBox("Print operator analysis");
+
     private JComboBox stepDistribution = new JComboBox();
     private JComboBox treeWorkingPrior = new JComboBox();
-    private JComboBox parameterWorkingPrior = new JComboBox();
+    //private JComboBox parameterWorkingPrior = new JComboBox();
 
     private MarginalLikelihoodEstimationOptions options;
     private BeautiOptions beautiOptions;
@@ -57,7 +85,7 @@ public class MLEGSSDialog {
         pathStepsField.setColumns(16);
         pathStepsField.setMinimumSize(pathStepsField.getPreferredSize());
         labelPathSteps = optionsPanel.addComponentWithLabel("Number of stepping stones:", pathStepsField);
-        /*pathStepsField.addKeyListener(new java.awt.event.KeyListener() {
+        pathStepsField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -65,15 +93,15 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.pathSteps = pathStepsField.getValue();
+                options.pathSteps = pathStepsField.getValue();
             }
-        });*/
+        });
 
         chainLengthField.setValue(1000000);
         chainLengthField.setColumns(16);
         chainLengthField.setMinimumSize(chainLengthField.getPreferredSize());
         labelChainLength = optionsPanel.addComponentWithLabel("Length of chains:", chainLengthField);
-        /*chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
+        chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -81,9 +109,9 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.mleChainLength = chainLengthField.getValue();
+                options.mleChainLength = chainLengthField.getValue();
             }
-        });*/
+        });
 
         optionsPanel.addSeparator();
 
@@ -91,7 +119,7 @@ public class MLEGSSDialog {
         logEveryField.setColumns(16);
         logEveryField.setMinimumSize(logEveryField.getPreferredSize());
         labelLogEvery = optionsPanel.addComponentWithLabel("Log likelihood every:", logEveryField);
-        /*logEveryField.addKeyListener(new java.awt.event.KeyListener() {
+        logEveryField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -99,9 +127,9 @@ public class MLEGSSDialog {
             }
 
             public void keyReleased(KeyEvent e) {
-                //options.mleLogEvery = logEveryField.getValue();
+                options.mleLogEvery = logEveryField.getValue();
             }
-        });*/
+        });
 
         optionsPanel.addSeparator();
 
@@ -109,7 +137,7 @@ public class MLEGSSDialog {
         logFileNameField.setEditable(false);
         logFileNameField.setMinimumSize(logFileNameField.getPreferredSize());
         labelLogFileName = optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
-        /*logFileNameField.addKeyListener(new java.awt.event.KeyListener() {
+        logFileNameField.addKeyListener(new java.awt.event.KeyListener() {
             public void keyTyped(KeyEvent e) {
             }
 
@@ -119,7 +147,7 @@ public class MLEGSSDialog {
             public void keyReleased(KeyEvent e) {
                 //options.mleFileName = logFileNameField.getText();
             }
-        });*/
+        });
 
         optionsPanel.addSeparator();
 
@@ -135,6 +163,11 @@ public class MLEGSSDialog {
         treeWorkingPrior.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 String selection = (String)((JComboBox)e.getSource()).getSelectedItem();
+                if (selection.equals("Matching coalescent model")) {
+                    beautiOptions.logCoalescentEventsStatistic = false;
+                } else {
+                    beautiOptions.logCoalescentEventsStatistic = true;
+                }
                 TreePriorType treePrior = beautiOptions.getPartitionTreePriors().get(0).getNodeHeightPrior();
                 boolean mcmAllowed = false;
                 if (treePrior.equals(TreePriorType.CONSTANT) || treePrior.equals(TreePriorType.EXPONENTIAL)
@@ -157,12 +190,26 @@ public class MLEGSSDialog {
         });
         labelTreeWorkingPrior = optionsPanel.addComponentWithLabel("Tree working prior", treeWorkingPrior);
 
-        parameterWorkingPrior.addItem("Normal KDE");
+        //parameterWorkingPrior.addItem("Normal KDE");
         //parameterWorkingPrior.addItem("Gamma KDE");
-        labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
+        //labelParameterWorkingPrior = optionsPanel.addComponentWithLabel("Parameter working prior", parameterWorkingPrior);
 
         stepDistribution.addItem("Beta");
         labelStepDistribution = optionsPanel.addComponentWithLabel("Stepping stone distribution:", stepDistribution);
+
+        optionsPanel.addSeparator();
+
+        optionsPanel.addComponent(operatorAnalysis);
+
+        operatorAnalysis.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if (operatorAnalysis.isSelected()) {
+                    options.printOperatorAnalysis = true;
+                } else {
+                    options.printOperatorAnalysis = false;
+                }
+            }
+        });
 
         optionsPanel.addSeparator();
 
@@ -172,9 +219,8 @@ public class MLEGSSDialog {
         PanelUtils.setupComponent(mleTutorial);
         optionsPanel.addSpanningComponent(mleTutorial);
 
-        JTextArea citationText = new JTextArea("Baele G, Lemey P, Suchard MA (2015) Working priors for " +
-                "accurate model \nselection while accommodating phylogenetic uncertainty in a \ncoalescent-based " +
-                "framework [GSS Paper].");
+        JTextArea citationText = new JTextArea("Baele G, Lemey P, Suchard MA (2015) Genealogical working " +
+                "distributions for Bayesian \nmodel testing with phylogenetic uncertainty [GSS Paper].");
         citationText.setColumns(45);
         optionsPanel.addComponentWithLabel("Citation:", citationText);
 
@@ -223,6 +269,7 @@ public class MLEGSSDialog {
 
     public void setFilenameStem(String fileNameStem, boolean addTxt) {
         logFileNameField.setText(fileNameStem + ".mle.log" + (addTxt ? ".txt" : ""));
+        options.mleFileName = logFileNameField.getText();
     }
 
     public void setOptions(MarginalLikelihoodEstimationOptions options) {

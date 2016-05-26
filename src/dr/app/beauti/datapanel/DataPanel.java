@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * DataPanel.java
+ *
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -10,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -210,12 +212,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         controlPanel1.add(button);
 
-//        controlPanel1.add(new JLabel(" or "));
-//
-//        button = new JButton(importTraitsAction);
-//        PanelUtils.setupComponent(button);
-//        controlPanel1.add(button);
-
         JPanel panel1 = new JPanel(new BorderLayout());
         panel1.setOpaque(false);
         panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
@@ -225,14 +221,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
         add(panel1, BorderLayout.NORTH);
+//        add(toolBar1, BorderLayout.NORTH);
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
         useStarBEASTCheck.setEnabled(false);
         useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
         useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(ActionEvent e) {// wrong listener Issue 397: *BEAST in BEAUti is broken
-                if (frame.setupStarBEAST(useStarBEASTCheck.isSelected()) == false) {
+            public void actionPerformed(ActionEvent e) {
+                if (!frame.setupStarBEAST(useStarBEASTCheck.isSelected())) {
                     useStarBEASTCheck.setSelected(false); // go back to unchecked
                 }
 
@@ -532,7 +529,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (!model.getName().equals(partition.getName())) {
                 PartitionClockModel newModel = new PartitionClockModel(options, partition.getName(), model);
                 partition.setPartitionClockModel(newModel);
-                newModel.setClockModelGroup(model.getClockModelGroup()); // set clock model group
             }
         }
 

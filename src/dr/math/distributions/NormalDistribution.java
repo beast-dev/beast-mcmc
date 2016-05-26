@@ -1,7 +1,7 @@
 /*
  * NormalDistribution.java
  *
- * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -486,6 +486,7 @@ public class NormalDistribution implements Distribution, RandomGenerator {
         testTail(8.25, 0.0, 1.0);
         System.out.println();
         testTail(10, 0.0, 1.0);
+        System.out.println(NormalDistribution.standardCDF(2.0 / 0.5, true));
     }
 
     // RandomGenerator interface

@@ -36,7 +36,7 @@ import java.util.List;
  */
 public interface DataLikelihoodDelegate {
 
-    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber);
+    double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
 
     void makeDirty();
 
@@ -85,4 +85,6 @@ public interface DataLikelihoodDelegate {
         private final int leftChild;
         private final int rightChild;
     }
+
+    class LikelihoodUnderflowException extends Exception { }
 }

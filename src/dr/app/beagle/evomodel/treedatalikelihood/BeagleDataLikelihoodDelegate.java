@@ -88,16 +88,12 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @param patternList List of patterns
      * @param siteRateModel Specifies rates per site
      * @param useAmbiguities Whether to respect state ambiguities in data
-     * @param rescalingScheme BEAGLE rescaling scheme
-     * @param delayRescalingUntilUnderflow whether to delay rescaling until first underflow
      */
     public BeagleDataLikelihoodDelegate(Tree tree,
                                         BranchModel branchModel,
                                         PatternList patternList,
                                         SiteRateModel siteRateModel,
-                                        boolean useAmbiguities,
-                                        PartialsRescalingScheme rescalingScheme,
-                                        boolean delayRescalingUntilUnderflow) {
+                                        boolean useAmbiguities) {
 
         super("BeagleDataLikelihoodDelegate");
         final Logger logger = Logger.getLogger("dr.evomodel");
@@ -108,6 +104,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         this.dataType = patternList.getDataType();
         patternCount = patternList.getPatternCount();
         stateCount = dataType.getStateCount();
+
+        this.useAmbiguities = useAmbiguities;
 
         patternWeights = patternList.getPatternWeights();
 
@@ -341,7 +339,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         } catch (TaxonList.MissingTaxonException mte) {
             throw new RuntimeException(mte.toString());
         }
-        this.useAmbiguities = useAmbiguities;
     }
 
 
@@ -498,36 +495,15 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * @return the log likelihood.
      */
     @Override
-    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) {
+    public double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException {
 
-        recomputeScaleFactors = false;
-
-        if (!this.delayRescalingUntilUnderflow || everUnderflowed) {
-            if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS || this.rescalingScheme == PartialsRescalingScheme.DELAYED) {
-                useScaleFactors = true;
-                recomputeScaleFactors = true;
-            } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-                useScaleFactors = true;
-
-                if (rescalingCount > rescalingFrequency) {
-                    rescalingCount = 0;
-                    rescalingCountInner = 0;
-                }
-
-                if (rescalingCountInner < RESCALE_TIMES) {
-                    recomputeScaleFactors = true;
-                    updateAllNodes();
-
-                    rescalingCountInner++;
-                }
-
-                rescalingCount++;
-            }
-        }
+        // For the first version just do scaling always
+        useScaleFactors = true;
+        recomputeScaleFactors = true;
 
         branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
-           branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
+            branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchNumber();
             branchUpdateCount ++;
         }
@@ -560,89 +536,45 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             operationCount++;
         }
 
+        beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
-        double logL;
-        boolean done;
-        boolean firstRescaleAttempt = true;
+        int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
 
-        do {
+        double[] categoryWeights = this.siteRateModel.getCategoryProportions();
 
-            beagle.updatePartials(operations, operationCount, Beagle.NONE);
+        // This should probably explicitly be the state frequencies for the root node...
+        double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
 
-            int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
+        int cumulateScaleBufferIndex = Beagle.NONE;
+        if (useScaleFactors) {
 
-            double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-
-            // This should probably explicitly be the state frequencies for the root node...
-            double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
-
-            int cumulateScaleBufferIndex = Beagle.NONE;
-            if (useScaleFactors) {
-
-                if (recomputeScaleFactors) {
-                    scaleBufferHelper.flipOffset(internalNodeCount);
-                    cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-                    beagle.resetScaleFactors(cumulateScaleBufferIndex);
-                    beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
-                } else {
-                    cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
-                }
-            } else if (useAutoScaling) {
-                beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
-            }
-
-            // these could be set only when they change but store/restore would need to be considered
-            beagle.setCategoryWeights(0, categoryWeights);
-            beagle.setStateFrequencies(0, frequencies);
-
-            double[] sumLogLikelihoods = new double[1];
-
-            beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-                    new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
-
-            logL = sumLogLikelihoods[0];
-
-            if (Double.isNaN(logL) || Double.isInfinite(logL)) {
-                everUnderflowed = true;
-                logL = Double.NEGATIVE_INFINITY;
-
-                if (firstRescaleAttempt && (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
-                    // we have had a potential under/over flow so attempt a rescaling
-                    if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount == 0)) {
-                        Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
-                    }
-                    useScaleFactors = true;
-                    recomputeScaleFactors = true;
-
-                    branchUpdateCount = 0;
-
-                    updateAllNodes();
-
-                    if (hasRestrictedPartials) {
-                        for (int i = 0; i <= numRestrictedPartials; i++) {
-                            operationCount[i] = 0;
-                        }
-                    } else {
-                        operationCount[0] = 0;
-                    }
-
-                    // traverse again but without flipping partials indices as we
-                    // just want to overwrite the last attempt. We will flip the
-                    // scale buffer indices though as we are recomputing them.
-                    traverse(treeModel, root, null, false);
-
-                    done = false; // Run through do-while loop again
-                    firstRescaleAttempt = false; // Only try to rescale once
-                } else {
-                    // we have already tried a rescale, not rescaling or always rescaling
-                    // so just return the likelihood...
-                    done = true;
-                }
+            if (recomputeScaleFactors) {
+                scaleBufferHelper.flipOffset(internalNodeCount);
+                cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
+                beagle.resetScaleFactors(cumulateScaleBufferIndex);
+                beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, cumulateScaleBufferIndex);
             } else {
-                done = true; // No under-/over-flow, then done
+                cumulateScaleBufferIndex = scaleBufferHelper.getOffsetIndex(internalNodeCount);
             }
+        } else if (useAutoScaling) {
+            beagle.accumulateScaleFactors(scaleBufferIndices, internalNodeCount, Beagle.NONE);
+        }
 
-        } while (!done);
+        // these could be set only when they change but store/restore would need to be considered
+        beagle.setCategoryWeights(0, categoryWeights);
+        beagle.setStateFrequencies(0, frequencies);
+
+        double[] sumLogLikelihoods = new double[1];
+
+        beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
+                new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
+
+        double logL = sumLogLikelihoods[0];
+
+        if (Double.isNaN(logL) || Double.isInfinite(logL)) {
+            everUnderflowed = true;
+            throw new LikelihoodUnderflowException();
+        }
 
         updateSubstitutionModel = false;
         updateSiteModel = false;
@@ -671,37 +603,20 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     public void makeDirty() {
         updateSiteModel = true;
         updateSubstitutionModel = true;
-        updateAllPatterns();
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        if (model == siteRateModel) {
+            updateSiteModel = true;
+        } else if (model == branchModel) {
+            updateSubstitutionModel = true;
+        }
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 
-    }
-
-    /**
-     * Set update flag for a pattern
-     */
-    private void updatePattern(int i) {
-        if (updatePattern != null) {
-            updatePattern[i] = true;
-        }
-    }
-
-    /**
-     * Set update flag for all patterns
-     */
-    private void updateAllPatterns() {
-        if (updatePattern != null) {
-            for (int i = 0; i < patternCount; i++) {
-                updatePattern[i] = true;
-            }
-        }
     }
 
     /**
@@ -795,11 +710,6 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
     private int stateCount;
 
     /**
-     * Flags to specify which patterns are to be updated
-     */
-    private boolean[] updatePattern = null;
-
-    /**
      * the branch-site model for these sites
      */
     private final BranchModel branchModel;
@@ -849,21 +759,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      */
     private boolean updateSiteModel;
 
-//    /***
-//     * Flag to specify if LikelihoodCore supports dynamic rescaling
-//     */
-//    private boolean dynamicRescaling = false;
-
-
-    /**
-     * Flag to specify if site patterns are acertained
-     */
-
-    private boolean ascertainedSitePatterns = false;
-
-
     /**
      * Flag to specify if ambiguity codes are in use
      */
     private final boolean useAmbiguities;
+
 }

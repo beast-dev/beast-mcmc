@@ -217,22 +217,34 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private final double calculateLogLikelihood() {
 
 
-        branchOperations.clear();
-        nodeOperations.clear();
+        double logL = Double.NEGATIVE_INFINITY;
+        boolean done = false;
 
-        final NodeRef root = treeModel.getRoot();
-        traverse(treeModel, root, null, true);
+        do {
+            branchOperations.clear();
+            nodeOperations.clear();
 
-        delegate.updateBranches(branchOperations);
+            final NodeRef root = treeModel.getRoot();
+            traverse(treeModel, root, null, true);
 
-        delegate.updateNodes(nodeOperations);
+            if (COUNT_TOTAL_OPERATIONS) {
+                totalMatrixUpdateCount += branchOperations.size();
+                totalOperationCount += nodeOperations.size();
+            }
 
-        if (COUNT_TOTAL_OPERATIONS) {
-            totalMatrixUpdateCount += branchOperations.size();
-            totalOperationCount += nodeOperations.size();
-        }
 
-        double logL = delegate.calculateLikelihood(root.getNumber());
+            try {
+                logL = delegate.calculateLikelihood(branchOperations, nodeOperations, root.getNumber());
+
+                done = true;
+            } catch (DataLikelihoodDelegate.LikelihoodUnderflowException e) {
+
+                // if there is an underflow, assume delegate will attempt to rescale
+                // so flag all nodes to update and return to try again.
+                updateAllNodes();
+            }
+
+        } while (!done);
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.

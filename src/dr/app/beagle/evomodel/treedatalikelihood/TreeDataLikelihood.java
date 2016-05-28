@@ -64,10 +64,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         this.treeModel = treeModel;
         addModel(treeModel);
 
-        nodeCount = treeModel.getNodeCount();
-
-        updateNode = new boolean[nodeCount];
-        for (int i = 0; i < nodeCount; i++) {
+        updateNode = new boolean[treeModel.getNodeCount()];
+        for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = true;
         }
 
@@ -81,12 +79,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         }
         addModel(this.branchRateModel);
 
-        this.tipCount = treeModel.getExternalNodeCount();
-
-        internalNodeCount = nodeCount - tipCount;
-
-        // one partials buffer for each tip and two for each internal node (for store restore)
-        partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
     }
 
     // **************************************************************
@@ -194,7 +186,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     protected final void storeState() {
 
-        partialBufferHelper.storeState();
+        delegate.storeState();
 
         storedLikelihoodKnown = likelihoodKnown;
         storedLogLikelihood = logLikelihood;
@@ -204,7 +196,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     @Override
     protected final void restoreState() {
 
-        partialBufferHelper.restoreState();
+        delegate.restoreState();
 
         likelihoodKnown = storedLikelihoodKnown;
         logLikelihood = storedLogLikelihood;
@@ -224,58 +216,29 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      */
     private final double calculateLogLikelihood() {
 
-        if (branchUpdateIndices == null) {
-            branchUpdateIndices = new int[nodeCount];
-            branchLengths = new double[nodeCount];
-        }
 
-        if (operations == null) {
-            operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
-        }
-
-        branchUpdateCount = 0;
-
-        operationCount = 0;
+        branchOperations.clear();
+        nodeOperations.clear();
 
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null, true);
 
+        delegate.updateBranches(branchOperations);
 
-        if (branchUpdateCount > 0) {
-            // call the delegate
-//            substitutionModelDelegate.updateTransitionMatrices(
-//                    beagle,
-//                    branchUpdateIndices,
-//                    branchLengths,
-//                    branchUpdateCount);
-        }
+        delegate.updateNodes(nodeOperations);
 
         if (COUNT_TOTAL_OPERATIONS) {
-            totalMatrixUpdateCount += branchUpdateCount;
-            totalOperationCount += operationCount;
+            totalMatrixUpdateCount += branchOperations.size();
+            totalOperationCount += nodeOperations.size();
         }
 
-
-
-            // call the delegate
-//            beagle.updatePartials(operations[0], operationCount[0], Beagle.NONE);
-
-            int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
-
-            double[] sumLogLikelihoods = new double[1];
-
-            // call the delegate
-//            beagle.calculateRootLogLikelihoods(new int[]{rootIndex}, new int[]{0}, new int[]{0},
-//                    new int[]{cumulateScaleBufferIndex}, 1, sumLogLikelihoods);
-
-        double logL = sumLogLikelihoods[0];
+        double logL = delegate.calculateLikelihood(root.getNumber());
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
-        for (int i = 0; i < nodeCount; i++) {
+        for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = false;
         }
-
 
         return logL;
     }
@@ -318,13 +281,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 throw new RuntimeException("Negative branch length: " + branchLength);
             }
 
-            if (flip) {
-                // call delegate
-//                substitutionModelDelegate.flipMatrixBuffer(nodeNum);
-            }
-            branchUpdateIndices[branchUpdateCount] = nodeNum;
-            branchLengths[branchUpdateCount] = branchLength;
-            branchUpdateCount++;
+            branchOperations.add(new DataLikelihoodDelegate.BranchOperation(nodeNum, branchLength));
 
             update = true;
         }
@@ -344,52 +301,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
             // If either child node was updated then update this node too
             if (update1 || update2) {
 
-                // Beagle.OPERATION_TUPLE_SIZE -> delegate.getOperationTupleSize()?
-                int x = operationCount * Beagle.OPERATION_TUPLE_SIZE;
-
-                if (flip) {
-                    // first flip the partialBufferHelper
-                    partialBufferHelper.flipOffset(nodeNum);
-                }
-
-                operations[x] = partialBufferHelper.getOffsetIndex(nodeNum);
-
-                // Rescaling bookkeeping in the delegate?
-//                if (useScaleFactors) {
-//                    // get the index of this scaling buffer
-//                    int n = nodeNum - tipCount;
-//
-//                    if (recomputeScaleFactors) {
-//                        // flip the indicator: can take either n or (internalNodeCount + 1) - n
-//                        scaleBufferHelper.flipOffset(n);
-//
-//                        // store the index
-//                        scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
-//
-//                        operations[x + 1] = scaleBufferIndices[n]; // Write new scaleFactor
-//                        operations[x + 2] = Beagle.NONE;
-//
-//                    } else {
-//                        operations[x + 1] = Beagle.NONE;
-//                        operations[x + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
-//                    }
-//
-//                } else {
-//
-//                    if (useAutoScaling) {
-//                        scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
-//                    }
-                    operations[x + 1] = Beagle.NONE; // Not using scaleFactors
-                    operations[x + 2] = Beagle.NONE;
-//                }
-
-                operations[x + 3] = partialBufferHelper.getOffsetIndex(child1.getNumber()); // source node 1
-                // specify the matrix for child 1?
-//                operations[x + 4] = substitutionModelDelegate.getMatrixIndex(child1.getNumber()); // source matrix 1
-                operations[x + 5] = partialBufferHelper.getOffsetIndex(child2.getNumber()); // source node 2
-//                operations[x + 6] = substitutionModelDelegate.getMatrixIndex(child2.getNumber()); // source matrix 2
-
-                operationCount++;
+                nodeOperations.add(new DataLikelihoodDelegate.NodeOperation(nodeNum, child1.getNumber(), child2.getNumber()));
 
                 update = true;
 
@@ -440,7 +352,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * Set update flag for all nodes
      */
     protected void updateAllNodes() {
-        for (int i = 0; i < nodeCount; i++) {
+        for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = true;
         }
         likelihoodKnown = false;
@@ -487,13 +399,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     private final BranchRateModel branchRateModel;
 
     /**
-     * the number of nodes in the tree
-     */
-    private final int nodeCount;
-    private final int tipCount;
-    private final int internalNodeCount;
-
-    /**
      * Flags to specify which nodes are to be updated
      */
     private boolean[] updateNode;
@@ -518,15 +423,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private int[] branchUpdateIndices;
-    private double[] branchLengths;
-    private int branchUpdateCount;
-
-    private int[] operations;
-    private int operationCount;
-
-    private BufferIndexHelper partialBufferHelper;
-
-
+    private List<DataLikelihoodDelegate.BranchOperation> branchOperations = new ArrayList<>();
+    private List<DataLikelihoodDelegate.NodeOperation> nodeOperations = new ArrayList<>();
 
 }//END: class

@@ -48,6 +48,7 @@ import java.util.logging.Logger;
 public final class TreeDataLikelihood extends AbstractModelLikelihood implements Reportable {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = false;
+    private static final long MAX_UNDERFLOWS_BEFORE_ERROR = 100;
 
     public TreeDataLikelihood(DataLikelihoodDelegate delegate,
                               TreeModel treeModel,
@@ -60,6 +61,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
         logger.info("Using TreeDataLikelihood");
 
         this.delegate = delegate;
+        addModel(delegate);
 
         this.treeModel = treeModel;
         addModel(treeModel);
@@ -108,8 +110,6 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
     @Override
     public final void makeDirty() {
-        if (COUNT_TOTAL_OPERATIONS)
-            totalMakeDirtyCount++;
         likelihoodKnown = false;
         updateAllNodes();
     }
@@ -157,15 +157,19 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                     //System.err.println("Another tree event has occured (possibly a trait change).");
                 }
             }
+        } else if (model == delegate) {
 
-        } else if (model == branchRateModel) {
             if (index == -1) {
-                if (COUNT_TOTAL_OPERATIONS)
-                    totalRateUpdateAllCount++;
                 updateAllNodes();
             } else {
-                if (COUNT_TOTAL_OPERATIONS)
-                    totalRateUpdateSingleCount++;
+                updateNode(treeModel.getNode(index));
+            }
+
+        } else if (model == branchRateModel) {
+
+            if (index == -1) {
+                updateAllNodes();
+            } else {
                 updateNode(treeModel.getNode(index));
             }
 
@@ -176,6 +180,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         if (COUNT_TOTAL_OPERATIONS)
             totalModelChangedCount++;
+
         likelihoodKnown = false;
     }
 
@@ -219,6 +224,7 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
 
         double logL = Double.NEGATIVE_INFINITY;
         boolean done = false;
+        long underflowCount = 0;
 
         do {
             branchOperations.clear();
@@ -242,9 +248,10 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
                 // if there is an underflow, assume delegate will attempt to rescale
                 // so flag all nodes to update and return to try again.
                 updateAllNodes();
+                underflowCount ++;
             }
 
-        } while (!done);
+        } while (!done && underflowCount < MAX_UNDERFLOWS_BEFORE_ERROR);
 
         // after traverse all nodes and patterns have been updated --
         //so change flags to reflect this.
@@ -328,6 +335,8 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * Set update flag for a node and its children
      */
     protected void updateNode(NodeRef node) {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateSingleCount++;
 
         updateNode[node.getNumber()] = true;
         likelihoodKnown = false;
@@ -337,9 +346,15 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * Set update flag for a node and its direct children
      */
     protected void updateNodeAndChildren(NodeRef node) {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateSingleCount++;
+
         updateNode[node.getNumber()] = true;
 
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
+            if (COUNT_TOTAL_OPERATIONS)
+                totalRateUpdateSingleCount++;
+
             NodeRef child = treeModel.getChild(node, i);
             updateNode[child.getNumber()] = true;
         }
@@ -350,6 +365,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * Set update flag for a node and all its descendents
      */
     protected void updateNodeAndDescendents(NodeRef node) {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateSingleCount++;
+
         updateNode[node.getNumber()] = true;
 
         for (int i = 0; i < treeModel.getChildCount(node); i++) {
@@ -364,6 +382,9 @@ public final class TreeDataLikelihood extends AbstractModelLikelihood implements
      * Set update flag for all nodes
      */
     protected void updateAllNodes() {
+        if (COUNT_TOTAL_OPERATIONS)
+            totalRateUpdateAllCount++;
+
         for (int i = 0; i < updateNode.length; i++) {
             updateNode[i] = true;
         }

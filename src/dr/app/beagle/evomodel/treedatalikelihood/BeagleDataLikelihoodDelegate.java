@@ -35,20 +35,35 @@ package dr.app.beagle.evomodel.treedatalikelihood;/**
 
 import beagle.*;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
+import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.*;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
+import dr.app.beagle.tools.BeagleSequenceSimulator;
+import dr.app.beagle.tools.Partition;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,8 +161,8 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel, -1);
 
             // first set the rescaling scheme to use from the parser
-            this.rescalingScheme = rescalingScheme;
-            this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
+            this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
+            this.delayRescalingUntilUnderflow = false;
 
             int[] resourceList = null;
             long preferenceFlags = 0;
@@ -501,7 +516,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         useScaleFactors = true;
         recomputeScaleFactors = true;
 
-        branchUpdateCount = 0;
+        int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
             branchLengths[branchUpdateCount] = op.getBranchNumber();
@@ -527,13 +542,52 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
                     branchUpdateCount);
         }
 
-        operationCount = 0;
+        int operationCount = nodeOperations.size();
         int k = 0;
         for (NodeOperation op : nodeOperations) {
-            operations[k] = op.getNodeNumber();
-            operations[k + 1] = op.getLeftChild();
-            operations[k + 2] = op.getRightChild();
-            operationCount++;
+            int nodeNum = op.getNodeNumber();
+
+            if (flip) {
+                // first flip the partialBufferHelper
+                partialBufferHelper.flipOffset(nodeNum);
+            }
+
+            operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+
+            if (useScaleFactors) {
+                // get the index of this scaling buffer
+                int n = nodeNum - tipCount;
+
+                if (recomputeScaleFactors) {
+                    // flip the indicator: can take either n or (internalNodeCount + 1) - n
+                    scaleBufferHelper.flipOffset(n);
+
+                    // store the index
+                    scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
+
+                    operations[k + 1] = scaleBufferIndices[n]; // Write new scaleFactor
+                    operations[k + 2] = Beagle.NONE;
+
+                } else {
+                    operations[k + 1] = Beagle.NONE;
+                    operations[k + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
+                }
+
+            } else {
+
+                if (useAutoScaling) {
+                    scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
+                }
+                operations[k + 1] = Beagle.NONE; // Not using scaleFactors
+                operations[k + 2] = Beagle.NONE;
+            }
+
+            operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
+            operations[k + 4] = substitutionModelDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+            operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
+            operations[k + 6] = substitutionModelDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
+
+            k += Beagle.OPERATION_TUPLE_SIZE;
         }
 
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
@@ -573,6 +627,10 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
         if (Double.isNaN(logL) || Double.isInfinite(logL)) {
             everUnderflowed = true;
+            // turn off double buffer flipping so the next call overwrites the
+            // underflowed buffers. Flip will be turned on again in storeState for
+            // next step
+            flip = false;
             throw new LikelihoodUnderflowException();
         }
 
@@ -631,6 +689,9 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             System.arraycopy(scaleBufferIndices, 0, storedScaleBufferIndices, 0, scaleBufferIndices.length);
 //            storedRescalingCount = rescalingCount;
         }
+
+        // turn on double buffering flipping (may have been turned off to enable a rescale)
+        flip = true;
     }
 
     /**
@@ -649,11 +710,11 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
             scaleBufferIndices = tmp;
 //            rescalingCount = storedRescalingCount;
         }
+
     }
 
     @Override
     protected void acceptState() {
-
     }
 
     // **************************************************************
@@ -666,14 +727,13 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
 
     private int[] branchUpdateIndices;
     private double[] branchLengths;
-    private int branchUpdateCount;
 
     private int[] scaleBufferIndices;
     private int[] storedScaleBufferIndices;
 
     private int[] operations;
-    private int operationCount;
 
+    private boolean flip = true;
     private BufferIndexHelper partialBufferHelper;
     private BufferIndexHelper scaleBufferHelper;
 
@@ -763,5 +823,92 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * Flag to specify if ambiguity codes are in use
      */
     private final boolean useAmbiguities;
+
+    public static void main(String[] args) {
+
+        try {
+
+            MathUtils.setSeed(666);
+
+            System.out.println("Test case 1: simulateOnePartition");
+
+            int sequenceLength = 1000;
+            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+
+            // create tree
+            NewickImporter importer = new NewickImporter(
+                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+            Tree tree = importer.importTree(null);
+            TreeModel treeModel = new TreeModel(tree);
+
+            // create Frequency Model
+            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
+                    0.25, 0.25});
+            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+                    freqs);
+
+            // create branch model
+            Parameter kappa1 = new Parameter.Default(1, 1);
+            Parameter kappa2 = new Parameter.Default(1, 1);
+
+            HKY hky1 = new HKY(kappa1, freqModel);
+            HKY hky2 = new HKY(kappa2, freqModel);
+
+            HomogeneousBranchModel homogenousBranchSubstitutionModel = new HomogeneousBranchModel(
+                    hky1);
+
+            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
+            substitutionModels.add(hky1);
+            substitutionModels.add(hky2);
+            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
+            freqModels.add(freqModel);
+
+            Parameter epochTimes = new Parameter.Default(1, 20);
+
+            // create branch rate model
+            Parameter rate = new Parameter.Default(1, 0.001);
+            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
+
+            // create site model
+            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+                    "siteModel");
+
+            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);
+
+            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
+
+            // create partition
+            Partition partition1 = new Partition(treeModel, //
+                    homogenousBranchSubstitutionModel,//
+                    siteRateModel, //
+                    branchRateModel, //
+                    freqModel, //
+                    0, // from
+                    sequenceLength - 1, // to
+                    1 // every
+            );
+
+            partitionsList.add(partition1);
+
+            // feed to sequence simulator and generate data
+            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
+//            		, sequenceLength
+            );
+            Alignment alignment = simulator.simulate(false, false);
+
+            BeagleDataLikelihoodDelegate bdld = new BeagleDataLikelihoodDelegate(treeModel, homogeneousBranchModel, alignment, siteRateModel, false);
+            TreeDataLikelihood tdl  = new TreeDataLikelihood(bdld, treeModel, branchRateModel);
+
+            System.out.println("BeagleDataLikelihoodDelegate(homogeneous) = " + tdl.getLogLikelihood());
+
+//            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
+//
+//            System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        } // END: try-catch block
+    }
 
 }

@@ -25,6 +25,8 @@
 
 package dr.app.beagle.evomodel.treedatalikelihood;
 
+import dr.inference.model.Model;
+
 import java.util.List;
 
 /**
@@ -34,7 +36,7 @@ import java.util.List;
  * @author Marc Suchard
  * @version $Id$
  */
-public interface DataLikelihoodDelegate {
+public interface DataLikelihoodDelegate extends Model {
 
     double calculateLikelihood(List<BranchOperation> branchOperations, List<NodeOperation> nodeOperations, int rootNodeNumber) throws LikelihoodUnderflowException;
 

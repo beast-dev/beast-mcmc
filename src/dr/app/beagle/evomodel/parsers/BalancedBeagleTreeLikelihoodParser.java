@@ -59,9 +59,7 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
     //public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 
     public static final String TREE_LIKELIHOOD = "balancedTreeLikelihood";
-    public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
-    public static final String SCALING_SCHEME = "scalingScheme";
     public static final String PARTIALS_RESTRICTION = "partialsRestriction";
     
     public final int TEST_RUNS = 100;
@@ -77,6 +75,7 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                        boolean delayScaling,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
         return new BeagleTreeLikelihood(
@@ -88,13 +87,14 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
                 tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
+                delayScaling,
                 partialsRestrictions
         );
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        boolean useAmbiguities = xo.getAttribute(USE_AMBIGUITIES, false);
+        boolean useAmbiguities = xo.getAttribute(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, false);
         /*int instanceCount = xo.getAttribute(INSTANCE_COUNT, 1);
         if (instanceCount < 1) {
             instanceCount = 1;
@@ -131,14 +131,15 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
 //        }
 
         PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
-        if (xo.hasAttribute(SCALING_SCHEME)) {
-            scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
+        if (xo.hasAttribute(BeagleTreeLikelihoodParser.SCALING_SCHEME)) {
+//            scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(BeagleTreeLikelihoodParser.SCALING_SCHEME));
             if (scalingScheme == null)
-                throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(SCALING_SCHEME)+"' in "+
+                throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(BeagleTreeLikelihoodParser.SCALING_SCHEME)+"' in "+
                         "OldBeagleTreeLikelihood object '"+xo.getId());
 
         }
 
+        boolean delayScaling = true;
         Map<Set<String>, Parameter> partialsRestrictions = null;
 
         if (xo.hasChildNamed(PARTIALS_RESTRICTION)) {
@@ -180,6 +181,7 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
                 tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
+                delayScaling,
                 partialsRestrictions,
                 xo
         );
@@ -226,6 +228,7 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
                         null,
                         useAmbiguities,
                         scalingScheme,
+                        delayScaling,
                         partialsRestrictions,
                         xo);
                 treeLikelihood.setId(xo.getId() + "_" + instanceCount);
@@ -272,6 +275,7 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
                             null,
                             useAmbiguities,
                             scalingScheme,
+                            delayScaling,
                             partialsRestrictions,
                             xo);
                     treeLikelihood.setId(xo.getId() + "_" + instanceCount);
@@ -322,7 +326,7 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
     }
 
     public static final XMLSyntaxRule[] rules = {
-            AttributeRule.newBooleanRule(USE_AMBIGUITIES, true),
+            AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
@@ -330,7 +334,8 @@ public class BalancedBeagleTreeLikelihoodParser extends AbstractXMLObjectParser 
             new ElementRule(SubstitutionModel.class, true),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TipStatesModel.class, true),
-            AttributeRule.newStringRule(SCALING_SCHEME,true),
+            AttributeRule.newStringRule(BeagleTreeLikelihoodParser.SCALING_SCHEME,true),
+            AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.DELAY_SCALING,true),
             new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                     new ElementRule(TaxonList.class),
                     new ElementRule(Parameter.class),

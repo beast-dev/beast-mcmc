@@ -73,6 +73,7 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
                 null,
                 false,
                 PartialsRescalingScheme.AUTO,
+                true,
                 null,
                 hky.getDataType(),
                 "stateTag",

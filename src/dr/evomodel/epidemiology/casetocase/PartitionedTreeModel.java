@@ -630,9 +630,11 @@ public class PartitionedTreeModel extends TreeModel {
         int indexCaseCount = 0;
 
         for(AbstractCase aCase : outbreak.getCases()){
-            if(map.get(aCase)==null){
-                firstCase = aCase;
-                indexCaseCount ++;
+            if(aCase.wasEverInfected()) {
+                if (map.get(aCase) == null) {
+                    firstCase = aCase;
+                    indexCaseCount++;
+                }
             }
         }
         if(indexCaseCount==0){
@@ -734,14 +736,8 @@ public class PartitionedTreeModel extends TreeModel {
 
 
     private AbstractCase randomlyAssignNode(NodeRef node, boolean allowCreep){
-        //this makes a non-extended partition. This is OK, but if it keeps giving zero likelihoods then you could do
-        //something else
 
         if(isExternal(node)){
-            if(getNodeTaxon(node).getId().startsWith("Location_2_4_0_")){
-                System.out.println("look at me");
-            }
-
             return branchMap.get(node.getNumber());
         } else {
 
@@ -766,7 +762,7 @@ public class PartitionedTreeModel extends TreeModel {
             }
 
             if(forcedByTopology.size()>1){
-                throw new RuntimeException("Starting transmission tree is incompatible with starting phylogeny");
+                throw new RuntimeException("Starting phylogeny is incompatible with this tip partition");
             } else if(forcedByTopology.size()==1){
                 branchMap.set(node.getNumber(), forcedByTopology.get(0), true);
 

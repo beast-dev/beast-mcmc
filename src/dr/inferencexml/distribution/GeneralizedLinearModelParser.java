@@ -1,7 +1,7 @@
 /*
  * GeneralizedLinearModelParser.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -34,7 +34,6 @@ import dr.inference.distribution.LogisticRegression;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
 
 /**
@@ -66,7 +65,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-        System.err.println("PASSED 0");
+//        System.err.println("PASSED 0");
         XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
         Parameter dependentParam = null;
         if (cxo != null)
@@ -114,11 +113,11 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
             glm.addScaleParameter(scaleParameter, scaleDesign);
         }
-        System.err.println("START 0");
+//        System.err.println("START 0");
         addIndependentParameters(xo, glm, dependentParam);
-        System.err.println("START 1");
+//        System.err.println("START 1");
         addRandomEffects(xo, glm, dependentParam);
-        System.err.println("START 2");
+//        System.err.println("START 2");
 
         boolean checkIdentifiability = xo.getAttribute(CHECK_IDENTIFIABILITY, true);
         if (checkIdentifiability) {
@@ -126,9 +125,9 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("All design matrix predictors are not identifiable in "+  xo.getId());
             }
         }
-        System.err.println("PASSED B");
+//        System.err.println("PASSED B");
         checkFullRankOfMatrix = xo.getAttribute(CHECK_FULL_RANK,true);
-        System.err.println("PASSED C");
+//        System.err.println("PASSED C");
         return glm;
     }
 

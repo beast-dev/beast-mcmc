@@ -706,7 +706,7 @@ public class BeagleSeqSimTest {
 						branchRateModel, //
 						null, //
 						false, //
-						PartialsRescalingScheme.DEFAULT);
+						PartialsRescalingScheme.DEFAULT, true);
 
 				System.out.println("likelihood = " + nbtl.getLogLikelihood());
 

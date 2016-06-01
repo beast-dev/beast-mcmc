@@ -110,7 +110,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
 
         i = eligibleNodes.get(MathUtils.nextInt(eligibleNodes.size()));
 
-        int eligibleNodeCount = eligibleNodes.size();
+        double eligibleNodeCount = eligibleNodes.size();
 
 
         final NodeRef iP = tree.getParent(i);
@@ -348,7 +348,7 @@ public class TransmissionSubtreeSlideA extends AbstractTreeOperator implements C
             c2cLikelihood.outputTreeToFile("afterTSSA.nex", false);
         }
 
-        int reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
+        double reverseEligibleNodeCount = getEligibleNodes(tree, branchMap).size();
 
         logq += Math.log(eligibleNodeCount/reverseEligibleNodeCount);
 

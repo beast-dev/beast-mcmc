@@ -28,6 +28,7 @@ package dr.app.beagle.evomodel.treelikelihood;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
@@ -70,6 +71,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               TipStatesModel tipStatesModel,
                                               boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
+                                              boolean delayRescalingUntilUnderflow,
                                               Map<Set<String>, Parameter> partialsRestrictions,
                                               final DataType dataType,
                                               final String tag,
@@ -77,7 +79,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               boolean useMAP,
                                               boolean returnML) {
 
-        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme,
+        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme, delayRescalingUntilUnderflow,
                 partialsRestrictions);
 
         this.dataType = dataType;
@@ -146,16 +148,24 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
 
-            int state = patternList.getPatternState(sequenceIndex, i);
-            stateSet = dataType.getStateSet(state);
 
-            for (int j = 0; j < stateCount; j++) {
-                if (stateSet[j]) {
-                    partials[v] = 1.0;
-                } else {
-                    partials[v] = 0.0;
+            if (patternList instanceof UncertainSiteList) {
+                ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
+                v += stateCount;
+                // TODO Add this functionality to SimpleSiteList to avoid if statement here
+            } else {
+
+                int state = patternList.getPatternState(sequenceIndex, i);
+                stateSet = dataType.getStateSet(state);
+
+                for (int j = 0; j < stateCount; j++) {
+                    if (stateSet[j]) {
+                        partials[v] = 1.0;
+                    } else {
+                        partials[v] = 0.0;
+                    }
+                    v++;
                 }
-                v++;
             }
         }  // TODO Note code duplication with BTL, refactor when debugged
 

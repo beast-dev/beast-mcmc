@@ -289,7 +289,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
                     branchRateModel, //
                     null, //
                     false, //
-                    PartialsRescalingScheme.DEFAULT);
+                    PartialsRescalingScheme.DEFAULT, true);
 
             BeagleTreeLikelihood gold = new BeagleTreeLikelihood(convert, //
                     tree, //
@@ -298,7 +298,7 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
                     branchRateModel, //
                     null, //
                     false, //
-                    PartialsRescalingScheme.DEFAULT);
+                    PartialsRescalingScheme.DEFAULT, true);
             
             System.out.println("likelihood (gold) = " + gold.getLogLikelihood());
             System.out.println("likelihood = " + like.getLogLikelihood());

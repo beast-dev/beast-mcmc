@@ -40,6 +40,7 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
     public static final String MONOPHYLY_STATISTIC = "monophylyStatistic";
     public static final String MRCA = "mrca";
     public static final String IGNORE = "ignore";
+    public static final String INVERSE = "inverse";
 
     public String getParserName() {
         return MONOPHYLY_STATISTIC;
@@ -48,6 +49,8 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String name = xo.getAttribute(Statistic.NAME, xo.getId());
+
+        Boolean inverse = xo.getAttribute(INVERSE, false);
 
         Tree tree = (Tree) xo.getChild(Tree.class);
 
@@ -81,7 +84,7 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
         }
 
         try {
-            return new MonophylyStatistic(name, tree, taxa, ignore);
+            return new MonophylyStatistic(name, tree, taxa, ignore, inverse);
         } catch (Tree.MissingTaxonException mte) {
             throw new XMLParseException("Taxon, " + mte + ", in " + getParserName() + "was not found in the tree.");
         }
@@ -105,6 +108,7 @@ public class MonophylyStatisticParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new StringAttributeRule(Statistic.NAME, "A name for this statistic for the purpose of logging", true),
+            AttributeRule.newBooleanRule(INVERSE, true, "inverse, returns 0/false when monophyletic and 1/true when not monophyletic"),
             // Any tree will do, no need to insist on a Tree Model
             new ElementRule(Tree.class),
             new ElementRule(MRCA, new XMLSyntaxRule[]{

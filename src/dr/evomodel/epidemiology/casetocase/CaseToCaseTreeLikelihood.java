@@ -131,6 +131,8 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     public CaseToCaseTreeLikelihood(String name, PartitionedTreeModel tree, AbstractOutbreak caseData,
                                     Parameter maxFirstInfToRoot) {
+
+
         super(name, caseData, tree);
 
 
@@ -278,8 +280,6 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
                         littleTree.getRootHeight() + extraHeight);
 
                 elementsAsTrees.put(aCase, treelet);
-
-
             }
         }
     }

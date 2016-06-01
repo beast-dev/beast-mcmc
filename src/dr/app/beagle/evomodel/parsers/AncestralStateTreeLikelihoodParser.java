@@ -72,6 +72,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
             TipStatesModel tipStatesModel, //
             boolean useAmbiguities, //
             PartialsRescalingScheme scalingScheme, //
+            boolean delayScaling,
             Map<Set<String>, //
                     Parameter> partialsRestrictions, //
             XMLObject xo //
@@ -101,6 +102,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
+                delayScaling,
                 partialsRestrictions,
                 dataType,
                 tag,
@@ -111,7 +113,7 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                AttributeRule.newBooleanRule(OldTreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newBooleanRule(BeagleTreeLikelihoodParser.USE_AMBIGUITIES, true),
                 AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
@@ -120,7 +122,8 @@ public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodPars
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(TipStatesModel.class, true),
                 new ElementRule(SubstitutionModel.class, true),
-                AttributeRule.newStringRule(OldTreeLikelihoodParser.SCALING_SCHEME,true),
+                AttributeRule.newStringRule(BeagleTreeLikelihoodParser.SCALING_SCHEME,true),
+                AttributeRule.newStringRule(BeagleTreeLikelihoodParser.DELAY_SCALING,true),
                 new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                         new ElementRule(TaxonList.class),
                         new ElementRule(Parameter.class),

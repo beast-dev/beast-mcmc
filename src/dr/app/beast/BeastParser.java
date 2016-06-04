@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import dr.util.Citable;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -35,9 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author Alexei Drummond
@@ -197,6 +196,18 @@ public class BeastParser extends XMLParser {
         if (verbose) {
             System.out.println("load " + parsersFile + " successfully.\n");
         }
+    }
+
+    public Set<Citable> getCitableObjects() {
+        Set<Citable> citables = new HashSet<Citable>();
+
+        for (Object object : getObjectStore().values()) {
+            if (object instanceof Citable) {
+                citables.add((Citable)object);
+            }
+        }
+
+        return citables;
     }
 
     private void setup(String[] args) {

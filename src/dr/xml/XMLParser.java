@@ -467,6 +467,9 @@ public class XMLParser {
         return logFile;
     }
 
+    public Map<String, Object> getObjectStore() {
+        return store;
+    }
 
     public class ArrayParser extends AbstractXMLObjectParser {
 

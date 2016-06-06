@@ -183,7 +183,8 @@ public class FastMatrixParameter extends CompoundParameter implements MatrixPara
 
     @Override
     public void setParameterValue(int row, int col, double value) {
-        singleParameter.setParameterValue(index(row, col), value);
+        singleParameter.setParameterValueQuietly(index(row, col), value);
+        singleParameter.fireParameterChangedEvent(col * getRowDimension() + row, ChangeType.VALUE_CHANGED);
     }
 
     @Override

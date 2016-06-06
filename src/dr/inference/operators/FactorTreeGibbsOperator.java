@@ -15,10 +15,11 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     LatentFactorModel lfm;
     double pathParameter = 1;
     FullyConjugateMultivariateTraitLikelihood tree;
+    FullyConjugateMultivariateTraitLikelihood workingTree;
     MatrixParameterInterface factors;
     MatrixParameterInterface errorPrec;
 
-    public FactorTreeGibbsOperator(double weight, LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree){
+    public FactorTreeGibbsOperator(double weight, LatentFactorModel lfm, FullyConjugateMultivariateTraitLikelihood tree, FullyConjugateMultivariateTraitLikelihood workingTree){
         setWeight(weight);
         this.tree = tree;
         this.lfm = lfm;
@@ -60,7 +61,7 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     }
 
     double[][] getPrecision(int column){
-        double [][] treePrec = tree.getConditionalPrecision(column);
+        double [][] treePrec = getTreePrec(column);
 
         for (int i = 0; i < lfm.getLoadings().getColumnDimension(); i++) {
             for (int j = i; j < lfm.getLoadings().getColumnDimension(); j++) {
@@ -76,8 +77,8 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
     double[] getMean(int column, double[][] precision){
         Matrix variance = (new SymmetricMatrix(precision)).inverse();
         double[] midMean = new double[lfm.getLoadings().getColumnDimension()];
-        double[] condMean = tree.getConditionalMean(column);
-        double[][] condPrec = tree.getConditionalPrecision(column);
+        double[] condMean = getTreeMean(column);
+        double[][] condPrec = getTreePrec(column);
         for (int i = 0; i < midMean.length; i++) {
             for (int j = 0; j < midMean.length; j++) {
                 midMean [i] += condPrec[i][j] * condMean[j];
@@ -96,6 +97,33 @@ public class FactorTreeGibbsOperator extends SimpleMCMCOperator implements Gibbs
 
         }
         return mean;
+    }
+
+    public double[][] getTreePrec(int column){
+        double[][] answer = tree.getConditionalPrecision(column);
+        if(workingTree == null){
+            return answer;
+        }
+        double[][] temp = workingTree.getConditionalPrecision(column);
+        for (int i = 0; i <answer.length ; i++) {
+            for (int j = 0; j <answer.length ; j++) {
+                answer[i][j] = answer[i][j] * pathParameter + temp[i][j] * (1 - pathParameter);
+            }
+
+        }
+        return answer;
+    }
+
+    public double[] getTreeMean(int column){
+        double[] answer = tree.getConditionalMean(column);
+        if(workingTree == null){
+            return answer;
+        }
+        double[] temp = workingTree.getConditionalMean(column);
+        for (int i = 0; i <answer.length ; i++) {
+                answer[i] = answer[i] * pathParameter + temp[i] * (1 - pathParameter);
+            }
+        return answer;
     }
 
     @Override

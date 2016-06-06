@@ -48,6 +48,7 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
     }
 
     protected void restoreValues(){
+        super.restoreValues();
         rowDimension = storedRowDimension;
         columnDimension = storedColumnDimension;
     }

@@ -1,6 +1,5 @@
 package dr.inference.operators;
 
-import com.sun.xml.internal.bind.v2.TODO;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.GaussianProcessFromTree;
 import dr.inference.distribution.MomentDistributionModel;

@@ -13,6 +13,7 @@ import dr.xml.*;
 public class FactorTreeGibbsOperatorParser extends AbstractXMLObjectParser {
     public static final String FACTOR_TREE_GIBBS_OPERATOR_PARSER = "factorTreeGibbsOperator";
     public static final String WEIGHT = "weight";
+    public static final String WORKING_PRIOR = "workingPrior";
 
 
     @Override
@@ -21,8 +22,14 @@ public class FactorTreeGibbsOperatorParser extends AbstractXMLObjectParser {
         double weight = Double.parseDouble(weightTemp);
         LatentFactorModel lfm= (LatentFactorModel) xo.getChild(LatentFactorModel.class);
         FullyConjugateMultivariateTraitLikelihood tree = (FullyConjugateMultivariateTraitLikelihood) xo.getChild(FullyConjugateMultivariateTraitLikelihood.class);
+        FullyConjugateMultivariateTraitLikelihood workingTree = null;
+        if(xo.getChild(WORKING_PRIOR) != null){
+            System.out.println("happy");
+            workingTree = (FullyConjugateMultivariateTraitLikelihood) xo.getChild(WORKING_PRIOR).getChild(FullyConjugateMultivariateTraitLikelihood.class);
+        }
 
-        return new FactorTreeGibbsOperator(weight, lfm, tree);
+
+        return new FactorTreeGibbsOperator(weight, lfm, tree, workingTree);
     }
 
     @Override
@@ -34,6 +41,9 @@ public class FactorTreeGibbsOperatorParser extends AbstractXMLObjectParser {
             new ElementRule(LatentFactorModel.class),
             new ElementRule(FullyConjugateMultivariateTraitLikelihood.class),
             AttributeRule.newDoubleRule(WEIGHT),
+            new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
+                    new ElementRule(FullyConjugateMultivariateTraitLikelihood.class)
+            }, true),
     };
 
 

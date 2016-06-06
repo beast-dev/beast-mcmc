@@ -414,13 +414,14 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         double p = getPrecisionFactor(taxa);
 
         double[][] thisP = new double[dim][dim];
-
-        for (int i = 0; i < dim; i++) {
-            for (int j = 0; j < dim; j++) {
+        for (int i = 0; i < getNumData(); i++) {
+            for (int j = 0; j < getDimTrait(); j++) {
+                for (int k = 0; k < getDimTrait(); k++) {
 //                System.out.println("P: "+p);
 //                System.out.println("I: "+i+", J: "+j+" value:"+precisionParam[i][j]);
-                thisP[i][j] = p * precisionParam[i][ j];
+                    thisP[i * getDimTrait() + j][i * getDimTrait() + k] = p * precisionParam[j][k];
 
+                }
             }
         }
 

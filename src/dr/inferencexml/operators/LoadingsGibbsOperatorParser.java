@@ -44,6 +44,7 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
     public static final String LOADINGS_GIBBS_OPERATOR = "loadingsGibbsOperator";
     public static final String WEIGHT = "weight";
     private final String RANDOM_SCAN = "randomScan";
+    private final String WORKING_PRIOR = "workingPrior";
 
 
     @Override
@@ -58,9 +59,14 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
         if(xo.getChild(MatrixParameterInterface.class)!=null){
             loadings=(MatrixParameterInterface) xo.getChild(MatrixParameterInterface.class);
         }
+        DistributionLikelihood WorkingPrior = null;
+        if(xo.getChild(WORKING_PRIOR) != null){
+            System.out.println("here");
+            WorkingPrior = (DistributionLikelihood) xo.getChild(WORKING_PRIOR).getChild(DistributionLikelihood.class);
+        }
 
         if(prior!=null)
-        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan);  //To change body of implemented methods use File | Settings | File Templates.
+        return new LoadingsGibbsOperator(LFM, prior, weight, randomScan, WorkingPrior);  //To change body of implemented methods use File | Settings | File Templates.
         else
             return new LoadingsGibbsTruncatedOperator(LFM, prior2, weight, randomScan, loadings);
     }
@@ -79,6 +85,9 @@ public class LoadingsGibbsOperatorParser extends AbstractXMLObjectParser {
             ),
 //            new ElementRule(CompoundParameter.class),
             AttributeRule.newDoubleRule(WEIGHT),
+            new ElementRule(WORKING_PRIOR, new XMLSyntaxRule[]{
+                    new ElementRule(DistributionLikelihood.class)
+            }, true),
     };
 
     @Override

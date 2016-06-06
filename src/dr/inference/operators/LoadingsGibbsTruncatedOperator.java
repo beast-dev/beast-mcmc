@@ -156,16 +156,16 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         double[][] newVariance = new double[meanArray.length - 1][meanArray.length - 1];
         for (int i = 0; i < meanArray.length; i++) {
             for (int j = 0; j < meanArray.length; j++) {
-                if(i < column || j < column){
+                if(i < column && j < column){
                     newVariance[i][j] = variance[i][j];
                 }
-                else if(i < column || j > column){
+                else if(i < column && j > column){
                     newVariance[i][j - 1] = variance[i][j];
                 }
-                else if(i > column || j < column){
+                else if(i > column && j < column){
                     newVariance[i - 1][j] = variance[i][j];
                 }
-                else if(i > column || j > column){
+                else if(i > column && j > column){
                     newVariance[i - 1][j - 1] = variance[i][j];
                 }
                 else{}

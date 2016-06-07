@@ -42,9 +42,12 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Author;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A multivariate trait likelihood that analytically integrates out the unobserved trait values at all internal
@@ -241,9 +244,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return "\tSample internal node traits: false\n";
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = super.getCitations();
-        citations.add(
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Multivariate diffusion model",
                 new Citation(
                         new Author[]{
                                 new Author("OG", "Pybus"),

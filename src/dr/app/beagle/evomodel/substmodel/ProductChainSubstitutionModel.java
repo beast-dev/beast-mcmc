@@ -35,7 +35,9 @@ import dr.util.Citation;
 import dr.util.CommonCitations;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 //import dr.math.matrixAlgebra.Vector;
@@ -110,9 +112,9 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
                 + Citable.Utils.getCitationString(this));
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
+        public Map<String, Citation> getCitations() {
+            Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+            citations.put("Product chain substition model",
                 CommonCitations.OBRIEN_2009
         );
         return citations;

@@ -25,10 +25,7 @@
 
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
@@ -310,10 +307,10 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
     }// END: main
 
 	@Override
-	public List<Citation> getCitations() {
-		
-		List<Citation> citations = new ArrayList<Citation>();
-		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
+	public Map<String, Citation> getCitations() {
+		Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+		citations.put("Lineage Specific Branch model",
+				new Citation(new Author[] { new Author("F", "Bielejec"),
 				new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
 				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
 		return citations;

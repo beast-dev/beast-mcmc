@@ -30,9 +30,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * FLU model of amino acid evolution (add reference).
@@ -199,8 +197,11 @@ public class FLU extends EmpiricalRateMatrix.AbstractAminoAcid {
         setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
     }
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
+    @Override
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("FLU amino acid substitution model", CITATION);
+        return citations;
     }
 
     public static Citation CITATION = new Citation(

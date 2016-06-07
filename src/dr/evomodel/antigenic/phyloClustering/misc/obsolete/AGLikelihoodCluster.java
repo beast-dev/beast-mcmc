@@ -1062,9 +1062,10 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
         }
     };
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Bayesian Antigenic Cartography framework",
+                new Citation(
                 new Author[]{
                         new Author("T", "Bedford"),
                         new Author("MA", "Suchard"),

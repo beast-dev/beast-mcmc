@@ -46,7 +46,9 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -295,11 +297,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
-    private static Citable TraitAscertainmentCitation = new Citable() {//} implements Citable {
-
-        public List<Citation> getCitations() {
-            List<Citation> list = new ArrayList<Citation>();
-            list.add(
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Multivariate Diffusion model",
+                CommonCitations.LEMEY_2010
+                );
+        if (doAscertainmentCorrect) {
+            citations.put("Ascertainment correction for multivariate trait model",
                     new Citation(
                             new Author[]{
                                     new Author("MA", "Suchard"),
@@ -310,15 +314,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                             Citation.Status.IN_PREPARATION
                     )
             );
-            return list;
         }
-    };
-
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                CommonCitations.LEMEY_2010
-        );
         return citations;
     }
 
@@ -337,8 +333,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         StringBuilder sb = new StringBuilder("Enabling ascertainment correction for multivariate trait model: ");
         sb.append(getId()).append("\n");
         sb.append("\tTaxon: ").append(taxon.getId()).append("\n");
-        sb.append("\tPlease cite:\n");
-        sb.append(Citable.Utils.getCitationString(TraitAscertainmentCitation));
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 

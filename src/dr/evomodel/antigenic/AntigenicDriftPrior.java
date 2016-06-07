@@ -32,7 +32,9 @@ import dr.util.Citation;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -221,19 +223,27 @@ public class AntigenicDriftPrior extends AbstractModelLikelihood implements Cita
         }
     };
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("T", "Bedford"),
-                        new Author("MA", "Suchard"),
-                        new Author("P", "Lemey"),
-                        new Author("G", "Dudas"),
-                        new Author("C", "Russell"),
-                        new Author("D", "Smith"),
-                        new Author("A", "Rambaut")
-                },
-                Citation.Status.IN_PREPARATION
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Bayesian Antigenic Cartography framework",
+                new Citation(
+                        new Author[]{
+                                new Author("T", "Bedford"),
+                                new Author("MA", "Suchard"),
+                                new Author("P", "Lemey"),
+                                new Author("G", "Dudas"),
+                                new Author("V", "Gregory"),
+                                new Author("AJ", "Hay"),
+                                new Author("JW", "McCauley"),
+                                new Author("CA", "Russell"),
+                                new Author("DJ", "Smith"),
+                                new Author("A", "Rambaut")
+                        },
+                        "Integrating influenza antigenic dynamics with molecular evolution",
+                        2015,
+                        "eLife",
+                        "e01914",
+                        "10.7554/eLife.01914"
         ));
         return citations;
     }

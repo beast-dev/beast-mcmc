@@ -57,6 +57,9 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.ThreadAwareLikelihood;
 import dr.math.MathUtils;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -71,7 +74,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
-public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood {
+public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood, Citable {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -1409,6 +1412,22 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         double[] siteLogLikelihoods = new double[patternCount];
         beagle.getSiteLogLikelihoods(siteLogLikelihoods);
         return siteLogLikelihoods;
+    }
+
+    @Override
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Using BEAGLE likelihood calculation library",
+                new Citation(
+                new Author[]{
+                        new Author("", "Ayres et al"),
+                },
+                "BEAGLE: a common application programming inferface and high-performance computing library for statistical phylogenetics",
+                2012,
+                "Syst Biol",
+                61, 170, 173,
+                "10.1093/sysbio/syr100"));
+        return citations;
     }
 
 }//END: class

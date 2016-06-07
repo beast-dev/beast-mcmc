@@ -55,9 +55,9 @@ public class PlinkImporter implements Citable {
         parse(reader);
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("PLink",
                 new Citation(
                         new Author[]{
                                 new Author("MA", "Suchard"),

@@ -30,8 +30,10 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * Package: AscertainedSitePatterns
@@ -112,9 +114,10 @@ public class AscertainedSitePatterns extends SitePatterns implements Citable {
 
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
+    @Override
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Ascertained Site Patterns",
                 CommonCitations.ALEKSEYENKO_2008
         );
         return citations;

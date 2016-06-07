@@ -122,21 +122,6 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         return treeLength;
     }
         
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{                                                           
-                                new Author("MA", "Suchard"),
-                                new Author("P", "Lemey"),
-                                new Author("A", "Rambaut"),
-                        },
-                        Citation.Status.IN_PREPARATION
-                )
-        );
-        return citations;
-    }
-
     private class SufficientStatistics {
         double sumWeight;
         double productWeight;

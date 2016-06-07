@@ -335,9 +335,11 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
 
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
+    @Override
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Multi-species coalescent model",
+                new Citation(
                 new Author[]{
                         new Author("Graham", "Jones")
                 },

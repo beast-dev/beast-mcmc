@@ -25,7 +25,9 @@
 
 package dr.util;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Interface for associating a list of citations with an object
@@ -38,13 +40,12 @@ public interface Citable {
     /**
      * @return a list of citations associated with this object
      */
-    List<Citation> getCitations();
+    Map<String, Citation> getCitations();
 
-    public class Utils {
-
+    class Utils {
         public static String getCitationString(Citable citable, String prepend, String postpend) {
-            List<Citation> citations = citable.getCitations();
-            if (citations == null || citations.size() == 0) {
+            Collection<Citation> citations = citable.getCitations().values();
+            if (citations.size() == 0) {
                 return null;
             }
             StringBuilder builder = new StringBuilder();

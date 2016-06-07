@@ -32,7 +32,9 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by msuchard on 5/19/16.
@@ -75,9 +77,9 @@ public class UncertainSiteList extends SimpleSiteList implements Citable {
         System.arraycopy(sitePatterns[sequenceIndex], 0, partials, offset, getDataType().getStateCount());
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Uncertain site list",
                 new Citation(
                         new Author[]{
                                 new Author("MA", "Suchard"),

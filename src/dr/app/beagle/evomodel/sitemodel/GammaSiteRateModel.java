@@ -31,6 +31,12 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.distributions.GammaDistribution;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * GammaSiteModel - A SiteModel that has a gamma distributed rates across sites.
@@ -39,7 +45,7 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
  * @version $Id: GammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
-public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
+public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, Citable {
 
     public GammaSiteRateModel(String name) {
         this(   name,
@@ -345,6 +351,26 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
     public void setSubstitutionModel(SubstitutionModel substitutionModel) {
         this.substitutionModel = substitutionModel;
     }
+
+
+    @Override
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Discrete gamma-distributed rate heterogeneity model", CITATION);
+        return citations;
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("Z", "Yang")
+            },
+            "Maximum likelihood phylogenetic estimation from DNA sequences with variable rates over sites: approximate methods",
+            1994,
+            "J. Mol. Evol.",
+            39,
+            306, 314,
+            Citation.Status.PUBLISHED
+    );
 
     private SubstitutionModel substitutionModel;
 }

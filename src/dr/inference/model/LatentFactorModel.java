@@ -28,10 +28,9 @@ package dr.inference.model;
 import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -678,12 +677,12 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 
     }
 
-    /**
-     * @return a list of citations associated with this object
-     */
     @Override
-    public List<Citation> getCitations() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Latent factor model",
+                CommonCitations.SUCHARD_GENERIC);
+        return citations;
     }
 
     /**

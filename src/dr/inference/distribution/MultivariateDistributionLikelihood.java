@@ -167,7 +167,6 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                             .append(i + 1).append("\n");
                 }
             }
-            sb.append("Please cite:\n").append(Citable.Utils.getCitationString(Transform.LOG));
             Logger.getLogger("dr.utils.Transform").info(sb.toString());
         }
         return transforms;

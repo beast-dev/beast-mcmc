@@ -891,9 +891,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
     };
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Bayesian Antigenic Cartography framework",
+                new Citation(
                 new Author[]{
                         new Author("T", "Bedford"),
                         new Author("MA", "Suchard"),
@@ -907,8 +908,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                         new Author("A", "Rambaut")
                 },
                 "Integrating influenza antigenic dynamics with molecular evolution",
+                2015,
                 "eLife",
-                Citation.Status.ACCEPTED
+                "e01914",
+                "10.7554/eLife.01914"
         ));
         return citations;
     }

@@ -279,35 +279,37 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
     // Citable implementation
     @Override
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("Graham", "Jones"),
-                        new Author("Serik", "Sagitov"),
-                        new Author("Bengt", "Oxelman")
-                },
-                "Statistical Inference of Allopolyploid Species Networks in the Presence of Incomplete Lineage Sorting",
-                2013,
-                "Systematic Biology",
-                62,
-                467,
-                478,
-                Citation.Status.PUBLISHED
-        ));
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Allopolyploid Species Networks model",
+                new Citation(
+                        new Author[]{
+                                new Author("Graham", "Jones"),
+                                new Author("Serik", "Sagitov"),
+                                new Author("Bengt", "Oxelman")
+                        },
+                        "Statistical Inference of Allopolyploid Species Networks in the Presence of Incomplete Lineage Sorting",
+                        2013,
+                        "Systematic Biology",
+                        62,
+                        467,
+                        478,
+                        Citation.Status.PUBLISHED
+                ));
 
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("Graham", "Jones")
-                },
-                "Bayesian phylogenetic analysis for diploid and allotetraploid species networks",
-                2013,
-                "",
-                -1,
-                -1,
-                -1,
-                Citation.Status.IN_PREPARATION
-        ));
+//            citations.put("Case to Case Transmission Tree model",
+//                    new Citation(
+//                new Author[]{
+//                        new Author("Graham", "Jones")
+//                },
+//                "Bayesian phylogenetic analysis for diploid and allotetraploid species networks",
+//                2013,
+//                "",
+//                -1,
+//                -1,
+//                -1,
+//                Citation.Status.IN_PREPARATION
+//        ));
 
         return citations;
     }

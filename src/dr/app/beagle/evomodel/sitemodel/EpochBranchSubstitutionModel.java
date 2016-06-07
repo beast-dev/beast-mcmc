@@ -48,6 +48,7 @@ import java.util.*;
 /**
  * @author Filip Bielejec
  * @author Marc A. Suchard
+ * @author Andrew Rambaut
  * @version $Id$
  */
 @SuppressWarnings("serial")
@@ -540,12 +541,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		}
 	}// END: checkBuffers
 
-	/**
-	 * @return a list of citations associated with this object
-	 */
-	public List<Citation> getCitations() {
-		List<Citation> citations = new ArrayList<Citation>();
-		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
+	@Override
+	public Map<String, Citation> getCitations() {
+		Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+		citations.put("Using Epoch Branch Substitution model",
+				new Citation(new Author[] { new Author("F", "Bielejec"),
 				new Author("P", "Lemey"), new Author("G", "Baele"),
 				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
 		return citations;

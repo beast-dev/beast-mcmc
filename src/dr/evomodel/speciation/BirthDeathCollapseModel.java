@@ -59,9 +59,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 
@@ -175,22 +173,22 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     }
 
     @Override
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("Graham", "Jones"),
-                        new Author("Bengt", "Oxelman")
-                },
-                "DISSECT: an assignment-free Bayesian discovery method for species delimitation under the multispecies coalescent",
-                2014,
-                "BIORXIV/2014/003178",
-                -1,
-                -1,
-                -1,
-                Citation.Status.IN_SUBMISSION
-        ));
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("DISSECT species delimitation model",
+                new Citation(
+                        new Author[]{
+                                new Author("Graham", "Jones"),
+                                new Author("Bengt", "Oxelman")
+                        },
+                        "DISSECT: an assignment-free Bayesian discovery method for species delimitation under the multispecies coalescent",
+                        2014,
+                        "BIORXIV/2014/003178",
+                        -1,
+                        -1,
+                        -1,
+                        Citation.Status.IN_SUBMISSION
+                ));
 
         return citations;
     }

@@ -37,9 +37,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -223,9 +221,9 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 //        return pcFreqModel;
 //    }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
+    public Map<String, Citation> getCitations() {
+        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
+        citations.put("Markov modulated substition model",
                 CommonCitations.SUCHARD_2012
         );
         return citations;

@@ -66,7 +66,8 @@ public enum AminoAcidModelType {
     }
 
     public Citation getCitation() {
-        return matrix.getCitations().get(0);
+        String key = matrix.getCitations().keySet().iterator().next();
+        return matrix.getCitations().get(key);
     }
 
     public static String[] xmlNames() {

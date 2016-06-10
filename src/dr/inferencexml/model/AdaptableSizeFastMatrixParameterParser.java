@@ -16,6 +16,7 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
     private static final String MAX_COL_SIZE="maxColumnSize";
     private static final String COLUMNS="columns";
     private static final String TRANSPOSE="transpose";
+    private static final String STARTING_VALUE = "startingValue";
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
         int MaxRowSize = xo.getAttribute(MAX_ROW_SIZE, 1);
@@ -23,8 +24,11 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
         int rowDimension = xo.getAttribute(ROWS, 1);
         int columnDimension = xo.getAttribute(COLUMNS, 1);
         String name = xo.getName();
+        double startingValue = 1;
+        if(xo.hasAttribute(STARTING_VALUE))
+            startingValue = xo.getDoubleAttribute(STARTING_VALUE);
 
-      return new AdaptableSizeFastMatrixParameter(name, rowDimension, columnDimension, MaxRowSize, MaxColumnSize);
+      return new AdaptableSizeFastMatrixParameter(name, rowDimension, columnDimension, MaxRowSize, MaxColumnSize, startingValue);
     }
 
     @Override
@@ -38,6 +42,7 @@ public class AdaptableSizeFastMatrixParameterParser extends AbstractXMLObjectPar
             AttributeRule.newIntegerRule(ROWS, true),
             AttributeRule.newIntegerRule(MAX_ROW_SIZE, true),
             AttributeRule.newIntegerRule(MAX_COL_SIZE, true),
+            AttributeRule.newDoubleRule(STARTING_VALUE, true),
 
     };
 

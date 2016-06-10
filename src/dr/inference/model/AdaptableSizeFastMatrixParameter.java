@@ -7,8 +7,8 @@ import dr.inference.loggers.NumberColumn;
  * Created by max on 4/6/16.
  */
 public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
-    public AdaptableSizeFastMatrixParameter(String id, int rowDimension, int colDimension, int maxRow, int maxCol) {
-        super(id, maxRow, maxCol);
+    public AdaptableSizeFastMatrixParameter(String id, int rowDimension, int colDimension, int maxRow, int maxCol, double startingValue) {
+        super(id, maxRow, maxCol, startingValue);
         if(maxRow < rowDimension){
             throw new RuntimeException("Row Dimension: " + rowDimension + ", is greater than Max Row Dimension: " + maxRow + " in " + getParameterName());
         }
@@ -141,6 +141,12 @@ public class AdaptableSizeFastMatrixParameter extends FastMatrixParameter {
         public double getDoubleValue() {
             return 0;
         }
+    }
+
+    public void setParameterValue(int row, int column, double value){
+        super.setParameterValueQuietly(row, column, value);
+        fireParameterChangedEvent(getRowDimension() * column + row, ChangeType.VALUE_CHANGED);
+
     }
 }
 

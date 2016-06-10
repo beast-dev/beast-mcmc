@@ -32,7 +32,9 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
     double priorMeanPrecision;
     MatrixParameterInterface loadings;
 
-    public LoadingsGibbsTruncatedOperator(LatentFactorModel LFM, MomentDistributionModel prior, double weight, boolean randomScan, MatrixParameterInterface loadings) {
+    DistributionLikelihood cutoffPrior;
+
+    public LoadingsGibbsTruncatedOperator(LatentFactorModel LFM, MomentDistributionModel prior, double weight, boolean randomScan, MatrixParameterInterface loadings, DistributionLikelihood cutoffPrior) {
         setWeight(weight);
 
         this.loadings=loadings;
@@ -40,6 +42,7 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         this.LFM = LFM;
         priorPrecision = (this.prior.getScaleMatrix()[0][0]);
         priorMeanPrecision = this.prior.getMean()[0] * priorPrecision;
+        this.cutoffPrior = cutoffPrior;
     }
 
     private void getPrecisionOfTruncated(MatrixParameterInterface full, int newRowDimension, int row, double[][] answer) {
@@ -51,9 +54,9 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
                     sum += full.getParameterValue(i, k) * full.getParameterValue(j, k);
                 answer[i][j] = sum * LFM.getColumnPrecision().getParameterValue(row, row);
                 if (i == j) {
-                    answer[i][j] =answer[i][j]*pathParameter+ priorPrecision;
+                    answer[i][j] =answer[i][j] * pathParameter + priorPrecision;
                 } else {
-                    answer[i][j]*=pathParameter;
+                    answer[i][j] *= pathParameter;
                     answer[j][i] = answer[i][j];
                 }
             }
@@ -111,19 +114,23 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         highCutoff = - lowCutoff;
         double low = truncated.cdf(lowCutoff);
         double high = truncated.cdf(highCutoff);
-        double split = low / (low + high);
+        double split = low / (low + (1-high));
         double rand = MathUtils.nextDouble();
         double draw;
         if(rand < split){
-            draw = MathUtils.nextDouble() * lowCutoff;
+            draw = MathUtils.nextDouble() * low;
             draw = truncated.quantile(draw);
         }
         else{
-            draw = MathUtils.nextDouble() * (1- high)+ high;
+            draw = MathUtils.nextDouble() * (1- high) + high;
             draw = truncated.quantile(draw);
         }
 
-        loadings.setParameterValue(row, column, draw);
+
+        if(!Double.isNaN(draw)){
+            loadings.setParameterValue(row, column, draw);
+        }
+
     }
 
     private void drawI(int i, int column) {
@@ -146,13 +153,20 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         getMean(i, variance, meanMidArray, meanArray);
 
 
-        NormalDistribution conditioned = getConditionalDistribution(meanArray, variance, column);
+        NormalDistribution conditioned = getConditionalDistribution(meanArray, variance, column, i);
 
 
-        getTruncatedDraw(i, column, conditioned);
+        if(MathUtils.nextDouble() < .5) {
+            getTruncatedDraw(i, column, conditioned);
+            getCutoffDraw(i, column);
+        }
+        else{
+            getCutoffDraw(i, column);
+            getTruncatedDraw(i, column, conditioned);
+        }
     }
 
-    private NormalDistribution getConditionalDistribution(double[] meanArray, double[][] variance, int column) {
+    private NormalDistribution getConditionalDistribution(double[] meanArray, double[][] variance, int column, int row) {
         double[][] newVariance = new double[meanArray.length - 1][meanArray.length - 1];
         for (int i = 0; i < meanArray.length; i++) {
             for (int j = 0; j < meanArray.length; j++) {
@@ -175,12 +189,12 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
         double[] meanStore1 = new double[meanArray.length - 1];
         double[] meanStore2 = new double[meanArray.length - 1];
         double[] precStore = new double[meanArray.length - 1];
-        for (int i = 0; i < meanArray.length - 1; i++) {
+        for (int i = 0; i < meanArray.length; i++) {
             if(i < column){
-                meanStore1[i] = meanArray[i] - LFM.getLoadings().getParameterValue(i, column);
+                meanStore1[i] = LFM.getLoadings().getParameterValue(row, i) - meanArray[i];
             }
             else if (i > column){
-                meanStore1[i] = meanArray[i - 1] - LFM.getLoadings().getParameterValue(i - 1, column);
+                meanStore1[i - 1] = LFM.getLoadings().getParameterValue(row, i) - meanArray[i];
             }
             else{}
         }
@@ -188,7 +202,6 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
             for (int j = 0; j < meanArray.length - 1; j++) {
                 meanStore2[i] += smallPrecision[i][j] * meanStore1[j];
             }
-
         }
         double mean = meanArray[column];
         for (int i = 0; i < meanArray.length - 1; i++) {
@@ -198,14 +211,6 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
             else{
                 mean += meanStore2[i] * variance[i + 1][column];
             }
-        }
-        for (int i = 0; i < meanArray.length; i++) {
-            for (int j = 0; j < meanArray.length; j++) {
-                if(i < column && j < column){
-
-                }
-            }
-
         }
         for (int i = 0; i < meanArray.length - 1; i++) {
             for (int j = 0; j < meanArray.length - 1; j++) {
@@ -228,6 +233,13 @@ public class LoadingsGibbsTruncatedOperator extends SimpleMCMCOperator implement
 
 
 
+    }
+
+    void getCutoffDraw(int row, int column){
+        double loadingsCutoff = Math.abs(loadings.getParameterValue(row, column));
+        double stopperCDF = Math.pow(cutoffPrior.getDistribution().cdf(loadingsCutoff), 2);
+        double randQuant = MathUtils.nextDouble() * stopperCDF;
+        ((MatrixParameterInterface) prior.getCutoff()).setParameterValue(row, column, cutoffPrior.getDistribution().quantile(randQuant));
     }
 
     @Override

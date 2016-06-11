@@ -324,18 +324,7 @@ public class XMLParser {
                 }
 
                 if (obj instanceof Citable) {
-
-                    // remove 'In prep' citations
-                    List<Citation> citationList = new LinkedList<Citation>();
-                    for (Citation citation : ((Citable)obj).getCitations()) {
-                        if (citation.getStatus() != Citation.Status.IN_PREPARATION) {
-                            citationList.add(citation);
-                        }
-                    }
-                    if (citationList.size() > 0) {
-                        Pair<String, String> pair = new Pair(((Citable) obj).getCategory(), ((Citable) obj).getDescription());
-                        citationStore.put(pair, citationList);
-                    }
+                    addCitable((Citable)obj);
                 }
 
                 if (obj instanceof Likelihood) {
@@ -379,12 +368,12 @@ public class XMLParser {
                     Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
 
                     // force the Framework category to be first...
-                    categoryMap.put("Framework", new HashSet<Pair<String, String>>());
+                    categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
 
                     for (Pair<String, String>keyPair : citationStore.keySet()) {
                         Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.fst);
                         if (pairSet == null) {
-                            pairSet = new HashSet<Pair<String, String>>();
+                            pairSet = new LinkedHashSet<Pair<String, String>>();
                             categoryMap.put(keyPair.fst, pairSet);
                         }
                         pairSet.add(keyPair);
@@ -608,8 +597,18 @@ public class XMLParser {
 ////        }
 //    };
 
-    public void addCitation(String category, String description, Citation citation) {
-        citationStore.put(new Pair<String, String>(category, description), Collections.singletonList(citation));
+    public void addCitable(Citable citable) {
+        // remove 'In prep' citations
+        List<Citation> citationList = new LinkedList<Citation>();
+        for (Citation citation : citable.getCitations()) {
+            if (citation.getStatus() != Citation.Status.IN_PREPARATION) {
+                citationList.add(citation);
+            }
+        }
+        if (citationList.size() > 0) {
+            Pair<String, String> pair = new Pair<String, String>(citable.getCategory(), citable.getDescription());
+            citationStore.put(pair, citationList);
+        }
     }
 
     //    private final Hashtable<String, XMLObject> store = new Hashtable<String, XMLObject>();

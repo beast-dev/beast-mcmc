@@ -56,18 +56,7 @@ public class BeastParser extends XMLParser {
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML) {
         super(parserWarnings, strictXML);
 
-        addCitation("Framework", "BEAST primary citation", new Citation(
-                new Author[]{
-                        new Author("AJ", "Drummond"),
-                        new Author("MA", "Suchard"),
-                        new Author("Dong", "Xie"),
-                        new Author("A", "Rambaut")
-                },
-                "Bayesian phylogenetics with BEAUti and the BEAST 1.7",
-                2012,
-                "Mol Biol Evol",
-                29, 1969, 1973,
-                "10.1093/molbev/mss075"));
+        addCitable(BeastVersion.INSTANCE);
 
         setup(args);
 

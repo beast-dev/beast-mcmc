@@ -33,6 +33,13 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.GammaFunction;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Alexander V. Alekseyenko (alexander.alekseyenko@gmail.com)
@@ -41,7 +48,7 @@ import dr.math.GammaFunction;
  *         Date: Aug 22, 2008
  *         Time: 3:26:57 PM
  */
-public class CTMCScalePrior extends AbstractModelLikelihood {
+public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     final private Parameter ctmcScale;
     final private TreeModel treeModel;
     private double treeLength;
@@ -165,4 +172,32 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
     public void makeDirty() {
         treeLengthKnown = false;
     }
+
+    @Override
+    public String getCategory() {
+        return "Prior Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "CTMC Scale Reference Prior model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("MAR", "Ferreira"),
+                    new Author("MA", "Suchard")
+            },
+            "Bayesian analysis of elapsed times in continuous-time Markov chains",
+            2008,
+            "Canadian Journal of Statistics",
+            36,
+            355, 368,
+            Citation.Status.PUBLISHED
+    );
 }

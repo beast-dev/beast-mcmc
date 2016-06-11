@@ -44,10 +44,7 @@ import dr.util.Author;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A multivariate trait likelihood that analytically integrates out the unobserved trait values at all internal
@@ -244,9 +241,18 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return "\tSample internal node traits: false\n";
     }
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Multivariate diffusion model",
+    @Override
+    public String getCategory() {
+        return "Trait Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Multivariate diffusion model";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(
                 new Citation(
                         new Author[]{
                                 new Author("OG", "Pybus"),
@@ -270,7 +276,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                         Citation.Status.PUBLISHED
                 )
         );
-        return citations;
     }
 
     public double getLogDataLikelihood() {
@@ -618,8 +623,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
                 for (int i = 0; i < dimTrait; ++i) {
                     System.err.println("\t"
-                                    + cacheHelper.getCorrectedMeanCache()[childOffset0 + 0 * dimTrait + i] + " "
-                                    + cacheHelper.getCorrectedMeanCache()[childOffset1 + 0 * dimTrait + i]
+                            + cacheHelper.getCorrectedMeanCache()[childOffset0 + 0 * dimTrait + i] + " "
+                            + cacheHelper.getCorrectedMeanCache()[childOffset1 + 0 * dimTrait + i]
                     );
                 }
                 System.exit(-1);

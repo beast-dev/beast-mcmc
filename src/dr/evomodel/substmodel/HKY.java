@@ -32,7 +32,9 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -383,11 +385,20 @@ public class HKY extends AbstractNucleotideModel implements Citable {
     };
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("HKY nucleotide substitution model", CITATION);
-        return citations;
+    public String getCategory() {
+        return "Substitution Models";
     }
+
+    @Override
+    public String getDescription() {
+        return "HKY nucleotide substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
 
     public static Citation CITATION = new Citation(
             new Author[]{

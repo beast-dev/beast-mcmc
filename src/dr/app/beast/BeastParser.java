@@ -56,7 +56,7 @@ public class BeastParser extends XMLParser {
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML) {
         super(parserWarnings, strictXML);
 
-        addCitation("BEAST primary citation", new Citation(
+        addCitation("Framework", "BEAST primary citation", new Citation(
                 new Author[]{
                         new Author("AJ", "Drummond"),
                         new Author("MA", "Suchard"),

@@ -25,6 +25,8 @@
 
 package dr.util;
 
+import java.util.Arrays;
+
 /**
  * @author Alexei Drummond
  * @author Marc A. Suchard
@@ -52,31 +54,28 @@ public class Citation {
 
     public Citation(Author[] authors, String title, String journal,
                    Status status) {
-        this.authors = authors;
-        this.title = title;
-        this.year = -1;
-        this.journal = journal;
-        this.volume = -1;
-        this.startpage = -1;
-        this.endpage = -1;
-        this.location = null;
-        this.DOI = null;
-        this.status = Status.PUBLISHED;
+        this(authors, title, -1, journal, -1, -1, -1, null, status);
         if (status == Status.PUBLISHED) {
             throw new CitationException("Published citations must have years, volumes and pages");
         }
     }
 
-    public Citation(Author[] authors, String title, int year, String journal, int volume, int startpage, int endpage, Status status) {
-        this(authors, title, year, journal, volume, startpage, endpage);
+    public Citation(Author[] authors, String title, int year, String journal, int volume, int startpage, int endpage,
+                    Status status) {
+        this(authors, title, year, journal, volume, startpage, endpage, null, status);
     }
 
     public Citation(Author[] authors, String title, int year, String journal, int volume, int startpage, int endpage) {
-        this(authors, title, year, journal, volume, startpage, endpage, (String)null);
+        this(authors, title, year, journal, volume, startpage, endpage, null, Status.PUBLISHED);
     }
 
     public Citation(Author[] authors, String title, int year, String journal, int volume, int startpage, int endpage,
                    String DOI) {
+        this(authors, title, year, journal, volume, startpage, endpage, DOI, Status.PUBLISHED);
+    }
+
+    public Citation(Author[] authors, String title, int year, String journal, int volume, int startpage, int endpage,
+                    String DOI, Status status) {
         this.authors = authors;
         this.title = title;
         this.year = year;
@@ -86,7 +85,7 @@ public class Citation {
         this.endpage = endpage;
         this.location = null;
         this.DOI = DOI;
-        this.status = Status.PUBLISHED;
+        this.status = status;
     }
 
     public Citation(Author[] authors, String title, int year, String journal, String location) {
@@ -106,6 +105,8 @@ public class Citation {
         this.DOI = DOI;
         this.status = Status.PUBLISHED;
     }
+
+
 
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -169,6 +170,50 @@ public class Citation {
         builder.append("</html>");
 
         return builder.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Citation citation = (Citation) o;
+
+        if (year != citation.year) return false;
+        if (volume != citation.volume) return false;
+        if (startpage != citation.startpage) return false;
+        if (endpage != citation.endpage) return false;
+        // Probably incorrect - comparing Object[] arrays with Arrays.equals
+        if (!Arrays.equals(authors, citation.authors)) return false;
+        if (!title.equals(citation.title)) return false;
+        if (journal != null ? !journal.equals(citation.journal) : citation.journal != null) return false;
+        if (location != null ? !location.equals(citation.location) : citation.location != null) return false;
+        if (status != citation.status) return false;
+        return DOI != null ? DOI.equals(citation.DOI) : citation.DOI == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Arrays.hashCode(authors);
+        result = 31 * result + title.hashCode();
+        result = 31 * result + year;
+        result = 31 * result + (journal != null ? journal.hashCode() : 0);
+        result = 31 * result + (location != null ? location.hashCode() : 0);
+        result = 31 * result + volume;
+        result = 31 * result + startpage;
+        result = 31 * result + endpage;
+        result = 31 * result + status.hashCode();
+        result = 31 * result + (DOI != null ? DOI.hashCode() : 0);
+        return result;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public String getDOI() {
+        return DOI;
     }
 
     public enum Status {

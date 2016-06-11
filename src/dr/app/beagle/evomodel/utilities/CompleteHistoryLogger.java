@@ -39,10 +39,8 @@ import dr.util.CommonCitations;
 
 import java.awt.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -260,15 +258,18 @@ public class CompleteHistoryLogger implements Loggable, Citable {
         return columns;
     }
 
-    /**
-     * @return a list of citations associated with this object
-     */
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Complete history logger 1", CommonCitations.LEMEY_2012);
-        citations.put("Complete history logger 2", CommonCitations.SHAPIRO_2012);
-        citations.put("Complete history logger 3", CommonCitations.BLOOM_2012);
-        return citations;
+    @Override
+    public String getCategory() {
+        return "Counting Processes";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Complete history logger";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(CommonCitations.LEMEY_2012, CommonCitations.SHAPIRO_2012, CommonCitations.BLOOM_2012);
     }
 
     final private Tree tree;

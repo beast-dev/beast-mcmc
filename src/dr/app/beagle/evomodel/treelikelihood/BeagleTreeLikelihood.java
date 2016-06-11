@@ -60,6 +60,7 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -1415,10 +1416,17 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Using BEAGLE likelihood calculation library",
-                new Citation(
+    public String getCategory() {
+        return "Framework";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Using BEAGLE likelihood calculation library";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(new Citation(
                 new Author[]{
                         new Author("", "Ayres et al"),
                 },
@@ -1427,7 +1435,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 "Syst Biol",
                 61, 170, 173,
                 "10.1093/sysbio/syr100"));
-        return citations;
     }
 
 }//END: class

@@ -331,12 +331,18 @@ public class DnDsPerSiteAnalysis implements Citable {
     }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Renaissance counting",
-                CommonCitations.LEMEY_RENAISSANCE
-        );
-        return citations;
+    public String getCategory() {
+        return "Counting Processes";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Renaissance counting";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.LEMEY_RENAISSANCE);
     }
 
     private class OutputFormat {

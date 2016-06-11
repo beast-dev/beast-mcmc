@@ -28,6 +28,12 @@ package dr.evomodel.substmodel;
 import dr.evomodelxml.substmodel.GTRParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * General Time Reversible model of nucleotide evolution
@@ -38,7 +44,7 @@ import dr.inference.model.Variable;
  * @author Alexei Drummond
  * @version $Id: GTR.java,v 1.19 2005/05/24 20:25:58 rambaut Exp $
  */
-public class GTR extends AbstractNucleotideModel {
+public class GTR extends AbstractNucleotideModel implements Citable {
 
     private Variable<Double> rateACValue = null;
     private Variable<Double> rateAGValue = null;
@@ -171,5 +177,31 @@ public class GTR extends AbstractNucleotideModel {
 
         return buffer.toString();
     }
+
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "HKY nucleotide substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("S", "Tavaré")
+            },
+            "Some probabilistic and statistical problems in the analysis of DNA sequences.",
+            1985,
+            "In: Miura R. M., editor. Lectures on mathematics in the life sciences.",
+            17, 57, 86
+    );
 
 }

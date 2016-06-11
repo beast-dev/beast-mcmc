@@ -45,10 +45,7 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -297,13 +294,22 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Multivariate Diffusion model",
-                CommonCitations.LEMEY_2010
-                );
+    @Override
+    public String getCategory() {
+        return "Trait Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Multivariate Diffusion model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(CommonCitations.LEMEY_2010);
         if (doAscertainmentCorrect) {
-            citations.put("Ascertainment correction for multivariate trait model",
+            citations.add(
                     new Citation(
                             new Author[]{
                                     new Author("MA", "Suchard"),

@@ -1118,14 +1118,21 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     }
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Case to Case Transmission Tree model",
-                new Citation(
+    @Override
+    public String getCategory() {
+        return "Tree Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Case to Case Transmission Tree model";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
                         new Author[]{new Author("M", "Hall"), new Author("M", "Woolhouse"), new Author("A", "Rambaut")},
             "Epidemic Reconstruction in a Phylogenetics Framework: Transmission Trees as Partitions of the Node Set",
             "PLOS Comput Biol", Citation.Status.IN_PRESS));
-    return citations;
 }
 
     // **************************************************************

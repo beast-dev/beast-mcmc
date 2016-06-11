@@ -310,11 +310,20 @@ public class MultinomialLatentLiabilityLikelihood extends AbstractModelLikelihoo
         }
     };
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Latent Liability model",
-                CommonCitations.SUCHARD_2012_LATENT
-        );
+    @Override
+    public String getCategory() {
+        return "Trait Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Latent Liability model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(CommonCitations.SUCHARD_2012_LATENT);
         return citations;
     }
 

@@ -36,10 +36,7 @@ import dr.util.Citation;
 import dr.util.CommonCitations;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -152,14 +149,17 @@ public class SplitBySiteTraitLogger extends TreeTraitProvider.Helper implements 
         }
     };
 
-    /**
-     * @return a list of citations associated with this object
-     */
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Split by site trait logger",
-                CommonCitations.SUCHARD_2012
-        );
-        return citations;
+    @Override
+    public String getCategory() {
+        return "Framework";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Split by site trait logger";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.SUCHARD_2012);
     }
 }

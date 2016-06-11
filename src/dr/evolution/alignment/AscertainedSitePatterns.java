@@ -30,10 +30,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Package: AscertainedSitePatterns
@@ -115,13 +112,20 @@ public class AscertainedSitePatterns extends SitePatterns implements Citable {
     }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Ascertained Site Patterns",
+    public String getCategory() {
+        return "Data Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Ascertained Site Patterns";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(
                 CommonCitations.ALEKSEYENKO_2008
         );
-        return citations;
-    }    
+    }
 
     public int getIncludePatternCount() {
         return ascertainmentIncludeCount;

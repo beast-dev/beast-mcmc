@@ -55,17 +55,24 @@ public class PlinkImporter implements Citable {
         parse(reader);
     }
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("PLink",
-                new Citation(
+    @Override
+    public String getCategory() {
+        return "Misc";
+    }
+
+    @Override
+    public String getDescription() {
+        return "PLink";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
                         new Author[]{
                                 new Author("MA", "Suchard"),
                                 new Author("A", "Boyko"),
                         },
                         Citation.Status.IN_PREPARATION)
         );
-        return citations;
     }
 
     private String formatTransformedValue(double value) {

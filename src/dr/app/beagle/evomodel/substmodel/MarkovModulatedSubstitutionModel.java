@@ -221,12 +221,18 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 //        return pcFreqModel;
 //    }
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Markov modulated substition model",
-                CommonCitations.SUCHARD_2012
-        );
-        return citations;
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Markov modulated substitution model";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.SUCHARD_2012);
     }
 
     @Override

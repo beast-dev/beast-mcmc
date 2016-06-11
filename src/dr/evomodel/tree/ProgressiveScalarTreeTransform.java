@@ -36,7 +36,9 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -132,12 +134,20 @@ public class ProgressiveScalarTreeTransform extends TreeTransform implements Cit
     }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Branch-specific phenotypic mixture model",
-                CommonCitations.SUCHARD_GENERIC);
-        return citations;
+    public String getCategory() {
+        return "Tree Transform";
     }
+
+    @Override
+    public String getDescription() {
+        return "Branch-specific phenotypic mixture model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.SUCHARD_GENERIC);
+    }
+
 
 
 }

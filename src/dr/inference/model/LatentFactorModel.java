@@ -678,11 +678,18 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
     }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Latent factor model",
-                CommonCitations.SUCHARD_GENERIC);
-        return citations;
+    public String getCategory() {
+        return "Misc";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Latent factor model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.SUCHARD_GENERIC);
     }
 
     /**

@@ -173,9 +173,18 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
     }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("DISSECT species delimitation model",
+    public String getCategory() {
+        return "Misc";
+    }
+
+    @Override
+    public String getDescription() {
+        return "DISSECT species delimitation model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(
                 new Citation(
                         new Author[]{
                                 new Author("Graham", "Jones"),
@@ -189,7 +198,5 @@ public class BirthDeathCollapseModel extends SpeciationModel implements Citable 
                         -1,
                         Citation.Status.IN_SUBMISSION
                 ));
-
-        return citations;
     }
 }

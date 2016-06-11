@@ -29,10 +29,7 @@ import dr.evolution.datatype.AminoAcids;
 import dr.util.Author;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * MTREV24 model of amino acid evolution
@@ -190,22 +187,26 @@ public class MTREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 	}
 
 	@Override
-	public Map<String, Citation> getCitations() {
-		Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-		citations.put("MTREV amino acid substitution model", CITATION);
-		return citations;
+	public String getCategory() {
+		return "Substitution Models";
 	}
 
-    public static Citation CITATION = new Citation(
+	@Override
+	public String getDescription() {
+		return "MTREV amino acid substitution model";
+	}
+
+	@Override
+	public List<Citation> getCitations() {
+		return Collections.singletonList(CITATION);
+	}
+
+	public static Citation CITATION = new Citation(
             new Author[]{
                     new Author("J", "Adachi"),
                     new Author("M", "Hasegawa")
             },
             "Model of amino acid substitution in proteins encoded by mitochondrial DNA",
-            1996,
-            "J Mol Evol",
-            42,
-            459, 468,
-            Citation.Status.PUBLISHED
+            1996, "J Mol Evol", 42, 459, 468
     );
 }

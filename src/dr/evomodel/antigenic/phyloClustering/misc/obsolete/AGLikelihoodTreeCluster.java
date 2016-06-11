@@ -1240,31 +1240,50 @@ public class AGLikelihoodTreeCluster extends AbstractModelLikelihood implements 
         }
     };
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Bayesian Antigenic Cartography framework",
-                new Citation(
-                new Author[]{
-                        new Author("T", "Bedford"),
-                        new Author("MA", "Suchard"),
-                        new Author("P", "Lemey"),
-                        new Author("G", "Dudas"),
-                        new Author("V", "Gregory"),
-                        new Author("AJ", "Hay"),
-                        new Author("JW", "McCauley"),
-                        new Author("CA", "Russell"),
-                        new Author("DJ", "Smith"),
-                        new Author("A", "Rambaut")
-                },
-                "Integrating influenza antigenic dynamics with molecular evolution",
-                "eLife",
-                Citation.Status.ACCEPTED
-        ));
-        return citations;
+    @Override
+    public String getCategory() {
+        return "Trait Models";
     }
 
-    
-    
+    @Override
+    public String getDescription() {
+        return "Bayesian Antigenic Cartography framework";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
+                        new Author[]{
+                                new Author("C", "Cheung"),
+                                new Author("A", "Rambaut"),
+                                new Author("P", "Lemey"),
+                                new Author("T", "Bedford")
+                        },
+                        "Integrating influenza antigenic dynamics with molecular evolution",
+                        2015,
+                        "eLife",
+                        "e01914",
+                        "10.7554/eLife.01914"
+                ),
+                new Citation(
+                        new Author[]{
+                                new Author("T", "Bedford"),
+                                new Author("MA", "Suchard"),
+                                new Author("P", "Lemey"),
+                                new Author("G", "Dudas"),
+                                new Author("V", "Gregory"),
+                                new Author("AJ", "Hay"),
+                                new Author("JW", "McCauley"),
+                                new Author("CA", "Russell"),
+                                new Author("DJ", "Smith"),
+                                new Author("A", "Rambaut")
+                        },
+                        "Integrating influenza antigenic dynamics with molecular evolution",
+                        2015,
+                        "eLife",
+                        "e01914",
+                        "10.7554/eLife.01914"
+                ));
+    }
     
     public double getLogLikelihoodBasedOnPrecompute(int[] clusterLabel, int numClusters, int[] oldObservationCluster, double[] oldContribution, int[] newObservationCluster, double[] newContribution) {
 	   	

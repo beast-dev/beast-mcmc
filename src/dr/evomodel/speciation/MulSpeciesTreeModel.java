@@ -1538,18 +1538,24 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
         return new Parameter.Default(dim, value);
     }
 
+    @Override
+    public String getCategory() {
+        return "Tree Model";
+    }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Multiply labelled species tree",
+    public String getDescription() {
+        return "Multiply labelled species tree";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(
                 new Citation(
                         new Author[]{
                                 new Author("GR", "Jones")
                         },
                         Citation.Status.IN_PREPARATION
                 ));
-        return citations;
     }
 
 }

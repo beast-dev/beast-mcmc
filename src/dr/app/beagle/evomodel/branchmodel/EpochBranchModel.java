@@ -37,10 +37,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Filip Bielejec
@@ -173,17 +170,21 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     protected void acceptState() {
     }// END: acceptState
 
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
 
-    /**
-     * @return a list of citations associated with this object
-     */
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Epoch Branch model",
-        new Citation(new Author[]{new Author("F", "Bielejec"),
-                new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
-                new Author("MA", "Suchard")}, Citation.Status.IN_PREPARATION));
-        return citations;
+    @Override
+    public String getDescription() {
+        return "Epoch Branch model";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(
+                new Citation(new Author[]{new Author("F", "Bielejec"),
+                        new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
+                        new Author("MA", "Suchard")}, Citation.Status.IN_PREPARATION));
     }// END: getCitations
 
     private final TreeModel tree;

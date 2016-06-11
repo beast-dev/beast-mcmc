@@ -29,10 +29,7 @@ import dr.evolution.datatype.AminoAcids;
 import dr.util.Author;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * LG model of amino acid evolution (Le and Gascuel, 2008)
@@ -313,13 +310,22 @@ public class LG extends EmpiricalRateMatrix.AbstractAminoAcid {
 	}
 
 	@Override
-	public Map<String, Citation> getCitations() {
-		Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-		citations.put("LG amino acid substitution model", CITATION);
-		return citations;
+	public String getCategory() {
+		return "Substitution Models";
 	}
 
-    public static Citation CITATION = new Citation(
+	@Override
+	public String getDescription() {
+		return "LG amino acid substitution model";
+	}
+
+	@Override
+	public List<Citation> getCitations() {
+		return Collections.singletonList(CITATION);
+	}
+
+
+	public static Citation CITATION = new Citation(
             new Author[]{
                     new Author("S. Q.", "Le"),
                     new Author("O.", "Gascuel")

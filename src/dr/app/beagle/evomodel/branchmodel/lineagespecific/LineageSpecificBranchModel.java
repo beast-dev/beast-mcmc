@@ -57,6 +57,7 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 /**
  * @author Filip Bielejec
@@ -307,13 +308,20 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
     }// END: main
 
 	@Override
-	public Map<String, Citation> getCitations() {
-		Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-		citations.put("Lineage Specific Branch model",
+	public String getCategory() {
+		return "Clock Model";
+	}
+
+	@Override
+	public String getDescription() {
+		return "Lineage Specific Branch model";
+	}
+
+	public List<Citation> getCitations() {
+		return Collections.singletonList(
 				new Citation(new Author[] { new Author("F", "Bielejec"),
 				new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
 				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
-		return citations;
 	}// END: getCitations
 
 }// END: class

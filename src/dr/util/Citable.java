@@ -37,19 +37,22 @@ import java.util.Map;
 
 public interface Citable {
 
+    String getCategory();
+
+    String getDescription();
+
     /**
      * @return a list of citations associated with this object
      */
-    Map<String, Citation> getCitations();
+    List<Citation> getCitations();
 
     class Utils {
         public static String getCitationString(Citable citable, String prepend, String postpend) {
-            Collection<Citation> citations = citable.getCitations().values();
-            if (citations.size() == 0) {
+            if (citable.getCitations().size() == 0) {
                 return null;
             }
             StringBuilder builder = new StringBuilder();
-            for (Citation citation : citations) {
+            for (Citation citation : citable.getCitations()) {
                 builder.append(prepend);
                 builder.append(citation.toString());
                 builder.append(postpend);

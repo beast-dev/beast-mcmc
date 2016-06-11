@@ -35,7 +35,9 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -354,13 +356,20 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel, 
 
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Discrete gamma-distributed rate heterogeneity model", CITATION);
-        return citations;
+    public String getCategory() {
+        return "Substitution Models";
     }
 
-    public static Citation CITATION = new Citation(
+    @Override
+    public String getDescription() {
+        return "Discrete gamma-distributed rate heterogeneity model";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public final static Citation CITATION = new Citation(
             new Author[]{
                     new Author("Z", "Yang")
             },

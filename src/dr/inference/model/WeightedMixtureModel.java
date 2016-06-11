@@ -32,10 +32,7 @@ import dr.util.Citation;
 import dr.util.CommonCitations;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -314,10 +311,17 @@ public class WeightedMixtureModel extends AbstractModelLikelihood implements Cit
     }
 
     @Override
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Weighted mixture model",
-                CommonCitations.LEMEY_MIXTURE_2012);
-        return citations;
+    public String getCategory() {
+        return "Misc";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Weighted mixture model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.LEMEY_MIXTURE_2012);
     }
 }

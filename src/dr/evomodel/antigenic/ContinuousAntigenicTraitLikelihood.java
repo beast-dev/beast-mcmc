@@ -521,10 +521,18 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
         }
     };
 
-    public Map<String, Citation> getCitations() {
-        Map<String, Citation> citations = new LinkedHashMap<String, Citation>();
-        citations.put("Bayesian Antigenic Cartography framework",
-                new Citation(
+    @Override
+    public String getCategory() {
+        return "Trait Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian Antigenic Cartography framework";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
                         new Author[]{
                                 new Author("T", "Bedford"),
                                 new Author("MA", "Suchard"),
@@ -543,6 +551,5 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
                         "e01914",
                         "10.7554/eLife.01914"
                 ));
-        return citations;
     }
 }

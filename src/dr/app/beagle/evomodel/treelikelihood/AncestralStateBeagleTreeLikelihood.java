@@ -71,6 +71,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               TipStatesModel tipStatesModel,
                                               boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
+                                              boolean delayRescalingUntilUnderflow,
                                               Map<Set<String>, Parameter> partialsRestrictions,
                                               final DataType dataType,
                                               final String tag,
@@ -78,7 +79,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               boolean useMAP,
                                               boolean returnML) {
 
-        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme,
+        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme, delayRescalingUntilUnderflow,
                 partialsRestrictions);
 
         this.dataType = dataType;

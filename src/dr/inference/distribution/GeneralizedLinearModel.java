@@ -1,7 +1,7 @@
 /*
  * GeneralizedLinearModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -132,8 +132,20 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             offset += length;
         }
 
+        double[][] mat = grandDesignMatrix;
+
+        if (grandDesignMatrix.length < grandDesignMatrix[0].length) {
+            mat = new double[grandDesignMatrix[0].length][grandDesignMatrix.length];
+
+            for (int i = 0; i < grandDesignMatrix.length; ++i) {
+                for (int j = 0; j < grandDesignMatrix[i].length; ++j) {
+                    mat[j][i] = grandDesignMatrix[i][j];
+                }
+            }
+        }
+
         SingularValueDecomposition svd = new SingularValueDecomposition(
-                new DenseDoubleMatrix2D(grandDesignMatrix));
+                new DenseDoubleMatrix2D(mat));
 
         int rank = svd.rank();
         boolean isFullRank = (totalColDim == rank);

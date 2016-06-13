@@ -274,6 +274,10 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
         ratesKnown = true;
     }
 
+    public boolean hasInvariantSites() {
+        return invarParameter != null;
+    }
+
     // *****************************************************************
     // Interface ModelComponent
     // *****************************************************************

@@ -1106,11 +1106,11 @@ public class NewBeagleSequenceLikelihood extends NewAbstractSequenceLikelihood i
             );
             Alignment alignment = simulator.simulate(false, false);
 
-            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, true);
 
             System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
 
-            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, true);
 
             System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
 

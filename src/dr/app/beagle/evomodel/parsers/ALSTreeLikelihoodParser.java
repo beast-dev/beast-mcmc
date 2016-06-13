@@ -77,6 +77,7 @@ public class ALSTreeLikelihoodParser extends BeagleTreeLikelihoodParser {
             TipStatesModel tipStatesModel, //
             boolean useAmbiguities, //
             PartialsRescalingScheme scalingScheme, //
+            boolean delayScaling,
             Map<Set<String>, //
                     Parameter> partialsRestrictions, //
             XMLObject xo //
@@ -130,6 +131,7 @@ public class ALSTreeLikelihoodParser extends BeagleTreeLikelihoodParser {
                 tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
+                delayScaling,
                 partialsRestrictions
         );
     }

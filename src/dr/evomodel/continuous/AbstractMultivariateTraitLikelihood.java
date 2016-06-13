@@ -1,7 +1,7 @@
 /*
  * AbstractMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -156,6 +156,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             addModel(samplingDensity);
         }
 
+        if (traitParameter != null)
+            addVariable(traitParameter);
 
         this.reportAsMultivariate = reportAsMultivariate;
 
@@ -166,13 +168,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             validLogLikelihoods = new boolean[treeModel.getNodeCount()];
             storedValidLogLikelihoods = new boolean[treeModel.getNodeCount()];
         }
-
-        if (traitParameter != null){
-            addVariable(traitParameter);
-//            traitParameter.addParameterListener(this);
-//            traitParameter.fireParameterChangedEvent();
-        }
-
 
         this.scaleByTime = scaleByTime;
         this.useTreeLength = useTreeLength;
@@ -810,16 +805,17 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 deltaParameter = (Parameter) cxo.getChild(Parameter.class);
             }
 
-            if (standardizeTraits) {
-//                standardize(traitParameter);
-//                dimTrait = diffusionModel.getPrecisionmatrix().length;
-//                        dim = traitParameter != null ? traitParameter.getParameter(0).getDimension() : 0;
-//                        numData = dim / dimTrait;
 
-//                System.err.println(traitParameter.getDimension());
-//                System.err.println(traitParameter.getParameterCount());
-//                System.err.println(traitParameter.getParameter(0).getDimension());
-//                System.exit(-1);
+            if (standardizeTraits) {
+                //                standardize(traitParameter);
+                //                dimTrait = diffusionModel.getPrecisionmatrix().length;
+                //                        dim = traitParameter != null ? traitParameter.getParameter(0).getDimension() : 0;
+                //                        numData = dim / dimTrait;
+
+                //                System.err.println(traitParameter.getDimension());
+                //                System.err.println(traitParameter.getParameterCount());
+                //                System.err.println(traitParameter.getParameter(0).getDimension());
+                //                System.exit(-1);
                 int numTraits = traitParameter.getParameter(0).getDimension();
                 int numObservations = traitParameter.getParameterCount();
 
@@ -845,7 +841,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 Logger.getLogger("dr.evomodel").info(sb.toString());
 
             }
-
+            
             AbstractMultivariateTraitLikelihood like;
 
             if (integrate) {
@@ -1018,7 +1014,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
                 AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
-                AttributeRule.newBooleanRule(STANDARDIZE_TRAITS, true),
                 AttributeRule.newBooleanRule(CACHE_BRANCHES, true),
                 AttributeRule.newIntegerRule(RANDOM_SAMPLE, true),
                 AttributeRule.newBooleanRule(IGNORE_PHYLOGENY, true),

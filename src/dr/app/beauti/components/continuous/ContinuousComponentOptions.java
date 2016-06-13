@@ -74,7 +74,8 @@ public class ContinuousComponentOptions implements ComponentOptions {
                 modelOptions.createParameterBetaDistributionPrior(prefix + LAMBDA,
                         "phylogenetic signal parameter",
                         0.5, 2.0, 2.0, 0.0);
-                modelOptions.createOperator(prefix + LAMBDA, OperatorType.RANDOM_WALK_ABSORBING, 0.3, 10.0);
+                // don't autooptimize
+                modelOptions.createOperator(prefix + LAMBDA, OperatorType.RANDOM_WALK_ABSORBING, 0.3, 10.0, false);
             }
 
             if (!modelOptions.parameterExists(prefix + "swap." + RRW_CATEGORIES)) {

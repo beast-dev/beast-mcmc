@@ -99,7 +99,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  List<BranchRateModel> optimalValues,
                                                  BranchRateModel strengthOfSelection,
                                                  Model samplingDensity,
-                                                 List<NodeClamp> clamps,
+                                                 List<RestrictedPartials> clamps,
                                                  boolean reportAsMultivariate,
                                                  boolean reciprocalRates) {
 
@@ -276,12 +276,18 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     private void setupClamps() {
+        System.err.println("Start setupClamps");
         if (nodeToClampMap == null) {
-            nodeToClampMap = new HashMap<NodeRef, NodeClamp>();
+            nodeToClampMap = new HashMap<NodeRef, RestrictedPartials>();
         }
         nodeToClampMap.clear();
 
         recursiveSetupClamp(treeModel, treeModel.getRoot(), new BitSet());
+
+        anyClamps = (nodeToClampMap.size() > 0);
+
+        System.err.println("Clamps = " + nodeToClampMap.size());
+        System.err.println("End setupClamps");
     }
 
     private void recursiveSetupClamp(Tree tree, NodeRef node, BitSet tips) {
@@ -1508,41 +1514,47 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     protected final MissingTraits missingTraits;
 
-    class NodeClamp {
-        private double trait[];
-        private double precision;
+//    class NodeClamp {
+//        private double trait[];
+//        private double precision;
+//
+//        List<Integer> tipList;
+//
+////        BitSet tipSet;
+//
+//        NodeClamp(double trait[], double precision) {
+////            tipSet = Tree.Utils.getTipsBitSetForTaxa(tree, taxa);
+////            this.tipSet = tipSet;
+//            this.trait = trait;
+//            this.precision = precision;
+//        }
+//
+//        double[] getTrait() { return trait; }
+//
+//        double getTrait(int i) { return trait[i]; }
+//
+//        double getPrecision() { return precision; }
+//
+////        BitSet getTipSet() { return tipSet; }
+//
+//    }
 
-        List<Integer> tipList;
-
-//        BitSet tipSet;
-
-        NodeClamp(double trait[], double precision) {
-//            tipSet = Tree.Utils.getTipsBitSetForTaxa(tree, taxa);
-//            this.tipSet = tipSet;
-            this.trait = trait;
-            this.precision = precision;
-        }
-
-        double[] getTrait() { return trait; }
-
-        double getTrait(int i) { return trait[i]; }
-
-        double getPrecision() { return precision; }
-
-//        BitSet getTipSet() { return tipSet; }
-
-    }
-
-    protected void addClamp(final NodeClamp nodeClamp, final TaxonList taxonList, Tree tree) throws Tree.MissingTaxonException {
+    @Override
+    public void addRestrictedPartials(RestrictedPartials nodeClamp) {
         if (clampList == null) {
-            clampList = new HashMap<BitSet, NodeClamp>();
+            clampList = new HashMap<BitSet, RestrictedPartials>();
         }
-        clampList.put(Tree.Utils.getTipsBitSetForTaxa(tree, taxonList), nodeClamp);
+        clampList.put(nodeClamp.getTipBitSet(), nodeClamp);
+        addModel(nodeClamp);
+
+        System.err.println("Added a CLAMP!");
     }
 
     protected boolean clampsKnown = false;
 //    private List<NodeClamp> clampList = null;
-    private Map<BitSet, NodeClamp> clampList = null;
-    private Map<NodeRef, NodeClamp> nodeToClampMap = null;
+    private Map<BitSet, RestrictedPartials> clampList = null;
+    private Map<NodeRef, RestrictedPartials> nodeToClampMap = null;
+
+    protected boolean anyClamps = false;
 
 }

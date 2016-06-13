@@ -45,8 +45,7 @@ import dr.xml.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -962,6 +961,18 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 like.setAscertainedTaxon(taxon);
             }
 
+            for (int i = 0; i < xo.getChildCount(); ++i) {
+                Object cxo = xo.getChild(i);
+
+                if (cxo instanceof RestrictedPartials) {
+                    if (!integrate) {
+                        throw new XMLParseException("Restricted partials are currently only implements" +
+                                "for integrated multivariate trait likelihood models");
+                    }
+                    like.addRestrictedPartials((RestrictedPartials) cxo);
+                }
+            }
+
             return like;
         }
 
@@ -1021,6 +1032,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 new ElementRule(DRIFT_MODELS, new XMLSyntaxRule[]{
                         new ElementRule(BranchRateModel.class, 1, Integer.MAX_VALUE),
                 }, true),
+                new ElementRule(RestrictedPartials.class, 0, Integer.MAX_VALUE),
         };
 
 
@@ -1028,6 +1040,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             return AbstractMultivariateTraitLikelihood.class;
         }
     };
+
+    public void addRestrictedPartials(RestrictedPartials restrictedPartials) {
+        throw new IllegalArgumentException("Not implemented for this model type");
+    }
 
     MultivariateTraitTree treeModel = null;
     MultivariateDiffusionModel diffusionModel = null;
@@ -1070,5 +1086,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected int dim;
 
     protected boolean updateRestrictedNodePartials = true;
+    protected Map<BitSet, RestrictedPartials> restrictedPartialsMap;
 }
 

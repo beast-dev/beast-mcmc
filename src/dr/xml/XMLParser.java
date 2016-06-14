@@ -25,10 +25,13 @@
 
 package dr.xml;
 
+import com.sun.tools.javac.util.Pair;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inferencexml.loggers.LoggerParser;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.FileHelpers;
 import dr.util.Identifiable;
 import org.w3c.dom.*;
@@ -108,7 +111,7 @@ public class XMLParser {
 
         XMLObject xo = new XMLObject(null /*, objectStore*/);
         xo.setNativeObject(object);
-        store.put(name, xo);
+        objectStore.put(name, xo);
     }
 
     /**
@@ -147,7 +150,7 @@ public class XMLParser {
         }
     }
 
-    public ObjectStore parse(Reader reader, boolean run)
+    public Map<String, XMLObject> parse(Reader reader, boolean run)
             throws java.io.IOException,
             org.xml.sax.SAXException,
             dr.xml.XMLParseException,
@@ -218,7 +221,7 @@ public class XMLParser {
             }
 
 
-            XMLObject restoredXMLObject = (XMLObject) store.get(idref);
+            XMLObject restoredXMLObject = (XMLObject) objectStore.get(idref);
             if (index != -1) {
 
                 if (restoredXMLObject.getNativeObject() instanceof List) {
@@ -267,7 +270,7 @@ public class XMLParser {
                 repeats = Integer.parseInt(e.getAttribute("count"));
             }
 
-            XMLObject xo = new XMLObject(e /*, objectStore*/);
+            XMLObject xo = new XMLObject(e);
 
             final XMLObjectParser parser = doParse ? parserStore.get(xo.getName()) : null;
 
@@ -308,7 +311,7 @@ public class XMLParser {
                 id = e.getAttribute(ID);
             }
 
-            if ((id != null) && store.get(id) != null) {
+            if ((id != null) && objectStore.get(id) != null) {
                 throw new XMLParseException("Object with Id=" + id + " already exists");
             }
 
@@ -316,8 +319,12 @@ public class XMLParser {
             if (parser != null) {
                 obj = parser.parseXMLObject(xo, id, objectStore, strictXML);
 
-                if (id != null && obj instanceof Identifiable) {
+                if (obj instanceof Identifiable) {
                     ((Identifiable) obj).setId(id);
+                }
+
+                if (obj instanceof Citable) {
+                    addCitable((Citable)obj);
                 }
 
                 if (obj instanceof Likelihood) {
@@ -334,7 +341,7 @@ public class XMLParser {
             if (id != null) {
                 if (verbose) System.out.println("  Storing " + xo.getName() + " with id=" + id);
 
-                store.put(id, xo);
+                objectStore.put(id, xo);
             }
 
             if (run) {
@@ -353,6 +360,42 @@ public class XMLParser {
                         waitForThread((Thread) thread1);
                     }
                 } else if (obj instanceof Runnable && !concurrent) {
+
+                    System.out.println();
+                    System.out.println();
+                    System.out.println("Citations for this analysis: ");
+
+                    Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
+
+                    // force the Framework category to be first...
+                    categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
+
+                    for (Pair<String, String>keyPair : citationStore.keySet()) {
+                        Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.fst);
+                        if (pairSet == null) {
+                            pairSet = new LinkedHashSet<Pair<String, String>>();
+                            categoryMap.put(keyPair.fst, pairSet);
+                        }
+                        pairSet.add(keyPair);
+                    }
+
+                    for (String category : categoryMap.keySet()) {
+                        System.out.println();
+                        System.out.println(category.toUpperCase());
+                        Set<Pair<String, String>> pairSet = categoryMap.get(category);
+
+                        for (Pair<String, String>keyPair : pairSet) {
+                            System.out.println(keyPair.snd + ":");
+
+                            for (Citation citation : citationStore.get(keyPair)) {
+                                System.out.println("\t" + citation.toString());
+                            }
+                        }
+                    }
+
+                    System.out.println();
+                    System.out.println();
+
                     if (obj instanceof Spawnable && !((Spawnable) obj).getSpawnable()) {
                         ((Spawnable) obj).run();
                     } else {
@@ -467,6 +510,9 @@ public class XMLParser {
         return logFile;
     }
 
+    public Map<String, XMLObject> getObjectStore() {
+        return objectStore;
+    }
 
     public class ArrayParser extends AbstractXMLObjectParser {
 
@@ -514,46 +560,61 @@ public class XMLParser {
         }
     }
 
-    //anonymous object store class
-    private final ObjectStore objectStore = new ObjectStore() {
-        public Object getObjectById(Object uid) throws ObjectNotFoundException {
-            XMLObject obj = (XMLObject) store.get(uid);
-            if (obj == null) throw new ObjectNotFoundException("Object with uid=" + uid + " not found in ObjectStore");
-            if (obj.hasNativeObject()) return obj.getNativeObject();
-            return obj;
-        }
+//    //anonymous object store class
+//    private final ObjectStore objectStore = new ObjectStore() {
+//        public Object getObjectById(Object uid) throws ObjectNotFoundException {
+//            XMLObject obj = (XMLObject) store.get(uid);
+//            if (obj == null) throw new ObjectNotFoundException("Object with uid=" + uid + " not found in ObjectStore");
+//            if (obj.hasNativeObject()) return obj.getNativeObject();
+//            return obj;
+//        }
+//
+//        public boolean hasObjectId(Object uid) {
+//            Object obj = store.get(uid);
+//            return (obj != null);
+//        }
+//
+//        public Set getIdSet() {
+//            return store.keySet();
+//        }
+//
+//        public Collection getObjects() {
+//            return store.values();
+//        }
+//
+////        public void addIdentifiableObject(Identifiable obj, boolean force) {
+////
+////            String id = obj.getId();
+////            if (id == null) throw new IllegalArgumentException("Object must have a non-null identifier.");
+////
+////            if (force) {
+////                store.put(id, obj);
+////            } else {
+////                if (store.get(id) == null) {
+////                    store.put(id, obj);
+////                }
+////            }
+////        }
+//    };
 
-        public boolean hasObjectId(Object uid) {
-            Object obj = store.get(uid);
-            return (obj != null);
-        }
-
-        public Set getIdSet() {
-            return store.keySet();
-        }
-
-        public Collection getObjects() {
-            return store.values();
-        }
-
-        public void addIdentifiableObject(Identifiable obj, boolean force) {
-
-            String id = obj.getId();
-            if (id == null) throw new IllegalArgumentException("Object must have a non-null identifier.");
-
-            if (force) {
-                store.put(id, obj);
-            } else {
-                if (store.get(id) == null) {
-                    store.put(id, obj);
-                }
+    public void addCitable(Citable citable) {
+        // remove 'In prep' citations
+        List<Citation> citationList = new LinkedList<Citation>();
+        for (Citation citation : citable.getCitations()) {
+            if (citation.getStatus() != Citation.Status.IN_PREPARATION) {
+                citationList.add(citation);
             }
         }
-    };
+        if (citationList.size() > 0) {
+            Pair<String, String> pair = new Pair<String, String>(citable.getCategory(), citable.getDescription());
+            citationStore.put(pair, citationList);
+        }
+    }
 
-
-    private final Hashtable<String, Object> store = new Hashtable<String, Object>();
-    private final TreeMap<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
+    //    private final Hashtable<String, XMLObject> store = new Hashtable<String, XMLObject>();
+    private final Map<String, XMLObjectParser> parserStore = new TreeMap<String, XMLObjectParser>(new ParserComparator());
+    private final Map<String, XMLObject> objectStore = new LinkedHashMap<String, XMLObject>();
+    private final Map<Pair<String, String>, List<Citation>> citationStore = new LinkedHashMap<Pair<String, String>, List<Citation>>();
     private boolean concurrent = false;
     private XMLObject root = null;
 

@@ -26,11 +26,7 @@
 package dr.evomodel.epidemiology.casetocase;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 import dr.app.tools.NexusExporter;
 import dr.evolution.tree.FlexibleNode;
@@ -1122,12 +1118,22 @@ public abstract class CaseToCaseTreeLikelihood extends AbstractTreeLikelihood im
 
     }
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(new Author[]{new Author("M", "Hall"), new Author("A", "Rambaut")},
-                Citation.Status.IN_PREPARATION));
-        return citations;
+    @Override
+    public String getCategory() {
+        return "Tree Model";
     }
+
+    @Override
+    public String getDescription() {
+        return "Case to Case Transmission Tree model";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
+                        new Author[]{new Author("M", "Hall"), new Author("M", "Woolhouse"), new Author("A", "Rambaut")},
+            "Epidemic Reconstruction in a Phylogenetics Framework: Transmission Trees as Partitions of the Node Set",
+            "PLOS Comput Biol", Citation.Status.IN_PRESS));
+}
 
     // **************************************************************
     // TreeTraitProvider IMPLEMENTATION

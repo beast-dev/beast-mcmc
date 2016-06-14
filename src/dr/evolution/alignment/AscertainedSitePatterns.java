@@ -30,8 +30,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.List;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * Package: AscertainedSitePatterns
@@ -112,13 +111,21 @@ public class AscertainedSitePatterns extends SitePatterns implements Citable {
 
     }
 
+    @Override
+    public String getCategory() {
+        return "Data Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Ascertained Site Patterns";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
+        return Collections.singletonList(
                 CommonCitations.ALEKSEYENKO_2008
         );
-        return citations;
-    }    
+    }
 
     public int getIncludePatternCount() {
         return ascertainmentIncludeCount;

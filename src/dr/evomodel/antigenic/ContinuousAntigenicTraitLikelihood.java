@@ -521,19 +521,35 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
         }
     };
 
+    @Override
+    public String getCategory() {
+        return "Trait Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian Antigenic Cartography framework";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("A", "Rambaut"),
-                        new Author("T", "Bedford"),
-                        new Author("P", "Lemey"),
-                        new Author("C", "Russell"),
-                        new Author("D", "Smith"),
-                        new Author("MA", "Suchard"),
-                },
-                Citation.Status.IN_PREPARATION
-        ));
-        return citations;
+        return Arrays.asList(new Citation(
+                        new Author[]{
+                                new Author("T", "Bedford"),
+                                new Author("MA", "Suchard"),
+                                new Author("P", "Lemey"),
+                                new Author("G", "Dudas"),
+                                new Author("V", "Gregory"),
+                                new Author("AJ", "Hay"),
+                                new Author("JW", "McCauley"),
+                                new Author("CA", "Russell"),
+                                new Author("DJ", "Smith"),
+                                new Author("A", "Rambaut")
+                        },
+                        "Integrating influenza antigenic dynamics with molecular evolution",
+                        2015,
+                        "eLife",
+                        "e01914",
+                        "10.7554/eLife.01914"
+                ));
     }
 }

@@ -29,8 +29,7 @@ import dr.evolution.datatype.AminoAcids;
 import dr.util.Author;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * CPREV 45 model of amino acid evolution
@@ -202,9 +201,20 @@ public class CPREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
+	@Override
+	public String getCategory() {
+		return "Substitution Models";
+	}
+
+	@Override
+	public String getDescription() {
+		return "CPREV amino acid substitution model";
+	}
+
+	@Override
+	public List<Citation> getCitations() {
+		return Collections.singletonList(CITATION);
+	}
 
     public static Citation CITATION = new Citation(
             new Author[]{

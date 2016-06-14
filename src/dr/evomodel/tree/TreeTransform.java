@@ -37,12 +37,14 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Marc A. Suchard
  */
-public abstract class TreeTransform extends AbstractModel implements TreeTraitProvider, Citable {
+public abstract class TreeTransform extends AbstractModel implements TreeTraitProvider {
 
     public static final String TREE_TRANSFORM_PREFIX = "treeTransform";
 
@@ -105,17 +107,5 @@ public abstract class TreeTransform extends AbstractModel implements TreeTraitPr
 
     private final Helper treeTraits = new Helper();
 
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{
-                                new Author("P", "Lemey"),
-                                new Author("MA", "Suchard"),
-                        },
-                        Citation.Status.IN_PREPARATION
-                ));
-        return citations;
-    }
 }
 

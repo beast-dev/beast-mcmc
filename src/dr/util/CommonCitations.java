@@ -33,6 +33,15 @@ package dr.util;
  */
 public class CommonCitations {
 
+    public static Citation LEMEY_RENAISSANCE = new Citation(
+            new Author[]{
+        new Author("P", "Lemey"),
+                new Author("VN", "Minin"),
+                new Author("MA", "Suchard")
+    },
+    Citation.Status.IN_PREPARATION
+    );
+
     public static Citation LEMEY_2010 = new Citation(
             new Author[]{
                     new Author("P", "Lemey"),
@@ -94,7 +103,7 @@ public class CommonCitations {
             Citation.Status.IN_PREPARATION
     );
 
-    public static Citation LEMEY_2012 = new Citation(
+    public static Citation  LEMEY_2012 = new Citation(
             new Author[]{
                     new Author("P", "Lemey"),
                     new Author("T", "Bedford"),
@@ -124,6 +133,13 @@ public class CommonCitations {
             new Author[]{
                     new Author("MA", "Suchard"),
                     new Author("J", "Felsenstein"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
+
+    public static Citation SUCHARD_GENERIC = new Citation(
+            new Author[]{
+                    new Author("MA", "Suchard"),
             },
             Citation.Status.IN_PREPARATION
     );

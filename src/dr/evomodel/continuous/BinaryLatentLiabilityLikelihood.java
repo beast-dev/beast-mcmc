@@ -37,7 +37,9 @@ import dr.util.CommonCitations;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 
@@ -254,11 +256,20 @@ public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood imp
         }
     };
 
+    @Override
+    public String getCategory() {
+        return "Trait Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Latent Liability model";
+    }
+
+    @Override
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                CommonCitations.SUCHARD_2012_LATENT
-        );
+        citations.add(CommonCitations.SUCHARD_2012_LATENT);
         return citations;
     }
 

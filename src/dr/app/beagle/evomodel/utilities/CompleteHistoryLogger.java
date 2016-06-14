@@ -39,7 +39,7 @@ import dr.util.CommonCitations;
 
 import java.awt.*;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -258,15 +258,18 @@ public class CompleteHistoryLogger implements Loggable, Citable {
         return columns;
     }
 
-    /**
-     * @return a list of citations associated with this object
-     */
+    @Override
+    public String getCategory() {
+        return "Counting Processes";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Complete history logger";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(CommonCitations.LEMEY_2012);
-        citations.add(CommonCitations.SHAPIRO_2012);
-        citations.add(CommonCitations.BLOOM_2012);
-        return citations;
+        return Arrays.asList(CommonCitations.LEMEY_2012, CommonCitations.SHAPIRO_2012, CommonCitations.BLOOM_2012);
     }
 
     final private Tree tree;

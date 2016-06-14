@@ -33,12 +33,19 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
  */
-public class ProgressiveScalarTreeTransform extends TreeTransform {
+public class ProgressiveScalarTreeTransform extends TreeTransform implements Citable {
 
     public ProgressiveScalarTreeTransform(Parameter scale) {
         this(scale, null);
@@ -125,4 +132,22 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
         TransformedTreeModel model2 = new TransformedTreeModel("tree2", treeModel, xform2);
         System.err.println(model2.toString());
     }
+
+    @Override
+    public String getCategory() {
+        return "Tree Transform";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Branch-specific phenotypic mixture model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.SUCHARD_GENERIC);
+    }
+
+
+
 }

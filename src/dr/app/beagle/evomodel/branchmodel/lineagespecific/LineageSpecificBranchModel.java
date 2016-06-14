@@ -25,10 +25,7 @@
 
 package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
@@ -60,6 +57,7 @@ import dr.math.MathUtils;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 /**
  * @author Filip Bielejec
@@ -310,13 +308,20 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
     }// END: main
 
 	@Override
+	public String getCategory() {
+		return "Clock Model";
+	}
+
+	@Override
+	public String getDescription() {
+		return "Lineage Specific Branch model";
+	}
+
 	public List<Citation> getCitations() {
-		
-		List<Citation> citations = new ArrayList<Citation>();
-		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
+		return Collections.singletonList(
+				new Citation(new Author[] { new Author("F", "Bielejec"),
 				new Author("P", "Lemey"), new Author("G", "Baele"), new Author("A", "Rambaut"),
 				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
-		return citations;
 	}// END: getCitations
 
 }// END: class

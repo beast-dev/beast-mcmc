@@ -46,7 +46,7 @@ public class TraitGuesser implements Serializable {
         this.traitData = traitData;
     }
 
-    public static enum GuessType {
+    public enum GuessType {
         DELIMITER,
         REGEX
     }

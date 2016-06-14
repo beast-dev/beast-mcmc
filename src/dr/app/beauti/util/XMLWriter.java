@@ -93,11 +93,13 @@ public class XMLWriter extends java.io.PrintWriter {
         StringBuffer buffer = new StringBuffer("<");
         buffer.append(tagname);
         for (Attribute attribute : attributes) {
-            buffer.append(' ');
-            buffer.append(attribute.getAttributeName());
-            buffer.append("=\"");
-            buffer.append(attribute.getAttributeValue());
-            buffer.append("\"");
+            if (attribute != null) {
+                buffer.append(' ');
+                buffer.append(attribute.getAttributeName());
+                buffer.append("=\"");
+                buffer.append(attribute.getAttributeValue());
+                buffer.append("\"");
+            }
         }
         if (close) {
             buffer.append("/");
@@ -113,11 +115,13 @@ public class XMLWriter extends java.io.PrintWriter {
         StringBuffer buffer = new StringBuffer("<");
         buffer.append(tagname);
         for (Attribute attribute : attributes) {
-            buffer.append(' ');
-            buffer.append(attribute.getAttributeName());
-            buffer.append("=\"");
-            buffer.append(attribute.getAttributeValue());
-            buffer.append("\"");
+            if (attribute != null) {
+                buffer.append(' ');
+                buffer.append(attribute.getAttributeName());
+                buffer.append("=\"");
+                buffer.append(attribute.getAttributeValue());
+                buffer.append("\"");
+            }
         }
         if (content != null) {
             buffer.append(">");

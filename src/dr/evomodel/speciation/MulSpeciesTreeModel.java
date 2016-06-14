@@ -53,7 +53,7 @@ import java.util.logging.Logger;
 
 /**
  * Multiply labelled species tree which includes demographic function per branch.
- * 
+ *
  * @author Joseph Heled, Graham Jones
  *         Date: 20/12/2011
  */
@@ -93,11 +93,11 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
     private final boolean bmp;
     private final boolean nonConstRootPopulation;
     private final boolean constantPopulation;
-    
-    // grj
-	public final static boolean DBUGTUNE = false;
 
-    
+    // grj
+    public final static boolean DBUGTUNE = false;
+
+
 
     private class NodeProperties {
         private final int speciesIndex;
@@ -112,8 +112,8 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
     }
 
     public MulSpeciesTreeModel(MulSpeciesBindings species, Parameter sppSplitPopulations,
-                            Parameter coalPointsPops, Parameter coalPointsIndicator, Tree startTree,
-                            boolean bmp, boolean nonConstRootPopulation, boolean constantPopulation) {
+                               Parameter coalPointsPops, Parameter coalPointsIndicator, Tree startTree,
+                               boolean bmp, boolean nonConstRootPopulation, boolean constantPopulation) {
         super(MulSpeciesTreeModelParser.MUL_SPECIES_TREE);
 
         this.mulspb = species;
@@ -202,97 +202,97 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
                 }
             }
         }
-        
+
         Logger.getLogger("dr.evomodel.speciation.allopolyploid").info("\tConstructing a multiply labelled tree, please cite:\n"
                 + Citable.Utils.getCitationString(this));
 
     }
 
-    
-    
+
+
     // grj
     private String nodeAsText(NodeRef node, int indentlen) {
-		StringBuilder s = new StringBuilder();
-		Formatter formatter = new Formatter(s, Locale.US);
-		if (spTree.isExternal(node)) {
-			formatter.format("%s ", spTree.getNodeTaxon(node));
-		} else {
-			formatter.format("%s ", "+");
-		}
-		while (s.length() < 20-indentlen) {
-			formatter.format("%s", " "); 
-		}
-		formatter.format("%s ", AlloppMisc.nonnegIn8Chars(spTree.getNodeHeight(node)));
+        StringBuilder s = new StringBuilder();
+        Formatter formatter = new Formatter(s, Locale.US);
+        if (spTree.isExternal(node)) {
+            formatter.format("%s ", spTree.getNodeTaxon(node));
+        } else {
+            formatter.format("%s ", "+");
+        }
+        while (s.length() < 20-indentlen) {
+            formatter.format("%s", " ");
+        }
+        formatter.format("%s ", AlloppMisc.nonnegIn8Chars(spTree.getNodeHeight(node)));
         // it would be nice to disply popsizes and nlineages like allopp mul tree
-		return s.toString();
-	}
-    
-    
-  
+        return s.toString();
+    }
+
+
+
     // grj
-	private String subtreeAsText(NodeRef node, String s, Stack<Integer> x, int depth, String b) {
-		Integer[] y = x.toArray(new Integer[x.size()]);
-		StringBuffer indent = new StringBuffer();
-		for (int i = 0; i < depth; i++) {
-			indent.append("  ");
-		}
-		for (int i = 0; i < y.length; i++) {
-			indent.replace(2*y[i], 2*y[i]+1, "|");
-		}
-		if (b.length() > 0) {
-			indent.replace(indent.length()-b.length(), indent.length(), b);
-		}
-		s += indent;
-		s += nodeAsText(node, indent.length());
-		s += System.getProperty("line.separator");
-		String subs = "";
-		if (!spTree.isExternal(node)) {
-			x.push(depth);
-			subs += subtreeAsText(spTree.getChild(node, 0), "", x, depth+1, "-");
-			x.pop();
-			subs += subtreeAsText(spTree.getChild(node, 1), "", x, depth+1, "`-");
-		}
-		return s + subs;
-	}
-    
-    
-    
-	// grj
-	public String asText() {
-		String header = "topology             height" + System.getProperty("line.separator");
+    private String subtreeAsText(NodeRef node, String s, Stack<Integer> x, int depth, String b) {
+        Integer[] y = x.toArray(new Integer[x.size()]);
+        StringBuffer indent = new StringBuffer();
+        for (int i = 0; i < depth; i++) {
+            indent.append("  ");
+        }
+        for (int i = 0; i < y.length; i++) {
+            indent.replace(2*y[i], 2*y[i]+1, "|");
+        }
+        if (b.length() > 0) {
+            indent.replace(indent.length()-b.length(), indent.length(), b);
+        }
+        s += indent;
+        s += nodeAsText(node, indent.length());
+        s += System.getProperty("line.separator");
+        String subs = "";
+        if (!spTree.isExternal(node)) {
+            x.push(depth);
+            subs += subtreeAsText(spTree.getChild(node, 0), "", x, depth+1, "-");
+            x.pop();
+            subs += subtreeAsText(spTree.getChild(node, 1), "", x, depth+1, "`-");
+        }
+        return s + subs;
+    }
 
-		String s = "";
-		Stack<Integer> x = new Stack<Integer>();
-		return header + subtreeAsText(spTree.getRoot(), s, x, 0, "");
-	}
-    
-    
-	public String toString() {
-		int ngt = mulspb.numberOfGeneTrees();
-		String nl = System.getProperty("line.separator");
-		String s = nl + asText() + nl;
-		for (int g = 0; g < ngt; g++) {
-			s += "Gene tree " + g + nl;
-			s += mulspb.genetreeAsText(g) + nl;
-			s += mulspb.seqassignsAsText(g) + nl;
-		}
-		s += nl;
-		return s;
-	}
-    
 
-	
-	// grj
-	public LogColumn[] getColumns() {
-		LogColumn[] columns = new LogColumn[1];
-		columns[0] = new LogColumn.Default("    MUL-tree and gene trees", this);
-		return columns;
-	}
-    
-    
-	
-	
-    
+
+    // grj
+    public String asText() {
+        String header = "topology             height" + System.getProperty("line.separator");
+
+        String s = "";
+        Stack<Integer> x = new Stack<Integer>();
+        return header + subtreeAsText(spTree.getRoot(), s, x, 0, "");
+    }
+
+
+    public String toString() {
+        int ngt = mulspb.numberOfGeneTrees();
+        String nl = System.getProperty("line.separator");
+        String s = nl + asText() + nl;
+        for (int g = 0; g < ngt; g++) {
+            s += "Gene tree " + g + nl;
+            s += mulspb.genetreeAsText(g) + nl;
+            s += mulspb.seqassignsAsText(g) + nl;
+        }
+        s += nl;
+        return s;
+    }
+
+
+
+    // grj
+    public LogColumn[] getColumns() {
+        LogColumn[] columns = new LogColumn[1];
+        columns[0] = new LogColumn.Default("    MUL-tree and gene trees", this);
+        return columns;
+    }
+
+
+
+
+
     public boolean constPopulation() {
         return constantPopulation;
     }
@@ -306,8 +306,8 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
         }
         return isSubtreeCompatible(getRoot(), geneTreeInfo.getCoalInfo(), 0) >= 0;
     }
-    
-    
+
+
 
     // Not very efficient, should do something better, based on traversing the cList once
     private int isSubtreeCompatible(NodeRef node, MulSpeciesBindings.CoalInfo[] cList, int loc) {
@@ -1538,16 +1538,24 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
         return new Parameter.Default(dim, value);
     }
 
-	
-	public List<Citation> getCitations() {
-		List<Citation> citations = new ArrayList<Citation>();
-		citations.add(new Citation(
-				new Author[]{
-						new Author("GR", "Jones")
-				},
-				Citation.Status.IN_PREPARATION
-		));
-		return citations;
-	}
+    @Override
+    public String getCategory() {
+        return "Tree Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Multiply labelled species tree";
+    }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(
+                new Citation(
+                        new Author[]{
+                                new Author("GR", "Jones")
+                        },
+                        Citation.Status.IN_PREPARATION
+                ));
+    }
 
 }

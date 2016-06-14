@@ -50,11 +50,11 @@ public class ModelOptions implements Serializable {
     protected final Map<TaxonList, Parameter> statistics = new HashMap<TaxonList, Parameter>();
 
     public static final double demoTuning = 0.75;
-    public static final double demoWeights = 30.0;
+    public static final double demoWeights = 3.0;
 
-    protected static final double branchWeights = 300.0;
-    protected static final double treeWeights = 150.0;
-    protected static final double rateWeights = 30.0;
+	protected static final double branchWeights = 30.0;
+	protected static final double treeWeights = 15.0;
+	protected static final double rateWeights = 3.0;
 
     private final List<ComponentOptions> components = new ArrayList<ComponentOptions>();
 
@@ -170,7 +170,15 @@ public class ModelOptions implements Serializable {
     //+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
     public Operator createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
-        return new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight).build(operators);
+        return new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight)
+                .build(operators);
+    }
+
+    public Operator createOperator(String parameterName, OperatorType type, double tuning, double weight, boolean autoOptimize) {
+        Parameter parameter = getParameter(parameterName);
+        return new Operator.Builder(parameterName, parameterName, parameter, type, tuning, weight)
+                .autoOptimize(autoOptimize)
+                .build(operators);
     }
 
     public Operator createScaleOperator(String parameterName, double tuning, double weight) {

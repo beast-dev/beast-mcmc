@@ -43,6 +43,7 @@ import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.math.matrixAlgebra.Vector;
 import dr.util.Author;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.*;
 
@@ -242,9 +243,18 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return "\tSample internal node traits: false\n";
     }
 
+    @Override
+    public String getCategory() {
+        return "Trait Model";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Multivariate diffusion model";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = super.getCitations();
-        citations.add(
+        return Collections.singletonList(
                 new Citation(
                         new Author[]{
                                 new Author("OG", "Pybus"),
@@ -268,7 +278,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                         Citation.Status.PUBLISHED
                 )
         );
-        return citations;
     }
 
     public double getLogDataLikelihood() {
@@ -657,8 +666,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
                 for (int i = 0; i < dimTrait; ++i) {
                     System.err.println("\t"
-                                    + cacheHelper.getCorrectedMeanCache()[childOffset0 + 0 * dimTrait + i] + " "
-                                    + cacheHelper.getCorrectedMeanCache()[childOffset1 + 0 * dimTrait + i]
+                            + cacheHelper.getCorrectedMeanCache()[childOffset0 + 0 * dimTrait + i] + " "
+                            + cacheHelper.getCorrectedMeanCache()[childOffset1 + 0 * dimTrait + i]
                     );
                 }
                 System.exit(-1);

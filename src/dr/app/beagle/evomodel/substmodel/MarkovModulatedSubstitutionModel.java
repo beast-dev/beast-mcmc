@@ -37,9 +37,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -223,12 +221,18 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
 //        return pcFreqModel;
 //    }
 
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Markov modulated substitution model";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                CommonCitations.SUCHARD_2012
-        );
-        return citations;
+        return Collections.singletonList(CommonCitations.SUCHARD_2012);
     }
 
     @Override

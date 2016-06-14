@@ -42,12 +42,14 @@ import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.*;
 
 /**
  * @author Filip Bielejec
  * @author Marc A. Suchard
+ * @author Andrew Rambaut
  * @version $Id$
  */
 @SuppressWarnings("serial")
@@ -540,16 +542,21 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		}
 	}// END: checkBuffers
 
-	/**
-	 * @return a list of citations associated with this object
-	 */
+	@Override
+	public String getCategory() {
+		return "Substitution Models";
+	}
+
+	@Override
+	public String getDescription() {
+		return "Using Epoch Branch Substitution model";
+	}
+
 	public List<Citation> getCitations() {
-		List<Citation> citations = new ArrayList<Citation>();
-		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
+		return Arrays.asList(new Citation(new Author[] { new Author("F", "Bielejec"),
 				new Author("P", "Lemey"), new Author("G", "Baele"),
 				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
-		return citations;
-	}// END: getCitations
+	}
 
 	// /////////////
 	// ---DEBUG---//

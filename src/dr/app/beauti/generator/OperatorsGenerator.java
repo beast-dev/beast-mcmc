@@ -278,7 +278,10 @@ public class OperatorsGenerator extends Generator {
                         new Attribute.Default<Double>("windowSize", operator.getTuning()),
                         getWeightAttribute(operator.getWeight()),
                         new Attribute.Default<String>("boundaryCondition",
-                                (reflecting ? "reflecting" : "absorbing"))
+                                (reflecting ? "reflecting" : "absorbing")),
+                        (operator.isAutoOptimize() == false ?
+                                new Attribute.Default<Boolean>("autoOptimize", false) :
+                                null)
                 });
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);

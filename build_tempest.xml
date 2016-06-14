@@ -82,7 +82,7 @@
         <jar jarfile="${dist}/tempest.jar">
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
-                <attribute name="Main-Class" value="dr.app.tempest.TempestApp"/>
+                <attribute name="Main-Class" value="dr.app.tempest.TempEstApp"/>
             </manifest>
             <fileset dir="${build}">
                 <include name="dr/app/tempest/**/*.class"/>
@@ -144,9 +144,13 @@
             classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
 
         <copy file="${dist}/tempest.jar" todir="${Windows_package_dir}/lib"/>
+
+        <!--
         <copy todir="${Windows_package_dir}/lib">
             <fileset dir="${Windows_dir}/lib"/>
         </copy>
+        -->
+
         <copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
 
         <launch4j configFile="${Windows_dir}/tempest_launch4j.xml"
@@ -175,11 +179,15 @@
 
         <chmod dir="${Linux_package_dir}/bin" perm="755" includes="**/**"/>
 
-        <copy file="${Linux_dir}/icons/pathogen.png" todir="${Linux_package_dir}/images"/>
+        <copy file="${Linux_dir}/icons/tempest.png" todir="${Linux_package_dir}/images"/>
         <copy file="${dist}/tempest.jar" todir="${Linux_package_dir}/lib"/>
+
+        <!-- no libraries to copy...
         <copy todir="${Linux_package_dir}/lib">
             <fileset dir="${Linux_dir}/lib"/>
         </copy>
+        -->
+
         <copy file="${common_dir}/README.txt" todir="${Linux_package_dir}"/>
 
         <tar destfile="${release_dir}/${name}_v${version}.tgz" compression="gzip">
@@ -201,7 +209,7 @@
         <!-- create a jar bundle for the mac -->
         <jarbundler dir="${Mac_package_dir}"
                         name="${name} v${version}"
-                        mainclass="dr.app.tempest.TempestApp"
+                        mainclass="dr.app.tempest.TempEstApp"
                         stubfile="${packaging_tools}/mac/universalJavaApplicationStub"
                         icon="${Mac_dir}/icons/TempEst.icns"
                         jvmversion="1.6+"
@@ -209,7 +217,7 @@
                         vmoptions="-Xmx1024M"
                         version="${version}"
                         copyright="${name} v${version}, Copyright 2006-2016, Andrew Rambaut"
-                        bundleid="pathogen" >
+                        bundleid="tempest" >
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <jarfileset dir="${dist}">
                 <include name="**/tempest.jar"/>

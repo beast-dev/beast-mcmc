@@ -32,9 +32,7 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Philippe Lemey
@@ -371,19 +369,19 @@ public class CnCsToDnDsPerSiteAnalysis implements Citable {
         return sb.toString();
     }
 
+    @Override
+    public String getCategory() {
+        return "Counting Processes";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Renaissance counting";
+    }
+
+    @Override
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{
-                                new Author("P", "Lemey"),
-                                new Author("VN", "Minin"),
-                                new Author("MA", "Suchard")
-                        },
-                        Citation.Status.IN_PREPARATION
-                )
-        );
-        return citations;
+        return Collections.singletonList(CommonCitations.LEMEY_RENAISSANCE);
     }
 
     private class OutputFormat {

@@ -30,9 +30,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * FLU model of amino acid evolution (add reference).
@@ -55,7 +53,7 @@ public class FLU extends EmpiricalRateMatrix.AbstractAminoAcid {
     // but the AminoAcids dataType wants them in this order:
     // ACDEFGHIKLMNPQRSTVWY
     // This is solved by calling the setEmpiricalRates and setEmpiricalFrequencies methods
-    
+
     private FLU() { super("FLU");
 
         int n = AminoAcids.INSTANCE.getStateCount();
@@ -199,8 +197,19 @@ public class FLU extends EmpiricalRateMatrix.AbstractAminoAcid {
         setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
     }
 
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "FLU amino acid substitution model";
+    }
+
+    @Override
     public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
+        return Collections.singletonList(CITATION);
     }
 
     public static Citation CITATION = new Citation(
@@ -211,10 +220,6 @@ public class FLU extends EmpiricalRateMatrix.AbstractAminoAcid {
                     new Author("VS", "Le")
             },
             "FLU, an amino acid substitution model for influenza proteins",
-            2010,
-            "BMC Evolutionary Biology",
-            10,
-            99, -1,
-            Citation.Status.PUBLISHED
+            2010, "BMC Evolutionary Biology", 10, 99, -1
     );
 }

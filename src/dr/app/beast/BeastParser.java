@@ -25,6 +25,9 @@
 
 package dr.app.beast;
 
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -35,9 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * @author Alexei Drummond
@@ -54,6 +55,8 @@ public class BeastParser extends XMLParser {
 
     public BeastParser(String[] args, List<String> additionalParsers, boolean verbose, boolean parserWarnings, boolean strictXML) {
         super(parserWarnings, strictXML);
+
+        addCitable(BeastVersion.INSTANCE);
 
         setup(args);
 

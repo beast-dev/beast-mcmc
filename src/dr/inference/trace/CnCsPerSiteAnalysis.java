@@ -27,12 +27,11 @@ package dr.inference.trace;
 
 import dr.util.*;
 import dr.xml.*;
+import mpi.Comm;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Philippe Lemey
@@ -161,39 +160,39 @@ public class CnCsPerSiteAnalysis implements Citable {
             sb.append(positiveProb);
         }
 
-            if (format.includeSiteClassification) {
-                sb.append(format.separator);
-                sb.append(classification);
+        if (format.includeSiteClassification) {
+            sb.append(format.separator);
+            sb.append(classification);
+        }
+
+
+        if (format.includeSignificantSymbol) {
+            sb.append(format.separator);
+            if (isSignificant) {
+                sb.append("*");
+            } else {
+                // Do nothing?
             }
+        }
 
-
-            if (format.includeSignificantSymbol) {
-                sb.append(format.separator);
-                if (isSignificant) {
-                    sb.append("*");
+        if (format.includeSimulationOutcome) {
+            sb.append(format.separator);
+            sb.append(format.siteSimulation[index]);
+            sb.append(format.separator);
+            if (format.siteSimulation[index].equals("+") || format.siteSimulation[index].equals("-")) {
+                if (classification.equals(format.siteSimulation[index])){
+                    sb.append("TP");   // True Positive
                 } else {
-                    // Do nothing?
+                    sb.append("FN");   // True Negative
+                }
+            }  else {
+                if (classification.equals(format.siteSimulation[index])){
+                    sb.append("TN");   // True Negative
+                } else {
+                    sb.append("FP");   // False Positive
                 }
             }
-
-            if (format.includeSimulationOutcome) {
-                sb.append(format.separator);
-                sb.append(format.siteSimulation[index]);
-                sb.append(format.separator);
-                if (format.siteSimulation[index].equals("+") || format.siteSimulation[index].equals("-")) {
-                    if (classification.equals(format.siteSimulation[index])){
-                        sb.append("TP");   // True Positive
-                    } else {
-                        sb.append("FN");   // True Negative
-                    }
-                }  else {
-                    if (classification.equals(format.siteSimulation[index])){
-                        sb.append("TN");   // True Negative
-                    } else {
-                        sb.append("FP");   // False Positive
-                    }
-                }
-            }
+        }
 
 
         sb.append("\n");
@@ -253,24 +252,24 @@ public class CnCsPerSiteAnalysis implements Citable {
         return sb.toString();
     }
 
+    @Override
+    public String getCategory() {
+        return "Counting Processes";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Renaissance counting";
+    }
+
+    @Override
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{
-                                new Author("P", "Lemey"),
-                                new Author("VN", "Minin"),
-                                new Author("MA", "Suchard")
-                        },
-                        Citation.Status.IN_PREPARATION
-                )
-        );
-        return citations;
+        return Collections.singletonList(CommonCitations.LEMEY_RENAISSANCE);
     }
 
     private class OutputFormat {
         boolean includeMeans;
-//        boolean includeHPD;
+        //        boolean includeHPD;
 //        boolean includeSignificanceLevel;
         boolean includePValues;
         boolean includeSignificantSymbol;
@@ -278,7 +277,7 @@ public class CnCsPerSiteAnalysis implements Citable {
         boolean includeSimulationOutcome;
         String[] siteSimulation;
         double cutoff;
-//        double proportion;
+        //        double proportion;
 //        SignificanceTest test;
         String separator;
 

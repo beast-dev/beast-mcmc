@@ -25,7 +25,7 @@
 
 package dr.evomodelxml.substmodel;
 
-import dr.evomodel.substmodel.MultivariateOUModel;
+import dr.inference.distribution.MultivariateOUModel;
 import dr.evomodel.substmodel.SubstitutionModel;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.model.DesignMatrix;

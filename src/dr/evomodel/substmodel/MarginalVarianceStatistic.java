@@ -25,7 +25,7 @@
 
 package dr.evomodel.substmodel;
 
-import dr.evomodel.substmodel.MultivariateOUModel;
+import dr.inference.distribution.MultivariateOUModel;
 import dr.xml.*;
 import dr.inference.model.Statistic;
 

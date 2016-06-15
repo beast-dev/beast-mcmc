@@ -1,5 +1,5 @@
 /*
- * GibbsOperator.java
+ * PathDependentOperator.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -26,19 +26,13 @@
 package dr.inference.operators;
 
 /**
- * An interface for a Gibbs operator.
- *
- * @author Roald Forsberg
+ * Created by Guy Baele on 13/01/16.
  */
-public interface GibbsOperator extends MCMCOperator, PathDependentOperator {
-
-   /**
-	* @return the number of steps the operator performs in one go.
-	*/
-	int getStepCount();
+public interface PathDependentOperator {
 
     /**
      * Set the path parameter for sampling from power-posterior
      */
-    //void setPathParameter(double beta);
+    public void setPathParameter(double beta);
+
 }

@@ -33,12 +33,16 @@ import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
 import dr.inference.operators.*;
 import dr.inference.prior.Prior;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.Identifiable;
 import dr.xml.*;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.BetaDistributionImpl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -47,7 +51,7 @@ import java.util.List;
  * @author Marc Suchard
  * @author Guy Baele
  */
-public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
+public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Citable {
 
     public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps, double[] fixedRunValues,
 //                                       boolean linear, boolean lacing,
@@ -100,8 +104,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
             for (int i = 0; i < schedule.getOperatorCount(); ++i) {
                 MCMCOperator operator = schedule.getOperator(i);
-                if (operator instanceof GibbsOperator) {
-                    ((GibbsOperator)operator).setPathParameter(pathParameter);
+                if (operator instanceof PathDependentOperator) {
+                    ((PathDependentOperator)operator).setPathParameter(pathParameter);
                 }
             }
 
@@ -401,6 +405,65 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
         }
     };
 
+    @Override
+    public String getCategory() {
+        return "Framework";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Marginal likelihood estimation using path sampling / stepping-stone sampling (first 2 citations) and generalized stepping-stone sampling (3rd citation)";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
+                        new Author[]{
+                                new Author("G", "Baele"),
+                                new Author("P", "Lemey"),
+                                new Author("T", "Bedford"),
+                                new Author("A", "Rambaut"),
+                                new Author("MA", "Suchard"),
+                                new Author("AV", "Alekseyenko")
+                        },
+                        "Improving the accuracy of demographic and molecular clock model comparison while accommodating phylogenetic uncertainty",
+                        2012,
+                        "Mol. Biol. Evol.",
+                        29,
+                        2157, 2167,
+                        Citation.Status.PUBLISHED
+                ),
+                new Citation(
+                        new Author[]{
+                                new Author("G", "Baele"),
+                                new Author("WLS", "Li"),
+                                new Author("AJ", "Drummond"),
+                                new Author("MA", "Suchard"),
+                                new Author("P", "Lemey")
+                        },
+                        "Accurate model selection of relaxed molecular clocks in Bayesian phylogenetics",
+                        2013,
+                        "Mol. Biol. Evol.",
+                        30,
+                        239, 243,
+                        Citation.Status.PUBLISHED
+                ),
+                new Citation(
+                        new Author[]{
+                                new Author("G", "Baele"),
+                                new Author("P", "Lemey"),
+                                new Author("MA", "Suchard")
+                        },
+                        "Genealogical working distributions for Bayesian model testing with phylogenetic uncertainty",
+                        2016,
+                        "Syst. Biol.",
+                        65,
+                        250, 264,
+                        Citation.Status.PUBLISHED
+                )
+        );
+    }
+
     // TRANSIENT PUBLIC METHODS *****************************************
 
     /**
@@ -553,14 +616,14 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
                     "\n  pathSteps=" + pathSteps +
-                    "\n  pathScheme=" + scheme.getText() + alphaBetaText +
-                    "\n  If you use these results, please cite:" +
-                    "\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
-                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " +
-                    "\n          phylogenetic uncertainty. Mol. Biol. Evol. 29(9):2157-2167." +
-                    "\n    and " +
-                    "\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2013." +
-                    "\n    Accurate model selection of relaxed molecular clocks in Bayesian phylogenetics. Mol. Biol. Evol. 30(2):239-243.\n");
+                    "\n  pathScheme=" + scheme.getText() + alphaBetaText); //+
+                    //"\n  If you use these results, please cite:" +
+                    //"\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
+                    //"\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " +
+                    //"\n          phylogenetic uncertainty. Mol. Biol. Evol. 29(9):2157-2167." +
+                    //"\n    and " +
+                    //"\n    Guy Baele, Wai Lok Sibon Li, Alexei J. Drummond, Marc A. Suchard, and Philippe Lemey. 2013." +
+                    //"\n    Accurate model selection of relaxed molecular clocks in Bayesian phylogenetics. Mol. Biol. Evol. 30(2):239-243.\n");
             return mle;
         }
 

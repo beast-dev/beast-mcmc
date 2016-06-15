@@ -160,7 +160,6 @@
                 <include name="dr/**/*.properties"/>
             </fileset>
             <zipgroupfileset dir="${lib}" includes="jebl.jar"/>
-	    <zipgroupfileset dir="${lib}" includes="tools.jar"/>
             <zipgroupfileset dir="${lib}" includes="jam.jar"/>
             <zipgroupfileset dir="${lib}" includes="jdom.jar"/>
             <zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar"/>

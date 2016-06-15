@@ -25,15 +25,11 @@
 
 package dr.xml;
 
-import com.sun.tools.javac.util.Pair;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inferencexml.loggers.LoggerParser;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.FileHelpers;
-import dr.util.Identifiable;
+import dr.util.*;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -42,7 +38,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.*;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class XMLParser {
 
@@ -633,6 +628,7 @@ public class XMLParser {
             return name1.compareTo(name2);
         }
     }
+
 }
 
 

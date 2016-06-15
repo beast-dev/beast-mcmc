@@ -25,10 +25,8 @@
 
 package dr.app.beast;
 
-import com.sun.tools.javac.util.Pair;
-import dr.util.Author;
-import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.Pair;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -213,7 +211,7 @@ public class BeastParser extends XMLParser {
         // force the Framework category to be first...
         categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
 
-        for (Pair<String, String>keyPair : getCitationStore().keySet()) {
+        for (Pair<String, String> keyPair : getCitationStore().keySet()) {
             Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.fst);
             if (pairSet == null) {
                 pairSet = new LinkedHashSet<Pair<String, String>>();

@@ -419,7 +419,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 parenthesis = true;
             }
             if (this.delayRescalingUntilUnderflow) {
-                rescaleMessage += (parenthesis ? ", " : "(") + "delay rescaling until first overflow";
+                rescaleMessage += (parenthesis ? ", " : " (") + "delay rescaling until first overflow";
                 parenthesis = true;
             }
             rescaleMessage += (parenthesis ? ")" : "");
@@ -812,8 +812,6 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 if (rescalingCountInner < RESCALE_TIMES) {
                     recomputeScaleFactors = true;
                     updateAllNodes();
-//                makeDirty();
-//                System.err.println("Recomputing scale factors");
                     rescalingCountInner++;
                 }
 
@@ -941,7 +939,15 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 if (firstRescaleAttempt && (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
                     // we have had a potential under/over flow so attempt a rescaling
                     if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount == 0)) {
-                        Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                        // show a message but only every 1000 rescales
+                        if (rescalingMessageCount % 1000 == 0) {
+                            if (rescalingMessageCount > 0) {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood (" + rescalingMessageCount + " messages not shown).");
+                            } else {
+                                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                            }
+                        }
+                        rescalingMessageCount += 1;
                     }
                     useScaleFactors = true;
                     recomputeScaleFactors = true;
@@ -1225,6 +1231,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private int rescalingCount = 0;
     private int rescalingCountInner = 0;
 //    private int storedRescalingCount;
+
+    private int rescalingMessageCount = 0;
 
     /**
      * the branch-site model for these sites

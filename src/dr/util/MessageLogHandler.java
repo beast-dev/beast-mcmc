@@ -27,7 +27,6 @@ package dr.util;
 
 import java.io.OutputStream;
 import java.util.logging.*;
-import java.util.stream.Stream;
 
 public class MessageLogHandler extends StreamHandler {
 

@@ -32,8 +32,12 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.VariableSkylineLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -42,7 +46,7 @@ import java.util.List;
  *
  * @author Alexei Drummond
  */
-public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
+public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood implements Citable {
 
     // PUBLIC STUFF
 
@@ -361,4 +365,31 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood {
     private final Type type;
 
     private boolean logSpace = false;
+
+    @Override
+    public String getCategory() {
+        return "Tree Density Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extended Skyline Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("J", "Heled"),
+                    new Author("AJ", "Drummond")
+            },
+            "",
+            0,
+            "",
+            0, 0, 0,
+            ""
+    );
 }

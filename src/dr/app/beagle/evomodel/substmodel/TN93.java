@@ -27,13 +27,19 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Tamura-Nei model of nucleotide evolution
  *
  * @author Marc A. Suchard
  */
-public class TN93 extends BaseSubstitutionModel {
+public class TN93 extends BaseSubstitutionModel implements Citable {
 
     private Parameter kappaParameter1 = null;
     private Parameter kappaParameter2 = null;
@@ -149,4 +155,30 @@ public class TN93 extends BaseSubstitutionModel {
 
         return eigenDecomposition;
     }
+
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Tamura-Nei nucleotide substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("K", "Tamura"),
+                    new Author("M", "Nei")
+            },
+            "Estimation of the number of nucleotide substitutions in the control region of mitochondrial DNA in humans and chimpanzees",
+            1993,
+            "Mol Biol Evol",
+            10, 512, 526
+    );
 }

@@ -34,8 +34,13 @@ import dr.evomodelxml.coalescent.BayesianSkylineLikelihoodParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.math.MathUtils;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
+import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * A likelihood function for the generalized skyline plot coalescent. Takes a tree and population size and group size parameters.
@@ -44,7 +49,7 @@ import java.util.Date;
  *
  * @author Alexei Drummond
  */
-public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood {
+public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood implements Citable {
 
     // PUBLIC STUFF
 
@@ -368,4 +373,31 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
     private final int type;
 
+    @Override
+    public String getCategory() {
+        return "Tree Density Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian Skyline Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("AJ", "Drummond"),
+                    new Author("A", "Rambaut"),
+                    new Author("B", "Shapiro"),
+                    new Author("OG", "Pybus")
+            },
+            "Bayesian coalescent inference of past population dynamics from molecular sequences",
+            2005,
+            "Mol Biol Evol",
+            22, 1185, 1192
+    );
 }

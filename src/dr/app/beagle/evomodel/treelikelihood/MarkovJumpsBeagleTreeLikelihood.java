@@ -44,6 +44,8 @@ import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.*;
 
@@ -622,6 +624,17 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             }
             return expectedTreeLength;
         }
+    }
+
+    @Override
+    public String getDescription() {
+        return super.getDescription() + " and MarkovJumps inference techniques";
+    }
+
+    public List<Citation> getCitations() {
+        List<Citation> tmp = super.getCitations();
+        tmp.add(CommonCitations.MININ_2008_COUNTING);
+        return tmp;
     }
 
     public static final String ALL_HISTORY = "history_all";

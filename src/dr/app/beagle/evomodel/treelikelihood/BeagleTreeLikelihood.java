@@ -1434,15 +1434,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     }
 
     public List<Citation> getCitations() {
-        return Collections.singletonList(new Citation(
-                new Author[]{
-                        new Author("", "Ayres et al"),
-                },
-                "BEAGLE: a common application programming inferface and high-performance computing library for statistical phylogenetics",
-                2012,
-                "Syst Biol",
-                61, 170, 173,
-                "10.1093/sysbio/syr100"));
+        return Collections.singletonList(CommonCitations.AYRES_2012_BEAGLE);
     }
 
 }//END: class

@@ -143,6 +143,40 @@ public class CommonCitations {
             Citation.Status.IN_PREPARATION
     );
 
+    public static Citation LEMEY_2014_UNIFYING = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("A", "Rambaut"),
+                    new Author("T", "Bedford"),
+                    new Author("C", "Thiemann"),
+                    new Author("D", "Grady"),
+                    new Author("F", "Bielejec"),
+                    new Author("G", "Baele"),
+                    new Author("C", "Russell"),
+                    new Author("D", "Smith"),
+                    new Author("D", "Brockman"),
+                    new Author("MA", "Suchard"),
+            },
+            "Unifying viral genetics and human transportation data to predict the global transmission dynamics of human influenza H3N2",
+            2014,
+            "PLoS Pathogens",
+            10,
+            "e100392"
+    );
+
+    public static Citation MININ_2008_COUNTING = new Citation(
+            new Author[] {
+                    new Author("VN", "Minin"),
+                    new Author("MA", "Suchard"),
+            },
+            "Counting labeled transitions in continuous-time Markov models of evolution",
+            2008,
+            "Journal of Mathematical Biology",
+            56,
+            391, 412,
+            Citation.Status.PUBLISHED
+    );
+
     public static Citation MININ_2008_FAST = new Citation(
             new Author[]{
                     new Author("VN", "Minin"),
@@ -236,4 +270,13 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
+    public static Citation AYRES_2012_BEAGLE = new Citation(
+            new Author[]{
+                    new Author("", "Ayres et al"),
+            },
+            "BEAGLE: a common application programming inferface and high-performance computing library for statistical phylogenetics",
+            2012,
+            "Syst Biol",
+            61, 170, 173,
+            "10.1093/sysbio/syr100");
 }

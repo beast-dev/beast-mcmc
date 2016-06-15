@@ -235,6 +235,9 @@ public class BeastParser extends XMLParser {
             }
         }
 
+        // clear the citation store so all the same citations don't get cited again
+        getCitationStore().clear();
+
         Logger.getLogger("dr.apps.beast").info("\n");
 
     }

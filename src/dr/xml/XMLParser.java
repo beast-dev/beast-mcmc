@@ -25,7 +25,6 @@
 
 package dr.xml;
 
-import com.sun.tools.javac.util.Pair;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -42,7 +41,6 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.*;
 import java.util.*;
-import java.util.logging.Logger;
 
 public class XMLParser {
 
@@ -631,6 +629,32 @@ public class XMLParser {
             String name2 = o2.toUpperCase();
 
             return name1.compareTo(name2);
+        }
+    }
+
+    private class Pair<A, B> {
+        public final A fst;
+        public final B snd;
+
+        public Pair(A var1, B var2) {
+            this.fst = var1;
+            this.snd = var2;
+        }
+
+        public String toString() {
+            return "Pair[" + this.fst + "," + this.snd + "]";
+        }
+
+        private boolean equals(Object var0, Object var1) {
+            return var0 == null && var1 == null || var0 != null && var0.equals(var1);
+        }
+
+        public boolean equals(Object var1) {
+            return var1 instanceof Pair && equals(this.fst, ((Pair)var1).fst) && equals(this.snd, ((Pair)var1).snd);
+        }
+
+        public int hashCode() {
+            return this.fst == null?(this.snd == null?0:this.snd.hashCode() + 1):(this.snd == null?this.fst.hashCode() + 2:this.fst.hashCode() * 17 + this.snd.hashCode());
         }
     }
 }

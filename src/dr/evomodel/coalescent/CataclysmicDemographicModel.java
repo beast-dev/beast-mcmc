@@ -29,6 +29,12 @@ import dr.evolution.coalescent.CataclysmicDemographic;
 import dr.evolution.coalescent.DemographicFunction;
 import dr.evomodelxml.coalescent.CataclysmicDemographicModelParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class models an exponentially growing model that suffers a
@@ -39,7 +45,7 @@ import dr.inference.model.Parameter;
  * @author Andrew Rambaut
  * @version $Id: CataclysmicDemographicModel.java,v 1.6 2005/05/24 20:25:57 rambaut Exp $
  */
-public class CataclysmicDemographicModel extends DemographicModel {
+public class CataclysmicDemographicModel extends DemographicModel implements Citable {
 
     /**
      * Construct demographic model with default settings
@@ -119,4 +125,30 @@ public class CataclysmicDemographicModel extends DemographicModel {
     Parameter timeParameter = null;
     Parameter declineRateParameter = null;
     CataclysmicDemographic cataclysm = null;
+
+    @Override
+    public String getCategory() {
+        return "Tree Density Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Boom-Bust Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("B", "Shapiro"),
+                    new Author("", "et al.")
+            },
+            "Rise and fall of the Beringian steppe bison",
+            2004,
+            "Science",
+            306, 1561, 1565
+    );
 }

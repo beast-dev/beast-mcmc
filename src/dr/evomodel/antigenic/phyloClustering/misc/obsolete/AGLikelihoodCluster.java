@@ -40,7 +40,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
     private static final int SERUM_STRAIN = 4;
     private static final int SERUM_DATE = 5;
     private static final int TITRE = 6;
-    
+
 
 
     public enum MeasurementType {
@@ -67,7 +67,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
             DataTable<String[]> dataTable,
             boolean mergeSerumIsolates,
             double intervalWidth,
-            double driftInitialLocations, 
+            double driftInitialLocations,
             boolean clusterMeans,
             Parameter clusterOffsetsParameter) {
 
@@ -77,7 +77,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
         boolean useIntervals = USE_INTERVALS && intervalWidth > 0.0;
 
         int thresholdCount = 0;
-             
+
         double earliestDate = Double.POSITIVE_INFINITY;
         for (int i = 0; i < dataTable.getRowCount(); i++) {
 
@@ -105,7 +105,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
                 serumDates.add(serumDate);
                 serum = serumNames.size() - 1;
             }
-            
+
             boolean isThreshold = false;
             boolean isLowerThreshold = false;
             double rawTitre = Double.NaN;
@@ -121,11 +121,11 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
                         thresholdCount++;
                     }
                     // check if threshold above
-                    if (values[TITRE].contains(">")) {                	
+                    if (values[TITRE].contains(">")) {
                         rawTitre = Double.parseDouble(values[TITRE].replace(">",""));
                         isThreshold = true;
                         isLowerThreshold = false;
-                        thresholdCount++;                    	
+                        thresholdCount++;
                         //throw new IllegalArgumentException("Error in measurement: unsupported greater than threshold at row " + (i+1));
                     }
                 }
@@ -228,48 +228,48 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
 
-       // driftInitialLocations = 1; //charles added - now specified in the xml
+        // driftInitialLocations = 1; //charles added - now specified in the xml
         setupInitialLocations(driftInitialLocations);
-   //     loadInitialLocations(virusNames, serumNames);
-        
+        //     loadInitialLocations(virusNames, serumNames);
+
         //System.out.println("Print now!");
-		//      for (int i = 0; i < virusLocationsParameter.getParameterCount(); i++) {    	  
-		 //   	 System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(0) + " ");
-		  //  	 System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(1) + " ");  	  
-		   //   }
-		   //   System.out.println("");
-     
+        //      for (int i = 0; i < virusLocationsParameter.getParameterCount(); i++) {
+        //   	 System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(0) + " ");
+        //  	 System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(1) + " ");
+        //   }
+        //   System.out.println("");
 
-		        if(clusterMeans){
-		        	this.clusterMeans = clusterMeans;
-		        	this.clusterOffsetsParameter = clusterOffsetsParameter;
-		        	
-		        	
-		        	//if(clusterOffsetsParameter != null){
-		        	//System.out.println("virusNames.size()="+ virusNames.size());
-		        	//clusterOffsetsParameter.setDimension( virusNames.size());  
-		        //    for (int i = 0; i < virusNames.size(); i++) {
-		           // 	clusterOffsetsParameter.setId(virusNames.get(i));
-		           // }
-		            //addVariable(clusterOffsetsParameter);
-		        	//}
-		        	
-		        	//stay null
-		           if (clusterOffsetsParameter == null) {
-		            //	clusterOffsetsParameter = new Parameter.Default("clusterOffsets");
-		            } else {
-		            	//clusterOffsetsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1000));
-		                addVariable(clusterOffsetsParameter);
-			            clusterOffsetsParameter.setDimension(virusNames.size());
 
-		            }
-		        	
-		        	
-		        	System.out.println(" clusterMeans = true");
-		        	//System.exit(0);
-		        }
+        if(clusterMeans){
+            this.clusterMeans = clusterMeans;
+            this.clusterOffsetsParameter = clusterOffsetsParameter;
 
-		      
+
+            //if(clusterOffsetsParameter != null){
+            //System.out.println("virusNames.size()="+ virusNames.size());
+            //clusterOffsetsParameter.setDimension( virusNames.size());
+            //    for (int i = 0; i < virusNames.size(); i++) {
+            // 	clusterOffsetsParameter.setId(virusNames.get(i));
+            // }
+            //addVariable(clusterOffsetsParameter);
+            //}
+
+            //stay null
+            if (clusterOffsetsParameter == null) {
+                //	clusterOffsetsParameter = new Parameter.Default("clusterOffsets");
+            } else {
+                //clusterOffsetsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1000));
+                addVariable(clusterOffsetsParameter);
+                clusterOffsetsParameter.setDimension(virusNames.size());
+
+            }
+
+
+            System.out.println(" clusterMeans = true");
+            //System.exit(0);
+        }
+
+
         makeDirty();
     }
 
@@ -397,21 +397,21 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
     }
 
     private void setupInitialLocations(double drift) {
-    	//System.out.println("hihi");
+        //System.out.println("hihi");
         for (int i = 0; i < virusLocationsParameter.getParameterCount(); i++) {
             double offset = 0.0;
             if (virusOffsetsParameter != null) {
-            	//System.out.print("virus Offset Parameter present"+ ": ");
-            	//System.out.print( virusOffsetsParameter.getParameterValue(i) + " ");
-            	//System.out.print(" drift= " + drift + " ");
+                //System.out.print("virus Offset Parameter present"+ ": ");
+                //System.out.print( virusOffsetsParameter.getParameterValue(i) + " ");
+                //System.out.print(" drift= " + drift + " ");
                 offset = drift * virusOffsetsParameter.getParameterValue(i);
             }
             else{
-            	System.out.println("virus Offeset Parameter NOT present");
+                System.out.println("virus Offeset Parameter NOT present");
             }
             double r = MathUtils.nextGaussian() + offset;
             virusLocationsParameter.getParameter(i).setParameterValue(0, r);
-           // System.out.println (  virusLocationsParameter.getParameter(i).getParameterValue(0));
+            // System.out.println (  virusLocationsParameter.getParameter(i).getParameterValue(0));
             if (mdsDimension > 1) {
                 for (int j = 1; j < mdsDimension; j++) {
                     r = MathUtils.nextGaussian();
@@ -434,102 +434,102 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
             }
         }
     }
-    
+
     //load initial
     private void loadInitialLocations(List<String> strainNames, List<String> serumNames) {
 
-		FileReader fileReader;
-		try {
-			//fileReader = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialCondition/H3N2_mds.virusLocs.log");
-			fileReader = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialConditionWithInitialLocationDrift/lastIteration/H3N2_mds.virusLocs.log");
-		     /**
-		       * Creating a buffered reader to read the file
-		       */
-		      BufferedReader bReader = new BufferedReader( fileReader);
+        FileReader fileReader;
+        try {
+            //fileReader = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialCondition/H3N2_mds.virusLocs.log");
+            fileReader = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialConditionWithInitialLocationDrift/lastIteration/H3N2_mds.virusLocs.log");
+            /**
+             * Creating a buffered reader to read the file
+             */
+            BufferedReader bReader = new BufferedReader( fileReader);
 
-		      String line;
+            String line;
 
-		      
-		      //this routine may give false results if there are extra lines with spaces
-		      
-		      line = bReader.readLine();
-		      System.out.println(line);
-		      String namevalue[] = line.split("\t");
 
-		      
-		      line = bReader.readLine();
-		      System.out.println(line);
-		      
-		      String datavalue[] = line.split("\t");
-		          
-		      for (int i = 0; i < virusLocationsParameter.getParameterCount(); i++) {
-		    	  
-		    	  int index = findStrain( namevalue[i*2+1], strainNames);  //note. namevalue actually has the extra 1 or 2attached to it.. but it doesn't seem to matter
-		    //	  System.out.println("name: " + virusLocationsParameter.getParameter(i).getParameterName() + " :" + index);
-		    	 // System.out.println(datavalue[i*2+1]);
-		    	  virusLocationsParameter.getParameter(index).setParameterValue(0, Double.parseDouble(datavalue[i*2+1]));
-		    	  virusLocationsParameter.getParameter(index).setParameterValue(1, Double.parseDouble(datavalue[i*2+2]));
-		          //virusLocationsParameter.getParameter(i).setParameterValue(0, 1);
-			    	// System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(0) + " ");
-			    	// System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(1) + " ");  	  
+            //this routine may give false results if there are extra lines with spaces
 
-		      }
-		      bReader.close();
-		
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}          
- 
+            line = bReader.readLine();
+            System.out.println(line);
+            String namevalue[] = line.split("\t");
 
-		FileReader fileReader2;
-		try {
-			//fileReader2 = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialCondition/H3N2.serumLocs.log");
-			fileReader2 = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialConditionWithInitialLocationDrift/lastIteration/H3N2.serumLocs.log");
-			
-		     /**
-		       * Creating a buffered reader to read the file
-		       */
-		      BufferedReader bReader2 = new BufferedReader( fileReader2);
 
-		      String line;
-		      
-		      line = bReader2.readLine();
-		      System.out.println(line);
-		      String namevalue[] = line.split("\t");
+            line = bReader.readLine();
+            System.out.println(line);
 
-		      
-		      line = bReader2.readLine();
-		      System.out.println(line);
-		      
-		      String datavalue[] = line.split("\t");
-		       //   System.out.println(serumLocationsParameter.getParameterCount());
-		      for (int i = 0; i < serumLocationsParameter.getParameterCount(); i++) {
-		    	  int index = findStrain( namevalue[i*2+1], serumNames);
+            String datavalue[] = line.split("\t");
 
-		    	 // System.out.println(datavalue[i*2+1]);
-		    	  serumLocationsParameter.getParameter(index).setParameterValue(0, Double.parseDouble(datavalue[i*2+1]));
-		    	  serumLocationsParameter.getParameter(index).setParameterValue(1, Double.parseDouble(datavalue[i*2+2]));
-		          //virusLocationsParameter.getParameter(i).setParameterValue(0, 1);
-		   	  
-		      }
-		      bReader2.close();
-		
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}        
-      
-    	
+            for (int i = 0; i < virusLocationsParameter.getParameterCount(); i++) {
+
+                int index = findStrain( namevalue[i*2+1], strainNames);  //note. namevalue actually has the extra 1 or 2attached to it.. but it doesn't seem to matter
+                //	  System.out.println("name: " + virusLocationsParameter.getParameter(i).getParameterName() + " :" + index);
+                // System.out.println(datavalue[i*2+1]);
+                virusLocationsParameter.getParameter(index).setParameterValue(0, Double.parseDouble(datavalue[i*2+1]));
+                virusLocationsParameter.getParameter(index).setParameterValue(1, Double.parseDouble(datavalue[i*2+2]));
+                //virusLocationsParameter.getParameter(i).setParameterValue(0, 1);
+                // System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(0) + " ");
+                // System.out.print(virusLocationsParameter.getParameter(i).getParameterValue(1) + " ");
+
+            }
+            bReader.close();
+
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+
+        FileReader fileReader2;
+        try {
+            //fileReader2 = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialCondition/H3N2.serumLocs.log");
+            fileReader2 = new FileReader("/Users/charles/Documents/research/antigenic/GenoPheno/Gabriela/results/initialConditionWithInitialLocationDrift/lastIteration/H3N2.serumLocs.log");
+
+            /**
+             * Creating a buffered reader to read the file
+             */
+            BufferedReader bReader2 = new BufferedReader( fileReader2);
+
+            String line;
+
+            line = bReader2.readLine();
+            System.out.println(line);
+            String namevalue[] = line.split("\t");
+
+
+            line = bReader2.readLine();
+            System.out.println(line);
+
+            String datavalue[] = line.split("\t");
+            //   System.out.println(serumLocationsParameter.getParameterCount());
+            for (int i = 0; i < serumLocationsParameter.getParameterCount(); i++) {
+                int index = findStrain( namevalue[i*2+1], serumNames);
+
+                // System.out.println(datavalue[i*2+1]);
+                serumLocationsParameter.getParameter(index).setParameterValue(0, Double.parseDouble(datavalue[i*2+1]));
+                serumLocationsParameter.getParameter(index).setParameterValue(1, Double.parseDouble(datavalue[i*2+2]));
+                //virusLocationsParameter.getParameter(i).setParameterValue(0, 1);
+
+            }
+            bReader2.close();
+
+        } catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+
 
     }
-    
+
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -554,9 +554,9 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
         } else if (variable == locationDriftParameter) {
             setLocationChangedFlags(true);
         } else if (variable == virusDriftParameter) {
-                setLocationChangedFlags(true);
+            setLocationChangedFlags(true);
         } else if (variable == serumDriftParameter) {
-                setLocationChangedFlags(true);
+            setLocationChangedFlags(true);
         } else if (variable == serumPotenciesParameter) {
             serumEffectChanged[index] = true;
         } else if (variable == serumBreadthsParameter) {
@@ -593,12 +593,12 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
     }
 
     public double getLogLikelihood() {
- //uncommenting for testing only
-    		
+        //uncommenting for testing only
+
         if (!likelihoodKnown) {
             logLikelihood = computeLogLikelihood();
         }
-        
+
 // logLikelihood=0;       //for testing purpose only
 //System.out.println("logLikelihood of AGLikelihoodCluster= " + logLikelihood);
         return logLikelihood;
@@ -606,7 +606,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
 
     // This function can be overwritten to implement other sampling densities, i.e. discrete ranks
     private double computeLogLikelihood() {
-    	    	
+
 
         double precision = mdsPrecisionParameter.getParameterValue(0);
         double sd = 1.0 / Math.sqrt(precision);
@@ -630,12 +630,12 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
                         logLikelihoods[i] = computeMeasurementLikelihood(measurement.log2Titre, expectation, sd);
                     } break;
                     case THRESHOLD: {
-                    	if(measurement.isLowerThreshold){
-                    		logLikelihoods[i] = computeMeasurementThresholdLikelihood(measurement.log2Titre, expectation, sd);
-                    	}
-                    	else{
-                    		logLikelihoods[i] = computeMeasurementUpperThresholdLikelihood(measurement.log2Titre, expectation, sd);                  		
-                    	}
+                        if(measurement.isLowerThreshold){
+                            logLikelihoods[i] = computeMeasurementThresholdLikelihood(measurement.log2Titre, expectation, sd);
+                        }
+                        else{
+                            logLikelihoods[i] = computeMeasurementUpperThresholdLikelihood(measurement.log2Titre, expectation, sd);
+                        }
                     } break;
                     case MISSING:
                         break;
@@ -684,45 +684,45 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
         // first dimension is shifted
         double vxOffset = 0.0;
         double sxOffset = 0.0;
-        if(clusterMeans == true){      	
-        	
-        	
-        	if(virusDriftParameter!= null && virusOffsetsParameter != null && serumOffsetsParameter != null && clusterOffsetsParameter!=null){
+        if(clusterMeans == true){
+
+
+            if(virusDriftParameter!= null && virusOffsetsParameter != null && serumOffsetsParameter != null && clusterOffsetsParameter!=null){
                 vxOffset = virusDriftParameter.getParameterValue(0)* clusterOffsetsParameter.getParameterValue(virus);
-        		sxOffset = virusDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
+                sxOffset = virusDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
                 //vxOffset = locationDriftParameter.getParameterValue(0)*  ;               
-           //     System.out.println("clusterOffset =" + clusterOffsetsParameter.getParameterValue(virus));
-                 	//System.out.println("offset = " + vxOffset);
-                 
-        	}
-        	
-        	//overwrite serum drift
-	        if (serumDriftParameter != null && serumOffsetsParameter != null) {
-	        //	System.out.println("hihi ya");
-	            sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
-	        }
-	        
+                //     System.out.println("clusterOffset =" + clusterOffsetsParameter.getParameterValue(virus));
+                //System.out.println("offset = " + vxOffset);
+
+            }
+
+            //overwrite serum drift
+            if (serumDriftParameter != null && serumOffsetsParameter != null) {
+                //	System.out.println("hihi ya");
+                sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
+            }
+
         }
         else{
-	        if (locationDriftParameter != null && virusOffsetsParameter != null && serumOffsetsParameter != null) {
-	            vxOffset = locationDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
+            if (locationDriftParameter != null && virusOffsetsParameter != null && serumOffsetsParameter != null) {
+                vxOffset = locationDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
                 sxOffset = locationDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
-	        }
-	        if (virusDriftParameter != null && virusOffsetsParameter != null) {
-	            vxOffset = virusDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
-	        }
-	        if (serumDriftParameter != null && serumOffsetsParameter != null) {
-	            sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
-	        }
+            }
+            if (virusDriftParameter != null && virusOffsetsParameter != null) {
+                vxOffset = virusDriftParameter.getParameterValue(0) * virusOffsetsParameter.getParameterValue(virus);
+            }
+            if (serumDriftParameter != null && serumOffsetsParameter != null) {
+                sxOffset = serumDriftParameter.getParameterValue(0) * serumOffsetsParameter.getParameterValue(serum);
+            }
         }
 
         double vxLoc = vLoc.getParameterValue(0) + vxOffset;
         double sxLoc = sLoc.getParameterValue(0) + sxOffset;
 
-       // if(virus ==1){
+        // if(virus ==1){
         //	System.out.println("virus " + virus + " has vxLoc of " + vxLoc + " = " + vLoc.getParameterValue(0) + "+" + vxOffset);
         //}
-        
+
         double difference = vxLoc - sxLoc;
         sum += difference * difference;
 
@@ -780,16 +780,16 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
 
         // real titre is somewhere between -infinity and measured 'titre'
         // want the lower tail of the normal CDF
-    	double L = NormalDistribution.cdf(titre, expectation, sd, false);          // returns  CDF
-    	double lnL = Math.log(1-L);  //get the upper tail probability, then log it
+        double L = NormalDistribution.cdf(titre, expectation, sd, false);          // returns  CDF
+        double lnL = Math.log(1-L);  //get the upper tail probability, then log it
 
         if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite threshold measurement");
         }
         return lnL;
-    }    
-    
-    
+    }
+
+
     private static double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre, double expectation, double sd) {
 
         // real titre is somewhere between measured minTitre and maxTitre
@@ -872,7 +872,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
     private final boolean[] virusEffectChanged;
     private double[] logLikelihoods;
     private double[] storedLogLikelihoods;
-    
+
     private boolean clusterMeans = false;
     private Parameter clusterOffsetsParameter;
 
@@ -918,7 +918,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
             System.out.println("Loaded HI table file: " + fileName);
 
             boolean mergeSerumIsolates = xo.getAttribute(MERGE_SERUM_ISOLATES, false);
-            
+
             boolean cluster_means = xo.getAttribute(CLUSTER_MEANS, false);
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
@@ -956,12 +956,12 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
 
             Parameter virusDrift = null;
             if (xo.hasChildNamed(VIRUS_DRIFT)) {
-            	virusDrift = (Parameter) xo.getElementFirstChild(VIRUS_DRIFT);
+                virusDrift = (Parameter) xo.getElementFirstChild(VIRUS_DRIFT);
             }
 
             Parameter serumDrift = null;
             if (xo.hasChildNamed(SERUM_DRIFT)) {
-            	serumDrift = (Parameter) xo.getElementFirstChild(SERUM_DRIFT);
+                serumDrift = (Parameter) xo.getElementFirstChild(SERUM_DRIFT);
             }
 
             Parameter virusOffsetsParameter = null;
@@ -988,10 +988,10 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
             if (xo.hasChildNamed(VIRUS_AVIDITIES)) {
                 virusAviditiesParameter = (Parameter) xo.getElementFirstChild(VIRUS_AVIDITIES);
             }
-            
+
             Parameter clusterOffsetsParameter = null;
             if (xo.hasChildNamed(CLUSTER_OFFSETS)) {
-            	clusterOffsetsParameter = (Parameter) xo.getElementFirstChild(CLUSTER_OFFSETS);
+                clusterOffsetsParameter = (Parameter) xo.getElementFirstChild(CLUSTER_OFFSETS);
             }
 
 
@@ -1012,10 +1012,10 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
                     assayTable,
                     mergeSerumIsolates,
                     intervalWidth,
-                    driftInitialLocations, 
-                    cluster_means, 
+                    driftInitialLocations,
+                    cluster_means,
                     clusterOffsetsParameter);
-                        
+
 
             Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 
@@ -1054,7 +1054,7 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
                 new ElementRule(VIRUS_DRIFT, Parameter.class, "Optional parameter for drifting only virus locations, overrides locationDrift", true),
                 new ElementRule(SERUM_DRIFT, Parameter.class, "Optional parameter for drifting only serum locations, overrides locationDrift", true),
                 AttributeRule.newBooleanRule(CLUSTER_MEANS, true, "Should we use cluster means to control the virus locations"),
-               new ElementRule(CLUSTER_OFFSETS, Parameter.class, "Parameter of cluster offsets of all virus"),                
+                new ElementRule(CLUSTER_OFFSETS, Parameter.class, "Parameter of cluster offsets of all virus"),
         };
 
         public Class getReturnType() {
@@ -1062,26 +1062,49 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
         }
     };
 
+    @Override
+    public String getCategory() {
+        return "Trait Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian Antigenic Cartography framework";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
-                new Author[]{
-                        new Author("T", "Bedford"),
-                        new Author("MA", "Suchard"),
-                        new Author("P", "Lemey"),
-                        new Author("G", "Dudas"),
-                        new Author("V", "Gregory"),
-                        new Author("AJ", "Hay"),
-                        new Author("JW", "McCauley"),
-                        new Author("CA", "Russell"),
-                        new Author("DJ", "Smith"),
-                        new Author("A", "Rambaut")
-                },
-                "Integrating influenza antigenic dynamics with molecular evolution",
-                "eLife",
-                Citation.Status.ACCEPTED
-        ));
-        return citations;
+        return Arrays.asList(new Citation(
+                        new Author[]{
+                                new Author("C", "Cheung"),
+                                new Author("A", "Rambaut"),
+                                new Author("P", "Lemey"),
+                                new Author("T", "Bedford")
+                        },
+                        "Integrating influenza antigenic dynamics with molecular evolution",
+                        2015,
+                        "eLife",
+                        "e01914",
+                        "10.7554/eLife.01914"
+                ),
+                new Citation(
+                        new Author[]{
+                                new Author("T", "Bedford"),
+                                new Author("MA", "Suchard"),
+                                new Author("P", "Lemey"),
+                                new Author("G", "Dudas"),
+                                new Author("V", "Gregory"),
+                                new Author("AJ", "Hay"),
+                                new Author("JW", "McCauley"),
+                                new Author("CA", "Russell"),
+                                new Author("DJ", "Smith"),
+                                new Author("A", "Rambaut")
+                        },
+                        "Integrating influenza antigenic dynamics with molecular evolution",
+                        2015,
+                        "eLife",
+                        "e01914",
+                        "10.7554/eLife.01914"
+                ));
     }
 
 

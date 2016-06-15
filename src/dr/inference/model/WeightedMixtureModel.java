@@ -32,8 +32,7 @@ import dr.util.Citation;
 import dr.util.CommonCitations;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -311,9 +310,18 @@ public class WeightedMixtureModel extends AbstractModelLikelihood implements Cit
         System.err.println("correct            = " + test);
     }
 
+    @Override
+    public String getCategory() {
+        return "Misc";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Weighted mixture model";
+    }
+
+    @Override
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(CommonCitations.LEMEY_MIXTURE_2012);
-        return citations;
+        return Collections.singletonList(CommonCitations.LEMEY_MIXTURE_2012);
     }
 }

@@ -37,7 +37,9 @@ import dr.util.Citable;
 import dr.util.Citation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -45,7 +47,7 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id$
  */
-public class ExternalInternalBranchModel extends AbstractModel implements BranchModel, Citable {
+public class ExternalInternalBranchModel extends AbstractModel implements BranchModel {
     public ExternalInternalBranchModel(TreeModel tree, SubstitutionModel externalSubstModel, SubstitutionModel internalSubstModel) {
         super("ExternalInternalBranchModel");
 
@@ -111,25 +113,6 @@ public class ExternalInternalBranchModel extends AbstractModel implements Branch
 
     @Override
     protected void acceptState() {
-    }
-
-    /**
-     * @return a list of citations associated with this object
-     */
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{
-                                new Author("F", "Bielejec"),
-                                new Author("P", "Lemey"),
-                                new Author("A", "Rambaut"),
-                                new Author("MA", "Suchard")
-                        },
-                        Citation.Status.IN_PREPARATION
-                )
-        );
-        return citations;
     }
 
     private final TreeModel tree;

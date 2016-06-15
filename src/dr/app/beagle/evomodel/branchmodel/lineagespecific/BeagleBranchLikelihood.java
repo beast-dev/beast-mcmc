@@ -512,7 +512,7 @@ public class BeagleBranchLikelihood implements Likelihood {
 			BeagleTreeLikelihood btl = new BeagleTreeLikelihood(alignment,
 					treeModel, homogeneousBranchModel, siteRateModel,
 					branchRateModel, null, false,
-					PartialsRescalingScheme.DEFAULT);
+					PartialsRescalingScheme.DEFAULT, true);
 
 			System.out.println("BTL(homogeneous) = " + btl.getLogLikelihood());
 

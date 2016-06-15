@@ -90,7 +90,7 @@ public interface Transform {
     public double getLogJacobian(double[] values, int from, int to);
 
 
-    public static class LogTransform implements Transform, Citable {
+    public static class LogTransform implements Transform {
 
         public LogTransform() {
         }
@@ -122,22 +122,9 @@ public interface Transform {
         public double getLogJacobian(double[] values, int from, int to) {
             throw new RuntimeException("Transformation not permitted for this type of parameter, exiting ...");
         }
-
-        public List<Citation> getCitations() {
-            List<Citation> citations = new ArrayList<Citation>();
-            citations.add(new Citation(
-                    new Author[]{
-                            new Author("MA", "Suchard"),
-                            new Author("G", "Baele"),
-                            new Author("P", "Lemey"),
-                    },
-                    Citation.Status.IN_PREPARATION
-                    ));
-            return citations;
-        }
     }
 
-    public static class LogConstrainedSumTransform implements Transform, Citable {
+    public static class LogConstrainedSumTransform implements Transform {
 
         public LogConstrainedSumTransform() {
         }
@@ -191,19 +178,6 @@ public interface Transform {
                 sum -= Math.log(values[i]);
             }
             return sum;
-        }
-
-        public List<Citation> getCitations() {
-            List<Citation> citations = new ArrayList<Citation>();
-            citations.add(new Citation(
-                    new Author[]{
-                            new Author("MA", "Suchard"),
-                            new Author("G", "Baele"),
-                            new Author("P", "Lemey"),
-                    },
-                    Citation.Status.IN_PREPARATION
-            ));
-            return citations;
         }
 
         public static void main(String[] args) {

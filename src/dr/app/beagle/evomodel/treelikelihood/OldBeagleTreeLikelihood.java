@@ -140,12 +140,12 @@ public class OldBeagleTreeLikelihood extends AbstractSinglePartitionTreeLikeliho
             addModel(this.siteRateModel);
 
             this.branchSubstitutionModel = branchSubstitutionModel;
-            if (!(branchSubstitutionModel instanceof HomogenousBranchSubstitutionModel)) {
-                logger.info("  Branch site model used: " + branchSubstitutionModel.getModelName());
-                if (branchSubstitutionModel instanceof Citable) {
-                    logger.info("      Please cite: " + Citable.Utils.getCitationString((Citable) branchSubstitutionModel, "", ""));
-                }
-            }
+//            if (!(branchSubstitutionModel instanceof HomogenousBranchSubstitutionModel)) {
+//                logger.info("  Branch site model used: " + branchSubstitutionModel.getModelName());
+//                if (branchSubstitutionModel instanceof Citable) {
+//                    logger.info("      Please cite: " + Citable.Utils.getCitationString((Citable) branchSubstitutionModel, "", ""));
+//                }
+//            }
             eigenCount = this.branchSubstitutionModel.getEigenCount();
             addModel(branchSubstitutionModel);
 

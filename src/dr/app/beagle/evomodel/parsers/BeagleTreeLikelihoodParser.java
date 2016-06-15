@@ -69,6 +69,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
     //    public static final String DEVICE_NUMBER = "deviceNumber";
 //    public static final String PREFER_SINGLE_PRECISION = "preferSinglePrecision";
     public static final String SCALING_SCHEME = "scalingScheme";
+    public static final String DELAY_SCALING = "delayScaling";
     public static final String PARTIALS_RESTRICTION = "partialsRestriction";
 
     public String getParserName() {
@@ -81,6 +82,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                        boolean delayRescalingUntilUnderflow,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
         return new BeagleTreeLikelihood(
@@ -92,6 +94,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
                 tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
+                delayRescalingUntilUnderflow,
                 partialsRestrictions
         );
     }
@@ -135,12 +138,16 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
 //        }
 
         PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
+        boolean delayScaling = true;
         if (xo.hasAttribute(SCALING_SCHEME)) {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
                 throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(SCALING_SCHEME)+"' in "+
                         "OldBeagleTreeLikelihood object '"+xo.getId());
 
+        }
+        if (xo.hasAttribute(DELAY_SCALING)) {
+            delayScaling = xo.getBooleanAttribute(DELAY_SCALING);
         }
 
         Map<Set<String>, Parameter> partialsRestrictions = null;
@@ -169,6 +176,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
                     tipStatesModel,
                     useAmbiguities,
                     scalingScheme,
+                    delayScaling,
                     partialsRestrictions,
                     xo
             );
@@ -198,6 +206,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
                     null,
                     useAmbiguities,
                     scalingScheme,
+                    delayScaling,
                     partialsRestrictions,
                     xo);
             treeLikelihood.setId(xo.getId() + "_" + instanceCount);

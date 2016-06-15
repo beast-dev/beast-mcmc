@@ -127,14 +127,12 @@ public class NewickParser extends AbstractXMLObjectParser {
             String id = node.getTaxon().getId();
             Taxon taxon = null;
 
-            try {
-                Object obj = getStore().getObjectById(id);
+            XMLObject obj = getStore().get(id);
 
-                if (obj instanceof Taxon) {
+            if (obj != null && obj.getNativeObject() instanceof Taxon) {
 
-                    taxon = (Taxon) obj;
-                }
-            } catch (ObjectNotFoundException e) { /**/}
+                taxon = (Taxon) obj.getNativeObject();
+            }
 
             if (taxon != null) {
 

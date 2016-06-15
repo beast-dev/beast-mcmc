@@ -40,6 +40,7 @@ import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
@@ -51,10 +52,15 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
+import dr.inference.model.BooleanLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.ThreadAwareLikelihood;
 import dr.math.MathUtils;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -69,7 +75,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
-public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood {
+public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood implements ThreadAwareLikelihood, Citable {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -79,6 +85,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
     private static final String SCALING_PROPERTY = "beagle.scaling";
     private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
+    private static final String DELAY_SCALING_PROPERTY = "beagle.delay.scaling";
     private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
     private static final String FORCE_VECTORIZATION = "beagle.force.vectorization";
 
@@ -103,9 +110,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                                 BranchRateModel branchRateModel,
                                 TipStatesModel tipStatesModel,
                                 boolean useAmbiguities,
-                                PartialsRescalingScheme rescalingScheme) {
+                                PartialsRescalingScheme rescalingScheme,
+                                boolean delayRescalingUntilUnderflow) {
 
-        this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme, null);
+        this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme, delayRescalingUntilUnderflow, null);
     }
 
     public BeagleTreeLikelihood(PatternList patternList,
@@ -116,6 +124,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                                 TipStatesModel tipStatesModel,
                                 boolean useAmbiguities,
                                 PartialsRescalingScheme rescalingScheme,
+                                boolean delayRescalingUntilUnderflow,
                                 Map<Set<String>, Parameter> partialsRestrictions) {
 
         super(BeagleTreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
@@ -184,6 +193,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
+            this.delayRescalingUntilUnderflow = delayRescalingUntilUnderflow;
+
             int[] resourceList = null;
             long preferenceFlags = 0;
             long requirementFlags = 0;
@@ -221,12 +232,19 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 }
             }
 
+            // to keep behaviour of the delayed scheme (always + delay)...
+            if (this.rescalingScheme == PartialsRescalingScheme.DELAYED) {
+                this.delayRescalingUntilUnderflow = true;
+                this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
+            }
+
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO) {
                 preferenceFlags |= BeagleFlag.SCALING_AUTO.getMask();
                 useAutoScaling = true;
             } else {
 //                preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
             }
+
             String r = System.getProperty(RESCALE_FREQUENCY_PROPERTY);
             if (r != null) {
                 rescalingFrequency = Integer.parseInt(r);
@@ -234,6 +252,12 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                     rescalingFrequency = RESCALE_FREQUENCY;
                 }
             }
+
+            String d = System.getProperty(DELAY_SCALING_PROPERTY);
+            if (d != null) {
+                this.delayRescalingUntilUnderflow = Boolean.parseBoolean(d);
+            }
+
 
             if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
                 if (stateCount == 4 && patternList.getPatternCount() < 10000) // TODO determine good cut-off
@@ -310,6 +334,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
             }
+
+            if (patternList instanceof UncertainSiteList) {
+                useAmbiguities = true;
+            }
+
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
@@ -384,9 +413,16 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
                 rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
             }
+            boolean parenthesis = false;
             if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-                rescaleMessage += " (rescaling every " + rescalingFrequency + " evaluations)";
+                rescaleMessage += " (rescaling every " + rescalingFrequency + " evaluations";
+                parenthesis = true;
             }
+            if (this.delayRescalingUntilUnderflow) {
+                rescaleMessage += (parenthesis ? ", " : "(") + "delay rescaling until first overflow";
+                parenthesis = true;
+            }
+            rescaleMessage += (parenthesis ? ")" : "");
             logger.info(rescaleMessage);
 
             if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
@@ -467,6 +503,10 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         return rescalingScheme;
     }
 
+    public boolean isDelayRescalingUntilUnderflow() {
+        return delayRescalingUntilUnderflow;
+    }
+
     public Map<Set<String>, Parameter> getPartialsRestrictions() {
         return partialsRestrictions;
     }
@@ -498,16 +538,23 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         int v = 0;
         for (int i = 0; i < patternCount; i++) {
 
-            int state = patternList.getPatternState(sequenceIndex, i);
-            stateSet = dataType.getStateSet(state);
+            if (patternList instanceof UncertainSiteList) {
+                ((UncertainSiteList) patternList).fillPartials(sequenceIndex, i, partials, v);
+                v += stateCount;
+                // TODO Add this functionality to SimpleSiteList to avoid if statement here
+            } else {
 
-            for (int j = 0; j < stateCount; j++) {
-                if (stateSet[j]) {
-                    partials[v] = 1.0;
-                } else {
-                    partials[v] = 0.0;
+                int state = patternList.getPatternState(sequenceIndex, i);
+                stateSet = dataType.getStateSet(state);
+
+                for (int j = 0; j < stateCount; j++) {
+                    if (stateSet[j]) {
+                        partials[v] = 1.0;
+                    } else {
+                        partials[v] = 0.0;
+                    }
+                    v++;
                 }
-                v++;
             }
         }
 
@@ -750,30 +797,28 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
         recomputeScaleFactors = false;
 
-        if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS) {
-            useScaleFactors = true;
-            recomputeScaleFactors = true;
-        } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC && everUnderflowed) {
-            useScaleFactors = true;
-
-            if (rescalingCount > rescalingFrequency) {
-                rescalingCount = 0;
-                rescalingCountInner = 0;
-            }
-
-            if (rescalingCountInner < RESCALE_TIMES) {
+        if (!this.delayRescalingUntilUnderflow || everUnderflowed) {
+            if (this.rescalingScheme == PartialsRescalingScheme.ALWAYS || this.rescalingScheme == PartialsRescalingScheme.DELAYED) {
+                useScaleFactors = true;
                 recomputeScaleFactors = true;
-                updateAllNodes();
+            } else if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                useScaleFactors = true;
+
+                if (rescalingCount > rescalingFrequency) {
+                    rescalingCount = 0;
+                    rescalingCountInner = 0;
+                }
+
+                if (rescalingCountInner < RESCALE_TIMES) {
+                    recomputeScaleFactors = true;
+                    updateAllNodes();
 //                makeDirty();
 //                System.err.println("Recomputing scale factors");
-                rescalingCountInner++;
-            }
+                    rescalingCountInner++;
+                }
 
-            rescalingCount++;
-        } else if (this.rescalingScheme == PartialsRescalingScheme.DELAYED && everUnderflowed) {
-            useScaleFactors = true;
-            recomputeScaleFactors = true;
-            rescalingCount++;
+                rescalingCount++;
+            }
         }
 
         if (tipStatesModel != null) {
@@ -893,7 +938,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
                 everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
 
-                if (firstRescaleAttempt && (rescalingScheme == PartialsRescalingScheme.DYNAMIC || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
+                if (firstRescaleAttempt && (delayRescalingUntilUnderflow || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
                     // we have had a potential under/over flow so attempt a rescaling
                     if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount == 0)) {
                         Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
@@ -1171,6 +1216,7 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
 
     private PartialsRescalingScheme rescalingScheme;
     private int rescalingFrequency = RESCALE_FREQUENCY;
+    private boolean delayRescalingUntilUnderflow = true;
 
     protected boolean useScaleFactors = false;
     private boolean useAutoScaling = false;
@@ -1330,11 +1376,11 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
             );
             Alignment alignment = simulator.simulate(false, false);
 
-            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
 
             System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
 
-            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
 
             System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
 
@@ -1367,6 +1413,28 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
         double[] siteLogLikelihoods = new double[patternCount];
         beagle.getSiteLogLikelihoods(siteLogLikelihoods);
         return siteLogLikelihoods;
+    }
+
+    @Override
+    public String getCategory() {
+        return "Framework";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Using BEAGLE likelihood calculation library";
+    }
+
+    public List<Citation> getCitations() {
+        return Collections.singletonList(new Citation(
+                new Author[]{
+                        new Author("", "Ayres et al"),
+                },
+                "BEAGLE: a common application programming inferface and high-performance computing library for statistical phylogenetics",
+                2012,
+                "Syst Biol",
+                61, 170, 173,
+                "10.1093/sysbio/syr100"));
     }
 
 }//END: class

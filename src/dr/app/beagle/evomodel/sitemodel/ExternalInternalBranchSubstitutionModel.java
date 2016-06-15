@@ -50,7 +50,7 @@ import java.util.List;
  */
 
 @Deprecated // Switching to BranchModel
-public class ExternalInternalBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel, Citable {
+public class ExternalInternalBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel {
     public ExternalInternalBranchSubstitutionModel(List<SubstitutionModel> substModelList, List<FrequencyModel> frequencyModelList) {
         super("ExternalInternalBranchSubstitutionModel");
 
@@ -146,23 +146,6 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
 
     private final List<SubstitutionModel> substModelList;
     private final List<FrequencyModel> frequencyModelList;
-
-    /**
-     * @return a list of citations associated with this object
-     */
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{
-                                new Author("P", "Lemey"),
-                                new Author("MA", "Suchard")
-                        },
-                        Citation.Status.IN_PREPARATION
-                )
-        );
-        return citations;
-    }
 
 	@Override
 	public int getExtraBufferCount(TreeModel treeModel) {

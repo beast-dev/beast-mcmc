@@ -31,8 +31,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -82,7 +81,7 @@ public class AntigenicDriftPrior extends AbstractModelLikelihood implements Cita
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == locationsParameter || variable == offsetsParameter
-            || variable == regressionSlopeParameter || variable == regressionPrecisionParameter) {
+                || variable == regressionSlopeParameter || variable == regressionPrecisionParameter) {
             likelihoodKnown = false;
         }
     }
@@ -129,7 +128,7 @@ public class AntigenicDriftPrior extends AbstractModelLikelihood implements Cita
 
         double ssr = 0.0;
 
-        for (int i=0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
 
             Parameter loc = locationsParameter.getParameter(i);
             double offset = offsetsParameter.getParameterValue(i);
@@ -140,9 +139,9 @@ public class AntigenicDriftPrior extends AbstractModelLikelihood implements Cita
 
             ssr += (x - y) * (x - y);
 
-            for (int j=1; j < dimension; j++) {
+            for (int j = 1; j < dimension; j++) {
                 x = loc.getParameterValue(j);
-                ssr += x*x;
+                ssr += x * x;
             }
 
         }
@@ -189,10 +188,10 @@ public class AntigenicDriftPrior extends AbstractModelLikelihood implements Cita
             Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSION_PRECISION);
 
             AntigenicDriftPrior AGDP = new AntigenicDriftPrior(
-                locationsParameter,
-                offsetsParameter,
-                regressionSlopeParameter,
-                regressionPrecisionParameter);
+                    locationsParameter,
+                    offsetsParameter,
+                    regressionSlopeParameter,
+                    regressionPrecisionParameter);
 
             return AGDP;
         }
@@ -221,20 +220,35 @@ public class AntigenicDriftPrior extends AbstractModelLikelihood implements Cita
         }
     };
 
+    @Override
+    public String getCategory() {
+        return "Trait Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian Antigenic Cartography framework";
+    }
+
     public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(
+        return Arrays.asList(new Citation(
                 new Author[]{
                         new Author("T", "Bedford"),
                         new Author("MA", "Suchard"),
                         new Author("P", "Lemey"),
                         new Author("G", "Dudas"),
-                        new Author("C", "Russell"),
-                        new Author("D", "Smith"),
+                        new Author("V", "Gregory"),
+                        new Author("AJ", "Hay"),
+                        new Author("JW", "McCauley"),
+                        new Author("CA", "Russell"),
+                        new Author("DJ", "Smith"),
                         new Author("A", "Rambaut")
                 },
-                Citation.Status.IN_PREPARATION
+                "Integrating influenza antigenic dynamics with molecular evolution",
+                2015,
+                "eLife",
+                "e01914",
+                "10.7554/eLife.01914"
         ));
-        return citations;
     }
 }

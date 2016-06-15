@@ -25,7 +25,13 @@
 
 package dr.app.beast;
 
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.Version;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class provides a mechanism for returning the version number of the
@@ -39,7 +45,9 @@ import dr.util.Version;
  *
  * $Id$
  */
-public class BeastVersion implements Version {
+public class BeastVersion implements Version, Citable {
+
+    public static final BeastVersion INSTANCE = new BeastVersion();
 
     /**
      * Version string: assumed to be in format x.x.x
@@ -52,7 +60,7 @@ public class BeastVersion implements Version {
 
     // this is now being manually updated since the move to GitHub. Using date in yyyymmdd format (suffix
     // with b,c,d etc if multiple revisions in a day.
-    private static final String REVISION = "GitHub 20160319";
+    private static final String REVISION = "GitHub 20160615";
 
     public String getVersion() {
         return VERSION;
@@ -128,4 +136,33 @@ public class BeastVersion implements Version {
             return "Invalid Revision String : " + REVISION;
         }
     }
+
+    @Override
+    public String getCategory() {
+        return "Framework";
+    }
+
+    @Override
+    public String getDescription() {
+        return "BEAST primary citation";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("AJ", "Drummond"),
+                    new Author("MA", "Suchard"),
+                    new Author("Dong", "Xie"),
+                    new Author("A", "Rambaut")
+            },
+            "Bayesian phylogenetics with BEAUti and the BEAST 1.7",
+            2012,
+            "Mol Biol Evol",
+            29, 1969, 1973,
+            "10.1093/molbev/mss075");
+
 }

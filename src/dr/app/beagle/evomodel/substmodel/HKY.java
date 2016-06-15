@@ -29,6 +29,12 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.evolution.datatype.Nucleotides;
 import dr.math.matrixAlgebra.Vector;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 
 /**
@@ -38,7 +44,7 @@ import dr.math.matrixAlgebra.Vector;
  * @author Andrew Rambaut
  * @author Marc A. Suchard
  */
-public class HKY extends BaseSubstitutionModel {
+public class HKY extends BaseSubstitutionModel implements Citable {
 
     private Parameter kappaParameter = null;
 
@@ -221,6 +227,36 @@ public class HKY extends BaseSubstitutionModel {
         }
 
     };
+
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "HKY nucleotide substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("M", "Hasegowa"),
+                    new Author("H", "Kishino"),
+                    new Author("T", "Yano")
+            },
+            "Dating the human-ape splitting by a molecular clock of mitochondrial DNA",
+            1985,
+            "J. Mol. Evol.",
+            22,
+            160, 174,
+            Citation.Status.PUBLISHED
+    );
+
 
     public static void main(String[] args) {
 //        double kappa = 2.0;

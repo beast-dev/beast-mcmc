@@ -54,9 +54,7 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
         boolean trial = xo.getAttribute(TRIAL, false);
         SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
-        Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ctmcScalePrior model.");
-        Logger.getLogger("dr.evolution").info("\tIf you publish results using this prior, please reference:");
-        Logger.getLogger("dr.evolution").info("\t\t 1. Ferreira and Suchard (2008) for the conditional reference prior on CTMC scale parameter prior;");
+        Logger.getLogger("dr.evolution").info("Creating CTMC Scale Reference Prior model.");
 
         return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel, reciprocal, substitutionModel, trial);
     }

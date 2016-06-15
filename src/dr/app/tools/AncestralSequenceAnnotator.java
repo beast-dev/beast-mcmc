@@ -921,6 +921,7 @@ public class AncestralSequenceAnnotator {
                 null,
                 false,
                 PartialsRescalingScheme.DEFAULT,
+                true,
                 null,
                 alignment.getDataType(),
                 TAG,

@@ -29,8 +29,7 @@ import dr.evolution.datatype.AminoAcids;
 import dr.util.Author;
 import dr.util.Citation;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * BLOSUM62 model of amino acid evolution
@@ -188,11 +187,22 @@ public class Blosum62 extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
-    public List<Citation> getCitations() {
-        return Arrays.asList(CITATION);
-    }
+	@Override
+	public String getCategory() {
+		return "Substitution Models";
+	}
 
-    public static Citation CITATION = new Citation(
+	@Override
+	public String getDescription() {
+		return "Blosum62 amino acid substitution model";
+	}
+
+	@Override
+	public List<Citation> getCitations() {
+		return Collections.singletonList(CITATION);
+	}
+
+	public static Citation CITATION = new Citation(
             new Author[]{
                     new Author("S", "Henikoff"),
                     new Author("JG", "Henikoff")

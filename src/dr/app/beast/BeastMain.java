@@ -44,6 +44,7 @@ import jam.util.IconUtils;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -123,6 +124,12 @@ public class BeastMain {
                 }
             });
             infoLogger.addHandler(errorHandler);
+
+            if (System.getProperty("citations.filename") != null) {
+                FileOutputStream citationStream = new FileOutputStream(System.getProperty("citations.filename"));
+                Handler citationHandler = new MessageLogHandler(citationStream);
+                Logger.getLogger("dr.apps.beast").addHandler(citationHandler);
+            }
 
             logger.setUseParentHandlers(false);
 
@@ -341,6 +348,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_async", "BEAGLE: use asynchronous kernels if available"),
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
+                        new Arguments.Option("beagle_delay_scaling_off", "BEAGLE: don't wait until underflow for scaling option"),
                         new Arguments.LongOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("mpi", "Use MPI rank to label output"),
 
@@ -352,6 +360,8 @@ public class BeastMain {
                         new Arguments.StringOption("load_dump", "FILENAME", "Specify a filename to load a dumped state from"),
                         new Arguments.LongOption("dump_state", "Specify a state at which to write a dump file"),
                         new Arguments.LongOption("dump_every", "Specify a frequency to write a dump file"),
+
+                        new Arguments.StringOption("citations_file", "FILENAME", "Specify a filename to write a citation list to"),
 
                         new Arguments.Option("version", "Print the version and credits and stop"),
                         new Arguments.Option("help", "Print this information and stop"),
@@ -507,6 +517,10 @@ public class BeastMain {
             System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
         }
 
+        if (arguments.hasOption("beagle_delay_scaling_off")) {
+            System.setProperty("beagle.delay.scaling", Boolean.FALSE.toString());
+        }
+
         if (arguments.hasOption("beagle_rescale")) {
             System.setProperty("beagle.rescale", Long.toString(arguments.getLongOption("beagle_rescale")));
         }
@@ -544,6 +558,11 @@ public class BeastMain {
         if (arguments.hasOption("dump_every")) {
             long debugWriteEvery = arguments.getLongOption("dump_every");
             System.setProperty(MCMC.DUMP_EVERY, Long.toString(debugWriteEvery));
+        }
+
+        if (arguments.hasOption("citations_file")) {
+            String debugStateFile = arguments.getStringOption("citations_file");
+            System.setProperty("citations.filename", debugStateFile);
         }
 
         if (useMPI) {

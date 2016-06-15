@@ -31,7 +31,7 @@ import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
+import dr.evolution.util.*;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
@@ -70,9 +70,8 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
     private boolean pleaseReExplode = true;
 
 
-    public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData,
-                                String startingNetworkFileName, Parameter maxFirstInfToRoot, DemographicModel demoModel,
-                                Mode mode)
+    public WithinCaseCoalescent(PartitionedTreeModel virusTree, AbstractOutbreak caseData, Parameter maxFirstInfToRoot,
+                                DemographicModel demoModel, Mode mode)
             throws TaxonList.MissingTaxonException {
 
         super(WITHIN_CASE_COALESCENT, virusTree, caseData, maxFirstInfToRoot);
@@ -120,12 +119,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
                 if (recalculateCoalescentFlags[number]) {
 
                     Treelet treelet = elementsAsTrees.get(aCase);
-
-                    try{
-                        int test = treelet.getExternalNodeCount();
-                    } catch (NullPointerException e){
-                        System.out.println();
-                    }
 
                     if (treelet.getExternalNodeCount() > 1) {
                         SpecifiedZeroCoalescent coalescent = new SpecifiedZeroCoalescent(treelet, demoModel,
@@ -522,12 +515,6 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
 
             PartitionedTreeModel virusTree = (PartitionedTreeModel) xo.getChild(TreeModel.class);
 
-            String startingNetworkFileName=null;
-
-            if(xo.hasChildNamed(STARTING_NETWORK)){
-                startingNetworkFileName = (String) xo.getElementFirstChild(STARTING_NETWORK);
-            }
-
             AbstractOutbreak caseSet = (AbstractOutbreak) xo.getChild(AbstractOutbreak.class);
 
             CaseToCaseTreeLikelihood likelihood;
@@ -539,8 +526,7 @@ public class WithinCaseCoalescent extends CaseToCaseTreeLikelihood {
             Mode mode = xo.hasAttribute(TRUNCATE) & xo.getBooleanAttribute(TRUNCATE) ? Mode.TRUNCATE : Mode.NORMAL;
 
             try {
-                likelihood = new WithinCaseCoalescent(virusTree, caseSet, startingNetworkFileName,
-                        earliestFirstInfection, demoModel, mode);
+                likelihood = new WithinCaseCoalescent(virusTree, caseSet, earliestFirstInfection, demoModel, mode);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }

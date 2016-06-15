@@ -29,6 +29,12 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.LogisticGrowth;
 import dr.evomodelxml.coalescent.LogisticGrowthModelParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Logistic growth.
@@ -37,7 +43,7 @@ import dr.inference.model.Parameter;
  * @author Andrew Rambaut
  * @version $Id: LogisticGrowthModel.java,v 1.21 2005/05/24 20:25:57 rambaut Exp $
  */
-public class LogisticGrowthModel extends DemographicModel {
+public class LogisticGrowthModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -110,4 +116,30 @@ public class LogisticGrowthModel extends DemographicModel {
     double alpha = 0.5;
     LogisticGrowth logisticGrowth = null;
     boolean usingGrowthRate = true;
+
+    @Override
+    public String getCategory() {
+        return "Tree Density Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Logistic Growth Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("OG", "Pybus"),
+                    new Author("A", "Rambaut")
+            },
+            "GENIE: estimating demographic history from molecular phylogenies",
+            2001,
+            "Bioinformatics",
+            18, 1404, 1405
+    );
 }

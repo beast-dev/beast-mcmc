@@ -29,10 +29,7 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inferencexml.loggers.LoggerParser;
-import dr.util.Citable;
-import dr.util.Citation;
-import dr.util.FileHelpers;
-import dr.util.Identifiable;
+import dr.util.*;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -632,31 +629,6 @@ public class XMLParser {
         }
     }
 
-    private class Pair<A, B> {
-        public final A fst;
-        public final B snd;
-
-        public Pair(A var1, B var2) {
-            this.fst = var1;
-            this.snd = var2;
-        }
-
-        public String toString() {
-            return "Pair[" + this.fst + "," + this.snd + "]";
-        }
-
-        private boolean equals(Object var0, Object var1) {
-            return var0 == null && var1 == null || var0 != null && var0.equals(var1);
-        }
-
-        public boolean equals(Object var1) {
-            return var1 instanceof Pair && equals(this.fst, ((Pair)var1).fst) && equals(this.snd, ((Pair)var1).snd);
-        }
-
-        public int hashCode() {
-            return this.fst == null?(this.snd == null?0:this.snd.hashCode() + 1):(this.snd == null?this.fst.hashCode() + 2:this.fst.hashCode() * 17 + this.snd.hashCode());
-        }
-    }
 }
 
 

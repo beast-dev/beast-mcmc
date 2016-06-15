@@ -248,34 +248,33 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     @Override
     public String getDescription() {
-        return "Multivariate diffusion model";
+        return "Multivariate diffusion model with integrated internal traits";
     }
 
     public List<Citation> getCitations() {
-        return Collections.singletonList(
-                new Citation(
-                        new Author[]{
-                                new Author("OG", "Pybus"),
-                                new Author("MA", "Suchard"),
-                                new Author("P", "Lemey"),
-                                new Author("F", "Bernadin"),
-                                new Author("A", "Rambaut"),
-                                new Author("FW", "Crawford"),
-                                new Author("RR", "Gray"),
-                                new Author("N", "Arinaminpathy"),
-                                new Author("S", "Stramer"),
-                                new Author("MP", "Busch"),
-                                new Author("E", "Delwart")
-
-                        },
-                        "Unifying the spatial epidemiology and evolution of emerging epidemics",
-                        2012,
-                        "Proceedings of the National Academy of Sciences",
-                        109,
-                        15066, 15071,
-                        Citation.Status.PUBLISHED
-                )
-        );
+        List<Citation> rtn = super.getCitations();
+        rtn.add(new Citation(
+                new Author[] {
+                        new Author("OG", "Pybus"),
+                        new Author("MA", "Suchard"),
+                        new Author("P", "Lemey"),
+                        new Author("F", "Bernadin"),
+                        new Author("A", "Rambaut"),
+                        new Author("FW", "Crawford"),
+                        new Author("RR", "Gray"),
+                        new Author("N", "Arinaminpathy"),
+                        new Author("S", "Stramer"),
+                        new Author("MP", "Busch"),
+                        new Author("E", "Delwart")
+                },
+                "Unifying the spatial epidemiology and evolution of emerging epidemics",
+                2012,
+                "Proceedings of the National Academy of Sciences",
+                109,
+                15066, 15071,
+                Citation.Status.PUBLISHED
+        ));
+        return rtn;
     }
 
     public double getLogDataLikelihood() {

@@ -902,25 +902,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     public List<Citation> getCitations() {
-        return Arrays.asList(new Citation(
-                new Author[]{
-                        new Author("T", "Bedford"),
-                        new Author("MA", "Suchard"),
-                        new Author("P", "Lemey"),
-                        new Author("G", "Dudas"),
-                        new Author("V", "Gregory"),
-                        new Author("AJ", "Hay"),
-                        new Author("JW", "McCauley"),
-                        new Author("CA", "Russell"),
-                        new Author("DJ", "Smith"),
-                        new Author("A", "Rambaut")
-                },
-                "Integrating influenza antigenic dynamics with molecular evolution",
-                2015,
-                "eLife",
-                "e01914",
-                "10.7554/eLife.01914"
-        ));
+        return Arrays.asList(CommonCitations.BEDFORD_2015_INTEGRATING);
     }
 
     public static void main(String[] args) {

@@ -29,6 +29,9 @@ import dr.evolution.datatype.DataType;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.*;
 
@@ -37,7 +40,7 @@ import java.util.*;
  */
 
 public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements Likelihood,
-        BayesianStochasticSearchVariableSelection {
+        BayesianStochasticSearchVariableSelection, Citable {
 
     public SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
                                        Parameter ratesParameter, Parameter indicatorsParameter) {
@@ -80,7 +83,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     }
 
     public boolean validState() {
-        return !updateMatrix || Utils.connectedAndWellConditioned(probability,this);
+        return !updateMatrix || BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -105,7 +108,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
      */
     public double getLogLikelihood() {
         if (updateMatrix) {
-            if (!Utils.connectedAndWellConditioned(probability,this)) {
+            if (!BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this)) {
                 return Double.NEGATIVE_INFINITY;
             }
         }
@@ -158,6 +161,21 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
         return new LogColumn[]{
                 new LikelihoodColumn(getId())
         };
+    }
+
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Stochastic search variable selection, reversible substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.LEMEY_2009_BAYESIAN);
     }
 
     protected class LikelihoodColumn extends NumberColumn {

@@ -33,13 +33,17 @@ import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
 import java.util.*;
 
 /**
  * @author Marc Suchard
  */
-public class ComplexSubstitutionModel extends GeneralSubstitutionModel implements Likelihood {
+public class ComplexSubstitutionModel extends GeneralSubstitutionModel implements Likelihood, Citable {
 
     public ComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, Parameter parameter) {
         super(name, dataType, freqModel, parameter, -1);
@@ -272,6 +276,21 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     void setDoNormalization(boolean normalize) {
         this.doNormalization = normalize;
+    }
+
+    @Override
+    public String getCategory() {
+        return "Substitution Models";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Complex-diagonalizable, irreversible substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.EDWARDS_2011_ANCIENT);
     }
 
     private boolean doNormalization = true;

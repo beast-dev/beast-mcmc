@@ -33,16 +33,56 @@ package dr.util;
  */
 public class CommonCitations {
 
-    public static Citation LEMEY_RENAISSANCE = new Citation(
-            new Author[]{
-        new Author("P", "Lemey"),
-                new Author("VN", "Minin"),
-                new Author("MA", "Suchard")
-    },
-    Citation.Status.IN_PREPARATION
+    public static Citation LEMEY_2012_RENAISSANCE = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("VN", "Minin"),
+                    new Author("F", "Bielejec"),
+                    new Author("SL", "Kosakovsky-Pond"),
+                    new Author("MA", "Suchard"),
+            },
+            "A counting renaissance: combining stochastic mapping and empirical Bayes to quickly detect amino acid sites under positive selection",
+            2012,
+            "Bioinformatics",
+            28,
+            3248, 3256,
+            Citation.Status.PUBLISHED
     );
 
-    public static Citation LEMEY_2010 = new Citation(
+    public static Citation LEMEY_2009_BAYESIAN = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("A", "Rambaut"),
+                    new Author("AJ", "Drummond"),
+            },
+            "Bayesian phylogeography finds its roots",
+            2009,
+            "PLoS Computational Biology",
+            5,
+            "e1000520"
+    );
+
+    public static Citation BEDFORD_2015_INTEGRATING = new Citation(
+            new Author[]{
+                    new Author("T", "Bedford"),
+                    new Author("MA", "Suchard"),
+                    new Author("P", "Lemey"),
+                    new Author("G", "Dudas"),
+                    new Author("V", "Gregory"),
+                    new Author("AJ", "Hay"),
+                    new Author("JW", "McCauley"),
+                    new Author("CA", "Russell"),
+                    new Author("DJ", "Smith"),
+                    new Author("A", "Rambaut")
+            },
+            "Integrating influenza antigenic dynamics with molecular evolution",
+            2015,
+            "eLife",
+            "e01914",
+            "10.7554/eLife.01914"
+    );
+
+    public static Citation LEMEY_2010_PHYLOGEOGRAPHY = new Citation(
             new Author[]{
                     new Author("P", "Lemey"),
                     new Author("A", "Rambaut"),
@@ -103,15 +143,30 @@ public class CommonCitations {
             Citation.Status.IN_PREPARATION
     );
 
-    public static Citation  LEMEY_2012 = new Citation(
+    public static Citation MININ_2008_FAST = new Citation(
             new Author[]{
-                    new Author("P", "Lemey"),
-                    new Author("T", "Bedford"),
-                    new Author("A", "Rambaut"),
+                    new Author("VN", "Minin"),
                     new Author("MA", "Suchard"),
             },
-            Citation.Status.IN_PREPARATION
+            "Fast, accurate and simulation-free stochastic mapping",
+            2008,
+            "Philos Trans R Soc Lond B Biol Sci",
+            363,
+            3985, 3995,
+            Citation.Status.PUBLISHED
     );
+
+//    Minin VN, Suchard MA (2008) . Philos Trans R Soc Lond B Biol Sci 363(1512):3985–3995.
+
+//    public static Citation LEMEY_2012 = new Citation(
+//            new Author[]{
+//                    new Author("P", "Lemey"),
+//                    new Author("T", "Bedford"),
+//                    new Author("A", "Rambaut"),
+//                    new Author("MA", "Suchard"),
+//            },
+//            Citation.Status.IN_PREPARATION
+//    );
 
     public static Citation LEMEY_MIXTURE_2012 = new Citation(
             new Author[]{
@@ -121,13 +176,21 @@ public class CommonCitations {
             Citation.Status.IN_PREPARATION
     );
 
-    public static Citation BLOOM_2012 = new Citation(
+    public static Citation BLOOM_2013_STABILITY = new Citation(
             new Author[]{
                     new Author("J", "Bloom"),
+                    new Author("LI", "Gong"),
                     new Author("MA", "Suchard"),
             },
-            Citation.Status.IN_PREPARATION
+            "Stability-mediated epistasis constrains the evolution of an influenza protein",
+            2013,
+            "eLife",
+            2,
+            "e00631"
     );
+
+
+//    Gong LI, Suchard MA, Bloom JD. Stability-mediated epistasis constrains the evolution of an influenza protein. eLife, 2, e00631, 2013.
 
     public static Citation SUCHARD_2012_LATENT = new Citation(
             new Author[]{
@@ -143,4 +206,34 @@ public class CommonCitations {
             },
             Citation.Status.IN_PREPARATION
     );
+
+    public static Citation EDWARDS_2011_ANCIENT = new Citation(
+            new Author[] {
+                    new Author("CJ", "Edwards"),
+                    new Author("MA", "Suchard"),
+                    new Author("P", "Lemey"),
+                    new Author("JJ", "Welch"),
+                    new Author("I", "Barnes"),
+                    new Author("TL", "Fulton"),
+                    new Author("R", "Barnett"),
+                    new Author("TC", "O'Connell"),
+                    new Author("P", "Coxon"),
+                    new Author("N", "Monaghan"),
+                    new Author("CE", "Valdiosera"),
+                    new Author("ED", "Lorenzen"),
+                    new Author("E", "Willerslev"),
+                    new Author("GF", "Baryshnikov"),
+                    new Author("A", "Rambaut"),
+                    new Author("MG", "Thomas"),
+                    new Author("DG", "Bradley"),
+                    new Author("B", "Shapiro"),
+            },
+            "Ancient hybridization and an Irish origin for the modern polar bear matriline",
+            2011,
+            "Current Biology",
+            21,
+            1251, 1258,
+            Citation.Status.PUBLISHED
+    );
+
 }

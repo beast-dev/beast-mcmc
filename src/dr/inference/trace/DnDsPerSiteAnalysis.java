@@ -342,7 +342,7 @@ public class DnDsPerSiteAnalysis implements Citable {
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.LEMEY_RENAISSANCE);
+        return Collections.singletonList(CommonCitations.LEMEY_2012_RENAISSANCE);
     }
 
     private class OutputFormat {

@@ -160,6 +160,6 @@ public class SplitBySiteTraitLogger extends TreeTraitProvider.Helper implements 
     }
 
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.SUCHARD_2012);
+        return Collections.singletonList(CommonCitations.LEMEY_2012_RENAISSANCE);
     }
 }

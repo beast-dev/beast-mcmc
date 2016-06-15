@@ -85,7 +85,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
 
     public boolean validState() {
         return !updateMatrix ||
-                Utils.connectedAndWellConditioned(probability,this);
+                BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

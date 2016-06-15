@@ -60,7 +60,7 @@ public class BeastVersion implements Version, Citable {
 
     // this is now being manually updated since the move to GitHub. Using date in yyyymmdd format (suffix
     // with b,c,d etc if multiple revisions in a day.
-    private static final String REVISION = "GitHub 20160319";
+    private static final String REVISION = "GitHub 20160615";
 
     public String getVersion() {
         return VERSION;

@@ -110,8 +110,8 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     }
 
     @Override
-    public String getCategory() {
-        return "Substitution Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override
@@ -120,7 +120,7 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
     }
 
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.OBRIEN_2009);
+        return Collections.singletonList(CommonCitations.OBRIEN_2009_LEARNING);
     }
 
     public EigenDecomposition getEigenDecomposition() {

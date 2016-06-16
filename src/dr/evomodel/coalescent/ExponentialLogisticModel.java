@@ -142,8 +142,8 @@ public class ExponentialLogisticModel extends DemographicModel implements Citabl
     ExponentialLogistic exponentialLogistic = null;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

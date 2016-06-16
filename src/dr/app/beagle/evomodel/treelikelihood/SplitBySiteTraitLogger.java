@@ -150,8 +150,8 @@ public class SplitBySiteTraitLogger extends TreeTraitProvider.Helper implements 
     };
 
     @Override
-    public String getCategory() {
-        return "Framework";
+    public Citation.Category getCategory() {
+        return Citation.Category.COUNTING_PROCESSES;
     }
 
     @Override

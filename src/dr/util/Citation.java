@@ -241,6 +241,26 @@ public class Citation {
         private final String text;
     }
 
+    public enum Category {
+        FRAMEWORK("Framework"),
+        SUBSTITUTION_MODELS("Substitution Models"),
+        PRIOR_MODELS("Prior Models"),
+        TRAIT_MODELS("Trait Models"),
+        DATA_MODELS("Data Models"),
+        SPECIES_MODELS("Species Models"),
+        COUNTING_PROCESSES("Counting Processes"), // TODO Decide where MarkovJumpsBTL goes (multiple categories?)
+        TREE_PRIORS("Tree Density Models"),
+        MOLECULAR_CLOCK("Molecular Clock Models"),
+        MISC("Misc"); // Try to avoid this category
+
+
+        Category(String text) { this.text = text; }
+
+        public String toString() { return text; }
+
+        private final String text;
+    }
+
     class CitationException extends RuntimeException {
         CitationException(String message) {
             super(message);

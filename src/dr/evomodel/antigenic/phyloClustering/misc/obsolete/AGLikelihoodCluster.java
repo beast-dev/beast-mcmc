@@ -1064,8 +1064,8 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
     };
 
     @Override
-    public String getCategory() {
-        return "Trait Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override

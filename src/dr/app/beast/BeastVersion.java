@@ -138,8 +138,8 @@ public class BeastVersion implements Version, Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Framework";
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
     }
 
     @Override

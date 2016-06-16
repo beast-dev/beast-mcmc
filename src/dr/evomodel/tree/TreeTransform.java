@@ -35,16 +35,14 @@ import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.CommonCitations;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Marc A. Suchard
  */
-public abstract class TreeTransform extends AbstractModel implements TreeTraitProvider {
+public abstract class TreeTransform extends AbstractModel implements TreeTraitProvider, Citable {
 
     public static final String TREE_TRANSFORM_PREFIX = "treeTransform";
 
@@ -106,6 +104,22 @@ public abstract class TreeTransform extends AbstractModel implements TreeTraitPr
     }
 
     private final Helper treeTraits = new Helper();
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Branch-specific phenotypic mixture model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.VRANCKEN_2015_SIMULTANEOUSLY);
+    }
+
 
 }
 

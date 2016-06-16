@@ -278,8 +278,8 @@ public class MixtureModelLikelihood extends AbstractModelLikelihood implements C
     List<Likelihood> likelihoodList;
 
     @Override
-    public String getCategory() {
-        return "Misc";
+    public Citation.Category getCategory() {
+        return Citation.Category.MISC;
     }
 
     @Override

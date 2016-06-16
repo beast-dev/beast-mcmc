@@ -351,8 +351,8 @@ public class LocalClockModel extends AbstractBranchRateModel implements Citable 
     private final Helper helper = new Helper();
 
     @Override
-    public String getCategory() {
-        return "Molecular Clock Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.MOLECULAR_CLOCK;
     }
 
     @Override

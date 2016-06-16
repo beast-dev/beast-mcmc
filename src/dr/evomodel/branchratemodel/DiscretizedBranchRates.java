@@ -240,8 +240,8 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel implements C
     }
 
     @Override
-    public String getCategory() {
-        return "Molecular Clock Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.MOLECULAR_CLOCK;
     }
 
     @Override

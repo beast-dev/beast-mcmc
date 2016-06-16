@@ -577,7 +577,8 @@ public class XMLParser {
             }
         }
         if (citationList.size() > 0) {
-            Pair<String, String> pair = new Pair<String, String>(citable.getCategory(), citable.getDescription());
+            Pair<String, String> pair = new Pair<String, String>(citable.getCategory().toString(),
+                    citable.getDescription());
             citationStore.put(pair, citationList);
         }
     }

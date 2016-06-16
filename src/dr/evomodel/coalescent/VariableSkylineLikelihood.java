@@ -367,8 +367,8 @@ public class VariableSkylineLikelihood extends OldAbstractCoalescentLikelihood i
     private boolean logSpace = false;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

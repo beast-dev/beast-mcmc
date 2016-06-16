@@ -239,8 +239,8 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     boolean recalculationNeeded = true;
 
     @Override
-    public String getCategory() {
-        return "Molecular Clock Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.MOLECULAR_CLOCK;
     }
 
     @Override

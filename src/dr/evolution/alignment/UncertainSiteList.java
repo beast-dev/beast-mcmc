@@ -75,8 +75,8 @@ public class UncertainSiteList extends SimpleSiteList implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Data Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.DATA_MODELS;
     }
 
     @Override

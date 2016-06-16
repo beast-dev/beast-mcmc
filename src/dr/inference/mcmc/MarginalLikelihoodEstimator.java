@@ -406,8 +406,8 @@ public class MarginalLikelihoodEstimator implements Runnable, Identifiable, Cita
     };
 
     @Override
-    public String getCategory() {
-        return "Framework";
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
     }
 
     @Override

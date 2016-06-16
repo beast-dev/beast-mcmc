@@ -385,8 +385,8 @@ public class HKY extends AbstractNucleotideModel implements Citable {
     };
 
     @Override
-    public String getCategory() {
-        return "Substitution Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

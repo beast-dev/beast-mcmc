@@ -119,8 +119,8 @@ public class ExpansionModel extends DemographicModel implements Citable {
     boolean usingGrowthRate = true;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

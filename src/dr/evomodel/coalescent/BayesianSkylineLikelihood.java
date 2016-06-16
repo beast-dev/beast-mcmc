@@ -374,8 +374,8 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
     private final int type;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

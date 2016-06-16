@@ -171,8 +171,8 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     }// END: acceptState
 
     @Override
-    public String getCategory() {
-        return "Substitution Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

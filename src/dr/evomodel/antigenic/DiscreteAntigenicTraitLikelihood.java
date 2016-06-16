@@ -770,8 +770,8 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
     };
 
     @Override
-    public String getCategory() {
-        return "Trait Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override

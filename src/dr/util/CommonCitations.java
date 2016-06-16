@@ -97,7 +97,7 @@ public class CommonCitations {
             Citation.Status.PUBLISHED
     );
 
-    public static Citation OBRIEN_2009 = new Citation(
+    public static Citation OBRIEN_2009_LEARNING = new Citation(
             new Author[]{
                     new Author("JB", "O'Brien"),
                     new Author("VN", "Minin"),
@@ -141,6 +141,23 @@ public class CommonCitations {
                     new Author("MA", "Suchard"),
             },
             Citation.Status.IN_PREPARATION
+    );
+
+    public static Citation CYBIS_2015_ASSESSING = new Citation(
+            new Author[]{
+                    new Author("GB", "Cybis"),
+                    new Author("JS", "Sinsheimer"),
+                    new Author("T", "Bedford"),
+                    new Author("AE", "Mather"),
+                    new Author("P", "Lemey"),
+                    new Author("MA", "Suchard"),
+            },
+            "Assessing phenotypic correlation through the multivariate phylogenetic latent liability model",
+            2015,
+            "Annals of Applied Statistics",
+            9,
+            969, 991,
+            Citation.Status.PUBLISHED
     );
 
     public static Citation LEMEY_2014_UNIFYING = new Citation(
@@ -279,4 +296,22 @@ public class CommonCitations {
             "Syst Biol",
             61, 170, 173,
             "10.1093/sysbio/syr100");
+
+    public static Citation VRANCKEN_2015_SIMULTANEOUSLY = new Citation(
+            new Author[] {
+                    new Author("B", "Vrancken"),
+                    new Author("P", "Lemey"),
+                    new Author("B", "Longdon"),
+                    new Author("A", "Rambaut"),
+                    new Author("T", "Bedford"),
+                    new Author("H", "Gunthard"),
+                    new Author("MA", "Suchard"),
+            },
+            "Simultaneously estimating evolutionary history and repeated traits phylogenetic signal: applications to viral phenotypic evolution",
+            2015,
+            "Methods in Ecology and Evolution",
+            6,
+            67, 82,
+            Citation.Status.PUBLISHED
+    );
 }

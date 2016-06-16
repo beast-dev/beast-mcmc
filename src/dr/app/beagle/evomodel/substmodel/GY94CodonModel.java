@@ -212,8 +212,8 @@ public class GY94CodonModel extends AbstractCodonModel implements Citable {
     };*/
 
     @Override
-    public String getCategory() {
-        return "Substitution Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

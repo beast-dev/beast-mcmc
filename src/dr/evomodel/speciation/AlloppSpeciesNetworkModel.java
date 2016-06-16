@@ -279,8 +279,8 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 
     @Override
-    public String getCategory() {
-        return "Misc";
+    public Citation.Category getCategory() {
+        return Citation.Category.SPECIES_MODELS;
     }
 
     @Override

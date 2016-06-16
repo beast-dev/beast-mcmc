@@ -116,8 +116,8 @@ public class ConstantExponentialModel extends DemographicModel implements Citabl
     boolean usingGrowthRate = true;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

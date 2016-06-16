@@ -157,8 +157,8 @@ public class TN93 extends BaseSubstitutionModel implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Substitution Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

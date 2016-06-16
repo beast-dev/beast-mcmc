@@ -112,8 +112,8 @@ public class AscertainedSitePatterns extends SitePatterns implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Data Model";
+    public Citation.Category getCategory() {
+        return Citation.Category.DATA_MODELS;
     }
 
     @Override

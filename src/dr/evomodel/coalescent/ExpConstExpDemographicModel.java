@@ -140,8 +140,8 @@ public class ExpConstExpDemographicModel extends DemographicModel implements Cit
     ExpConstExpDemographic expConstExp = null;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

@@ -541,13 +541,13 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood imple
     }
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override
     public String getDescription() {
-        return "SkyRide Coalescent";
+        return "Skyride coalescent";
     }
 
     @Override

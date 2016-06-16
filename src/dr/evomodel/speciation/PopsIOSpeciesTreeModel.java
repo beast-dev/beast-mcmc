@@ -334,8 +334,8 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     }
 
     @Override
-    public String getCategory() {
-        return "Tree Model";
+    public Citation.Category getCategory() {
+        return Citation.Category.SPECIES_MODELS;
     }
 
     @Override

@@ -1424,8 +1424,8 @@ public class BeagleTreeLikelihood extends AbstractSinglePartitionTreeLikelihood 
     }
 
     @Override
-    public String getCategory() {
-        return "Framework";
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
     }
 
     @Override

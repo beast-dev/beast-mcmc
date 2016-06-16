@@ -120,8 +120,8 @@ public class ConstantLogisticModel extends DemographicModel implements Citable {
     private ConstLogistic constLogistic = null;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

@@ -145,8 +145,8 @@ public class MG94CodonModel extends AbstractCodonModel implements Citable {
     private boolean doNormalization = true;
 
     @Override
-    public String getCategory() {
-        return "Substitution Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
     }
 
     @Override

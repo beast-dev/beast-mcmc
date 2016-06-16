@@ -242,13 +242,13 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     @Override
-    public String getCategory() {
-        return "Trait Model";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override
     public String getDescription() {
-        return "Multivariate diffusion model with integrated internal traits";
+        return super.getDescription() + " (first citation) with efficiently integrated internal traits (second citation)";
     }
 
     public List<Citation> getCitations() {

@@ -113,8 +113,8 @@ public class ExponentialConstantModel extends DemographicModel implements Citabl
     ExpConstant exponentialConstant = null;
 
     @Override
-    public String getCategory() {
-        return "Tree Density Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
     }
 
     @Override

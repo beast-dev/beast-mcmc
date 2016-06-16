@@ -331,8 +331,8 @@ public class DnDsPerSiteAnalysis implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Counting Processes";
+    public Citation.Category getCategory() {
+        return Citation.Category.COUNTING_PROCESSES;
     }
 
     @Override

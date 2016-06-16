@@ -174,8 +174,8 @@ public class CTMCScalePrior extends AbstractModelLikelihood implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Prior Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.PRIOR_MODELS;
     }
 
     @Override

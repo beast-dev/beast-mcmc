@@ -30,8 +30,7 @@ import dr.app.beagle.evomodel.substmodel.GLMSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.evoxml.util.DataTypeUtils;
-import dr.inference.distribution.GeneralizedLinearModel;
-import dr.inference.distribution.LogLinearModel;
+import dr.inference.glm.GeneralizedLinearModel;
 import dr.xml.*;
 
 /**
@@ -55,7 +54,8 @@ public class GLMSubstitutionModelParser extends AbstractXMLObjectParser {
 
             int rateCount = (dataType.getStateCount() - 1) * dataType.getStateCount();
 
-            LogLinearModel glm = (LogLinearModel) xo.getChild(GeneralizedLinearModel.class);
+            // should be constructed as a log-linear model - check?
+            GeneralizedLinearModel glm = (GeneralizedLinearModel) xo.getChild(GeneralizedLinearModel.class);
 
             int length = glm.getXBeta().length;
 

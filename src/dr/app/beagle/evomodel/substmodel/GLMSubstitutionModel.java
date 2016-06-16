@@ -26,7 +26,7 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
-import dr.inference.distribution.LogLinearModel;
+import dr.inference.glm.GeneralizedLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
@@ -42,7 +42,7 @@ import java.util.List;
 public class GLMSubstitutionModel extends ComplexSubstitutionModel {
 
     public GLMSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                LogLinearModel glm) {
+                                GeneralizedLinearModel glm) {
 
         super(name, dataType, rootFreqModel, null);
         this.glm = glm;
@@ -89,7 +89,7 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
     }
 
-    private LogLinearModel glm;
+    private GeneralizedLinearModel glm;
     private double[] testProbabilities;
 
 }

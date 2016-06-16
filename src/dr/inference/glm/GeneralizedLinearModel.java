@@ -23,15 +23,17 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.distribution;
+package dr.inference.glm;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
-import dr.inferencexml.distribution.GeneralizedLinearModelParser;
+import dr.inferencexml.glm.GeneralizedLinearModelParser;
 import dr.math.MultivariateFunction;
+import dr.math.distributions.Distribution;
+import dr.util.Transform;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -41,36 +43,40 @@ import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
+ * @author Andrew Rambaut
  */
-public abstract class GeneralizedLinearModel extends AbstractModelLikelihood implements MultivariateFunction {
+public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
-    protected Parameter dependentParam;
-    protected List<Parameter> independentParam;
-    protected List<Parameter> indParamDelta;
-    protected List<DesignMatrix> designMatrix; // fixed constants, access as double[][] to save overhead
+    private final Transform linkFunction;
+    private final GLMDensity density;
 
-    //    protected double[][] scaleDesignMatrix;
-    protected int[] scaleDesign;
-    protected Parameter scaleParameter;
+    private final Parameter dependentParameter;
+    private final List<Parameter> independentParameter = new ArrayList<Parameter>();
+    private final List<Parameter> independentParameterDelta = new ArrayList<Parameter>();
+    private final List<DesignMatrix> designMatrix = new ArrayList<DesignMatrix>();
 
-    protected int numIndependentVariables = 0;
-    protected int numRandomEffects = 0;
-    protected int N;
+    private int[] scaleDesign;
+    private Parameter scaleParameter;
+
+    private int numIndependentVariables = 0;
+    private int numRandomEffects = 0;
+    private int N;
 
     protected List<Parameter> randomEffects = null;
 
-    public GeneralizedLinearModel(Parameter dependentParam) {
+    public GeneralizedLinearModel(Parameter dependentParameter, GLMDensity density, Transform linkFunction) {
         super(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
-        this.dependentParam = dependentParam;
+        this.dependentParameter = dependentParameter;
+        this.linkFunction = linkFunction;
+        this.density = density;
 
-        if (dependentParam != null) {
-            addVariable(dependentParam);
-            N = dependentParam.getDimension();
+        if (dependentParameter != null) {
+            addVariable(dependentParameter);
+            N = dependentParameter.getDimension();
         } else
             N = 0;
     }
 
-    //    public double[][] getScaleDesignMatrix() { return scaleDesignMatrix; }
     public int[] getScaleDesign() {
         return scaleDesign;
     }
@@ -88,28 +94,37 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
     }
 
     public void addIndependentParameter(Parameter effect, DesignMatrix matrix, Parameter delta) {
-        if (designMatrix == null)
-            designMatrix = new ArrayList<DesignMatrix>();
-        if (independentParam == null)
-            independentParam = new ArrayList<Parameter>();
-        if (indParamDelta == null)
-            indParamDelta = new ArrayList<Parameter>();
-
         if (N == 0) {
             N = matrix.getRowDimension();
         }
-        designMatrix.add(matrix);
-        independentParam.add(effect);
-        indParamDelta.add(delta);
 
-        if (designMatrix.size() != independentParam.size())
+        designMatrix.add(matrix);
+        independentParameter.add(effect);
+        independentParameterDelta.add(delta);
+
+        if (designMatrix.size() != independentParameter.size()) {
             throw new RuntimeException("Independent variables and their design matrices are out of sync");
+        }
+
         addVariable(effect);
         addVariable(matrix);
-        if (delta != null)
+
+        if (delta != null) {
             addVariable(delta);
+        }
+
         numIndependentVariables++;
+
         Logger.getLogger("dr.inference").info("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
+    }
+
+    public void addScaleParameter(Parameter scaleParameter, Parameter design) {
+        this.scaleParameter = scaleParameter;
+//        this.scaleDesignMatrix = matrix.getParameterAsMatrix();
+        scaleDesign = new int[design.getDimension()];
+        for (int i = 0; i < scaleDesign.length; i++)
+            scaleDesign[i] = (int) design.getParameterValue(i);
+        addVariable(scaleParameter);
     }
 
     public boolean getAllIndependentVariablesIdentifiable() {
@@ -144,8 +159,7 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             }
         }
 
-        SingularValueDecomposition svd = new SingularValueDecomposition(
-                new DenseDoubleMatrix2D(mat));
+        SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(mat));
 
         int rank = svd.rank();
         boolean isFullRank = (totalColDim == rank);
@@ -153,21 +167,13 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return isFullRank;
     }
 
-    public int getNumberOfFixedEffects() {
-        return numIndependentVariables;
-    }
-
-    public int getNumberOfRandomEffects() {
-        return numRandomEffects;
-    }
-
     public double[] getXBeta() {
 
         double[] xBeta = new double[N];
 
         for (int j = 0; j < numIndependentVariables; j++) {
-            Parameter beta = independentParam.get(j);
-            Parameter delta = indParamDelta.get(j);
+            Parameter beta = independentParameter.get(j);
+            Parameter delta = independentParameterDelta.get(j);
             DesignMatrix X = designMatrix.get(j);
             final int K = beta.getDimension();
             for (int k = 0; k < K; k++) {
@@ -189,24 +195,12 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return xBeta;
     }
 
-    public Parameter getFixedEffect(int j) {
-        return independentParam.get(j);
-    }
-
-    public Parameter getRandomEffect(int j) {
-        return randomEffects.get(j);
-    }
-
-    public Parameter getDependentVariable() {
-        return dependentParam;
-    }
-
     public double[] getXBeta(int j) {
 
         double[] xBeta = new double[N];
 
-        Parameter beta = independentParam.get(j);
-        Parameter delta = indParamDelta.get(j);
+        Parameter beta = independentParameter.get(j);
+        Parameter delta = independentParameterDelta.get(j);
         DesignMatrix X = designMatrix.get(j);
         final int K = beta.getDimension();
         for (int k = 0; k < K; k++) {
@@ -221,26 +215,31 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             throw new RuntimeException("Attempting to retrieve fixed effects without controlling for random effects");
 
         return xBeta;
+    }
 
+    public int getNumberOfFixedEffects() {
+        return numIndependentVariables;
+    }
+
+    public int getNumberOfRandomEffects() {
+        return numRandomEffects;
+    }
+
+    public Parameter getFixedEffect(int j) {
+        return independentParameter.get(j);
+    }
+
+    public Parameter getRandomEffect(int j) {
+        return randomEffects.get(j);
+    }
+
+    public Parameter getDependentVariable() {
+        return dependentParameter;
     }
 
     public int getEffectNumber(Parameter effect) {
-        return independentParam.indexOf(effect);
+        return independentParameter.indexOf(effect);
     }
-
-//	public double[][] getXtScaleX(int j) {
-//
-//		final Parameter beta = independentParam.get(j);
-//		double[][] X = designMatrix.get(j);
-//		final int dim = X[0].length;
-//
-//		if( dim != beta.getDimension() )
-//			throw new RuntimeException("should have checked eariler");
-//
-//		double[] scale = getScale();
-//
-//
-//	}
 
     public double[][] getX(int j) {
         return designMatrix.get(j).getParameterAsMatrix();
@@ -257,121 +256,70 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
 //            for (int i = 0; i < N; i++)
 //                scale[i] += scaleDesignMatrix[i][k] * scaleK;
 //        }
-        for (int k = 0; k < N; k++)
+        for (int k = 0; k < N; k++) {
             scale[k] = scaleParameter.getParameterValue(scaleDesign[k]);
+        }
 
         return scale;
     }
 
+    private double calculateLogLikelihood() {
+        double[] X = dependentParameter.getParameterValues();
 
-    public double[][] getScaleAsMatrix() {
+        double[] xBeta = getXBeta();
+        double[] lambda = new double[xBeta.length];
 
-//        double[][] scale = new double[N][N];
-//
-//        return scale;
-        throw new RuntimeException("Not yet implemented: GeneralizedLinearModel.getScaleAsMatrix()");
-    }
-
-//	protected abstract double calculateLogLikelihoodAndGradient(double[] beta, double[] gradient);
-
-    protected abstract double calculateLogLikelihood(double[] beta);
-
-    protected abstract double calculateLogLikelihood();
-
-    protected abstract boolean confirmIndependentParameters();
-
-    public abstract boolean requiresScale();
-
-    public void addScaleParameter(Parameter scaleParameter, Parameter design) {
-        this.scaleParameter = scaleParameter;
-//        this.scaleDesignMatrix = matrix.getParameterAsMatrix();
-        scaleDesign = new int[design.getDimension()];
-        for (int i = 0; i < scaleDesign.length; i++)
-            scaleDesign[i] = (int) design.getParameterValue(i);
-        addVariable(scaleParameter);
-    }
-
-/*	// **************************************************************
-          // RealFunctionOfSeveralVariablesWithGradient IMPLEMENTATION
-	// **************************************************************
-
-
-	public double eval(double[] beta, double[] gradient) {
-		return calculateLogLikelihoodAndGradient(beta, gradient);
-	}
-
-
-	public double eval(double[] beta) {
-		return calculateLogLikelihood(beta);
-	}
-
-
-	public int getNumberOfVariables() {
-		return independentParam.getDimension();
-	}*/
-
-    // ************
-    //       Mutlivariate implementation
-    // ************
-
-
-    public double evaluate(double[] beta) {
-        return calculateLogLikelihood(beta);
-    }
-
-    public int getNumArguments() {
-        int total = 0;
-        for (Parameter effect : independentParam)
-            total += effect.getDimension();
-        return total;
-    }
-
-    public double getLowerBound(int n) {
-        int which = n;
-        int k = 0;
-        while (which > independentParam.get(k).getDimension()) {
-            which -= independentParam.get(k).getDimension();
-            k++;
+        for (int i = 0; i < lambda.length; i++) {
+            lambda[i] = linkFunction.inverse(xBeta[i]);
         }
-        return independentParam.get(k).getBounds().getLowerLimit(which);
+
+        return density.getLogPDF(lambda, X);
     }
 
-    public double getUpperBound(int n) {
-        int which = n;
-        int k = 0;
-        while (which > independentParam.get(k).getDimension()) {
-            which -= independentParam.get(k).getDimension();
-            k++;
-        }
-        return independentParam.get(k).getBounds().getUpperLimit(which);
+    // **************************************************************
+    // Likelihood IMPLEMENTATION
+    // **************************************************************
+
+    /**
+     * todo - cache likelihood values
+     * @return
+     */
+    public double getLogLikelihood() {
+        return calculateLogLikelihood();
     }
 
+    // **************************************************************
+    // Model IMPLEMENTATION
+    // **************************************************************
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
     }
 
+    @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
 //        fireModelChanged();
     }
 
+    @Override
     protected void storeState() {
         // No internal states to save
     }
 
+    @Override
     protected void restoreState() {
         // No internal states to restore
     }
 
+    @Override
     protected void acceptState() {
         // Nothing to do
     }
 
+    @Override
     public Model getModel() {
         return this;
-    }
-
-    public double getLogLikelihood() {
-        return calculateLogLikelihood();
     }
 
     @Override
@@ -379,12 +327,16 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
         return super.toString() + ": " + getLogLikelihood();
     }
 
+    @Override
     public void makeDirty() {
     }
 
     // **************************************************************
     // Loggable IMPLEMENTATION
     // **************************************************************
+
+    // probably makes more consistent sense to log the likelihood and expose the xBeta values
+    // through a statistic...
 
 //    /**
 //     * @return the log columns.

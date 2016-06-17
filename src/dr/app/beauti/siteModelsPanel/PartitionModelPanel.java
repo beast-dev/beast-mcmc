@@ -590,7 +590,7 @@ public class PartitionModelPanel extends OptionsPanel {
      * position model
      */
     private void setYang96Model() {
-        nucSubstCombo.setSelectedIndex(1);
+        nucSubstCombo.setSelectedIndex(2);
         heteroCombo.setSelectedIndex(1);
         codingCombo.setSelectedIndex(2);
         substUnlinkCheck.setSelected(true);

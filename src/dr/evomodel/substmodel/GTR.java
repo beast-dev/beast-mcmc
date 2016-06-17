@@ -185,7 +185,7 @@ public class GTR extends AbstractNucleotideModel implements Citable {
 
     @Override
     public String getDescription() {
-        return "HKY nucleotide substitution model";
+        return "GTR nucleotide substitution model";
     }
 
     @Override
@@ -198,7 +198,7 @@ public class GTR extends AbstractNucleotideModel implements Citable {
             new Author[]{
                     new Author("S", "Tavaré")
             },
-            "Some probabilistic and statistical problems in the analysis of DNA sequences.",
+            "Some probabilistic and statistical problems in the analysis of DNA sequences",
             1985,
             "In: Miura R. M., editor. Lectures on mathematics in the life sciences.",
             17, 57, 86

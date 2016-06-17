@@ -632,9 +632,9 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     }
 
     public List<Citation> getCitations() {
-        List<Citation> tmp = super.getCitations();
-        tmp.add(CommonCitations.MININ_2008_COUNTING);
-        return tmp;
+        List<Citation> citationList = new ArrayList<Citation>(super.getCitations());
+        citationList.add(CommonCitations.MININ_2008_COUNTING);
+        return citationList;
     }
 
     public static final String ALL_HISTORY = "history_all";

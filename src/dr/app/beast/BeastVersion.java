@@ -56,7 +56,7 @@ public class BeastVersion implements Version, Citable {
 
     private static final String DATE_STRING = "2002-2016";
 
-    private static final boolean IS_PRERELEASE = true;
+    private static final boolean IS_PRERELEASE = false;
 
     // this is now being manually updated since the move to GitHub. Using date in yyyymmdd format (suffix
     // with b,c,d etc if multiple revisions in a day.

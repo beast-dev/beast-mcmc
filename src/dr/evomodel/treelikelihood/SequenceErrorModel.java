@@ -30,6 +30,13 @@ import dr.evolution.util.TaxonList;
 import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class incorporates uncertainty in the state at the tips of the tree and can
@@ -42,7 +49,7 @@ import dr.inference.model.Statistic;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class SequenceErrorModel extends TipStatesModel {
+public class SequenceErrorModel extends TipStatesModel implements Citable {
     public enum ErrorType {
         TYPE_1_TRANSITIONS("type1Transitions"),
         TYPE_2_TRANSITIONS("type2Transitions"),
@@ -248,4 +255,41 @@ public class SequenceErrorModel extends TipStatesModel {
     private final Parameter baseErrorRateParameter;
     private final Parameter ageRelatedErrorRateParameter;
     private final Parameter indicatorParameter;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Sequence error model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+            return Arrays.asList(new Citation(
+                            new Author[]{
+                                    new Author("A", "Rambaut"),
+                                    new Author("SYW", "Ho"),
+                                    new Author("AJ", "Drummond"),
+                                    new Author("B", "Shapiro"),
+                            },
+                            "Accommodating the effect of ancient DNA damage on inferences of demographic histories",
+                            2008,
+                            "Mol Biol Evol",
+                            26,
+                            245, 248,
+                            "10.1093/molbev/msn256"
+                    ),
+                    new Citation(
+                            new Author[]{
+                                    new Author("J", "Felsenstein"),
+                            },
+                            "Inferring Phylogenies",
+                            2004,
+                            "Sinauer Associates",
+                            ""
+                    ));
+    }
 }

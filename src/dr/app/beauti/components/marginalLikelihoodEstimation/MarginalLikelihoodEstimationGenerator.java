@@ -47,6 +47,7 @@ import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -102,6 +103,18 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                             "Estimation settings via the MCMC panel.");
                 }
             }
+
+            // Shouldn't get here as the MLE switch in the MCMC tab already checks.
+            for (AbstractPartitionData partition : options.getDataPartitions()) {
+                if (partition.getDataType().getType() != DataType.NUCLEOTIDES) {
+                    throw new GeneratorException(
+                            "Generalized stepping-stone sampling is not currently\n" +
+                                    "compatible with substitution models other than those\n" +
+                                    "for nucleotide data. \n\n" +
+                                    BeautiFrame.MCMC);
+                }
+            }
+
         }
     }
 

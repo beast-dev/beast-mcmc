@@ -54,7 +54,7 @@
 
     <target name="compile" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
-        <javac source="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">
+        <javac source="1.6" target="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath">
             <include name="dr/app/tempest/**"/>
             <include name="dr/app/beauti/**"/>
             <include name="dr/app/tools/**"/>

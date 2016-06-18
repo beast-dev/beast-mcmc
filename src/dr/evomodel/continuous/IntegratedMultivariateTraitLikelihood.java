@@ -252,8 +252,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     }
 
     public List<Citation> getCitations() {
-        List<Citation> rtn = super.getCitations();
-        rtn.add(new Citation(
+        List<Citation> citationList = new ArrayList<Citation>(super.getCitations());
+        citationList.add(new Citation(
                 new Author[] {
                         new Author("OG", "Pybus"),
                         new Author("MA", "Suchard"),
@@ -274,7 +274,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 15066, 15071,
                 Citation.Status.PUBLISHED
         ));
-        return rtn;
+        return citationList;
     }
 
     public double getLogDataLikelihood() {

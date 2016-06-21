@@ -1,7 +1,7 @@
 /*
- * ParametricMultivariateDistributionModel.java
+ * Density.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,16 +26,21 @@
 package dr.inference.distribution;
 
 import dr.inference.model.Model;
-import dr.math.distributions.MultivariateDistribution;
+import dr.inference.model.Variable;
 
 /**
- * A class that describes a parametric multivariate distribution
+ * A mix-in interface to provide a non-specific interface to a density
+ * function as a model. This is implemented by ParametricDistributionModel
+ * and ParametricMultivariateDistributionModel.
  *
- * @author Marc Suchard
+ * @author Andrew Rambaut
  */
 
-public interface ParametricMultivariateDistributionModel extends MultivariateDistribution, DensityModel {
+public interface DensityModel extends Model {
 
-    double[] nextRandom();
-	
+    Variable<Double> getLocationVariable();
+
+    Variable<Double> getScaleVariable();
+
+    double logPdf(double[] x);
 }

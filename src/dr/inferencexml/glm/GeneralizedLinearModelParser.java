@@ -27,6 +27,7 @@ package dr.inferencexml.glm;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import dr.inference.distribution.DensityModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.glm.*;
 import dr.inference.model.DesignMatrix;
@@ -62,7 +63,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
         XMLObject cxo = xo.getChild(MODEL);
         String linkFunctionName = cxo.getAttribute(LINK_FUNCTION, "identity");
-        ParametricDistributionModel model = (ParametricDistributionModel) cxo.getChild(ParametricDistributionModel.class);
+        DensityModel model = (DensityModel) cxo.getChild(DensityModel.class);
         GeneralizedLinearModel.LinkFunction linkFunction = GeneralizedLinearModel.LinkFunction.valueOf(linkFunctionName.toUpperCase());
 
         cxo = xo.getChild(DEPENDENT_VARIABLES);

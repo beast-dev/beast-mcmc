@@ -27,7 +27,9 @@ package dr.inference.glm;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import dr.inference.distribution.DensityModel;
 import dr.inference.distribution.ParametricDistributionModel;
+import dr.inference.distribution.ParametricMultivariateDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
@@ -65,7 +67,8 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
     }
 
     private final Transform linkFunction;
-    private final ParametricDistributionModel density;
+    private final DensityModel density;
+    private final boolean isMultivariateDensity;
 
     private final Parameter dependentParameter;
     private final List<Parameter> independentParameter = new ArrayList<Parameter>();
@@ -78,11 +81,12 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
     protected List<Parameter> randomEffects = null;
 
-    public GeneralizedLinearModel(Parameter dependentParameter, ParametricDistributionModel density, LinkFunction linkFunction) {
+    public GeneralizedLinearModel(Parameter dependentParameter, DensityModel density, LinkFunction linkFunction) {
         super(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
         this.dependentParameter = dependentParameter;
         this.linkFunction = linkFunction.getTransform();
         this.density = density;
+        isMultivariateDensity = density instanceof ParametricMultivariateDistributionModel;
 
         addModel(density);
 
@@ -267,13 +271,19 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
     }
 
     private double calculateLogLikelihood() {
-        double[] X = dependentParameter.getParameterValues();
+        double[] Y = dependentParameter.getParameterValues();
         double[] transformedXBeta = getTransformedXBeta();
 
+
         double logL = 0.0;
-        for (int i = 0; i < X.length; i++) {
-            density.getLocationVariable().setValue(0, transformedXBeta[i]);
-            logL += density.logPdf(X[i]);
+
+        if (isMultivariateDensity) {
+            // todo - implement
+        } else {
+            for (int i = 0; i < Y.length; i++) {
+                density.getLocationVariable().setValue(0, transformedXBeta[i]);
+                logL += density.logPdf(new double[] { Y[i] });
+            }
         }
 
         return logL;

@@ -32,6 +32,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
+import dr.math.UnivariateFunction;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.RandomGenerator;
 
@@ -171,10 +172,9 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
         return distribution.logPdf(x);
     }
 
-    private final boolean conditionOnRoot;
-    private double[][] precisionMatrix = null;
-    private double[] rootValue;
-    private final int dim;
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
 
     @Override
     public Variable<Double> getLocationVariable() {
@@ -185,6 +185,12 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
     public Variable<Double> getScaleVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
+
+
+    private final boolean conditionOnRoot;
+    private double[][] precisionMatrix = null;
+    private double[] rootValue;
+    private final int dim;
 
 
     /*
@@ -233,6 +239,5 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
   };
 
     */
-
 
 }

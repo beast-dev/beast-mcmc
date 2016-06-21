@@ -131,7 +131,31 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
     protected void acceptState() {
     } // no additional state needs accepting
 
-    // **************************************************************
+    @Override
+    public int getDimension() {
+        return mean.getDimension();
+    }
+
+    @Override
+    public double[][] getPrecisionMatrix() {
+        return precision.getParameterAsMatrix();
+    }
+
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return mean;
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        return precision;
+    }
+
+// **************************************************************
     // Private instance variables and functions
     // **************************************************************
 
@@ -164,13 +188,4 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         return distribution.logPdf(x);
     }
 
-    @Override
-    public int getDimension() {
-        return mean.getDimension();
-    }
-
-    @Override
-    public double[][] getPrecisionMatrix() {
-        return precision.getParameterAsMatrix();
-    }
 }

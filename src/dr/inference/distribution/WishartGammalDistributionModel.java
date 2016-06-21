@@ -157,6 +157,20 @@ public class WishartGammalDistributionModel extends AbstractModel implements Par
     } // no additional state needs accepting
 
 
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
     // **************************************************************
     // Private instance variables and functions
     // **************************************************************

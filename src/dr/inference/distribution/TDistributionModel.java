@@ -118,6 +118,15 @@ public class TDistributionModel extends AbstractModel implements ParametricDistr
         }
     };
 
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
     @Override
     public Variable<Double> getLocationVariable() {
         return location;

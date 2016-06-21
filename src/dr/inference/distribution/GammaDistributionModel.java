@@ -218,6 +218,15 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
         }
     }
 
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
     @Override
     public Variable<Double> getLocationVariable() {
         throw new UnsupportedOperationException("Not implemented");

@@ -37,10 +37,6 @@ import dr.math.distributions.Distribution;
  * @version $Id: ParametricDistributionModel.java,v 1.4 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public interface ParametricDistributionModel extends Distribution, Model {
-
-    Variable<Double> getLocationVariable();
-
-    Variable<Double> getScaleVariable();
+public interface ParametricDistributionModel extends Distribution, DensityModel {
 
 }

@@ -204,6 +204,15 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         return new double[][]{{p}};
     }
 
+    // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
     @Override
     public Variable<Double> getLocationVariable() {
         return mean;

@@ -119,6 +119,25 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     };
 
     // *****************************************************************
+    // Interface DensityModel
+    // *****************************************************************
+
+    @Override
+    public double logPdf(double[] x) {
+        return logPdf(x[0]);
+    }
+
+    @Override
+    public Variable<Double> getLocationVariable() {
+        return mean;
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    // *****************************************************************
     // Interface Model
     // *****************************************************************
 
@@ -153,16 +172,6 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
 
     private double getMean() {
         return mean.getValue(0);
-    }
-
-    @Override
-    public Variable<Double> getLocationVariable() {
-        return mean;
-    }
-
-    @Override
-    public Variable<Double> getScaleVariable() {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     // **************************************************************

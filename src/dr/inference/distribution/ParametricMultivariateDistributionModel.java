@@ -34,8 +34,8 @@ import dr.math.distributions.MultivariateDistribution;
  * @author Marc Suchard
  */
 
-public interface ParametricMultivariateDistributionModel extends MultivariateDistribution, Model {
-	
-public double[] nextRandom();
+public interface ParametricMultivariateDistributionModel extends MultivariateDistribution, ParametricDistributionModel {
+
+    double[] nextRandom();
 	
 }

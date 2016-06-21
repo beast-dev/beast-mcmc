@@ -176,6 +176,17 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
     private double[] rootValue;
     private final int dim;
 
+    @Override
+    public Variable<Double> getLocationVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+
     /*
  public static final String TREE_TRAIT_NORMAL = "treeTraitNormalDistribution";
  public static final String CONDITION = "conditionOnRoot";

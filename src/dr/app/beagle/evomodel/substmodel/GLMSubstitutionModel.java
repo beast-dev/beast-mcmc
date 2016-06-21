@@ -64,9 +64,10 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
             super.handleModelChangedEvent(model, object, index);
     }
 
-    public LogColumn[] getColumns() {
-        return glm.getColumns();
-    }
+    // This info can be gotten from the GLM
+//    public LogColumn[] getColumns() {
+//        return glm.getColumns();
+//    }
 
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();

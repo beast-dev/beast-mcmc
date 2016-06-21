@@ -260,7 +260,8 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
     public LogColumn[] getColumns() {
         return new LogColumn[]{
-                new LikelihoodColumn(getId())
+                new LikelihoodColumn(getId()),
+                new NormalizationColumn(getId()),
         };
     }
 
@@ -271,6 +272,14 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
 
         public double getDoubleValue() {
             return getLogLikelihood();
+        }
+    }
+
+    protected class NormalizationColumn extends NumberColumn {
+        public NormalizationColumn(String label) { super(label); }
+
+        public double getDoubleValue() {
+            return getEigenDecomposition().getNormalization();
         }
     }
 

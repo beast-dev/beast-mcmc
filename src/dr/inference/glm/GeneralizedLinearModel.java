@@ -27,6 +27,7 @@ package dr.inference.glm;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
@@ -47,16 +48,29 @@ import java.util.logging.Logger;
  */
 public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
+    public enum LinkFunction {
+        IDENTITY(new Transform.NoTransform()),
+        LOG(new Transform.LogTransform()),
+        LOGIT(new Transform.LogitTransform());
+
+        LinkFunction(Transform transform) {
+            this.transform = transform;
+        }
+
+        public Transform getTransform() {
+            return transform;
+        }
+
+        private final Transform transform;
+    }
+
     private final Transform linkFunction;
-    private final GLMDensity density;
+    private final ParametricDistributionModel density;
 
     private final Parameter dependentParameter;
     private final List<Parameter> independentParameter = new ArrayList<Parameter>();
     private final List<Parameter> independentParameterDelta = new ArrayList<Parameter>();
     private final List<DesignMatrix> designMatrix = new ArrayList<DesignMatrix>();
-
-    private int[] scaleDesign;
-    private Parameter scaleParameter;
 
     private int numIndependentVariables = 0;
     private int numRandomEffects = 0;
@@ -64,21 +78,18 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
     protected List<Parameter> randomEffects = null;
 
-    public GeneralizedLinearModel(Parameter dependentParameter, GLMDensity density, Transform linkFunction) {
+    public GeneralizedLinearModel(Parameter dependentParameter, ParametricDistributionModel density, LinkFunction linkFunction) {
         super(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
         this.dependentParameter = dependentParameter;
-        this.linkFunction = linkFunction;
+        this.linkFunction = linkFunction.getTransform();
         this.density = density;
 
         if (dependentParameter != null) {
             addVariable(dependentParameter);
             N = dependentParameter.getDimension();
-        } else
+        } else {
             N = 0;
-    }
-
-    public int[] getScaleDesign() {
-        return scaleDesign;
+        }
     }
 
     public void addRandomEffectsParameter(Parameter effect) {
@@ -116,15 +127,6 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         numIndependentVariables++;
 
         Logger.getLogger("dr.inference").info("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
-    }
-
-    public void addScaleParameter(Parameter scaleParameter, Parameter design) {
-        this.scaleParameter = scaleParameter;
-//        this.scaleDesignMatrix = matrix.getParameterAsMatrix();
-        scaleDesign = new int[design.getDimension()];
-        for (int i = 0; i < scaleDesign.length; i++)
-            scaleDesign[i] = (int) design.getParameterValue(i);
-        addVariable(scaleParameter);
     }
 
     public boolean getAllIndependentVariablesIdentifiable() {
@@ -245,35 +247,17 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         return designMatrix.get(j).getParameterAsMatrix();
     }
 
-
-    public double[] getScale() {
-
-        double[] scale = new double[N];
-
-//        final int K = scaleParameter.getDimension();
-//        for (int k = 0; k < K; k++) {
-//            final double scaleK = scaleParameter.getParameterValue(k);
-//            for (int i = 0; i < N; i++)
-//                scale[i] += scaleDesignMatrix[i][k] * scaleK;
-//        }
-        for (int k = 0; k < N; k++) {
-            scale[k] = scaleParameter.getParameterValue(scaleDesign[k]);
-        }
-
-        return scale;
-    }
-
     private double calculateLogLikelihood() {
         double[] X = dependentParameter.getParameterValues();
-
         double[] xBeta = getXBeta();
-        double[] lambda = new double[xBeta.length];
 
-        for (int i = 0; i < lambda.length; i++) {
-            lambda[i] = linkFunction.inverse(xBeta[i]);
+        double logL = 0.0;
+        for (int i = 0; i < X.length; i++) {
+            density.getCentralTendencyVariable().setValue(0, xBeta[i]);
+            logL += density.logPdf(X[i]);
         }
 
-        return density.getLogPDF(lambda, X);
+        return logL;
     }
 
     // **************************************************************

@@ -167,6 +167,16 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
         return (x - offset) / length;
     }
 
+    @Override
+    public Variable<Double> getCentralTendencyVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
     // **************************************************************
     // Private instance variables
     // **************************************************************

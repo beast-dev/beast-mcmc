@@ -27,6 +27,7 @@ package dr.inferencexml.glm;
 
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.glm.*;
 import dr.inference.model.DesignMatrix;
 import dr.inference.model.Likelihood;
@@ -43,15 +44,11 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
     public static final String DEPENDENT_VARIABLES = "dependentVariables";
     public static final String INDEPENDENT_VARIABLES = "independentVariables";
-    public static final String BASIS_MATRIX = "basis";
-    public static final String FAMILY = "family";
-    public static final String SCALE_VARIABLES = "scaleVariables";
+
+    public static final String MODEL = "model";
+    public static final String LINK_FUNCTION = "linkFunction";
+
     public static final String INDICATOR = "indicator";
-    public static final String LOGISTIC_REGRESSION = "logistic";
-    public static final String NORMAL_REGRESSION = "normal";
-    public static final String LOG_NORMAL_REGRESSION = "logNormal";
-    public static final String LOG_LINEAR = "logLinear";
-//    public static final String LOG_TRANSFORM = "logDependentTransform";
     public static final String RANDOM_EFFECTS = "randomEffects";
     public static final String CHECK_IDENTIFIABILITY = "checkIdentifiability";
     public static final String CHECK_FULL_RANK = "checkFullRank";
@@ -63,28 +60,15 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-//        System.err.println("PASSED 0");
-        XMLObject cxo = xo.getChild(DEPENDENT_VARIABLES);
-        Parameter dependentParam = null;
-        if (cxo != null)
-            dependentParam = (Parameter) cxo.getChild(Parameter.class);
+        XMLObject cxo = xo.getChild(MODEL);
+        String linkFunctionName = cxo.getAttribute(LINK_FUNCTION, "identity");
+        ParametricDistributionModel model = (ParametricDistributionModel) cxo.getChild(ParametricDistributionModel.class);
+        GeneralizedLinearModel.LinkFunction linkFunction = GeneralizedLinearModel.LinkFunction.valueOf(linkFunctionName.toUpperCase());
 
-        String family = xo.getStringAttribute(FAMILY);
+        cxo = xo.getChild(DEPENDENT_VARIABLES);
+        Parameter dependentParam = (Parameter) cxo.getChild(Parameter.class);
 
-        GLMDensity density = null;
-        Transform linkFunction = null;
-
-        if (family.compareTo(LOGISTIC_REGRESSION) == 0) {
-            linkFunction = Transform.LOGIT;
-        } else if (family.compareTo(NORMAL_REGRESSION) == 0) {
-            linkFunction = Transform.NONE;
-        } else if (family.compareTo(LOG_NORMAL_REGRESSION) == 0) {
-        } else if (family.compareTo(LOG_LINEAR) == 0) {
-            linkFunction = Transform.LOG;
-        } else
-            throw new XMLParseException("Family '" + family + "' is not currently implemented");
-
-        GeneralizedLinearModel glm = new GeneralizedLinearModel(dependentParam, density, linkFunction);
+        GeneralizedLinearModel glm = new GeneralizedLinearModel(dependentParam, model, linkFunction);
 
         // parse this as parameters in a DistributionModel?
 //        if (glm.requiresScale()) {
@@ -237,11 +221,15 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newStringRule(FAMILY),
             AttributeRule.newBooleanRule(CHECK_IDENTIFIABILITY, true),
             AttributeRule.newBooleanRule(CHECK_FULL_RANK, true),
+            new ElementRule(MODEL,
+                    new XMLSyntaxRule[]{
+                            AttributeRule.newStringRule(LINK_FUNCTION),
+                            new ElementRule(ParametricDistributionModel.class),
+                    }),
             new ElementRule(DEPENDENT_VARIABLES,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, false),
             new ElementRule(INDEPENDENT_VARIABLES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class, true),

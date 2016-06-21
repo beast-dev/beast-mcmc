@@ -201,6 +201,16 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
         }
     };
 
+    @Override
+    public Variable<Double> getCentralTendencyVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
     // *****************************************************************
     // Interface Model
     // *****************************************************************

@@ -118,6 +118,16 @@ public class TDistributionModel extends AbstractModel implements ParametricDistr
         }
     };
 
+    @Override
+    public Variable<Double> getCentralTendencyVariable() {
+        return location;
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        return scale;
+    }
+
     // *****************************************************************
     // Interface Model
     // *****************************************************************

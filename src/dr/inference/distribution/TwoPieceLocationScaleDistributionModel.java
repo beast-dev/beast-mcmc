@@ -129,7 +129,17 @@ public class TwoPieceLocationScaleDistributionModel extends AbstractModel implem
         return logPdf(v);
     }
 
-    // *****************************************************************
+    @Override
+    public Variable<Double> getCentralTendencyVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+// *****************************************************************
     // Interface Model
     // *****************************************************************
 

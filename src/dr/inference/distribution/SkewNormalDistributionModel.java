@@ -142,6 +142,16 @@ public class SkewNormalDistributionModel extends AbstractModel implements Parame
         throw new RuntimeException("Not implemented!");
     }
 
+    @Override
+    public Variable<Double> getCentralTendencyVariable() {
+        return location;
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        return scale;
+    }
+
     // **************************************************************
     // Private instance variables
     // **************************************************************

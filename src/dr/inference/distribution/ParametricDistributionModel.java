@@ -26,6 +26,8 @@
 package dr.inference.distribution;
 
 import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.distributions.Distribution;
 
 /**
@@ -36,4 +38,9 @@ import dr.math.distributions.Distribution;
  */
 
 public interface ParametricDistributionModel extends Distribution, Model {
+
+    Variable<Double> getCentralTendencyVariable();
+
+    Variable<Double> getScaleVariable();
+
 }

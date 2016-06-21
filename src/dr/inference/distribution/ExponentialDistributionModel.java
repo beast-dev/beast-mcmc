@@ -155,6 +155,16 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
         return mean.getValue(0);
     }
 
+    @Override
+    public Variable<Double> getCentralTendencyVariable() {
+        return mean;
+    }
+
+    @Override
+    public Variable<Double> getScaleVariable() {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
     // **************************************************************
     // Private instance variables
     // **************************************************************

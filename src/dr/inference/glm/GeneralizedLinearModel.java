@@ -253,7 +253,7 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
         double logL = 0.0;
         for (int i = 0; i < X.length; i++) {
-            density.getCentralTendencyVariable().setValue(0, xBeta[i]);
+            density.getCentralTendencyVariable().setValue(0, linkFunction.inverse(xBeta[i]));
             logL += density.logPdf(X[i]);
         }
 

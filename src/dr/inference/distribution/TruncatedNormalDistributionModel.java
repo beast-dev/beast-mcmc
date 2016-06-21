@@ -200,7 +200,7 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
     };
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         return mean;
     }
 

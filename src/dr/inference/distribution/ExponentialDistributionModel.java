@@ -156,7 +156,7 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
     }
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         return mean;
     }
 

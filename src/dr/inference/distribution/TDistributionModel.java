@@ -119,7 +119,7 @@ public class TDistributionModel extends AbstractModel implements ParametricDistr
     };
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         return location;
     }
 

@@ -118,7 +118,7 @@ public class InverseGammaDistributionModel extends AbstractModel implements Para
     };
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
 

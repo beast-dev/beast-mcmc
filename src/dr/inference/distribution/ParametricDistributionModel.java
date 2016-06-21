@@ -39,7 +39,7 @@ import dr.math.distributions.Distribution;
 
 public interface ParametricDistributionModel extends Distribution, Model {
 
-    Variable<Double> getCentralTendencyVariable();
+    Variable<Double> getLocationVariable();
 
     Variable<Double> getScaleVariable();
 

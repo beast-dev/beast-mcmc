@@ -84,6 +84,8 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         this.linkFunction = linkFunction.getTransform();
         this.density = density;
 
+        addModel(density);
+
         if (dependentParameter != null) {
             addVariable(dependentParameter);
             N = dependentParameter.getDimension();
@@ -194,6 +196,10 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
             }
         }
 
+        for (int i = 0; i < N; i++) {
+            xBeta[i] = linkFunction.inverse(xBeta[i]);
+        }
+
         return xBeta;
     }
 
@@ -207,16 +213,29 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         final int K = beta.getDimension();
         for (int k = 0; k < K; k++) {
             double betaK = beta.getParameterValue(k);
-            if (delta != null)
+            if (delta != null) {
                 betaK *= delta.getParameterValue(k);
-            for (int i = 0; i < N; i++)
+            }
+            for (int i = 0; i < N; i++) {
                 xBeta[i] += X.getParameterValue(i, k) * betaK;
+            }
         }
 
-        if (numRandomEffects != 0)
+        if (numRandomEffects != 0) {
             throw new RuntimeException("Attempting to retrieve fixed effects without controlling for random effects");
+        }
 
         return xBeta;
+    }
+
+    public double[] getTransformedXBeta() {
+        double[] transformedXBeta = getXBeta();
+
+        for (int i = 0; i < N; i++) {
+            transformedXBeta[i] = linkFunction.inverse(transformedXBeta[i]);
+        }
+
+        return transformedXBeta;
     }
 
     public int getNumberOfFixedEffects() {
@@ -249,11 +268,11 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
     private double calculateLogLikelihood() {
         double[] X = dependentParameter.getParameterValues();
-        double[] xBeta = getXBeta();
+        double[] transformedXBeta = getTransformedXBeta();
 
         double logL = 0.0;
         for (int i = 0; i < X.length; i++) {
-            density.getCentralTendencyVariable().setValue(0, linkFunction.inverse(xBeta[i]));
+            density.getLocationVariable().setValue(0, transformedXBeta[i]);
             logL += density.logPdf(X[i]);
         }
 

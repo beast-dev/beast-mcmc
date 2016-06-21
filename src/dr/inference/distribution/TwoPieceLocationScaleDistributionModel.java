@@ -130,7 +130,7 @@ public class TwoPieceLocationScaleDistributionModel extends AbstractModel implem
     }
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
 

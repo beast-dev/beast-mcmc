@@ -205,7 +205,7 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
     }
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         return mean;
     }
 

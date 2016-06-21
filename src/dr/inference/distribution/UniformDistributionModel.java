@@ -111,7 +111,7 @@ public class UniformDistributionModel extends AbstractModel implements Parametri
     };
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
 

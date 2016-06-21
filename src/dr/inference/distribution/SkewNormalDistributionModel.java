@@ -143,7 +143,7 @@ public class SkewNormalDistributionModel extends AbstractModel implements Parame
     }
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         return location;
     }
 

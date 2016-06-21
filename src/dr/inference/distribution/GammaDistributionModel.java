@@ -219,7 +219,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     }
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
 

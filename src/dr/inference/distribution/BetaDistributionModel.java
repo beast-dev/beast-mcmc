@@ -168,7 +168,7 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
     }
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
 

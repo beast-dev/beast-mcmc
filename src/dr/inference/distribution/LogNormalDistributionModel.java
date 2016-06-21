@@ -218,7 +218,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     };
 
     @Override
-    public Variable<Double> getCentralTendencyVariable() {
+    public Variable<Double> getLocationVariable() {
         return meanParameter;
     }
 

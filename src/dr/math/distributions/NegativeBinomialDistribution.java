@@ -44,29 +44,15 @@ public class NegativeBinomialDistribution implements Distribution {
     }
 
     public double pdf(double x) {
-        if (x < 0)  return 0;
-        return Math.exp(logPdf(x));
+        return pdf(x, mean, stdev);
     }
 
     public double logPdf(double x) {
-        if (x < 0)  return Double.NEGATIVE_INFINITY;
-        double r = -1 * (mean*mean) / (mean - stdev*stdev);
-        double p = mean / (stdev*stdev);
-        return Math.log(Math.pow(1-p,x)) + Math.log(Math.pow(p, r)) + GammaFunction.lnGamma(r+x) - GammaFunction.lnGamma(r) - GammaFunction.lnGamma(x+1);
+        return logPdf(x, mean, stdev);
     }
 
     public double cdf(double x) {
-        double r = -1 * (mean*mean) / (mean - stdev*stdev);
-        double p = mean / (stdev*stdev);
-        try {
-            return Beta.regularizedBeta(p, r, x+1);
-        } catch (MathException e) {
-            // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
-            // exceptions is bad. Better to return NaN and let the calling code deal with it.
-            return Double.NaN;
-//                throw MathRuntimeException.createIllegalArgumentException(
-//                "Couldn't calculate beta cdf for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
-        }
+        return cdf(x, mean, stdev);
     }
 
     public double quantile(double y) {
@@ -85,6 +71,34 @@ public class NegativeBinomialDistribution implements Distribution {
     public UnivariateFunction getProbabilityDensityFunction() {
         throw new RuntimeException();
     }
+
+
+    public static double pdf(double x, double mean, double stdev) {
+        if (x < 0)  return 0;
+        return Math.exp(logPdf(x, mean, stdev));
+    }
+
+    public static double logPdf(double x, double mean, double stdev) {
+        if (x < 0)  return Double.NEGATIVE_INFINITY;
+        double r = -1 * (mean*mean) / (mean - stdev*stdev);
+        double p = mean / (stdev*stdev);
+        return Math.log(Math.pow(1-p,x)) + Math.log(Math.pow(p, r)) + GammaFunction.lnGamma(r+x) - GammaFunction.lnGamma(r) - GammaFunction.lnGamma(x+1);
+    }
+
+    public static double cdf(double x, double mean, double stdev) {
+        double r = -1 * (mean*mean) / (mean - stdev*stdev);
+        double p = mean / (stdev*stdev);
+        try {
+            return Beta.regularizedBeta(p, r, x+1);
+        } catch (MathException e) {
+            // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+            // exceptions is bad. Better to return NaN and let the calling code deal with it.
+            return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                "Couldn't calculate beta cdf for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
+        }
+    }
+
 
     public static void main(String[] args) {
         System.out.println("Test negative binomial");

@@ -1,5 +1,5 @@
 /*
- * PoissonDistributionModel.java
+ * NegativeBinomialDistributionModel.java
  *
  * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,41 +25,42 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.*;
-import dr.inferencexml.distribution.NormalDistributionModelParser;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.inferencexml.distribution.NegativeBinomialDistributionModelParser;
 import dr.inferencexml.distribution.PoissonDistributionModelParser;
-import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
-import dr.math.distributions.GaussianProcessRandomGenerator;
-import dr.math.distributions.NormalDistribution;
-import dr.math.distributions.PoissonDistribution;
+import dr.math.distributions.NegativeBinomialDistribution;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.PoissonDistributionImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * A class that acts as a model for Poisson distributed data.
+ * A class that acts as a model for Negative Binomially distributed data.
  *
  * @author Andrew Rambaut
  * @version $Id$
  */
 
-public class PoissonDistributionModel extends AbstractModel implements ParametricDistributionModel {
-    private final PoissonDistributionImpl distribution;
+public class NegativeBinomialDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
     /**
      * Constructor.
      */
-    public PoissonDistributionModel(Variable<Double> mean) {
+    public NegativeBinomialDistributionModel(Variable<Double> mean, Variable<Double> scale) {
 
-        super(PoissonDistributionModelParser.POISSON_DISTRIBUTION_MODEL);
-
-        distribution = new PoissonDistributionImpl(mean.getValue(0));
+        super(NegativeBinomialDistributionModelParser.NEGATIVE_BINOMIAL_DISTRIBUTION_MODEL);
 
         this.mean = mean;
         addVariable(mean);
-        mean.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
+        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+
+        this.scale = scale;
+        addVariable(scale);
+        scale.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
     }
 
     // *****************************************************************
@@ -67,31 +68,27 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
     // *****************************************************************
 
     public double pdf(double x) {
-        return distribution.probability(x);
+        return NegativeBinomialDistribution.pdf(x, mean(), scale());
     }
 
     public double logPdf(double x) {
-        return Math.log(distribution.probability(x));
+        return NegativeBinomialDistribution.logPdf(x, mean(), scale());
     }
 
     public double cdf(double x) {
-        try {
-            return distribution.cumulativeProbability(x);
-        } catch (MathException e) {
-            throw new RuntimeException(e);
-        }
+            return NegativeBinomialDistribution.cdf(x, mean(), scale());
     }
 
     public double quantile(double y) {
-        try {
-            return distribution.inverseCumulativeProbability(y);
-        } catch (MathException e) {
-            throw new RuntimeException(e);
-        }
+        throw new RuntimeException("Not implemented.");
     }
 
     public double mean() {
         return mean.getValue(0);
+    }
+
+    public double scale() {
+        return scale.getValue(0);
     }
 
     public double variance() {
@@ -132,7 +129,7 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
 
     @Override
     public Variable<Double> getScaleVariable() {
-        throw new UnsupportedOperationException("Not implemented");
+        return scale;
     }
 
     // *****************************************************************
@@ -144,8 +141,6 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // using a depricated method or else we would be reallocating this every call...
-        distribution.setMean(mean());
     }
 
     protected void storeState() {
@@ -166,5 +161,6 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
     // **************************************************************
 
     private final Variable<Double> mean;
+    private final Variable<Double> scale;
 
 }

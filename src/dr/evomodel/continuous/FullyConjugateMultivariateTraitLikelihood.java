@@ -252,7 +252,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
         if(variable==traitParameter &&(Parameter.ChangeType.ADDED==type || Parameter.ChangeType.REMOVED==type)){
             dimKnown = false;
-            numData = traitParameter.getParameter(0).getDimension() / getDimTrait();
+            dim = traitParameter.getParameter(0).getDimension();
+            numData = dim / getDimTrait();
+            meanCache = new double[dim * treeModel.getNodeCount()];
         }
         PostPreKnown=false;
         super.handleVariableChangedEvent(variable,index,type);
@@ -265,8 +267,10 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         storedDimKnown=dimKnown;
         if(preP!=null)
          System.arraycopy(preP, 0, storedPreP, 0,preP.length);
-        if(preMeans!=null)
-         System.arraycopy(preMeans, 0, storedPreMeans, 0, preMeans.length);
+        if(preMeans!=null){
+            for(int i = 0; i < preMeans.length; i++)
+                storedPreMeans[i] = preMeans[i].clone();
+        }
 
     }
 
@@ -275,8 +279,13 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         super.restoreState();
         PostPreKnown=storedPostPreKnown;
         priorInformationKnown = false;
-        preP=storedPreP;
+        double[] tempPreP = storedPreP;
+        storedPreP = preP;
+        preP = tempPreP;
         preMeans=storedPreMeans;
+        double[][] preMeansTemp = preMeans;
+        preMeans = storedPreMeans;
+        storedPreMeans = preMeansTemp;
         dimKnown=storedDimKnown;
     }
 
@@ -305,8 +314,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
             storedPreP=new double[treeModel.getNodeCount()];
         }
         if(!dimKnown){
-            preMeans=new double[treeModel.getNodeCount()][getDimTrait() * getNumData()];
-            storedPreMeans=new double[treeModel.getNodeCount()][getDimTrait() * getNumData()];
+            preMeans=new double[treeModel.getNodeCount()][dim];
+            storedPreMeans=new double[treeModel.getNodeCount()][dim];
+            System.out.println("this works");
             dimKnown=true;
         }
 

@@ -1,61 +1,62 @@
 package dr.inference.operators;
 
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.GaussianProcessFromTree;
-import dr.inference.distribution.MomentDistributionModel;
+import dr.inference.distribution.DeterminentalPointProcessPrior;
 import dr.inference.model.AdaptableSizeFastMatrixParameter;
 import dr.inference.model.CompoundParameter;
+import dr.inference.model.LatentFactorModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.math.distributions.Distribution;
 import dr.math.distributions.NormalDistribution;
 
 /**
  * Created by max on 4/29/16.
  */
-public class FactorRJMCMCOperator  extends AbstractCoercableOperator{
+public class FactorRJMCMCOperator  extends SimpleMCMCOperator implements GibbsOperator{
     GaussianProcessFromTree randomTree;
-    FullyConjugateMultivariateTraitLikelihood factorsPrior;
     AdaptableSizeFastMatrixParameter factors;
     AdaptableSizeFastMatrixParameter loadings;
     AdaptableSizeFastMatrixParameter cutoffs;
-    AdaptableSizeFastMatrixParameter loadingsSparcity;
-    Distribution cutoffPrior;
-    MomentDistributionModel loadingsPrior;
+    AdaptableSizeFastMatrixParameter loadingsSparsity;
+    LatentFactorModel lfm;
+    DeterminentalPointProcessPrior sparsityPrior;
+    int chainLength;
     CompoundParameter traitsTemp;
-    FullyConjugateMultivariateTraitLikelihood evaluator;
+    double sizeParam;
+    private double[] separator;
+    LoadingsGibbsTruncatedOperator loadingsOperator;
+    FactorTreeGibbsOperator factorOperator;
+    BitFlipOperator sparsityOperator;
+    AdaptableSizeFastMatrixParameter storedFactors;
+    AdaptableSizeFastMatrixParameter storedLoadings;
+    AdaptableSizeFastMatrixParameter storedCutoffs;
+    AdaptableSizeFastMatrixParameter storedLoadingsSparsity;
 
 
-    public FactorRJMCMCOperator(CoercionMode mode, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparcity, Distribution cutoffPrior, MomentDistributionModel loadingsPrior, FullyConjugateMultivariateTraitLikelihood factorsPrior) {
-        super(mode);
-        randomTree = new GaussianProcessFromTree(factorsPrior);
+    public FactorRJMCMCOperator(double weight, double sizeParam, int chainLength, AdaptableSizeFastMatrixParameter factors, AdaptableSizeFastMatrixParameter loadings, AdaptableSizeFastMatrixParameter cutoffs, AdaptableSizeFastMatrixParameter loadingsSparsity,  LatentFactorModel lfm, DeterminentalPointProcessPrior sparsityPrior, LoadingsGibbsTruncatedOperator loadingsOperator, FactorTreeGibbsOperator factorOperator, BitFlipOperator sparsityOperator) {
+        setWeight(weight);
         this.factors = factors;
         this.loadings = loadings;
         this.cutoffs = cutoffs;
-        this.loadingsSparcity = loadingsSparcity;
-        this.cutoffPrior = cutoffPrior;
-        this.loadingsPrior = loadingsPrior;
-        Parameter[] paramListTemp = new Parameter.Default[1];
-        paramListTemp[1] = new Parameter.Default(factors.getColumnDimension());
-        this.traitsTemp = new CompoundParameter(null, paramListTemp);
-        evaluator = factorsPrior.semiClone(traitsTemp);
-
+        this.loadingsSparsity = loadingsSparsity;
+        this.sparsityPrior = sparsityPrior;
+        this.lfm = lfm;
+        this.sizeParam = sizeParam;
+        this.chainLength = chainLength;
+//        Parameter[] paramListTemp = new Parameter.Default[1];
+//        paramListTemp[1] = new Parameter.Default(factors.getColumnDimension());
+//        this.traitsTemp = new CompoundParameter(null, paramListTemp);
+        this.storedFactors = new AdaptableSizeFastMatrixParameter(factors.getId()+".stored", 1, 1, factors.getMaxRowDimension(), factors.getMaxColumnDimension(), 1);
+        this.storedLoadings = new AdaptableSizeFastMatrixParameter(loadings.getId()+".stored", 1, 1, loadings.getMaxRowDimension(), loadings.getMaxColumnDimension(), 1);
+        this.storedCutoffs = new AdaptableSizeFastMatrixParameter(cutoffs.getId()+".stored", 1, 1, cutoffs.getMaxRowDimension(), cutoffs.getMaxColumnDimension(), 1);
+        this.storedLoadingsSparsity = new AdaptableSizeFastMatrixParameter(loadingsSparsity.getId()+".stored", 1, 1, loadingsSparsity.getMaxRowDimension(), loadingsSparsity.getMaxColumnDimension(), 1);
+        this.loadingsOperator = loadingsOperator;
+        this.factorOperator = factorOperator;
+        this.sparsityOperator = sparsityOperator;
+        storeDimensions();
     }
 
-    @Override
-    public double getCoercableParameter() {
-        return 0;
-    }
 
-    @Override
-    public void setCoercableParameter(double value) {
-
-    }
-
-    @Override
-    public double getRawParameter() {
-        return 0;
-    }
 
     @Override
     public String getPerformanceSuggestion() {
@@ -71,147 +72,149 @@ public class FactorRJMCMCOperator  extends AbstractCoercableOperator{
     public double doOperation() throws OperatorFailedException {
         double random = MathUtils.nextDouble();
         double from1 = 0;
+        double initialLikelihood = lfm.getLogLikelihood() * (1 - sizeParam);
+        boolean increment;
+
+
+
         int currentSize = factors.getRowDimension();
         if(random > .5 || currentSize == 1){
             if(factors.getRowDimension() == 1) {
                 from1 = Math.log(2);
             }
-            return increment() + from1;
+            storeDimensions();
+            storeValues();
+            factors.setRowDimension(factors.getRowDimension()+1);
+            loadings.setColumnDimension(loadings.getColumnDimension()+1);
+            loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()+1);
+            cutoffs.setColumnDimension(cutoffs.getColumnDimension()+1);
+            System.out.println("up");
+            increment = true;
         }
         else{
             if(currentSize == 2){
                 from1 = -Math.log(2);
             }
-            return decrement() + from1;
+            storeValues();
+            storeDimensions();
+            factors.setRowDimension(factors.getRowDimension()-1);
+            loadings.setColumnDimension(loadings.getColumnDimension()-1);
+            loadingsSparsity.setColumnDimension(loadingsSparsity.getColumnDimension()-1);
+            cutoffs.setColumnDimension(cutoffs.getColumnDimension()-1);
+            System.out.println("down");
+            increment = false;
         }
 
+        iterate();
+        double finalLikelihood = lfm.getLogLikelihood() *(1 - sizeParam);
 
 
-    }
-
-    private double increment(){
-        double tally = 0;
-        int newSize = factors.getRowDimension() + 1;
-        factors.setRowDimension(newSize);
-        loadings.setColumnDimension(newSize);
-        cutoffs.setColumnDimension(newSize);
-        loadingsSparcity.setColumnDimension(newSize);
-
-
-        //draws values from tree prior
-        double[] temp = randomTree.nextRandomFast();
-        for (int i = 0; i < temp.length; i++) {
-            traitsTemp.setParameterValueQuietly(i, temp[i]);
+        random = MathUtils.nextDouble();
+        double test = from1 + finalLikelihood - initialLikelihood;
+        test = Math.min(Math.exp(test), 1);
+        if(random < test){
+            System.out.println("yup!");
+            System.out.println(test);
         }
-        traitsTemp.fireParameterChangedEvent();
-        //computes likelihood of those values
-        tally += evaluator.getLogLikelihood();
-
-        //Draws new cutoff values
-        for (int i = 0; i < cutoffs.getRowDimension(); i++) {
-            double cutoffPriorDraw = cutoffPrior.quantile(MathUtils.nextDouble());
-            tally += cutoffPrior.logPdf(cutoffPriorDraw);
-        }
-
-        //split apart rows
-        int rowSplit = MathUtils.nextInt(newSize - 1);
-        tally += Math.log((newSize - 1));
-        for (int i = 0; i < loadingsSparcity.getRowDimension(); i++) {
-            double splitDecider = MathUtils.nextDouble();
-            if(splitDecider < .4){
-                tally += Math.log(.4);
-                loadingsSparcity.setParameterValueQuietly(i, newSize - 1, 0);
-            }
-            else if(splitDecider > .6){
-                tally += Math.log(.4);
-                loadingsSparcity.setParameterValueQuietly(i, rowSplit, 0);
-                loadingsSparcity.setParameterValueQuietly(i, newSize - 1, 1);
+        else{
+            if(increment){
+                restoreValues();
+                restoreDimensions();
             }
             else{
-                tally += Math.log(.2);
-                loadingsSparcity.setParameterValueQuietly(i, newSize - 1 , 1);
+                restoreDimensions();
+                restoreValues();
             }
-        }
 
-
-        for (int i = 0; i < loadings.getRowDimension(); i++) {
-            NormalDistribution useful = getLoadingsDistribution(i, newSize - 1);
-            double low = useful.cdf(-Math.sqrt(cutoffs.getParameterValue(i, newSize - 1)));
-            double high = useful.cdf(Math.sqrt(cutoffs.getParameterValue(i, newSize - 1)));
-            double proportion = low/(low + 1 - high);
-            if(MathUtils.nextDouble() < proportion){
-                double quantile=MathUtils.nextDouble() * low;
-                loadings.setParameterValueQuietly(i, newSize - 1, useful.quantile(quantile));
-                tally += useful.logPdf(loadings.getParameterValue(i, newSize - 1)) - Math.log(high - low);
-            }
-            else{
-                double quantile=(1-high) * MathUtils.nextDouble() + high;
-                loadings.setParameterValue(i, newSize - 1, useful.quantile(quantile));
-                tally += useful.logPdf(loadings.getParameterValue(i, newSize - 1)) - Math.log(high - low);
-            }
+            sparsityPrior.makeDirty();
+            lfm.makeDirty();
+            factors.storeParameterValues();
+            loadings.storeParameterValues();
+            loadingsSparsity.storeParameterValues();
+            cutoffs.storeParameterValues();
+            System.out.println("nope :(");
+            System.out.println(test);
 
         }
-        loadings.fireParameterChangedEvent();
-
-        return tally;
+        return 0;
     }
 
-    private double decrement(){
-        double tally = 0;
-        int condensing1 = MathUtils.nextInt(factors.getRowDimension());
-        int condensing2 = MathUtils.nextInt(factors.getRowDimension() - 1);
-        tally -= Math.log(factors.getRowDimension() -1);
-
-        if (condensing2 >= condensing1){
-            condensing2 += 1;
+    private void iterate() throws OperatorFailedException {
+        factorOperator.setPathParameter(sizeParam);
+        loadingsOperator.setPathParameter(sizeParam);
+        if(separator == null){
+            separator = new double[2];
+            double foWeight = factorOperator.getWeight();
+            double loWeight = loadingsOperator.getWeight();
+            double sparoWeight = sparsityOperator.getWeight();
+            double total = foWeight + loWeight + sparoWeight;
+            separator[0] = foWeight/total;
+            separator[1] = foWeight + loWeight;
         }
-        
-        
-        for (int i = 0; i < loadings.getRowDimension(); i++) {
-            NormalDistribution loadingsCondensed = getLoadingsDistribution(i, condensing2);
-            double low = loadingsCondensed.cdf(-Math.sqrt(cutoffs.getParameterValue(i, condensing2)));
-            double high = loadingsCondensed.cdf(Math.sqrt(cutoffs.getParameterValue(i, condensing2)));
-            tally -= loadingsCondensed.logPdf(loadings.getParameterValue(i, condensing2)) - Math.log(high - low);
-        }
-
-        for (int i = 0; i < cutoffs.getRowDimension(); i++) {
-            tally -= cutoffPrior.logPdf(cutoffs.getParameterValue(i, condensing2));
-        }
-
-        for (int i = 0; i < factors.getColumnDimension(); i++) {
-            traitsTemp.setParameterValueQuietly(i, factors.getParameterValue(condensing2, i));
-        }
-        traitsTemp.fireParameterChangedEvent();
-        tally -= evaluator.getLogLikelihood();
-
-
-        for (int i = 0; i < loadingsSparcity.getColumnDimension(); i++) {
-            if(loadingsSparcity.getParameterValue(i, condensing1) != loadingsSparcity.getParameterValue(i, condensing2))
-            {
-                tally -= Math.log(.4);
-                loadingsSparcity.setParameterValueQuietly(i, condensing1, 1);
+        for (int i = 0; i < chainLength; i++) {
+            double rand = MathUtils.nextDouble();
+            if(rand < separator[0]){
+                factorOperator.doOperation();
             }
-            else if(loadingsSparcity.getParameterValue(i, condensing1) == 0){}
-            else{
-                tally -= Math.log(.2);
+            else if (rand < separator[1]){
+                loadingsOperator.doOperation();
             }
+            else {
+                lfm.storeModelState();
+                sparsityPrior.storeModelState();
+                double mhRatio = - lfm.getLogLikelihood() * sizeParam - sparsityPrior.getLogLikelihood();
+                mhRatio -= sparsityOperator.doOperation();
+                mhRatio += lfm.getLogLikelihood() * sizeParam -sparsityPrior.getLogLikelihood();
+                mhRatio = Math.min(1, Math.exp(mhRatio));
+                if(MathUtils.nextDouble() > mhRatio){
+                    lfm.restoreModelState();
+                    sparsityPrior.restoreModelState();
+                }
+            }
+
         }
-
-        for (int i = 0; i < factors.getRowDimension() ; i++) {
-            factors.setParameterValueQuietly(condensing2, i, factors.getParameterValue(factors.getRowDimension()-1, i));
-            loadings.setParameterValueQuietly(i, condensing2, loadings.getParameterValue(i, loadings.getColumnDimension()-1));
-            loadingsSparcity.setParameterValueQuietly(i, condensing2, loadingsSparcity.getParameterValue(i, loadingsSparcity.getColumnDimension()-1));
-            cutoffs.setParameterValueQuietly(i, condensing2, cutoffs.getParameterValue(i, cutoffs.getColumnDimension()-1));
-        }
-
-
-        return tally;
+        factorOperator.setPathParameter(1);
+        loadingsOperator.setPathParameter(1);
     }
 
-    private NormalDistribution getLoadingsDistribution(int row, int column){
-        //TODO fix LoadingsGibbsTruncatedOperator and apply it here
-        double mean = 0;
-        double variance = 1;
-        return new NormalDistribution(mean, variance);
+    private void storeDimensions(){storedFactors.setRowDimension(factors.getRowDimension());
+        storedFactors.setColumnDimension(factors.getColumnDimension());
+        storedLoadings.setRowDimension(loadings.getRowDimension());
+        storedLoadings.setColumnDimension(loadings.getColumnDimension());
+        storedLoadingsSparsity.setRowDimension(loadingsSparsity.getRowDimension());
+        storedLoadingsSparsity.setColumnDimension(loadings.getColumnDimension());
+        storedCutoffs.setRowDimension(cutoffs.getRowDimension());
+        storedCutoffs.setColumnDimension(cutoffs.getColumnDimension());}
+
+    private void restoreDimensions(){factors.setRowDimension(storedFactors.getRowDimension());
+        factors.setColumnDimension(storedFactors.getColumnDimension());
+        loadings.setRowDimension(storedLoadings.getRowDimension());
+        loadings.setColumnDimension(storedLoadings.getColumnDimension());
+        loadingsSparsity.setRowDimension(storedLoadingsSparsity.getRowDimension());
+        loadingsSparsity.setColumnDimension(storedLoadingsSparsity.getColumnDimension());
+        cutoffs.setRowDimension(storedCutoffs.getRowDimension());
+        cutoffs.setColumnDimension(storedCutoffs.getColumnDimension());}
+
+    private void storeValues(){
+        for (int i = 0; i < factors.getDimension(); i++) {
+            storedFactors.setParameterValue(i, factors.getParameterValue(i));
+            storedLoadings.setParameterValue(i, loadings.getParameterValue(i));
+            storedLoadingsSparsity.setParameterValue(i, loadingsSparsity.getParameterValue(i));
+            storedCutoffs.setParameterValue(i, cutoffs.getParameterValue(i));
+        }
+    }
+
+    private void restoreValues(){
+        for (int i = 0; i < factors.getDimension(); i++) {
+            factors.setParameterValue(i, storedFactors.getParameterValue(i));
+            loadings.setParameterValue(i, storedLoadings.getParameterValue(i));
+            loadingsSparsity.setParameterValue(i, storedLoadingsSparsity.getParameterValue(i));
+            cutoffs.setParameterValue(i, storedCutoffs.getParameterValue(i));
+        }
+    }
+
+    @Override
+    public int getStepCount() {
+        return 0;
     }
 }

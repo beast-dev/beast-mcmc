@@ -528,7 +528,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
 //        for (int i = 0; i <changedValues.size() ; i++) {
 //            storedChangedValues.addElement(changedValues.elementAt(i));    ;
 //        }
-
+        storedChangedValues = (Vector<Integer>) changedValues.clone();
 
     }
 
@@ -561,6 +561,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
         loadingsKnown = storedLoadingsKnown;
         dataKnown = storedDataKnown;
         totalRecompute = storedTotalRecompute;
+        changedValues = storedChangedValues;
 //        changedValues=storedChangedValues;
 //        storedChangedValues=new Vector<Integer>();
 
@@ -602,7 +603,7 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
             traceKnown = false;
             likelihoodKnown = false;
             if (!RecomputeResiduals) {
-                if (index != -1)
+                if (index != -1 && !changedValues.contains(index))
                     changedValues.add(index);
                 else{
                     totalRecompute = true;
@@ -624,7 +625,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 int row = index / factors.getRowDimension();
                 if (index != -1)
                     for (int i = 0; i < data.getRowDimension(); i++) {
-                        changedValues.add(row * data.getRowDimension() + i);
+                        if(!changedValues.contains(i))
+                          changedValues.add(row * data.getRowDimension() + i);
                     }
                 else{
                     totalRecompute = true;
@@ -647,7 +649,8 @@ public class LatentFactorModel extends AbstractModelLikelihood implements Citabl
                 int col = index % loadings.getRowDimension();
                 if (index != -1) {
                     for (int i = 0; i < data.getColumnDimension(); i++) {
-                        changedValues.add(i * data.getRowDimension() + col);
+                        if(!changedValues.contains(i))
+                         changedValues.add(i * data.getRowDimension() + col);
                     }
                 }
                 else{totalRecompute = true;}

@@ -97,7 +97,11 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         likelihoodKnown = false;
-        changedList.add(index);
+        if(index == -1)
+            reset();
+        else {
+            changedList.add(index);
+        }
     }
 
     @Override
@@ -137,24 +141,9 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
 //        reset();
 
         if (newSize != size){
-            double[][] relationshipListTemp = new double[size][size];
-            for (int i = 0; i < Math.min(newSize, size) ; i++) {
-                for (int j = 0; j < Math.min(newSize, size); j++) {
-                    relationshipListTemp[i][j] = relationshipList[i][j];
-                }
-            }
-            if(relationshipList.length < relationshipListTemp.length){
-                for (int i = 0; i < data.getColumnDimension(); i++) {
-                    int count = 0;
-                    for (int j = 0; j < data.getRowDimension(); j++) {
-                        count += Math.abs(data.getParameterValue(i, j) - data.getParameterValue(newSize - 1, j));
-                    }
-                    relationshipListTemp[i][newSize - 1] = Math.exp(count / (theta * theta) );
-                    relationshipListTemp[newSize-1][i] = relationshipListTemp[i][newSize - 1];
-                }
-            }
             size = newSize;
-            relationshipList = relationshipListTemp;
+            relationshipList = new double[size][size];
+                reset();
         }
 
         CholeskyDecomposition chol = null;
@@ -174,10 +163,15 @@ public class DeterminentalPointProcessPrior extends AbstractModelLikelihood{
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
+        changedList = new Vector<Integer>();
+//        storedChangedList = new Vector<Integer>();
         reset();
     }
 
     public void reset(){
+        if(relationshipList.length != data.getColumnDimension()){
+            relationshipList = new double[data.getColumnDimension()][data.getColumnDimension()];
+        }
         for (int i = 0; i < data.getColumnDimension(); i++) {
             for (int j = 0; j < i; j++) {
                 int count = 0;

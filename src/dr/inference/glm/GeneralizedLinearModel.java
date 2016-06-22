@@ -50,6 +50,7 @@ import java.util.logging.Logger;
  */
 public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
+
     public enum LinkFunction {
         IDENTITY(new Transform.NoTransform()),
         LOG(new Transform.LogTransform()),
@@ -81,6 +82,16 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
     protected List<Parameter> randomEffects = null;
 
+    private double[] transformedXBeta;
+    private double[] storedTransformedXBeta;
+    private boolean transformedXBetaKnown = false;
+
+    private double[] Y;
+
+    private double storedLogLikelihood;
+    private double logLikelihood;
+    private boolean likelihoodKnown = false;
+
     public GeneralizedLinearModel(Parameter dependentParameter, DensityModel density, LinkFunction linkFunction) {
         super(GeneralizedLinearModelParser.GLM_LIKELIHOOD);
         this.dependentParameter = dependentParameter;
@@ -96,6 +107,14 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         } else {
             N = 0;
         }
+
+        transformedXBeta = new double[N];
+        storedTransformedXBeta = new double[N];
+
+        Y = dependentParameter.getParameterValues();
+
+        transformedXBetaKnown = false;
+        likelihoodKnown = false;
     }
 
     public void addRandomEffectsParameter(Parameter effect) {
@@ -200,10 +219,6 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
             }
         }
 
-        for (int i = 0; i < N; i++) {
-            xBeta[i] = linkFunction.inverse(xBeta[i]);
-        }
-
         return xBeta;
     }
 
@@ -230,16 +245,6 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         }
 
         return xBeta;
-    }
-
-    public double[] getTransformedXBeta() {
-        double[] transformedXBeta = getXBeta();
-
-        for (int i = 0; i < N; i++) {
-            transformedXBeta[i] = linkFunction.inverse(transformedXBeta[i]);
-        }
-
-        return transformedXBeta;
     }
 
     public int getNumberOfFixedEffects() {
@@ -270,10 +275,20 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
         return designMatrix.get(j).getParameterAsMatrix();
     }
 
-    private double calculateLogLikelihood() {
-        double[] Y = dependentParameter.getParameterValues();
-        double[] transformedXBeta = getTransformedXBeta();
+    private void calculateTransformedXBeta() {
+        double[] xBeta = getXBeta();
 
+        for (int i = 0; i < N; i++) {
+            transformedXBeta[i] = linkFunction.inverse(xBeta[i]);
+        }
+
+        transformedXBetaKnown = true;
+    }
+
+    private double calculateLogLikelihood() {
+        if (!transformedXBetaKnown) {
+            calculateTransformedXBeta();
+        }
 
         double logL = 0.0;
 
@@ -298,7 +313,10 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
      * @return
      */
     public double getLogLikelihood() {
-        return calculateLogLikelihood();
+        if (!likelihoodKnown) {
+            logLikelihood = calculateLogLikelihood();
+        }
+        return logLikelihood;
     }
 
     // **************************************************************
@@ -307,22 +325,32 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-
+        // some aspect of the density function has changed
+        likelihoodKnown = false;
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-//        fireModelChanged();
+        if (variable == dependentParameter) {
+            Y = dependentParameter.getParameterValues();
+        }
+
+        transformedXBetaKnown = false;
+        likelihoodKnown = false;
     }
 
     @Override
     protected void storeState() {
-        // No internal states to save
+        storedLogLikelihood = logLikelihood;
+        System.arraycopy(transformedXBeta, 0, storedTransformedXBeta, 0, transformedXBeta.length);
     }
 
     @Override
     protected void restoreState() {
-        // No internal states to restore
+        logLikelihood = storedLogLikelihood;
+
+        // could use double buffering to speed this up...
+        System.arraycopy(storedTransformedXBeta, 0, transformedXBeta, 0, transformedXBeta.length);
     }
 
     @Override

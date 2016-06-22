@@ -349,7 +349,7 @@ public final class GeneralizedLinearModel extends AbstractModelLikelihood {
     protected void restoreState() {
         logLikelihood = storedLogLikelihood;
 
-        // could use double buffering to speed this up...
+        // could use double buffering to speed this up for very large matrices...
         System.arraycopy(storedTransformedXBeta, 0, transformedXBeta, 0, transformedXBeta.length);
     }
 

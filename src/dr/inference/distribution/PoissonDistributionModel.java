@@ -71,7 +71,12 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
     }
 
     public double logPdf(double x) {
-        return Math.log(distribution.probability(x));
+        if (x == 0.0) {
+            return -mean();
+        }
+        // compute pdf in log space using an approximation for log factorial
+        return Math.log(mean()) * x - mean() - ((x + 0.5) * Math.log(x) - x + 0.5 * Math.log(2 * Math.PI));
+        //return Math.log(distribution.probability(x));
     }
 
     public double cdf(double x) {
@@ -81,6 +86,7 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
             throw new RuntimeException(e);
         }
     }
+
 
     public double quantile(double y) {
         try {

@@ -56,8 +56,8 @@ public class PlinkImporter implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Misc";
+    public Citation.Category getCategory() {
+        return Citation.Category.DATA_MODELS;
     }
 
     @Override

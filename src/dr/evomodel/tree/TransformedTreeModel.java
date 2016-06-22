@@ -47,7 +47,7 @@ import java.util.logging.Logger;
  *
  * @author Marc Suchard
  */
-public class TransformedTreeModel extends AbstractModel implements MultivariateTraitTree {
+public class TransformedTreeModel extends AbstractModel implements MultivariateTraitTree, Citable {
 
     public TransformedTreeModel(String id, TreeModel tree, TreeTransform treeTransform) {
         super(id);
@@ -318,5 +318,20 @@ public class TransformedTreeModel extends AbstractModel implements MultivariateT
 
     public void setUnits(Type units) {
         treeModel.setUnits(units);
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Bayesian estimation of Pagel's lambda";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.VRANCKEN_2015_SIMULTANEOUSLY);
     }
 }

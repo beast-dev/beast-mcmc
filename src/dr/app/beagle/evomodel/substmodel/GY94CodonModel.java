@@ -28,6 +28,12 @@ package dr.app.beagle.evomodel.substmodel;
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Yang model of codon evolution
@@ -37,7 +43,7 @@ import dr.inference.model.Statistic;
  * @author Marc A. Suchard
  * @version $Id: YangCodonModel.java,v 1.21 2005/05/24 20:25:58 rambaut Exp $
  */
-public class GY94CodonModel extends AbstractCodonModel {
+public class GY94CodonModel extends AbstractCodonModel implements Citable {
     /**
      * kappa
      */
@@ -204,5 +210,32 @@ public class GY94CodonModel extends AbstractCodonModel {
         }
 
     };*/
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Goldman-Yang codon substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("N", "Goldman"),
+                    new Author("Z", "Yang")
+            },
+            "A codon-based model of nucleotide substitution for protein-coding DNA sequences",
+            1994,
+            "Mol Biol Evol",
+            11, 725, 736
+    );
 
 }

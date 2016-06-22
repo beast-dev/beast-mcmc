@@ -197,17 +197,23 @@ public class GeneralDataType extends DataType implements Identifiable {
      */
     public boolean[] getStateSet(int state) {
 
-        if (state >= states.size()) {
-            throw new IllegalArgumentException("invalid state index");
-        }
-        State s = states.get(state);
-
         boolean[] stateSet = new boolean[stateCount];
-        for (int i = 0; i < stateCount; i++)
-            stateSet[i] = false;
 
-        for (int i = 0, n = s.ambiguities.length; i < n; i++) {
-            stateSet[s.ambiguities[i]] = true;
+        if (state < states.size()) {
+            State s = states.get(state);
+
+            for (int i = 0; i < stateCount; i++) {
+                stateSet[i] = false;
+            }
+            for (int i = 0, n = s.ambiguities.length; i < n; i++) {
+                stateSet[s.ambiguities[i]] = true;
+            }
+        } else if (state == states.size()) {
+            for (int i = 0; i < stateCount; i++) {
+                stateSet[i] = true;
+            }
+        } else {
+            throw new IllegalArgumentException("invalid state index");
         }
 
         return stateSet;

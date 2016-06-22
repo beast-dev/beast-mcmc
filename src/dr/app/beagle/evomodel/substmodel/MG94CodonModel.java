@@ -27,6 +27,12 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.Codons;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Muse-Gaut model of codon evolution
@@ -35,7 +41,7 @@ import dr.inference.model.Parameter;
  * @author Guy Baele
  * @author Philippe lemey
  */
-public class MG94CodonModel extends AbstractCodonModel {
+public class MG94CodonModel extends AbstractCodonModel implements Citable {
 
     protected Parameter alphaParameter;
     protected Parameter betaParameter;
@@ -137,4 +143,30 @@ public class MG94CodonModel extends AbstractCodonModel {
     }
 
     private boolean doNormalization = true;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Muse-Gaut codon substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("SV", "Muse"),
+                    new Author("BS", "Gaut")
+            },
+            "A likelihood approach for comparing synonymous and nonsynonymous nucleotide substitution rates, with application to the chloroplast genome",
+            1994,
+            "Mol Biol Evol",
+            11, 715, 724
+    );
 }

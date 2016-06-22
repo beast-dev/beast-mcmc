@@ -28,6 +28,12 @@ package dr.evomodel.substmodel;
 import dr.evomodelxml.substmodel.TN93Parser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Tamura and Nei model of nucleotide evolution.
@@ -49,7 +55,7 @@ import dr.inference.model.Variable;
  *
  * @author Joseph Heled
  */
-public class TN93 extends AbstractNucleotideModel {
+public class TN93 extends AbstractNucleotideModel implements Citable {
 
     private Variable<Double> kappa1Variable = null;
     private Variable<Double> kappa2Variable = null;
@@ -331,4 +337,30 @@ public class TN93 extends AbstractNucleotideModel {
 
         return buffer.toString();
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Tamura-Nei nucleotide substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("K", "Tamura"),
+                    new Author("M", "Nei")
+            },
+            "Estimation of the number of nucleotide substitutions in the control region of mitochondrial DNA in humans and chimpanzees",
+            1993,
+            "Mol Biol Evol",
+            10, 512, 526
+    );
 }

@@ -38,10 +38,11 @@ import dr.inference.model.*;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <b>A general irreversible class for any
@@ -50,7 +51,7 @@ import java.util.Set;
  * @author Marc Suchard
  */
 
-public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements Likelihood {
+public class ComplexSubstitutionModel extends AbstractSubstitutionModel implements Likelihood, Citable {
 
     public ComplexSubstitutionModel(String name, DataType dataType,
                                     FrequencyModel rootFreqModel, Parameter parameter) {
@@ -581,5 +582,20 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
     private boolean isUsed = false;
 
     private double[] probability = null;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Complex-diagonalizable, irreversible substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.EDWARDS_2011_ANCIENT);
+    }
 
 }

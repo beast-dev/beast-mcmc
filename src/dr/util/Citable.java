@@ -37,7 +37,7 @@ import java.util.Map;
 
 public interface Citable {
 
-    String getCategory();
+    Citation.Category getCategory();
 
     String getDescription();
 

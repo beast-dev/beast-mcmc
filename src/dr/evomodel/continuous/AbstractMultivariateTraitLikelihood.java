@@ -295,8 +295,8 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     }
 
     @Override
-    public String getCategory() {
-        return "Trait Model";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override
@@ -307,7 +307,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     @Override
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();
-        citations.add(CommonCitations.LEMEY_2010);
+        citations.add(CommonCitations.LEMEY_2010_PHYLOGEOGRAPHY);
         if (doAscertainmentCorrect) {
             citations.add(
                     new Citation(

@@ -1,5 +1,5 @@
 /*
- * ConditionalCladeProbability.java
+ * PathDependentOperator.java
  *
  * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -23,41 +23,16 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.inference.distribution;
+package dr.inference.operators;
 
-import dr.evolution.tree.SimpleTree;
-import dr.evomodel.tree.ConditionalCladeFrequency;
-import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Likelihood;
+/**
+ * Created by Guy Baele on 13/01/16.
+ */
+public interface PathDependentOperator {
 
-public class ConditionalCladeProbability extends Likelihood.Abstract {
-	
-	private ConditionalCladeFrequency ccf;
-	private TreeModel treeModel;
-	
-	public ConditionalCladeProbability(ConditionalCladeFrequency ccf, TreeModel treeModel) {
-		super(null);
-		this.ccf = ccf;
-		this.treeModel = treeModel;
-	}
-
-	@Override
-	protected double calculateLogLikelihood() {
-		
-		SimpleTree simTree = new SimpleTree(treeModel);
-		
-		//System.err.println("tree: " + simTree);
-		//System.err.println(ccf.getTreeProbability(simTree));
-		
-		return ccf.getTreeProbability(simTree);
-		
-	}
-	
-	/**
-     * Overridden to always return false.
+    /**
+     * Set the path parameter for sampling from power-posterior
      */
-    protected boolean getLikelihoodKnown() {
-        return false;
-    }
+    public void setPathParameter(double beta);
 
 }

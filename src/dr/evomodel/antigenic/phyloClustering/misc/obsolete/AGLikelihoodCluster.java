@@ -7,6 +7,7 @@ import dr.math.LogTricks;
 import dr.math.distributions.NormalDistribution;
 import dr.util.*;
 import dr.xml.*;
+import mpi.Comm;
 
 import java.io.*;
 import java.util.*;
@@ -1063,8 +1064,8 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
     };
 
     @Override
-    public String getCategory() {
-        return "Trait Models";
+    public Citation.Category getCategory() {
+        return Citation.Category.TRAIT_MODELS;
     }
 
     @Override
@@ -1078,34 +1079,11 @@ public class AGLikelihoodCluster extends AbstractModelLikelihood implements Cita
                                 new Author("C", "Cheung"),
                                 new Author("A", "Rambaut"),
                                 new Author("P", "Lemey"),
+                                new Author("MA", "Suchard"),
                                 new Author("T", "Bedford")
                         },
-                        "Integrating influenza antigenic dynamics with molecular evolution",
-                        2015,
-                        "eLife",
-                        "e01914",
-                        "10.7554/eLife.01914"
+                        Citation.Status.IN_PREPARATION
                 ),
-                new Citation(
-                        new Author[]{
-                                new Author("T", "Bedford"),
-                                new Author("MA", "Suchard"),
-                                new Author("P", "Lemey"),
-                                new Author("G", "Dudas"),
-                                new Author("V", "Gregory"),
-                                new Author("AJ", "Hay"),
-                                new Author("JW", "McCauley"),
-                                new Author("CA", "Russell"),
-                                new Author("DJ", "Smith"),
-                                new Author("A", "Rambaut")
-                        },
-                        "Integrating influenza antigenic dynamics with molecular evolution",
-                        2015,
-                        "eLife",
-                        "e01914",
-                        "10.7554/eLife.01914"
-                ));
+                CommonCitations.BEDFORD_2015_INTEGRATING);
     }
-
-
 }

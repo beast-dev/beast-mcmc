@@ -1539,8 +1539,8 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
     }
 
     @Override
-    public String getCategory() {
-        return "Tree Model";
+    public Citation.Category getCategory() {
+        return Citation.Category.SPECIES_MODELS;
     }
 
     @Override

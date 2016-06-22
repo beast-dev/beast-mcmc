@@ -53,6 +53,7 @@ import java.util.Map;
 public class SubtreeLeapOperator extends AbstractTreeOperator implements CoercableMCMCOperator {
 
     private double size = 1.0;
+    private double accP = 0.234;
 
     private final TreeModel tree;
     private final CoercionMode mode;
@@ -65,10 +66,11 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
      * @param size   scaling on a unit Gaussian to draw the patristic distance from
      * @param mode   coercion mode
      */
-    public SubtreeLeapOperator(TreeModel tree, double weight, double size, CoercionMode mode) {
+    public SubtreeLeapOperator(TreeModel tree, double weight, double size, double accP, CoercionMode mode) {
         this.tree = tree;
         setWeight(weight);
         this.size = size;
+        this.accP = accP;
         this.mode = mode;
     }
 
@@ -296,7 +298,7 @@ public class SubtreeLeapOperator extends AbstractTreeOperator implements Coercab
     }
 
     public double getTargetAcceptanceProbability() {
-        return 0.234;
+        return accP;
     }
 
 

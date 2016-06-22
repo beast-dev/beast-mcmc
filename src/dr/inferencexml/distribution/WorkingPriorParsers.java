@@ -1,7 +1,7 @@
 /*
  * WorkingPriorParsers.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -55,6 +55,7 @@ public class WorkingPriorParsers {
     public static final String GAMMA_WORKING_PRIOR = "gammaWorkingPrior";
     public static final String PARAMETER_COLUMN = "parameterColumn";
     public static final String DIMENSION = "dimension";
+    public static final String UPPERLIMIT = "upperLimit";
 
     /**
      * A special parser that reads a convenient short form of reference priors on parameters.
@@ -404,6 +405,14 @@ public class WorkingPriorParsers {
                     throw new XMLParseException("Column '" + parameterName + "' has dimension smaller than 1.");
                 }
 
+                double upperlimit = 1.0;
+                if (xo.hasAttribute(UPPERLIMIT)) {
+                    upperlimit = xo.getDoubleAttribute(UPPERLIMIT);
+                }
+                if (upperlimit <= 0.0) {
+                    throw new XMLParseException("Positive upper bound expected for logit transformed normal KDE distribution.");
+                }
+
                 LogFileTraces traces = new LogFileTraces(fileName, file);
                 traces.loadTraces();
                 long maxState = traces.getMaxState();
@@ -433,7 +442,7 @@ public class WorkingPriorParsers {
                     Double[] parameterSamples = new Double[traces.getStateCount()];
                     traces.getValues(traceIndexParameter).toArray(parameterSamples);
 
-                    DistributionLikelihood likelihood = new DistributionLikelihood(new LogitTransformedNormalKDEDistribution(parameterSamples));
+                    DistributionLikelihood likelihood = new DistributionLikelihood(new LogitTransformedNormalKDEDistribution(parameterSamples, upperlimit));
                     for (int j = 0; j < xo.getChildCount(); j++) {
                         if (xo.getChild(j) instanceof Statistic) {
                             if (DEBUG) {
@@ -471,7 +480,7 @@ public class WorkingPriorParsers {
                         Double[] parameterSamples = new Double[traces.getStateCount()];
                         traces.getValues(traceIndexParameter).toArray(parameterSamples);
 
-                        arrayKDE[i] = new LogitTransformedNormalKDEDistribution(parameterSamples);
+                        arrayKDE[i] = new LogitTransformedNormalKDEDistribution(parameterSamples, upperlimit);
 
                     }
 
@@ -513,6 +522,8 @@ public class WorkingPriorParsers {
                 AttributeRule.newIntegerRule("burnin"),
                 //optional to provide a dimension attribute
                 AttributeRule.newIntegerRule("dimension", true),
+                //optional to provide an upperLimit attribute
+                AttributeRule.newDoubleRule("upperLimit", true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

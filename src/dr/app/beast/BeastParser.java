@@ -25,9 +25,8 @@
 
 package dr.app.beast;
 
-import dr.util.Author;
-import dr.util.Citable;
 import dr.util.Citation;
+import dr.util.Pair;
 import dr.xml.PropertyParser;
 import dr.xml.UserInput;
 import dr.xml.XMLObjectParser;
@@ -39,6 +38,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
@@ -200,6 +200,44 @@ public class BeastParser extends XMLParser {
         if (verbose) {
             System.out.println("load " + parsersFile + " successfully.\n");
         }
+    }
+
+    @Override
+    protected void executingRunnable() {
+        Logger.getLogger("dr.apps.beast").info("\n\nCitations for this analysis: ");
+
+        Map<String, Set<Pair<String, String>>> categoryMap = new LinkedHashMap<String, Set<Pair<String, String>>>();
+
+        // force the Framework category to be first...
+        categoryMap.put("Framework", new LinkedHashSet<Pair<String, String>>());
+
+        for (Pair<String, String> keyPair : getCitationStore().keySet()) {
+            Set<Pair<String, String>> pairSet = categoryMap.get(keyPair.fst);
+            if (pairSet == null) {
+                pairSet = new LinkedHashSet<Pair<String, String>>();
+                categoryMap.put(keyPair.fst, pairSet);
+            }
+            pairSet.add(keyPair);
+        }
+
+        for (String category : categoryMap.keySet()) {
+            Logger.getLogger("dr.apps.beast").info("\n"+category.toUpperCase());
+            Set<Pair<String, String>> pairSet = categoryMap.get(category);
+
+            for (Pair<String, String>keyPair : pairSet) {
+                Logger.getLogger("dr.apps.beast").info(keyPair.snd + ":");
+
+                for (Citation citation : getCitationStore().get(keyPair)) {
+                    Logger.getLogger("dr.apps.beast").info("\t" + citation.toString());
+                }
+            }
+        }
+
+        // clear the citation store so all the same citations don't get cited again
+        getCitationStore().clear();
+
+        Logger.getLogger("dr.apps.beast").info("\n");
+
     }
 
     private void setup(String[] args) {

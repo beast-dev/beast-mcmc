@@ -311,8 +311,8 @@ public class WeightedMixtureModel extends AbstractModelLikelihood implements Cit
     }
 
     @Override
-    public String getCategory() {
-        return "Misc";
+    public Citation.Category getCategory() {
+        return Citation.Category.MISC;
     }
 
     @Override

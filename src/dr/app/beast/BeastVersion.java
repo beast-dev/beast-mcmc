@@ -56,11 +56,11 @@ public class BeastVersion implements Version, Citable {
 
     private static final String DATE_STRING = "2002-2016";
 
-    private static final boolean IS_PRERELEASE = true;
+    private static final boolean IS_PRERELEASE = false;
 
     // this is now being manually updated since the move to GitHub. Using date in yyyymmdd format (suffix
     // with b,c,d etc if multiple revisions in a day.
-    private static final String REVISION = "GitHub 20160319";
+    private static final String REVISION = "GitHub 20160617";
 
     public String getVersion() {
         return VERSION;
@@ -138,8 +138,8 @@ public class BeastVersion implements Version, Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Framework";
+    public Citation.Category getCategory() {
+        return Citation.Category.FRAMEWORK;
     }
 
     @Override

@@ -29,13 +29,19 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExpConstant;
 import dr.evomodelxml.coalescent.ExponentialConstantModelParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Exponential growth followed by constant size.
  *
  * @author Matthew Hall
  */
-public class ExponentialConstantModel extends DemographicModel {
+public class ExponentialConstantModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -105,4 +111,30 @@ public class ExponentialConstantModel extends DemographicModel {
     Parameter growthRateParameter = null;
     Parameter transitionTimeParameter = null;
     ExpConstant exponentialConstant = null;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Exponential-Constant Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("OG", "Pybus"),
+                    new Author("A", "Rambaut")
+            },
+            "GENIE: estimating demographic history from molecular phylogenies",
+            2001,
+            "Bioinformatics",
+            18, 1404, 1405
+    );
 }

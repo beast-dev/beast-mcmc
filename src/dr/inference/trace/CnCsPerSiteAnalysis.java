@@ -253,8 +253,8 @@ public class CnCsPerSiteAnalysis implements Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Counting Processes";
+    public Citation.Category getCategory() {
+        return Citation.Category.COUNTING_PROCESSES;
     }
 
     @Override
@@ -264,7 +264,7 @@ public class CnCsPerSiteAnalysis implements Citable {
 
     @Override
     public List<Citation> getCitations() {
-        return Collections.singletonList(CommonCitations.LEMEY_RENAISSANCE);
+        return Collections.singletonList(CommonCitations.LEMEY_2012_RENAISSANCE);
     }
 
     private class OutputFormat {

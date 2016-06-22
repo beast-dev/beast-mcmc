@@ -30,9 +30,14 @@ import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.xml.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -40,7 +45,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class HypermutantErrorModel extends TipStatesModel {
+public class HypermutantErrorModel extends TipStatesModel implements Citable {
 
     public static final String HYPERMUTANT_ERROR_MODEL = "hypermutantErrorModel";
     public static final String HYPERMUTATION_RATE = "hypermutationRate";
@@ -304,4 +309,41 @@ public class HypermutantErrorModel extends TipStatesModel {
     private final Parameter hypermutationRateParameter;
     private final Parameter hypermutationIndicatorParameter;
     private final boolean unlinkedRates;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Sequence error model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
+                        new Author[]{
+                                new Author("A", "Rambaut"),
+                                new Author("SYW", "Ho"),
+                                new Author("AJ", "Drummond"),
+                                new Author("B", "Shapiro"),
+                        },
+                        "Accommodating the effect of ancient DNA damage on inferences of demographic histories",
+                        2008,
+                        "Mol Biol Evol",
+                        26,
+                        245, 248,
+                        "10.1093/molbev/msn256"
+                ),
+                new Citation(
+                        new Author[]{
+                                new Author("J", "Felsenstein"),
+                        },
+                        "Inferring Phylogenies",
+                        2004,
+                        "Sinauer Associates",
+                        ""
+                ));
+    }
 }

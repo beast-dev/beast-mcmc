@@ -74,19 +74,26 @@ public class EigenDecomposition implements Serializable {
     }
 
     /**
+     * This function returns the normalization factor
+     * @return normalization factor
+     */
+    public final double getNormalization() { return normalization; }
+
+    /**
      * This function rescales the eigen values; this is more stable than
      * rescaling the original Q matrix, also O(stateCount) instead of O(stateCount^2)
      */
     public void normalizeEigenValues(double scale) {
+        this.normalization = scale;
         int dim = Eval.length;
-        for (int i = 0; i < dim; i++)
-
+        for (int i = 0; i < dim; i++) {
             Eval[i] /= scale;
+        }
     }
 
     // Eigenvalues, eigenvectors, and inverse eigenvectors
     private final double[] Evec;
     private final double[] Ievc;
     private final double[] Eval;
-
+    private double normalization = 1.0;
 }

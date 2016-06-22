@@ -308,8 +308,8 @@ public class LineageSpecificBranchModel extends AbstractModel implements BranchM
     }// END: main
 
 	@Override
-	public String getCategory() {
-		return "Clock Model";
+	public Citation.Category getCategory() {
+		return Citation.Category.MOLECULAR_CLOCK;
 	}
 
 	@Override

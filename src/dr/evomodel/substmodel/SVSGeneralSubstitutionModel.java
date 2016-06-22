@@ -29,10 +29,11 @@ import dr.evolution.datatype.*;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <b>A general model of sequence substitution with stochastic variable selection</b>. A general reversible class for any
@@ -43,7 +44,7 @@ import java.util.Set;
  */
 
 public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements Likelihood,
-        BayesianStochasticSearchVariableSelection {
+        BayesianStochasticSearchVariableSelection, Citable {
 
 
     public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
@@ -67,7 +68,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     }
 
     public boolean validState() {
-        return !updateMatrix || Utils.connectedAndWellConditioned(probability,this);
+        return !updateMatrix || BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -92,7 +93,7 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
      */
     public double getLogLikelihood() {
         if (updateMatrix) {
-            if (!Utils.connectedAndWellConditioned(probability,this)) {
+            if (!BayesianStochasticSearchVariableSelection.Utils.connectedAndWellConditioned(probability,this)) {
                 return Double.NEGATIVE_INFINITY;
             }
         }
@@ -187,4 +188,19 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     private boolean isUsed = false;
 
     private Parameter rateIndicator;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SUBSTITUTION_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Stochastic search variable selection, reversible substitution model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CommonCitations.LEMEY_2009_BAYESIAN);
+    }
 }

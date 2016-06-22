@@ -40,6 +40,9 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.HeapSort;
 import jebl.util.FixedBitSet;
 
@@ -51,7 +54,8 @@ import java.util.*;
  * @author Joseph Heled
  *         Date: 24/05/2008
  */
-public class SpeciesTreeModel extends AbstractModel implements MutableTree, TreeTraitProvider, TreeLogger.LogUpon, Scalable {
+public class SpeciesTreeModel extends AbstractModel implements
+        MutableTree, TreeTraitProvider, TreeLogger.LogUpon, Scalable, Citable {
     private final SimpleTree spTree;
     private final SpeciesBindings species;
     private final Map<NodeRef, NodeProperties> props = new HashMap<NodeRef, NodeProperties>();
@@ -907,7 +911,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             final double treeHeight = tree.getRootHeight();
             if (treeHeight <= 0) {
                 tree.setRootHeight(1.0);
-                Utils.correctHeightsForTips(tree);
+                MutableTree.Utils.correctHeightsForTips(tree);
                 SimpleTree.Utils.scaleNodeHeights(tree, rootHeight / tree.getRootHeight());
             }
 
@@ -1418,6 +1422,31 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             dim = 3 * spb.nSpecies() - 2 + (root ? 1 : 0);
         }
         return new Parameter.Default(dim, value);
+    }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.SPECIES_MODELS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "StarBEAST multi-locus species tree inference";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(new Citation(
+                new Author[]{
+                        new Author("J", "Heled"),
+                        new Author("AJ", "Drummond"),
+                },
+                "Bayesian Inference of Species Trees from Multilocus Data",
+                2010,
+                "Mol Biol Evol",
+                27, 570, 580,
+                "10.1093/molbev/msp274"
+        ));
     }
 
 }

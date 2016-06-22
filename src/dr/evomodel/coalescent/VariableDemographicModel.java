@@ -32,12 +32,18 @@ import dr.evomodelxml.coalescent.VariableDemographicModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Joseph Heled
  * @version $Id$
  */
-public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet {
+public class VariableDemographicModel extends DemographicModel implements MultiLociTreeSet, Citable {
 
     private final Parameter popSizeParameter;
     private final Parameter indicatorParameter;
@@ -204,4 +210,31 @@ public class VariableDemographicModel extends DemographicModel implements MultiL
         demoFunction = savedDemoFunction;
         savedDemoFunction = null;
     }
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Extended Bayesian Skyline multi-locus coalescent model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Arrays.asList(new Citation(
+                        new Author[]{
+                                new Author("J", "Heled"),
+                                new Author("AJ", "Drummond"),
+                        },
+                        "Bayesian inference of population size history from multiple loci",
+                        2008,
+                        "BMC Evolutionary Biology",
+                        8,
+                        "289",
+                        "10.1186/1471-2148-8-289"
+                ));
+    }
+
 }

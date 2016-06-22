@@ -30,6 +30,11 @@ import dr.inference.distribution.LogLinearModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Model;
+import dr.util.Citation;
+import dr.util.CommonCitations;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -59,9 +64,10 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
             super.handleModelChangedEvent(model, object, index);
     }
 
-    public LogColumn[] getColumns() {
-        return glm.getColumns();
-    }
+    // This info can be gotten from the GLM
+//    public LogColumn[] getColumns() {
+//        return glm.getColumns();
+//    }
 
     public double getLogLikelihood() {
         double logL = super.getLogLikelihood();
@@ -73,6 +79,16 @@ public class GLMSubstitutionModel extends ComplexSubstitutionModel {
         return Double.NEGATIVE_INFINITY;
     }
 
+    @Override
+    public String getDescription() {
+        return "Generalized linear (model, GLM) substitution model"; // TODO Horrible; fix
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+
+        return Collections.singletonList(CommonCitations.LEMEY_2014_UNIFYING);
+    }
 
     private LogLinearModel glm;
     private double[] testProbabilities;

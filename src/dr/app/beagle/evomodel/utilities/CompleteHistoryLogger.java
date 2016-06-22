@@ -259,8 +259,8 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     }
 
     @Override
-    public String getCategory() {
-        return "Counting Processes";
+    public Citation.Category getCategory() {
+        return Citation.Category.COUNTING_PROCESSES;
     }
 
     @Override
@@ -269,7 +269,8 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     }
 
     public List<Citation> getCitations() {
-        return Arrays.asList(CommonCitations.LEMEY_2012, CommonCitations.SHAPIRO_2012, CommonCitations.BLOOM_2012);
+        return Arrays.asList(//CommonCitations.LEMEY_2012, // TODO Find published Lemey paper
+                CommonCitations.MININ_2008_FAST, CommonCitations.BLOOM_2013_STABILITY);
     }
 
     final private Tree tree;

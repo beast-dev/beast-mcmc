@@ -29,6 +29,12 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evolution.coalescent.ExponentialLogistic;
 import dr.evomodelxml.coalescent.ExponentialLogisticModelParser;
 import dr.inference.model.Parameter;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Exponential growth followed by Logistic growth.
@@ -37,7 +43,7 @@ import dr.inference.model.Parameter;
  * @author Alexei Drummond
  * @version $Id$
  */
-public class ExponentialLogisticModel extends DemographicModel {
+public class ExponentialLogisticModel extends DemographicModel implements Citable {
 
     //
     // Public stuff
@@ -134,4 +140,30 @@ public class ExponentialLogisticModel extends DemographicModel {
     Parameter transistionTimeParameter = null;
     double alpha = 0.5;
     ExponentialLogistic exponentialLogistic = null;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.TREE_PRIORS;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Exponential-Logistic Coalescent";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("OG", "Pybus"),
+                    new Author("A", "Rambaut")
+            },
+            "GENIE: estimating demographic history from molecular phylogenies",
+            2001,
+            "Bioinformatics",
+            18, 1404, 1405
+    );
 }

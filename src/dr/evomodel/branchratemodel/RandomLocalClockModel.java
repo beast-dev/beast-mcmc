@@ -34,7 +34,12 @@ import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -47,7 +52,7 @@ import java.util.logging.Logger;
  * @version $Id: DiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
 public class RandomLocalClockModel extends AbstractBranchRateModel
-        implements RandomLocalTreeVariable {
+        implements RandomLocalTreeVariable, Citable {
 
     public RandomLocalClockModel(TreeModel treeModel,
                                  Parameter meanRateParameter,
@@ -232,4 +237,31 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     private TreeParameterModel rates;
 
     boolean recalculationNeeded = true;
+
+    @Override
+    public Citation.Category getCategory() {
+        return Citation.Category.MOLECULAR_CLOCK;
+    }
+
+    @Override
+    public String getDescription() {
+        return "Local clock model";
+    }
+
+    @Override
+    public List<Citation> getCitations() {
+        return Collections.singletonList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("AJ", "Drummond"),
+                    new Author("MA", "Suchard")
+            },
+            "Bayesian random local clocks, or one rate to rule them all",
+            2010,
+            "BMC Biology",
+            "8: 114",
+            "10.1186/1741-7007-8-114"
+    );
 }

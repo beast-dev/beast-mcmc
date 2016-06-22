@@ -457,6 +457,14 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                         switch (model.getNucSubstitutionModel()) {
 
+                            case JC:
+
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
+                                }
+                                break;
+
                             case HKY:
                                 if (codonPartitionCount > 1 && model.isUnlinkedSubstitutionModel()) {
                                     for (int i = 1; i <= codonPartitionCount; i++) {
@@ -478,6 +486,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                             });
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa");
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                }
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
                                 }
                                 break;
 
@@ -519,6 +531,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                     writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "kappa2");
                                     writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                 }
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
+                                }
                                 break;
 
                             case GTR:
@@ -546,6 +562,10 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + rateName);
                                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
                                     }
+                                }
+                                if (codonPartitionCount > 1) {
+                                    //write working priors for relative rates
+                                    writeRelativeRates(writer, model, codonPartitionCount);
                                 }
                                 break;
 
@@ -578,6 +598,11 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                         }
 
                         break;//NUCLEOTIDES
+
+                    case DataType.AMINO_ACIDS:
+
+                        //do nothing as these contain empirical values only
+                        break;
 
                     default:
                         throw new IllegalArgumentException("Unknown data type");
@@ -921,6 +946,20 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
         }
 
+    }
+
+    private void writeRelativeRates(XMLWriter writer, PartitionSubstitutionModel model, int codonPartitionCount) {
+        for (int i = 1; i <= codonPartitionCount; i++) {
+            writer.writeOpenTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                    new Attribute[]{
+                            new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                            new Attribute.Default<String>("parameterColumn", model.getPrefix(i) + "mu"),
+                            new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10)),
+                            new Attribute.Default<String>("upperLimit", "" + (double)(codonPartitionCount))
+                    });
+            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix(i) + "mu");
+            writer.writeCloseTag(WorkingPriorParsers.LOGIT_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+        }
     }
 
     private void writeCoalescentEventsStatistic(XMLWriter writer) {

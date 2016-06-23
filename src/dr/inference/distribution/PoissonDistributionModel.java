@@ -46,7 +46,6 @@ import org.w3c.dom.Element;
  */
 
 public class PoissonDistributionModel extends AbstractModel implements ParametricDistributionModel {
-    private final PoissonDistributionImpl distribution;
 
     /**
      * Constructor.
@@ -54,8 +53,6 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
     public PoissonDistributionModel(Variable<Double> mean) {
 
         super(PoissonDistributionModelParser.POISSON_DISTRIBUTION_MODEL);
-
-        distribution = new PoissonDistributionImpl(mean.getValue(0));
 
         this.mean = mean;
         addVariable(mean);
@@ -67,33 +64,17 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
     // *****************************************************************
 
     public double pdf(double x) {
-        return distribution.probability(x);
+        return PoissonDistribution.pdf(x, mean());
     }
 
-    public double logPdf(double x) {
-        if (x == 0.0) {
-            return -mean();
-        }
-        // compute pdf in log space using an approximation for log factorial
-        return Math.log(mean()) * x - mean() - ((x + 0.5) * Math.log(x) - x + 0.5 * Math.log(2 * Math.PI));
-        //return Math.log(distribution.probability(x));
-    }
+    public double logPdf(double x) { return PoissonDistribution.logPdf(x, mean()); }
 
     public double cdf(double x) {
-        try {
-            return distribution.cumulativeProbability(x);
-        } catch (MathException e) {
-            throw new RuntimeException(e);
-        }
+        return PoissonDistribution.cdf(x, mean());
     }
 
-
     public double quantile(double y) {
-        try {
-            return distribution.inverseCumulativeProbability(y);
-        } catch (MathException e) {
-            throw new RuntimeException(e);
-        }
+        return PoissonDistribution.quantile(y, mean());
     }
 
     public double mean() {
@@ -151,7 +132,6 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // using a depricated method or else we would be reallocating this every call...
-        distribution.setMean(mean());
     }
 
     protected void storeState() {

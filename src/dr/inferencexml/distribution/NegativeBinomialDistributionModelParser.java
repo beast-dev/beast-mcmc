@@ -37,7 +37,7 @@ public class NegativeBinomialDistributionModelParser extends AbstractXMLObjectPa
 
     public static final String NEGATIVE_BINOMIAL_DISTRIBUTION_MODEL = "negativeBinomialDistributionModel";
     public static final String MEAN = "mean";
-    public static final String SCALE = "scale";
+    public static final String SHAPE = "shape";
 
     public String getParserName() {
         return NEGATIVE_BINOMIAL_DISTRIBUTION_MODEL;
@@ -45,7 +45,7 @@ public class NegativeBinomialDistributionModelParser extends AbstractXMLObjectPa
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter meanParam, scaleParam;
+        Parameter meanParam, shapeParameter;
 
         XMLObject cxo = xo.getChild(MEAN);
         if (cxo.getChild(0) instanceof Parameter) {
@@ -54,14 +54,14 @@ public class NegativeBinomialDistributionModelParser extends AbstractXMLObjectPa
             meanParam = new Parameter.Default(cxo.getDoubleChild(0));
         }
 
-        cxo = xo.getChild(SCALE);
+        cxo = xo.getChild(SHAPE);
         if (cxo.getChild(0) instanceof Parameter) {
-            scaleParam = (Parameter) cxo.getChild(Parameter.class);
+            shapeParameter = (Parameter) cxo.getChild(Parameter.class);
         } else {
-            scaleParam = new Parameter.Default(cxo.getDoubleChild(0));
+            shapeParameter = new Parameter.Default(cxo.getDoubleChild(0));
         }
 
-        return new NegativeBinomialDistributionModel(meanParam, scaleParam);
+        return new NegativeBinomialDistributionModel(meanParam, shapeParameter);
     }
 
     //************************************************************************
@@ -80,7 +80,7 @@ public class NegativeBinomialDistributionModelParser extends AbstractXMLObjectPa
                                     new ElementRule(Double.class)
                             )}
             ),
-            new ElementRule(SCALE,
+            new ElementRule(SHAPE,
                     new XMLSyntaxRule[]{
                             new XORRule(
                                     new ElementRule(Parameter.class),

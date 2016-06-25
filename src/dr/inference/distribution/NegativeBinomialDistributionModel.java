@@ -50,7 +50,7 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
     /**
      * Constructor.
      */
-    public NegativeBinomialDistributionModel(Variable<Double> mean, Variable<Double> scale) {
+    public NegativeBinomialDistributionModel(Variable<Double> mean, Variable<Double> shape) {
 
         super(NegativeBinomialDistributionModelParser.NEGATIVE_BINOMIAL_DISTRIBUTION_MODEL);
 
@@ -58,9 +58,9 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
         addVariable(mean);
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
 
-        this.scale = scale;
-        addVariable(scale);
-        scale.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
+        this.shape = shape;
+        addVariable(shape);
+        shape.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
     }
 
     // *****************************************************************
@@ -68,15 +68,15 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
     // *****************************************************************
 
     public double pdf(double x) {
-        return NegativeBinomialDistribution.pdf(x, mean(), scale());
+        return NegativeBinomialDistribution.pdf(x, mean(), shape());
     }
 
     public double logPdf(double x) {
-        return NegativeBinomialDistribution.logPdf(x, mean(), scale());
+        return NegativeBinomialDistribution.logPdf(x, mean(), shape());
     }
 
     public double cdf(double x) {
-            return NegativeBinomialDistribution.cdf(x, mean(), scale());
+            return NegativeBinomialDistribution.cdf(x, mean(), shape());
     }
 
     public double quantile(double y) {
@@ -87,8 +87,8 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
         return mean.getValue(0);
     }
 
-    public double scale() {
-        return scale.getValue(0);
+    public double shape() {
+        return shape.getValue(0);
     }
 
     public double variance() {
@@ -129,7 +129,7 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
 
     @Override
     public Variable<Double> getScaleVariable() {
-        return scale;
+        return shape;
     }
 
     // *****************************************************************
@@ -161,6 +161,6 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
     // **************************************************************
 
     private final Variable<Double> mean;
-    private final Variable<Double> scale;
+    private final Variable<Double> shape;
 
 }

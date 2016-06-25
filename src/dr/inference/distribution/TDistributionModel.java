@@ -132,11 +132,6 @@ public class TDistributionModel extends AbstractModel implements ParametricDistr
         return location;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        return scale;
-    }
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************

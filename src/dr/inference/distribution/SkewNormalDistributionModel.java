@@ -156,11 +156,6 @@ public class SkewNormalDistributionModel extends AbstractModel implements Parame
         return location;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        return scale;
-    }
-
     // **************************************************************
     // Private instance variables
     // **************************************************************

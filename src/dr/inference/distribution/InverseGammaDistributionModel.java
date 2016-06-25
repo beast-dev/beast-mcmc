@@ -131,11 +131,6 @@ public class InverseGammaDistributionModel extends AbstractModel implements Para
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************

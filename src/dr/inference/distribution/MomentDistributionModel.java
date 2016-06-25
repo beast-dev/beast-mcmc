@@ -29,7 +29,6 @@ package dr.inference.distribution;
 import dr.inference.model.*;
 import dr.inference.model.Parameter;
 import dr.inferencexml.distribution.MomentDistributionModelParser;
-import dr.math.MathUtils;
 import dr.math.distributions.RandomGenerator;
 
 //@author Max Tolkoff
@@ -220,11 +219,6 @@ public class MomentDistributionModel extends AbstractModelLikelihood implements 
 
     @Override
     public Variable<Double> getLocationVariable() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public Variable<Double> getScaleVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
 

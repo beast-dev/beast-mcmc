@@ -26,15 +26,9 @@
 package dr.inference.distribution;
 
 import dr.inference.model.*;
-import dr.inferencexml.distribution.NormalDistributionModelParser;
 import dr.inferencexml.distribution.PoissonDistributionModelParser;
-import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
-import dr.math.distributions.GaussianProcessRandomGenerator;
-import dr.math.distributions.NormalDistribution;
 import dr.math.distributions.PoissonDistribution;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.PoissonDistributionImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -115,11 +109,6 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
     @Override
     public Variable<Double> getLocationVariable() {
         return mean;
-    }
-
-    @Override
-    public Variable<Double> getScaleVariable() {
-        throw new UnsupportedOperationException("Not implemented");
     }
 
     // *****************************************************************

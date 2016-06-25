@@ -30,11 +30,8 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inferencexml.distribution.NegativeBinomialDistributionModelParser;
-import dr.inferencexml.distribution.PoissonDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.NegativeBinomialDistribution;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.PoissonDistributionImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -50,7 +47,7 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
     /**
      * Constructor.
      */
-    public NegativeBinomialDistributionModel(Variable<Double> mean, Variable<Double> shape) {
+    public NegativeBinomialDistributionModel(Variable<Double> mean, Variable<Double> alpha) {
 
         super(NegativeBinomialDistributionModelParser.NEGATIVE_BINOMIAL_DISTRIBUTION_MODEL);
 
@@ -58,9 +55,9 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
         addVariable(mean);
         mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
 
-        this.shape = shape;
-        addVariable(shape);
-        shape.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
+        this.alpha = alpha;
+        addVariable(alpha);
+        alpha.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
     }
 
     // *****************************************************************
@@ -68,15 +65,15 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
     // *****************************************************************
 
     public double pdf(double x) {
-        return NegativeBinomialDistribution.pdf(x, mean(), shape());
+        return NegativeBinomialDistribution.pdf(x, mean(), alpha());
     }
 
     public double logPdf(double x) {
-        return NegativeBinomialDistribution.logPdf(x, mean(), shape());
+        return NegativeBinomialDistribution.logPdf(x, mean(), alpha());
     }
 
     public double cdf(double x) {
-            return NegativeBinomialDistribution.cdf(x, mean(), shape());
+            return NegativeBinomialDistribution.cdf(x, mean(), alpha());
     }
 
     public double quantile(double y) {
@@ -87,8 +84,8 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
         return mean.getValue(0);
     }
 
-    public double shape() {
-        return shape.getValue(0);
+    public double alpha() {
+        return alpha.getValue(0);
     }
 
     public double variance() {
@@ -127,11 +124,6 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
         return mean;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        return shape;
-    }
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************
@@ -161,6 +153,6 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
     // **************************************************************
 
     private final Variable<Double> mean;
-    private final Variable<Double> shape;
+    private final Variable<Double> alpha;
 
 }

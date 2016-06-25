@@ -215,11 +215,6 @@ public class InverseGaussianDistributionModel extends AbstractModel implements P
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************

@@ -132,11 +132,6 @@ public class ExponentialDistributionModel extends AbstractModel implements Param
         return mean;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************

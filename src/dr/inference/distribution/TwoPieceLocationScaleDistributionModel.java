@@ -143,11 +143,6 @@ public class TwoPieceLocationScaleDistributionModel extends AbstractModel implem
         throw new UnsupportedOperationException("Not implemented");
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************

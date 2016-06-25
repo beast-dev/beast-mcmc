@@ -213,11 +213,6 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
         return mean;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        return stdev;
-    }
-
     // *****************************************************************
     // Interface Model
     // *****************************************************************

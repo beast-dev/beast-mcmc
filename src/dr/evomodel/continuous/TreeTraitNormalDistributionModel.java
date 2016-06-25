@@ -32,7 +32,6 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inferencexml.distribution.MultivariateNormalDistributionModelParser;
-import dr.math.UnivariateFunction;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.RandomGenerator;
 
@@ -178,11 +177,6 @@ public class TreeTraitNormalDistributionModel extends AbstractModel implements P
 
     @Override
     public Variable<Double> getLocationVariable() {
-        throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public Variable<Double> getScaleVariable() {
         throw new UnsupportedOperationException("Not implemented");
     }
 

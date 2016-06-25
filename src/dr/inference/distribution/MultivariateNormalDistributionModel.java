@@ -150,12 +150,7 @@ public class MultivariateNormalDistributionModel extends AbstractModel implement
         return mean;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        return precision;
-    }
-
-// **************************************************************
+    // **************************************************************
     // Private instance variables and functions
     // **************************************************************
 

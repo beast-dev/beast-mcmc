@@ -218,12 +218,4 @@ public class NormalDistributionModel extends AbstractModel implements Parametric
         return mean;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        if (scale != null) {
-            return scale;
-        } else {
-            return precision;
-        }
-    }
 }

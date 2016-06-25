@@ -40,7 +40,5 @@ public interface DensityModel extends Model {
 
     Variable<Double> getLocationVariable();
 
-    Variable<Double> getScaleVariable();
-
     double logPdf(double[] x);
 }

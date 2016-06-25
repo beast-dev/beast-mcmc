@@ -36,23 +36,23 @@ import org.apache.commons.math.special.Beta;
 public class NegativeBinomialDistribution implements Distribution {
 
     double mean;
-    double shape;
+    double alpha;
 
-    public NegativeBinomialDistribution(double mean, double shape) {
+    public NegativeBinomialDistribution(double mean, double alpha) {
         this.mean = mean;
-        this.shape = shape;
+        this.alpha = alpha;
     }
 
     public double pdf(double x) {
-        return pdf(x, mean, shape);
+        return pdf(x, mean, alpha);
     }
 
     public double logPdf(double x) {
-        return logPdf(x, mean, shape);
+        return logPdf(x, mean, alpha);
     }
 
     public double cdf(double x) {
-        return cdf(x, mean, shape);
+        return cdf(x, mean, alpha);
     }
 
     public double quantile(double y) {
@@ -65,7 +65,7 @@ public class NegativeBinomialDistribution implements Distribution {
     }
 
     public double variance() {
-        return mean + ((mean * mean) / shape);
+        return mean + (mean * mean * alpha);
     }
 
     public UnivariateFunction getProbabilityDensityFunction() {
@@ -73,25 +73,27 @@ public class NegativeBinomialDistribution implements Distribution {
     }
 
 
-    public static double pdf(double x, double mean, double shape) {
+    public static double pdf(double x, double mean, double alpha) {
         if (x < 0)  return 0;
-        return Math.exp(logPdf(x, mean, shape));
+        return Math.exp(logPdf(x, mean, alpha));
     }
 
-    public static double logPdf(double x, double mean, double shape) {
+    public static double logPdf(double x, double mean, double alpha) {
         if (x < 0)  return Double.NEGATIVE_INFINITY;
 //        double r = -1 * (mean*mean) / (mean - stdev*stdev);
 //        double p = mean / (stdev*stdev);
 //        return Math.log(Math.pow(1-p,x)) + Math.log(Math.pow(p, r)) + GammaFunction.lnGamma(r+x) - GammaFunction.lnGamma(r) - GammaFunction.lnGamma(x+1);
+        double theta = 1.0 / alpha;
 
-        double p = shape / (shape + mean);
-        return Math.log(1 - p) * x + Math.log(p) * shape + GammaFunction.lnGamma(shape + x) - GammaFunction.lnGamma(shape) - GammaFunction.lnGamma(x+1);
+        double p = theta / (theta + mean);
+        return Math.log(1 - p) * x + Math.log(p) * theta + GammaFunction.lnGamma(theta + x) - GammaFunction.lnGamma(theta) - GammaFunction.lnGamma(x+1);
     }
 
-    public static double cdf(double x, double mean, double shape) {
-        double p = mean / (shape*shape);
+    public static double cdf(double x, double mean, double alpha) {
+        double theta = 1.0 / alpha;
+        double p = mean / (theta * theta);
         try {
-            return Beta.regularizedBeta(p, shape, x+1);
+            return Beta.regularizedBeta(p, theta, x+1);
         } catch (MathException e) {
             // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
             // exceptions is bad. Better to return NaN and let the calling code deal with it.
@@ -108,8 +110,10 @@ public class NegativeBinomialDistribution implements Distribution {
 
         double mean = 5;
         double stdev = 5;
-         double r = -1 * (mean*mean) / (mean - stdev*stdev);
-        NegativeBinomialDistribution dist = new NegativeBinomialDistribution(5, r);
+//         double r = -1 * (mean*mean) / (mean - stdev*stdev);
+        double alpha = (stdev * stdev - mean) / (mean * mean);
+
+        NegativeBinomialDistribution dist = new NegativeBinomialDistribution(5, alpha);
         System.out.println("pdf = " + dist.pdf(5));
         System.out.println("logPdf = " + dist.logPdf(5));
     }

@@ -231,12 +231,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         return meanParameter;
     }
 
-    @Override
-    public Variable<Double> getScaleVariable() {
-        return scaleParameter;
-    }
-
-// *****************************************************************
+    // *****************************************************************
     // Interface Model
     // *****************************************************************
 

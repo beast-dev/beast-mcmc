@@ -46,6 +46,7 @@ import dr.inference.model.Parameter;
 import java.util.Map;
 import java.util.Set;
 
+@Deprecated // replaced by TreeDataLikelihood
 public abstract class NewAbstractSequenceLikelihood extends NewAbstractLikelihoodOnTree {
 
     public NewAbstractSequenceLikelihood(String name, PatternList patternList, TreeModel treeModel,

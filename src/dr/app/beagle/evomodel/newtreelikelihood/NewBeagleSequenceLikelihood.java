@@ -72,6 +72,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
+@Deprecated // replaced by TreeDataLikelihood
 public class NewBeagleSequenceLikelihood extends NewAbstractSequenceLikelihood implements ThreadAwareLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to

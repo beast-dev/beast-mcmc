@@ -37,6 +37,7 @@ import dr.inference.model.Model;
  * @version $Id: SiteModel.java,v 1.77 2005/05/24 20:25:58 rambaut Exp $
  */
 
+@Deprecated // replaced by TreeDataLikelihood
 public interface SiteModel extends Model {
 
 	/**

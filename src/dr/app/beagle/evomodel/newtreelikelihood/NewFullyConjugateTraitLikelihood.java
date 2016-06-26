@@ -44,6 +44,7 @@ import java.util.Set;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // replaced by TreeDataLikelihood
 public class NewFullyConjugateTraitLikelihood extends NewAbstractLikelihoodOnTree implements ThreadAwareLikelihood,
         ConjugateWishartStatisticsProvider, Reportable {
 

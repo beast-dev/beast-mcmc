@@ -35,7 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by msuchard on 5/19/16.
+ * Created by msuchard on 2016-05-19.
  */
 public class UncertainSiteList extends SimpleSiteList implements Citable {
 

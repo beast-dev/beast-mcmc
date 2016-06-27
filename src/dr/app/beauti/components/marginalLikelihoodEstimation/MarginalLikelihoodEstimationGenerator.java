@@ -33,8 +33,12 @@ import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.Units;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.TreeWorkingPriorParsers;
+import dr.evomodelxml.branchratemodel.ContinuousBranchRatesParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.*;
 import dr.inference.mcmc.MarginalLikelihoodEstimator;
 import dr.inference.model.ParameterParser;
@@ -601,8 +605,15 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
 
                     case DataType.AMINO_ACIDS:
 
-                        //do nothing as these contain empirical values only
-                        break;
+                    case DataType.TWO_STATES:
+
+                    case DataType.COVARION:
+
+                    case DataType.GENERAL:
+
+                    case DataType.CONTINUOUS:
+
+                    case DataType.MICRO_SAT:
 
                     default:
                         throw new IllegalArgumentException("Unknown data type");
@@ -669,10 +680,37 @@ public class MarginalLikelihoodEstimationGenerator extends BaseComponentGenerato
                                 });
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
                         writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                        writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                         break;
 
                     case UNCORRELATED:
+
+                        if (model.isContinuousQuantile()) {
+                            writer.writeIDref(ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        } else {
+                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        }
+
                         switch (model.getClockDistributionType()) {
+                            case GAMMA:
+                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                        new Attribute[]{
+                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCGD_MEAN),
+                                                new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
+                                        });
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_MEAN);
+                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,
+                                        new Attribute[]{
+                                                new Attribute.Default<String>("fileName", beautiOptions.logFileName),
+                                                new Attribute.Default<String>("parameterColumn", model.getPrefix() + ClockType.UCGD_SHAPE),
+                                                new Attribute.Default<String>("burnin", "" + (int)(beautiOptions.chainLength*0.10))
+                                        });
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCGD_SHAPE);
+                                writer.writeCloseTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR);
+                                break;
+
                             case LOGNORMAL:
                                 if (model.getClockRateParameter().isMeanInRealSpace()) {
                                     writer.writeOpenTag(WorkingPriorParsers.LOG_TRANSFORMED_NORMAL_REFERENCE_PRIOR,

@@ -53,11 +53,11 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
 
         this.mean = mean;
         addVariable(mean);
-        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
+        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.alpha = alpha;
         addVariable(alpha);
-        alpha.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
+        alpha.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     // *****************************************************************
@@ -133,6 +133,7 @@ public class NegativeBinomialDistributionModel extends AbstractModel implements 
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        fireModelChanged();
     }
 
     protected void storeState() {

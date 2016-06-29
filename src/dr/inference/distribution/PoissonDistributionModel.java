@@ -50,7 +50,7 @@ public class PoissonDistributionModel extends AbstractModel implements Parametri
 
         this.mean = mean;
         addVariable(mean);
-        mean.addBounds(new Parameter.DefaultBounds(0.0, Double.NEGATIVE_INFINITY, 1));
+        mean.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
     }
 
     // *****************************************************************

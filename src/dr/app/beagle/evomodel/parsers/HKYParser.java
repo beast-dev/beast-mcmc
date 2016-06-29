@@ -51,9 +51,12 @@ public class HKYParser extends AbstractXMLObjectParser {
         Parameter kappaParam = (Parameter) xo.getElementFirstChild(KAPPA);
         FrequencyModel freqModel = (FrequencyModel) xo.getElementFirstChild(FrequencyModelParser.FREQUENCIES);
 
-        Logger.getLogger("dr.evomodel").info("Creating HKY substitution model. Initial kappa = " +
-                kappaParam.getParameterValue(0));
-
+        if (kappaParam.getId() == null && kappaParam.getParameterValue(0) == 1.0) {
+            Logger.getLogger("dr.evomodel").info("Creating JC substitution model.");
+        } else {
+            Logger.getLogger("dr.evomodel").info("Creating HKY substitution model. Initial kappa = " +
+                    kappaParam.getParameterValue(0));
+        }
         return new HKY(kappaParam, freqModel);
     }
 

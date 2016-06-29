@@ -91,7 +91,7 @@ public class NegativeBinomialDistribution implements Distribution {
 
     public static double cdf(double x, double mean, double alpha) {
         double theta = 1.0 / alpha;
-        double p = mean / (theta * theta);
+        double p = theta / (theta + mean);
         try {
             return Beta.regularizedBeta(p, theta, x+1);
         } catch (MathException e) {

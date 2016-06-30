@@ -117,13 +117,27 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         this.patternLists.addAll(patternLists);
         this.dataType = this.patternLists.get(0).getDataType();
         patternCounts = new int[this.patternLists.size()];
-        patternWeights = new double[this.patternLists.size()][];
+        totalPatternCount = 0;
         int k = 0;
         for (PatternList patternList : this.patternLists) {
             assert(patternList.getDataType().equals(this.dataType));
             patternCounts[k] = patternList.getPatternCount();
-            patternWeights[k] = patternList.getPatternWeights();
+            totalPatternCount += patternCounts[k];
             k++;
+        }
+
+        patternPartition = new int[totalPatternCount];
+        patternWeights = new double[totalPatternCount];
+
+        int j = 0;
+        k = 0;
+        for (PatternList patternList : this.patternLists) {
+            double[] pw = patternList.getPatternWeights();
+            for (int i = 0; i < patternList.getPatternCount(); i++) {
+                patternPartition[k] = j;
+                patternWeights[k] = pw[i];
+                k++;
+            }
         }
 
         stateCount = dataType.getStateCount();
@@ -169,9 +183,16 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
+            int eigenBufferCount = 0;
+            int matrixBufferCount = 0;
+
             // create a substitutionModelDelegate for each branchModel
             for (BranchModel branchModel : this.branchModels) {
-                substitutionModelDelegates.add(new SubstitutionModelDelegate(tree, branchModel, -1));
+                SubstitutionModelDelegate substitutionModelDelegate = new SubstitutionModelDelegate(tree, branchModel, -1);
+                substitutionModelDelegates.add(substitutionModelDelegate);
+
+                eigenBufferCount += substitutionModelDelegate.getEigenBufferCount();
+                matrixBufferCount += substitutionModelDelegate.getMatrixBufferCount();
             }
 
             // first set the rescaling scheme to use from the parser
@@ -277,9 +298,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                     partialBufferHelper.getBufferCount(),
                     compactPartialsCount,
                     stateCount,
-                    patternCount,
-                    substitutionModelDelegate.getEigenBufferCount(),
-                    substitutionModelDelegate.getMatrixBufferCount(),
+                    totalPatternCount,
+                    eigenBufferCount,
+                    matrixBufferCount,
                     categoryCount,
                     scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
                     resourceList,
@@ -320,30 +341,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
             logger.info("  With " + patternLists.size() + " partitions comprising " + patternCountString + " unique site patterns");
 
-            k = 0;
-            for (PatternList patternList : this.patternLists) {
-                // @todo - should check that each patternList spans the same set of taxa
-                for (int i = 0; i < tipCount; i++) {
-                    // Find the id of tip i in the patternList
-                    String id = tree.getTaxonId(i);
-                    int index = patternList.getTaxonIndex(id);
-
-                    if (index == -1) {
-                        throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + tree.getId() +
-                                ", is not found in patternList, " + patternList.getId());
-                    } else {
-                        if (useAmbiguities) {
-                            setPartials(beagle, k, patternList, index, i);
-                        } else {
-                            setStates(beagle, k, patternList, index, i);
-                        }
-                    }
+            // @todo - should check that each patternList spans the same set of taxa
+            for (int i = 0; i < tipCount; i++) {
+                String id = tree.getTaxonId(i);
+                if (useAmbiguities) {
+                    setPartials(beagle, this.patternLists, id, i);
+                } else {
+                    setStates(beagle, this.patternLists, id, i);
                 }
-
-                beagle.setPatternWeights(k, patternWeights[k]);
-
-                k++;
             }
+
+            beagle.setPatternWeights(patternWeights);
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
@@ -372,7 +380,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             updateSubstitutionModels = new boolean[substitutionModelDelegates.size()];
             updateSubstitutionModels();
 
-            updateSiteModels = new boolean[branchModels.size()];
+            updateSiteRateModels = new boolean[branchModels.size()];
             updateSiteModels();
 
         } catch (TaxonList.MissingTaxonException mte) {
@@ -386,9 +394,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
     }
 
-    private void updateSubstitutionModel(SubstitutionModelDelegate substitutionModelDelegate) {
+    private void updateSubstitutionModel(BranchModel branchModel) {
         for (int i = 0; i < substitutionModelDelegates.size(); i++) {
-            if (substitutionModelDelegates.get(i) == substitutionModelDelegate) {
+            if (substitutionModelDelegates.get(i).getBranchModel() == branchModel) {
                 updateSubstitutionModels[i] = true;
             }
         }
@@ -396,14 +404,14 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
     private void updateSiteModels(boolean... state) {
         for (int i = 0; i < branchModels.size(); i++) {
-            updateSiteModels[i] = (state.length < 1 || state[0]);
+            updateSiteRateModels[i] = (state.length < 1 || state[0]);
         }
     }
 
-    private void updateSiteModel(BranchModel branchModel) {
-        for (int i = 0; i < branchModels.size(); i++) {
-            if (branchModels.get(i) == branchModel) {
-                updateSiteModels[i] = true;
+    private void updateSiteModel(SiteRateModel siteRateModel) {
+        for (int i = 0; i < siteRateModels.size(); i++) {
+            if (siteRateModels.get(i) == siteRateModels) {
+                updateSiteRateModels[i] = true;
             }
         }
     }
@@ -453,74 +461,84 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * Sets the partials from a sequence in an alignment.
      *
      * @param beagle        beagle
-     * @param patternList   patternList
-     * @param sequenceIndex sequenceIndex
+     * @param patternLists  patternLists
+     * @param taxonId       taxonId
      * @param nodeIndex     nodeIndex
      */
     private final void setPartials(Beagle beagle,
-                                   int partitionIndex,
-                                   PatternList patternList,
-                                   int sequenceIndex,
-                                   int nodeIndex) {
+                                   List<PatternList> patternLists,
+                                   String taxonId,
+                                   int nodeIndex) throws TaxonList.MissingTaxonException {
 
-        int patternCount = patternList.getPatternCount();
-        double[] partials = new double[patternCount * stateCount * categoryCount];
-
-        boolean[] stateSet;
-
+        double[] partials = new double[totalPatternCount * stateCount * categoryCount];
         int v = 0;
-        for (int i = 0; i < patternCount; i++) {
+        for (PatternList patternList : this.patternLists) {
+            int sequenceIndex = patternList.getTaxonIndex(taxonId);
 
-            int state = patternList.getPatternState(sequenceIndex, i);
-            stateSet = dataType.getStateSet(state);
+            if (sequenceIndex == -1) {
+                throw new TaxonList.MissingTaxonException("Taxon, " + taxonId +
+                        ", not found in patternList, " + patternList.getId());
+            }
 
-            for (int j = 0; j < stateCount; j++) {
-                if (stateSet[j]) {
-                    partials[v] = 1.0;
-                } else {
-                    partials[v] = 0.0;
+            boolean[] stateSet;
+
+            for (int i = 0; i < patternList.getPatternCount(); i++) {
+
+                int state = patternList.getPatternState(sequenceIndex, i);
+                stateSet = dataType.getStateSet(state);
+
+                for (int j = 0; j < stateCount; j++) {
+                    if (stateSet[j]) {
+                        partials[v] = 1.0;
+                    } else {
+                        partials[v] = 0.0;
+                    }
+                    v++;
                 }
-                v++;
             }
         }
 
         // if there is more than one category then replicate the partials for each
-        int n = patternCount * stateCount;
+        int n = totalPatternCount * stateCount;
         int k = n;
         for (int i = 1; i < categoryCount; i++) {
             System.arraycopy(partials, 0, partials, k, n);
             k += n;
         }
 
-        beagle.setPartials(partitionIndex, nodeIndex, partials);
+        beagle.setPartials(nodeIndex, partials);
     }
 
     /**
      * Sets the partials from a sequence in an alignment.
      *
      * @param beagle        beagle
-     * @param patternList   patternList
-     * @param sequenceIndex sequenceIndex
+     * @param patternLists  patternLists
+     * @param taxonId       taxonId
      * @param nodeIndex     nodeIndex
      */
     private final void setStates(Beagle beagle,
-                                 int partitionIndex,
-                                 PatternList patternList,
-                                 int sequenceIndex,
-                                 int nodeIndex) {
+                                 List<PatternList> patternLists,
+                                 String taxonId,
+                                 int nodeIndex) throws TaxonList.MissingTaxonException {
 
-        int patternCount = patternList.getPatternCount();
+        int[] states = new int[totalPatternCount];
 
-        int i;
+        int v = 0;
+        for (PatternList patternList : this.patternLists) {
+            int sequenceIndex = patternList.getTaxonIndex(taxonId);
 
-        int[] states = new int[patternCount];
+            if (sequenceIndex == -1) {
+                throw new TaxonList.MissingTaxonException("Taxon, " + taxonId +
+                        ", not found in patternList, " + patternList.getId());
+            }
 
-        for (i = 0; i < patternCount; i++) {
-
-            states[i] = patternList.getPatternState(sequenceIndex, i);
+            for (int i = 0; i < patternList.getPatternCount(); i++) {
+                states[i] = patternList.getPatternState(sequenceIndex, i);
+            }
         }
 
-        beagle.setTipStates(partitionIndex, nodeIndex, states);
+        beagle.setTipStates(nodeIndex, states);
     }
 
     /**
@@ -553,17 +571,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             k++;
         }
 
-         k = 0;
+        k = 0;
         for (SiteRateModel siteRateModel : siteRateModels) {
-            if (updateSiteModels[k]) {
+            if (updateSiteRateModels[k]) {
                 double[] categoryRates = siteRateModel.getCategoryRates();
-                beagle.setCategoryRates(k, categoryRates);
+                beagle.setCategoryRates(categoryRates);
             }
             k++;
         }
 
         if (branchUpdateCount > 0) {
-            for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
+            for (SubstitutionModelDelegate substitutionModelDelegate: substitutionModelDelegates) {
                 substitutionModelDelegate.updateTransitionMatrices(
                         beagle,
                         branchUpdateIndices,
@@ -573,61 +591,62 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         int operationCount = nodeOperations.size();
-        int k = 0;
-        for (NodeOperation op : nodeOperations) {
-            int nodeNum = op.getNodeNumber();
+        k = 0;
+        for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
+            for (NodeOperation op : nodeOperations) {
+                int nodeNum = op.getNodeNumber();
 
-            if (flip) {
-                // first flip the partialBufferHelper
-                partialBufferHelper.flipOffset(nodeNum);
-            }
+                if (flip) {
+                    // first flip the partialBufferHelper
+                    partialBufferHelper.flipOffset(nodeNum);
+                }
 
-            operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
+                operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
-            if (useScaleFactors) {
-                // get the index of this scaling buffer
-                int n = nodeNum - tipCount;
+                if (useScaleFactors) {
+                    // get the index of this scaling buffer
+                    int n = nodeNum - tipCount;
 
-                if (recomputeScaleFactors) {
-                    // flip the indicator: can take either n or (internalNodeCount + 1) - n
-                    scaleBufferHelper.flipOffset(n);
+                    if (recomputeScaleFactors) {
+                        // flip the indicator: can take either n or (internalNodeCount + 1) - n
+                        scaleBufferHelper.flipOffset(n);
 
-                    // store the index
-                    scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
+                        // store the index
+                        scaleBufferIndices[n] = scaleBufferHelper.getOffsetIndex(n);
 
-                    operations[k + 1] = scaleBufferIndices[n]; // Write new scaleFactor
-                    operations[k + 2] = Beagle.NONE;
+                        operations[k + 1] = scaleBufferIndices[n]; // Write new scaleFactor
+                        operations[k + 2] = Beagle.NONE;
+
+                    } else {
+                        operations[k + 1] = Beagle.NONE;
+                        operations[k + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
+                    }
 
                 } else {
-                    operations[k + 1] = Beagle.NONE;
-                    operations[k + 2] = scaleBufferIndices[n]; // Read existing scaleFactor
+
+                    if (useAutoScaling) {
+                        scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
+                    }
+                    operations[k + 1] = Beagle.NONE; // Not using scaleFactors
+                    operations[k + 2] = Beagle.NONE;
                 }
 
-            } else {
+                operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
+                operations[k + 4] = substitutionModelDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
+                operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
+                operations[k + 6] = substitutionModelDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
 
-                if (useAutoScaling) {
-                    scaleBufferIndices[nodeNum - tipCount] = partialBufferHelper.getOffsetIndex(nodeNum);
-                }
-                operations[k + 1] = Beagle.NONE; // Not using scaleFactors
-                operations[k + 2] = Beagle.NONE;
+                k += Beagle.OPERATION_TUPLE_SIZE;
             }
-
-            operations[k + 3] = partialBufferHelper.getOffsetIndex(op.getLeftChild()); // source node 1
-            operations[k + 4] = substitutionModelDelegate.getMatrixIndex(op.getLeftChild()); // source matrix 1
-            operations[k + 5] = partialBufferHelper.getOffsetIndex(op.getRightChild()); // source node 2
-            operations[k + 6] = substitutionModelDelegate.getMatrixIndex(op.getRightChild()); // source matrix 2
-
-            k += Beagle.OPERATION_TUPLE_SIZE;
         }
-
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
         int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);
 
-        double[] categoryWeights = this.siteRateModel.getCategoryProportions();
+        double[] categoryWeights = this.siteRateModels.get(0).getCategoryProportions();
 
         // This should probably explicitly be the state frequencies for the root node...
-        double[] frequencies = substitutionModelDelegate.getRootStateFrequencies();
+        double[] frequencies = substitutionModelDelegates.get(0).getRootStateFrequencies();
 
         int cumulateScaleBufferIndex = Beagle.NONE;
         if (useScaleFactors) {
@@ -785,18 +804,28 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the patternLists
      */
-    private List<PatternList> patternLists = new ArrayList<>();
+    private List<PatternList> patternLists = new ArrayList<PatternList>();
     private DataType dataType = null;
 
     /**
-     * the pattern weights
+     * the pattern weights across all patterns
      */
-    private double[][] patternWeights;
+    private double[] patternWeights;
 
     /**
-     * the number of patterns
+     * The partition for each pattern
+     */
+    private int[] patternPartition;
+
+    /**
+     * the number of patterns for each partition
      */
     private int[] patternCounts;
+
+    /**
+     * total number of patterns across all partitions
+     */
+    private int totalPatternCount;
 
     /**
      * the number of states in the data
@@ -806,17 +835,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the branch-site model for these sites
      */
-    private final List<BranchModel> branchModels = new ArrayList<>();
+    private final List<BranchModel> branchModels = new ArrayList<BranchModel>();
 
     /**
      * A delegate to handle substitution models on branches
      */
-    private final List<SubstitutionModelDelegate> substitutionModelDelegates = new ArrayList<>();
+    private final List<SubstitutionModelDelegate> substitutionModelDelegates = new ArrayList<SubstitutionModelDelegate>();
 
     /**
      * the site model for these sites
      */
-    private final List<SiteRateModel> siteRateModels = new ArrayList<>();
+    private final List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
 
     /**
      * the pattern likelihoods
@@ -851,7 +880,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * Flag to specify that the site model has changed
      */
-    private boolean[] updateSiteModels;
+    private boolean[] updateSiteRateModels;
 
     public static void main(String[] args) {
 

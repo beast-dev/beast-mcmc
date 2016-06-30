@@ -441,6 +441,10 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
         return matrixBufferHelper.getOffsetIndex(branchIndex);
     }
 
+    public BranchModel getBranchModel() {
+        return branchModel;
+    }
+
     public void storeState() {
         eigenBufferHelper.storeState();
         matrixBufferHelper.storeState();

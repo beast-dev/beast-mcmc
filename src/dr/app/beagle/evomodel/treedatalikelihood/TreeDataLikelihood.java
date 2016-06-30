@@ -25,7 +25,6 @@
 
 package dr.app.beagle.evomodel.treedatalikelihood;
 
-import beagle.*;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;

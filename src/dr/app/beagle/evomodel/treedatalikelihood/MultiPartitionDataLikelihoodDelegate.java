@@ -35,21 +35,17 @@ package dr.app.beagle.evomodel.treedatalikelihood;/**
 
 import beagle.*;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.evomodel.treelikelihood.SubstitutionModelDelegate;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.UncertainSiteList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
@@ -57,9 +53,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -133,8 +127,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
 
         stateCount = dataType.getStateCount();
-
-        this.useAmbiguities = useAmbiguities;
 
         assert(branchModels.size() == 1 || branchModels.size() == patternLists.size());
         this.branchModels.addAll(branchModels);
@@ -388,9 +380,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
     }
 
-    private void updateSubstitutionModels() {
+    private void updateSubstitutionModels(boolean... state) {
         for (int i = 0; i < substitutionModelDelegates.size(); i++) {
-            updateSubstitutionModels[i] = true;
+            updateSubstitutionModels[i] = (state.length < 1 || state[0]);
         }
     }
 
@@ -402,9 +394,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         }
     }
 
-    private void updateSiteModels() {
+    private void updateSiteModels(boolean... state) {
         for (int i = 0; i < branchModels.size(); i++) {
-            updateSiteModels[i] = true;
+            updateSiteModels[i] = (state.length < 1 || state[0]);
         }
     }
 
@@ -564,18 +556,20 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
          k = 0;
         for (SiteRateModel siteRateModel : siteRateModels) {
             if (updateSiteModels[k]) {
-                double[] categoryRates = siteRateModelgetCategoryRates();
+                double[] categoryRates = siteRateModel.getCategoryRates();
                 beagle.setCategoryRates(k, categoryRates);
             }
             k++;
         }
 
         if (branchUpdateCount > 0) {
-            substitutionModelDelegate.updateTransitionMatrices(
-                    beagle,
-                    branchUpdateIndices,
-                    branchLengths,
-                    branchUpdateCount);
+            for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
+                substitutionModelDelegate.updateTransitionMatrices(
+                        beagle,
+                        branchUpdateIndices,
+                        branchLengths,
+                        branchUpdateCount);
+            }
         }
 
         int operationCount = nodeOperations.size();
@@ -670,8 +664,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             throw new LikelihoodUnderflowException();
         }
 
-        updateSubstitutionModel = false;
-        updateSiteModel = false;
+        updateSubstitutionModels(false);
+        updateSiteModels(false);
         //********************************************************************
 
         // If these are needed...
@@ -791,7 +785,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the patternLists
      */
-    private List<PatternList> patternLists = new ArrayList<PatternList>();
+    private List<PatternList> patternLists = new ArrayList<>();
     private DataType dataType = null;
 
     /**
@@ -812,17 +806,17 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the branch-site model for these sites
      */
-    private final List<BranchModel> branchModels = new ArrayList<BranchModel>();
+    private final List<BranchModel> branchModels = new ArrayList<>();
 
     /**
      * A delegate to handle substitution models on branches
      */
-    private final List<SubstitutionModelDelegate> substitutionModelDelegates = new ArrayList<SubstitutionModelDelegate>();
+    private final List<SubstitutionModelDelegate> substitutionModelDelegates = new ArrayList<>();
 
     /**
      * the site model for these sites
      */
-    private final List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
+    private final List<SiteRateModel> siteRateModels = new ArrayList<>();
 
     /**
      * the pattern likelihoods

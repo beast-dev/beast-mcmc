@@ -545,7 +545,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
-            branchLengths[branchUpdateCount] = op.getBranchNumber();
+            branchLengths[branchUpdateCount] = op.getBranchLength();
             branchUpdateCount++;
         }
 
@@ -581,14 +581,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         int operationCount = nodeOperations.size();
         k = 0;
-        for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
-            for (NodeOperation op : nodeOperations) {
-                int nodeNum = op.getNodeNumber();
+        for (NodeOperation op : nodeOperations) {
+            int nodeNum = op.getNodeNumber();
 
-                if (flip) {
-                    // first flip the partialBufferHelper
-                    partialBufferHelper.flipOffset(nodeNum);
-                }
+            if (flip) {
+                // first flip the partialBufferHelper
+                partialBufferHelper.flipOffset(nodeNum);
+            }
+
+            for (SubstitutionModelDelegate substitutionModelDelegate : substitutionModelDelegates) {
 
                 operations[k] = partialBufferHelper.getOffsetIndex(nodeNum);
 
@@ -628,6 +629,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 k += Beagle.OPERATION_TUPLE_SIZE;
             }
         }
+
         beagle.updatePartials(operations, operationCount, Beagle.NONE);
 
         int rootIndex = partialBufferHelper.getOffsetIndex(rootNodeNumber);

@@ -48,7 +48,8 @@ public final class SubstitutionModelDelegate implements EvolutionaryProcessDeleg
 
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;
-    public static final boolean MEASURE_RUN_TIME = true;
+    public static final boolean MEASURE_RUN_TIME = false;
+
     public double updateTime;
     public double convolveTime;
 

@@ -69,7 +69,7 @@ public class DataLikelihoodTester {
             throw new RuntimeException("Unable to parse Newick tree");
         }
 
-        System.out.println("\nTest BeagleTreeLikelihood = -1504.5179413042342:");
+        System.out.print("\nTest BeagleTreeLikelihood: ");
 
         //substitutionModel
         Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
@@ -78,8 +78,9 @@ public class DataLikelihoodTester {
         HKY hky = new HKY(kappa, f);
 
         //siteModel
-        double alpha = 0.5;
-        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
+//        double alpha = 0.5;
+//        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
+        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteRateModel");
         siteRateModel.setSubstitutionModel(hky);
         Parameter mu = new Parameter.Default(GammaSiteModelParser.SUBSTITUTION_RATE, 1.0, 0, Double.POSITIVE_INFINITY);
         siteRateModel.setMutationRateParameter(mu);
@@ -106,7 +107,7 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
-        System.out.println("\nTest BeagleDataLikelihoodDelegate:");
+        System.out.print("\nTest BeagleDataLikelihoodDelegate: ");
 
         BeagleDataLikelihoodDelegate dataLikelihoodDelegate = new BeagleDataLikelihoodDelegate(
                 treeModel,
@@ -141,7 +142,7 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
-        System.out.println("\nTest MultiPartitionDataLikelihoodDelegate 2 partition:");
+        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 2 partition: ");
 
         List<PatternList> patternLists = new ArrayList<>();
         patternLists.add(patterns);

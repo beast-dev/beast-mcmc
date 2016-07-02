@@ -100,10 +100,11 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         logger.info("Using Multi-Partition Data Likelihood Delegate");
 
-        int partitionCount = patternLists.size();
-
         this.dataType = patternLists.get(0).getDataType();
-        patternCounts = new int[patternLists.size()];
+        stateCount = dataType.getStateCount();
+
+        int partitionCount = patternLists.size();
+        patternCounts = new int[partitionCount];
         totalPatternCount = 0;
         int k = 0;
         for (PatternList patternList : patternLists) {
@@ -112,22 +113,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             totalPatternCount += patternCounts[k];
             k++;
         }
-
-        patternPartitions = new int[totalPatternCount];
-        patternWeights = new double[totalPatternCount];
-
-        int j = 0;
-        k = 0;
-        for (PatternList patternList : patternLists) {
-            double[] pw = patternList.getPatternWeights();
-            for (int i = 0; i < patternList.getPatternCount(); i++) {
-                patternPartitions[k] = j;
-                patternWeights[k] = pw[i];
-                k++;
-            }
-        }
-
-        stateCount = dataType.getStateCount();
 
         assert(branchModels.size() == 1 || branchModels.size() == patternLists.size());
         this.branchModels.addAll(branchModels);
@@ -142,7 +127,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             assert(siteRateModel.getCategoryCount() == categoryCount);
             addModel(siteRateModel);
         }
-
 
         nodeCount = tree.getNodeCount();
         tipCount = tree.getExternalNodeCount();
@@ -319,6 +303,20 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
                 }
             } else {
                 logger.info("  No external BEAGLE resources available, or resource list/requirements not met, using Java implementation");
+            }
+
+            patternPartitions = new int[totalPatternCount];
+            patternWeights = new double[totalPatternCount];
+
+            int j = 0;
+            k = 0;
+            for (PatternList patternList : patternLists) {
+                double[] pw = patternList.getPatternWeights();
+                for (int i = 0; i < patternList.getPatternCount(); i++) {
+                    patternPartitions[k] = j;
+                    patternWeights[k] = pw[i];
+                    k++;
+                }
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");

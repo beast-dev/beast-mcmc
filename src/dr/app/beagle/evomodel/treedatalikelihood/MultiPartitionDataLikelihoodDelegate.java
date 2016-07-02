@@ -114,7 +114,9 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             k++;
         }
 
-        assert(branchModels.size() == 1 || branchModels.size() == patternLists.size());
+//        assert(branchModels.size() == 1 || branchModels.size() == patternLists.size());
+        assert(branchModels.size() == patternLists.size());
+
         this.branchModels.addAll(branchModels);
         for (BranchModel branchModel : this.branchModels) {
             addModel(branchModel);
@@ -137,7 +139,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         scaleBufferIndices = new int[internalNodeCount];
         storedScaleBufferIndices = new int[internalNodeCount];
 
-        operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE];
+        operations = new int[internalNodeCount * Beagle.OPERATION_TUPLE_SIZE * partitionCount];
 
         try {
 

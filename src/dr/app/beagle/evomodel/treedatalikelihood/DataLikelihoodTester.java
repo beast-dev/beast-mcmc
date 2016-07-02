@@ -142,27 +142,45 @@ public class DataLikelihoodTester {
 
         System.out.println("logLikelihood = " + logLikelihood);
 
-        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 2 partition: ");
-
-        List<PatternList> patternLists = new ArrayList<>();
-        patternLists.add(patterns);
-        patternLists.add(patterns);
-
-         multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
-                treeModel,
-                patternLists,
-                Collections.singletonList((BranchModel)branchModel),
-                Collections.singletonList((SiteRateModel)siteRateModel),
-                true);
-
-        treeDataLikelihood = new TreeDataLikelihood(
-                multiPartitionDataLikelihoodDelegate,
-                treeModel,
-                branchRateModel);
-
-        logLikelihood = treeDataLikelihood.getLogLikelihood();
-
-        System.out.println("logLikelihood = " + logLikelihood);
+//        System.out.print("\nTest MultiPartitionDataLikelihoodDelegate 2 partition: ");
+//
+//        List<PatternList> patternLists = new ArrayList<>();
+//        patternLists.add(patterns);
+//        patternLists.add(patterns);
+//
+//        //substitutionModel
+//        FrequencyModel f2 = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+//        HKY hky2 = new HKY(kappa, f2);
+//
+//        //siteModel
+////        double alpha = 0.5;
+////        GammaSiteRateModel siteRateModel = new GammaSiteRateModel("gammaModel", alpha, 4);
+//        GammaSiteRateModel siteRateModel2 = new GammaSiteRateModel("siteRateModel");
+//        siteRateModel2.setSubstitutionModel(hky2);
+//        siteRateModel2.setMutationRateParameter(mu);
+//        BranchModel branchModel2 = new HomogeneousBranchModel(
+//                siteRateModel2.getSubstitutionModel(),
+//                siteRateModel2.getSubstitutionModel().getFrequencyModel());
+//
+//        List<BranchModel> branchModels = new ArrayList<>();
+//        branchModels.add(branchModel);
+//        branchModels.add(branchModel2);
+//
+//        multiPartitionDataLikelihoodDelegate = new MultiPartitionDataLikelihoodDelegate(
+//                treeModel,
+//                patternLists,
+//                branchModels,
+//                Collections.singletonList((SiteRateModel)siteRateModel),
+//                true);
+//
+//        treeDataLikelihood = new TreeDataLikelihood(
+//                multiPartitionDataLikelihoodDelegate,
+//                treeModel,
+//                branchRateModel);
+//
+//        logLikelihood = treeDataLikelihood.getLogLikelihood();
+//
+//        System.out.println("logLikelihood = " + logLikelihood);
     }
 
     private static SimpleAlignment createAlignment(Object[][] taxa_sequence, DataType dataType) {

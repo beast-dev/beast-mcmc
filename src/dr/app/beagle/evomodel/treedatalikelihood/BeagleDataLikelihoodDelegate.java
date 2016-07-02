@@ -518,7 +518,7 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
         int branchUpdateCount = 0;
         for (BranchOperation op : branchOperations) {
             branchUpdateIndices[branchUpdateCount] = op.getBranchNumber();
-            branchLengths[branchUpdateCount] = op.getBranchNumber();
+            branchLengths[branchUpdateCount] = op.getBranchLength();
             branchUpdateCount ++;
         }
 
@@ -822,92 +822,5 @@ public class BeagleDataLikelihoodDelegate extends AbstractModel implements DataL
      * Flag to specify if ambiguity codes are in use
      */
     private final boolean useAmbiguities;
-
-    public static void main(String[] args) {
-
-        try {
-
-            MathUtils.setSeed(666);
-
-            System.out.println("Test case 1: simulateOnePartition");
-
-            int sequenceLength = 1000;
-            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-            // create tree
-            NewickImporter importer = new NewickImporter(
-                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-            Tree tree = importer.importTree(null);
-            TreeModel treeModel = new TreeModel(tree);
-
-            // create Frequency Model
-            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
-                    0.25, 0.25});
-            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-                    freqs);
-
-            // create branch model
-            Parameter kappa1 = new Parameter.Default(1, 1);
-            Parameter kappa2 = new Parameter.Default(1, 1);
-
-            HKY hky1 = new HKY(kappa1, freqModel);
-            HKY hky2 = new HKY(kappa2, freqModel);
-
-            HomogeneousBranchModel homogenousBranchSubstitutionModel = new HomogeneousBranchModel(
-                    hky1);
-
-            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
-            substitutionModels.add(hky1);
-            substitutionModels.add(hky2);
-            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
-            freqModels.add(freqModel);
-
-            Parameter epochTimes = new Parameter.Default(1, 20);
-
-            // create branch rate model
-            Parameter rate = new Parameter.Default(1, 0.001);
-            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
-
-            // create site model
-            GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-                    "siteModel");
-
-            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);
-
-            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
-
-            // create partition
-            Partition partition1 = new Partition(treeModel, //
-                    homogenousBranchSubstitutionModel,//
-                    siteRateModel, //
-                    branchRateModel, //
-                    freqModel, //
-                    0, // from
-                    sequenceLength - 1, // to
-                    1 // every
-            );
-
-            partitionsList.add(partition1);
-
-            // feed to sequence simulator and generate data
-            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList
-//            		, sequenceLength
-            );
-            Alignment alignment = simulator.simulate(false, false);
-
-            BeagleDataLikelihoodDelegate bdld = new BeagleDataLikelihoodDelegate(treeModel, homogeneousBranchModel, alignment, siteRateModel, false);
-            TreeDataLikelihood tdl  = new TreeDataLikelihood(bdld, treeModel, branchRateModel);
-
-            System.out.println("BeagleDataLikelihoodDelegate(homogeneous) = " + tdl.getLogLikelihood());
-
-//            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
-//
-//            System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } // END: try-catch block
-    }
 
 }

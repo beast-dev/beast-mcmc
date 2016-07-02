@@ -35,30 +35,16 @@ package dr.app.beagle.evomodel.treedatalikelihood;/**
 
 import beagle.*;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.tools.BeagleSequenceSimulator;
-import dr.app.beagle.tools.Partition;
-import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,27 +100,28 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         logger.info("Using Multi-Partition Data Likelihood Delegate");
 
-        this.patternLists.addAll(patternLists);
-        this.dataType = this.patternLists.get(0).getDataType();
-        patternCounts = new int[this.patternLists.size()];
+        int partitionCount = patternLists.size();
+
+        this.dataType = patternLists.get(0).getDataType();
+        patternCounts = new int[patternLists.size()];
         totalPatternCount = 0;
         int k = 0;
-        for (PatternList patternList : this.patternLists) {
+        for (PatternList patternList : patternLists) {
             assert(patternList.getDataType().equals(this.dataType));
             patternCounts[k] = patternList.getPatternCount();
             totalPatternCount += patternCounts[k];
             k++;
         }
 
-        patternPartition = new int[totalPatternCount];
+        patternPartitions = new int[totalPatternCount];
         patternWeights = new double[totalPatternCount];
 
         int j = 0;
         k = 0;
-        for (PatternList patternList : this.patternLists) {
+        for (PatternList patternList : patternLists) {
             double[] pw = patternList.getPatternWeights();
             for (int i = 0; i < patternList.getPatternCount(); i++) {
-                patternPartition[k] = j;
+                patternPartitions[k] = j;
                 patternWeights[k] = pw[i];
                 k++;
             }
@@ -335,8 +322,8 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             }
 
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
-            String patternCountString = "" + this.patternLists.get(0).getPatternCount();
-            for (int i = 1; i < this.patternLists.size(); i++) {
+            String patternCountString = "" + patternLists.get(0).getPatternCount();
+            for (int i = 1; i < patternLists.size(); i++) {
                 patternCountString += ", " + patternLists.get(i).getPatternCount();
             }
             logger.info("  With " + patternLists.size() + " partitions comprising " + patternCountString + " unique site patterns");
@@ -345,13 +332,15 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
             for (int i = 0; i < tipCount; i++) {
                 String id = tree.getTaxonId(i);
                 if (useAmbiguities) {
-                    setPartials(beagle, this.patternLists, id, i);
+                    setPartials(beagle, patternLists, id, i);
                 } else {
-                    setStates(beagle, this.patternLists, id, i);
+                    setStates(beagle, patternLists, id, i);
                 }
             }
 
             beagle.setPatternWeights(patternWeights);
+
+            beagle.setPatternPartitions(partitionCount, patternPartitions);
 
             String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
@@ -472,7 +461,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
 
         double[] partials = new double[totalPatternCount * stateCount * categoryCount];
         int v = 0;
-        for (PatternList patternList : this.patternLists) {
+        for (PatternList patternList : patternLists) {
             int sequenceIndex = patternList.getTaxonIndex(taxonId);
 
             if (sequenceIndex == -1) {
@@ -525,7 +514,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
         int[] states = new int[totalPatternCount];
 
         int v = 0;
-        for (PatternList patternList : this.patternLists) {
+        for (PatternList patternList : patternLists) {
             int sequenceIndex = patternList.getTaxonIndex(taxonId);
 
             if (sequenceIndex == -1) {
@@ -804,7 +793,6 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * the patternLists
      */
-    private List<PatternList> patternLists = new ArrayList<PatternList>();
     private DataType dataType = null;
 
     /**
@@ -815,7 +803,7 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
     /**
      * The partition for each pattern
      */
-    private int[] patternPartition;
+    private int[] patternPartitions;
 
     /**
      * the number of patterns for each partition
@@ -881,94 +869,5 @@ public class MultiPartitionDataLikelihoodDelegate extends AbstractModel implemen
      * Flag to specify that the site model has changed
      */
     private boolean[] updateSiteRateModels;
-
-    public static void main(String[] args) {
-
-        try {
-
-            MathUtils.setSeed(666);
-
-            System.out.println("Test case 1: simulateOnePartition");
-
-            int sequenceLength = 1000;
-            ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-            // create tree
-            NewickImporter importer = new NewickImporter(
-                    "(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-            Tree tree = importer.importTree(null);
-            TreeModel treeModel = new TreeModel(tree);
-
-            // create Frequency Model
-            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25,
-                    0.25, 0.25});
-            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-                    freqs);
-
-            // create branch model
-            Parameter kappa1 = new Parameter.Default(1, 1);
-            Parameter kappa2 = new Parameter.Default(1, 1);
-
-            HKY hky1 = new HKY(kappa1, freqModel);
-            HKY hky2 = new HKY(kappa2, freqModel);
-
-            HomogeneousBranchModel homogenousBranchSubstitutionModel = new HomogeneousBranchModel(hky1);
-
-            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
-            substitutionModels.add(hky1);
-            substitutionModels.add(hky2);
-            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
-            freqModels.add(freqModel);
-
-            Parameter epochTimes = new Parameter.Default(1, 20);
-
-            // create branch rate model
-            Parameter rate = new Parameter.Default(1, 0.001);
-            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
-
-            // create site model
-            List<SiteRateModel> siteRateModels = new ArrayList<SiteRateModel>();
-            GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-            siteRateModels.add(siteRateModel);
-
-            List<BranchModel> branchModels = new ArrayList<BranchModel>();
-            branchModels.add(new HomogeneousBranchModel(hky1));
-
-//            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
-
-            // create partition
-            Partition partition1 = new Partition(treeModel, //
-                    homogenousBranchSubstitutionModel,//
-                    siteRateModel, //
-                    branchRateModel, //
-                    freqModel, //
-                    0, // from
-                    sequenceLength - 1, // to
-                    1 // every
-            );
-
-            partitionsList.add(partition1);
-
-            // feed to sequence simulator and generate data
-            BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList);
-            Alignment alignment = simulator.simulate(false, false);
-
-            List<PatternList> partitions = new ArrayList<PatternList>();
-            partitions.add(alignment);
-
-            MultiPartitionDataLikelihoodDelegate bdld = new MultiPartitionDataLikelihoodDelegate(treeModel, partitions, branchModels, siteRateModels, false);
-            TreeDataLikelihood tdl  = new TreeDataLikelihood(bdld, treeModel, branchRateModel);
-
-            System.out.println("BeagleDataLikelihoodDelegate(homogeneous) = " + tdl.getLogLikelihood());
-
-//            nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT, false);
-//
-//            System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(-1);
-        } // END: try-catch block
-    }
 
 }

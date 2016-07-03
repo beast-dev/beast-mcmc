@@ -36,6 +36,7 @@ import dr.xml.*;
 
 /**
  */
+@Deprecated // Switching to BEAGLE
 public class MarkovJumpsTreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "markovJumpsTreeLikelihood";

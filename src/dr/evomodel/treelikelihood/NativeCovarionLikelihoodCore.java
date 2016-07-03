@@ -25,6 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
+@Deprecated // Switching to BEAGLE
 public class NativeCovarionLikelihoodCore extends AbstractLikelihoodCore {
 
 	public NativeCovarionLikelihoodCore() {

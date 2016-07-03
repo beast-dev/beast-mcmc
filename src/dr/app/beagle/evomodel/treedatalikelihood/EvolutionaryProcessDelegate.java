@@ -1,7 +1,7 @@
 /*
- * VectorTreeLikelihoodParser.java
+ * EvolutionaryProcessDelegate.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,13 +23,22 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.newtreelikelihood;
+package dr.app.beagle.evomodel.treedatalikelihood;
 
-public class VectorTreeLikelihoodParser extends TreeLikelihood.TreeLikelihoodParser {
-    public static final String VECTOR_TREE_LIKELIHOOD = "vectorTreeLikelihood";
+import beagle.Beagle;
 
+/**
+ * Created by msuchard on 12/23/15.
+ */
+public interface EvolutionaryProcessDelegate {
 
-    public VectorTreeLikelihoodParser() {
-        super(VECTOR_TREE_LIKELIHOOD);
-    }
+    int getMatrixIndex(int branchIndex);
+
+    void updateSubstitutionModels(Beagle beagle);
+
+    void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount);
+
+    void storeState();
+
+    void restoreState();
 }

@@ -45,6 +45,7 @@ import dr.xml.*;
  * @version $Id: PurifyingGammaTreeLikelihood.java,v 1.6 2006/01/10 16:48:28 rambaut Exp $
  */
 
+@Deprecated // Switching to BEAGLE
 public class PurifyingGammaTreeLikelihood extends AbstractTreeLikelihood {
 
     public static final String PURIFYING_GAMMA_TREE_LIKELIHOOD = "purifyingGammaTreeLikelihood";

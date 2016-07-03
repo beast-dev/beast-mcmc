@@ -25,6 +25,7 @@
 
 package dr.evomodel.treelikelihood;
 
+@Deprecated // Switching to BEAGLE
 public class NativeAminoAcidLikelihoodCore extends AbstractLikelihoodCore{
 
 	public NativeAminoAcidLikelihoodCore() {

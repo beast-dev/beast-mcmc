@@ -39,12 +39,11 @@ import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
-import dr.evomodel.substmodel.AminoAcidModelType;
-import dr.evomodel.substmodel.NucModelType;
+import dr.app.beauti.types.AminoAcidModelType;
+import dr.app.beauti.types.NucModelType;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.logging.Logger;

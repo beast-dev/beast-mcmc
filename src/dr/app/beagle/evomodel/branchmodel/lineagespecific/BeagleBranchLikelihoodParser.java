@@ -28,8 +28,6 @@ package dr.app.beagle.evomodel.branchmodel.lineagespecific;
 import java.util.ArrayList;
 import java.util.List;
 
-import dr.app.beagle.evomodel.branchmodel.lineagespecific.BeagleBranchLikelihood;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;

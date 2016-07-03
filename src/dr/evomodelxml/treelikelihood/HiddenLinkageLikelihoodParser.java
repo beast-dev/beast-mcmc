@@ -33,6 +33,7 @@ import dr.xml.*;
 /**
  * @author Aaron Darling (koadman)
  */
+@Deprecated // Switching to BEAGLE
 public class HiddenLinkageLikelihoodParser extends AbstractXMLObjectParser {
 
 	@Override

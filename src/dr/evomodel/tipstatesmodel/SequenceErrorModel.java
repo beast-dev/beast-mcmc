@@ -1,7 +1,7 @@
 /*
  * SequenceErrorModel.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,11 +23,11 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.treelikelihood;
+package dr.evomodel.tipstatesmodel;
 
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.TaxonList;
-import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
+import dr.evomodelxml.tipstatesmodel.SequenceErrorModelParser;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.util.Author;

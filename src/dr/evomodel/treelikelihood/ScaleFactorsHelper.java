@@ -37,6 +37,7 @@ import java.util.Arrays;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // Switching to BEAGLE
 public class ScaleFactorsHelper extends AbstractModel {
 
     public ScaleFactorsHelper(LikelihoodScalingProvider scalingProvider,

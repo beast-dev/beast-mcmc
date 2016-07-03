@@ -34,6 +34,7 @@ import java.util.Arrays;
  * @version $Id: AbstractLikelihoodCore.java,v 1.11 2006/08/30 16:02:42 rambaut Exp $
  */
 
+@Deprecated // Switching to BEAGLE
 public abstract class AbstractLikelihoodCore implements LikelihoodCore {
 
     protected int stateCount;

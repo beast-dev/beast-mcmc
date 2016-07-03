@@ -38,6 +38,7 @@ import dr.xml.*;
  *
  * Parser for MicrosatelliteSamplerTreeLikelihood
  */
+@Deprecated // Switching to BEAGLE
 public class MicrosatelliteSamplerTreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TREE_LIKELIHOOD = "microsatelliteSamplerTreeLikelihood";
     public static final String MUTATION_RATE = "mutationRate";

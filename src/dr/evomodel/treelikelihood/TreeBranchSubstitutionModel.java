@@ -41,6 +41,7 @@ import dr.inference.model.Variable;
  * @author Marc A. Suchard
  */
 
+@Deprecated // Switching to BEAGLE
 public class TreeBranchSubstitutionModel extends AbstractModel {
 
     public TreeBranchSubstitutionModel(String name) {

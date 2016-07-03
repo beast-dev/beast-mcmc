@@ -35,6 +35,7 @@ import dr.xml.*;
 
 /**
  */
+@Deprecated // Switching to BEAGLE
 public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";

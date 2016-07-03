@@ -40,6 +40,7 @@ import java.util.ArrayList;
  * Treelikelihood that allows ancestral state sampling for microsatellite data.
  *
  */
+@Deprecated // Switching to BEAGLE
 public class MicrosatelliteSamplerTreeLikelihood extends AbstractTreeLikelihood{
 
     MicrosatelliteSamplerTreeModel treeMicrosatSamplerModel;

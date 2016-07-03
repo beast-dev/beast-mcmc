@@ -1,23 +1,18 @@
 package dr.app.beagle.evomodel.branchmodel;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-
 import dr.app.beagle.evomodel.parsers.BranchAssignmentModelParser;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
+
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 
 @SuppressWarnings("serial")
 public class BranchAssignmentModel extends AbstractModel implements BranchModel {

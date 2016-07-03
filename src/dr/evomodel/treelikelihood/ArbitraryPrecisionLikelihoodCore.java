@@ -35,6 +35,7 @@ import java.math.MathContext;
  * @version $Id: GeneralLikelihoodCore.java,v 1.28 2006/08/31 14:57:24 rambaut Exp $
  */
 
+@Deprecated // Switching to BEAGLE
 public class ArbitraryPrecisionLikelihoodCore implements LikelihoodCore {
 
     private MathContext precision;

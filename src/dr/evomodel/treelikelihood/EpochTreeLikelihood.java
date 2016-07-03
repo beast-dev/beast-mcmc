@@ -41,6 +41,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated // Switching to BEAGLE
 public class EpochTreeLikelihood extends TreeLikelihood {
     public static final String LIKE_NAME = "epochTreeLikelihood";
 

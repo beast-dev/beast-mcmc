@@ -41,6 +41,7 @@ import java.util.Set;
 /**
  * @author Aaron Darling
  */
+@Deprecated // Switching to BEAGLE
 public class HiddenLinkageLikelihood extends AbstractModelLikelihood
 {
 

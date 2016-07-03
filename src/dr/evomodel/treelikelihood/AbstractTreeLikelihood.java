@@ -42,6 +42,7 @@ import dr.xml.Reportable;
  * @version $Id: AbstractTreeLikelihood.java,v 1.16 2005/06/07 16:27:39 alexei Exp $
  */
 
+@Deprecated // Switching to BEAGLE
 public abstract class AbstractTreeLikelihood extends AbstractModelLikelihood implements Reportable {
 
     protected static final boolean COUNT_TOTAL_OPERATIONS = true;

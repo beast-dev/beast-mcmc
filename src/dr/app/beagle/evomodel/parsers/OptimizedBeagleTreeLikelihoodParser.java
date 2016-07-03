@@ -39,7 +39,7 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TipStatesModel;
+import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.model.*;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;

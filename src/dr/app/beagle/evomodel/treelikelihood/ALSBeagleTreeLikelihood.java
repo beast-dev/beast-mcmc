@@ -33,7 +33,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.LikelihoodPartialsProvider;
 import dr.evomodel.treelikelihood.ScaleFactorsHelper;
-import dr.evomodel.treelikelihood.TipStatesModel;
+import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 

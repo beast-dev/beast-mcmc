@@ -1,7 +1,7 @@
 /*
  * AminoAcidModelType.java
  *
- * Copyright (c) 2002-2015 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2016 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -23,10 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodel.substmodel;
+package dr.app.beauti.types;
 
 import dr.util.Citation;
-import jebl.evolution.substmodel.AminoAcidModel;
 
 /**
  * @author Alexei Drummond

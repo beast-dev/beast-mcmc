@@ -33,13 +33,12 @@ import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.SiteList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
-import dr.evomodel.treelikelihood.TipStatesModel;
+import dr.evomodel.tipstatesmodel.TipStatesModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 

@@ -40,6 +40,7 @@ import dr.math.distributions.GammaDistribution;
  * @version $Id: NewGammaSiteModel.java,v 1.31 2005/09/26 14:27:38 rambaut Exp $
  */
 
+@Deprecated // replaced by TreeDataLikelihood
 public class NewGammaSiteModel extends AbstractModel implements SiteRateModel {
 
     public NewGammaSiteModel(String name) {

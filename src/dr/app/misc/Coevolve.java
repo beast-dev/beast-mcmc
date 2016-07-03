@@ -34,13 +34,16 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.sitemodel.SiteModel;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
+import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.oldevomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.treelikelihood.TreeLikelihood;
 import dr.inference.model.Parameter;
 import dr.math.*;
+import dr.oldevomodel.substmodel.GeneralSubstitutionModel;
+import dr.oldevomodel.substmodel.SubstitutionModel;
 
 import java.io.*;
 

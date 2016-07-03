@@ -30,7 +30,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
+import dr.oldevomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;

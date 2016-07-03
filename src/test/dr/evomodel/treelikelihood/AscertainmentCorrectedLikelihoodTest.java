@@ -1,28 +1,8 @@
 package test.dr.evomodel.treelikelihood;
 
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.alignment.SitePatterns;
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.alignment.AscertainedSitePatterns;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.Date;
-import dr.evolution.util.Units;
-import dr.evolution.sequence.Sequence;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.HKY;
-import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.inference.model.Parameter;
-import dr.evomodelxml.substmodel.HKYParser;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import test.dr.inference.trace.TraceCorrelationAssert;
-
-import java.text.NumberFormat;
-import java.util.Locale;
-import java.util.List;
-import java.util.ArrayList;
 
 /**
  * @author Marc A. Suchard

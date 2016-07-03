@@ -31,7 +31,7 @@ import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.MSSD.CTMCScalePriorParser;
+import dr.oldevomodelxml.MSSD.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.*;

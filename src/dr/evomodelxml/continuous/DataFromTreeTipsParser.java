@@ -26,7 +26,7 @@
 package dr.evomodelxml.continuous;
 
 import dr.evolution.tree.MultivariateTraitTree;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.oldevomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;

@@ -30,7 +30,7 @@ import dr.evomodel.operators.MsatSingleAncestralStateGibbsOperator;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
-import dr.evomodel.substmodel.MicrosatelliteModel;
+import dr.oldevomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
 
 /**

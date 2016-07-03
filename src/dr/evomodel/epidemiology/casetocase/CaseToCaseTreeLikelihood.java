@@ -39,7 +39,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.epidemiology.casetocase.periodpriors.AbstractPeriodPriorDistribution;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.AbstractTreeLikelihood;
+import dr.oldevomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.model.Model;

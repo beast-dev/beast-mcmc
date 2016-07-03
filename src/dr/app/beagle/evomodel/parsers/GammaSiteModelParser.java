@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.sitemodel.SiteModel;
+import dr.oldevomodel.sitemodel.SiteModel;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;

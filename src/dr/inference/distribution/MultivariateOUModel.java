@@ -25,9 +25,8 @@
 
 package dr.inference.distribution;
 
-import dr.evomodel.substmodel.PositiveDefiniteSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
-import dr.inference.distribution.GeneralizedLinearModel;
+import dr.oldevomodel.substmodel.PositiveDefiniteSubstitutionModel;
+import dr.oldevomodel.substmodel.SubstitutionModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;

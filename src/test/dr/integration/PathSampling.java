@@ -4,8 +4,8 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Parameter;
-import dr.evomodel.substmodel.HKY;
-import dr.evomodel.substmodel.FrequencyModel;
+import dr.oldevomodel.substmodel.HKY;
+import dr.oldevomodel.substmodel.FrequencyModel;
 import dr.math.distributions.GammaDistribution;
 import dr.math.LogTricks;
 

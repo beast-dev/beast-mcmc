@@ -30,7 +30,7 @@ import dr.app.beagle.evomodel.substmodel.GeneralSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SVSComplexSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SVSGeneralSubstitutionModel;
 import dr.evolution.datatype.DataType;
-import dr.evomodelxml.substmodel.ComplexSubstitutionModelParser;
+import dr.oldevomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
@@ -125,7 +125,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
                 }
 
-                boolean randomize = xo.getAttribute(dr.evomodelxml.substmodel.ComplexSubstitutionModelParser.RANDOMIZE, false);
+                boolean randomize = xo.getAttribute(ComplexSubstitutionModelParser.RANDOMIZE, false);
                 if (randomize) {
                     BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
                         dataType.getStateCount(), !isNonReversible);

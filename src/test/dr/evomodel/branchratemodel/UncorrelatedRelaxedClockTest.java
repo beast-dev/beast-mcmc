@@ -1,50 +1,7 @@
 package test.dr.evomodel.branchratemodel;
 
-import dr.evolution.alignment.SitePatterns;
-import dr.evolution.datatype.Nucleotides;
-import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.DiscretizedBranchRates;
-import dr.evomodel.coalescent.CoalescentLikelihood;
-import dr.evomodel.coalescent.ConstantPopulationModel;
-import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.operators.SubtreeSlideOperator;
-import dr.evomodel.operators.WilsonBalding;
-import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.HKY;
-import dr.evomodel.tree.RateCovarianceStatistic;
-import dr.evomodel.tree.RateStatistic;
-import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import dr.evomodelxml.substmodel.HKYParser;
-import dr.evomodelxml.tree.RateStatisticParser;
-import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
-import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.distribution.LogNormalDistributionModel;
-import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.loggers.ArrayLogFormatter;
-import dr.inference.loggers.MCLogger;
-import dr.inference.loggers.TabDelimitedFormatter;
-import dr.inference.mcmc.MCMC;
-import dr.inference.mcmc.MCMCOptions;
-import dr.inference.model.CompoundLikelihood;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
-import dr.inference.operators.*;
-import dr.inference.trace.ArrayTraceList;
-import dr.inference.trace.Trace;
-import dr.inference.trace.TraceCorrelation;
-import dr.inferencexml.distribution.DistributionModelParser;
-import dr.inferencexml.distribution.LogNormalDistributionModelParser;
-import dr.inferencexml.model.CompoundLikelihoodParser;
-import dr.math.MathUtils;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 import test.dr.inference.trace.TraceCorrelationAssert;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Walter Xie

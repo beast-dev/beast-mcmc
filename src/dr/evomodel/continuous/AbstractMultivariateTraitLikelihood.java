@@ -29,7 +29,7 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.oldevomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;

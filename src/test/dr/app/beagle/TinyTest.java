@@ -4,8 +4,8 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;
-import dr.evomodelxml.sitemodel.GammaSiteModelParser;
-import dr.evomodelxml.substmodel.HKYParser;
+import dr.oldevomodelxml.sitemodel.GammaSiteModelParser;
+import dr.oldevomodelxml.substmodel.HKYParser;
 import dr.inference.model.Parameter;
 import test.dr.inference.trace.TraceCorrelationAssert;
 

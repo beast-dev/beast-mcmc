@@ -25,8 +25,8 @@
 
 package dr.evomodel.operators;
 
-import dr.evomodel.treelikelihood.AbstractLikelihoodCore;
-import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.oldevomodel.treelikelihood.AbstractLikelihoodCore;
+import dr.oldevomodel.treelikelihood.TreeLikelihood;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;

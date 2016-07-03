@@ -287,8 +287,8 @@ public class HKY extends BaseSubstitutionModel implements Citable {
         System.out.println("new probs = "+new Vector(probs));
 
         // check against old implementation
-        dr.evomodel.substmodel.FrequencyModel oldFreq = new dr.evomodel.substmodel.FrequencyModel(Nucleotides.INSTANCE,pi);
-        dr.evomodel.substmodel.HKY oldHKY = new dr.evomodel.substmodel.HKY(kappa,oldFreq);
+        dr.oldevomodel.substmodel.FrequencyModel oldFreq = new dr.oldevomodel.substmodel.FrequencyModel(Nucleotides.INSTANCE,pi);
+        dr.oldevomodel.substmodel.HKY oldHKY = new dr.oldevomodel.substmodel.HKY(kappa,oldFreq);
         oldHKY.setKappa(kappa);
 
         oldHKY.getTransitionProbabilities(time,probs);

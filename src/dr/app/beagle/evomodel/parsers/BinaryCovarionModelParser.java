@@ -34,14 +34,14 @@ import dr.xml.*;
  * Parses an element from an DOM document into a TwoStateCovarionModel
  */
 public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
-    public static final String COVARION_MODEL = dr.evomodelxml.substmodel.BinaryCovarionModelParser.COVARION_MODEL;
-    public static final String ALPHA = dr.evomodelxml.substmodel.BinaryCovarionModelParser.ALPHA;
-    public static final String SWITCHING_RATE = dr.evomodelxml.substmodel.BinaryCovarionModelParser.SWITCHING_RATE;
-    public static final String FREQUENCIES = dr.evomodelxml.substmodel.BinaryCovarionModelParser.FREQUENCIES;
-    public static final String HIDDEN_FREQUENCIES = dr.evomodelxml.substmodel.BinaryCovarionModelParser.HIDDEN_FREQUENCIES;
-    public static final String VERSION = dr.evomodelxml.substmodel.BinaryCovarionModelParser.VERSION;
-    public static final dr.evomodel.substmodel.BinaryCovarionModel.Version DEFAULT_VERSION =
-            dr.evomodelxml.substmodel.BinaryCovarionModelParser.DEFAULT_VERSION;
+    public static final String COVARION_MODEL = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.COVARION_MODEL;
+    public static final String ALPHA = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.ALPHA;
+    public static final String SWITCHING_RATE = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.SWITCHING_RATE;
+    public static final String FREQUENCIES = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.FREQUENCIES;
+    public static final String HIDDEN_FREQUENCIES = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.HIDDEN_FREQUENCIES;
+    public static final String VERSION = dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.VERSION;
+    public static final dr.oldevomodel.substmodel.BinaryCovarionModel.Version DEFAULT_VERSION =
+            dr.oldevomodelxml.substmodel.BinaryCovarionModelParser.DEFAULT_VERSION;
 
     public String getParserName() {
         return COVARION_MODEL;
@@ -69,9 +69,9 @@ public class BinaryCovarionModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(SWITCHING_RATE);
         switchingRateParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        dr.evomodel.substmodel.BinaryCovarionModel.Version version = DEFAULT_VERSION;
+        dr.oldevomodel.substmodel.BinaryCovarionModel.Version version = DEFAULT_VERSION;
         if (xo.hasAttribute(VERSION)) {
-            version = dr.evomodel.substmodel.BinaryCovarionModel.Version.parseFromString(xo.getStringAttribute(VERSION));
+            version = dr.oldevomodel.substmodel.BinaryCovarionModel.Version.parseFromString(xo.getStringAttribute(VERSION));
         }
 
         BinaryCovarionModel model = new BinaryCovarionModel(TwoStateCovarion.INSTANCE,

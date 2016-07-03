@@ -27,7 +27,7 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.app.beagle.evomodel.parsers.BinaryCovarionModelParser;
 import dr.evolution.datatype.TwoStateCovarion;
-import dr.evomodel.substmodel.SubstitutionModelUtils;
+import dr.oldevomodel.substmodel.SubstitutionModelUtils;
 import dr.inference.model.Parameter;
 
 /**
@@ -63,7 +63,7 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
                                Parameter hiddenFrequencies,
                                Parameter alphaParameter,
                                Parameter switchingParameter,
-                               dr.evomodel.substmodel.BinaryCovarionModel.Version version) {
+                               dr.oldevomodel.substmodel.BinaryCovarionModel.Version version) {
 
         super(BinaryCovarionModelParser.COVARION_MODEL, dataType, frequencies, hiddenFrequencies);
 
@@ -173,6 +173,6 @@ public class BinaryCovarionModel extends AbstractCovarionModel {
     private Parameter switchRate;
     private Parameter frequencies;
     private Parameter hiddenFrequencies;
-    final private dr.evomodel.substmodel.BinaryCovarionModel.Version version;
+    final private dr.oldevomodel.substmodel.BinaryCovarionModel.Version version;
 
 }

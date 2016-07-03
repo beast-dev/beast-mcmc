@@ -53,7 +53,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
+import dr.oldevomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.Parameter;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;

@@ -32,7 +32,7 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
-import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
+import dr.oldevomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.util.Attribute;
 
 /**

@@ -52,7 +52,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DiscretizedBranchRates;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.evomodel.sitemodel.SiteModel;
+import dr.oldevomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;

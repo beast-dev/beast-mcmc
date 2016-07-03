@@ -8,9 +8,9 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.substmodel.AsymmetricQuadraticModel;
-import dr.evomodel.sitemodel.GammaSiteModel;
-import dr.evomodel.treelikelihood.TreeLikelihood;
+import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;
+import dr.oldevomodel.sitemodel.GammaSiteModel;
+import dr.oldevomodel.treelikelihood.TreeLikelihood;
 
 import java.util.ArrayList;
 import java.util.Collections;

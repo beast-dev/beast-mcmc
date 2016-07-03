@@ -25,7 +25,7 @@
 
 package dr.oldevomodel.MSSD;
 
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModelLikelihood;
@@ -39,7 +39,6 @@ import dr.util.Citation;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * @author Alexander V. Alekseyenko (alexander.alekseyenko@gmail.com)

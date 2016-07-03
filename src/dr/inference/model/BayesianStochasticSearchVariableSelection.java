@@ -42,7 +42,7 @@ public interface BayesianStochasticSearchVariableSelection {
     public class Utils {
 
         public static boolean connectedAndWellConditioned(double[] probability,
-                                                          dr.app.beagle.evomodel.substmodel.SubstitutionModel substModel) {
+                                                          dr.evomodel.substmodel.SubstitutionModel substModel) {
             if (probability == null) {
                 int stateCount = substModel.getDataType().getStateCount();
                 probability = new double[stateCount*stateCount];

@@ -25,7 +25,7 @@
 
 package dr.app.beauti.generator;
 
-import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
@@ -36,6 +36,14 @@ import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
+import dr.evomodelxml.substmodel.BinaryCovarionModelParser;
+import dr.evomodelxml.substmodel.BinarySubstitutionModelParser;
+import dr.evomodelxml.substmodel.EmpiricalAminoAcidModelParser;
+import dr.evomodelxml.substmodel.FrequencyModelParser;
+import dr.evomodelxml.substmodel.GTRParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
+import dr.evomodelxml.substmodel.HKYParser;
+import dr.evomodelxml.substmodel.TN93Parser;
 import dr.oldevomodel.sitemodel.GammaSiteModel;
 import dr.oldevomodel.sitemodel.SiteModel;
 import dr.oldevomodel.substmodel.AsymmetricQuadraticModel;

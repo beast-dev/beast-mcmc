@@ -25,7 +25,7 @@
 
 package dr.evolution.colouring;
 
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 
 /**
  * @author Marc Suchard

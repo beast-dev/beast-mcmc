@@ -25,10 +25,13 @@
 
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.substmodel.*;
-import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.datatype.TwoStates;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.UniformizedSubstitutionModel;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;

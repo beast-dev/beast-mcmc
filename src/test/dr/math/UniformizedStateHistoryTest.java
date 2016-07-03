@@ -1,8 +1,8 @@
 package test.dr.math;
 
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
-import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.markovjumps.*;
 import dr.inference.model.Parameter;

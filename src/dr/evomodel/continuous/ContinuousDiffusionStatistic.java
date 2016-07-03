@@ -25,7 +25,7 @@
 
 package dr.evomodel.continuous;
 
-import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.app.util.Arguments;
 import dr.evolution.tree.MultivariateTraitTree;
 import dr.evolution.tree.NodeRef;
@@ -45,8 +45,6 @@ import dr.stats.DiscreteStatistics;
 import dr.xml.*;
 import org.jdom.Element;
 
-import javax.swing.event.TreeModelListener;
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.util.*;
 
 /**

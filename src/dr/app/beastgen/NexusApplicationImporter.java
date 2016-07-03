@@ -25,7 +25,7 @@
 
 package dr.app.beastgen;
 
-import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;

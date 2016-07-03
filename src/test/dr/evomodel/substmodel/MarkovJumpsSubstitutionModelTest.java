@@ -1,9 +1,9 @@
 package test.dr.evomodel.substmodel;
 
 import test.dr.math.MathTestCase;
-import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.markovjumps.MarkovJumpsCore;

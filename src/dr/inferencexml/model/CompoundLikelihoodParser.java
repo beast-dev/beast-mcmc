@@ -25,7 +25,6 @@
 
 package dr.inferencexml.model;
 
-import dr.app.beagle.evomodel.branchmodel.lineagespecific.BeagleBranchLikelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.xml.*;

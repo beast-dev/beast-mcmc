@@ -25,7 +25,7 @@
 
 package test.dr.multidimensionalscaling;
 
-import dr.app.beagle.multidimensionalscaling.NativeMDSSingleton;
+import dr.inference.multidimensionalscaling.NativeMDSSingleton;
 import test.dr.math.MathTestCase;
 
 /**

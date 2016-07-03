@@ -26,7 +26,7 @@
 package dr.oldevomodelxml.substmodel;
 
 import dr.evomodel.substmodel.*;
-import dr.oldevomodel.substmodel.*;
+import dr.evomodel.substmodel.aminoacid.*;
 import dr.xml.*;
 
 /**

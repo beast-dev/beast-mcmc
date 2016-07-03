@@ -25,8 +25,8 @@
 
 package test.dr.app.beauti;
 
-import dr.app.beagle.evomodel.substmodel.aminoacid.AminoAcidModelType;
-import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
+import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;

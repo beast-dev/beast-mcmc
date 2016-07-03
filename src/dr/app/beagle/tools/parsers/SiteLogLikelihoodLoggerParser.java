@@ -25,7 +25,7 @@
 
 package dr.app.beagle.tools.parsers;
 
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.tools.SiteLogLikelihoodLogger;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;

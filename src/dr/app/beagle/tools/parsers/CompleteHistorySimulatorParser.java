@@ -25,9 +25,9 @@
 
 package dr.app.beagle.tools.parsers;
 
-import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.CodonLabeling;
+import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
+import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.CodonLabeling;
 import dr.app.beagle.tools.CompleteHistorySimulator;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.Codons;

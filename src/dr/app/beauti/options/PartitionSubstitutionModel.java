@@ -25,8 +25,8 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beagle.evomodel.substmodel.aminoacid.AminoAcidModelType;
-import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
+import dr.evomodel.substmodel.aminoacid.AminoAcidModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.types.*;

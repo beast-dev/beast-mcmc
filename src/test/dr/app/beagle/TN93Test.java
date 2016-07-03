@@ -25,9 +25,9 @@
 
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.nucleotide.TN93;
+import dr.evomodel.substmodel.EigenDecomposition;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.nucleotide.TN93;
 import dr.evolution.datatype.Nucleotides;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;

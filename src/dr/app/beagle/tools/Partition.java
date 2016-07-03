@@ -32,11 +32,11 @@ import org.apache.commons.math.random.MersenneTwister;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
-import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
-import dr.app.beagle.evomodel.treelikelihood.SubstitutionModelDelegate;
+import dr.evomodel.branchmodel.BranchModel;
+import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.treelikelihood.BufferIndexHelper;
+import dr.evomodel.treelikelihood.SubstitutionModelDelegate;
 import dr.app.bss.Utils;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;

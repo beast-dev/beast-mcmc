@@ -25,11 +25,11 @@
 
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.substmodel.*;
-import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.substmodel.*;
 import junit.framework.TestCase;
 
 import java.util.ArrayList;

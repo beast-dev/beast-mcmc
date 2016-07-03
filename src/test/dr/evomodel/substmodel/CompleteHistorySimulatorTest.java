@@ -1,10 +1,10 @@
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.CodonLabeling;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.codon.GY94CodonModel;
-import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.sitemodel.GammaSiteRateModel;
+import dr.evomodel.substmodel.CodonLabeling;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.codon.GY94CodonModel;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.app.beagle.tools.CompleteHistorySimulator;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;

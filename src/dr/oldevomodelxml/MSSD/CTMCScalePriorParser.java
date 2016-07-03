@@ -25,7 +25,7 @@
 
 package dr.oldevomodelxml.MSSD;
 
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.oldevomodel.MSSD.CTMCScalePrior;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;

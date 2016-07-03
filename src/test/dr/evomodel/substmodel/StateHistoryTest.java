@@ -25,9 +25,12 @@
 
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.substmodel.*;
-import dr.app.beagle.evomodel.substmodel.nucleotide.HKY;
+import dr.evomodel.substmodel.nucleotide.HKY;
 import dr.evolution.datatype.Nucleotides;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.MarkovJumpsSubstitutionModel;
+import dr.evomodel.substmodel.SubstitutionModel;
+import dr.evomodel.substmodel.UniformizedSubstitutionModel;
 import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.StateHistory;
 import dr.math.LogTricks;

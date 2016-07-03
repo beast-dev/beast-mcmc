@@ -1,6 +1,6 @@
 package test.dr.integration;
 
-import dr.app.beagle.evomodel.substmodel.nucleotide.NucModelType;
+import dr.evomodel.substmodel.nucleotide.NucModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.util.Utils;

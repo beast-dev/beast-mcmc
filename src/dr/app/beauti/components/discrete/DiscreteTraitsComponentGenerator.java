@@ -25,7 +25,7 @@
 
 package dr.app.beauti.components.discrete;
 
-import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
+import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.generator.ClockModelGenerator;
